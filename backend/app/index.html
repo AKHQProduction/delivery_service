@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Map Application</title>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
+    <style>
+        body {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 20px;
+            margin: 0;
+            font-family: Arial, sans-serif;
+        }
+
+        #map {
+            height: 500px;
+            width: 100%;
+        }
+
+        input[type="text"], button {
+            width: 100%;
+            padding: 10px;
+            font-size: 18px;
+            margin: 5px 0;
+        }
+
+        button {
+            background-color: #007bff;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+
+        button:hover {
+            background-color: #0056b3;
+        }
+
+        @media (max-width: 768px) {
+            #map {
+                height: 300px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <h1>Map Application</h1>
+    <input type="text" id="start_address" placeholder="Enter start address">
+    <input type="text" id="end_address" placeholder="Enter end address">
+    <button onclick="generateRoute()">Generate Route</button>
+    <div id="map"></div>
+    <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+    <script src="https://unpkg.com/leaflet-routing-machine/dist/leaflet-routing-machine.js"></script>
+    <script>
+        function generateRoute() {
+            var startAddress = document.getElementById('start_address').value;
+            var endAddress = document.getElementById('end_address').value;
+
+            fetch('/geocode', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ address: startAddress })
+            })
+            .then(response => response.json())
+            .then(startData => {
+                if (startData.error) {
+                    alert('Start address not found');
+                    return;
+                }
+
+                fetch('/geocode', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ address: endAddress })
+                })
+                .then(response => response.json())
+                .then(endData => {
+                    if (endData.error) {
+                        alert('End address not found');
+                        return;
+                    }
+
+                    var startCoords = [startData.latitude, startData.longitude];
+                    var endCoords = [endData.latitude, endData.longitude];
+
+                    L.Routing.control({
+                        waypoints: [
+                            L.latLng(startCoords[0], startCoords[1]),
+                            L.latLng(endCoords[0], endCoords[1])
+                        ],
+                        routeWhileDragging: true
+                    }).addTo(map);
+                });
+            });
+        }
+
+        var map = L.map('map').setView([51.505, -0.09], 13);
+
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            attribution: '&copy; OpenStreetMap contributors'
+        }).addTo(map);
+    </script>
+</body>
+</html>
