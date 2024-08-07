@@ -1,5 +1,5 @@
 import L from 'leaflet';
-import { getUserCoordinates } from './getCustomerLocation';
+import { getUserCoordinates } from './getUserLocation';
 
 export const generateRoute = async (map: L.Map, setRouteControl: (control: L.Routing.Control) => void) => {
   const userCordinates = await getUserCoordinates();
