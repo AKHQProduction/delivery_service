@@ -29,6 +29,8 @@ export const generateRoute = async (
         driverMarker = L.marker(startCoords).addTo(map);
       }
 
+      map.setView(startCoords, 15)
+
       // Update the route control waypoints or create a new route control
       if (routeControl) {
         routeControl.setWaypoints([
@@ -41,6 +43,7 @@ export const generateRoute = async (
             L.latLng(startCoords[0], startCoords[1]),
             L.latLng(endCoords[0], endCoords[1]),
           ],
+          show: false,
           routeWhileDragging: true,
         }).addTo(map);
         setRouteControl(routeControl);
