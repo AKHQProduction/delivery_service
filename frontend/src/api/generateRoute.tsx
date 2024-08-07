@@ -1,5 +1,6 @@
 import L from "leaflet";
 import { watchUserCoordinates, getCustomerPosition } from "./getUserLocation";
+import { createCustomIcon } from "../handlers/createSVGicon";
 
 export const generateRoute = async (
   map: L.Map,
@@ -13,23 +14,35 @@ export const generateRoute = async (
 
     let routeControl: L.Routing.Control | null = null;
     let driverMarker: L.Marker | null = null;
+    let customerMarker: L.Marker | null = null;
 
     const updateRoute = (position: GeolocationPosition) => {
-      const driverCoordinates: [number, number] = [position.coords.latitude, position.coords.longitude];
+      const driverCoordinates: [number, number] = [
+        position.coords.latitude,
+        position.coords.longitude,
+      ];
       const startCoords: [number, number] = driverCoordinates;
       const endCoords: [number, number] = customerPosition as [number, number];
 
-      // Log the coordinates to verify they are updating
-      console.log("Driver coordinates:", startCoords);
-
-      // Create or update the driver marker
+      // Remove existing markers if they exist
       if (driverMarker) {
-        driverMarker.setLatLng(startCoords);
-      } else {
-        driverMarker = L.marker(startCoords).addTo(map);
+        map.removeLayer(driverMarker);
+      }
+      if (customerMarker) {
+        map.removeLayer(customerMarker);
       }
 
-      map.setView(startCoords, 15)
+      // Create new driver marker
+      driverMarker = L.marker(startCoords, {
+        icon: createCustomIcon("/icons/car-water.svg"),
+      }).addTo(map);
+
+      // Create new customer marker
+      customerMarker = L.marker(endCoords, {
+        icon: createCustomIcon("/icons/map-pin.svg"),
+      }).addTo(map);
+
+      map.setView(startCoords, map.getZoom());
 
       // Update the route control waypoints or create a new route control
       if (routeControl) {
