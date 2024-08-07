@@ -32,15 +32,15 @@ export const MapComponent: React.FC = () => {
 
   return (
     <div className="relative h-screen w-screen">
-    <button
-      id="testBtn"
-      className="absolute top-5 left-1/2 -translate-x-1/2 bg-blue-500 text-white w-32 h-12 rounded"
-      title="Click"
-      onClick={handleGenerateRoute}
-    >
-      Generate Route
-    </button>
-    <div className="absolute inset-0" id="mapElement" ref={mapRef} />
-  </div>
+      <button
+        id="testBtn"
+        className="absolute top-5 left-1/2 -translate-x-1/2 bg-blue-500 text-white w-32 h-12 rounded"
+        title="Click"
+        onClick={handleGenerateRoute}
+      >
+        Generate Route
+      </button>
+      <div className="absolute inset-0" id="mapElement" ref={mapRef} />
+    </div>
   );
 };
