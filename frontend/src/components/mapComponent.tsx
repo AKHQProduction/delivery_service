@@ -8,9 +8,7 @@ import { generateRoute } from "../api/generateRoute";
 export const MapComponent: React.FC = () => {
   const mapRef = useRef<HTMLDivElement>(null);
   const mapInstance = useRef<L.Map | null>(null);
-  const [routeControl, setRouteControl] = useState<L.Routing.Control | null>(
-    null
-  );
+  const [routeControl, setRouteControl] = useState<L.Routing.Control | null>(null);
 
   useEffect(() => {
     if (mapRef.current && !mapInstance.current) {
@@ -23,9 +21,6 @@ export const MapComponent: React.FC = () => {
 
   const handleGenerateRoute = useCallback(() => {
     if (mapInstance.current) {
-      if (routeControl) {
-        mapInstance.current.removeControl(routeControl);
-      }
       generateRoute(mapInstance.current, setRouteControl);
     }
   }, [routeControl]);
