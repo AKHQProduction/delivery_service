@@ -1,6 +1,6 @@
 import L from "leaflet";
 import { watchUserCoordinates, getCustomerPosition } from "./getUserLocation";
-import { createCustomIcon } from "../handlers/createSVGicon";
+import {createCustomMarker } from "../handlers/createMarker";
 
 export const generateRoute = async (
   map: L.Map,
@@ -32,15 +32,9 @@ export const generateRoute = async (
         map.removeLayer(customerMarker);
       }
 
-      // Create new driver marker
-      driverMarker = L.marker(startCoords, {
-        icon: createCustomIcon("/icons/car-water.svg"),
-      }).addTo(map);
-
-      // Create new customer marker
-      customerMarker = L.marker(endCoords, {
-        icon: createCustomIcon("/icons/map-pin.svg"),
-      }).addTo(map);
+      // Create driver and customer markers
+      createCustomMarker(driverMarker, startCoords, map, "/icons/car-water.svg");
+      createCustomMarker(customerMarker, endCoords, map, "/icons/map-pin.svg");
 
       map.setView(startCoords, map.getZoom());
 
