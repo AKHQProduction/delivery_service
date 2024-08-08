@@ -12,10 +12,15 @@ export const MapComponent: React.FC = () => {
 
   useEffect(() => {
     if (mapRef.current && !mapInstance.current) {
-      mapInstance.current = L.map(mapRef.current).setView([51.505, -0.09], 13);
-      L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
-        attribution: "&copy; OpenStreetMap contributors",
+      mapInstance.current = L.map(mapRef.current, {
+        center: [49.44443300, 32.05976700],
+        zoom: 13, 
+        
+      })
+      L.tileLayer("https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png", {
+        attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>',
       }).addTo(mapInstance.current);
+      
     }
   }, []);
 
@@ -28,6 +33,7 @@ export const MapComponent: React.FC = () => {
   return (
     <div className="relative h-screen w-screen">
       <button
+      
         id="testBtn"
         className="absolute top-5 left-1/2 -translate-x-1/2 bg-blue-500 text-white w-32 h-12 rounded"
         title="Click"

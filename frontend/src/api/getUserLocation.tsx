@@ -36,7 +36,13 @@ export const watchUserCoordinates = (
     return null;
   }
 
-  return navigator.geolocation.watchPosition(onPositionUpdate, onError);
+  const options: PositionOptions = {
+    enableHighAccuracy: true, 
+    timeout: 1000, 
+    maximumAge: 0
+  };
+
+  return navigator.geolocation.watchPosition(onPositionUpdate, onError, options);
 };
 
 export const getCustomerPosition = async () => {

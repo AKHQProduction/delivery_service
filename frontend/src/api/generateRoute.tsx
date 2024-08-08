@@ -1,5 +1,6 @@
 import L from "leaflet";
 import { watchUserCoordinates, getCustomerPosition } from "./getUserLocation";
+import {createCustomMarker } from "../handlers/createMarker";
 
 export const generateRoute = async (
   map: L.Map,
@@ -13,35 +14,49 @@ export const generateRoute = async (
 
     let routeControl: L.Routing.Control | null = null;
     let driverMarker: L.Marker | null = null;
+    let customerMarker: L.Marker | null = null;
 
     const updateRoute = (position: GeolocationPosition) => {
-      const driverCoordinates: [number, number] = [position.coords.latitude, position.coords.longitude];
-      const startCoords: [number, number] = driverCoordinates;
+      //get start and end coordinates, driver is updating, customer is const
+      const startCoords: [number, number] = [
+        position.coords.latitude,
+        position.coords.longitude,
+      ];
       const endCoords: [number, number] = customerPosition as [number, number];
 
-      // Log the coordinates to verify they are updating
-      console.log("Driver coordinates:", startCoords);
-
-      // Create or update the driver marker
-      if (driverMarker) {
-        driverMarker.setLatLng(startCoords);
-      } else {
-        driverMarker = L.marker(startCoords).addTo(map);
+      // Remove existing markers if they exist
+      if (driverMarker && customerMarker) {
+        map.removeLayer(driverMarker);
+        map.removeLayer(customerMarker);
       }
+    
+      // Create driver and customer markers
+      driverMarker = createCustomMarker(driverMarker, startCoords, map, "/icons/car-water.svg");
+      customerMarker = createCustomMarker(customerMarker, endCoords, map, "/icons/map-pin.svg");
+
+      // set view to start coordinates with zoom allowed
+      map.setView(startCoords, map.getZoom());
+
+      // set waypoints(markers)
+      const waypoints = [
+        L.latLng(startCoords[0], startCoords[1]),
+        L.latLng(endCoords[0], endCoords[1]),
+      ]
 
       // Update the route control waypoints or create a new route control
       if (routeControl) {
-        routeControl.setWaypoints([
-          L.latLng(startCoords[0], startCoords[1]),
-          L.latLng(endCoords[0], endCoords[1]),
-        ]);
+        routeControl.setWaypoints(waypoints);
       } else {
         routeControl = L.Routing.control({
-          waypoints: [
-            L.latLng(startCoords[0], startCoords[1]),
-            L.latLng(endCoords[0], endCoords[1]),
-          ],
+          waypoints: waypoints,
+          show: false,
           routeWhileDragging: true,
+          plan: new (L.Routing as any).Plan(
+            waypoints,
+            {
+              createMarker: () => null,
+            }
+          ),
         }).addTo(map);
         setRouteControl(routeControl);
       }
