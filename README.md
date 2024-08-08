@@ -1,3 +1,5 @@
+# Delivery Service Monorepo
+
 BACKEND TIPS: 
 1. terminal: cd backend -> .env\Scripts\activate (python -m venv .env if .env is not there)
 2. build frontend: cd frontend -> npm i -> npm run build
