@@ -3,9 +3,8 @@ import L from "leaflet";
 import "leaflet/dist/leaflet.css";
 import "leaflet-routing-machine/dist/leaflet-routing-machine.css";
 import "leaflet-routing-machine";
-import { generateRoute } from "../api/generateRoute";
 
-export const MapComponent: React.FC = () => {
+export const MapComponent: React.FC<MapComponentProps> = ({generateRoute}) => {
   const mapRef = useRef<HTMLDivElement>(null);
   const mapInstance = useRef<L.Map | null>(null);
   const [routeControl, setRouteControl] = useState<L.Routing.Control | null>(

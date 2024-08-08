@@ -1,5 +1,5 @@
 import L from "leaflet";
-import { watchUserCoordinates, getCustomerPosition } from "./getUserLocation";
+import { watchUserCoordinates, getCustomerPosition } from "../api/userLocation";
 import { createCustomMarker } from "../handlers/createMarker";
 
 export const generateRoute = async (
