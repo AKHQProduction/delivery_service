@@ -1,5 +1,5 @@
 from aiogram import Dispatcher
-from . import start
+from backend.presentation.bot.handlers import start
 
 
 def setup_handlers(dp: Dispatcher):
