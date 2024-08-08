@@ -1,6 +1,6 @@
 import L from "leaflet";
 import { watchUserCoordinates, getCustomerPosition } from "./getUserLocation";
-import {createCustomMarker } from "../handlers/createMarker";
+import { createCustomMarker } from "../handlers/createMarker";
 
 export const generateRoute = async (
   map: L.Map,
@@ -29,10 +29,20 @@ export const generateRoute = async (
         map.removeLayer(driverMarker);
         map.removeLayer(customerMarker);
       }
-    
+
       // Create driver and customer markers
-      driverMarker = createCustomMarker(driverMarker, startCoords, map, "/icons/car-water.svg");
-      customerMarker = createCustomMarker(customerMarker, endCoords, map, "/icons/map-pin.svg");
+      driverMarker = createCustomMarker(
+        driverMarker,
+        startCoords,
+        map,
+        "/icons/car-water.svg"
+      );
+      customerMarker = createCustomMarker(
+        customerMarker,
+        endCoords,
+        map,
+        "/icons/map-pin.svg"
+      );
 
       // set view to start coordinates with zoom allowed
       map.setView(startCoords, map.getZoom());
@@ -41,7 +51,7 @@ export const generateRoute = async (
       const waypoints = [
         L.latLng(startCoords[0], startCoords[1]),
         L.latLng(endCoords[0], endCoords[1]),
-      ]
+      ];
 
       // Update the route control waypoints or create a new route control
       if (routeControl) {
@@ -51,12 +61,9 @@ export const generateRoute = async (
           waypoints: waypoints,
           show: false,
           routeWhileDragging: true,
-          plan: new (L.Routing as any).Plan(
-            waypoints,
-            {
-              createMarker: () => null,
-            }
-          ),
+          plan: new (L.Routing as any).Plan(waypoints, {
+            createMarker: () => null,
+          }),
         }).addTo(map);
         setRouteControl(routeControl);
       }
