@@ -17,50 +17,44 @@ export const generateRoute = async (
     let customerMarker: L.Marker | null = null;
 
     const updateRoute = (position: GeolocationPosition) => {
-      const driverCoordinates: [number, number] = [
+      //get start and end coordinates, driver is updating, customer is const
+      const startCoords: [number, number] = [
         position.coords.latitude,
         position.coords.longitude,
       ];
-      const startCoords: [number, number] = driverCoordinates;
       const endCoords: [number, number] = customerPosition as [number, number];
 
       // Remove existing markers if they exist
-      if (driverMarker) {
+      if (driverMarker && customerMarker) {
         map.removeLayer(driverMarker);
-      }
-      if (customerMarker) {
         map.removeLayer(customerMarker);
       }
-
+    
       // Create driver and customer markers
       createCustomMarker(driverMarker, startCoords, map, "/icons/car-water.svg");
       createCustomMarker(customerMarker, endCoords, map, "/icons/map-pin.svg");
 
+      // set view to start coordinates with zoom allowed
       map.setView(startCoords, map.getZoom());
+
+      // set waypoints(markers)
+      const waypoints = [
+        L.latLng(startCoords[0], startCoords[1]),
+        L.latLng(endCoords[0], endCoords[1]),
+      ]
 
       // Update the route control waypoints or create a new route control
       if (routeControl) {
-        routeControl.setWaypoints([
-          L.latLng(startCoords[0], startCoords[1]),
-          L.latLng(endCoords[0], endCoords[1]),
-        ]);
+        routeControl.setWaypoints(waypoints);
       } else {
         routeControl = L.Routing.control({
-          waypoints: [
-            L.latLng(startCoords[0], startCoords[1]),
-            L.latLng(endCoords[0], endCoords[1]),
-          ],
+          waypoints: waypoints,
           show: false,
           routeWhileDragging: true,
           plan: new (L.Routing as any).Plan(
-            [
-              L.latLng(startCoords[0], startCoords[1]),
-              L.latLng(endCoords[0], endCoords[1]),
-            ],
+            waypoints,
             {
               createMarker: () => null,
-              extendToWaypoints: false,
-              missingRouteTolerance: 0,
             }
           ),
         }).addTo(map);
