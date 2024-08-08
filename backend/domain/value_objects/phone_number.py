@@ -1,7 +1,7 @@
 import re
 
-from backend.domain.common.value_objects.base import ValueObject
-from backend.domain.errors.user import InvalidPhoneNumber
+from domain.common.value_objects.base import ValueObject
+from domain.errors.user import InvalidPhoneNumber
 
 
 class PhoneNumber(ValueObject[str]):

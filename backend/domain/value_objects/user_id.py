@@ -1,4 +1,4 @@
-from backend.domain.common.value_objects.base import ValueObject
+from domain.common.value_objects.base import ValueObject
 
 
 class UserId(ValueObject[int]):

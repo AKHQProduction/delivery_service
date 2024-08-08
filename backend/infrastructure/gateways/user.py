@@ -1,8 +1,8 @@
-from backend.application.common.gateways.user import UserSaver, UserReader
-from backend.application.dto import UserDTO
-from backend.application.errors.user import UserAlreadyExistsError
-from backend.domain.entities.user import User
-from backend.domain.value_objects.user_id import UserId
+from application.common.gateways.user import UserSaver, UserReader
+from application.dto import UserDTO
+from application.errors.user import UserAlreadyExistsError
+from domain.entities.user import User
+from domain.value_objects.user_id import UserId
 
 
 class InMemoryUserGateway(UserReader, UserSaver):

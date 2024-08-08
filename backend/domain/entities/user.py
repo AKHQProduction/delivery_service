@@ -1,8 +1,8 @@
 from dataclasses import dataclass
 from typing import Union
 
-from backend.domain.value_objects.phone_number import PhoneNumber
-from backend.domain.value_objects.user_id import UserId
+from domain.value_objects.phone_number import PhoneNumber
+from domain.value_objects.user_id import UserId
 
 
 @dataclass

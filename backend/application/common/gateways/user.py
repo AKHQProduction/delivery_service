@@ -1,9 +1,9 @@
 from abc import abstractmethod
 from typing import Protocol
 
-from backend.application.dto import UserDTO
-from backend.domain.entities.user import User
-from backend.domain.value_objects.user_id import UserId
+from application.dto import UserDTO
+from domain.entities.user import User
+from domain.value_objects.user_id import UserId
 
 
 class UserReader(Protocol):

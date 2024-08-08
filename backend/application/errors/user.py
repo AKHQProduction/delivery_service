@@ -1,6 +1,6 @@
 from dataclasses import dataclass
 
-from backend.application.common.errors.base import ApplicationError
+from application.common.errors.base import ApplicationError
 
 
 @dataclass(eq=False)

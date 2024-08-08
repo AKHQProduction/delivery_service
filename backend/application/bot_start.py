@@ -1,10 +1,10 @@
 import logging
 from dataclasses import dataclass
 
-from backend.application.common.gateways.user import UserSaver, UserReader
-from backend.application.common.interactor import Interactor
-from backend.domain.entities.user import User
-from backend.domain.value_objects.user_id import UserId
+from application.common.gateways.user import UserSaver, UserReader
+from application.common.interactor import Interactor
+from domain.entities.user import User
+from domain.value_objects.user_id import UserId
 
 
 @dataclass(frozen=True)

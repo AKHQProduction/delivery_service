@@ -6,9 +6,9 @@ from aiogram.client.default import DefaultBotProperties
 from aiogram.enums import ParseMode
 from dishka.integrations.aiogram import setup_dishka
 
-from backend.entrypoint.config import Config, load_config
-from backend.infrastructure.bootstrap.di import setup_di
-from backend.presentation.bot.handlers.setup import setup_handlers
+from entrypoint.config import Config, load_config
+from infrastructure.bootstrap.di import setup_di
+from presentation.bot.handlers.setup import setup_handlers
 
 
 def get_dispatcher() -> Dispatcher:

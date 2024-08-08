@@ -1,10 +1,17 @@
 from aiogram.types import TelegramObject, User
-from dishka import Provider, Scope, AnyOf, AsyncContainer, \
-    make_async_container, from_context, provide
+from dishka import (
+    Provider,
+    Scope,
+    AnyOf,
+    AsyncContainer,
+    make_async_container,
+    from_context,
+    provide
+)
 
-from backend.application.bot_start import BotStart
-from backend.application.common.gateways.user import UserReader, UserSaver
-from backend.infrastructure.gateways.user import InMemoryUserGateway
+from application.bot_start import BotStart
+from application.common.gateways.user import UserReader, UserSaver
+from infrastructure.gateways.user import InMemoryUserGateway
 
 
 def gateway_provider() -> Provider:

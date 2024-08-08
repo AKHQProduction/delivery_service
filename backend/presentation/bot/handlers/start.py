@@ -3,7 +3,7 @@ from aiogram.filters import CommandStart
 from aiogram.types import Message, User
 from dishka import FromDishka
 
-from backend.application.bot_start import BotStart, BotStartDTO
+from application.bot_start import BotStart, BotStartDTO
 
 router = Router()
 
