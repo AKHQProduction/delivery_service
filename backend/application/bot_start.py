@@ -3,6 +3,7 @@ from dataclasses import dataclass
 
 from application.common.gateways.user import UserSaver, UserReader
 from application.common.interactor import Interactor
+from application.common.uow import UoW
 from domain.entities.user import User
 from domain.value_objects.user_id import UserId
 
@@ -18,10 +19,12 @@ class BotStart(Interactor[BotStartDTO, UserId]):
     def __init__(
             self,
             user_reader: UserReader,
-            user_saver: UserSaver
+            user_saver: UserSaver,
+            uow: UoW
     ):
         self.user_reader = user_reader
         self.user_saver = user_saver
+        self.uow = uow
 
     async def __call__(self, data: BotStartDTO) -> UserId:
         user_id: UserId = UserId(data.user_id)
@@ -36,6 +39,8 @@ class BotStart(Interactor[BotStartDTO, UserId]):
                     username=data.username
                 )
             )
+
+            await self.uow.commit()
 
             logging.info("New user created %s", user_id.to_raw())
 

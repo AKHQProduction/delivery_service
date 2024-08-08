@@ -9,8 +9,8 @@ services:
     command: poetry run python -m entrypoint.bot
     env_file:
       - "./backend/.env"
-#    volumes:
-#      - ./backend/infrastructure/persistence/alembic/migrations/versions:/app/backend/infrastructure/persistence/alembic/migrations/versions
+    volumes:
+      - ./backend/infrastructure/persistence/alembic/migrations/versions:/app/infrastructure/persistence/alembic/migrations/versions
 
   delivery_db:
     container_name: "delivery_db"
@@ -26,7 +26,7 @@ services:
       test:
         [
           "CMD-SHELL",
-          "pg_isready -d dating_database -U ${POSTGRES_USER}"
+          "pg_isready -d delivery_database -U $${POSTGRES_USER}"
         ]
       interval: 2s
       timeout: 60s

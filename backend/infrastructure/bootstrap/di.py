@@ -11,17 +11,42 @@ from dishka import (
 
 from application.bot_start import BotStart
 from application.common.gateways.user import UserReader, UserSaver
-from infrastructure.gateways.user import InMemoryUserGateway
+from application.common.uow import UoW
+from infrastructure.bootstrap.configs import load_all_configs
+from infrastructure.gateways.user import PostgreUserGateway
+from infrastructure.persistence.config import DBConfig
+from infrastructure.persistence.provider import (
+    get_engine,
+    get_async_sessionmaker,
+    get_async_session
+)
+from infrastructure.persistence.uow import SAUnitOfWork
 
 
 def gateway_provider() -> Provider:
     provider = Provider()
 
     provider.provide(
-        InMemoryUserGateway,
-        scope=Scope.APP,
+        PostgreUserGateway,
+        scope=Scope.REQUEST,
         provides=AnyOf[UserReader, UserSaver]
     )
+
+    provider.provide(
+        SAUnitOfWork,
+        scope=Scope.REQUEST,
+        provides=UoW,
+    )
+
+    return provider
+
+
+def db_provider() -> Provider:
+    provider = Provider()
+
+    provider.provide(get_engine, scope=Scope.APP)
+    provider.provide(get_async_sessionmaker, scope=Scope.APP)
+    provider.provide(get_async_session, scope=Scope.REQUEST)
 
     return provider
 
@@ -30,6 +55,16 @@ def interactor_provider() -> Provider:
     provider = Provider()
 
     provider.provide(BotStart, scope=Scope.REQUEST)
+
+    return provider
+
+
+def config_provider() -> Provider:
+    provider = Provider()
+
+    config = load_all_configs()
+
+    provider.provide(lambda: config.db, scope=Scope.APP, provides=DBConfig)
 
     return provider
 
@@ -45,7 +80,9 @@ class TgProvider(Provider):
 def setup_providers() -> list[Provider]:
     providers = [
         gateway_provider(),
-        interactor_provider()
+        interactor_provider(),
+        db_provider(),
+        config_provider(),
     ]
 
     return providers
