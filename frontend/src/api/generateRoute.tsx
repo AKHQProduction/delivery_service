@@ -31,8 +31,8 @@ export const generateRoute = async (
       }
     
       // Create driver and customer markers
-      createCustomMarker(driverMarker, startCoords, map, "/icons/car-water.svg");
-      createCustomMarker(customerMarker, endCoords, map, "/icons/map-pin.svg");
+      driverMarker = createCustomMarker(driverMarker, startCoords, map, "/icons/car-water.svg");
+      customerMarker = createCustomMarker(customerMarker, endCoords, map, "/icons/map-pin.svg");
 
       // set view to start coordinates with zoom allowed
       map.setView(startCoords, map.getZoom());
