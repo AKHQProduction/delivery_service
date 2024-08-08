@@ -58,6 +58,17 @@ export const generateRoute = async (
           ],
           show: false,
           routeWhileDragging: true,
+          plan: new (L.Routing as any).Plan(
+            [
+              L.latLng(startCoords[0], startCoords[1]),
+              L.latLng(endCoords[0], endCoords[1]),
+            ],
+            {
+              createMarker: () => null,
+              extendToWaypoints: false,
+              missingRouteTolerance: 0,
+            }
+          ),
         }).addTo(map);
         setRouteControl(routeControl);
       }
