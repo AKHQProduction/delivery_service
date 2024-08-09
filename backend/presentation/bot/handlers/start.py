@@ -1,6 +1,6 @@
 from aiogram import Router
 from aiogram.filters import CommandStart
-from aiogram.types import Message, User
+from aiogram.types import Message, User, ReplyKeyboardMarkup, KeyboardButton
 from dishka import FromDishka
 
 from application.bot_start import BotStart, BotStartDTO
@@ -21,4 +21,17 @@ async def cmd_start(
                     )
     )
 
-    await msg.answer(f"Hello, {user.full_name}")
+    await msg.answer(
+        text=f"Hello, {user.full_name}",
+        reply_markup=ReplyKeyboardMarkup(
+            keyboard=[
+                [
+                    KeyboardButton(text="🛒 Створити замовлення")
+                ],
+                [
+                    KeyboardButton(text="🗄 Мої замовлення")
+                ]
+            ],
+            resize_keyboard=True
+        )
+    )
