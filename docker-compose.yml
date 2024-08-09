@@ -1,0 +1,37 @@
+services:
+  bot:
+    image: "delivery_bot"
+    container_name: delivery_bot
+    restart: on-failure
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    command: poetry run python -m entrypoint.bot
+    env_file:
+      - "./backend/.env"
+    volumes:
+      - ./backend/infrastructure/persistence/alembic/migrations/versions:/app/infrastructure/persistence/alembic/migrations/versions
+
+  delivery_db:
+    container_name: "delivery_db"
+    image: postgres:16-alpine
+    restart: always
+    volumes:
+      - pg_data:/var/lib/postgresql/data/
+    ports:
+      - "5432:5432"
+    env_file:
+      - "./backend/.env"
+    healthcheck:
+      test:
+        [
+          "CMD-SHELL",
+          "pg_isready -d delivery_database -U $${POSTGRES_USER}"
+        ]
+      interval: 2s
+      timeout: 60s
+      retries: 10
+      start_period: 3s
+
+volumes:
+  pg_data:
