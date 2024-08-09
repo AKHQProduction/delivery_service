@@ -4,6 +4,7 @@ import logging
 from aiogram import Dispatcher, Bot
 from aiogram.client.default import DefaultBotProperties
 from aiogram.enums import ParseMode
+from aiogram_dialog import setup_dialogs
 from dishka.integrations.aiogram import setup_dishka
 
 from entrypoint.config import Config, load_config
@@ -16,6 +17,7 @@ def get_dispatcher() -> Dispatcher:
 
     setup_dishka(container=setup_di(), router=dp, auto_inject=True)
     setup_handlers(dp)
+    setup_dialogs(dp)
 
     return dp
 
