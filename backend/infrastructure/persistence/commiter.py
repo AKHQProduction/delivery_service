@@ -1,9 +1,9 @@
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from application.common.uow import UoW
+from application.common.commiter import Commiter
 
 
-class SAUnitOfWork(UoW):
+class SACommiter(Commiter):
     def __init__(self, session: AsyncSession):
         self.session: AsyncSession = session
 

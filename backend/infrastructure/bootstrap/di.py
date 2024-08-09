@@ -11,7 +11,7 @@ from dishka import (
 
 from application.bot_start import BotStart
 from application.common.gateways.user import UserReader, UserSaver
-from application.common.uow import UoW
+from application.common.commiter import Commiter
 from infrastructure.bootstrap.configs import load_all_configs
 from infrastructure.gateways.user import PostgreUserGateway
 from infrastructure.persistence.config import DBConfig
@@ -20,7 +20,7 @@ from infrastructure.persistence.provider import (
     get_async_sessionmaker,
     get_async_session
 )
-from infrastructure.persistence.uow import SAUnitOfWork
+from infrastructure.persistence.commiter import SACommiter
 
 
 def gateway_provider() -> Provider:
@@ -33,9 +33,9 @@ def gateway_provider() -> Provider:
     )
 
     provider.provide(
-        SAUnitOfWork,
+        SACommiter,
         scope=Scope.REQUEST,
-        provides=UoW,
+        provides=Commiter,
     )
 
     return provider
