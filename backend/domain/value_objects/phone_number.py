@@ -5,8 +5,6 @@ from domain.errors.user import InvalidPhoneNumber
 
 
 class PhoneNumber(ValueObject[str]):
-    value: str
-
     def _validate(self) -> None:
         pattern = r'^\+380\d{9}$'
 
