@@ -14,7 +14,7 @@ sqlalchemy = "^2.0.32"
 asyncpg = "^0.29.0"
 alembic = "^1.13.2"
 greenlet = "^3.0.3"
-aiogram-dialog = "^2.1.0"
+aiogram-dialog = {git = "https://github.com/Tishka17/aiogram_dialog.git", rev = "a37ae78738e921bb8a788e1ae6598ac6fa730052"}
 
 
 [build-system]
