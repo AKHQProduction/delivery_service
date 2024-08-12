@@ -4,7 +4,7 @@ from domain.common.errors.base import DomainError
 
 
 @dataclass(eq=False)
-class InvalidPhoneNumber(DomainError):
+class InvalidPhoneNumber(DomainError, ValueError):
     phone_number: str
 
     @property
