@@ -1,13 +1,14 @@
 import L from "leaflet";
-import { watchUserCoordinates, getCustomerPosition } from "../api/userLocation";
+import { watchUserCoordinates } from "../api/userLocation";
 import { createCustomMarker } from "../handlers/createMarker";
+import { queryParamsCoordinates } from "../url/queryParamUserPosition";
 
-export const generateRoute = async (
+export const generateRoute = (
   map: L.Map,
   setRouteControl: (control: L.Routing.Control) => void
 ) => {
   try {
-    const customerPosition = await getCustomerPosition();
+    const customerPosition = queryParamsCoordinates();
     if (!customerPosition) {
       throw new Error("Customer position could not be determined");
     }

@@ -1,8 +1,3 @@
-// type Coordinates = {
-//   latitude: number;
-//   longitude: number;
-// };
-
 // export const getUserCoordinates = (): Promise<Coordinates> => {
 //   return new Promise((resolve, reject) => {
 //     if (!navigator.geolocation) {
@@ -47,29 +42,4 @@ export const watchUserCoordinates = (
     onError,
     options
   );
-};
-
-export const getCustomerPosition = async () => {
-  try {
-    const response = await fetch("/geocode", {
-      method: "GET",
-      headers: { "Content-Type": "application/json" },
-    });
-    const routeData = await response.json();
-
-    if (routeData.error) {
-      alert("Address not found");
-      return null;
-    }
-
-    const startCoords = [
-      routeData.customer.latitude,
-      routeData.customer.longitude,
-    ];
-
-    return startCoords;
-  } catch (err) {
-    console.log("error", err);
-    return null;
-  }
 };
