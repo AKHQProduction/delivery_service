@@ -34,7 +34,10 @@ async def main():
               default=DefaultBotProperties(parse_mode=ParseMode.HTML)
               )
 
-    await get_dispatcher().start_polling(bot)
+    try:
+        await get_dispatcher().start_polling(bot)
+    finally:
+        await bot.session.close()
 
 
 if __name__ == "__main__":
