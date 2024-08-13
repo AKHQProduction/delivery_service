@@ -14,8 +14,7 @@ from aiogram_dialog import (
 )
 from aiogram_dialog.widgets.input import (
     MessageInput,
-    TextInput,
-    ManagedTextInput
+    TextInput
 )
 from aiogram_dialog.widgets.kbd import (
     ManagedCalendar,
@@ -23,11 +22,14 @@ from aiogram_dialog.widgets.kbd import (
     Counter,
     Next, Cancel
 )
-from aiogram_dialog.widgets.text import Const, Format, Multi
+from aiogram_dialog.widgets.text import Const, Format, Multi, Case, Jinja
 from dishka.integrations.aiogram_dialog import inject
 
 from domain.value_objects.phone_number import PhoneNumber
-from infrastructure.geopy.errors import AddressIsNotExists
+from infrastructure.geopy.errors import (
+    AddressIsNotExists,
+    GeolocatorBadGateway
+)
 from infrastructure.geopy.geopy_processor import GeoProcessor
 from presentation.bot import states
 from presentation.bot.widgets import CustomCalendar
@@ -44,6 +46,13 @@ async def init_create_order_dialog(
         state=states.CreateOrder.WATER_TYPE,
         mode=StartMode.RESET_STACK
     )
+
+
+DEFAULT_WATER_TYPE_TEXT = "Звичайна"
+MAGNESIA_WATER_TYPE_TEXT = "Магнезія"
+
+MORNING_TEXT = "Перша половина дня"
+AFTERNOON_TEXT = "Друга половина дня"
 
 
 async def on_select_water_type(
@@ -104,6 +113,8 @@ async def on_input_user_address(
         geolocator: FromDishka[GeoProcessor]
 
 ):
+    waiting_msg = await msg.answer("⏳ Шукаємо вашу адресу...")
+
     try:
         latitude, longitude = await geolocator.get_coordinates(msg.text)
 
@@ -116,6 +127,12 @@ async def on_input_user_address(
         await msg.answer(
             "😥 На жаль, ми не змогли Вашої адреси"
         )
+    except GeolocatorBadGateway:
+        await msg.answer(
+            "😥 На жаль, сталась помилка. Повторіть Ваш запит пізніше"
+        )
+    finally:
+        await waiting_msg.delete()
 
 
 async def on_error_input_phone_number(
@@ -133,29 +150,10 @@ async def get_dialog_data(
         dialog_manager: DialogManager,
         **_kwargs
 ) -> dict[str, Any]:
-    data: dict[str, Any] = dialog_manager.dialog_data
+    phone_data: PhoneNumber = dialog_manager.find("phone_input").get_value()
+    dialog_manager.dialog_data["phone"] = phone_data.to_raw()
 
-    water_type: str = (
-        "звичайна" if data["water_type"] == "default_water" else "магнезія"
-    )
-
-    delivery_time: str = (
-        "перша половина дня" if data["delivery_time"] == "morning"
-        else "друга половина дня"
-    )
-
-    phone_input_widget: ManagedTextInput = dialog_manager.find("phone_input")
-    phone_data: PhoneNumber = phone_input_widget.get_value()
-
-    data["water_type"] = water_type
-    data["delivery_time"] = delivery_time
-    data["phone"] = phone_data.to_raw()
-
-    delivery_date: date = data["delivery_date"].strftime("%d.%m.%Y")
-
-    data["delivery_date"] = delivery_date
-
-    return data
+    return dialog_manager.dialog_data
 
 
 async def on_successful_confirm_order(
@@ -182,12 +180,12 @@ create_order_dialog = Dialog(
     Window(
         Const("1️⃣ Виберіть воду для замовлення"),
         Button(
-            Const("Звичайна"),
+            Const(DEFAULT_WATER_TYPE_TEXT),
             id="default_water",
             on_click=on_select_water_type
         ),
         Button(
-            Const("Магнезія"),
+            Const(MAGNESIA_WATER_TYPE_TEXT),
             id="magnesia_water",
             on_click=on_select_water_type
         ),
@@ -216,12 +214,12 @@ create_order_dialog = Dialog(
     Window(
         Const("4️⃣ Коли саме Ви хочете отримати замовлення"),
         Button(
-            Const("Перша половина дня"),
+            Const(MORNING_TEXT),
             id="morning",
             on_click=on_select_delivery_time
         ),
         Button(
-            Const("Друга половина дня"),
+            Const(AFTERNOON_TEXT),
             id="afternoon",
             on_click=on_select_delivery_time
         ),
@@ -253,13 +251,35 @@ create_order_dialog = Dialog(
         Const("<b>⚠️Перевірте Ваше замовлення</b> \n"),
 
         Multi(
-            Format("<b>💧 Вода:</b> {water_type}"),
+            Multi(
+                Const("<b>💧 Вода:</b>"),
+                Case(
+                    {
+                        "default_water": Const(DEFAULT_WATER_TYPE_TEXT),
+                        "magnesia_water": Const(MAGNESIA_WATER_TYPE_TEXT)
+                    },
+                    selector=F["dialog_data"]["water_type"]
+                ),
+                sep=" "
+            ),
             Format("<b>📦 Кількість:</b> {quantity}"),
-            Format("<b>🗓 Дата доставки:</b> {delivery_date}"),
-            Format("<b>⏰ Час доставки:</b> {delivery_time}"),
+            Jinja(
+                "<b>🗓 Дата доставки:</b> "
+                "{{dialog_data.delivery_date.strftime('%d.%m.%Y')}}"
+            ),
+            Multi(
+                Const("<b>⏰ Час доставки:</b>"),
+                Case(
+                    {
+                        "morning": Const(MORNING_TEXT),
+                        "afternoon": Const(AFTERNOON_TEXT)
+                    },
+                    selector=F["dialog_data"]["delivery_time"]
+                ),
+                sep=" "
+            ),
             Format("<b>🏠 Адреса:</b> {address}"),
-            Format("<b>📞 Номер телефону</b> {phone}"),
-            sep="\n"
+            Jinja("<b>📞 Номер телефону:</b> {{dialog_data.phone}}"),
         ),
         Button(
             Const("✅ Підтвердити"),
