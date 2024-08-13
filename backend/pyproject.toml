@@ -7,7 +7,6 @@ readme = "README.md"
 
 [tool.poetry.dependencies]
 python = "^3.11"
-dishka = "^1.2.0"
 environs = "^11.0.0"
 aiogram = "^3.10.0"
 sqlalchemy = "^2.0.32"
@@ -15,6 +14,8 @@ asyncpg = "^0.29.0"
 alembic = "^1.13.2"
 greenlet = "^3.0.3"
 aiogram-dialog = {git = "https://github.com/Tishka17/aiogram_dialog.git", rev = "a37ae78738e921bb8a788e1ae6598ac6fa730052"}
+geopy = "^2.4.1"
+dishka = {git = "https://github.com/reagento/dishka", rev = "80fc5564b2688a76bfdce013bf0e96af9f9ca847"}
 
 
 [build-system]

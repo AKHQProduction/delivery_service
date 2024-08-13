@@ -1,6 +1,7 @@
 from datetime import date
 from typing import Any
 
+from dishka import FromDishka
 from aiogram import Router, F
 from aiogram.enums import ContentType
 from aiogram.types import Message, CallbackQuery
@@ -23,8 +24,11 @@ from aiogram_dialog.widgets.kbd import (
     Next, Cancel
 )
 from aiogram_dialog.widgets.text import Const, Format, Multi
+from dishka.integrations.aiogram_dialog import inject
 
 from domain.value_objects.phone_number import PhoneNumber
+from infrastructure.geopy.errors import AddressIsNotExists
+from infrastructure.geopy.geopy_processor import GeoProcessor
 from presentation.bot import states
 from presentation.bot.widgets import CustomCalendar
 
@@ -34,7 +38,7 @@ router = Router()
 @router.message(F.text == "🛒 Створити замовлення")
 async def init_create_order_dialog(
         _: Message,
-        dialog_manager: DialogManager
+        dialog_manager: DialogManager,
 ):
     await dialog_manager.start(
         state=states.CreateOrder.WATER_TYPE,
@@ -45,7 +49,8 @@ async def init_create_order_dialog(
 async def on_select_water_type(
         _: CallbackQuery,
         widget: Button,
-        manager: DialogManager):
+        manager: DialogManager
+):
     manager.dialog_data["water_type"] = widget.widget_id
 
     await manager.next()
@@ -91,14 +96,26 @@ async def on_select_delivery_time(
     await manager.next()
 
 
+@inject
 async def on_input_user_address(
         msg: Message,
         _: MessageInput,
-        manager: DialogManager
-):
-    manager.dialog_data["address"] = msg.text
+        manager: DialogManager,
+        geolocator: FromDishka[GeoProcessor]
 
-    await manager.next()
+):
+    try:
+        latitude, longitude = await geolocator.get_coordinates(msg.text)
+
+        manager.dialog_data["latitude"] = latitude
+        manager.dialog_data["longitude"] = longitude
+        manager.dialog_data["address"] = msg.text
+
+        await manager.next()
+    except AddressIsNotExists:
+        await msg.answer(
+            "😥 На жаль, ми не змогли Вашої адреси"
+        )
 
 
 async def on_error_input_phone_number(
@@ -114,7 +131,7 @@ async def on_error_input_phone_number(
 
 async def get_dialog_data(
         dialog_manager: DialogManager,
-        **kwargs
+        **_kwargs
 ) -> dict[str, Any]:
     data: dict[str, Any] = dialog_manager.dialog_data
 
