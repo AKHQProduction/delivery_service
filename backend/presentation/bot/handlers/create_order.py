@@ -36,6 +36,8 @@ from presentation.bot.widgets import CustomCalendar
 
 router = Router()
 
+ORDER_CREATED_KEY = "order_created"
+
 
 @router.message(F.text == "🛒 Створити замовлення")
 async def init_create_order_dialog(
@@ -44,7 +46,10 @@ async def init_create_order_dialog(
 ):
     await dialog_manager.start(
         state=states.CreateOrder.WATER_TYPE,
-        mode=StartMode.RESET_STACK
+        mode=StartMode.RESET_STACK,
+        data={
+            ORDER_CREATED_KEY: False
+        }
     )
 
 
@@ -53,6 +58,13 @@ MAGNESIA_WATER_TYPE_TEXT = "Магнезія"
 
 MORNING_TEXT = "Перша половина дня"
 AFTERNOON_TEXT = "Друга половина дня"
+
+
+async def on_start_create_order_dialog(
+        data: dict[str, Any],
+        manager: DialogManager
+) -> None:
+    manager.dialog_data[ORDER_CREATED_KEY] = data[ORDER_CREATED_KEY]
 
 
 async def on_select_water_type(
@@ -163,6 +175,8 @@ async def on_successful_confirm_order(
 ):
     await call.message.answer("🎉 Ваше замовлення прийняте")
 
+    manager.dialog_data[ORDER_CREATED_KEY] = True
+
     await manager.done()
 
 
@@ -174,6 +188,18 @@ async def on_reject_order(
     await call.message.answer("👀 Будемо очікувати від Вас замовлення")
 
     await manager.done()
+
+
+async def on_close_create_order_dialog(
+        _data: dict[str, Any],
+        manager: DialogManager
+) -> None:
+    is_order_created: bool = manager.dialog_data[ORDER_CREATED_KEY]
+
+    if is_order_created:
+        # TODO: Add order to db
+        print("Successfully")
+    manager.dialog_data.clear()
 
 
 create_order_dialog = Dialog(
@@ -292,6 +318,8 @@ create_order_dialog = Dialog(
             on_click=on_reject_order
         ),
         state=states.CreateOrder.CONFIRMATION,
-        getter=get_dialog_data
-    )
+        getter=get_dialog_data,
+    ),
+    on_start=on_start_create_order_dialog,
+    on_close=on_close_create_order_dialog
 )
