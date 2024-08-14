@@ -7,5 +7,6 @@ class CreateOrder(StatesGroup):
     DELIVERY_DATE = State()
     DELIVERY_TIME = State()
     ADDRESS = State()
+    APARTMENT = State()
     PHONE = State()
     CONFIRMATION = State()

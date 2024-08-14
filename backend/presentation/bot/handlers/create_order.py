@@ -68,6 +68,7 @@ async def on_start_create_order_dialog(
         manager: DialogManager
 ) -> None:
     manager.dialog_data[ORDER_CREATED_KEY] = data[ORDER_CREATED_KEY]
+    manager.dialog_data["is_private_house"] = False
 
 
 async def on_select_water_type(
@@ -125,7 +126,8 @@ async def on_select_delivery_date(
 async def on_select_delivery_time(
         _: CallbackQuery,
         widget: Button,
-        manager: DialogManager):
+        manager: DialogManager
+):
     manager.dialog_data["delivery_time"] = widget.widget_id
 
     await manager.next()
@@ -172,23 +174,32 @@ async def on_input_user_address(
         await waiting_msg.delete()
 
 
-async def on_error_input_phone_number(
-        msg: Message,
-        _: Any,
-        __: DialogManager,
-        ___: ValueError
+def check_apartment_number(value: str):
+    if not value.isdigit() or int(value) < 1:
+        raise ValueError
+    return value
+
+
+async def on_select_private_house(
+        _: CallbackQuery,
+        __: Button,
+        manager: DialogManager
 ):
-    await msg.answer(
-        "Ви ввели некоректний номер телефону"
-    )
+    manager.dialog_data["is_private_house"] = True
+
+    await manager.next()
 
 
-async def get_dialog_data(
+async def get_create_order_dialog_data(
         dialog_manager: DialogManager,
         **_kwargs
 ) -> dict[str, Any]:
     phone_data: PhoneNumber = dialog_manager.find("phone_input").get_value()
     dialog_manager.dialog_data["phone"] = phone_data.to_raw()
+
+    dialog_manager.dialog_data["apartment"] = (
+        dialog_manager.find("apartment_input").get_value()
+    )
 
     return dialog_manager.dialog_data
 
@@ -288,8 +299,22 @@ create_order_dialog = Dialog(
         state=states.CreateOrder.ADDRESS
     ),
     Window(
+        Const("6️⃣ <b>Вкажіть номер Вашої квартири👇</b>"),
+        TextInput(
+            id="apartment_input",
+            type_factory=check_apartment_number,
+            on_success=Next()
+        ),
+        Button(
+            id="is_private_house",
+            text=Const("Це приватний будинок"),
+            on_click=on_select_private_house
+        ),
+        state=states.CreateOrder.APARTMENT
+    ),
+    Window(
         Multi(
-            Const("6️⃣ <b>Введіть ваш номер телефону👇</b>"),
+            Const("7️⃣ <b>Введіть ваш номер телефону👇</b>"),
             Const("<i>В форматі +380</i>"),
             sep="\n\n"
         ),
@@ -297,7 +322,6 @@ create_order_dialog = Dialog(
             id="phone_input",
             type_factory=lambda x: PhoneNumber(value=x),
             on_success=Next(),
-            on_error=on_error_input_phone_number,
         ),
         state=states.CreateOrder.PHONE
     ),
@@ -333,6 +357,17 @@ create_order_dialog = Dialog(
                 sep=" "
             ),
             Format("<b>🏠 Адреса:</b> {address}"),
+            Multi(
+                Const("<b>#️⃣ Квартира:</b>"),
+                Case(
+                    {
+                        True: Const("Приватний будинок"),
+                        False: Format("{apartment}")
+                    },
+                    selector=F["dialog_data"]["is_private_house"]
+                ),
+                sep=" "
+            ),
             Jinja("<b>📞 Номер телефону:</b> {{dialog_data.phone}}"),
         ),
         Button(
@@ -346,7 +381,7 @@ create_order_dialog = Dialog(
             on_click=on_reject_order
         ),
         state=states.CreateOrder.CONFIRMATION,
-        getter=get_dialog_data,
+        getter=get_create_order_dialog_data,
     ),
     on_start=on_start_create_order_dialog,
     on_close=on_close_create_order_dialog
