@@ -35,11 +35,15 @@ class PyGeoProcessor(GeoProcessor):
 
         location_city = address.get("city", "")
         location_town = address.get("town", "")
-        location_village = address.get("village", "")
 
-        if self.city not in [location_city, location_town, location_village]:
-            return False
-        return True
+        house_number = address.get("house_number", None)
+
+        if self.city in [
+            location_city,
+            location_town
+        ] and house_number is not None:
+            return True
+        return False
 
     async def get_coordinates(
             self,

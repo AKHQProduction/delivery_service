@@ -32,6 +32,9 @@ from infrastructure.geopy.errors import (
 )
 from infrastructure.geopy.geopy_processor import GeoProcessor
 from presentation.bot import states
+from presentation.bot.helpers import (
+    is_address_specific_enough, is_contains_emoji,
+)
 from presentation.bot.widgets import CustomCalendar
 
 router = Router()
@@ -138,6 +141,17 @@ async def on_input_user_address(
 ):
     waiting_msg = await msg.answer("⏳ Шукаємо вашу адресу...")
 
+    if (
+            not is_address_specific_enough(msg.text)
+            and
+            is_contains_emoji(msg.text)
+    ):
+        await waiting_msg.delete()
+
+        return await msg.answer(
+            "🙅‍♀️ Будь ласка, введіть корректну адресу"
+        )
+
     try:
         latitude, longitude = await geolocator.get_coordinates(msg.text)
 
@@ -148,11 +162,11 @@ async def on_input_user_address(
         await manager.next()
     except AddressIsNotExists:
         await msg.answer(
-            "😥 На жаль, ми не змогли Вашої адреси"
+            "😥 На жаль, ми не змогли знайти Вашої адреси"
         )
     except GeolocatorBadGateway:
         await msg.answer(
-            "😥 На жаль, сталась помилка. Повторіть Ваш запит пізніше"
+            "🥺 На жаль, сталась помилка. Повторіть Ваш запит пізніше"
         )
     finally:
         await waiting_msg.delete()
@@ -215,7 +229,7 @@ async def on_close_create_order_dialog(
 
 create_order_dialog = Dialog(
     Window(
-        Const("1️⃣ Виберіть воду для замовлення"),
+        Const("1️⃣ <b>Виберіть воду для замовлення</b>"),
         Button(
             Const(DEFAULT_WATER_TYPE_TEXT),
             id="default_water",
@@ -229,7 +243,7 @@ create_order_dialog = Dialog(
         state=states.CreateOrder.WATER_TYPE
     ),
     Window(
-        Const("2️⃣ Вкажіть кількість бутлів"),
+        Const("2️⃣ <b>Вкажіть кількість бутлів</b>"),
         Counter(
             id="water_quantity_counter",
         ),
@@ -241,7 +255,7 @@ create_order_dialog = Dialog(
         state=states.CreateOrder.QUANTITY
     ),
     Window(
-        Const("3️⃣ Вкажіть дату доставки"),
+        Const("3️⃣ <b>Вкажіть дату доставки</b>"),
         CustomCalendar(
             id="delivery_date",
             on_click=on_select_delivery_date
@@ -249,7 +263,7 @@ create_order_dialog = Dialog(
         state=states.CreateOrder.DELIVERY_DATE,
     ),
     Window(
-        Const("4️⃣ Коли саме Ви хочете отримати замовлення"),
+        Const("4️⃣ <b>Коли саме Ви хочете отримати замовлення</b>"),
         Button(
             Const(MORNING_TEXT),
             id="morning",
@@ -263,7 +277,10 @@ create_order_dialog = Dialog(
         state=states.CreateOrder.DELIVERY_TIME
     ),
     Window(
-        Const("5️⃣ Вкажіть Вашу адресу👇"),
+        Const(
+            "5️⃣ <b>Вкажіть Вашу адресу👇</b>\n"
+            "<i>Наприклад: бульвар Шевченка 42</i>"
+        ),
         MessageInput(
             on_input_user_address,
             content_types=[ContentType.TEXT]
@@ -272,7 +289,7 @@ create_order_dialog = Dialog(
     ),
     Window(
         Multi(
-            Const("6️⃣ Введіть ваш номер телефону👇"),
+            Const("6️⃣ <b>Введіть ваш номер телефону👇</b>"),
             Const("<i>В форматі +380</i>"),
             sep="\n\n"
         ),
