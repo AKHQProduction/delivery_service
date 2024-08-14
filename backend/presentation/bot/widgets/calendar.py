@@ -37,8 +37,6 @@ MONTH: dict[int, str] = {
     12: "Грудень",
 }
 
-SELECTED_DAYS_KEY = "selected_dates"
-
 
 class WeekDay(Text):
     async def _render_text(self, data: dict, manager: DialogManager) -> str:
@@ -47,22 +45,6 @@ class WeekDay(Text):
         week_day: int = selected_date.weekday()
 
         return DAY_OF_WEEK[week_day]
-
-
-class MarkedDay(Text):
-    def __init__(self, mark: str, other: Text):
-        super().__init__()
-        self.mark = mark
-        self.other = other
-
-    async def _render_text(self, data: dict, manager: DialogManager) -> str:
-        current_date: date = data["date"]
-        serial_date = current_date.isoformat()
-        selected = manager.dialog_data.get(SELECTED_DAYS_KEY, [])
-
-        if serial_date in selected:
-            return self.mark
-        return await self.other.render_text(data, manager)
 
 
 class Month(Text):
@@ -79,8 +61,6 @@ class CustomCalendar(Calendar):
         return {
             CalendarScope.DAYS: CalendarDaysView(
                 self._item_callback_data,
-                date_text=MarkedDay("🔴", DATE_TEXT),
-                today_text=MarkedDay("⭕", TODAY_TEXT),
                 header_text=Month(),
                 weekday_text=WeekDay(),
                 next_month_text=Month() + " >>",
