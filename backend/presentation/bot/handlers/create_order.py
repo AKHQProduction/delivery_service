@@ -98,10 +98,21 @@ async def on_select_delivery_date(
         manager: DialogManager,
         selected_date: date
 ):
+    # TODO: Make from this VO, and use TextInput
+
     current_date: date = date.today()
 
     if current_date > selected_date:
         return await call.answer("Дата вибрана некорректно")
+
+    if not (
+            selected_date.month == current_date.month
+            and
+            selected_date.year == current_date.year
+    ):
+        return await call.answer(
+            f"Замовлення приймаются в рамках поточного місяця"
+        )
 
     manager.dialog_data["delivery_date"] = selected_date
 
