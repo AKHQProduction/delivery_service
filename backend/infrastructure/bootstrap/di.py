@@ -14,6 +14,9 @@ from application.common.gateways.user import UserReader, UserSaver
 from application.common.commiter import Commiter
 from infrastructure.bootstrap.configs import load_all_configs
 from infrastructure.gateways.user import PostgreUserGateway
+from infrastructure.geopy.config import GeoConfig
+from infrastructure.geopy.geopy_processor import GeoProcessor, PyGeoProcessor
+from infrastructure.geopy.provider import get_geolocator
 from infrastructure.persistence.config import DBConfig
 from infrastructure.persistence.provider import (
     get_engine,
@@ -51,10 +54,30 @@ def db_provider() -> Provider:
     return provider
 
 
+def geo_provider() -> Provider:
+    provider = Provider()
+
+    provider.provide(get_geolocator, scope=Scope.REQUEST)
+
+    return provider
+
+
 def interactor_provider() -> Provider:
     provider = Provider()
 
     provider.provide(BotStart, scope=Scope.REQUEST)
+
+    return provider
+
+
+def infrastructure_provider() -> Provider:
+    provider = Provider()
+
+    provider.provide(
+        PyGeoProcessor,
+        scope=Scope.REQUEST,
+        provides=GeoProcessor
+    )
 
     return provider
 
@@ -65,6 +88,7 @@ def config_provider() -> Provider:
     config = load_all_configs()
 
     provider.provide(lambda: config.db, scope=Scope.APP, provides=DBConfig)
+    provider.provide(lambda: config.geo, scope=Scope.APP, provides=GeoConfig)
 
     return provider
 
@@ -82,6 +106,8 @@ def setup_providers() -> list[Provider]:
         gateway_provider(),
         interactor_provider(),
         db_provider(),
+        geo_provider(),
+        infrastructure_provider(),
         config_provider(),
     ]
 

@@ -9,14 +9,17 @@ from dishka.integrations.aiogram import setup_dishka
 
 from entrypoint.config import Config, load_config
 from infrastructure.bootstrap.di import setup_di
-from presentation.bot.handlers.setup import setup_handlers
+from presentation.bot.handlers.setup import register_handlers, register_dialogs
 
 
 def get_dispatcher() -> Dispatcher:
     dp = Dispatcher()
 
     setup_dishka(container=setup_di(), router=dp, auto_inject=True)
-    setup_handlers(dp)
+
+    register_handlers(dp)
+    register_dialogs(dp)
+
     setup_dialogs(dp)
 
     return dp
@@ -30,7 +33,11 @@ async def main():
     bot = Bot(config.tg_bot.token,
               default=DefaultBotProperties(parse_mode=ParseMode.HTML)
               )
-    await get_dispatcher().start_polling(bot)
+
+    try:
+        await get_dispatcher().start_polling(bot)
+    finally:
+        await bot.session.close()
 
 
 if __name__ == "__main__":

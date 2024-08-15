@@ -42,24 +42,28 @@ redis = ["redis[hiredis] (>=5.0.1,<5.1.0)"]
 test = ["aresponses (>=2.1.6,<2.2.0)", "pycryptodomex (>=3.19.0,<3.20.0)", "pytest (>=7.4.2,<7.5.0)", "pytest-aiohttp (>=1.0.5,<1.1.0)", "pytest-asyncio (>=0.21.1,<0.22.0)", "pytest-cov (>=4.1.0,<4.2.0)", "pytest-html (>=4.0.2,<4.1.0)", "pytest-lazy-fixture (>=0.6.3,<0.7.0)", "pytest-mock (>=3.12.0,<3.13.0)", "pytest-mypy (>=0.10.3,<0.11.0)", "pytz (>=2023.3,<2024.0)"]
 
 [[package]]
-name = "aiogram-dialog"
+name = "aiogram_dialog"
 version = "2.1.0"
 description = "Telegram bot UI framework on top of aiogram"
 optional = false
 python-versions = ">=3.8"
-files = [
-    {file = "aiogram_dialog-2.1.0-py3-none-any.whl", hash = "sha256:b0df4de3343bc770a2af57e4bb5fbd827d88faad290702833219f01fbdfcca81"},
-    {file = "aiogram_dialog-2.1.0.tar.gz", hash = "sha256:b8763134a3b8dc8adfb101a280d06dcfd3a7971641f1a4c43e4a065a1e751787"},
-]
+files = []
+develop = false
 
 [package.dependencies]
 aiogram = ">=3.0.0"
 cachetools = ">=4.0.0,<6.0.0"
 jinja2 = "*"
-magic-filter = "*"
+magic_filter = "*"
 
 [package.extras]
 tools = ["aiohttp", "diagrams"]
+
+[package.source]
+type = "git"
+url = "https://github.com/Tishka17/aiogram_dialog.git"
+reference = "a37ae78738e921bb8a788e1ae6598ac6fa730052"
+resolved_reference = "a37ae78738e921bb8a788e1ae6598ac6fa730052"
 
 [[package]]
 name = "aiohttp"
@@ -311,14 +315,18 @@ files = [
 
 [[package]]
 name = "dishka"
-version = "1.2.0"
+version = "0.1"
 description = "Minimal DI framework"
 optional = false
 python-versions = ">=3.10"
-files = [
-    {file = "dishka-1.2.0-py3-none-any.whl", hash = "sha256:d543497b611a448d14a4a138976435937b3b58e5657549f73e7df8c3fc04ccad"},
-    {file = "dishka-1.2.0.tar.gz", hash = "sha256:aae988a49f9f5e591cb103c45287a709378b2f3924a95192fceede168f8605dd"},
-]
+files = []
+develop = false
+
+[package.source]
+type = "git"
+url = "https://github.com/reagento/dishka"
+reference = "80fc5564b2688a76bfdce013bf0e96af9f9ca847"
+resolved_reference = "80fc5564b2688a76bfdce013bf0e96af9f9ca847"
 
 [[package]]
 name = "environs"
@@ -425,6 +433,40 @@ files = [
     {file = "frozenlist-1.4.1-py3-none-any.whl", hash = "sha256:04ced3e6a46b4cfffe20f9ae482818e34eba9b5fb0ce4056e4cc9b6e212d09b7"},
     {file = "frozenlist-1.4.1.tar.gz", hash = "sha256:c037a86e8513059a2613aaba4d817bb90b9d9b6b69aace3ce9c877e8c8ed402b"},
 ]
+
+[[package]]
+name = "geographiclib"
+version = "2.0"
+description = "The geodesic routines from GeographicLib"
+optional = false
+python-versions = ">=3.7"
+files = [
+    {file = "geographiclib-2.0-py3-none-any.whl", hash = "sha256:6b7225248e45ff7edcee32becc4e0a1504c606ac5ee163a5656d482e0cd38734"},
+    {file = "geographiclib-2.0.tar.gz", hash = "sha256:f7f41c85dc3e1c2d3d935ec86660dc3b2c848c83e17f9a9e51ba9d5146a15859"},
+]
+
+[[package]]
+name = "geopy"
+version = "2.4.1"
+description = "Python Geocoding Toolbox"
+optional = false
+python-versions = ">=3.7"
+files = [
+    {file = "geopy-2.4.1-py3-none-any.whl", hash = "sha256:ae8b4bc5c1131820f4d75fce9d4aaaca0c85189b3aa5d64c3dcaf5e3b7b882a7"},
+    {file = "geopy-2.4.1.tar.gz", hash = "sha256:50283d8e7ad07d89be5cb027338c6365a32044df3ae2556ad3f52f4840b3d0d1"},
+]
+
+[package.dependencies]
+geographiclib = ">=1.52,<3"
+
+[package.extras]
+aiohttp = ["aiohttp"]
+dev = ["coverage", "flake8 (>=5.0,<5.1)", "isort (>=5.10.0,<5.11.0)", "pytest (>=3.10)", "pytest-asyncio (>=0.17)", "readme-renderer", "sphinx (<=4.3.2)", "sphinx-issues", "sphinx-rtd-theme (>=0.5.0)"]
+dev-docs = ["readme-renderer", "sphinx (<=4.3.2)", "sphinx-issues", "sphinx-rtd-theme (>=0.5.0)"]
+dev-lint = ["flake8 (>=5.0,<5.1)", "isort (>=5.10.0,<5.11.0)"]
+dev-test = ["coverage", "pytest (>=3.10)", "pytest-asyncio (>=0.17)", "sphinx (<=4.3.2)"]
+requests = ["requests (>=2.16.2)", "urllib3 (>=1.24.2)"]
+timezone = ["pytz"]
 
 [[package]]
 name = "greenlet"
@@ -1097,4 +1139,4 @@ multidict = ">=4.0"
 [metadata]
 lock-version = "2.0"
 python-versions = "^3.11"
-content-hash = "54f23dc13ec2929dd3f0c370274010cea297509d3198db98f936dfa94d202307"
+content-hash = "f28ad66b3c8db08a3f0e79067778493b6c81f03f36b34e66b6a8b16315a723b8"

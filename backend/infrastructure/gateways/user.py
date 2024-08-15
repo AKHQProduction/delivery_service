@@ -15,7 +15,7 @@ class InMemoryUserGateway(UserReader, UserSaver):
         self.users = {}
 
     def _get_from_memory(self, user_id: UserId) -> User | None:
-        return self.users.get(user_id)
+        return self.users.get(user_id.to_raw())
 
     async def save(self, user: User) -> UserDTO:
         user_in_memory = self._get_from_memory(user.user_id)

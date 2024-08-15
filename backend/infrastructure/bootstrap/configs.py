@@ -2,6 +2,7 @@ from dataclasses import dataclass
 import logging
 import os
 
+from infrastructure.geopy.config import GeoConfig
 from infrastructure.persistence.config import DBConfig
 from dotenv import load_dotenv
 
@@ -9,6 +10,7 @@ from dotenv import load_dotenv
 @dataclass
 class AllConfigs:
     db: DBConfig
+    geo: GeoConfig
 
 
 def load_all_configs() -> AllConfigs:
@@ -21,6 +23,14 @@ def load_all_configs() -> AllConfigs:
         password=os.getenv("POSTGRES_PASSWORD"),
     )
 
+    geo_config = GeoConfig(
+        city=os.getenv("CITY"),
+        user_agent=os.getenv("GEO_USER_AGENT")
+    )
+
     logging.info("Config loaded.")
 
-    return AllConfigs(db=db_config)
+    return AllConfigs(
+        db=db_config,
+        geo=geo_config
+    )
