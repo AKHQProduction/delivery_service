@@ -10,15 +10,15 @@ class UserORM(Base, UpdatedAtMixin):
     __tablename__ = "users"
 
     user_id: Mapped[int] = mapped_column(
-        sa.BigInteger, unique=True, primary_key=True
+            sa.BigInteger, unique=True, primary_key=True, index=True
     )
     full_name: Mapped[str] = mapped_column(sa.String(128), nullable=False)
     username: Mapped[str] = mapped_column(
-        sa.String(255), nullable=True, default=None
+            sa.String(255), nullable=True, default=None, index=True
     )
     phone_number: Mapped[str] = mapped_column(
-        sa.String(12), nullable=True, default=None
+            sa.String(12), nullable=True, default=None
     )
     is_active: Mapped[bool] = mapped_column(
-        sa.Boolean, default=True, nullable=False
+            sa.Boolean, default=True, nullable=False
     )
