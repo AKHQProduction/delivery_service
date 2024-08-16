@@ -17,4 +17,4 @@ async def get_geolocator(config: GeoConfig) -> AsyncGenerator[Nominatim, None]:
 
         yield geolocator
 
-        logging.info("Geolocator was stop.")
+        logging.info("Geolocator has been stopped.")
