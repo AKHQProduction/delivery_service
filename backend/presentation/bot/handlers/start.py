@@ -12,26 +12,30 @@ router = Router()
 async def cmd_start(
         msg: Message,
         action: FromDishka[BotStart],
-        user: FromDishka[User]
 ):
+    user_id: int = msg.from_user.id
+    full_name: str = msg.from_user.full_name
+    username: str | None = msg.from_user.username
+
     await action(
-        BotStartDTO(user_id=user.id,
-                    full_name=user.full_name,
-                    username=user.username
-                    )
+            BotStartDTO(
+                user_id=user_id,
+                full_name=full_name,
+                username=username
+                )
     )
 
     await msg.answer(
-        text=f"Hello, {user.full_name}",
-        reply_markup=ReplyKeyboardMarkup(
-            keyboard=[
-                [
-                    KeyboardButton(text="🛒 Створити замовлення")
-                ],
-                [
-                    KeyboardButton(text="🗄 Мої замовлення")
-                ]
-            ],
-            resize_keyboard=True
-        )
+            text=f"Hello, {full_name}",
+            reply_markup=ReplyKeyboardMarkup(
+                    keyboard=[
+                        [
+                            KeyboardButton(text="🛒 Створити замовлення")
+                        ],
+                        [
+                            KeyboardButton(text="🗄 Мої замовлення")
+                        ]
+                    ],
+                    resize_keyboard=True
+            )
     )
