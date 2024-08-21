@@ -10,14 +10,12 @@ from dishka import (
 )
 
 from application.bot_start import BotStart
-from application.common.gateways.role import RoleReader
 from application.common.gateways.user import UserReader, UserSaver
 from application.common.commiter import Commiter
 from application.common.identity_provider import IdentityProvider
 from infrastructure.auth.tg_auth import TgIdentityProvider
 from infrastructure.bootstrap.configs import load_all_configs
-from infrastructure.gateways.role import RoleGateway
-from infrastructure.gateways.user import InMemoryUserGateway
+from infrastructure.gateways.user import PostgreUserGateway
 from infrastructure.geopy.config import GeoConfig
 from infrastructure.geopy.geopy_processor import GeoProcessor, PyGeoProcessor
 from infrastructure.geopy.provider import get_geolocator
@@ -34,15 +32,9 @@ def gateway_provider() -> Provider:
     provider = Provider()
 
     provider.provide(
-            InMemoryUserGateway,
-            scope=Scope.APP,
-            provides=AnyOf[UserReader, UserSaver]
-    )
-
-    provider.provide(
-            RoleGateway,
+            PostgreUserGateway,
             scope=Scope.REQUEST,
-            provides=AnyOf[RoleReader]
+            provides=AnyOf[UserReader, UserSaver]
     )
 
     provider.provide(
@@ -115,13 +107,11 @@ class TgProvider(Provider):
             self,
             user_id: int,
             user_gateway: UserReader,
-            role_gateway: RoleReader
 
     ) -> IdentityProvider:
         identity_provider = TgIdentityProvider(
                 user_id=user_id,
                 user_gateway=user_gateway,
-                role_gateway=role_gateway
         )
 
         return identity_provider

@@ -1,14 +1,24 @@
 from dataclasses import dataclass
+from enum import Enum
 from typing import Union
 
 from domain.value_objects.phone_number import PhoneNumber
 from domain.value_objects.user_id import UserId
 
 
+class RoleName(Enum):
+    BLOCKER = "BLOCKED"
+    USER = "USER"
+    ADMIN = "ADMIN"
+    MANAGER = "MANAGER"
+    DRIVER = "DRIVER"
+
+
 @dataclass
 class User:
     user_id: UserId
     full_name: str
+    role: RoleName = RoleName.USER
     username: str | None = None
     phone_number: PhoneNumber | None = None
     is_active: bool = True

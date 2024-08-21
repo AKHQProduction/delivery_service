@@ -1,8 +1,7 @@
 from abc import abstractmethod
 from asyncio import Protocol
 
-from domain.entities.role import Role
-from domain.entities.user import User
+from domain.entities.user import RoleName, User
 
 
 class IdentityProvider(Protocol):
@@ -11,5 +10,5 @@ class IdentityProvider(Protocol):
         raise NotImplementedError
 
     @abstractmethod
-    async def get_user_roles(self) -> list[Role]:
+    async def get_user_role(self) -> RoleName:
         raise NotImplementedError

@@ -1,7 +1,10 @@
+from enum import Enum
+
 import sqlalchemy as sa
 
-from sqlalchemy.orm import Mapped, mapped_column
+from sqlalchemy.orm import Mapped, mapped_column, relationship
 
+from domain.entities.user import RoleName
 from infrastructure.persistence.models.base import Base
 from infrastructure.persistence.models.mixins import UpdatedAtMixin
 
@@ -19,6 +22,11 @@ class UserORM(Base, UpdatedAtMixin):
     phone_number: Mapped[str] = mapped_column(
             sa.String(12), nullable=True, default=None
     )
+
+    role: Mapped[RoleName] = mapped_column(
+            sa.Enum(RoleName), default=RoleName.USER, nullable=False
+    )
+
     is_active: Mapped[bool] = mapped_column(
             sa.Boolean, default=True, nullable=False
     )
