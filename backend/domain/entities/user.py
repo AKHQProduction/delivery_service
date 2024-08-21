@@ -23,6 +23,9 @@ class User:
     phone_number: PhoneNumber | None = None
     is_active: bool = True
 
+    def change_role(self, role: RoleName) -> None:
+        self.role = role
+
     def __hash__(self) -> int:
         return hash(self.user_id)
 

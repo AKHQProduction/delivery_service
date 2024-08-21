@@ -10,6 +10,7 @@ from dishka import (
 )
 
 from application.bot_start import BotStart
+from application.change_user_role import ChangeUserRole
 from application.common.gateways.user import UserReader, UserSaver
 from application.common.commiter import Commiter
 from application.common.identity_provider import IdentityProvider
@@ -68,6 +69,7 @@ def interactor_provider() -> Provider:
     provider = Provider()
 
     provider.provide(BotStart, scope=Scope.REQUEST)
+    provider.provide(ChangeUserRole, scope=Scope.REQUEST)
 
     return provider
 

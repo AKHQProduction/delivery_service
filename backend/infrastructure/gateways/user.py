@@ -4,9 +4,11 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from application.common.gateways.user import UserSaver, UserReader
 from application.dto import UserDTO
+from application.errors.gateway import GatewayError
 from application.errors.user import UserAlreadyExistsError
 from domain.entities.user import User
 from domain.value_objects.user_id import UserId
+from infrastructure.gateways.converters import convert_user_entity_to_db_model
 from infrastructure.persistence.models import UserORM
 
 
@@ -35,20 +37,20 @@ class InMemoryUserGateway(UserReader, UserSaver):
     async def by_id(self, user_id: UserId) -> User | None:
         return self._get_from_memory(user_id)
 
+    async def update(self, user: User) -> None:
+        self.users[user.user_id.to_raw()] = user
+
 
 class PostgreUserGateway(UserReader, UserSaver):
     def __init__(self, session: AsyncSession) -> None:
         self.session: AsyncSession = session
 
     async def save(self, user: User) -> UserDTO:
-        db_user = UserORM(
-                user_id=user.user_id.to_raw(),
-                full_name=user.full_name,
-                username=user.username,
-        )
+        db_user = convert_user_entity_to_db_model(user)
 
+        self.session.add(db_user)
         try:
-            await self.session.merge(db_user)
+            await self.session.flush((db_user,))
         except IntegrityError as err:
             raise UserAlreadyExistsError(user.user_id.to_raw()) from err
 
@@ -74,3 +76,11 @@ class PostgreUserGateway(UserReader, UserSaver):
                 role=user.role,
                 is_active=user.is_active,
         )
+
+    async def update(self, user: User) -> None:
+        db_user = convert_user_entity_to_db_model(user)
+
+        try:
+            await self.session.merge(db_user)
+        except IntegrityError as err:
+            raise GatewayError from err
