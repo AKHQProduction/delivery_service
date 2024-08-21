@@ -71,5 +71,6 @@ class PostgreUserGateway(UserReader, UserSaver):
                 full_name=user.full_name,
                 username=user.username,
                 phone_number=user.phone_number,
+                role=user.role,
                 is_active=user.is_active,
         )
