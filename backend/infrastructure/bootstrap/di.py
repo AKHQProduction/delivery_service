@@ -14,6 +14,7 @@ from application.change_user_role import ChangeUserRole
 from application.common.gateways.user import UserReader, UserSaver
 from application.common.commiter import Commiter
 from application.common.identity_provider import IdentityProvider
+from application.get_user import GetUser
 from infrastructure.auth.tg_auth import TgIdentityProvider
 from infrastructure.bootstrap.configs import load_all_configs
 from infrastructure.gateways.user import PostgreUserGateway
@@ -70,6 +71,7 @@ def interactor_provider() -> Provider:
 
     provider.provide(BotStart, scope=Scope.REQUEST)
     provider.provide(ChangeUserRole, scope=Scope.REQUEST)
+    provider.provide(GetUser, scope=Scope.REQUEST)
 
     return provider
 
