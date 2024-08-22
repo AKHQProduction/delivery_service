@@ -26,6 +26,14 @@ class User:
     def change_role(self, role: RoleName) -> None:
         self.role = role
 
+    @property
+    def formatted_username(self) -> str:
+        return "Відсутній" if self.username is None else f"@{self.username}"
+
+    @property
+    def formatted_phone_number(self) -> str:
+        return "Відсутній" if self.phone_number is None else self.phone_number.to_raw()
+
     def __hash__(self) -> int:
         return hash(self.user_id)
 

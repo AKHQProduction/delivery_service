@@ -14,7 +14,7 @@ class UserReader(Protocol):
 
 class UserSaver(Protocol):
     @abstractmethod
-    async def save(self, user: User) -> UserDTO:
+    async def save(self, user: User) -> None:
         raise NotImplementedError
 
     @abstractmethod

@@ -19,20 +19,13 @@ class InMemoryUserGateway(UserReader, UserSaver):
     def _get_from_memory(self, user_id: UserId) -> User | None:
         return self.users.get(user_id.to_raw())
 
-    async def save(self, user: User) -> UserDTO:
+    async def save(self, user: User) -> None:
         user_in_memory = self._get_from_memory(user.user_id)
 
         if user_in_memory:
             raise UserAlreadyExistsError(user.user_id.to_raw())
 
         self.users[user.user_id.to_raw()] = user
-
-        return UserDTO(
-                user_id=user.user_id.to_raw(),
-                full_name=user.full_name,
-                username=user.username,
-                phone_number=user.phone_number
-        )
 
     async def by_id(self, user_id: UserId) -> User | None:
         return self._get_from_memory(user_id)
@@ -45,7 +38,7 @@ class PostgreUserGateway(UserReader, UserSaver):
     def __init__(self, session: AsyncSession) -> None:
         self.session: AsyncSession = session
 
-    async def save(self, user: User) -> UserDTO:
+    async def save(self, user: User) -> None:
         db_user = convert_user_entity_to_db_model(user)
 
         self.session.add(db_user)
@@ -53,13 +46,6 @@ class PostgreUserGateway(UserReader, UserSaver):
             await self.session.flush((db_user,))
         except IntegrityError as err:
             raise UserAlreadyExistsError(user.user_id.to_raw()) from err
-
-        return UserDTO(
-                user_id=db_user.user_id,
-                full_name=db_user.full_name,
-                username=db_user.username,
-                phone_number=db_user.phone_number
-        )
 
     async def by_id(self, user_id: UserId) -> User | None:
         query = select(UserORM).where(UserORM.user_id == user_id.to_raw())
