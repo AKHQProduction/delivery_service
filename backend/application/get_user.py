@@ -5,7 +5,7 @@ from application.common.gateways.user import UserReader
 from application.common.identity_provider import IdentityProvider
 from application.common.interactor import Interactor
 from application.common.specification import Specification
-from application.dto import UserDTO
+from application.common.dto import UserDTO
 from application.errors.access import AccessDeniedError
 from application.errors.user import UserIsNotExistError
 from application.specs.has_role import HasRoleSpec
@@ -60,6 +60,6 @@ class GetUser(Interactor[GetUserInputDTO, UserDTO]):
         return UserDTO(
                 user_id=user_id.to_raw(),
                 full_name=user.full_name,
-                username=user.username,
-                phone_number=user.phone_number
+                username=user.formatted_username,
+                phone_number=user.formatted_phone_number
         )
