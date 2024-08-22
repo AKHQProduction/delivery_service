@@ -4,6 +4,12 @@ from aiogram.types import KeyboardButton, ReplyKeyboardMarkup
 
 from application.common.identity_provider import IdentityProvider
 from domain.entities.user import RoleName
+from presentation.bot.consts import (
+    CREATE_ORDER_BTN_TXT,
+    MY_ORDERS_BTN_TXT,
+    PROFILE_BTN_TXT,
+    STAFF_BTN_TXT
+)
 
 
 class IKeyboardByRole(ABC):
@@ -17,7 +23,7 @@ class AdminKeyboard(IKeyboardByRole):
         return ReplyKeyboardMarkup(
                 keyboard=[
                     [
-                        KeyboardButton(text="👥 Персонал")
+                        KeyboardButton(text=STAFF_BTN_TXT)
                     ]
                 ],
                 resize_keyboard=True
@@ -29,10 +35,13 @@ class UserKeyboard(IKeyboardByRole):
         return ReplyKeyboardMarkup(
                 keyboard=[
                     [
-                        KeyboardButton(text="🛒 Створити замовлення")
+                        KeyboardButton(text=CREATE_ORDER_BTN_TXT)
                     ],
                     [
-                        KeyboardButton(text="🗄 Мої замовлення")
+                        KeyboardButton(text=PROFILE_BTN_TXT)
+                    ],
+                    [
+                        KeyboardButton(text=MY_ORDERS_BTN_TXT)
                     ]
                 ],
                 resize_keyboard=True
