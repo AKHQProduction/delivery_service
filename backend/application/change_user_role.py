@@ -6,6 +6,7 @@ from application.common.gateways.user import UserReader, UserSaver
 from application.common.identity_provider import IdentityProvider
 from application.common.interactor import Interactor
 from application.errors.access import AccessDeniedError
+from application.errors.user import RoleAlreadyAssignedError
 from application.specs.has_role import HasRoleSpec
 from application.common.specification import Specification
 from domain.entities.user import RoleName
@@ -40,6 +41,11 @@ class ChangeUserRole(Interactor[ChangeUserRoleDTO, None]):
             raise AccessDeniedError()
 
         user = await self._user_reader.by_id(UserId(data.user_id))
+
+        if data.role == user.role:
+            logging.info("Attempting to change an already assigned role")
+            raise RoleAlreadyAssignedError()
+
         user.change_role(data.role)
 
         await self._user_saver.update(user)

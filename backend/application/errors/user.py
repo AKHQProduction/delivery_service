@@ -19,3 +19,10 @@ class UserAlreadyExistsError(ApplicationError):
     @property
     def message(self):
         return f"User already exists with id {self.user_id}"
+
+
+@dataclass(eq=False)
+class RoleAlreadyAssignedError(ApplicationError):
+    @property
+    def message(self):
+        return "The user already has this role."
