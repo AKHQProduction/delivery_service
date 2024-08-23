@@ -32,7 +32,11 @@ class User:
 
     @property
     def formatted_phone_number(self) -> str:
-        return "Відсутній" if self.phone_number is None else self.phone_number.to_raw()
+        return (
+            "Відсутній"
+            if self.phone_number is None
+            else self.phone_number.to_raw()
+        )
 
     def __hash__(self) -> int:
         return hash(self.user_id)
