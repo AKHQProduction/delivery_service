@@ -91,7 +91,7 @@ add_to_staff_dialog = Dialog(
         Window(
                 Const(
                         "Введіть телеграм ID користувача, "
-                        "якого хочете додати до персонал"
+                        "якого хочете додати до співробітників"
                 ),
                 TextInput(
                         id="new_staff_id",
