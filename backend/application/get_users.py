@@ -1,3 +1,4 @@
+import asyncio
 import logging
 from dataclasses import dataclass
 
@@ -46,10 +47,14 @@ class GetUsers(Interactor[GetUsersDTO, GetUsersResultDTO]):
             )
             raise AccessDeniedError()
 
-        total_users: int = await self._user_reader.total_users(data.filters)
-        users: list[User] = await self._user_reader.all(
-                data.filters,
-                data.pagination
+        total_users: int = await asyncio.create_task(
+                self._user_reader.total_users(data.filters)
+        )
+        users: list[User] = await asyncio.create_task(
+                self._user_reader.all(
+                        data.filters,
+                        data.pagination
+                )
         )
 
         logging.debug(
