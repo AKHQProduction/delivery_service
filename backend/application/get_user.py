@@ -60,6 +60,6 @@ class GetUser(Interactor[GetUserInputDTO, UserDTO]):
         return UserDTO(
                 user_id=user_id.to_raw(),
                 full_name=user.full_name,
-                username=user.formatted_username,
-                phone_number=user.formatted_phone_number
+                username=user.username,
+                phone_number=user.phone_number
         )
