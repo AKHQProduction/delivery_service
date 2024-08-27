@@ -1,4 +1,4 @@
-from aiogram.types import TelegramObject, User
+from aiogram.types import TelegramObject
 from dishka import (
     Provider,
     Scope,
@@ -10,8 +10,13 @@ from dishka import (
 )
 
 from application.bot_start import BotStart
+from application.change_user_role import ChangeUserRole
 from application.common.gateways.user import UserReader, UserSaver
 from application.common.commiter import Commiter
+from application.common.identity_provider import IdentityProvider
+from application.get_user import GetUser
+from application.get_users import GetUsers
+from infrastructure.auth.tg_auth import TgIdentityProvider
 from infrastructure.bootstrap.configs import load_all_configs
 from infrastructure.gateways.user import PostgreUserGateway
 from infrastructure.geopy.config import GeoConfig
@@ -30,15 +35,15 @@ def gateway_provider() -> Provider:
     provider = Provider()
 
     provider.provide(
-        PostgreUserGateway,
-        scope=Scope.REQUEST,
-        provides=AnyOf[UserReader, UserSaver]
+            PostgreUserGateway,
+            scope=Scope.REQUEST,
+            provides=AnyOf[UserReader, UserSaver]
     )
 
     provider.provide(
-        SACommiter,
-        scope=Scope.REQUEST,
-        provides=Commiter,
+            SACommiter,
+            scope=Scope.REQUEST,
+            provides=Commiter,
     )
 
     return provider
@@ -66,6 +71,9 @@ def interactor_provider() -> Provider:
     provider = Provider()
 
     provider.provide(BotStart, scope=Scope.REQUEST)
+    provider.provide(ChangeUserRole, scope=Scope.REQUEST)
+    provider.provide(GetUser, scope=Scope.REQUEST)
+    provider.provide(GetUsers, scope=Scope.REQUEST)
 
     return provider
 
@@ -74,9 +82,9 @@ def infrastructure_provider() -> Provider:
     provider = Provider()
 
     provider.provide(
-        PyGeoProcessor,
-        scope=Scope.REQUEST,
-        provides=GeoProcessor
+            PyGeoProcessor,
+            scope=Scope.REQUEST,
+            provides=GeoProcessor
     )
 
     return provider
@@ -97,8 +105,22 @@ class TgProvider(Provider):
     tg_object = from_context(provides=TelegramObject, scope=Scope.REQUEST)
 
     @provide(scope=Scope.REQUEST)
-    async def get_user(self, obj: TelegramObject) -> User:
-        return obj.from_user
+    async def get_user_id(self, obj: TelegramObject) -> int:
+        return obj.from_user.id
+
+    @provide(scope=Scope.REQUEST)
+    async def get_identity_provider(
+            self,
+            user_id: int,
+            user_gateway: UserReader,
+
+    ) -> IdentityProvider:
+        identity_provider = TgIdentityProvider(
+                user_id=user_id,
+                user_gateway=user_gateway,
+        )
+
+        return identity_provider
 
 
 def setup_providers() -> list[Provider]:

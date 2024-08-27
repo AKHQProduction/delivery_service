@@ -35,7 +35,7 @@ from presentation.bot import states
 from presentation.bot.helpers import (
     is_address_specific_enough, is_contains_emoji,
 )
-from presentation.bot.widgets import CustomCalendar
+from presentation.bot.dialogs.widgets.common.calendar import CustomCalendar
 
 router = Router()
 

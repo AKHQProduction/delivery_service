@@ -1,5 +1,5 @@
 import logging
-from abc import abstractmethod
+from abc import ABC, abstractmethod
 from asyncio import Protocol
 from typing import TypeAlias, Any
 
@@ -8,14 +8,16 @@ from geopy.exc import GeocoderTimedOut
 from geopy.geocoders import Nominatim
 
 from infrastructure.geopy.config import GeoConfig
-from infrastructure.geopy.errors import AddressIsNotExists, \
+from infrastructure.geopy.errors import (
+    AddressIsNotExists,
     GeolocatorBadGateway
+)
 
 GeoPayload: TypeAlias = tuple[float, float]
 Address: TypeAlias = str
 
 
-class GeoProcessor(Protocol):
+class GeoProcessor(ABC):
     @abstractmethod
     async def get_coordinates(self, address: Address) -> GeoPayload:
         raise NotImplementedError
@@ -36,34 +38,25 @@ class PyGeoProcessor(GeoProcessor):
         location_city = address.get("city", "")
         location_town = address.get("town", "")
 
-        house_number = address.get("house_number", None)
+        house_number = address.get("house_number")
 
-        if self.city in [
+        return self.city in [
             location_city,
             location_town
-        ] and house_number is not None:
-            return True
-        return False
+        ] and house_number is not None
 
     async def get_coordinates(
             self,
-            address: Address,
-            tries: int = 0
+            address: Address
     ) -> GeoPayload:
         full_address: str = f"{address}, {self.city}"
 
         try:
             coordinates: Location | None = await self.geolocator.geocode(
-                full_address, addressdetails=True, language="UA"
+                    full_address, addressdetails=True, language="UA"
             )
         except GeocoderTimedOut:
-            logging.warning(f"The {tries} mistake in work geocoder")
-
-            if tries <= 3:
-                tries += 1
-                return await self.get_coordinates(address, tries)
-            else:
-                raise GeolocatorBadGateway()
+            raise GeolocatorBadGateway()
 
         if coordinates is None or not self._check_address_in_city(coordinates):
             raise AddressIsNotExists(address, self.city)

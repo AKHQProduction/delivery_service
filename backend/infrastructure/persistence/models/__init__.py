@@ -3,5 +3,5 @@ from .user import UserORM
 
 __all__ = [
     "Base",
-    "UserORM",
+    "UserORM"
 ]
