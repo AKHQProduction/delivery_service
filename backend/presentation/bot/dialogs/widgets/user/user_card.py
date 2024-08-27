@@ -1,36 +1,37 @@
 from aiogram import F
-from aiogram_dialog.widgets.text import Case, Format, Multi
+from aiogram_dialog.widgets.text import Case, Const, Format, Multi
 
 user_card = Multi(
+        Const("👀 Картка користувача \n"),
         Format(
                 "<b>🆔 Телеграм ID:</b> "
-                "<code>{dialog_data[user][user_id]}</code>"
+                "<code>{user[user_id]}</code>"
         ),
-        Format("<b>💁🏼‍♂️ Ім'я</b> {dialog_data[user][full_name]}"),
+        Format("<b>💁🏼‍♂️ Ім'я: </b>{user[full_name]}"),
         Case(
                 {
-                    True: Format(
+                    ...: Format(
                             "<b>🪪 Телеграм тег:</b> "
-                            "@{dialog_data[user][username]}"
+                            "@{user[username]}"
                     ),
-                    False: Format(
+                    None: Format(
                             "<b>🪪 Телеграм тег:</b> ",
                             "<i>відсутній</i>"
                     )
                 },
-                selector=F["dialog_data"]["user"]["username"].cast(bool)
+                selector=F["user"]["username"]
         ),
         Case(
                 {
-                    True: Format(
+                    ...: Format(
                             "<b>📞 Номер телефону:</b> "
-                            "{dialog_data[user][phone_number]}"
+                            "{user[phone_number]}"
                     ),
-                    False: Format(
+                    None: Format(
                             "<b>📞 Номер телефону:</b> "
                             "<i>відсутній</i>"
                     )
                 },
-                selector=F["dialog_data"]["user"]["phone_number"].cast(bool)
+                selector=F["user"]["phone_number"]
         )
 )

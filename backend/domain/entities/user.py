@@ -7,11 +7,11 @@ from domain.value_objects.user_id import UserId
 
 
 class RoleName(Enum):
-    BLOCKER = "BLOCKED"
-    USER = "USER"
-    ADMIN = "ADMIN"
-    MANAGER = "MANAGER"
-    DRIVER = "DRIVER"
+    BLOCKER = "🚫 Заблокований"
+    USER = "🙎‍♂️ Користувач"
+    ADMIN = "🤴 Адмін"
+    MANAGER = "👩‍💻 Менеджер"
+    DRIVER = "🚛 Водій"
 
 
 @dataclass

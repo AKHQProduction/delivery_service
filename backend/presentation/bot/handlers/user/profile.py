@@ -2,9 +2,7 @@ from aiogram import Router, F
 from aiogram.types import Message
 from dishka import FromDishka
 
-from application.change_user_role import ChangeUserRole, ChangeUserRoleDTO
 from application.common.identity_provider import IdentityProvider
-from domain.entities.user import RoleName
 
 router = Router()
 

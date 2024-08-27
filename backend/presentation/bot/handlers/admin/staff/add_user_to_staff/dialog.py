@@ -2,7 +2,7 @@ import operator
 from typing import Any
 
 from aiogram.types import CallbackQuery, Message
-from aiogram_dialog import Dialog, DialogManager, Window
+from aiogram_dialog import Dialog, DialogManager, StartMode, Window
 from aiogram_dialog.widgets.input import ManagedTextInput, TextInput
 from aiogram_dialog.widgets.kbd import (
     Cancel,
@@ -16,39 +16,29 @@ from dishka import FromDishka
 from dishka.integrations.aiogram_dialog import inject
 
 from application.change_user_role import ChangeUserRole, ChangeUserRoleDTO
-from application.errors.user import UserIsNotExistError
-from application.get_user import GetUser, GetUserInputDTO
 from domain.entities.user import RoleName
+from presentation.bot.dialogs.getters.user import get_user_getter
+from presentation.bot.dialogs.widgets.user.user_card import user_card
 from . import states
 from ..states import StaffWorkflow
 
 
-@inject
-async def find_user(
-        msg: Message,
-        _: ManagedTextInput,
+async def on_success_input_user_id(
+        _: Message,
+        __: ManagedTextInput,
         manager: DialogManager,
         value: int,
-        action: FromDishka[GetUser]
 ):
-    try:
-        user = await action(GetUserInputDTO(user_id=value))
-
-        manager.dialog_data["user_id"] = user.user_id
-        manager.dialog_data["full_name"] = user.full_name
-        manager.dialog_data["username"] = user.username
-        manager.dialog_data["phone_number"] = user.phone_number
-
-    except UserIsNotExistError:
-        return await msg.answer("😥 Не вдалось знайти користувач з вказаним ID")
+    manager.dialog_data["user_id"] = value
 
     await manager.next()
 
 
-async def get_actual_roles(**_kwargs) -> dict[str, Any]:
+async def get_actual_staff_roles(**_kwargs) -> dict[str, Any]:
     roles = [
-        ("manager", "👩‍💻 Менеджер", RoleName.MANAGER.value),
-        ("driver", "🚛 Драйвер", RoleName.DRIVER.value)
+        ("manager", RoleName.MANAGER.value, RoleName.MANAGER.value),
+        ("driver", RoleName.DRIVER.value, RoleName.DRIVER.value),
+        ("admin", RoleName.ADMIN.value, RoleName.ADMIN.value),
     ]
 
     return {
@@ -60,9 +50,9 @@ async def on_role_selected(
         _: CallbackQuery,
         __: Select,
         manager: DialogManager,
-        item_id: RoleName,
+        role: RoleName,
 ) -> None:
-    manager.dialog_data["role"] = item_id
+    manager.dialog_data["role"] = role
 
     await manager.next()
 
@@ -75,19 +65,19 @@ async def on_role_confirmed(
         action: FromDishka[ChangeUserRole]
 ):
     user_id: int = manager.dialog_data["user_id"]
-    role: str = manager.dialog_data["role"]
+    role: RoleName = manager.dialog_data["role"]
 
     await action(
             ChangeUserRoleDTO(
                     user_id=user_id,
-                    role=RoleName(role)
+                    role=role
             )
     )
 
-    await call.message.answer("✅ Ви успішно додали співробітника")
+    await call.answer("✅ Ви успішно додали співробітника")
 
 
-add_to_staff_dialog = Dialog(
+add_user_to_staff_dialog = Dialog(
         Window(
                 Const(
                         "Введіть телеграм ID користувача, "
@@ -96,31 +86,13 @@ add_to_staff_dialog = Dialog(
                 TextInput(
                         id="new_staff_id",
                         type_factory=int,
-                        on_success=find_user
+                        on_success=on_success_input_user_id
                 ),
-                state=states.AddToStaff.ID
+                state=states.ChangeUserRole.ID,
         ),
         Window(
                 Multi(
-                        Const("👀 Користувач знайден"),
-                        Multi(
-                                Format(
-                                        "<b>Ім'я:</b> "
-                                        "{dialog_data[full_name]}"
-                                ),
-                                Format(
-                                        "<b>ID:</b> "
-                                        "<code>{dialog_data[user_id]}</code>"
-                                ),
-                                Format(
-                                        "<b>Username:</b> "
-                                        "{dialog_data[username]}"
-                                ),
-                                Format(
-                                        "<b>Номер телефону:</b> "
-                                        "{dialog_data[phone_number]}"
-                                )
-                        ),
+                        user_card,
                         Const("Виберіть посаду👇"),
                         sep="\n\n"
                 ),
@@ -130,12 +102,13 @@ add_to_staff_dialog = Dialog(
                                 id="select_user_role",
                                 items="roles",
                                 item_id_getter=operator.itemgetter(2),
+                                type_factory=RoleName,
                                 on_click=on_role_selected
                         ),
                         width=2
                 ),
-                state=states.AddToStaff.SELECT_USER_ROLE,
-                getter=get_actual_roles
+                state=states.ChangeUserRole.SELECT_USER_ROLE,
+                getter=[get_actual_staff_roles, get_user_getter]
         ),
         Window(
                 Const("Підтвердіть Ваше рішення"),
@@ -148,9 +121,10 @@ add_to_staff_dialog = Dialog(
                         Start(
                                 text=Const("Ні"),
                                 id="reject_change_role",
-                                state=StaffWorkflow.MAIN_MENU
+                                state=StaffWorkflow.MAIN_MENU,
+                                mode=StartMode.RESET_STACK
                         )
                 ),
-                state=states.AddToStaff.CONFIRMATION
+                state=states.ChangeUserRole.CONFIRMATION
         )
 )

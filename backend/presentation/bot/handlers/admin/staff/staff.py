@@ -2,20 +2,23 @@ from typing import Any
 
 from aiogram import Router, F
 from aiogram.filters import Command
-from aiogram.types import Message
+from aiogram.types import CallbackQuery, Message
 from aiogram_dialog import Dialog, DialogManager, StartMode, Window
-from aiogram_dialog.widgets.kbd import Button, Row, Start
+from aiogram_dialog.widgets.kbd import ScrollingGroup, Select, Start
 from aiogram_dialog.widgets.text import Case, Const, Format
 from dishka import FromDishka
 from dishka.integrations.aiogram_dialog import inject
+from magic_filter import MagicFilter
 
 from application.common.dto import Pagination
 from application.common.gateways.user import GetUsersFilters
-from application.get_users import GetUsers, GetUsersDTO, GetUsersResultDTO
-from domain.entities.user import RoleName, User
+from application.get_users import GetUsers, GetUsersDTO
+from domain.entities.user import RoleName
+from domain.value_objects.user_id import UserId
 from presentation.bot.consts import STAFF_BTN_TXT
 from . import states
-from .add_to_staff.states import AddToStaff
+from .add_user_to_staff.states import ChangeUserRole
+from .view_staff_card.states import ViewStaff
 
 router = Router()
 
@@ -33,7 +36,7 @@ async def staff_workflow_btn(
 
 
 @inject
-async def get_staff(
+async def get_user_from_staff(
         action: FromDishka[GetUsers],
         dialog_manager: DialogManager,
         **_kwargs
@@ -57,12 +60,22 @@ async def get_staff(
     return dialog_manager.dialog_data
 
 
-def staff_main_menu_text_selector(
-        _: dict,
-        __: Case,
-        manager: DialogManager
+is_only_admin_in_staff: MagicFilter = F["dialog_data"]["total"] == 1
+
+
+async def on_selected_user_from_staff(
+        _: CallbackQuery,
+        __: Select,
+        manager: DialogManager,
+        user_id: UserId
 ):
-    return manager.dialog_data["total"] == 1
+    await manager.start(
+            state=ViewStaff.STAFF_CARD,
+            data={
+                "user_id": user_id.to_raw()
+            },
+            mode=StartMode.RESET_STACK
+    )
 
 
 staff_workflow_dialog = Dialog(
@@ -75,33 +88,30 @@ staff_workflow_dialog = Dialog(
                             ),
                             True: Const("У вас немає співробітників")
                         },
-                        selector=staff_main_menu_text_selector
+                        selector=is_only_admin_in_staff
                 ),
-                Start(
-                        Const("➕ Додати співробітника"),
-                        id="add_to_staff",
-                        state=AddToStaff.ID,
-                        when=F["dialog_data"]["total"] == 1
+                ScrollingGroup(
+                        Start(
+                                Const("➕ Додати співробітника"),
+                                id="add_user_to_staff",
+                                state=ChangeUserRole.ID,
+                        ),
+                        Select(
+                                id="select_user_from_staff",
+                                text=Format(
+                                        "{item.full_name} | {item.role.value}"
+                                ),
+                                items="users",
+                                item_id_getter=lambda item: item.user_id.value,
+                                type_factory=lambda item: UserId(int(item)),
+                                on_click=on_selected_user_from_staff
+                        ),
+                        id="staff_list",
+                        hide_on_single_page=True,
+                        width=1,
+                        height=5,
                 ),
                 state=states.StaffWorkflow.MAIN_MENU,
-                getter=get_staff
+                getter=get_user_from_staff
         )
 )
-# Window(
-#
-#         Const("👷‍♂️Робота з персоналом"),
-#         Row(
-#                 Start(
-#                         Const("➕ Додати до персоналу"),
-#                         id="add_to_staff",
-#                         state=AddToStaff.ID
-#                 ),
-#                 Button(
-#                         Const("➖ Прибрати з персоналу"),
-#                         id="reject_from_staff"
-#                 )
-#         ),
-#         Button(Const("👷 Персонал"), id="staff"),
-#         state=states.StaffWorkflow.MAIN_MENU,
-#         getter=get_staff
-# )
