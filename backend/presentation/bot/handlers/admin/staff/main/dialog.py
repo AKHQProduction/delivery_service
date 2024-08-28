@@ -17,8 +17,12 @@ from domain.entities.user import RoleName
 from domain.value_objects.user_id import UserId
 from presentation.bot.consts import STAFF_BTN_TXT
 from presentation.bot.handlers.admin.staff.main import states
-from presentation.bot.handlers.admin.staff.add_user_to_staff.states import ChangeUserRole
-from presentation.bot.handlers.admin.staff.view_staff_card.states import ViewStaff
+from presentation.bot.handlers.admin.staff.add_user_to_staff.states import (
+    ChangeUserRole
+)
+from presentation.bot.handlers.admin.staff.view_staff_card.states import (
+    ViewStaff
+)
 
 router = Router()
 
