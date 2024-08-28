@@ -2,10 +2,10 @@ from abc import ABC, abstractmethod
 
 from aiogram.types import KeyboardButton, ReplyKeyboardMarkup
 
-from application.common.identity_provider import IdentityProvider
 from domain.entities.user import RoleName
 from presentation.bot.consts import (
     CREATE_ORDER_BTN_TXT,
+    GOODS_BTN_TEXT,
     MY_ORDERS_BTN_TXT,
     PROFILE_BTN_TXT,
     STAFF_BTN_TXT
@@ -24,6 +24,9 @@ class AdminKeyboard(IKeyboardByRole):
                 keyboard=[
                     [
                         KeyboardButton(text=STAFF_BTN_TXT)
+                    ],
+                    [
+                        KeyboardButton(text=GOODS_BTN_TEXT)
                     ]
                 ],
                 resize_keyboard=True
