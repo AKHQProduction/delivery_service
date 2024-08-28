@@ -11,6 +11,6 @@ ENV POETRY_NO_INTERACTION=1 \
 
 COPY . .
 
-RUN poetry install --no-root && rm -rf $POETRY_CACHE_DIR
+RUN poetry install --no-root --without dev && rm -rf $POETRY_CACHE_DIR
 
 RUN poetry install

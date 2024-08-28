@@ -8,7 +8,7 @@ from infrastructure.persistence.models.mixins import UpdatedAtMixin
 
 
 class UserORM(Base, UpdatedAtMixin):
-    __tablename__ = "user"
+    __tablename__ = "users"
 
     user_id: Mapped[int] = mapped_column(
             sa.BigInteger, unique=True, primary_key=True, index=True
