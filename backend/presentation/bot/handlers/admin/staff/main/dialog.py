@@ -11,10 +11,10 @@ from dishka.integrations.aiogram_dialog import inject
 from magic_filter import MagicFilter
 
 from application.common.dto import Pagination
-from application.common.gateways.user import GetUsersFilters
-from application.get_users import GetUsers, GetUsersDTO
-from domain.entities.user import RoleName
-from domain.value_objects.user_id import UserId
+from application.user.gateways.user import GetUsersFilters
+from application.user.interactors.get_users import GetUsers, GetUsersDTO
+from domain.user.entity.user import RoleName
+from domain.user.value_objects.user_id import UserId
 from presentation.bot.consts import STAFF_BTN_TXT
 from presentation.bot.handlers.admin.staff.main import states
 from presentation.bot.handlers.admin.staff.add_user_to_staff.states import (
@@ -59,7 +59,7 @@ async def get_user_from_staff(
     )
 
     dialog_manager.dialog_data["total"] = result.total
-    dialog_manager.dialog_data["users"] = result.users
+    dialog_manager.dialog_data["user"] = result.users
 
     return dialog_manager.dialog_data
 
@@ -105,7 +105,7 @@ staff_workflow_dialog = Dialog(
                                 text=Format(
                                         "{item.full_name} | {item.role.value}"
                                 ),
-                                items="users",
+                                items="user",
                                 item_id_getter=lambda item: item.user_id.value,
                                 type_factory=lambda item: UserId(int(item)),
                                 on_click=on_selected_user_from_staff

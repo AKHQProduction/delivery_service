@@ -15,8 +15,8 @@ from aiogram_dialog.widgets.text import Const, Format, Multi
 from dishka import FromDishka
 from dishka.integrations.aiogram_dialog import inject
 
-from application.change_user_role import ChangeUserRole, ChangeUserRoleDTO
-from domain.entities.user import RoleName
+from application.user.interactors.change_user_role import ChangeUserRole, ChangeUserRoleDTO
+from domain.user.entity.user import RoleName
 from presentation.bot.dialogs.getters.user import get_user_getter
 from presentation.bot.dialogs.widgets.user.user_card import user_card
 from . import states

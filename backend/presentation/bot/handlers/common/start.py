@@ -3,9 +3,9 @@ from aiogram.filters import CommandStart
 from aiogram.types import Message
 from dishka import FromDishka
 
-from application.bot_start import BotStart, BotStartDTO
+from application.user.interactors.bot_start import BotStart, BotStartDTO
 from application.common.identity_provider import IdentityProvider
-from domain.entities.user import RoleName
+from domain.user.entity.user import RoleName
 from presentation.bot.keyboards.main_reply import MainReplyKeyboard
 
 router = Router()

@@ -2,15 +2,15 @@ import logging
 from dataclasses import dataclass
 
 from application.common.commiter import Commiter
-from application.common.gateways.user import UserReader, UserSaver
+from application.user.gateways.user import UserReader, UserSaver
 from application.common.identity_provider import IdentityProvider
 from application.common.interactor import Interactor
 from application.errors.access import AccessDeniedError
-from application.errors.user import RoleAlreadyAssignedError
+from application.user.errors.user import RoleAlreadyAssignedError
 from application.specs.has_role import HasRoleSpec
 from application.common.specification import Specification
-from domain.entities.user import RoleName
-from domain.value_objects.user_id import UserId
+from domain.user.entity.user import RoleName
+from domain.user.value_objects.user_id import UserId
 
 
 @dataclass(frozen=True)

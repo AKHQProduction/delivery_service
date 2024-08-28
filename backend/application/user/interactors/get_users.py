@@ -3,13 +3,13 @@ import logging
 from dataclasses import dataclass
 
 from application.common.dto import Pagination
-from application.common.gateways.user import GetUsersFilters, UserReader
+from application.user.gateways.user import GetUsersFilters, UserReader
 from application.common.identity_provider import IdentityProvider
 from application.common.interactor import Interactor
 from application.common.specification import Specification
 from application.errors.access import AccessDeniedError
 from application.specs.has_role import HasRoleSpec
-from domain.entities.user import RoleName, User
+from domain.user.entity.user import RoleName, User
 
 
 @dataclass(frozen=True)
@@ -58,9 +58,9 @@ class GetUsers(Interactor[GetUsersDTO, GetUsersResultDTO]):
         )
 
         logging.debug(
-                "Get users",
+                "Get user",
                 extra={
-                    "users": users,
+                    "user": users,
                     "pagination": data.pagination,
                     "filters": data.filters
                 }

@@ -1,5 +1,5 @@
-from domain.entities.user import User
-from domain.value_objects.user_id import UserId
+from domain.user.entity.user import User
+from domain.user.value_objects.user_id import UserId
 from infrastructure.persistence.models import UserORM
 
 

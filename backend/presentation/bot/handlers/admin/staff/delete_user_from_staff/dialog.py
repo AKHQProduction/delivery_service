@@ -7,8 +7,8 @@ from aiogram_dialog.widgets.text import Const
 from dishka import FromDishka
 from dishka.integrations.aiogram_dialog import inject
 
-from application.change_user_role import ChangeUserRole, ChangeUserRoleDTO
-from domain.entities.user import RoleName
+from application.user.interactors.change_user_role import ChangeUserRole, ChangeUserRoleDTO
+from domain.user.entity.user import RoleName
 from .states import DeleteUserFromStaff
 from presentation.bot.handlers.admin.staff.main.states import StaffWorkflow
 

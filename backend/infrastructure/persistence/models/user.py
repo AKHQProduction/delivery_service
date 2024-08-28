@@ -1,16 +1,14 @@
-from enum import Enum
-
 import sqlalchemy as sa
 
-from sqlalchemy.orm import Mapped, mapped_column, relationship
+from sqlalchemy.orm import Mapped, mapped_column
 
-from domain.entities.user import RoleName
+from domain.user.entity.user import RoleName
 from infrastructure.persistence.models.base import Base
 from infrastructure.persistence.models.mixins import UpdatedAtMixin
 
 
 class UserORM(Base, UpdatedAtMixin):
-    __tablename__ = "users"
+    __tablename__ = "user"
 
     user_id: Mapped[int] = mapped_column(
             sa.BigInteger, unique=True, primary_key=True, index=True

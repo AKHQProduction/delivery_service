@@ -1,16 +1,16 @@
 import logging
 from dataclasses import dataclass
 
-from application.common.gateways.user import UserReader
+from application.user.gateways.user import UserReader
 from application.common.identity_provider import IdentityProvider
 from application.common.interactor import Interactor
 from application.common.specification import Specification
-from application.common.dto import UserDTO
+from application.user.dto.user import UserDTO
 from application.errors.access import AccessDeniedError
-from application.errors.user import UserIsNotExistError
+from application.user.errors.user import UserIsNotExistError
 from application.specs.has_role import HasRoleSpec
-from domain.entities.user import RoleName
-from domain.value_objects.user_id import UserId
+from domain.user.entity.user import RoleName
+from domain.user.value_objects.user_id import UserId
 
 
 @dataclass(frozen=True)

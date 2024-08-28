@@ -3,8 +3,8 @@ from dataclasses import dataclass
 from typing import Protocol
 
 from application.common.dto import Pagination
-from domain.entities.user import RoleName, User
-from domain.value_objects.user_id import UserId
+from domain.user.entity.user import RoleName, User
+from domain.user.value_objects.user_id import UserId
 
 
 @dataclass(frozen=True)

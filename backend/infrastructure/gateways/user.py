@@ -5,15 +5,15 @@ from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from application.common.dto import Pagination, SortOrder
-from application.common.gateways.user import (
+from application.user.gateways.user import (
     GetUsersFilters,
     UserSaver,
     UserReader
 )
 from application.errors.gateway import GatewayError
-from application.errors.user import UserAlreadyExistsError
-from domain.entities.user import User
-from domain.value_objects.user_id import UserId
+from application.user.errors.user import UserAlreadyExistsError
+from domain.user.entity.user import User
+from domain.user.value_objects.user_id import UserId
 from infrastructure.gateways.converters import (
     convert_db_user_to_user_entity,
     convert_user_entity_to_db_user

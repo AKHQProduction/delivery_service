@@ -9,13 +9,13 @@ from dishka import (
     provide
 )
 
-from application.bot_start import BotStart
-from application.change_user_role import ChangeUserRole
-from application.common.gateways.user import UserReader, UserSaver
+from application.user.interactors.bot_start import BotStart
+from application.user.interactors.change_user_role import ChangeUserRole
+from application.user.gateways.user import UserReader, UserSaver
 from application.common.commiter import Commiter
 from application.common.identity_provider import IdentityProvider
-from application.get_user import GetUser
-from application.get_users import GetUsers
+from application.user.interactors.get_user import GetUser
+from application.user.interactors.get_users import GetUsers
 from infrastructure.auth.tg_auth import TgIdentityProvider
 from infrastructure.bootstrap.configs import load_all_configs
 from infrastructure.gateways.user import PostgreUserGateway

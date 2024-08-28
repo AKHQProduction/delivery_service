@@ -2,8 +2,8 @@ from dataclasses import dataclass
 from enum import Enum
 from typing import Union
 
-from domain.value_objects.phone_number import PhoneNumber
-from domain.value_objects.user_id import UserId
+from domain.user.value_objects.phone_number import PhoneNumber
+from domain.user.value_objects.user_id import UserId
 
 
 class RoleName(Enum):

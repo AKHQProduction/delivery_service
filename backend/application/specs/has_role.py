@@ -1,5 +1,5 @@
 from application.common.specification import Specification
-from domain.entities.user import RoleName
+from domain.user.entity.user import RoleName
 
 
 class HasRoleSpec(Specification):
