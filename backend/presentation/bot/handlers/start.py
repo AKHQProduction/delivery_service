@@ -6,7 +6,7 @@ from dishka import FromDishka
 from application.bot_start import BotStart, BotStartDTO
 from application.common.identity_provider import IdentityProvider
 from domain.entities.user import RoleName
-from presentation.bot.keyboards.by_role import MainReplyKeyboard
+from presentation.bot.keyboards.main_reply import MainReplyKeyboard
 
 router = Router()
 

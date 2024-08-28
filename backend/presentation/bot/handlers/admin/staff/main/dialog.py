@@ -27,7 +27,7 @@ from presentation.bot.handlers.admin.staff.view_staff_card.states import (
 router = Router()
 
 
-@router.message(Command("/staff"))
+@router.message(Command("staff"))
 @router.message(F.text == STAFF_BTN_TXT)
 async def staff_workflow_btn(
         _: Message,
