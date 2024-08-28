@@ -20,7 +20,7 @@ from domain.entities.user import RoleName
 from presentation.bot.dialogs.getters.user import get_user_getter
 from presentation.bot.dialogs.widgets.user.user_card import user_card
 from . import states
-from ..states import StaffWorkflow
+from presentation.bot.handlers.admin.staff.main.states import StaffWorkflow
 
 
 async def on_success_input_user_id(

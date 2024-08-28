@@ -10,7 +10,7 @@ from dishka.integrations.aiogram_dialog import inject
 from application.change_user_role import ChangeUserRole, ChangeUserRoleDTO
 from domain.entities.user import RoleName
 from .states import DeleteUserFromStaff
-from ..states import StaffWorkflow
+from presentation.bot.handlers.admin.staff.main.states import StaffWorkflow
 
 
 async def on_start_delete_user_from_staff_dialog(
