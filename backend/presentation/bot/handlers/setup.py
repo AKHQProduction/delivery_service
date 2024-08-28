@@ -1,7 +1,6 @@
 from aiogram import Dispatcher
-from . import start, create_order, unsupported
-from .create_order import create_order_dialog
-from .user import setup_user_handlers, profile
+from .common import setup_common_handlers
+from .user import profile
 from .admin import (
     setup_admin_dialogs,
     setup_admin_handlers
@@ -9,11 +8,11 @@ from .admin import (
 
 
 def register_handlers(dp: Dispatcher):
-    dp.include_routers(start.router)
     dp.include_router(profile.router)
     setup_admin_handlers(dp)
 
-    dp.include_router(unsupported.router)
+    # Always must be last registered
+    setup_common_handlers(dp)
 
 
 def register_dialogs(dp: Dispatcher):
