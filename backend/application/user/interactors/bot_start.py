@@ -24,16 +24,16 @@ class BotStart(Interactor[BotStartDTO, UserId]):
             commiter: Commiter,
             identity_provider: IdentityProvider
     ):
-        self.user_reader = user_reader
-        self.user_saver = user_saver
-        self.commiter = commiter
-        self.identity_provider = identity_provider
+        self._user_reader = user_reader
+        self._user_saver = user_saver
+        self._commiter = commiter
+        self._identity_provider = identity_provider
 
     async def __call__(self, data: BotStartDTO) -> UserId:
-        user = await self.identity_provider.get_user()
+        user = await self._identity_provider.get_user()
 
         if not user:
-            await self.user_saver.save(
+            await self._user_saver.save(
                     User(
                             user_id=UserId(data.user_id),
                             full_name=data.full_name,
@@ -41,7 +41,7 @@ class BotStart(Interactor[BotStartDTO, UserId]):
                     )
             )
 
-            await self.commiter.commit()
+            await self._commiter.commit()
 
             logging.info("New user created %s", data.user_id)
 
