@@ -15,7 +15,7 @@ from dishka.integrations.aiogram import setup_dishka
 
 from entrypoint.config import Config, load_config
 from infrastructure.bootstrap.di import setup_di
-from presentation.bot.handlers.setup import setup_all
+from presentation.admin.handlers.setup import setup_all
 
 
 def get_admin_dispatcher() -> Dispatcher:
