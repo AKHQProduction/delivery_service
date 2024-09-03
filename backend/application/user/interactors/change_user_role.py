@@ -33,11 +33,11 @@ class ChangeUserRole(Interactor[ChangeUserRoleDTO, None]):
         self._id_provider = id_provider
 
     async def __call__(self, data: ChangeUserRoleDTO) -> None:
-        actor_role = await self._id_provider.get_user_role()
+        actor = await self._id_provider.get_user()
         rule: Specification = HasRoleSpec(RoleName.ADMIN)
 
-        if not rule.is_satisfied_by(actor_role):
-            logging.info("Access denied to user with role %s", actor_role)
+        if not rule.is_satisfied_by(actor.role):
+            logging.info("Access denied to user with role %s", actor.role)
             raise AccessDeniedError()
 
         user = await self._user_reader.by_id(UserId(data.user_id))
@@ -46,7 +46,7 @@ class ChangeUserRole(Interactor[ChangeUserRoleDTO, None]):
             logging.info("Attempting to change an already assigned role")
             raise RoleAlreadyAssignedError()
 
-        user.change_role(data.role)
+        user.role = data.role
 
         await self._user_saver.update(user)
         await self._commiter.commit()

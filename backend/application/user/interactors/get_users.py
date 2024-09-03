@@ -34,16 +34,16 @@ class GetUsers(Interactor[GetUsersDTO, GetUsersResultDTO]):
         self._id_provider = id_provider
 
     async def __call__(self, data: GetUsersDTO) -> GetUsersResultDTO:
-        actor_role = await self._id_provider.get_user_role()
+        actor = await self._id_provider.get_user()
 
         rule: Specification = (
                 HasRoleSpec(RoleName.ADMIN) or HasRoleSpec(RoleName.MANAGER)
         )
 
-        if not rule.is_satisfied_by(actor_role):
+        if not rule.is_satisfied_by(actor.role):
             logging.info(
                     "GetUsers: access denied to user with role %s",
-                    actor_role
+                    actor.role
             )
             raise AccessDeniedError()
 
