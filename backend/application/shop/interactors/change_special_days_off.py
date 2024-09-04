@@ -1,14 +1,15 @@
 import logging
 from dataclasses import dataclass, field
+from datetime import datetime
 
 from application.common.commiter import Commiter
 from application.common.identity_provider import IdentityProvider
 from application.common.interactor import Interactor
 from application.common.specification import Specification
+from application.errors.access import AccessDeniedError
 from application.shop.errors import ShopIsNotExistsError
 from application.shop.gateway import ShopReader
 from application.specs.has_role import HasRoleSpec
-from application.errors.access import AccessDeniedError
 from entities.shop.model import ShopId
 from entities.user.model import RoleName
 
@@ -16,7 +17,7 @@ from entities.user.model import RoleName
 @dataclass(frozen=True)
 class ChangeRegularDaysOffDTO:
     shop_id: int
-    regular_days_off: list[int] = field(default_factory=list)
+    special_days_off: list[datetime] = field(default_factory=list)
 
 
 class ChangeRegularDaysOff(Interactor[ChangeRegularDaysOffDTO, None]):
@@ -37,7 +38,7 @@ class ChangeRegularDaysOff(Interactor[ChangeRegularDaysOffDTO, None]):
 
         if not rule.is_satisfied_by(user.role):
             logging.info(
-                    "ChangeRegularDaysOff: access denied for user with "
+                    "ChangeSpecialDaysOff: access denied for user with "
                     f"id={user.user_id}"
             )
             raise AccessDeniedError()
@@ -47,11 +48,11 @@ class ChangeRegularDaysOff(Interactor[ChangeRegularDaysOffDTO, None]):
         if not shop:
             raise ShopIsNotExistsError(data.shop_id)
 
-        shop.regular_days_off = data.regular_days_off
+        shop.special_days_off = data.special_days_off
 
         await self._commiter.commit()
 
         logging.info(
-                "ChangeRegularDaysOff: successfully change regular days off "
+                "ChangeSpecialDaysOff: successfully change regular days off "
                 f"for shop={data.shop_id}"
         )
