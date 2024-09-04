@@ -9,7 +9,7 @@ from application.common.interactor import Interactor
 from application.common.specification import Specification
 from application.errors.access import AccessDeniedError
 from application.specs.has_role import HasRoleSpec
-from domain.user.entity.user import RoleName, User
+from entities.user.models.user import RoleName, User
 
 
 @dataclass(frozen=True)

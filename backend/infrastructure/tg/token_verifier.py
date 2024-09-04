@@ -3,7 +3,7 @@ from aiogram.exceptions import TelegramUnauthorizedError
 
 from application.shop.errors import ShopTokenUnauthorizedError
 from application.shop.token_verifier import TokenVerifier
-from domain.shop.entity.value_objects import ShopToken
+from entities.shop.models.value_objects import ShopToken
 
 
 class TgTokenVerifier(TokenVerifier):

@@ -25,7 +25,7 @@ from aiogram_dialog.widgets.kbd import (
 from aiogram_dialog.widgets.text import Const, Format, Multi, Case, Jinja
 from dishka.integrations.aiogram_dialog import inject
 
-from domain.user.value_objects.phone_number import PhoneNumber
+from entities.user.value_objects.phone_number import PhoneNumber
 from infrastructure.geopy.errors import (
     AddressIsNotExists,
     GeolocatorBadGateway

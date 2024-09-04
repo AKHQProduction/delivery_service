@@ -5,12 +5,12 @@ from application.common.commiter import Commiter
 from application.common.identity_provider import IdentityProvider
 from application.common.interactor import Interactor
 from application.common.specification import Specification
-from application.errors.access import AccessDeniedError
 from application.shop.errors import ShopIsNotExistsError
 from application.shop.gateway import ShopReader, ShopSaver
 from application.specs.has_role import HasRoleSpec
-from domain.shop.entity.entity import ShopId
-from domain.user.entity.user import RoleName
+from application.errors.access import AccessDeniedError
+from entities.shop.models.entity import ShopId
+from entities.user.models.user import RoleName
 
 
 @dataclass(frozen=True)
@@ -40,7 +40,7 @@ class ChangeRegularDaysOff(Interactor[ChangeRegularDaysOffDTO, None]):
         if not rule.is_satisfied_by(user.role):
             logging.info(
                     "ChangeRegularDaysOff: access denied for user with "
-                    f"id={user.user_id.to_raw()}"
+                    f"id={user.user_id}"
             )
             raise AccessDeniedError()
 
@@ -51,7 +51,6 @@ class ChangeRegularDaysOff(Interactor[ChangeRegularDaysOffDTO, None]):
 
         shop.regular_days_off = data.regular_days_off
 
-        await self._shop_saver.update(shop)
         await self._commiter.commit()
 
         logging.info(

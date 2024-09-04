@@ -5,15 +5,14 @@ from application.common.commiter import Commiter
 from application.common.identity_provider import IdentityProvider
 from application.common.interactor import Interactor
 from application.common.specification import Specification
-from application.errors.access import AccessDeniedError
 from application.shop.gateway import ShopSaver
 from application.shop.token_verifier import TokenVerifier
 from application.specs.has_role import HasRoleSpec
 from application.user.gateways.user import UserSaver
-from domain.shop.entity.entity import ShopId
-from domain.shop.entity.value_objects import ShopTitle, ShopToken
-from domain.shop.service import ShopService
-from domain.user.entity.user import RoleName
+from application.errors.access import AccessDeniedError
+from entities.shop.models.entity import Shop, ShopId
+from entities.shop.models.value_objects import ShopTitle, ShopToken
+from entities.user.models.user import RoleName
 
 
 @dataclass(frozen=True)
@@ -47,7 +46,7 @@ class CreateShop(Interactor[CreateShopDTO, ShopId]):
         if not rule.is_satisfied_by(user.role):
             logging.info(
                     "CreateShop: access denied for user with "
-                    f"id={user.user_id.to_raw()}"
+                    f"id={user.user_id}"
             )
             raise AccessDeniedError()
 
@@ -55,23 +54,23 @@ class CreateShop(Interactor[CreateShopDTO, ShopId]):
 
         await self._token_verifier.verify_token(token)
 
-        shop = ShopService.create_shop(
-                ShopId(data.shop_id),
-                user,
-                ShopTitle(data.title),
-                token,
-                data.regular_days_off
+        shop_id = ShopId(data.shop_id)
+
+        await self._shop_saver.save(
+                Shop(
+                        shop_id=shop_id,
+                        user_id=user.user_id,
+                        title=ShopTitle(data.title),
+                        token=ShopToken(data.token),
+                        regular_days_off=data.regular_days_off
+                )
         )
 
-        await self._shop_saver.save(shop)
-
-        logging.info(f"CreateShop: New shop created with id={data.shop_id}")
-
-        logging.info(
-                f"CreateShop: Change user={user.user_id} role "
-                "to ADMIN"
-        )
+        user.role = RoleName.ADMIN
 
         await self._commiter.commit()
 
-        return shop.shop_id
+        logging.info(f"CreateShop: New shop created with id={data.shop_id}")
+        logging.info(f"CreateShop: Change user={user.user_id} role to ADMIN")
+
+        return shop_id

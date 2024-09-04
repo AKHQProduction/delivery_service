@@ -1,5 +1,5 @@
 from application.shop.gateway import ShopReader, ShopSaver
-from domain.shop.entity.entity import Shop, ShopId
+from entities.shop.models.entity import Shop, ShopId
 
 
 class InMemoryShopGateway(ShopSaver, ShopReader):

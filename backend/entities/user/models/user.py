@@ -2,7 +2,7 @@ from dataclasses import dataclass
 from enum import Enum
 from typing import NewType, Union
 
-from domain.user.value_objects.phone_number import PhoneNumber
+from entities.user.value_objects.phone_number import PhoneNumber
 
 
 class RoleName(Enum):
