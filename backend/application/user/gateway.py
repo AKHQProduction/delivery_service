@@ -3,7 +3,7 @@ from dataclasses import dataclass
 from typing import Protocol
 
 from application.common.dto import Pagination
-from entities.user.models.user import RoleName, User, UserId
+from entities.user.model import RoleName, User, UserId
 
 
 @dataclass(frozen=True)
@@ -28,7 +28,7 @@ class UserReader(Protocol):
     async def total_users(
             self,
             filters: GetUsersFilters
-    ):
+    ) -> int:
         raise NotImplementedError
 
 

@@ -17,7 +17,7 @@ from application.shop.interactors.create_shop import CreateShop
 from application.shop.token_verifier import TokenVerifier
 from application.user.interactors.bot_start import BotStart
 from application.user.interactors.change_user_role import ChangeUserRole
-from application.user.gateways.user import UserReader, UserSaver
+from application.user.gateway import UserReader, UserSaver
 from application.common.commiter import Commiter
 from application.common.identity_provider import IdentityProvider
 from application.user.interactors.get_user import GetUser

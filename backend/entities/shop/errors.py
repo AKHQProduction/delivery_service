@@ -1,6 +1,6 @@
 from dataclasses import dataclass
 
-from entities.common.errors.base import DomainError
+from entities.common.errors import DomainError
 
 
 @dataclass(eq=False)

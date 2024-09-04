@@ -3,13 +3,13 @@ import logging
 from dataclasses import dataclass
 
 from application.common.dto import Pagination
-from application.user.gateways.user import GetUsersFilters, UserReader
+from application.user.gateway import GetUsersFilters, UserReader
 from application.common.identity_provider import IdentityProvider
 from application.common.interactor import Interactor
 from application.common.specification import Specification
 from application.errors.access import AccessDeniedError
 from application.specs.has_role import HasRoleSpec
-from entities.user.models.user import RoleName, User
+from entities.user.model import RoleName, User
 
 
 @dataclass(frozen=True)

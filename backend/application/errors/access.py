@@ -1,4 +1,4 @@
-from entities.common.errors.base import DomainError
+from entities.common.errors import DomainError
 
 
 class AccessDeniedError(DomainError):

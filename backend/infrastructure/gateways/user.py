@@ -5,51 +5,14 @@ from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from application.common.dto import Pagination, SortOrder
-from application.user.gateways.user import (
+from application.user.gateway import (
     GetUsersFilters,
     UserSaver,
     UserReader
 )
-from application.errors.gateway import GatewayError
-from application.user.errors.user import UserAlreadyExistsError
-from entities.user.models.user import User, UserId
+from application.user.errors import UserAlreadyExistsError
+from entities.user.model import User, UserId
 from infrastructure.persistence.models.user import users_table
-
-
-class InMemoryUserGateway(UserReader, UserSaver):
-    def __init__(self):
-        self.users = {}
-
-    def _get_from_memory(self, user_id: UserId) -> User | None:
-        return self.users.get(user_id)
-
-    async def save(self, user: User) -> None:
-        user_in_memory = self._get_from_memory(user.user_id)
-
-        if user_in_memory:
-            raise UserAlreadyExistsError(user.user_id)
-
-        self.users[user.user_id] = user
-
-    async def by_id(self, user_id: UserId) -> User | None:
-        return self._get_from_memory(user_id)
-
-    async def update(self, user: User) -> None:
-        self.users[user.user_id] = user
-
-    # TODO: implementation
-    async def all(
-            self,
-            filters: GetUsersFilters,
-            pagination: Pagination
-    ) -> list[User]:
-        pass
-
-    async def total_users(
-            self,
-            filters: GetUsersFilters
-    ):
-        pass
 
 
 class PostgreUserGateway(UserReader, UserSaver):
@@ -74,10 +37,34 @@ class PostgreUserGateway(UserReader, UserSaver):
             filters: GetUsersFilters,
             pagination: Pagination
     ) -> list[User]:
-        pass
+        query = select(User)
+
+        if pagination.order is SortOrder.ASC:
+            query = query.order_by(users_table.c.created_at.asc())
+        else:
+            query = query.order_by(users_table.c.created_at.desc())
+
+        if pagination.offset is not None:
+            query = query.offset(pagination.offset)
+        if pagination.limit is not None:
+            query = query.offset(pagination.limit)
+
+        if filters.roles is not None and filters.roles:
+            query = query.where(users_table.c.role.in_(filters.roles))
+
+        result = await self.session.scalars(query)
+
+        return list(result.all())
 
     async def total_users(
             self,
             filters: GetUsersFilters
-    ):
-        pass
+    ) -> int:
+        query = select(func.count(users_table.c.user_id))
+
+        if filters.roles is not None and filters.roles:
+            query = query.where(users_table.c.role.in_(filters.roles))
+
+        total: int = await self.session.scalar(query)
+
+        return total

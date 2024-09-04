@@ -2,12 +2,9 @@ from abc import ABC, abstractmethod
 
 from aiogram.types import KeyboardButton, ReplyKeyboardMarkup
 
-from entities.user.models.user import RoleName
+from entities.user.model import RoleName
 from presentation.admin.consts import (
-    CREATE_NEW_SHOP_TXT, CREATE_ORDER_BTN_TXT,
-    GOODS_BTN_TEXT,
-    MY_ORDERS_BTN_TXT,
-    PROFILE_BTN_TXT,
+    CREATE_NEW_SHOP_TXT, GOODS_BTN_TEXT,
     STAFF_BTN_TXT
 )
 

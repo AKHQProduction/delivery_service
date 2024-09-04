@@ -11,9 +11,9 @@ from dishka.integrations.aiogram_dialog import inject
 from magic_filter import MagicFilter
 
 from application.common.dto import Pagination
-from application.user.gateways.user import GetUsersFilters
+from application.user.gateway import GetUsersFilters
 from application.user.interactors.get_users import GetUsers, GetUsersDTO
-from entities.user.models.user import RoleName, UserId
+from entities.user.model import RoleName, UserId
 from presentation.admin.consts import STAFF_BTN_TXT
 from presentation.admin.handlers.admin.staff.main import states
 from presentation.admin.handlers.admin.staff.add_user_to_staff.states import (
@@ -105,7 +105,7 @@ staff_workflow_dialog = Dialog(
                                         "{item.full_name} | {item.role.value}"
                                 ),
                                 items="user",
-                                item_id_getter=lambda item: item.user_id.value,
+                                item_id_getter=lambda item: item.user_id,
                                 type_factory=lambda item: UserId(int(item)),
                                 on_click=on_selected_user_from_staff
                         ),

@@ -1,7 +1,7 @@
 from abc import abstractmethod
 from asyncio import Protocol
 
-from entities.shop.models.value_objects import ShopToken
+from entities.shop.value_objects import ShopToken
 
 
 class TokenVerifier(Protocol):

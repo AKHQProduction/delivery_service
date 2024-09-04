@@ -1,8 +1,7 @@
 from abc import abstractmethod
 from asyncio import Protocol
 
-from entities.shop.models.entity import Shop, ShopId
-from entities.shop.models.value_objects import ShopTitle
+from entities.shop.model import Shop, ShopId
 
 
 class ShopReader(Protocol):

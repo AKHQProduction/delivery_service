@@ -8,11 +8,11 @@ from application.common.specification import Specification
 from application.shop.gateway import ShopSaver
 from application.shop.token_verifier import TokenVerifier
 from application.specs.has_role import HasRoleSpec
-from application.user.gateways.user import UserSaver
+from application.user.gateway import UserSaver
 from application.errors.access import AccessDeniedError
-from entities.shop.models.entity import Shop, ShopId
-from entities.shop.models.value_objects import ShopTitle, ShopToken
-from entities.user.models.user import RoleName
+from entities.shop.model import Shop, ShopId
+from entities.shop.value_objects import ShopTitle, ShopToken
+from entities.user.model import RoleName
 
 
 @dataclass(frozen=True)

@@ -16,7 +16,7 @@ from dishka import FromDishka
 from dishka.integrations.aiogram_dialog import inject
 
 from application.user.interactors.change_user_role import ChangeUserRole, ChangeUserRoleDTO
-from entities.user.models.user import RoleName
+from entities.user.model import RoleName
 from presentation.admin.dialogs.getters.user import get_user_getter
 from presentation.admin.dialogs.widgets.user.user_card import user_card
 from . import states

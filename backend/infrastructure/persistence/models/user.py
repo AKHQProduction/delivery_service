@@ -7,7 +7,7 @@ from sqlalchemy import (
     Boolean
 )
 
-from entities.user.models.user import RoleName, User
+from entities.user.model import RoleName, User
 from infrastructure.persistence.models.base import (
     created_at_column,
     mapper_registry,

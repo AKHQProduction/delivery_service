@@ -2,8 +2,8 @@ from dataclasses import dataclass, field
 from datetime import datetime
 from typing import NewType
 
-from entities.shop.models.value_objects import ShopTitle, ShopToken
-from entities.user.models.user import UserId
+from entities.shop.value_objects import ShopTitle, ShopToken
+from entities.user.model import UserId
 
 ShopId = NewType("ShopId", int)
 

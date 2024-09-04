@@ -1,11 +1,11 @@
 import logging
 from dataclasses import dataclass
 
-from application.user.gateways.user import UserSaver, UserReader
+from application.user.gateway import UserSaver, UserReader
 from application.common.identity_provider import IdentityProvider
 from application.common.interactor import Interactor
 from application.common.commiter import Commiter
-from entities.user.models.user import User, UserId
+from entities.user.model import User, UserId
 
 
 @dataclass(frozen=True)

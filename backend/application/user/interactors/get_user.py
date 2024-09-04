@@ -1,20 +1,27 @@
 import logging
 from dataclasses import dataclass
 
-from application.user.gateways.user import UserReader
+from application.user.gateway import UserReader
 from application.common.identity_provider import IdentityProvider
 from application.common.interactor import Interactor
 from application.common.specification import Specification
-from application.user.dto.user import UserDTO
 from application.errors.access import AccessDeniedError
-from application.user.errors.user import UserIsNotExistError
+from application.user.errors import UserIsNotExistError
 from application.specs.has_role import HasRoleSpec
-from entities.user.models.user import RoleName, UserId
+from entities.user.model import RoleName, UserId
 
 
 @dataclass(frozen=True)
 class GetUserInputDTO:
     user_id: int
+
+
+@dataclass(frozen=True)
+class UserDTO:
+    user_id: int
+    full_name: str
+    username: str | None
+    phone_number: str | None
 
 
 class GetUser(Interactor[GetUserInputDTO, UserDTO]):

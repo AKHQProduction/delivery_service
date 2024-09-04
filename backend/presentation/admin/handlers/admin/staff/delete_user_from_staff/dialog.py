@@ -8,7 +8,7 @@ from dishka import FromDishka
 from dishka.integrations.aiogram_dialog import inject
 
 from application.user.interactors.change_user_role import ChangeUserRole, ChangeUserRoleDTO
-from entities.user.models.user import RoleName
+from entities.user.model import RoleName
 from .states import DeleteUserFromStaff
 from presentation.admin.handlers.admin.staff.main.states import StaffWorkflow
 

@@ -5,8 +5,11 @@ from aiogram_dialog import DialogManager
 from dishka import FromDishka
 from dishka.integrations.aiogram_dialog import inject
 
-from application.user.dto.user import UserDTO
-from application.user.interactors.get_user import GetUser, GetUserInputDTO
+from application.user.interactors.get_user import (
+    GetUser,
+    GetUserInputDTO,
+    UserDTO
+)
 
 
 @inject
