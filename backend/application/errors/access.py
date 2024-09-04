@@ -1,7 +1,7 @@
-from application.common.errors.base import ApplicationError
+from entities.common.errors.base import DomainError
 
 
-class AccessDeniedError(ApplicationError):
+class AccessDeniedError(DomainError):
     @property
     def message(self):
         return "Access denied"

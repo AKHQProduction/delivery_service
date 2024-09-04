@@ -1,4 +1,4 @@
-from application.common.errors.base import ApplicationError
+from application.common.error import ApplicationError
 
 
 class GatewayError(ApplicationError):

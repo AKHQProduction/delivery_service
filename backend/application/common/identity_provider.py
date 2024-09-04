@@ -1,7 +1,7 @@
 from abc import abstractmethod
 from asyncio import Protocol
 
-from domain.user.entity.user import RoleName, User
+from entities.user.models.user import RoleName, User
 
 
 class IdentityProvider(Protocol):

@@ -16,6 +16,6 @@ async def user_profile(
 
     await msg.answer(
             "👤 <b>Ваш профіль</b> \n\n"
-            f"🆔 <b>Ваш ID:</b> <code>{user.user_id.to_raw()}</code> \n"
+            f"🆔 <b>Ваш ID:</b> <code>{user.user_id}</code> \n"
             f"📞 <b>Ваш номер телефона:</b> {user.phone_number}"
     )

@@ -9,7 +9,7 @@ from application.errors.access import AccessDeniedError
 from application.user.errors.user import RoleAlreadyAssignedError
 from application.specs.has_role import HasRoleSpec
 from application.common.specification import Specification
-from domain.user.entity.user import RoleName, UserId
+from entities.user.models.user import RoleName, UserId
 
 
 @dataclass(frozen=True)

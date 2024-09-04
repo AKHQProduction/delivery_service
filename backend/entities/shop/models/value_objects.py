@@ -1,7 +1,7 @@
 import re
 from dataclasses import dataclass
 
-from domain.shop.entity.errors import (
+from entities.shop.models.errors import (
     InvalidBotTokenError,
     ShopTitleTooLongError,
     ShopTitleTooShortError

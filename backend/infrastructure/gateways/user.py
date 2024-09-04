@@ -12,7 +12,7 @@ from application.user.gateways.user import (
 )
 from application.errors.gateway import GatewayError
 from application.user.errors.user import UserAlreadyExistsError
-from domain.user.entity.user import User, UserId
+from entities.user.models.user import User, UserId
 from infrastructure.persistence.models.user import users_table
 
 
@@ -27,7 +27,7 @@ class InMemoryUserGateway(UserReader, UserSaver):
         user_in_memory = self._get_from_memory(user.user_id)
 
         if user_in_memory:
-            raise UserAlreadyExistsError(user.user_id.to_raw())
+            raise UserAlreadyExistsError(user.user_id)
 
         self.users[user.user_id] = user
 

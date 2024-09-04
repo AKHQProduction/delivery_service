@@ -5,7 +5,7 @@ from application.user.gateways.user import UserSaver, UserReader
 from application.common.identity_provider import IdentityProvider
 from application.common.interactor import Interactor
 from application.common.commiter import Commiter
-from domain.user.entity.user import User, UserId
+from entities.user.models.user import User, UserId
 
 
 @dataclass(frozen=True)

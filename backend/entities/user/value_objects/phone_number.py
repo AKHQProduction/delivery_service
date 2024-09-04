@@ -1,7 +1,7 @@
 import re
 
-from domain.common.value_objects.base import ValueObject
-from domain.user.errors.user import InvalidPhoneNumberError
+from entities.common.value_objects.base import ValueObject
+from entities.user.errors.user import InvalidPhoneNumberError
 
 
 class PhoneNumber(ValueObject[str]):

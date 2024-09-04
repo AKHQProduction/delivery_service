@@ -13,7 +13,7 @@ from magic_filter import MagicFilter
 from application.common.dto import Pagination
 from application.user.gateways.user import GetUsersFilters
 from application.user.interactors.get_users import GetUsers, GetUsersDTO
-from domain.user.entity.user import RoleName, UserId
+from entities.user.models.user import RoleName, UserId
 from presentation.admin.consts import STAFF_BTN_TXT
 from presentation.admin.handlers.admin.staff.main import states
 from presentation.admin.handlers.admin.staff.add_user_to_staff.states import (
