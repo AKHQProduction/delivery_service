@@ -15,6 +15,7 @@ from dishka.integrations.aiogram import setup_dishka
 
 from entrypoint.config import Config, load_config
 from infrastructure.bootstrap.di import setup_di
+from infrastructure.persistence.models import map_tables
 from presentation.admin.handlers.setup import setup_all
 
 
@@ -108,6 +109,8 @@ def main():
             shop_bot_token=config.tg_bot.shop_bot_token
     )
     setup_application(app, shop_dp)
+
+    map_tables()
 
     web.run_app(
             app,

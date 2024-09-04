@@ -9,8 +9,7 @@ from application.user.dto.user import UserDTO
 from application.errors.access import AccessDeniedError
 from application.user.errors.user import UserIsNotExistError
 from application.specs.has_role import HasRoleSpec
-from domain.user.entity.user import RoleName
-from domain.user.value_objects.user_id import UserId
+from domain.user.entity.user import RoleName, UserId
 
 
 @dataclass(frozen=True)

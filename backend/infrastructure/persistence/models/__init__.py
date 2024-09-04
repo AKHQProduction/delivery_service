@@ -1,7 +1,9 @@
-from .base import Base
-from .user import UserORM
+from .base import mapper_registry
+from .user import User
+from .map import map_tables
 
 __all__ = [
-    "Base",
-    "UserORM"
+    "mapper_registry",
+    "map_tables",
+    "User"
 ]

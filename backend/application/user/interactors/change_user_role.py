@@ -9,8 +9,7 @@ from application.errors.access import AccessDeniedError
 from application.user.errors.user import RoleAlreadyAssignedError
 from application.specs.has_role import HasRoleSpec
 from application.common.specification import Specification
-from domain.user.entity.user import RoleName
-from domain.user.value_objects.user_id import UserId
+from domain.user.entity.user import RoleName, UserId
 
 
 @dataclass(frozen=True)
@@ -48,10 +47,9 @@ class ChangeUserRole(Interactor[ChangeUserRoleDTO, None]):
 
         user.role = data.role
 
-        await self._user_saver.update(user)
         await self._commiter.commit()
 
         logging.info(
-                f"User {user.user_id.to_raw()} role "
+                f"User {user.user_id} role "
                 f"successfully update to {data.role}"
         )

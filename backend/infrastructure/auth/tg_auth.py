@@ -1,7 +1,6 @@
 from application.user.gateways.user import UserReader
 from application.common.identity_provider import IdentityProvider
-from domain.user.entity.user import RoleName, User
-from domain.user.value_objects.user_id import UserId
+from domain.user.entity.user import RoleName, User, UserId
 
 
 class TgIdentityProvider(IdentityProvider):

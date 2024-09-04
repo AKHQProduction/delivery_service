@@ -1,30 +1,61 @@
-import sqlalchemy as sa
+from sqlalchemy import (
+    Column,
+    Table,
+    BigInteger,
+    String,
+    Enum,
+    Boolean
+)
 
-from sqlalchemy.orm import Mapped, mapped_column
+from domain.user.entity.user import RoleName, User
+from infrastructure.persistence.models.base import (
+    created_at_column,
+    mapper_registry,
+    updated_at_column
+)
 
-from domain.user.entity.user import RoleName
-from infrastructure.persistence.models.base import Base
-from infrastructure.persistence.models.mixins import UpdatedAtMixin
+users_table = Table(
+        "users",
+        mapper_registry.metadata,
+        Column(
+                "user_id",
+                BigInteger,
+                primary_key=True,
+                unique=True,
+        ),
+        Column(
+                "full_name",
+                String(128),
+                nullable=False
+        ),
+        Column(
+                "username",
+                String(255),
+                nullable=True,
+                default=None,
+        ),
+        Column(
+                "phone_number",
+                String(12),
+                nullable=True,
+                default=None
+        ),
+        Column(
+                "role",
+                Enum(RoleName),
+                default=RoleName.USER,
+                nullable=False
+        ),
+        Column(
+                "is_active",
+                Boolean,
+                default=True,
+                nullable=False
+        ),
+        created_at_column,
+        updated_at_column
+)
 
 
-class UserORM(Base, UpdatedAtMixin):
-    __tablename__ = "users"
-
-    user_id: Mapped[int] = mapped_column(
-            sa.BigInteger, unique=True, primary_key=True, index=True
-    )
-    full_name: Mapped[str] = mapped_column(sa.String(128), nullable=False)
-    username: Mapped[str] = mapped_column(
-            sa.String(255), nullable=True, default=None, index=True
-    )
-    phone_number: Mapped[str] = mapped_column(
-            sa.String(12), nullable=True, default=None
-    )
-
-    role: Mapped[RoleName] = mapped_column(
-            sa.Enum(RoleName), default=RoleName.USER, nullable=False
-    )
-
-    is_active: Mapped[bool] = mapped_column(
-            sa.Boolean, default=True, nullable=False
-    )
+def map_users_table():
+    mapper_registry.map_imperatively(User, users_table)
