@@ -2,7 +2,6 @@ from abc import ABC, abstractmethod
 
 from aiogram.types import KeyboardButton, ReplyKeyboardMarkup
 
-from entities.user.model import RoleName
 from presentation.admin.consts import (
     CREATE_NEW_SHOP_TXT, GOODS_BTN_TEXT,
     STAFF_BTN_TXT
@@ -46,10 +45,7 @@ class MainReplyKeyboard:
     def __init__(
             self,
     ):
-        self._keyboards = {
-            RoleName.USER: UserKeyboard(),
-            RoleName.ADMIN: AdminKeyboard()
-        }
+        pass
 
     async def render_keyboard(self) -> ReplyKeyboardMarkup:
         return UserKeyboard().render_keyboard()

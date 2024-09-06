@@ -9,7 +9,7 @@ from application.common.interactor import Interactor
 from application.common.specification import Specification
 from application.errors.access import AccessDeniedError
 from application.specs.has_role import HasRoleSpec
-from entities.user.model import RoleName, User
+from entities.user.models import User
 
 
 @dataclass(frozen=True)
@@ -35,17 +35,6 @@ class GetUsers(Interactor[GetUsersDTO, GetUsersResultDTO]):
 
     async def __call__(self, data: GetUsersDTO) -> GetUsersResultDTO:
         actor = await self._id_provider.get_user()
-
-        rule: Specification = (
-                HasRoleSpec(RoleName.ADMIN) or HasRoleSpec(RoleName.MANAGER)
-        )
-
-        if not rule.is_satisfied_by(actor.role):
-            logging.info(
-                    "GetUsers: access denied to user with role %s",
-                    actor.role
-            )
-            raise AccessDeniedError()
 
         total_users: int = await asyncio.create_task(
                 self._user_reader.total_users(data.filters)

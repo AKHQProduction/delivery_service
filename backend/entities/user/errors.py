@@ -10,3 +10,12 @@ class InvalidPhoneNumberError(DomainError, ValueError):
     @property
     def message(self):
         return f"Invalid phone number {self.phone_number}"
+
+
+@dataclass(eq=False)
+class UserIsNotActiveError(DomainError):
+    user_id: int
+
+    @property
+    def message(self):
+        return f"User with id={self.user_id} is not active"

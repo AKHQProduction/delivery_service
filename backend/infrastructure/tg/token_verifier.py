@@ -2,7 +2,7 @@ from aiogram import Bot
 from aiogram.exceptions import TelegramUnauthorizedError
 
 from application.shop.errors import ShopTokenUnauthorizedError
-from application.shop.token_verifier import TokenVerifier
+from entities.common.token_verifier import TokenVerifier
 from entities.shop.value_objects import ShopToken
 
 

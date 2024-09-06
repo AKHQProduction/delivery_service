@@ -13,7 +13,7 @@ from magic_filter import MagicFilter
 from application.common.dto import Pagination
 from application.user.gateway import GetUsersFilters
 from application.user.interactors.get_users import GetUsers, GetUsersDTO
-from entities.user.model import RoleName, UserId
+from entities.user.models import UserId
 from presentation.admin.consts import STAFF_BTN_TXT
 from presentation.admin.handlers.admin.staff.main import states
 from presentation.admin.handlers.admin.staff.add_user_to_staff.states import (
@@ -48,11 +48,7 @@ async def get_user_from_staff(
             GetUsersDTO(
                     pagination=Pagination(),
                     filters=GetUsersFilters(
-                            roles=[
-                                RoleName.ADMIN,
-                                RoleName.MANAGER,
-                                RoleName.DRIVER
-                            ]
+
                     )
             )
     )

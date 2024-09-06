@@ -1,7 +1,7 @@
 import sqlalchemy as sa
 from sqlalchemy.orm import relationship
 
-from entities.user.model import RoleName, User
+from entities.user.models import User
 from infrastructure.persistence.models import mapper_registry
 from infrastructure.persistence.models.associations import (
     association_between_shops_and_users

@@ -3,12 +3,12 @@ from dataclasses import dataclass
 from typing import Protocol
 
 from application.common.dto import Pagination
-from entities.user.model import RoleName, User, UserId
+from entities.user.models import User, UserId
 
 
 @dataclass(frozen=True)
 class GetUsersFilters:
-    roles: list[RoleName] | None = None
+    pass
 
 
 class UserReader(Protocol):

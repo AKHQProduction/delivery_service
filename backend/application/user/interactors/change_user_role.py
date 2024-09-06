@@ -9,13 +9,13 @@ from application.errors.access import AccessDeniedError
 from application.user.errors import RoleAlreadyAssignedError
 from application.specs.has_role import HasRoleSpec
 from application.common.specification import Specification
-from entities.user.model import RoleName, UserId
+from entities.user.models import UserId
 
 
 @dataclass(frozen=True)
 class ChangeUserRoleDTO:
     user_id: int
-    role: RoleName
+    role: None
 
 
 class ChangeUserRole(Interactor[ChangeUserRoleDTO, None]):

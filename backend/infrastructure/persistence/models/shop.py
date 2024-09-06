@@ -1,7 +1,7 @@
 import sqlalchemy as sa
 from sqlalchemy.orm import composite, relationship
 
-from entities.shop.model import Shop
+from entities.shop.models import Shop
 from entities.shop.value_objects import RegularDaysOff, ShopTitle, ShopToken
 from infrastructure.persistence.models import mapper_registry
 from infrastructure.persistence.models.associations import (
@@ -60,7 +60,8 @@ def map_shops_table() -> None:
                 "users": relationship(
                         "User",
                         secondary=association_between_shops_and_users,
-                        back_populates="shops"
+                        back_populates="shops",
+                        lazy="selectin"
                 ),
                 "title": composite(
                         ShopTitle,

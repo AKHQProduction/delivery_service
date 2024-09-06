@@ -10,8 +10,8 @@ from application.errors.access import AccessDeniedError
 from application.shop.errors import ShopIsNotExistsError
 from application.shop.gateway import ShopReader
 from application.specs.has_role import HasRoleSpec
-from entities.shop.model import ShopId
-from entities.user.model import RoleName
+from entities.shop.models import ShopId
+from entities.user.models import RoleName
 
 
 @dataclass(frozen=True)

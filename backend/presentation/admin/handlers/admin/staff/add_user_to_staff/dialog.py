@@ -15,8 +15,10 @@ from aiogram_dialog.widgets.text import Const, Format, Multi
 from dishka import FromDishka
 from dishka.integrations.aiogram_dialog import inject
 
-from application.user.interactors.change_user_role import ChangeUserRole, ChangeUserRoleDTO
-from entities.user.model import RoleName
+from application.user.interactors.change_user_role import (
+    ChangeUserRole,
+    ChangeUserRoleDTO
+)
 from presentation.admin.dialogs.getters.user import get_user_getter
 from presentation.admin.dialogs.widgets.user.user_card import user_card
 from . import states
@@ -35,14 +37,9 @@ async def on_success_input_user_id(
 
 
 async def get_actual_staff_roles(**_kwargs) -> dict[str, Any]:
-    roles = [
-        ("manager", RoleName.MANAGER.value, RoleName.MANAGER.value),
-        ("driver", RoleName.DRIVER.value, RoleName.DRIVER.value),
-        ("admin", RoleName.ADMIN.value, RoleName.ADMIN.value),
-    ]
 
     return {
-        "roles": roles
+        "roles": None
     }
 
 
@@ -50,9 +47,8 @@ async def on_role_selected(
         _: CallbackQuery,
         __: Select,
         manager: DialogManager,
-        role: RoleName,
 ) -> None:
-    manager.dialog_data["role"] = role
+    manager.dialog_data["role"] = None
 
     await manager.next()
 
@@ -65,12 +61,11 @@ async def on_role_confirmed(
         action: FromDishka[ChangeUserRole]
 ):
     user_id: int = manager.dialog_data["user_id"]
-    role: RoleName = manager.dialog_data["role"]
 
     await action(
             ChangeUserRoleDTO(
                     user_id=user_id,
-                    role=role
+                    role=None
             )
     )
 
@@ -102,7 +97,7 @@ add_user_to_staff_dialog = Dialog(
                                 id="select_user_role",
                                 items="roles",
                                 item_id_getter=operator.itemgetter(2),
-                                type_factory=RoleName,
+                                type_factory=int,
                                 on_click=on_role_selected
                         ),
                         width=2

@@ -4,14 +4,11 @@ from dataclasses import dataclass, field
 from application.common.commiter import Commiter
 from application.common.identity_provider import IdentityProvider
 from application.common.interactor import Interactor
-from application.common.specification import Specification
 from application.shop.errors import ShopIsNotExistsError
 from application.shop.gateway import ShopReader
-from application.specs.has_role import HasRoleSpec
-from application.errors.access import AccessDeniedError
-from entities.shop.model import ShopId
+
+from entities.shop.models import ShopId
 from entities.shop.value_objects import RegularDaysOff
-from entities.user.model import RoleName
 
 
 @dataclass(frozen=True)
@@ -25,14 +22,14 @@ class ChangeRegularDaysOff(Interactor[ChangeRegularDaysOffDTO, None]):
             self,
             identity_provider: IdentityProvider,
             shop_reader: ShopReader,
-            commiter: Commiter
+            commiter: Commiter,
     ) -> None:
         self._identity_provider = identity_provider
         self._shop_reader = shop_reader
         self._commiter = commiter
 
     async def __call__(self, data: ChangeRegularDaysOffDTO) -> None:
-        user = await self._identity_provider.get_user()
+        # user = await self._identity_provider.get_user()
 
         shop = await self._shop_reader.by_id(ShopId(data.shop_id))
 

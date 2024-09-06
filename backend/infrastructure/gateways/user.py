@@ -11,7 +11,7 @@ from application.user.gateway import (
     UserReader
 )
 from application.user.errors import UserAlreadyExistsError
-from entities.user.model import User, UserId
+from entities.user.models import User, UserId
 from infrastructure.persistence.models.user import users_table
 
 

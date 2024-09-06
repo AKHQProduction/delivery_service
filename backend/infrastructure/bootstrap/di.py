@@ -14,7 +14,7 @@ from application.shop.interactors.change_regular_days_off import (
     ChangeRegularDaysOff
 )
 from application.shop.interactors.create_shop import CreateShop
-from application.shop.token_verifier import TokenVerifier
+from entities.common.token_verifier import TokenVerifier
 from application.user.interactors.bot_start import BotStart
 from application.user.interactors.change_user_role import ChangeUserRole
 from application.user.gateway import UserReader, UserSaver
@@ -22,9 +22,10 @@ from application.common.commiter import Commiter
 from application.common.identity_provider import IdentityProvider
 from application.user.interactors.get_user import GetUser
 from application.user.interactors.get_users import GetUsers
+from entities.shop.services import ShopService
 from infrastructure.auth.tg_auth import TgIdentityProvider
 from infrastructure.bootstrap.configs import load_all_configs
-from infrastructure.gateways.shop import InMemoryShopGateway, ShopGateway
+from infrastructure.gateways.shop import ShopGateway
 from infrastructure.gateways.user import UserGateway
 from infrastructure.geopy.config import GeoConfig
 from infrastructure.geopy.geopy_processor import GeoProcessor, PyGeoProcessor
@@ -94,6 +95,14 @@ def interactor_provider() -> Provider:
     return provider
 
 
+def service_provider() -> Provider:
+    provider = Provider()
+
+    provider.provide(ShopService, scope=Scope.REQUEST)
+
+    return provider
+
+
 def infrastructure_provider() -> Provider:
     provider = Provider()
 
@@ -151,6 +160,7 @@ def setup_providers() -> list[Provider]:
         interactor_provider(),
         db_provider(),
         geo_provider(),
+        service_provider(),
         infrastructure_provider(),
         config_provider(),
     ]

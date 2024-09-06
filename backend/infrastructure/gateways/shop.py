@@ -4,7 +4,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from application.shop.errors import UserHasAlreadyCreatedShop
 from application.shop.gateway import ShopReader, ShopSaver
-from entities.shop.model import Shop, ShopId
+from entities.shop.models import Shop, ShopId
 from infrastructure.persistence.models.shop import shops_table
 
 
@@ -31,8 +31,7 @@ class ShopGateway(ShopSaver, ShopReader):
             self.session.add(shop)
         except IntegrityError:
             raise UserHasAlreadyCreatedShop(
-                    shop_id=shop.shop_id,
-                    user_id=shop.user_id
+                    shop_id=shop.shop_id
             )
 
     async def by_id(self, shop_id: ShopId) -> Shop | None:
