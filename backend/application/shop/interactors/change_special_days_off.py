@@ -32,17 +32,6 @@ class ChangeRegularDaysOff(Interactor[ChangeRegularDaysOffDTO, None]):
         self._commiter = commiter
 
     async def __call__(self, data: ChangeRegularDaysOffDTO) -> None:
-        user = await self._identity_provider.get_user()
-
-        rule: Specification = HasRoleSpec(RoleName.ADMIN)
-
-        if not rule.is_satisfied_by(user.role):
-            logging.info(
-                    "ChangeSpecialDaysOff: access denied for user with "
-                    f"id={user.user_id}"
-            )
-            raise AccessDeniedError()
-
         shop = await self._shop_reader.by_id(ShopId(data.shop_id))
 
         if not shop:

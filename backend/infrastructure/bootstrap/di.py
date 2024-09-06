@@ -16,7 +16,6 @@ from application.shop.interactors.change_regular_days_off import (
 from application.shop.interactors.create_shop import CreateShop
 from entities.common.token_verifier import TokenVerifier
 from application.user.interactors.bot_start import BotStart
-from application.user.interactors.change_user_role import ChangeUserRole
 from application.user.gateway import UserReader, UserSaver
 from application.common.commiter import Commiter
 from application.common.identity_provider import IdentityProvider
@@ -86,7 +85,6 @@ def interactor_provider() -> Provider:
     provider = Provider()
 
     provider.provide(BotStart, scope=Scope.REQUEST)
-    provider.provide(ChangeUserRole, scope=Scope.REQUEST)
     provider.provide(GetUser, scope=Scope.REQUEST)
     provider.provide(GetUsers, scope=Scope.REQUEST)
     provider.provide(CreateShop, scope=Scope.REQUEST)

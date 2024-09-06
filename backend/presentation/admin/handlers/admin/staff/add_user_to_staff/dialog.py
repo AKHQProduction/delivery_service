@@ -15,10 +15,6 @@ from aiogram_dialog.widgets.text import Const, Format, Multi
 from dishka import FromDishka
 from dishka.integrations.aiogram_dialog import inject
 
-from application.user.interactors.change_user_role import (
-    ChangeUserRole,
-    ChangeUserRoleDTO
-)
 from presentation.admin.dialogs.getters.user import get_user_getter
 from presentation.admin.dialogs.widgets.user.user_card import user_card
 from . import states
@@ -58,16 +54,8 @@ async def on_role_confirmed(
         call: CallbackQuery,
         _: Cancel,
         manager: DialogManager,
-        action: FromDishka[ChangeUserRole]
 ):
     user_id: int = manager.dialog_data["user_id"]
-
-    await action(
-            ChangeUserRoleDTO(
-                    user_id=user_id,
-                    role=None
-            )
-    )
 
     await call.answer("✅ Ви успішно додали співробітника")
 

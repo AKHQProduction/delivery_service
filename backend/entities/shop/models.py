@@ -3,7 +3,7 @@ from datetime import datetime
 from typing import NewType
 
 from entities.shop.value_objects import RegularDaysOff, ShopTitle, ShopToken
-from entities.user.models import User, UserId
+from entities.user.models import User
 
 ShopId = NewType("ShopId", int)
 

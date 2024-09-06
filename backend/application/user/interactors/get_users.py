@@ -34,8 +34,6 @@ class GetUsers(Interactor[GetUsersDTO, GetUsersResultDTO]):
         self._id_provider = id_provider
 
     async def __call__(self, data: GetUsersDTO) -> GetUsersResultDTO:
-        actor = await self._id_provider.get_user()
-
         total_users: int = await asyncio.create_task(
                 self._user_reader.total_users(data.filters)
         )

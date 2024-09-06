@@ -21,7 +21,6 @@ class UserDTO:
     user_id: int
     full_name: str
     username: str | None
-    phone_number: str | None
 
 
 class GetUser(Interactor[GetUserInputDTO, UserDTO]):
@@ -34,8 +33,6 @@ class GetUser(Interactor[GetUserInputDTO, UserDTO]):
         self._id_provider = id_provider
 
     async def __call__(self, data: GetUserInputDTO) -> UserDTO:
-        actor = await self._id_provider.get_user()
-
         user_id = UserId(data.user_id)
 
         user = await self._user_reader.by_id(user_id)
@@ -56,5 +53,4 @@ class GetUser(Interactor[GetUserInputDTO, UserDTO]):
                 user_id=user_id,
                 full_name=user.full_name,
                 username=user.username,
-                phone_number=user.phone_number
         )

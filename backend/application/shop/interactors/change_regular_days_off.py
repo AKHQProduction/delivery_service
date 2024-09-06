@@ -29,8 +29,6 @@ class ChangeRegularDaysOff(Interactor[ChangeRegularDaysOffDTO, None]):
         self._commiter = commiter
 
     async def __call__(self, data: ChangeRegularDaysOffDTO) -> None:
-        # user = await self._identity_provider.get_user()
-
         shop = await self._shop_reader.by_id(ShopId(data.shop_id))
 
         if not shop:

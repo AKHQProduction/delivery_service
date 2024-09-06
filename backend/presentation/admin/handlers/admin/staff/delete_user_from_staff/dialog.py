@@ -7,10 +7,6 @@ from aiogram_dialog.widgets.text import Const
 from dishka import FromDishka
 from dishka.integrations.aiogram_dialog import inject
 
-from application.user.interactors.change_user_role import (
-    ChangeUserRole,
-    ChangeUserRoleDTO
-)
 from .states import DeleteUserFromStaff
 from presentation.admin.handlers.admin.staff.main.states import StaffWorkflow
 
@@ -27,16 +23,8 @@ async def handle_change_role_to_user(
         call: CallbackQuery,
         _: Cancel,
         manager: DialogManager,
-        action: FromDishka[ChangeUserRole]
 ):
     user_id: int = manager.dialog_data["user_id"]
-
-    await action(
-            ChangeUserRoleDTO(
-                    user_id=user_id,
-                    role=None
-            )
-    )
 
     await call.answer("✅ Ви успішно видалили співробітника")
 

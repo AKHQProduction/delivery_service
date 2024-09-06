@@ -4,7 +4,6 @@ from aiogram.types import Message
 from dishka import FromDishka
 
 from application.user.interactors.bot_start import BotStart, BotStartDTO
-from application.common.identity_provider import IdentityProvider
 from presentation.admin.keyboards.main_reply import MainReplyKeyboard
 
 router = Router()
@@ -14,7 +13,6 @@ router = Router()
 async def cmd_start(
         msg: Message,
         action: FromDishka[BotStart],
-        id_provider: FromDishka[IdentityProvider],
 ):
     user_id: int = msg.from_user.id
     full_name: str = msg.from_user.full_name
