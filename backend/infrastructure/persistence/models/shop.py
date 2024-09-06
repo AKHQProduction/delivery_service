@@ -63,6 +63,11 @@ def map_shops_table() -> None:
                         back_populates="shops",
                         lazy="selectin"
                 ),
+                "employees": relationship(
+                        "Employee",
+                        back_populates="shop",
+                        cascade="all, delete-orphan"
+                ),
                 "title": composite(
                         ShopTitle,
                         shops_table.c.shop_title

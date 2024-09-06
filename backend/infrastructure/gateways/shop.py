@@ -2,7 +2,9 @@ from sqlalchemy import select
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from application.shop.errors import UserHasAlreadyCreatedShop
+from application.shop.errors import (
+    ShopAlreadyExistsError
+)
 from application.shop.gateway import ShopReader, ShopSaver
 from entities.shop.models import Shop, ShopId
 from infrastructure.persistence.models.shop import shops_table
@@ -27,12 +29,12 @@ class ShopGateway(ShopSaver, ShopReader):
         self.session: AsyncSession = session
 
     async def save(self, shop: Shop) -> None:
+        self.session.add(shop)
+
         try:
-            self.session.add(shop)
+            await self.session.flush()
         except IntegrityError:
-            raise UserHasAlreadyCreatedShop(
-                    shop_id=shop.shop_id
-            )
+            raise ShopAlreadyExistsError(shop_id=shop.shop_id)
 
     async def by_id(self, shop_id: ShopId) -> Shop | None:
         query = select(Shop).where(shops_table.c.shop_id == shop_id)

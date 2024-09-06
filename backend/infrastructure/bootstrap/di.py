@@ -9,6 +9,7 @@ from dishka import (
     provide
 )
 
+from application.employee.gateway import EmployeeSaver
 from application.shop.gateway import ShopReader, ShopSaver
 from application.shop.interactors.change_regular_days_off import (
     ChangeRegularDaysOff
@@ -24,6 +25,7 @@ from application.user.interactors.get_users import GetUsers
 from entities.shop.services import ShopService
 from infrastructure.auth.tg_auth import TgIdentityProvider
 from infrastructure.bootstrap.configs import load_all_configs
+from infrastructure.gateways.employee import EmployeeGateway
 from infrastructure.gateways.shop import ShopGateway
 from infrastructure.gateways.user import UserGateway
 from infrastructure.geopy.config import GeoConfig
@@ -52,6 +54,12 @@ def gateway_provider() -> Provider:
             ShopGateway,
             scope=Scope.REQUEST,
             provides=AnyOf[ShopReader, ShopSaver]
+    )
+
+    provider.provide(
+            EmployeeGateway,
+            scope=Scope.REQUEST,
+            provides=AnyOf[EmployeeSaver]
     )
 
     provider.provide(

@@ -20,8 +20,10 @@ class UserGateway(UserReader, UserSaver):
         self.session: AsyncSession = session
 
     async def save(self, user: User) -> None:
+        self.session.add(user)
+
         try:
-            self.session.add(user)
+            await self.session.flush()
         except IntegrityError:
             raise UserAlreadyExistsError(user.user_id)
 

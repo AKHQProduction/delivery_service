@@ -4,8 +4,10 @@ from dataclasses import dataclass, field
 from application.common.commiter import Commiter
 from application.common.identity_provider import IdentityProvider
 from application.common.interactor import Interactor
+from application.employee.gateway import EmployeeSaver
 from application.shop.gateway import ShopSaver
 from application.user.gateway import UserSaver
+from entities.employee.models import Employee, EmployeeRole
 from entities.shop.models import ShopId
 from entities.shop.services import ShopService
 
@@ -23,6 +25,7 @@ class CreateShop(Interactor[CreateShopDTO, ShopId]):
             self,
             shop_saver: ShopSaver,
             user_saver: UserSaver,
+            employee_saver: EmployeeSaver,
             commiter: Commiter,
             identity_provider: IdentityProvider,
             shop_service: ShopService
@@ -30,6 +33,7 @@ class CreateShop(Interactor[CreateShopDTO, ShopId]):
     ) -> None:
         self._shop_saver = shop_saver
         self._user_saver = user_saver
+        self._employee_saver = employee_saver
         self._commiter = commiter
         self._identity_provider = identity_provider
         self._shop_service = shop_service
@@ -46,11 +50,19 @@ class CreateShop(Interactor[CreateShopDTO, ShopId]):
         )
 
         await self._shop_saver.save(shop)
+        await self._employee_saver.save(
+                Employee(
+                        employee_id=None,
+                        user_id=user.user_id,
+                        shop_id=shop.shop_id,
+                        role=EmployeeRole.ADMIN
+                )
+        )
+
         await self._commiter.commit()
 
-        logging.info(f"CreateShop: New shop created with id={data.shop_id}")
         logging.info(
-                f"CreateShop: Add user={user.user_id} to shop={shop.shop_id}"
+                f"CreateShop: User={user.user_id} created shop={shop.shop_id}"
         )
 
         return shop.shop_id

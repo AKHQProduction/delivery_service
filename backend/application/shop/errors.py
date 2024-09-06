@@ -28,3 +28,12 @@ class ShopIsNotExistsError(ApplicationError):
     @property
     def message(self):
         return f"Shop with id={self.shop_id} is not exists"
+
+
+@dataclass(eq=False)
+class ShopAlreadyExistsError(ApplicationError):
+    shop_id: int
+
+    @property
+    def message(self):
+        return f"Shop with id={self.shop_id} already exists"

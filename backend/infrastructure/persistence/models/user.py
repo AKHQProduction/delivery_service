@@ -59,6 +59,11 @@ def map_users_table() -> None:
                         "Shop",
                         secondary=association_between_shops_and_users,
                         back_populates="users",
+                ),
+                "employees": relationship(
+                        "Employee",
+                        back_populates="user",
+                        cascade="all, delete-orphan"
                 )
             }
     )

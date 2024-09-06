@@ -1,6 +1,6 @@
 from application.user.gateway import UserReader
 from application.common.identity_provider import IdentityProvider
-from entities.user.model import User, UserId
+from entities.user.models import User, UserId
 
 
 class TgIdentityProvider(IdentityProvider):

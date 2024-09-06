@@ -16,7 +16,7 @@ class EmployeeRole(StrEnum):
 
 @dataclass
 class Employee:
-    employee_id: EmployeeId
+    employee_id: EmployeeId | None
     user_id: UserId
     shop_id: ShopId
     role: EmployeeRole
