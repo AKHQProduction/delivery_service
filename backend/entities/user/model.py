@@ -20,7 +20,5 @@ UserId = NewType("UserId", int)
 class User:
     user_id: UserId
     full_name: str
-    role: RoleName = RoleName.USER
     username: str | None = None
-    phone_number: PhoneNumber | None = None
     is_active: bool = True

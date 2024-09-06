@@ -10,6 +10,7 @@ from application.shop.gateway import ShopReader
 from application.specs.has_role import HasRoleSpec
 from application.errors.access import AccessDeniedError
 from entities.shop.model import ShopId
+from entities.shop.value_objects import RegularDaysOff
 from entities.user.model import RoleName
 
 
@@ -33,21 +34,12 @@ class ChangeRegularDaysOff(Interactor[ChangeRegularDaysOffDTO, None]):
     async def __call__(self, data: ChangeRegularDaysOffDTO) -> None:
         user = await self._identity_provider.get_user()
 
-        rule: Specification = HasRoleSpec(RoleName.ADMIN)
-
-        if not rule.is_satisfied_by(user.role):
-            logging.info(
-                    "ChangeRegularDaysOff: access denied for user with "
-                    f"id={user.user_id}"
-            )
-            raise AccessDeniedError()
-
         shop = await self._shop_reader.by_id(ShopId(data.shop_id))
 
         if not shop:
             raise ShopIsNotExistsError(data.shop_id)
 
-        shop.regular_days_off = data.regular_days_off
+        shop.regular_days_off = RegularDaysOff(data.regular_days_off)
 
         await self._commiter.commit()
 

@@ -28,11 +28,9 @@ async def cmd_start(
             )
     )
 
-    actor = await id_provider.get_user()
-
     await msg.answer(
             text=f"Hello, {full_name}",
             reply_markup=(
-                await MainReplyKeyboard(actor.role).render_keyboard()
+                await MainReplyKeyboard().render_keyboard()
             )
     )

@@ -24,8 +24,8 @@ from application.user.interactors.get_user import GetUser
 from application.user.interactors.get_users import GetUsers
 from infrastructure.auth.tg_auth import TgIdentityProvider
 from infrastructure.bootstrap.configs import load_all_configs
-from infrastructure.gateways.shop import InMemoryShopGateway
-from infrastructure.gateways.user import PostgreUserGateway
+from infrastructure.gateways.shop import InMemoryShopGateway, ShopGateway
+from infrastructure.gateways.user import UserGateway
 from infrastructure.geopy.config import GeoConfig
 from infrastructure.geopy.geopy_processor import GeoProcessor, PyGeoProcessor
 from infrastructure.geopy.provider import get_geolocator
@@ -43,14 +43,14 @@ def gateway_provider() -> Provider:
     provider = Provider()
 
     provider.provide(
-            PostgreUserGateway,
+            UserGateway,
             scope=Scope.REQUEST,
             provides=AnyOf[UserReader, UserSaver]
     )
 
     provider.provide(
-            InMemoryShopGateway,
-            scope=Scope.APP,
+            ShopGateway,
+            scope=Scope.REQUEST,
             provides=AnyOf[ShopReader, ShopSaver]
     )
 

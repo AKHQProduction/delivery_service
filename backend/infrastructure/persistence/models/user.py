@@ -1,61 +1,64 @@
-from sqlalchemy import (
-    Column,
-    Table,
-    BigInteger,
-    String,
-    Enum,
-    Boolean
-)
+import sqlalchemy as sa
+from sqlalchemy.orm import relationship
 
 from entities.user.model import RoleName, User
-from infrastructure.persistence.models.base import (
-    created_at_column,
-    mapper_registry,
-    updated_at_column
+from infrastructure.persistence.models import mapper_registry
+from infrastructure.persistence.models.associations import (
+    association_between_shops_and_users
 )
 
-users_table = Table(
+users_table = sa.Table(
         "users",
         mapper_registry.metadata,
-        Column(
+        sa.Column(
                 "user_id",
-                BigInteger,
+                sa.BigInteger,
                 primary_key=True,
                 unique=True,
         ),
-        Column(
+        sa.Column(
                 "full_name",
-                String(128),
+                sa.String(128),
                 nullable=False
         ),
-        Column(
+        sa.Column(
                 "username",
-                String(255),
+                sa.String(255),
                 nullable=True,
                 default=None,
         ),
-        Column(
-                "phone_number",
-                String(12),
-                nullable=True,
-                default=None
-        ),
-        Column(
-                "role",
-                Enum(RoleName),
-                default=RoleName.USER,
-                nullable=False
-        ),
-        Column(
+        sa.Column(
                 "is_active",
-                Boolean,
+                sa.Boolean,
                 default=True,
                 nullable=False
         ),
-        created_at_column,
-        updated_at_column
+        sa.Column(
+                "created_at",
+                sa.DateTime,
+                default=sa.func.now(),
+                server_default=sa.func.now()
+        ),
+        sa.Column(
+                "updated_at",
+                sa.DateTime,
+                default=sa.func.now(),
+                server_default=sa.func.now(),
+                onupdate=sa.func.now(),
+                server_onupdate=sa.func.now(),
+        )
 )
 
 
-def map_users_table():
-    mapper_registry.map_imperatively(User, users_table)
+def map_users_table() -> None:
+    mapper_registry.map_imperatively(
+            User,
+            users_table,
+            properties={
+                "shops": relationship(
+                        "Shop",
+                        secondary=association_between_shops_and_users,
+                        back_populates="users",
+                )
+            }
+    )

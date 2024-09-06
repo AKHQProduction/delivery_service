@@ -33,5 +33,5 @@ async def create_new_shop_btn(
     )
 
     await change_regular_days_off(
-            ChangeRegularDaysOffDTO(shop_id=bot_id, regular_days_off=[1, 2])
+            ChangeRegularDaysOffDTO(shop_id=bot_id, regular_days_off=[5, 2])
     )

@@ -1,6 +1,8 @@
 from dataclasses import dataclass
 import os
 
+from environs import Env
+
 
 @dataclass
 class BaseDBConfig:
@@ -24,11 +26,14 @@ class AlembicDBConfig(BaseDBConfig):
 
 
 def load_alembic_config() -> AlembicDBConfig:
+    env = Env()
+    env.read_env(".env")
+
     config = AlembicDBConfig(
-            host=os.getenv("DB_HOST"),
-            db_name=os.getenv("POSTGRES_DB"),
-            user=os.getenv("POSTGRES_USER"),
-            password=os.getenv("POSTGRES_PASSWORD"),
+            host=env.str("DB_HOST"),
+            db_name=env.str("POSTGRES_DB"),
+            user=env.str("POSTGRES_USER"),
+            password=env.str("POSTGRES_PASSWORD"),
     )
 
     return config

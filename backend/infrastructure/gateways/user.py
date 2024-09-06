@@ -15,15 +15,15 @@ from entities.user.model import User, UserId
 from infrastructure.persistence.models.user import users_table
 
 
-class PostgreUserGateway(UserReader, UserSaver):
+class UserGateway(UserReader, UserSaver):
     def __init__(self, session: AsyncSession) -> None:
         self.session: AsyncSession = session
 
     async def save(self, user: User) -> None:
         try:
             self.session.add(user)
-        except IntegrityError as err:
-            raise UserAlreadyExistsError(user.user_id) from err
+        except IntegrityError:
+            raise UserAlreadyExistsError(user.user_id)
 
     async def by_id(self, user_id: UserId) -> User | None:
         query = select(User).where(users_table.c.user_id == user_id)
@@ -60,7 +60,7 @@ class PostgreUserGateway(UserReader, UserSaver):
             self,
             filters: GetUsersFilters
     ) -> int:
-        query = select(func.count(users_table.c.user_id))
+        query = select(func.count(User))
 
         if filters.roles is not None and filters.roles:
             query = query.where(users_table.c.role.in_(filters.roles))

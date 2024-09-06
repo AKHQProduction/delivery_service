@@ -28,3 +28,11 @@ class ShopTitleTooLongError(DomainError):
     @property
     def message(self):
         return f"Shop title is too long, value - {self.title}"
+
+
+@dataclass(eq=False)
+class InvalidRegularDayOffError(DomainError):
+
+    @property
+    def message(self):
+        return f"The day must be between 0 and 6"

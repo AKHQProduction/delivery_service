@@ -1,9 +1,11 @@
 from .base import mapper_registry
-from .user import User
 from .map import map_tables
+from .user import User
+from .shop import Shop
 
 __all__ = [
     "mapper_registry",
     "map_tables",
-    "User"
+    "User",
+    "Shop"
 ]

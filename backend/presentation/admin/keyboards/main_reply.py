@@ -45,15 +45,11 @@ class UserKeyboard(IKeyboardByRole):
 class MainReplyKeyboard:
     def __init__(
             self,
-            role: RoleName,
     ):
-        self._role = role
         self._keyboards = {
             RoleName.USER: UserKeyboard(),
             RoleName.ADMIN: AdminKeyboard()
         }
 
     async def render_keyboard(self) -> ReplyKeyboardMarkup:
-        keyboard: IKeyboardByRole = self._keyboards.get(self._role)
-
-        return keyboard.render_keyboard()
+        return UserKeyboard().render_keyboard()

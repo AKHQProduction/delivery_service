@@ -6,10 +6,11 @@ from application.common.error import ApplicationError
 @dataclass(eq=False)
 class UserHasAlreadyCreatedShop(ApplicationError):
     user_id: int
+    shop_id: int
 
     @property
     def message(self):
-        return f"User {self.user_id} already has shop"
+        return f"User {self.user_id} already has shop={self.shop_id}"
 
 
 @dataclass(eq=False)

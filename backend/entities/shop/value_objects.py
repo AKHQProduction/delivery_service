@@ -1,8 +1,9 @@
 import re
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 
 from entities.shop.errors import (
     InvalidBotTokenError,
+    InvalidRegularDayOffError,
     ShopTitleTooLongError,
     ShopTitleTooShortError
 )
@@ -31,3 +32,12 @@ class ShopTitle:
 
         if len_value >= 20:
             ShopTitleTooLongError(self.title)
+
+
+@dataclass(slots=True, frozen=True, eq=True, unsafe_hash=True)
+class RegularDaysOff:
+    days: list[int] = field(default_factory=list)
+
+    def __post_init__(self) -> None:
+        if any(day < 0 or day > 6 for day in self.days):
+            raise InvalidRegularDayOffError()
