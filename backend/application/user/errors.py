@@ -13,7 +13,7 @@ class UserIsNotExistError(ApplicationError):
 
 
 @dataclass(eq=False)
-class UserAlreadyExistsError(ApplicationError):
+class UserAlreadyExistError(ApplicationError):
     user_id: int
 
     @property

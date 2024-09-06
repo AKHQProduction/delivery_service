@@ -4,15 +4,6 @@ from application.common.error import ApplicationError
 
 
 @dataclass(eq=False)
-class UserHasAlreadyCreatedShop(ApplicationError):
-    shop_id: int
-
-    @property
-    def message(self):
-        return f"User already has shop={self.shop_id}"
-
-
-@dataclass(eq=False)
 class ShopTokenUnauthorizedError(ApplicationError):
     token: str
 
@@ -22,7 +13,7 @@ class ShopTokenUnauthorizedError(ApplicationError):
 
 
 @dataclass(eq=False)
-class ShopIsNotExistsError(ApplicationError):
+class ShopIsNotExistError(ApplicationError):
     shop_id: int
 
     @property
@@ -31,7 +22,7 @@ class ShopIsNotExistsError(ApplicationError):
 
 
 @dataclass(eq=False)
-class ShopAlreadyExistsError(ApplicationError):
+class ShopAlreadyExistError(ApplicationError):
     shop_id: int
 
     @property
