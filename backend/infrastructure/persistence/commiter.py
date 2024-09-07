@@ -9,9 +9,3 @@ class SACommiter(Commiter):
 
     async def commit(self) -> None:
         await self.session.commit()
-
-    async def rollback(self) -> None:
-        await self.session.rollback()
-
-    async def flush(self) -> None:
-        await self.session.flush()

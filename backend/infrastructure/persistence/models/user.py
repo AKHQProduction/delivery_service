@@ -1,32 +1,69 @@
-from enum import Enum
-
 import sqlalchemy as sa
+from sqlalchemy.orm import relationship
 
-from sqlalchemy.orm import Mapped, mapped_column, relationship
+from entities.user.models import User
+from infrastructure.persistence.models import mapper_registry
+from infrastructure.persistence.models.associations import (
+    association_between_shops_and_users
+)
 
-from domain.entities.user import RoleName
-from infrastructure.persistence.models.base import Base
-from infrastructure.persistence.models.mixins import UpdatedAtMixin
+users_table = sa.Table(
+        "users",
+        mapper_registry.metadata,
+        sa.Column(
+                "user_id",
+                sa.BigInteger,
+                primary_key=True,
+                unique=True,
+        ),
+        sa.Column(
+                "full_name",
+                sa.String(128),
+                nullable=False
+        ),
+        sa.Column(
+                "username",
+                sa.String(255),
+                nullable=True,
+                default=None,
+        ),
+        sa.Column(
+                "is_active",
+                sa.Boolean,
+                default=True,
+                nullable=False
+        ),
+        sa.Column(
+                "created_at",
+                sa.DateTime,
+                default=sa.func.now(),
+                server_default=sa.func.now()
+        ),
+        sa.Column(
+                "updated_at",
+                sa.DateTime,
+                default=sa.func.now(),
+                server_default=sa.func.now(),
+                onupdate=sa.func.now(),
+                server_onupdate=sa.func.now(),
+        )
+)
 
 
-class UserORM(Base, UpdatedAtMixin):
-    __tablename__ = "users"
-
-    user_id: Mapped[int] = mapped_column(
-            sa.BigInteger, unique=True, primary_key=True, index=True
-    )
-    full_name: Mapped[str] = mapped_column(sa.String(128), nullable=False)
-    username: Mapped[str] = mapped_column(
-            sa.String(255), nullable=True, default=None, index=True
-    )
-    phone_number: Mapped[str] = mapped_column(
-            sa.String(12), nullable=True, default=None
-    )
-
-    role: Mapped[RoleName] = mapped_column(
-            sa.Enum(RoleName), default=RoleName.USER, nullable=False
-    )
-
-    is_active: Mapped[bool] = mapped_column(
-            sa.Boolean, default=True, nullable=False
+def map_users_table() -> None:
+    mapper_registry.map_imperatively(
+            User,
+            users_table,
+            properties={
+                "shops": relationship(
+                        "Shop",
+                        secondary=association_between_shops_and_users,
+                        back_populates="users",
+                ),
+                "employees": relationship(
+                        "Employee",
+                        back_populates="user",
+                        cascade="all, delete-orphan"
+                )
+            }
     )

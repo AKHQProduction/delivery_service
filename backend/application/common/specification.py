@@ -29,9 +29,8 @@ class _MultipleCompositeSpecification(_CompositeSpecification, ABC):
 class _And(_MultipleCompositeSpecification):
     def __and__(self, other: Specification):
         if isinstance(other, _And):
-            self.specifications += other.specifications
-        else:
-            self.specifications += (other,)
+            return _And(*self.specifications, *other.specifications)
+        return _And(*self.specifications, other)
 
     def is_satisfied_by(self, candidate: Any) -> bool:
         return all(
@@ -43,9 +42,8 @@ class _And(_MultipleCompositeSpecification):
 class _Or(_MultipleCompositeSpecification):
     def __or__(self, other: Specification):
         if isinstance(other, _Or):
-            self.specifications += other.specifications
-        else:
-            self.specifications += (other,)
+            return _Or(*self.specifications, *other.specifications)
+        return _Or(*self.specifications, other)
 
     def is_satisfied_by(self, candidate: Any) -> bool:
         return any(

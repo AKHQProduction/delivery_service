@@ -33,5 +33,13 @@ services:
       retries: 10
       start_period: 3s
 
+  ngrok:
+    image: ngrok/ngrok:latest
+    restart: unless-stopped
+    environment:
+      - NGROK_CONFIG=/etc/ngrok.yml
+    volumes:
+      - ./ngrok.yml:/etc/ngrok.yml
+
 volumes:
   pg_data:

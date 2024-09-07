@@ -3,13 +3,15 @@ import asyncio
 from logging.config import fileConfig
 
 from sqlalchemy import pool
+from sqlalchemy.orm import clear_mappers
 from sqlalchemy.engine import Connection
 from sqlalchemy.ext.asyncio import async_engine_from_config
 
 from alembic import context
 
 from infrastructure.persistence.config import load_alembic_config
-from infrastructure.persistence.models import Base
+from infrastructure.persistence.models import mapper_registry
+from infrastructure.persistence.models import map_tables
 
 # this is the Alembic Config object, which provides
 # access to the values within the .ini file in use.
@@ -24,7 +26,9 @@ if config.config_file_name is not None:
 # for 'autogenerate' support
 # from myapp import mymodel
 # target_metadata = mymodel.Base.metadata
-target_metadata = Base.metadata
+target_metadata = mapper_registry.metadata
+clear_mappers()
+map_tables()
 
 
 def get_url() -> str:
@@ -54,10 +58,10 @@ def run_migrations_offline() -> None:
     url = get_url()
 
     context.configure(
-        url=url,
-        target_metadata=target_metadata,
-        literal_binds=True,
-        dialect_opts={"paramstyle": "named"},
+            url=url,
+            target_metadata=target_metadata,
+            literal_binds=True,
+            dialect_opts={"paramstyle": "named"},
     )
 
     with context.begin_transaction():
@@ -81,9 +85,9 @@ async def run_async_migrations() -> None:
     configuration["sqlalchemy.url"] = get_url()
 
     connectable = async_engine_from_config(
-        configuration,
-        prefix="sqlalchemy.",
-        poolclass=pool.NullPool,
+            configuration,
+            prefix="sqlalchemy.",
+            poolclass=pool.NullPool,
     )
 
     async with connectable.connect() as connection:

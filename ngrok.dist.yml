@@ -1,0 +1,7 @@
+version: 2
+authtoken:
+tunnels:
+  first:
+    addr: localhost:port
+    proto: http
+    hostname:

@@ -1,7 +1,6 @@
-from application.common.gateways.user import UserReader
+from application.user.gateway import UserReader
 from application.common.identity_provider import IdentityProvider
-from domain.entities.user import RoleName, User
-from domain.value_objects.user_id import UserId
+from entities.user.models import User, UserId
 
 
 class TgIdentityProvider(IdentityProvider):
@@ -15,8 +14,3 @@ class TgIdentityProvider(IdentityProvider):
 
     async def get_user(self) -> User:
         return await self._user_gateway.by_id(UserId(self._user_id))
-
-    async def get_user_role(self) -> RoleName:
-        user = await self.get_user()
-
-        return user.role
