@@ -1,7 +1,13 @@
-from entities.common.errors import DomainError
+from dataclasses import dataclass
+
+from application.common.error import ApplicationError
 
 
-class AccessDeniedError(DomainError):
+@dataclass(eq=False)
+class AccessDeniedError(ApplicationError):
+
     @property
     def message(self):
-        return "Access denied"
+        return (
+            "You do not have permission."
+        )

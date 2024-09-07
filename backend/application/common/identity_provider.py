@@ -9,7 +9,3 @@ class IdentityProvider(Protocol):
     @abstractmethod
     async def get_user(self) -> User:
         raise NotImplementedError
-
-    @abstractmethod
-    async def get_role(self) -> EmployeeRole | None:
-        raise NotImplementedError

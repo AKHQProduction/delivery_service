@@ -42,9 +42,9 @@ class CreateShop(Interactor[CreateShopRequestData, ShopId]):
         self._access_service = access_service
 
     async def __call__(self, data: CreateShopRequestData) -> ShopId:
-        await self._access_service.ensure_can_create_shop()
-
         user = await self._identity_provider.get_user()
+
+        await self._access_service.ensure_can_create_shop(user)
 
         shop = await self._shop_service.create_shop(
                 user,
