@@ -1,6 +1,7 @@
 import logging
 from dataclasses import dataclass, field
 
+from application.common.access_service import AccessService
 from application.common.commiter import Commiter
 from application.common.identity_provider import IdentityProvider
 from application.common.interactor import Interactor
@@ -13,14 +14,14 @@ from entities.shop.services import ShopService
 
 
 @dataclass(frozen=True)
-class CreateShopDTO:
+class CreateShopRequestData:
     shop_id: int
     title: str
     token: str
     regular_days_off: list[int] = field(default_factory=list)
 
 
-class CreateShop(Interactor[CreateShopDTO, ShopId]):
+class CreateShop(Interactor[CreateShopRequestData, ShopId]):
     def __init__(
             self,
             shop_saver: ShopSaver,
@@ -28,7 +29,8 @@ class CreateShop(Interactor[CreateShopDTO, ShopId]):
             employee_saver: EmployeeSaver,
             commiter: Commiter,
             identity_provider: IdentityProvider,
-            shop_service: ShopService
+            shop_service: ShopService,
+            access_service: AccessService
 
     ) -> None:
         self._shop_saver = shop_saver
@@ -37,8 +39,11 @@ class CreateShop(Interactor[CreateShopDTO, ShopId]):
         self._commiter = commiter
         self._identity_provider = identity_provider
         self._shop_service = shop_service
+        self._access_service = access_service
 
-    async def __call__(self, data: CreateShopDTO) -> ShopId:
+    async def __call__(self, data: CreateShopRequestData) -> ShopId:
+        await self._access_service.ensure_can_create_shop()
+
         user = await self._identity_provider.get_user()
 
         shop = await self._shop_service.create_shop(

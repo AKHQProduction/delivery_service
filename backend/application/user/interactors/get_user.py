@@ -4,26 +4,23 @@ from dataclasses import dataclass
 from application.user.gateway import UserReader
 from application.common.identity_provider import IdentityProvider
 from application.common.interactor import Interactor
-from application.common.specification import Specification
-from application.errors.access import AccessDeniedError
 from application.user.errors import UserIsNotExistError
-from application.specs.has_role import HasRoleSpec
 from entities.user.models import UserId
 
 
 @dataclass(frozen=True)
-class GetUserInputDTO:
+class GetUserRequestData:
     user_id: int
 
 
 @dataclass(frozen=True)
-class UserDTO:
+class UserResponseData:
     user_id: int
     full_name: str
     username: str | None
 
 
-class GetUser(Interactor[GetUserInputDTO, UserDTO]):
+class GetUser(Interactor[GetUserRequestData, UserResponseData]):
     def __init__(
             self,
             user_reader: UserReader,
@@ -32,7 +29,7 @@ class GetUser(Interactor[GetUserInputDTO, UserDTO]):
         self._user_reader = user_reader
         self._id_provider = id_provider
 
-    async def __call__(self, data: GetUserInputDTO) -> UserDTO:
+    async def __call__(self, data: GetUserRequestData) -> UserResponseData:
         user_id = UserId(data.user_id)
 
         user = await self._user_reader.by_id(user_id)
@@ -49,7 +46,7 @@ class GetUser(Interactor[GetUserInputDTO, UserDTO]):
                 user_id
         )
 
-        return UserDTO(
+        return UserResponseData(
                 user_id=user_id,
                 full_name=user.full_name,
                 username=user.username,

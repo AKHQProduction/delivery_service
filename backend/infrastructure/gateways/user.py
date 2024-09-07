@@ -4,13 +4,13 @@ from sqlalchemy import func, select
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from application.common.dto import Pagination, SortOrder
+from application.common.request_data import Pagination, SortOrder
 from application.user.gateway import (
     GetUsersFilters,
     UserSaver,
     UserReader
 )
-from application.user.errors import UserAlreadyExistsError
+from application.user.errors import UserAlreadyExistError
 from entities.user.models import User, UserId
 from infrastructure.persistence.models.user import users_table
 
@@ -25,7 +25,7 @@ class UserGateway(UserReader, UserSaver):
         try:
             await self.session.flush()
         except IntegrityError:
-            raise UserAlreadyExistsError(user.user_id)
+            raise UserAlreadyExistError(user.user_id)
 
     async def by_id(self, user_id: UserId) -> User | None:
         query = select(User).where(users_table.c.user_id == user_id)

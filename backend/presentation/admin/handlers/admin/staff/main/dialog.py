@@ -10,9 +10,12 @@ from dishka import FromDishka
 from dishka.integrations.aiogram_dialog import inject
 from magic_filter import MagicFilter
 
-from application.common.dto import Pagination
+from application.common.request_data import Pagination
 from application.user.gateway import GetUsersFilters
-from application.user.interactors.get_users import GetUsers, GetUsersDTO
+from application.user.interactors.get_users import (
+    GetUsers,
+    GetUsersRequestData
+)
 from entities.user.models import UserId
 from presentation.admin.consts import STAFF_BTN_TXT
 from presentation.admin.handlers.admin.staff.main import states
@@ -45,7 +48,7 @@ async def get_user_from_staff(
         **_kwargs
 ) -> dict[str, Any]:
     result = await action(
-            GetUsersDTO(
+            GetUsersRequestData(
                     pagination=Pagination(),
                     filters=GetUsersFilters(
 

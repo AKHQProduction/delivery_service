@@ -2,29 +2,26 @@ import asyncio
 import logging
 from dataclasses import dataclass
 
-from application.common.dto import Pagination
+from application.common.request_data import Pagination
 from application.user.gateway import GetUsersFilters, UserReader
 from application.common.identity_provider import IdentityProvider
 from application.common.interactor import Interactor
-from application.common.specification import Specification
-from application.errors.access import AccessDeniedError
-from application.specs.has_role import HasRoleSpec
 from entities.user.models import User
 
 
 @dataclass(frozen=True)
-class GetUsersDTO:
+class GetUsersRequestData:
     pagination: Pagination
     filters: GetUsersFilters
 
 
 @dataclass
-class GetUsersResultDTO:
+class GetUsersResponseData:
     total: int
     users: list[User]
 
 
-class GetUsers(Interactor[GetUsersDTO, GetUsersResultDTO]):
+class GetUsers(Interactor[GetUsersRequestData, GetUsersResponseData]):
     def __init__(
             self,
             user_reader: UserReader,
@@ -33,7 +30,7 @@ class GetUsers(Interactor[GetUsersDTO, GetUsersResultDTO]):
         self._user_reader = user_reader
         self._id_provider = id_provider
 
-    async def __call__(self, data: GetUsersDTO) -> GetUsersResultDTO:
+    async def __call__(self, data: GetUsersRequestData) -> GetUsersResponseData:
         total_users: int = await asyncio.create_task(
                 self._user_reader.total_users(data.filters)
         )
@@ -53,4 +50,4 @@ class GetUsers(Interactor[GetUsersDTO, GetUsersResultDTO]):
                 }
         )
 
-        return GetUsersResultDTO(total=total_users, users=users)
+        return GetUsersResponseData(total=total_users, users=users)

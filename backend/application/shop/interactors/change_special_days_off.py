@@ -5,22 +5,18 @@ from datetime import datetime
 from application.common.commiter import Commiter
 from application.common.identity_provider import IdentityProvider
 from application.common.interactor import Interactor
-from application.common.specification import Specification
-from application.errors.access import AccessDeniedError
-from application.shop.errors import ShopIsNotExistsError
+from application.shop.errors import ShopIsNotExistError
 from application.shop.gateway import ShopReader
-from application.specs.has_role import HasRoleSpec
 from entities.shop.models import ShopId
-from entities.user.models import RoleName
 
 
 @dataclass(frozen=True)
-class ChangeRegularDaysOffDTO:
+class ChangeRegularDaysOffRequestData:
     shop_id: int
     special_days_off: list[datetime] = field(default_factory=list)
 
 
-class ChangeRegularDaysOff(Interactor[ChangeRegularDaysOffDTO, None]):
+class ChangeRegularDaysOff(Interactor[ChangeRegularDaysOffRequestData, None]):
     def __init__(
             self,
             identity_provider: IdentityProvider,
@@ -31,11 +27,11 @@ class ChangeRegularDaysOff(Interactor[ChangeRegularDaysOffDTO, None]):
         self._shop_reader = shop_reader
         self._commiter = commiter
 
-    async def __call__(self, data: ChangeRegularDaysOffDTO) -> None:
+    async def __call__(self, data: ChangeRegularDaysOffRequestData) -> None:
         shop = await self._shop_reader.by_id(ShopId(data.shop_id))
 
         if not shop:
-            raise ShopIsNotExistsError(data.shop_id)
+            raise ShopIsNotExistError(data.shop_id)
 
         shop.special_days_off = data.special_days_off
 

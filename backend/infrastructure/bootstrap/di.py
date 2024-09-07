@@ -9,7 +9,8 @@ from dishka import (
     provide
 )
 
-from application.employee.gateway import EmployeeSaver
+from application.common.access_service import AccessService
+from application.employee.gateway import EmployeeReader, EmployeeSaver
 from application.shop.gateway import ShopReader, ShopSaver
 from application.shop.interactors.change_regular_days_off import (
     ChangeRegularDaysOff
@@ -59,7 +60,7 @@ def gateway_provider() -> Provider:
     provider.provide(
             EmployeeGateway,
             scope=Scope.REQUEST,
-            provides=AnyOf[EmployeeSaver]
+            provides=AnyOf[EmployeeReader, EmployeeSaver]
     )
 
     provider.provide(
@@ -109,6 +110,14 @@ def service_provider() -> Provider:
     return provider
 
 
+def access_provider() -> Provider:
+    provider = Provider()
+
+    provider.provide(AccessService, scope=Scope.REQUEST)
+
+    return provider
+
+
 def infrastructure_provider() -> Provider:
     provider = Provider()
 
@@ -150,11 +159,13 @@ class TgProvider(Provider):
             self,
             user_id: int,
             user_gateway: UserReader,
+            employee_gateway: EmployeeReader
 
     ) -> IdentityProvider:
         identity_provider = TgIdentityProvider(
                 user_id=user_id,
                 user_gateway=user_gateway,
+                employee_gateway=employee_gateway
         )
 
         return identity_provider
@@ -167,6 +178,7 @@ def setup_providers() -> list[Provider]:
         db_provider(),
         geo_provider(),
         service_provider(),
+        access_provider(),
         infrastructure_provider(),
         config_provider(),
     ]

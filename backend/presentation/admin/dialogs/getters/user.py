@@ -7,8 +7,8 @@ from dishka.integrations.aiogram_dialog import inject
 
 from application.user.interactors.get_user import (
     GetUser,
-    GetUserInputDTO,
-    UserDTO
+    GetUserRequestData,
+    UserResponseData
 )
 
 
@@ -20,7 +20,7 @@ async def get_user_getter(
 ) -> dict[str, Any]:
     user_id = dialog_manager.dialog_data["user_id"]
 
-    user: UserDTO = await action(GetUserInputDTO(user_id=user_id))
+    user: UserResponseData = await action(GetUserRequestData(user_id=user_id))
 
     return {
         "user": asdict(user)

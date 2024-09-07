@@ -3,7 +3,7 @@ from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from application.shop.errors import (
-    ShopAlreadyExistsError
+    ShopAlreadyExistError
 )
 from application.shop.gateway import ShopReader, ShopSaver
 from entities.shop.models import Shop, ShopId
@@ -34,7 +34,7 @@ class ShopGateway(ShopSaver, ShopReader):
         try:
             await self.session.flush()
         except IntegrityError:
-            raise ShopAlreadyExistsError(shop_id=shop.shop_id)
+            raise ShopAlreadyExistError(shop_id=shop.shop_id)
 
     async def by_id(self, shop_id: ShopId) -> Shop | None:
         query = select(Shop).where(shops_table.c.shop_id == shop_id)

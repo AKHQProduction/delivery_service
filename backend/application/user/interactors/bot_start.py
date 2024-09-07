@@ -9,13 +9,13 @@ from entities.user.models import User, UserId
 
 
 @dataclass(frozen=True)
-class BotStartDTO:
+class BotStartRequestData:
     user_id: int
     full_name: str
     username: str | None = None
 
 
-class BotStart(Interactor[BotStartDTO, UserId]):
+class BotStart(Interactor[BotStartRequestData, UserId]):
     def __init__(
             self,
             user_reader: UserReader,
@@ -28,7 +28,7 @@ class BotStart(Interactor[BotStartDTO, UserId]):
         self._commiter = commiter
         self._identity_provider = identity_provider
 
-    async def __call__(self, data: BotStartDTO) -> UserId:
+    async def __call__(self, data: BotStartRequestData) -> UserId:
         user = await self._identity_provider.get_user()
 
         if not user:

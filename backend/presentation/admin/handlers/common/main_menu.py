@@ -5,9 +5,9 @@ from dishka import FromDishka
 from application.shop.interactors.change_regular_days_off import (
 
     ChangeRegularDaysOff,
-    ChangeRegularDaysOffDTO
+    ChangeRegularDaysOffRequestData
 )
-from application.shop.interactors.create_shop import CreateShop, CreateShopDTO
+from application.shop.interactors.create_shop import CreateShop, CreateShopRequestData
 from presentation.admin.consts import (
     CREATE_NEW_SHOP_TXT
 )
@@ -25,7 +25,7 @@ async def create_new_shop_btn(
     bot_id: int = int(bot_token.split(":")[0])
 
     await create_shop(
-            CreateShopDTO(
+            CreateShopRequestData(
                     shop_id=bot_id,
                     title="TestShop",
                     token=bot_token
@@ -33,5 +33,5 @@ async def create_new_shop_btn(
     )
 
     await change_regular_days_off(
-            ChangeRegularDaysOffDTO(shop_id=bot_id, regular_days_off=[5, 2])
+            ChangeRegularDaysOffRequestData(shop_id=bot_id, regular_days_off=[5, 2])
     )
