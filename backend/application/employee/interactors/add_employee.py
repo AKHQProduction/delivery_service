@@ -3,7 +3,6 @@ from dataclasses import dataclass
 
 from application.common.access_service import AccessService
 from application.common.commiter import Commiter
-from application.common.identity_provider import IdentityProvider
 from application.common.interactor import Interactor
 from application.employee.gateway import EmployeeSaver
 from application.shop.errors import ShopIsNotExistError
@@ -26,14 +25,12 @@ class AddEmployeeRequestData:
 class AddEmployee(Interactor[AddEmployeeRequestData, None]):
     def __init__(
             self,
-            identity_provider: IdentityProvider,
             employee_saver: EmployeeSaver,
             shop_reader: ShopReader,
             user_reader: UserReader,
             access_service: AccessService,
             commiter: Commiter
     ):
-        self._identity_provider = identity_provider
         self._employee_saver = employee_saver
         self._shop_reader = shop_reader
         self._user_reader = user_reader
@@ -43,8 +40,6 @@ class AddEmployee(Interactor[AddEmployeeRequestData, None]):
     async def __call__(self, data: AddEmployeeRequestData) -> None:
         user_id = UserId(data.user_id)
         shop_id = ShopId(data.shop_id)
-
-        actor = await self._identity_provider.get_user()
 
         user = await self._user_reader.by_id(user_id)
 
@@ -56,7 +51,7 @@ class AddEmployee(Interactor[AddEmployeeRequestData, None]):
         if not shop:
             raise ShopIsNotExistError(data.shop_id)
 
-        await self._access_service.ensure_can_create_employee(shop, actor)
+        await self._access_service.ensure_can_create_employee(shop_id)
 
         await self._employee_saver.save(
                 Employee(
