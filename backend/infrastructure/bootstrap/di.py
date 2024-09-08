@@ -11,6 +11,7 @@ from dishka import (
 
 from application.common.access_service import AccessService
 from application.employee.gateway import EmployeeReader, EmployeeSaver
+from application.employee.interactors.add_employee import AddEmployee
 from application.shop.gateway import ShopReader, ShopSaver
 from application.shop.interactors.change_regular_days_off import (
     ChangeRegularDaysOff
@@ -98,6 +99,7 @@ def interactor_provider() -> Provider:
     provider.provide(GetUsers, scope=Scope.REQUEST)
     provider.provide(CreateShop, scope=Scope.REQUEST)
     provider.provide(ChangeRegularDaysOff, scope=Scope.REQUEST)
+    provider.provide(AddEmployee, scope=Scope.REQUEST)
 
     return provider
 

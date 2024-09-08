@@ -1,7 +1,6 @@
 from abc import abstractmethod
 from asyncio import Protocol
 
-from entities.employee.models import EmployeeRole
 from entities.user.models import User
 
 
