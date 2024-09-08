@@ -5,12 +5,14 @@ from application.common.access_service import AccessService
 from application.common.commiter import Commiter
 from application.common.identity_provider import IdentityProvider
 from application.common.interactor import Interactor
+from application.common.webhook_manager import WebhookManager
 from application.employee.gateway import EmployeeSaver
 from application.shop.gateway import ShopSaver
 from application.user.gateway import UserSaver
 from entities.employee.models import Employee, EmployeeRole
 from entities.shop.models import ShopId
 from entities.shop.services import ShopService
+from entities.shop.value_objects import ShopToken
 
 
 @dataclass(frozen=True)
@@ -30,6 +32,7 @@ class CreateShop(Interactor[CreateShopRequestData, ShopId]):
             commiter: Commiter,
             identity_provider: IdentityProvider,
             shop_service: ShopService,
+            webhook_manager: WebhookManager,
             access_service: AccessService
 
     ) -> None:
@@ -39,6 +42,7 @@ class CreateShop(Interactor[CreateShopRequestData, ShopId]):
         self._commiter = commiter
         self._identity_provider = identity_provider
         self._shop_service = shop_service
+        self._webhook_manager = webhook_manager
         self._access_service = access_service
 
     async def __call__(self, data: CreateShopRequestData) -> ShopId:
@@ -63,6 +67,8 @@ class CreateShop(Interactor[CreateShopRequestData, ShopId]):
                         role=EmployeeRole.ADMIN
                 )
         )
+
+        await self._webhook_manager.setup_webhook(data.token)
 
         await self._commiter.commit()
 

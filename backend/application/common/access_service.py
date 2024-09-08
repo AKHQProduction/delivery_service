@@ -1,9 +1,8 @@
 from application.common.identity_provider import IdentityProvider
 from application.employee.gateway import EmployeeReader
 from application.errors.access import AccessDeniedError
-from application.specs.has_role import HasRoleSpec
-from entities.employee.models import Employee, EmployeeRole
-from entities.shop.models import Shop, ShopId
+from entities.employee.models import EmployeeRole
+from entities.shop.models import ShopId
 from entities.user.models import User
 
 
