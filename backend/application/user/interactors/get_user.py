@@ -2,7 +2,6 @@ import logging
 from dataclasses import dataclass
 
 from application.user.gateway import UserReader
-from application.common.identity_provider import IdentityProvider
 from application.common.interactor import Interactor
 from application.user.errors import UserIsNotExistError
 from entities.user.models import UserId
@@ -24,10 +23,8 @@ class GetUser(Interactor[GetUserRequestData, UserResponseData]):
     def __init__(
             self,
             user_reader: UserReader,
-            id_provider: IdentityProvider
     ):
         self._user_reader = user_reader
-        self._id_provider = id_provider
 
     async def __call__(self, data: GetUserRequestData) -> UserResponseData:
         user_id = UserId(data.user_id)
