@@ -11,11 +11,11 @@ from entities.shop.models import ShopId
 
 
 @dataclass(frozen=True)
-class StopShopRequestData:
+class ResumeShopRequestData:
     shop_id: int
 
 
-class StopShop(Interactor[StopShopRequestData, None]):
+class ResumeShop(Interactor[ResumeShopRequestData, None]):
     def __init__(
             self,
             shop_reader: ShopReader,
@@ -29,7 +29,7 @@ class StopShop(Interactor[StopShopRequestData, None]):
         self._commiter = commiter
         self._webhook_manager = webhook_manager
 
-    async def __call__(self, data: StopShopRequestData) -> None:
+    async def __call__(self, data: ResumeShopRequestData) -> None:
         shop = await self._shop_reader.by_id(ShopId(data.shop_id))
 
         if shop is None:
@@ -37,12 +37,12 @@ class StopShop(Interactor[StopShopRequestData, None]):
 
         await self._access_service.ensure_can_edit_shop(shop.shop_id)
 
-        shop.is_active = False
+        shop.is_active = True
 
-        await self._webhook_manager.drop_webhook(shop.token.value)
+        await self._webhook_manager.setup_webhook(shop.token.value)
 
         await self._commiter.commit()
 
         logging.info(
-                f"StopShop: shop with id={shop.shop_id} messed up its work"
+                f"Resume: shop with id={shop.shop_id} resume its work"
         )
