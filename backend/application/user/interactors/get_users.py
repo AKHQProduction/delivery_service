@@ -44,7 +44,7 @@ class GetUsers(Interactor[GetUsersInputData, GetUsersOutputData]):
                 )
         )
 
-        logging.debug(
+        logging.info(
                 "Get user",
                 extra={
                     "user": users,
