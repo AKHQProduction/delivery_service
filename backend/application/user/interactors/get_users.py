@@ -30,7 +30,10 @@ class GetUsers(Interactor[GetUsersRequestData, GetUsersResponseData]):
         self._user_reader = user_reader
         self._id_provider = id_provider
 
-    async def __call__(self, data: GetUsersRequestData) -> GetUsersResponseData:
+    async def __call__(
+            self,
+            data: GetUsersRequestData
+    ) -> GetUsersResponseData:
         total_users: int = await asyncio.create_task(
                 self._user_reader.total_users(data.filters)
         )

@@ -51,9 +51,6 @@ class UserGateway(UserReader, UserSaver):
         if pagination.limit is not None:
             query = query.offset(pagination.limit)
 
-        if filters.roles is not None and filters.roles:
-            query = query.where(users_table.c.role.in_(filters.roles))
-
         result = await self.session.scalars(query)
 
         return list(result.all())
@@ -63,9 +60,6 @@ class UserGateway(UserReader, UserSaver):
             filters: GetUsersFilters
     ) -> int:
         query = select(func.count(User))
-
-        if filters.roles is not None and filters.roles:
-            query = query.where(users_table.c.role.in_(filters.roles))
 
         total: int = await self.session.scalar(query)
 
