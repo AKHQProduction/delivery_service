@@ -1,4 +1,4 @@
-from sqlalchemy import select
+from sqlalchemy import delete, select
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -42,3 +42,8 @@ class ShopGateway(ShopSaver, ShopReader):
         result = await self.session.execute(query)
 
         return result.scalar_one_or_none()
+
+    async def delete(self, shop_id: ShopId) -> None:
+        query = delete(Shop).where(shops_table.c.shop_id == shop_id)
+
+        await self.session.execute(query)

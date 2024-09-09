@@ -10,12 +10,18 @@ from dishka import (
 )
 
 from application.common.access_service import AccessService
+from application.common.webhook_manager import WebhookManager
 from application.employee.gateway import EmployeeReader, EmployeeSaver
+from application.employee.interactors.add_employee import AddEmployee
+from application.employee.interactors.remove_employee import RemoveEmployee
 from application.shop.gateway import ShopReader, ShopSaver
 from application.shop.interactors.change_regular_days_off import (
     ChangeRegularDaysOff
 )
 from application.shop.interactors.create_shop import CreateShop
+from application.shop.interactors.delete_shop import DeleteShop
+from application.shop.interactors.resume_shop import ResumeShop
+from application.shop.interactors.stop_shop import StopShop
 from entities.common.token_verifier import TokenVerifier
 from application.user.interactors.bot_start import BotStart
 from application.user.gateway import UserReader, UserSaver
@@ -39,6 +45,8 @@ from infrastructure.persistence.provider import (
     get_async_session
 )
 from infrastructure.persistence.commiter import SACommiter
+from infrastructure.tg.bot_webhook_manager import BotWebhookManager
+from infrastructure.tg.config import WebhookConfig
 from infrastructure.tg.token_verifier import TgTokenVerifier
 
 
@@ -96,8 +104,15 @@ def interactor_provider() -> Provider:
     provider.provide(BotStart, scope=Scope.REQUEST)
     provider.provide(GetUser, scope=Scope.REQUEST)
     provider.provide(GetUsers, scope=Scope.REQUEST)
+
     provider.provide(CreateShop, scope=Scope.REQUEST)
+    provider.provide(StopShop, scope=Scope.REQUEST)
+    provider.provide(ResumeShop, scope=Scope.REQUEST)
+    provider.provide(DeleteShop, scope=Scope.REQUEST)
     provider.provide(ChangeRegularDaysOff, scope=Scope.REQUEST)
+
+    provider.provide(AddEmployee, scope=Scope.REQUEST)
+    provider.provide(RemoveEmployee, scope=Scope.REQUEST)
 
     return provider
 
@@ -133,6 +148,12 @@ def infrastructure_provider() -> Provider:
             provides=TokenVerifier
     )
 
+    provider.provide(
+            BotWebhookManager,
+            scope=Scope.REQUEST,
+            provides=WebhookManager
+    )
+
     return provider
 
 
@@ -141,8 +162,15 @@ def config_provider() -> Provider:
 
     config = load_all_configs()
 
-    provider.provide(lambda: config.db, scope=Scope.APP, provides=DBConfig)
-    provider.provide(lambda: config.geo, scope=Scope.APP, provides=GeoConfig)
+    provider.provide(
+            lambda: config.db, scope=Scope.APP, provides=DBConfig
+    )
+    provider.provide(
+            lambda: config.geo, scope=Scope.APP, provides=GeoConfig
+    )
+    provider.provide(
+            lambda: config.webhook, scope=Scope.APP, provides=WebhookConfig
+    )
 
     return provider
 

@@ -1,10 +1,10 @@
-from sqlalchemy import select
+from sqlalchemy import delete, select
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from application.employee.errors import EmployeeAlreadyExistsError
 from application.employee.gateway import EmployeeReader, EmployeeSaver
-from entities.employee.models import Employee
+from entities.employee.models import Employee, EmployeeId
 from entities.user.models import UserId
 from infrastructure.persistence.models.employee import employees_table
 
@@ -27,3 +27,12 @@ class EmployeeGateway(EmployeeSaver, EmployeeReader):
         result = await self.session.execute(query)
 
         return result.scalar_one_or_none()
+
+    async def delete(self, employee_id: EmployeeId) -> None:
+        query = delete(
+                Employee
+        ).where(
+                employees_table.c.employee_id == employee_id
+        )
+
+        await self.session.execute(query)

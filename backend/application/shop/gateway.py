@@ -14,3 +14,7 @@ class ShopSaver(Protocol):
     @abstractmethod
     async def save(self, shop: Shop) -> None:
         raise NotImplementedError
+
+    @abstractmethod
+    async def delete(self, shop_id: ShopId) -> None:
+        raise NotImplementedError

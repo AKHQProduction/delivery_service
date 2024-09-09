@@ -16,6 +16,7 @@ from dishka.integrations.aiogram import setup_dishka
 from entrypoint.config import Config, load_config
 from infrastructure.bootstrap.di import setup_di
 from infrastructure.persistence.models import map_tables
+from infrastructure.tg.bot_webhook_manager import BotWebhookManager
 from presentation.admin.handlers.setup import setup_all
 
 
@@ -45,7 +46,11 @@ async def on_startup_admin_bot(
             f"{config.webhook.webhook_url}{config.webhook.webhook_admin_path}"
     )
 
-    await add_shop_bot(bot, shop_bot_token, config)
+    await BotWebhookManager(
+            config.webhook
+    ).setup_webhook(
+            config.tg_bot.shop_bot_token
+    )
 
 
 async def add_shop_bot(bot: Bot, new_bot_token: str, config: Config):
