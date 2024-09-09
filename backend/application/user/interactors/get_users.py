@@ -4,7 +4,6 @@ from dataclasses import dataclass
 
 from application.common.request_data import Pagination
 from application.user.gateway import GetUsersFilters, UserReader
-from application.common.identity_provider import IdentityProvider
 from application.common.interactor import Interactor
 from entities.user.models import User
 
@@ -25,10 +24,8 @@ class GetUsers(Interactor[GetUsersInputData, GetUsersOutputData]):
     def __init__(
             self,
             user_reader: UserReader,
-            id_provider: IdentityProvider
     ):
         self._user_reader = user_reader
-        self._id_provider = id_provider
 
     async def __call__(
             self,
