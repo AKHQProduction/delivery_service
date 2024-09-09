@@ -11,12 +11,12 @@ from entities.shop.models import ShopId
 
 
 @dataclass(frozen=True)
-class RemoveEmployeeRequestData:
+class RemoveEmployeeInputData:
     employee_id: int
     shop_id: int
 
 
-class RemoveEmployee(Interactor[RemoveEmployeeRequestData, None]):
+class RemoveEmployee(Interactor[RemoveEmployeeInputData, None]):
     def __init__(
             self,
             identity_provider: IdentityProvider,
@@ -29,7 +29,7 @@ class RemoveEmployee(Interactor[RemoveEmployeeRequestData, None]):
         self._employee_saver = employee_saver
         self._commiter = commiter
 
-    async def __call__(self, data: RemoveEmployeeRequestData) -> None:
+    async def __call__(self, data: RemoveEmployeeInputData) -> None:
         employee_id = EmployeeId(data.employee_id)
         shop_id = ShopId(data.shop_id)
 

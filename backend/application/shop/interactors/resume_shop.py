@@ -11,11 +11,11 @@ from entities.shop.models import ShopId
 
 
 @dataclass(frozen=True)
-class ResumeShopRequestData:
+class ResumeShopInputData:
     shop_id: int
 
 
-class ResumeShop(Interactor[ResumeShopRequestData, None]):
+class ResumeShop(Interactor[ResumeShopInputData, None]):
     def __init__(
             self,
             shop_reader: ShopReader,
@@ -29,7 +29,7 @@ class ResumeShop(Interactor[ResumeShopRequestData, None]):
         self._commiter = commiter
         self._webhook_manager = webhook_manager
 
-    async def __call__(self, data: ResumeShopRequestData) -> None:
+    async def __call__(self, data: ResumeShopInputData) -> None:
         shop = await self._shop_reader.by_id(ShopId(data.shop_id))
 
         if shop is None:

@@ -11,11 +11,11 @@ from entities.shop.models import ShopId
 
 
 @dataclass(frozen=True)
-class DeleteShopRequestData:
+class DeleteShopInputData:
     shop_id: int
 
 
-class DeleteShop(Interactor[DeleteShopRequestData, None]):
+class DeleteShop(Interactor[DeleteShopInputData, None]):
     def __init__(
             self,
             shop_reader: ShopReader,
@@ -31,7 +31,7 @@ class DeleteShop(Interactor[DeleteShopRequestData, None]):
         self._commiter = commiter
         self._webhook_manager = webhook_manager
 
-    async def __call__(self, data: DeleteShopRequestData) -> None:
+    async def __call__(self, data: DeleteShopInputData) -> None:
         shop_id = ShopId(data.shop_id)
 
         shop = await self._shop_reader.by_id(shop_id)

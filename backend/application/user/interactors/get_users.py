@@ -10,18 +10,18 @@ from entities.user.models import User
 
 
 @dataclass(frozen=True)
-class GetUsersRequestData:
+class GetUsersInputData:
     pagination: Pagination
     filters: GetUsersFilters
 
 
 @dataclass
-class GetUsersResponseData:
+class GetUsersOutputData:
     total: int
     users: list[User]
 
 
-class GetUsers(Interactor[GetUsersRequestData, GetUsersResponseData]):
+class GetUsers(Interactor[GetUsersInputData, GetUsersOutputData]):
     def __init__(
             self,
             user_reader: UserReader,
@@ -32,8 +32,8 @@ class GetUsers(Interactor[GetUsersRequestData, GetUsersResponseData]):
 
     async def __call__(
             self,
-            data: GetUsersRequestData
-    ) -> GetUsersResponseData:
+            data: GetUsersInputData
+    ) -> GetUsersOutputData:
         total_users: int = await asyncio.create_task(
                 self._user_reader.total_users(data.filters)
         )
@@ -53,4 +53,4 @@ class GetUsers(Interactor[GetUsersRequestData, GetUsersResponseData]):
                 }
         )
 
-        return GetUsersResponseData(total=total_users, users=users)
+        return GetUsersOutputData(total=total_users, users=users)

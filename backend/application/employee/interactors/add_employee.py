@@ -16,13 +16,13 @@ from entities.user.models import UserId
 
 
 @dataclass(frozen=True)
-class AddEmployeeRequestData:
+class AddEmployeeInputData:
     user_id: int
     shop_id: int
     role: EmployeeRole
 
 
-class AddEmployee(Interactor[AddEmployeeRequestData, None]):
+class AddEmployee(Interactor[AddEmployeeInputData, None]):
     def __init__(
             self,
             employee_saver: EmployeeSaver,
@@ -37,7 +37,7 @@ class AddEmployee(Interactor[AddEmployeeRequestData, None]):
         self._access_service = access_service
         self._commiter = commiter
 
-    async def __call__(self, data: AddEmployeeRequestData) -> None:
+    async def __call__(self, data: AddEmployeeInputData) -> None:
         user_id = UserId(data.user_id)
         shop_id = ShopId(data.shop_id)
 

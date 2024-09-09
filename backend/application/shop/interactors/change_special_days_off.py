@@ -11,12 +11,12 @@ from entities.shop.models import ShopId
 
 
 @dataclass(frozen=True)
-class ChangeRegularDaysOffRequestData:
+class ChangeRegularDaysOffInputData:
     shop_id: int
     special_days_off: list[datetime] = field(default_factory=list)
 
 
-class ChangeRegularDaysOff(Interactor[ChangeRegularDaysOffRequestData, None]):
+class ChangeRegularDaysOff(Interactor[ChangeRegularDaysOffInputData, None]):
     def __init__(
             self,
             shop_reader: ShopReader,
@@ -27,7 +27,7 @@ class ChangeRegularDaysOff(Interactor[ChangeRegularDaysOffRequestData, None]):
         self._commiter = commiter
         self._access_service = access_service
 
-    async def __call__(self, data: ChangeRegularDaysOffRequestData) -> None:
+    async def __call__(self, data: ChangeRegularDaysOffInputData) -> None:
         shop_id = ShopId(data.shop_id)
 
         shop = await self._shop_reader.by_id(shop_id)
