@@ -12,7 +12,6 @@ from application.user.gateway import UserSaver
 from entities.employee.models import Employee, EmployeeRole
 from entities.shop.models import ShopId
 from entities.shop.services import ShopService
-from entities.shop.value_objects import ShopToken
 
 
 @dataclass(frozen=True)

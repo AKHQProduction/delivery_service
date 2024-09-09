@@ -41,7 +41,7 @@ class AccessService:
             self,
             shop_id: ShopId
     ) -> None:
-        if not self._is_shop_owner(shop_id):
+        if not await self._is_shop_owner(shop_id):
             raise AccessDeniedError()
 
     async def ensure_can_create_employee(
