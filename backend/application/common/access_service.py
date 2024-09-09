@@ -44,6 +44,13 @@ class AccessService:
         if not await self._is_shop_owner(shop_id):
             raise AccessDeniedError()
 
+    async def ensure_can_delete_shop(
+            self,
+            shop_id: ShopId
+    ):
+        if not await self._is_shop_owner(shop_id):
+            raise AccessDeniedError()
+
     async def ensure_can_create_employee(
             self,
             shop_id: ShopId,

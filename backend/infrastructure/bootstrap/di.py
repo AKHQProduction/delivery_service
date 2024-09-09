@@ -19,6 +19,7 @@ from application.shop.interactors.change_regular_days_off import (
     ChangeRegularDaysOff
 )
 from application.shop.interactors.create_shop import CreateShop
+from application.shop.interactors.delete_shop import DeleteShop
 from application.shop.interactors.resume_shop import ResumeShop
 from application.shop.interactors.stop_shop import StopShop
 from entities.common.token_verifier import TokenVerifier
@@ -106,11 +107,12 @@ def interactor_provider() -> Provider:
 
     provider.provide(CreateShop, scope=Scope.REQUEST)
     provider.provide(StopShop, scope=Scope.REQUEST)
+    provider.provide(ResumeShop, scope=Scope.REQUEST)
+    provider.provide(DeleteShop, scope=Scope.REQUEST)
     provider.provide(ChangeRegularDaysOff, scope=Scope.REQUEST)
 
     provider.provide(AddEmployee, scope=Scope.REQUEST)
     provider.provide(RemoveEmployee, scope=Scope.REQUEST)
-    provider.provide(ResumeShop, scope=Scope.REQUEST)
 
     return provider
 
