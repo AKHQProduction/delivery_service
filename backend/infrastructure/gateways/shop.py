@@ -7,9 +7,8 @@ from application.shop.errors import (
 )
 from application.shop.gateway import ShopReader, ShopSaver
 from entities.shop.models import Shop, ShopId
-from entities.user.models import User, UserId
-from infrastructure.persistence.models.associations import \
-    association_between_shops_and_users
+from entities.user.models import UserId
+
 from infrastructure.persistence.models.shop import shops_table
 from infrastructure.persistence.models.user import users_table
 
