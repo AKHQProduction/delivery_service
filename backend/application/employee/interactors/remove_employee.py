@@ -6,6 +6,8 @@ from application.common.commiter import Commiter
 from application.common.identity_provider import IdentityProvider
 from application.common.interactor import Interactor
 from application.employee.gateway import EmployeeSaver
+from application.shop.errors import UserNotHaveShopError
+from application.shop.gateway import ShopReader
 from entities.employee.models import EmployeeId
 from entities.shop.models import ShopId
 
@@ -13,25 +15,33 @@ from entities.shop.models import ShopId
 @dataclass(frozen=True)
 class RemoveEmployeeInputData:
     employee_id: int
-    shop_id: int
 
 
 class RemoveEmployee(Interactor[RemoveEmployeeInputData, None]):
     def __init__(
             self,
             identity_provider: IdentityProvider,
+            shop_reader: ShopReader,
             access_service: AccessService,
             employee_saver: EmployeeSaver,
             commiter: Commiter
     ) -> None:
         self._identity_provider = identity_provider
+        self._shop_reader = shop_reader
         self._access_service = access_service
         self._employee_saver = employee_saver
         self._commiter = commiter
 
     async def __call__(self, data: RemoveEmployeeInputData) -> None:
+        actor = await self._identity_provider.get_user()
+
+        shop = await self._shop_reader.by_identity(actor.user_id)
+
+        if not shop:
+            raise UserNotHaveShopError(actor.user_id)
+
         employee_id = EmployeeId(data.employee_id)
-        shop_id = ShopId(data.shop_id)
+        shop_id = shop.shop_id
 
         await self._access_service.ensure_can_edit_employee(shop_id)
 
