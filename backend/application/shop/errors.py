@@ -22,6 +22,15 @@ class ShopIsNotExistError(ApplicationError):
 
 
 @dataclass(eq=False)
+class UserNotHaveShopError(ApplicationError):
+    user_id: int
+
+    @property
+    def message(self):
+        return f"User {self.user_id} not have shop"
+
+
+@dataclass(eq=False)
 class ShopAlreadyExistError(ApplicationError):
     shop_id: int
 

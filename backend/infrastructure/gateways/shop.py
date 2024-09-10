@@ -7,21 +7,25 @@ from application.shop.errors import (
 )
 from application.shop.gateway import ShopReader, ShopSaver
 from entities.shop.models import Shop, ShopId
+from entities.user.models import User, UserId
+from infrastructure.persistence.models.associations import \
+    association_between_shops_and_users
 from infrastructure.persistence.models.shop import shops_table
+from infrastructure.persistence.models.user import users_table
 
 
-class InMemoryShopGateway(ShopSaver, ShopReader):
-    def __init__(self):
-        self._shops: dict[int, Shop] = {}
-
-    async def by_id(self, shop_id: ShopId) -> Shop | None:
-        return self._shops.get(shop_id)
-
-    async def save(self, shop: Shop) -> None:
-        self._shops[shop.shop_id] = shop
-
-    async def update(self, shop: Shop) -> None:
-        self._shops[shop.shop_id] = shop
+# class InMemoryShopGateway(ShopSaver, ShopReader):
+#     def __init__(self):
+#         self._shops: dict[int, Shop] = {}
+#
+#     async def by_id(self, shop_id: ShopId) -> Shop | None:
+#         return self._shops.get(shop_id)
+#
+#     async def save(self, shop: Shop) -> None:
+#         self._shops[shop.shop_id] = shop
+#
+#     async def update(self, shop: Shop) -> None:
+#         self._shops[shop.shop_id] = shop
 
 
 class ShopGateway(ShopSaver, ShopReader):
@@ -38,6 +42,19 @@ class ShopGateway(ShopSaver, ShopReader):
 
     async def by_id(self, shop_id: ShopId) -> Shop | None:
         query = select(Shop).where(shops_table.c.shop_id == shop_id)
+
+        result = await self.session.execute(query)
+
+        return result.scalar_one_or_none()
+
+    async def by_identity(self, user_id: UserId) -> Shop | None:
+        query = select(
+                Shop
+        ).select_from(
+                shops_table.join(
+                        users_table, users_table.c.user_id == user_id
+                ),
+        )
 
         result = await self.session.execute(query)
 

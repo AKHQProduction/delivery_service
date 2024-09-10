@@ -1,23 +1,18 @@
 import logging
-from dataclasses import dataclass
 
 from application.common.access_service import AccessService
 from application.common.commiter import Commiter
+from application.common.identity_provider import IdentityProvider
 from application.common.interactor import Interactor
 from application.common.webhook_manager import WebhookManager
-from application.shop.errors import ShopIsNotExistError
+from application.shop.errors import UserNotHaveShopError
 from application.shop.gateway import ShopReader, ShopSaver
-from entities.shop.models import ShopId
 
 
-@dataclass(frozen=True)
-class DeleteShopInputData:
-    shop_id: int
-
-
-class DeleteShop(Interactor[DeleteShopInputData, None]):
+class DeleteShop(Interactor[None, None]):
     def __init__(
             self,
+            identity_provider: IdentityProvider,
             shop_reader: ShopReader,
             shop_saver: ShopSaver,
             access_service: AccessService,
@@ -25,19 +20,22 @@ class DeleteShop(Interactor[DeleteShopInputData, None]):
             webhook_manager: WebhookManager,
 
     ):
+        self._identity_provider = identity_provider
         self._shop_reader = shop_reader
         self._shop_saver = shop_saver
         self._access_service = access_service
         self._commiter = commiter
         self._webhook_manager = webhook_manager
 
-    async def __call__(self, data: DeleteShopInputData) -> None:
-        shop_id = ShopId(data.shop_id)
+    async def __call__(self, data: None = None) -> None:
+        actor = await self._identity_provider.get_user()
 
-        shop = await self._shop_reader.by_id(shop_id)
+        shop = await self._shop_reader.by_identity(actor.user_id)
 
         if shop is None:
-            raise ShopIsNotExistError(shop_id)
+            raise UserNotHaveShopError(actor.user_id)
+
+        shop_id = shop.shop_id
 
         await self._access_service.ensure_can_delete_shop(shop_id)
 
