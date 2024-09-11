@@ -79,6 +79,7 @@ async def test_create_shop(
         assert not employee_gateway.saved
         assert not shop_gateway.saved
         assert not webhook_manager.setup
+
     else:
         output_data = await coro
 
@@ -91,4 +92,5 @@ async def test_create_shop(
         assert employee_gateway.saved
         assert shop_gateway.saved
         assert webhook_manager.setup
+        assert shop_id in shop_gateway.shops.keys()
 
