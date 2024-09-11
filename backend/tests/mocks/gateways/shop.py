@@ -49,4 +49,6 @@ class FakeShopGateway(ShopReader, ShopSaver):
         if not shop:
             raise ShopIsNotExistError(shop_id=shop_id)
 
+        del self.shops[shop_id]
+
         self.deleted = True
