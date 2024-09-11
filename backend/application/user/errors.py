@@ -5,7 +5,7 @@ from application.common.error import ApplicationError
 
 @dataclass(eq=False)
 class UserIsNotExistError(ApplicationError):
-    user_id: int
+    user_id: int | None = None
 
     @property
     def message(self):

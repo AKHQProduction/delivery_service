@@ -14,7 +14,7 @@ from application.common.request_data import Pagination
 from application.user.gateway import GetUsersFilters
 from application.user.interactors.get_users import (
     GetUsers,
-    GetUsersRequestData
+    GetUsersInputData
 )
 from entities.user.models import UserId
 from presentation.admin.consts import STAFF_BTN_TXT
@@ -48,7 +48,7 @@ async def get_user_from_staff(
         **_kwargs
 ) -> dict[str, Any]:
     result = await action(
-            GetUsersRequestData(
+            GetUsersInputData(
                     pagination=Pagination(),
                     filters=GetUsersFilters(
 

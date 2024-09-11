@@ -2,7 +2,7 @@ from sqlalchemy import delete, select
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from application.employee.errors import EmployeeAlreadyExistsError
+from application.employee.errors import EmployeeAlreadyExistError
 from application.employee.gateway import EmployeeReader, EmployeeSaver
 from entities.employee.models import Employee, EmployeeId
 from entities.user.models import UserId
@@ -19,7 +19,7 @@ class EmployeeGateway(EmployeeSaver, EmployeeReader):
         try:
             await self.session.flush()
         except IntegrityError:
-            raise EmployeeAlreadyExistsError()
+            raise EmployeeAlreadyExistError(employee.user_id)
 
     async def by_identity(self, user_id: UserId) -> Employee | None:
         query = select(Employee).where(employees_table.c.user_id == user_id)

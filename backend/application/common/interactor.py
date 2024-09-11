@@ -1,11 +1,11 @@
 from abc import abstractmethod
 from typing import Generic, TypeVar
 
-RequestData = TypeVar("RequestData")
-ResponseData = TypeVar("ResponseData")
+InputData = TypeVar("InputData")
+OutputData = TypeVar("OutputData")
 
 
-class Interactor(Generic[RequestData, ResponseData]):
+class Interactor(Generic[InputData, OutputData]):
     @abstractmethod
-    async def __call__(self, data: RequestData) -> ResponseData:
+    async def __call__(self, data: InputData) -> OutputData:
         raise NotImplementedError

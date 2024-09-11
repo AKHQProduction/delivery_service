@@ -19,6 +19,22 @@ dishka = { git = "https://github.com/reagento/dishka", rev = "80fc5564b2688a76bf
 
 [tool.poetry.group.dev.dependencies]
 pytest = "^8.3.2"
+pytest-asyncio = "^0.24.0"
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+asyncio_mode = "auto"
+
+markers = [
+    "value_objects: test related to value objects",
+    "user: test related to user context",
+    "shop: test related to shop context",
+    "employee: test related to employee context",
+    "entities: test related to entities layer",
+    "application: test related to application layer"
+]
+
+filterwarnings = "ignore::DeprecationWarning"
 
 
 [build-system]
