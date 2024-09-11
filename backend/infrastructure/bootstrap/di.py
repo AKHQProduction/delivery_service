@@ -18,6 +18,8 @@ from application.shop.gateway import ShopReader, ShopSaver
 from application.shop.interactors.change_regular_days_off import (
     ChangeRegularDaysOff
 )
+from application.shop.interactors.change_special_days_off import \
+    ChangeSpecialDaysOff
 from application.shop.interactors.create_shop import CreateShop
 from application.shop.interactors.delete_shop import DeleteShop
 from application.shop.interactors.resume_shop import ResumeShop
@@ -110,6 +112,7 @@ def interactor_provider() -> Provider:
     provider.provide(ResumeShop, scope=Scope.REQUEST)
     provider.provide(DeleteShop, scope=Scope.REQUEST)
     provider.provide(ChangeRegularDaysOff, scope=Scope.REQUEST)
+    provider.provide(ChangeSpecialDaysOff, scope=Scope.REQUEST)
 
     provider.provide(AddEmployee, scope=Scope.REQUEST)
     provider.provide(RemoveEmployee, scope=Scope.REQUEST)

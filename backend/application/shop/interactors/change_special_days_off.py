@@ -1,5 +1,5 @@
 import logging
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from datetime import datetime
 
 from application.common.access_service import AccessService
@@ -8,14 +8,16 @@ from application.common.identity_provider import IdentityProvider
 from application.common.interactor import Interactor
 from application.shop.errors import UserNotHaveShopError
 from application.shop.gateway import ShopReader
+from application.user.errors import UserIsNotExistError
+from entities.shop.value_objects import SpecialDaysOff
 
 
 @dataclass(frozen=True)
-class ChangeRegularDaysOffInputData:
-    special_days_off: list[datetime] = field(default_factory=list)
+class ChangeSpecialDaysOffInputData:
+    special_days_off: list[datetime]
 
 
-class ChangeRegularDaysOff(Interactor[ChangeRegularDaysOffInputData, None]):
+class ChangeSpecialDaysOff(Interactor[ChangeSpecialDaysOffInputData, None]):
     def __init__(
             self,
             identity_provider: IdentityProvider,
@@ -28,8 +30,11 @@ class ChangeRegularDaysOff(Interactor[ChangeRegularDaysOffInputData, None]):
         self._commiter = commiter
         self._access_service = access_service
 
-    async def __call__(self, data: ChangeRegularDaysOffInputData) -> None:
+    async def __call__(self, data: ChangeSpecialDaysOffInputData) -> None:
         actor = await self._identity_provider.get_user()
+
+        if not actor:
+            raise UserIsNotExistError()
 
         shop = await self._shop_reader.by_identity(actor.user_id)
 
@@ -40,7 +45,7 @@ class ChangeRegularDaysOff(Interactor[ChangeRegularDaysOffInputData, None]):
 
         await self._access_service.ensure_can_edit_shop(shop_id)
 
-        shop.special_days_off = data.special_days_off
+        shop.special_days_off = SpecialDaysOff(data.special_days_off)
 
         await self._commiter.commit()
 
