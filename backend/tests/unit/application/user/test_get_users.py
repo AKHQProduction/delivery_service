@@ -7,20 +7,23 @@ from application.user.interactors.get_users import (
     GetUsersInputData,
     GetUsersOutputData
 )
-from entities.user.models import User
 from tests.mocks.gateways.user import FakeUserGateway
 
 
 @pytest.mark.application
 @pytest.mark.user
-async def test_get_users(user_gateway: FakeUserGateway, user: User) -> None:
-    interactor = GetUsers(user_gateway)
+async def test_get_users(user_gateway: FakeUserGateway) -> None:
+    action = GetUsers(user_reader=user_gateway)
 
-    input_data = GetUsersInputData(Pagination(), GetUsersFilters())
+    input_data = GetUsersInputData(
+            pagination=Pagination(),
+            filters=GetUsersFilters()
+    )
 
-    output_data = await interactor(input_data)
+    output_data = await action(input_data)
 
+    assert output_data
     assert isinstance(output_data, GetUsersOutputData)
-    assert output_data.total == 1
-    assert isinstance(output_data.users, list)
-    assert user in output_data.users
+
+    assert output_data.users == list(user_gateway.users.values())
+    assert output_data.total == len(list(user_gateway.users.values()))
