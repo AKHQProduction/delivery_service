@@ -38,15 +38,11 @@ async def test_create_shop(
         token_verifier: FakeTokenVerifier,
         webhook_manager: FakeWebhookManager,
         commiter: FakeCommiter,
+        access_service: AccessService,
         user_id: UserId,
         shop_id: int,
         exc_class
 ) -> None:
-    access_service = AccessService(
-            employee_reader=employee_gateway,
-            identity_provider=identity_provider
-    )
-
     shop_service = ShopService(token_verifier)
 
     shop_title = "TestShop"
@@ -93,4 +89,3 @@ async def test_create_shop(
         assert shop_gateway.saved
         assert webhook_manager.setup
         assert shop_id in shop_gateway.shops.keys()
-

@@ -7,13 +7,14 @@ from application.common.identity_provider import IdentityProvider
 from application.common.interactor import Interactor
 from application.shop.errors import UserNotHaveShopError
 from application.shop.gateway import ShopReader
+from application.user.errors import UserIsNotExistError
 
 from entities.shop.value_objects import RegularDaysOff
 
 
 @dataclass(frozen=True)
 class ChangeRegularDaysOffInputData:
-    regular_days_off: list[int] = field(default_factory=list)
+    regular_days_off: list[int]
 
 
 class ChangeRegularDaysOff(Interactor[ChangeRegularDaysOffInputData, None]):
@@ -31,6 +32,9 @@ class ChangeRegularDaysOff(Interactor[ChangeRegularDaysOffInputData, None]):
 
     async def __call__(self, data: ChangeRegularDaysOffInputData) -> None:
         actor = await self._identity_provider.get_user()
+
+        if not actor:
+            raise UserIsNotExistError()
 
         shop = await self._shop_reader.by_identity(actor.user_id)
 
