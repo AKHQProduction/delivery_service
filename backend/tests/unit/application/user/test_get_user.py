@@ -16,7 +16,7 @@ from tests.mocks.gateways.user import FakeUserGateway
         ["user_id", "exc_class"],
         [
             (1, None),
-            (3, UserIsNotExistError)
+            (4, UserIsNotExistError)
         ]
 )
 async def test_get_user(

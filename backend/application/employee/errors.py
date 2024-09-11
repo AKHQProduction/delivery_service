@@ -4,7 +4,18 @@ from application.common.error import ApplicationError
 
 
 @dataclass(eq=False)
-class EmployeeAlreadyExistsError(ApplicationError):
+class EmployeeAlreadyExistError(ApplicationError):
+    user_id: int
+
     @property
     def message(self):
-        return f"Employee already exists"
+        return f"Employee already exist with user_id={self.user_id}"
+
+
+@dataclass(eq=False)
+class EmployeeIsNotExistError(ApplicationError):
+    employee_id: int
+
+    @property
+    def message(self):
+        return f"Employee with id={self.employee_id} not exist"

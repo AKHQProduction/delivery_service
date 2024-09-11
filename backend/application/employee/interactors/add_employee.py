@@ -41,6 +41,9 @@ class AddEmployee(Interactor[AddEmployeeInputData, None]):
     async def __call__(self, data: AddEmployeeInputData) -> None:
         actor = await self._identity_provider.get_user()
 
+        if not actor:
+            raise UserIsNotExistError()
+
         shop = await self._shop_reader.by_identity(actor.user_id)
 
         if not shop:

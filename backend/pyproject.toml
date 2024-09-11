@@ -26,7 +26,10 @@ testpaths = ["tests"]
 asyncio_mode = "auto"
 
 markers = [
+    "value_objects: test related to value objects",
     "user: test related to user context",
+    "shop: test related to shop context",
+    "employee: test related to employee context",
     "entities: test related to entities layer",
     "application: test related to application layer"
 ]

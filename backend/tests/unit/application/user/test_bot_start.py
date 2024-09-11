@@ -39,6 +39,7 @@ async def test_bot_start_with_already_created_user(
     assert output_data
     assert isinstance(output_data, int)
     assert not user_gateway.saved
+    assert not commiter.commited
     assert output_data == user_id
 
 
@@ -47,8 +48,8 @@ async def test_bot_start_with_already_created_user(
 @pytest.mark.parametrize(
         ["user_id"],
         [
-            (3,),
-            (4,)
+            (4,),
+            (5,)
         ]
 )
 async def test_bot_start_when_create_new_user(
@@ -74,4 +75,5 @@ async def test_bot_start_when_create_new_user(
     assert output_data
     assert isinstance(output_data, int)
     assert user_gateway.saved
+    assert commiter.commited
     assert output_data == user_id
