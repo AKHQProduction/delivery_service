@@ -1,15 +1,17 @@
+from datetime import datetime, timedelta
+
 import pytest
 
 from entities.shop.errors import (
     InvalidBotTokenError,
     InvalidRegularDayOffError,
-    ShopTitleTooLongError,
+    InvalidSpecialDayOffError, ShopTitleTooLongError,
     ShopTitleTooShortError
 )
 from entities.shop.value_objects import (
     RegularDaysOff,
     ShopTitle,
-    ShopToken
+    ShopToken, SpecialDaysOff
 )
 
 
@@ -83,3 +85,27 @@ def test_regular_days_off(
 
         assert days_off.days == regular_days_off
         assert isinstance(days_off, RegularDaysOff)
+
+
+@pytest.mark.entities
+@pytest.mark.value_objects
+@pytest.mark.parametrize(
+        ["special_days_off", "exc_class"],
+        [
+            ([datetime.now() + timedelta(days=1)], None),
+            ([datetime.now() - timedelta(days=1)], InvalidSpecialDayOffError),
+            ([], None)
+        ]
+)
+def test_special_days_off(
+        special_days_off: list[datetime],
+        exc_class
+) -> None:
+    if exc_class:
+        with pytest.raises(exc_class):
+            SpecialDaysOff(special_days_off)
+    else:
+        days_off = SpecialDaysOff(special_days_off)
+
+        assert days_off.days == special_days_off
+        assert isinstance(days_off, SpecialDaysOff)
