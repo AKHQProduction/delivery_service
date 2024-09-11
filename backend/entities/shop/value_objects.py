@@ -28,10 +28,10 @@ class ShopTitle:
         len_value = len(self.title)
 
         if len_value <= 3:
-            ShopTitleTooShortError(self.title)
+            raise ShopTitleTooShortError(self.title)
 
-        if len_value >= 20:
-            ShopTitleTooLongError(self.title)
+        if len_value > 20:
+            raise ShopTitleTooLongError(self.title)
 
 
 @dataclass(slots=True, frozen=True, eq=True, unsafe_hash=True)
