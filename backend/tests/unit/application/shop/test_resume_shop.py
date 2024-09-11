@@ -4,6 +4,8 @@ from application.common.access_service import AccessService
 from application.errors.access import AccessDeniedError
 from application.shop.errors import UserNotHaveShopError
 
+from application.shop.interactors.delete_shop import DeleteShop
+from application.shop.interactors.resume_shop import ResumeShop
 from application.shop.interactors.stop_shop import StopShop
 from application.user.errors import UserIsNotExistError
 from entities.user.models import UserId
@@ -24,7 +26,7 @@ from tests.mocks.gateways.shop import FakeShopGateway
             (2, 1234567898, UserNotHaveShopError)
         ]
 )
-async def test_stop_shop(
+async def test_resume_shop(
         shop_gateway: FakeShopGateway,
         identity_provider: FakeIdentityProvider,
         webhook_manager: FakeWebhookManager,
@@ -34,7 +36,7 @@ async def test_stop_shop(
         shop_id: int,
         exc_class
 ) -> None:
-    action = StopShop(
+    action = ResumeShop(
             shop_reader=shop_gateway,
             identity_provider=identity_provider,
             webhook_manager=webhook_manager,
@@ -49,7 +51,7 @@ async def test_stop_shop(
             await coro
 
         assert not commiter.commited
-        assert not webhook_manager.dropped
+        assert not webhook_manager.setup
 
     else:
         output_data = await coro
@@ -57,5 +59,6 @@ async def test_stop_shop(
         assert not output_data
 
         assert commiter.commited
-        assert webhook_manager.dropped
+        assert not webhook_manager.dropped
+        assert webhook_manager.setup
         assert shop_id in shop_gateway.shops.keys()
