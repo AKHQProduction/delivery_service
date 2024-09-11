@@ -8,6 +8,7 @@ from application.common.interactor import Interactor
 from application.common.webhook_manager import WebhookManager
 from application.employee.gateway import EmployeeSaver
 from application.shop.gateway import ShopSaver
+from application.user.errors import UserIsNotExistError
 from application.user.gateway import UserSaver
 from entities.employee.models import Employee, EmployeeRole
 from entities.shop.models import ShopId
@@ -46,6 +47,9 @@ class CreateShop(Interactor[CreateShopInputData, ShopId]):
 
     async def __call__(self, data: CreateShopInputData) -> ShopId:
         user = await self._identity_provider.get_user()
+
+        if not user:
+            raise UserIsNotExistError()
 
         await self._access_service.ensure_can_create_shop(user)
 

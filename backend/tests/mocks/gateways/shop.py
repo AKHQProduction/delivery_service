@@ -21,9 +21,9 @@ class FakeShopGateway(ShopReader, ShopSaver):
         self.deleted = False
 
     async def save(self, shop: Shop) -> None:
-        shop = await self.by_id(shop.shop_id)
+        shop_in_memory = await self.by_id(shop.shop_id)
 
-        if shop:
+        if shop_in_memory:
             raise ShopAlreadyExistError(shop.shop_id)
 
         self.shops[shop.shop_id] = shop

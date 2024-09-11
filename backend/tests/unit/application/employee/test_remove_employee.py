@@ -60,8 +60,8 @@ async def test_remove_employee(
         with pytest.raises(exc_class):
             await coro
 
-            assert not commiter.commited
-            assert not employee_gateway.deleted
+        assert not commiter.commited
+        assert not employee_gateway.deleted
 
     else:
         output_data = await coro

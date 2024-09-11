@@ -66,8 +66,8 @@ async def test_add_employee(
         with pytest.raises(exc_class):
             await coro
 
-            assert not employee_gateway.saved
-            assert not commiter.commited
+        assert not employee_gateway.saved
+        assert not commiter.commited
 
     else:
         output_data = await coro
