@@ -20,9 +20,9 @@ class WebhookConfig:
         webhook_port = env.int("WEBHOOK_PORT")
 
         return WebhookConfig(
-                webhook_url=webhook_url,
-                webhook_admin_path=webhook_admin_path,
-                webhook_shop_path=webhook_shop_path,
-                webhook_host=webhook_host,
-                webhook_port=webhook_port
+            webhook_url=webhook_url,
+            webhook_admin_path=webhook_admin_path,
+            webhook_shop_path=webhook_shop_path,
+            webhook_host=webhook_host,
+            webhook_port=webhook_port,
         )

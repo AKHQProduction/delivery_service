@@ -1,6 +1,6 @@
 from application.employee.errors import (
     EmployeeAlreadyExistError,
-    EmployeeIsNotExistError
+    EmployeeIsNotExistError,
 )
 from application.employee.gateway import EmployeeReader, EmployeeSaver
 from entities.employee.models import Employee, EmployeeId, EmployeeRole
@@ -12,17 +12,17 @@ class FakeEmployeeGateway(EmployeeReader, EmployeeSaver):
     def __init__(self):
         self.employees: dict[int, Employee] = {
             1: Employee(
-                    employee_id=EmployeeId(1),
-                    user_id=UserId(1),
-                    shop_id=ShopId(1234567898),
-                    role=EmployeeRole.ADMIN
+                employee_id=EmployeeId(1),
+                user_id=UserId(1),
+                shop_id=ShopId(1234567898),
+                role=EmployeeRole.ADMIN,
             ),
             2: Employee(
-                    employee_id=EmployeeId(2),
-                    user_id=UserId(3),
-                    shop_id=ShopId(1234567898),
-                    role=EmployeeRole.MANAGER
-            )
+                employee_id=EmployeeId(2),
+                user_id=UserId(3),
+                shop_id=ShopId(1234567898),
+                role=EmployeeRole.MANAGER,
+            ),
         }
 
         self.saved = False
@@ -43,12 +43,12 @@ class FakeEmployeeGateway(EmployeeReader, EmployeeSaver):
 
     async def by_identity(self, user_id: UserId) -> Employee | None:
         return next(
-                (
-                    employee
-                    for employee in list(self.employees.values())
-                    if employee.user_id == user_id
-                ),
-                None
+            (
+                employee
+                for employee in list(self.employees.values())
+                if employee.user_id == user_id
+            ),
+            None,
         )
 
     async def delete(self, employee_id: EmployeeId) -> None:

@@ -1,11 +1,12 @@
 from aiogram import Dispatcher
 
-from .delete_user_from_staff.dialog import delete_user_from_staff_dialog
 from presentation.admin.handlers.admin.staff.main.dialog import (
+    router,
     staff_workflow_dialog,
-    router
 )
+
 from .add_user_to_staff.dialog import add_user_to_staff_dialog
+from .delete_user_from_staff.dialog import delete_user_from_staff_dialog
 from .view_staff_card.dialog import view_staff_card_dialog
 
 
@@ -20,7 +21,4 @@ def setup_staff_workflow_dialogs(dp: Dispatcher):
     dp.include_router(delete_user_from_staff_dialog)
 
 
-__all__ = [
-    "setup_staff_workflow_dialogs",
-    "setup_staff_workflow_handlers"
-]
+__all__ = ["setup_staff_workflow_dialogs", "setup_staff_workflow_handlers"]

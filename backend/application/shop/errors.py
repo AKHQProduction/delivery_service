@@ -40,7 +40,7 @@ class ShopAlreadyExistError(ApplicationError):
 
 
 @dataclass(eq=False)
-class ShopIsNotActive(ApplicationError):
+class ShopIsNotActiveError(ApplicationError):
     shop_id: int
 
     @property

@@ -1,5 +1,4 @@
 from aiogram.fsm.state import State, StatesGroup
-from aiogram_dialog.widgets.kbd import Next
 
 
 class ChangeUserRole(StatesGroup):

@@ -1,0 +1,33 @@
+repos:
+-   repo: 'https://github.com/pre-commit/pre-commit-hooks'
+    rev: v4.5.0
+    hooks:
+      - id: check-merge-conflict
+      - id: detect-private-key
+      - id: trailing-whitespace
+      - id: check-added-large-files
+        args: ['--maxkb=100']
+-   repo: https://github.com/astral-sh/ruff-pre-commit
+    rev: v0.6.4
+    hooks:
+      - id: ruff
+        args: [ --fix ]
+      - id: ruff-format
+-   repo: local
+    hooks:
+      - id: pytest-check
+        types: [python]
+        name: pytest-check
+        entry: pytest
+        language: system
+        pass_filenames: false
+        always_run: true
+#-   repo: local
+#    hooks:
+#      - id: mypy-check
+#        types: [python]
+#        name: mypy-check
+#        entry: mypy backend
+#        language: system
+#        pass_filenames: false
+#        always_run: true

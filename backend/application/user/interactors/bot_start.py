@@ -1,10 +1,10 @@
 import logging
 from dataclasses import dataclass
 
-from application.user.gateway import UserSaver, UserReader
+from application.common.commiter import Commiter
 from application.common.identity_provider import IdentityProvider
 from application.common.interactor import Interactor
-from application.common.commiter import Commiter
+from application.user.gateway import UserReader, UserSaver
 from entities.user.models import User, UserId
 
 
@@ -17,11 +17,11 @@ class BotStartInputData:
 
 class BotStart(Interactor[BotStartInputData, UserId]):
     def __init__(
-            self,
-            user_reader: UserReader,
-            user_saver: UserSaver,
-            commiter: Commiter,
-            identity_provider: IdentityProvider
+        self,
+        user_reader: UserReader,
+        user_saver: UserSaver,
+        commiter: Commiter,
+        identity_provider: IdentityProvider,
     ):
         self._user_reader = user_reader
         self._user_saver = user_saver
@@ -33,11 +33,11 @@ class BotStart(Interactor[BotStartInputData, UserId]):
 
         if not user:
             await self._user_saver.save(
-                    User(
-                            user_id=UserId(data.user_id),
-                            full_name=data.full_name,
-                            username=data.username
-                    )
+                User(
+                    user_id=UserId(data.user_id),
+                    full_name=data.full_name,
+                    username=data.username,
+                ),
             )
 
             await self._commiter.commit()

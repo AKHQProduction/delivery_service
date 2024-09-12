@@ -12,13 +12,12 @@ from application.user.errors import UserIsNotExistError
 
 class ResumeShop(Interactor[None, None]):
     def __init__(
-            self,
-            identity_provider: IdentityProvider,
-            shop_reader: ShopReader,
-            access_service: AccessService,
-            commiter: Commiter,
-            webhook_manager: WebhookManager,
-
+        self,
+        identity_provider: IdentityProvider,
+        shop_reader: ShopReader,
+        access_service: AccessService,
+        commiter: Commiter,
+        webhook_manager: WebhookManager,
     ):
         self._identity_provider = identity_provider
         self._shop_reader = shop_reader
@@ -46,5 +45,5 @@ class ResumeShop(Interactor[None, None]):
         await self._commiter.commit()
 
         logging.info(
-                f"ResumeShop: shop with id={shop.shop_id} resume its work"
+            "ResumeShop: shop with id=%s resume its work", shop.shop_id
         )

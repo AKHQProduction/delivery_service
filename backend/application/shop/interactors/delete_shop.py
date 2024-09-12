@@ -12,14 +12,13 @@ from application.user.errors import UserIsNotExistError
 
 class DeleteShop(Interactor[None, None]):
     def __init__(
-            self,
-            identity_provider: IdentityProvider,
-            shop_reader: ShopReader,
-            shop_saver: ShopSaver,
-            access_service: AccessService,
-            commiter: Commiter,
-            webhook_manager: WebhookManager,
-
+        self,
+        identity_provider: IdentityProvider,
+        shop_reader: ShopReader,
+        shop_saver: ShopSaver,
+        access_service: AccessService,
+        commiter: Commiter,
+        webhook_manager: WebhookManager,
     ):
         self._identity_provider = identity_provider
         self._shop_reader = shop_reader
@@ -49,4 +48,4 @@ class DeleteShop(Interactor[None, None]):
 
         await self._commiter.commit()
 
-        logging.info(f"DeleteShop: Successfully delete shop={shop_id}")
+        logging.info("DeleteShop: Successfully delete shop=%s", shop_id)

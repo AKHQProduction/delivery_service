@@ -1,10 +1,8 @@
 from dataclasses import dataclass
 
-from geopy.exc import GeocoderTimedOut
-
 
 @dataclass(eq=False)
-class AddressIsNotExists(Exception):
+class AddressIsNotExistError(Exception):
     address: str
     city: str
 
@@ -14,7 +12,7 @@ class AddressIsNotExists(Exception):
 
 
 @dataclass(eq=False)
-class GeolocatorBadGateway(Exception):
+class GeolocatorBadGatewayError(Exception):
     @property
     def message(self):
         return "Service is not work"

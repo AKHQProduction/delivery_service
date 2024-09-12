@@ -1,5 +1,4 @@
 from dataclasses import dataclass
-import os
 
 from environs import Env
 
@@ -13,8 +12,8 @@ class BaseDBConfig:
 
     def get_connection_url(self) -> str:
         return (
-                f"postgresql+asyncpg://{self.user}:{self.password}@{self.host}"
-                f"/{self.db_name}"
+            f"postgresql+asyncpg://{self.user}:{self.password}@{self.host}"
+            f"/{self.db_name}"
         )
 
 
@@ -33,10 +32,10 @@ def load_alembic_config() -> AlembicDBConfig:
     env.read_env(".env")
 
     config = AlembicDBConfig(
-            host=env.str("DB_HOST"),
-            db_name=env.str("POSTGRES_DB"),
-            user=env.str("POSTGRES_USER"),
-            password=env.str("POSTGRES_PASSWORD"),
+        host=env.str("DB_HOST"),
+        db_name=env.str("POSTGRES_DB"),
+        user=env.str("POSTGRES_USER"),
+        password=env.str("POSTGRES_PASSWORD"),
     )
 
     return config
