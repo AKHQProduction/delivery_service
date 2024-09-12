@@ -32,15 +32,13 @@ class ShopTitleTooLongError(DomainError):
 
 @dataclass(eq=False)
 class InvalidRegularDayOffError(DomainError):
-
     @property
     def message(self):
-        return f"The day must be between 0 and 6"
+        return "The day must be between 0 and 6"
 
 
 @dataclass(eq=False)
 class InvalidSpecialDayOffError(DomainError):
-
     @property
     def message(self):
-        return f"The date must be in the future"
+        return "The date must be in the future"

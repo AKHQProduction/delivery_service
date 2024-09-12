@@ -5,7 +5,7 @@ from application.user.gateway import GetUsersFilters
 from application.user.interactors.get_users import (
     GetUsers,
     GetUsersInputData,
-    GetUsersOutputData
+    GetUsersOutputData,
 )
 from tests.mocks.gateways.user import FakeUserGateway
 
@@ -16,8 +16,7 @@ async def test_get_users(user_gateway: FakeUserGateway) -> None:
     action = GetUsers(user_reader=user_gateway)
 
     input_data = GetUsersInputData(
-            pagination=Pagination(),
-            filters=GetUsersFilters()
+        pagination=Pagination(), filters=GetUsersFilters()
     )
 
     output_data = await action(input_data)

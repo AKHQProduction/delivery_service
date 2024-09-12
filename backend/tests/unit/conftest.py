@@ -18,8 +18,8 @@ def token_verifier() -> FakeTokenVerifier:
 
 @pytest.fixture
 def identity_provider(
-        user_id: UserId,
-        user_gateway: FakeUserGateway
+    user_id: UserId,
+    user_gateway: FakeUserGateway,
 ) -> FakeIdentityProvider:
     return FakeIdentityProvider(user_id, user_gateway)
 
@@ -51,10 +51,10 @@ def user_gateway() -> FakeUserGateway:
 
 @pytest.fixture
 def access_service(
-        employee_gateway: FakeEmployeeGateway,
-        identity_provider: FakeIdentityProvider
+    employee_gateway: FakeEmployeeGateway,
+    identity_provider: FakeIdentityProvider,
 ) -> AccessService:
     return AccessService(
-            employee_reader=employee_gateway,
-            identity_provider=identity_provider
+        employee_reader=employee_gateway,
+        identity_provider=identity_provider,
     )

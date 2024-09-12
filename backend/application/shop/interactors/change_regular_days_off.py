@@ -1,5 +1,5 @@
 import logging
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 
 from application.common.access_service import AccessService
 from application.common.commiter import Commiter
@@ -8,7 +8,6 @@ from application.common.interactor import Interactor
 from application.shop.errors import UserNotHaveShopError
 from application.shop.gateway import ShopReader
 from application.user.errors import UserIsNotExistError
-
 from entities.shop.value_objects import RegularDaysOff
 
 
@@ -19,11 +18,11 @@ class ChangeRegularDaysOffInputData:
 
 class ChangeRegularDaysOff(Interactor[ChangeRegularDaysOffInputData, None]):
     def __init__(
-            self,
-            identity_provider: IdentityProvider,
-            shop_reader: ShopReader,
-            commiter: Commiter,
-            access_service: AccessService
+        self,
+        identity_provider: IdentityProvider,
+        shop_reader: ShopReader,
+        commiter: Commiter,
+        access_service: AccessService,
     ) -> None:
         self._identity_provider = identity_provider
         self._shop_reader = shop_reader
@@ -50,6 +49,7 @@ class ChangeRegularDaysOff(Interactor[ChangeRegularDaysOffInputData, None]):
         await self._commiter.commit()
 
         logging.info(
-                "ChangeRegularDaysOff: successfully change regular days off "
-                f"for shop={shop_id}"
+            "ChangeRegularDaysOff: successfully change regular days off "
+            "for shop=%s",
+            shop_id,
         )

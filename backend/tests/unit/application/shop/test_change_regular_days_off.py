@@ -5,7 +5,7 @@ from application.errors.access import AccessDeniedError
 from application.shop.errors import UserNotHaveShopError
 from application.shop.interactors.change_regular_days_off import (
     ChangeRegularDaysOff,
-    ChangeRegularDaysOffInputData
+    ChangeRegularDaysOffInputData,
 )
 from application.user.errors import UserIsNotExistError
 from entities.user.models import UserId
@@ -17,32 +17,32 @@ from tests.mocks.gateways.shop import FakeShopGateway
 @pytest.mark.application
 @pytest.mark.shop
 @pytest.mark.parametrize(
-        ["user_id", "regular_days_off", "exc_class"],
-        [
-            (1, [2, 3], None),
-            (10, [], UserIsNotExistError),
-            (2, [], UserNotHaveShopError),
-            (3, [], AccessDeniedError)
-        ]
+    ["user_id", "regular_days_off", "exc_class"],
+    [
+        (1, [2, 3], None),
+        (10, [], UserIsNotExistError),
+        (2, [], UserNotHaveShopError),
+        (3, [], AccessDeniedError),
+    ],
 )
 async def test_change_regular_days_off(
-        identity_provider: FakeIdentityProvider,
-        shop_gateway: FakeShopGateway,
-        commiter: FakeCommiter,
-        access_service: AccessService,
-        user_id: UserId,
-        regular_days_off: list[int],
-        exc_class
+    identity_provider: FakeIdentityProvider,
+    shop_gateway: FakeShopGateway,
+    commiter: FakeCommiter,
+    access_service: AccessService,
+    user_id: UserId,
+    regular_days_off: list[int],
+    exc_class,
 ) -> None:
     action = ChangeRegularDaysOff(
-            identity_provider=identity_provider,
-            shop_reader=shop_gateway,
-            commiter=commiter,
-            access_service=access_service
+        identity_provider=identity_provider,
+        shop_reader=shop_gateway,
+        commiter=commiter,
+        access_service=access_service,
     )
 
     input_data = ChangeRegularDaysOffInputData(
-            regular_days_off=regular_days_off
+        regular_days_off=regular_days_off
     )
 
     coro = action(input_data)

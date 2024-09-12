@@ -18,8 +18,8 @@ class EmployeeGateway(EmployeeSaver, EmployeeReader):
 
         try:
             await self.session.flush()
-        except IntegrityError:
-            raise EmployeeAlreadyExistError(employee.user_id)
+        except IntegrityError as error:
+            raise EmployeeAlreadyExistError(employee.user_id) from error
 
     async def by_identity(self, user_id: UserId) -> Employee | None:
         query = select(Employee).where(employees_table.c.user_id == user_id)
@@ -29,10 +29,8 @@ class EmployeeGateway(EmployeeSaver, EmployeeReader):
         return result.scalar_one_or_none()
 
     async def delete(self, employee_id: EmployeeId) -> None:
-        query = delete(
-                Employee
-        ).where(
-                employees_table.c.employee_id == employee_id
+        query = delete(Employee).where(
+            employees_table.c.employee_id == employee_id
         )
 
         await self.session.execute(query)

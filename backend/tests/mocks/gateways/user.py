@@ -7,18 +7,9 @@ from entities.user.models import User, UserId
 class FakeUserGateway(UserReader, UserSaver):
     def __init__(self):
         self.users: dict[int, User] = {
-            1: User(
-                    user_id=UserId(1),
-                    full_name="First User"
-            ),
-            2: User(
-                    user_id=UserId(2),
-                    full_name="Second User"
-            ),
-            3: User(
-                    user_id=UserId(3),
-                    full_name="Third User"
-            )
+            1: User(user_id=UserId(1), full_name="First User"),
+            2: User(user_id=UserId(2), full_name="Second User"),
+            3: User(user_id=UserId(3), full_name="Third User"),
         }
 
         self.saved = False
@@ -27,18 +18,13 @@ class FakeUserGateway(UserReader, UserSaver):
         return self.users.get(user_id, None)
 
     async def all(
-            self,
-            filters: GetUsersFilters,
-            pagination: Pagination
+        self, filters: GetUsersFilters, pagination: Pagination
     ) -> list[User]:
         users = self.users.values()
 
         return list(users)
 
-    async def total_users(
-            self,
-            filters: GetUsersFilters
-    ) -> int:
+    async def total_users(self, filters: GetUsersFilters) -> int:
         return len(self.users)
 
     async def save(self, user: User) -> None:

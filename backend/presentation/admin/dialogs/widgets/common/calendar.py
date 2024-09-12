@@ -1,16 +1,17 @@
-from datetime import date
+from typing import TYPE_CHECKING
 
 from aiogram_dialog import DialogManager
 from aiogram_dialog.widgets.kbd import Calendar, CalendarScope
 from aiogram_dialog.widgets.kbd.calendar_kbd import (
-    CalendarScopeView,
     CalendarDaysView,
-    DATE_TEXT,
-    TODAY_TEXT,
     CalendarMonthView,
-    CalendarYearsView
+    CalendarScopeView,
+    CalendarYearsView,
 )
-from aiogram_dialog.widgets.text import Text, Format
+from aiogram_dialog.widgets.text import Format, Text
+
+if TYPE_CHECKING:
+    from datetime import date
 
 DAY_OF_WEEK: dict[int, str] = {
     0: "Пн",

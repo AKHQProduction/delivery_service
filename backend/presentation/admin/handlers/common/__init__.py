@@ -1,5 +1,6 @@
 from aiogram import Dispatcher
-from . import start, unsupported, main_menu
+
+from . import main_menu, start, unsupported
 
 
 def setup_common_handlers(dp: Dispatcher):

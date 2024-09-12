@@ -1,16 +1,10 @@
-from typing import Iterable
-
 from sqlalchemy import func, select
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from application.common.request_data import Pagination, SortOrder
-from application.user.gateway import (
-    GetUsersFilters,
-    UserSaver,
-    UserReader
-)
 from application.user.errors import UserAlreadyExistError
+from application.user.gateway import GetUsersFilters, UserReader, UserSaver
 from entities.user.models import User, UserId
 from infrastructure.persistence.models.user import users_table
 
@@ -24,8 +18,8 @@ class UserGateway(UserReader, UserSaver):
 
         try:
             await self.session.flush()
-        except IntegrityError:
-            raise UserAlreadyExistError(user.user_id)
+        except IntegrityError as error:
+            raise UserAlreadyExistError(user.user_id) from error
 
     async def by_id(self, user_id: UserId) -> User | None:
         query = select(User).where(users_table.c.user_id == user_id)
@@ -35,9 +29,7 @@ class UserGateway(UserReader, UserSaver):
         return result.scalar_one_or_none()
 
     async def all(
-            self,
-            filters: GetUsersFilters,
-            pagination: Pagination
+        self, filters: GetUsersFilters, pagination: Pagination
     ) -> list[User]:
         query = select(User)
 
@@ -55,10 +47,7 @@ class UserGateway(UserReader, UserSaver):
 
         return list(result.all())
 
-    async def total_users(
-            self,
-            filters: GetUsersFilters
-    ) -> int:
+    async def total_users(self, filters: GetUsersFilters) -> int:
         query = select(func.count(User))
 
         total: int = await self.session.scalar(query)

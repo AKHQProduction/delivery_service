@@ -2,11 +2,14 @@ import re
 from dataclasses import dataclass, field
 from datetime import datetime
 
+from zoneinfo import ZoneInfo
+
 from entities.shop.errors import (
     InvalidBotTokenError,
     InvalidRegularDayOffError,
-    InvalidSpecialDayOffError, ShopTitleTooLongError,
-    ShopTitleTooShortError
+    InvalidSpecialDayOffError,
+    ShopTitleTooLongError,
+    ShopTitleTooShortError,
 )
 
 
@@ -25,13 +28,16 @@ class ShopToken:
 class ShopTitle:
     title: str
 
+    MAX_TITLE_LEN = 20
+    MIN_TITLE_LEN = 3
+
     def __post_init__(self) -> None:
         len_value = len(self.title)
 
-        if len_value <= 3:
+        if len_value <= self.MIN_TITLE_LEN:
             raise ShopTitleTooShortError(self.title)
 
-        if len_value > 20:
+        if len_value > self.MAX_TITLE_LEN:
             raise ShopTitleTooLongError(self.title)
 
 
@@ -39,8 +45,11 @@ class ShopTitle:
 class RegularDaysOff:
     days: list[int] = field(default_factory=list)
 
+    MONDAY = 0
+    SUNDAY = 6
+
     def __post_init__(self) -> None:
-        if any(day < 0 or day > 6 for day in self.days):
+        if any(day < self.MONDAY or day > self.SUNDAY for day in self.days):
             raise InvalidRegularDayOffError()
 
 
@@ -49,7 +58,7 @@ class SpecialDaysOff:
     days: list[datetime] = field(default=list)
 
     def __post_init__(self) -> None:
-        now = datetime.now()
+        now = datetime.now(tz=ZoneInfo("Europe/Kiev"))
 
         if any(now > day for day in self.days):
             raise InvalidSpecialDayOffError()

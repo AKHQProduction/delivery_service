@@ -1,36 +1,37 @@
 from aiogram.types import TelegramObject
 from dishka import (
-    Provider,
-    Scope,
     AnyOf,
     AsyncContainer,
-    make_async_container,
+    Provider,
+    Scope,
     from_context,
-    provide
+    make_async_container,
+    provide,
 )
 
 from application.common.access_service import AccessService
+from application.common.commiter import Commiter
+from application.common.identity_provider import IdentityProvider
 from application.common.webhook_manager import WebhookManager
 from application.employee.gateway import EmployeeReader, EmployeeSaver
 from application.employee.interactors.add_employee import AddEmployee
 from application.employee.interactors.remove_employee import RemoveEmployee
 from application.shop.gateway import ShopReader, ShopSaver
 from application.shop.interactors.change_regular_days_off import (
-    ChangeRegularDaysOff
+    ChangeRegularDaysOff,
 )
-from application.shop.interactors.change_special_days_off import \
-    ChangeSpecialDaysOff
+from application.shop.interactors.change_special_days_off import (
+    ChangeSpecialDaysOff,
+)
 from application.shop.interactors.create_shop import CreateShop
 from application.shop.interactors.delete_shop import DeleteShop
 from application.shop.interactors.resume_shop import ResumeShop
 from application.shop.interactors.stop_shop import StopShop
-from entities.common.token_verifier import TokenVerifier
-from application.user.interactors.bot_start import BotStart
 from application.user.gateway import UserReader, UserSaver
-from application.common.commiter import Commiter
-from application.common.identity_provider import IdentityProvider
+from application.user.interactors.bot_start import BotStart
 from application.user.interactors.get_user import GetUser
 from application.user.interactors.get_users import GetUsers
+from entities.common.token_verifier import TokenVerifier
 from entities.shop.services import ShopService
 from infrastructure.auth.tg_auth import TgIdentityProvider
 from infrastructure.bootstrap.configs import load_all_configs
@@ -40,13 +41,13 @@ from infrastructure.gateways.user import UserGateway
 from infrastructure.geopy.config import GeoConfig
 from infrastructure.geopy.geopy_processor import GeoProcessor, PyGeoProcessor
 from infrastructure.geopy.provider import get_geolocator
+from infrastructure.persistence.commiter import SACommiter
 from infrastructure.persistence.config import DBConfig
 from infrastructure.persistence.provider import (
-    get_engine,
+    get_async_session,
     get_async_sessionmaker,
-    get_async_session
+    get_engine,
 )
-from infrastructure.persistence.commiter import SACommiter
 from infrastructure.tg.bot_webhook_manager import BotWebhookManager
 from infrastructure.tg.config import WebhookConfig
 from infrastructure.tg.token_verifier import TgTokenVerifier
@@ -56,27 +57,27 @@ def gateway_provider() -> Provider:
     provider = Provider()
 
     provider.provide(
-            UserGateway,
-            scope=Scope.REQUEST,
-            provides=AnyOf[UserReader, UserSaver]
+        UserGateway,
+        scope=Scope.REQUEST,
+        provides=AnyOf[UserReader, UserSaver],
     )
 
     provider.provide(
-            ShopGateway,
-            scope=Scope.REQUEST,
-            provides=AnyOf[ShopReader, ShopSaver]
+        ShopGateway,
+        scope=Scope.REQUEST,
+        provides=AnyOf[ShopReader, ShopSaver],
     )
 
     provider.provide(
-            EmployeeGateway,
-            scope=Scope.REQUEST,
-            provides=AnyOf[EmployeeReader, EmployeeSaver]
+        EmployeeGateway,
+        scope=Scope.REQUEST,
+        provides=AnyOf[EmployeeReader, EmployeeSaver],
     )
 
     provider.provide(
-            SACommiter,
-            scope=Scope.REQUEST,
-            provides=Commiter,
+        SACommiter,
+        scope=Scope.REQUEST,
+        provides=Commiter,
     )
 
     return provider
@@ -140,21 +141,15 @@ def infrastructure_provider() -> Provider:
     provider = Provider()
 
     provider.provide(
-            PyGeoProcessor,
-            scope=Scope.REQUEST,
-            provides=GeoProcessor
+        PyGeoProcessor, scope=Scope.REQUEST, provides=GeoProcessor
     )
 
     provider.provide(
-            TgTokenVerifier,
-            scope=Scope.REQUEST,
-            provides=TokenVerifier
+        TgTokenVerifier, scope=Scope.REQUEST, provides=TokenVerifier
     )
 
     provider.provide(
-            BotWebhookManager,
-            scope=Scope.REQUEST,
-            provides=WebhookManager
+        BotWebhookManager, scope=Scope.REQUEST, provides=WebhookManager
     )
 
     return provider
@@ -165,14 +160,10 @@ def config_provider() -> Provider:
 
     config = load_all_configs()
 
+    provider.provide(lambda: config.db, scope=Scope.APP, provides=DBConfig)
+    provider.provide(lambda: config.geo, scope=Scope.APP, provides=GeoConfig)
     provider.provide(
-            lambda: config.db, scope=Scope.APP, provides=DBConfig
-    )
-    provider.provide(
-            lambda: config.geo, scope=Scope.APP, provides=GeoConfig
-    )
-    provider.provide(
-            lambda: config.webhook, scope=Scope.APP, provides=WebhookConfig
+        lambda: config.webhook, scope=Scope.APP, provides=WebhookConfig
     )
 
     return provider
@@ -187,13 +178,13 @@ class TgProvider(Provider):
 
     @provide(scope=Scope.REQUEST)
     async def get_identity_provider(
-            self,
-            user_id: int,
-            user_gateway: UserReader,
+        self,
+        user_id: int,
+        user_gateway: UserReader,
     ) -> IdentityProvider:
         identity_provider = TgIdentityProvider(
-                user_id=user_id,
-                user_gateway=user_gateway
+            user_id=user_id,
+            user_gateway=user_gateway,
         )
 
         return identity_provider
