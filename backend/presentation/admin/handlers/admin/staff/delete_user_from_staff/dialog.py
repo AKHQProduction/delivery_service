@@ -34,7 +34,7 @@ delete_user_from_staff_dialog = Dialog(
             Start(
                 text=Const("Так"),
                 id="accept_change_role_to_user",
-                on_click=handle_change_role_to_user,
+                on_click=handle_change_role_to_user,  # type: ignore[arg-type]
                 state=StaffWorkflow.MAIN_MENU,
                 mode=StartMode.RESET_STACK,
             ),

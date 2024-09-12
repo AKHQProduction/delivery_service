@@ -264,7 +264,10 @@ create_order_dialog = Dialog(
             "5️⃣ <b>Вкажіть Вашу адресу👇</b>\n"
             "<i>Наприклад: бульвар Шевченка 42</i>",
         ),
-        MessageInput(on_input_user_address, content_types=[ContentType.TEXT]),
+        MessageInput(
+            on_input_user_address,  # type: ignore[arg-type]
+            content_types=[ContentType.TEXT],
+        ),
         state=states.CreateOrder.ADDRESS,
     ),
     Window(

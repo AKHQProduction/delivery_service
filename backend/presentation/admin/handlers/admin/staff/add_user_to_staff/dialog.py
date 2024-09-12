@@ -71,7 +71,7 @@ add_user_to_staff_dialog = Dialog(
                 items="roles",
                 item_id_getter=operator.itemgetter(2),
                 type_factory=int,
-                on_click=on_role_selected,
+                on_click=on_role_selected,  # type: ignore[arg-type]
             ),
             width=2,
         ),
@@ -84,7 +84,7 @@ add_user_to_staff_dialog = Dialog(
             Cancel(
                 text=Const("Так"),
                 id="accept_change_role",
-                on_click=on_role_confirmed,
+                on_click=on_role_confirmed,  # type: ignore[arg-type]
             ),
             Start(
                 text=Const("Ні"),
