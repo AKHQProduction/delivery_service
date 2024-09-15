@@ -9,7 +9,7 @@ from tests.mocks.gateways.user import FakeUserGateway
 
 @pytest.mark.application
 @pytest.mark.user
-@pytest.mark.parametrize("user_id", [(1,), (2,)])
+@pytest.mark.parametrize(["user_id"], [(1,), (2,)])
 async def test_bot_start_with_already_created_user(
     user_gateway: FakeUserGateway,
     commiter: FakeCommiter,
@@ -36,7 +36,7 @@ async def test_bot_start_with_already_created_user(
 
 @pytest.mark.application
 @pytest.mark.user
-@pytest.mark.parametrize("user_id", [(4,), (5,)])
+@pytest.mark.parametrize(["user_id"], [(4,), (5,)])
 async def test_bot_start_when_create_new_user(
     user_gateway: FakeUserGateway,
     commiter: FakeCommiter,
