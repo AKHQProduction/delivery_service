@@ -1,8 +1,15 @@
 from datetime import datetime, timedelta
+from decimal import Decimal
 
 import pytest
 from zoneinfo import ZoneInfo
 
+from entities.goods.errors import (
+    GoodsTitleTooLongError,
+    GoodsTitleTooShortError,
+    InvalidGoodsPriceError,
+)
+from entities.goods.value_objects import GoodsPrice, GoodsTitle
 from entities.shop.errors import (
     InvalidBotTokenError,
     InvalidRegularDayOffError,
@@ -103,3 +110,45 @@ def test_special_days_off(special_days_off: list[datetime], exc_class) -> None:
 
         assert days_off.days == special_days_off
         assert isinstance(days_off, SpecialDaysOff)
+
+
+@pytest.mark.entities
+@pytest.mark.value_objects
+@pytest.mark.parametrize(
+    ["goods_title", "exc_class"],
+    [
+        ("TestTitle", None),
+        ("", GoodsTitleTooShortError),
+        ("A" * 21, GoodsTitleTooLongError),
+    ],
+)
+def test_goods_title(goods_title: str, exc_class) -> None:
+    if exc_class:
+        with pytest.raises(exc_class):
+            GoodsTitle(goods_title)
+    else:
+        title = GoodsTitle(goods_title)
+
+        assert goods_title == title.title
+        assert isinstance(title, GoodsTitle)
+
+
+@pytest.mark.entities
+@pytest.mark.value_objects
+@pytest.mark.parametrize(
+    ["value", "exc_class"],
+    [
+        ("2.50", None),
+        ("0", InvalidGoodsPriceError),
+        ("-2.50", InvalidGoodsPriceError),
+    ],
+)
+def test_goods_price(value: Decimal, exc_class) -> None:
+    if exc_class:
+        with pytest.raises(exc_class):
+            GoodsPrice(value)
+    else:
+        price = GoodsPrice(value)
+
+        assert Decimal(value) == price.value
+        assert isinstance(price, GoodsPrice)
