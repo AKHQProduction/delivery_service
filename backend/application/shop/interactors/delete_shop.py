@@ -40,7 +40,9 @@ class DeleteShop(Interactor[None, None]):
 
         shop_id = shop.shop_id
 
-        await self._access_service.ensure_can_delete_shop(shop_id)
+        await self._access_service.ensure_can_delete_shop(
+            actor.user_id, shop_id
+        )
 
         await self._shop_saver.delete(shop_id)
 

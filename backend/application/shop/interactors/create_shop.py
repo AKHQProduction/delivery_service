@@ -50,7 +50,7 @@ class CreateShop(Interactor[CreateShopInputData, ShopId]):
         if not user:
             raise UserIsNotExistError()
 
-        await self._access_service.ensure_can_create_shop(user)
+        await self._access_service.ensure_can_create_shop(user.user_id)
 
         shop = await self._shop_service.create_shop(
             user,

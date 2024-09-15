@@ -43,7 +43,7 @@ class ChangeSpecialDaysOff(Interactor[ChangeSpecialDaysOffInputData, None]):
 
         shop_id = shop.shop_id
 
-        await self._access_service.ensure_can_edit_shop(shop_id)
+        await self._access_service.ensure_can_edit_shop(actor.user_id, shop_id)
 
         shop.special_days_off = SpecialDaysOff(data.special_days_off)
 

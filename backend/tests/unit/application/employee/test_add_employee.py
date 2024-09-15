@@ -37,15 +37,11 @@ async def test_add_employee(
     user_gateway: FakeUserGateway,
     shop_gateway: FakeShopGateway,
     commiter: FakeCommiter,
+    access_service: AccessService,
     user_id: UserId,
     user_id_to_add: int,
     exc_class,
 ) -> None:
-    access_service = AccessService(
-        employee_reader=employee_gateway,
-        identity_provider=identity_provider,
-    )
-
     action = AddEmployee(
         identity_provider=identity_provider,
         access_service=access_service,

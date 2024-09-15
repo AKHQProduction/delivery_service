@@ -141,6 +141,7 @@ def test_goods_title(goods_title: str, exc_class) -> None:
         ("2.50", None),
         ("0", InvalidGoodsPriceError),
         ("-2.50", InvalidGoodsPriceError),
+        (2.50, None),
     ],
 )
 def test_goods_price(value: Decimal, exc_class) -> None:

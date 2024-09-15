@@ -52,9 +52,7 @@ def user_gateway() -> FakeUserGateway:
 @pytest.fixture
 def access_service(
     employee_gateway: FakeEmployeeGateway,
-    identity_provider: FakeIdentityProvider,
 ) -> AccessService:
     return AccessService(
         employee_reader=employee_gateway,
-        identity_provider=identity_provider,
     )

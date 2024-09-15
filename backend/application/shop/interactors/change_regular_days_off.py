@@ -42,7 +42,7 @@ class ChangeRegularDaysOff(Interactor[ChangeRegularDaysOffInputData, None]):
 
         shop_id = shop.shop_id
 
-        await self._access_service.ensure_can_edit_shop(shop_id)
+        await self._access_service.ensure_can_edit_shop(actor.user_id, shop_id)
 
         shop.regular_days_off = RegularDaysOff(data.regular_days_off)
 

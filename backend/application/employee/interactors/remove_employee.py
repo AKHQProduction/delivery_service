@@ -46,7 +46,9 @@ class RemoveEmployee(Interactor[RemoveEmployeeInputData, None]):
         employee_id = EmployeeId(data.employee_id)
         shop_id = shop.shop_id
 
-        await self._access_service.ensure_can_edit_employee(shop_id)
+        await self._access_service.ensure_can_edit_employee(
+            actor.user_id, shop_id
+        )
 
         await self._employee_saver.delete(employee_id)
 

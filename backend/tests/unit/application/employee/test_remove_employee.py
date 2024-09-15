@@ -33,15 +33,11 @@ async def test_remove_employee(
     employee_gateway: FakeEmployeeGateway,
     shop_gateway: FakeShopGateway,
     commiter: FakeCommiter,
+    access_service: AccessService,
     user_id: UserId,
     employee_id_to_del: int,
     exc_class,
 ) -> None:
-    access_service = AccessService(
-        employee_reader=employee_gateway,
-        identity_provider=identity_provider,
-    )
-
     action = RemoveEmployee(
         identity_provider=identity_provider,
         access_service=access_service,

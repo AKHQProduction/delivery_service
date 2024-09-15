@@ -57,7 +57,9 @@ class AddEmployee(Interactor[AddEmployeeInputData, None]):
         if not user:
             raise UserIsNotExistError(data.user_id)
 
-        await self._access_service.ensure_can_create_employee(shop_id)
+        await self._access_service.ensure_can_create_employee(
+            actor.user_id, shop_id
+        )
 
         await self._employee_saver.save(
             Employee(

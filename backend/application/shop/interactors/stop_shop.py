@@ -36,7 +36,9 @@ class StopShop(Interactor[None, None]):
         if shop is None:
             raise UserNotHaveShopError(actor.user_id)
 
-        await self._access_service.ensure_can_edit_shop(shop.shop_id)
+        await self._access_service.ensure_can_edit_shop(
+            actor.user_id, shop.shop_id
+        )
 
         shop.is_active = False
 
