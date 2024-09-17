@@ -11,11 +11,14 @@ from dishka import (
 
 from application.common.access_service import AccessService
 from application.common.commiter import Commiter
+from application.common.file_manager import FileManager
 from application.common.identity_provider import IdentityProvider
 from application.common.webhook_manager import WebhookManager
 from application.employee.gateway import EmployeeReader, EmployeeSaver
 from application.employee.interactors.add_employee import AddEmployee
 from application.employee.interactors.remove_employee import RemoveEmployee
+from application.goods.gateway import GoodsSaver
+from application.goods.interactors.add_goods import AddGoods
 from application.shop.gateway import ShopReader, ShopSaver
 from application.shop.interactors.change_regular_days_off import (
     ChangeRegularDaysOff,
@@ -36,6 +39,7 @@ from entities.shop.services import ShopService
 from infrastructure.auth.tg_auth import TgIdentityProvider
 from infrastructure.bootstrap.configs import load_all_configs
 from infrastructure.gateways.employee import EmployeeGateway
+from infrastructure.gateways.goods import GoodsGateway
 from infrastructure.gateways.shop import ShopGateway
 from infrastructure.gateways.user import UserGateway
 from infrastructure.geopy.config import GeoConfig
@@ -48,6 +52,8 @@ from infrastructure.persistence.provider import (
     get_async_sessionmaker,
     get_engine,
 )
+from infrastructure.s3.config import S3Config
+from infrastructure.s3.file_manager import S3FileManager
 from infrastructure.tg.bot_webhook_manager import BotWebhookManager
 from infrastructure.tg.config import WebhookConfig
 from infrastructure.tg.token_verifier import TgTokenVerifier
@@ -72,6 +78,10 @@ def gateway_provider() -> Provider:
         EmployeeGateway,
         scope=Scope.REQUEST,
         provides=AnyOf[EmployeeReader, EmployeeSaver],
+    )
+
+    provider.provide(
+        GoodsGateway, scope=Scope.REQUEST, provides=AnyOf[GoodsSaver]
     )
 
     provider.provide(
@@ -115,6 +125,8 @@ def interactor_provider() -> Provider:
     provider.provide(ChangeRegularDaysOff, scope=Scope.REQUEST)
     provider.provide(ChangeSpecialDaysOff, scope=Scope.REQUEST)
 
+    provider.provide(AddGoods, scope=Scope.REQUEST)
+
     provider.provide(AddEmployee, scope=Scope.REQUEST)
     provider.provide(RemoveEmployee, scope=Scope.REQUEST)
 
@@ -152,6 +164,8 @@ def infrastructure_provider() -> Provider:
         BotWebhookManager, scope=Scope.REQUEST, provides=WebhookManager
     )
 
+    provider.provide(S3FileManager, scope=Scope.REQUEST, provides=FileManager)
+
     return provider
 
 
@@ -165,6 +179,7 @@ def config_provider() -> Provider:
     provider.provide(
         lambda: config.webhook, scope=Scope.APP, provides=WebhookConfig
     )
+    provider.provide(lambda: config.s3, scope=Scope.APP, provides=S3Config)
 
     return provider
 

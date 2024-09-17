@@ -6,6 +6,7 @@ from dotenv import load_dotenv
 
 from infrastructure.geopy.config import GeoConfig
 from infrastructure.persistence.config import DBConfig
+from infrastructure.s3.config import S3Config
 from infrastructure.tg.config import WebhookConfig
 
 
@@ -14,6 +15,7 @@ class AllConfigs:
     db: DBConfig
     geo: GeoConfig
     webhook: WebhookConfig
+    s3: S3Config
 
 
 def load_all_configs() -> AllConfigs:
@@ -39,6 +41,14 @@ def load_all_configs() -> AllConfigs:
         webhook_port=int(os.getenv("WEBHOOK_PORT")),
     )
 
+    s3_config = S3Config(
+        endpoint_url=os.getenv("MINIO_URL"),
+        aws_access_key_id=os.getenv("MINIO_ACCESS_KEY"),
+        aws_secret_access_key=os.getenv("MINIO_SECRET_KEY"),
+    )
+
     logging.info("Config loaded.")
 
-    return AllConfigs(db=db_config, geo=geo_config, webhook=webhook_config)
+    return AllConfigs(
+        db=db_config, geo=geo_config, webhook=webhook_config, s3=s3_config
+    )

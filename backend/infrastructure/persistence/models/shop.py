@@ -50,6 +50,9 @@ def map_shops_table() -> None:
                 back_populates="shop",
                 cascade="all, delete-orphan",
             ),
+            "goods": relationship(
+                "Goods", back_populates="shop", cascade="all, delete-orphan"
+            ),
             "title": composite(ShopTitle, shops_table.c.shop_title),
             "token": composite(ShopToken, shops_table.c.shop_token),
             "regular_days_off": composite(

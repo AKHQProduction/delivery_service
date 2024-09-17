@@ -20,6 +20,20 @@ employees_table = sa.Table(
         sa.ForeignKey("shops.shop_id", ondelete="CASCADE"),
     ),
     sa.Column("role", sa.Enum(EmployeeRole), nullable=False),
+    sa.Column(
+        "created_at",
+        sa.DateTime,
+        default=sa.func.now(),
+        server_default=sa.func.now(),
+    ),
+    sa.Column(
+        "updated_at",
+        sa.DateTime,
+        default=sa.func.now(),
+        server_default=sa.func.now(),
+        onupdate=sa.func.now(),
+        server_onupdate=sa.func.now(),
+    ),
     UniqueConstraint("user_id", name="uq_shop_employee"),
 )
 

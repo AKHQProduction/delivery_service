@@ -11,7 +11,7 @@ from . import states
 router = Router()
 
 
-@router.message(Command("good"))
+@router.message(Command("goods"))
 @router.message(F.text == GOODS_BTN_TEXT)
 async def good_workflow_btn(_: Message, dialog_manager: DialogManager):
     await dialog_manager.start(

@@ -27,7 +27,7 @@ class GoodsTitle:
 
 @dataclass(slots=True, frozen=True, eq=True, unsafe_hash=True)
 class GoodsPrice:
-    value: Decimal()
+    value: Decimal
 
     def __post_init__(self) -> None:
         if isinstance(self.value, str):
@@ -40,3 +40,9 @@ class GoodsPrice:
 
         if self.value <= 0:
             raise InvalidGoodsPriceError()
+
+
+@dataclass(slots=True, frozen=True, eq=True, unsafe_hash=True)
+class GoodsMetadata:
+    key: str
+    file_id: str

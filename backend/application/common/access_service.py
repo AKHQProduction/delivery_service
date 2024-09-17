@@ -54,7 +54,7 @@ class AccessService:
         except KeyError:
             return False
 
-    async def ensure_has_permission(
+    async def _ensure_has_permission(
         self,
         user_id: UserId,
         permission: Permission,
@@ -66,19 +66,19 @@ class AccessService:
             raise AccessDeniedError()
 
     async def ensure_can_create_shop(self, user_id: UserId) -> None:
-        await self.ensure_has_permission(user_id, Permission.CAN_CREATE_SHOP)
+        await self._ensure_has_permission(user_id, Permission.CAN_CREATE_SHOP)
 
     async def ensure_can_edit_shop(
         self, user_id: UserId, shop_id: ShopId
     ) -> None:
-        await self.ensure_has_permission(
+        await self._ensure_has_permission(
             user_id, Permission.CAN_EDIT_SHOP, shop_id
         )
 
     async def ensure_can_delete_shop(
         self, user_id: UserId, shop_id: ShopId
     ) -> None:
-        await self.ensure_has_permission(
+        await self._ensure_has_permission(
             user_id, Permission.CAN_DELETE_SHOP, shop_id
         )
 
@@ -87,7 +87,7 @@ class AccessService:
         user_id: UserId,
         shop_id: ShopId,
     ) -> None:
-        await self.ensure_has_permission(
+        await self._ensure_has_permission(
             user_id, Permission.CAN_CREATE_EMPLOYEE, shop_id
         )
 
@@ -96,13 +96,13 @@ class AccessService:
         user_id: UserId,
         shop_id: ShopId,
     ) -> None:
-        await self.ensure_has_permission(
+        await self._ensure_has_permission(
             user_id, Permission.CAN_EDIT_EMPLOYEE, shop_id
         )
 
     async def ensure_can_create_goods(
         self, user_id: UserId, shop_id: ShopId
     ) -> None:
-        await self.ensure_has_permission(
+        await self._ensure_has_permission(
             user_id, Permission.CAN_CREATE_GOODS, shop_id
         )
