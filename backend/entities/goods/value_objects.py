@@ -40,9 +40,3 @@ class GoodsPrice:
 
         if self.value <= 0:
             raise InvalidGoodsPriceError()
-
-
-@dataclass(slots=True, frozen=True, eq=True, unsafe_hash=True)
-class GoodsMetadata:
-    key: str
-    file_id: str

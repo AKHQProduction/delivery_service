@@ -2,7 +2,7 @@ from dataclasses import dataclass
 from typing import NewType
 from uuid import UUID
 
-from entities.goods.value_objects import GoodsMetadata, GoodsPrice, GoodsTitle
+from entities.goods.value_objects import GoodsPrice, GoodsTitle
 from entities.shop.models import ShopId
 
 GoodsId = NewType("GoodsId", UUID)
@@ -14,4 +14,4 @@ class Goods:
     shop_id: ShopId
     title: GoodsTitle
     price: GoodsPrice
-    metadata: GoodsMetadata | None = None
+    metadata_key: str | None = None

@@ -12,13 +12,12 @@ from application.shop.errors import UserNotHaveShopError
 from application.shop.gateway import ShopReader
 from application.user.errors import UserIsNotExistError
 from entities.goods.models import Goods, GoodsId
-from entities.goods.value_objects import GoodsMetadata, GoodsPrice, GoodsTitle
+from entities.goods.value_objects import GoodsPrice, GoodsTitle
 
 
 @dataclass(frozen=True)
 class FileMetadata:
     payload: bytes
-    file_id: str
     extension: str = "jpg"
 
 
@@ -67,7 +66,7 @@ class AddGoods(Interactor[AddGoodsInputData, GoodsId]):
             shop_id=shop.shop_id,
             title=GoodsTitle(data.title),
             price=GoodsPrice(data.price),
-            metadata=metadata,
+            metadata_key=metadata,
         )
 
         await self._goods_saver.save(new_goods)
@@ -78,7 +77,7 @@ class AddGoods(Interactor[AddGoodsInputData, GoodsId]):
 
     def _process_file_metadata(
         self, goods_id: GoodsId, metadata: FileMetadata | None
-    ) -> GoodsMetadata | None:
+    ) -> str | None:
         if not metadata:
             return None
 
@@ -86,4 +85,4 @@ class AddGoods(Interactor[AddGoodsInputData, GoodsId]):
 
         self._file_manager.save(payload=metadata.payload, path=key)
 
-        return GoodsMetadata(key=key, file_id=metadata.file_id)
+        return key

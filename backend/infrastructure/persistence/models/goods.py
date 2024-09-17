@@ -2,7 +2,7 @@ import sqlalchemy as sa
 from sqlalchemy.orm import composite, relationship
 
 from entities.goods.models import Goods
-from entities.goods.value_objects import GoodsMetadata, GoodsPrice, GoodsTitle
+from entities.goods.value_objects import GoodsPrice, GoodsTitle
 from infrastructure.persistence.models import mapper_registry
 
 goods_table = sa.Table(
@@ -16,8 +16,7 @@ goods_table = sa.Table(
     ),
     sa.Column("goods_title", sa.String(length=20), nullable=False),
     sa.Column("goods_price", sa.DECIMAL(10, 2), nullable=False),
-    sa.Column("goods_key", sa.String(), nullable=True),
-    sa.Column("goods_file_id", sa.String(), nullable=True),
+    sa.Column("metadata_key", sa.String(), nullable=True),
     sa.Column(
         "created_at",
         sa.DateTime,
@@ -43,10 +42,5 @@ def map_goods_table() -> None:
             "shop": relationship("Shop", back_populates="goods"),
             "title": composite(GoodsTitle, goods_table.c.goods_title),
             "price": composite(GoodsPrice, goods_table.c.goods_price),
-            "metadata": composite(
-                GoodsMetadata,
-                goods_table.c.goods_key,
-                goods_table.c.goods_file_id,
-            ),
         },
     )
