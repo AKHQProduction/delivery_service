@@ -1,9 +1,9 @@
 import logging
 from dataclasses import dataclass
 
-from application.user.gateway import UserReader
 from application.common.interactor import Interactor
 from application.user.errors import UserIsNotExistError
+from application.user.gateway import UserReader
 from entities.user.models import UserId
 
 
@@ -21,8 +21,8 @@ class GetUserOutputData:
 
 class GetUser(Interactor[GetUserInputData, GetUserOutputData]):
     def __init__(
-            self,
-            user_reader: UserReader,
+        self,
+        user_reader: UserReader,
     ):
         self._user_reader = user_reader
 
@@ -32,19 +32,13 @@ class GetUser(Interactor[GetUserInputData, GetUserOutputData]):
         user = await self._user_reader.by_id(user_id)
 
         if user is None:
-            logging.info(
-                    "GetUser: user with id %s not found",
-                    user_id
-            )
+            logging.info("GetUser: user with id %s not found", user_id)
             raise UserIsNotExistError(user_id)
 
-        logging.info(
-                "GetUser: successfully get user %s",
-                user_id
-        )
+        logging.info("GetUser: successfully get user %s", user_id)
 
         return GetUserOutputData(
-                user_id=user_id,
-                full_name=user.full_name,
-                username=user.username,
+            user_id=user_id,
+            full_name=user.full_name,
+            username=user.username,
         )

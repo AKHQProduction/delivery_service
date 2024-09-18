@@ -19,11 +19,11 @@ class ChangeSpecialDaysOffInputData:
 
 class ChangeSpecialDaysOff(Interactor[ChangeSpecialDaysOffInputData, None]):
     def __init__(
-            self,
-            identity_provider: IdentityProvider,
-            shop_reader: ShopReader,
-            commiter: Commiter,
-            access_service: AccessService
+        self,
+        identity_provider: IdentityProvider,
+        shop_reader: ShopReader,
+        commiter: Commiter,
+        access_service: AccessService,
     ) -> None:
         self._identity_provider = identity_provider
         self._shop_reader = shop_reader
@@ -43,13 +43,14 @@ class ChangeSpecialDaysOff(Interactor[ChangeSpecialDaysOffInputData, None]):
 
         shop_id = shop.shop_id
 
-        await self._access_service.ensure_can_edit_shop(shop_id)
+        await self._access_service.ensure_can_edit_shop(actor.user_id, shop_id)
 
         shop.special_days_off = SpecialDaysOff(data.special_days_off)
 
         await self._commiter.commit()
 
         logging.info(
-                "ChangeSpecialDaysOff: successfully change regular days off "
-                f"for shop={shop_id}"
+            "ChangeSpecialDaysOff: successfully change regular days off "
+            "for shop=%s",
+            shop_id,
         )

@@ -18,17 +18,12 @@ class UserReader(Protocol):
 
     @abstractmethod
     async def all(
-            self,
-            filters: GetUsersFilters,
-            pagination: Pagination
+        self, filters: GetUsersFilters, pagination: Pagination
     ) -> list[User]:
         raise NotImplementedError
 
     @abstractmethod
-    async def total_users(
-            self,
-            filters: GetUsersFilters
-    ) -> int:
+    async def total_users(self, filters: GetUsersFilters) -> int:
         raise NotImplementedError
 
 

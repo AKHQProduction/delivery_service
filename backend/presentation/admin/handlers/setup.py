@@ -1,10 +1,8 @@
 from aiogram import Dispatcher
+
+from .admin import setup_admin_dialogs, setup_admin_handlers
 from .common import setup_common_handlers
 from .user import profile
-from .admin import (
-    setup_admin_dialogs,
-    setup_admin_handlers
-)
 
 
 def register_handlers(dp: Dispatcher):

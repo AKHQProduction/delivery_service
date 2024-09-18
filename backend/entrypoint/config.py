@@ -1,5 +1,5 @@
-from dataclasses import dataclass
 import logging
+from dataclasses import dataclass
 
 from environs import Env
 
@@ -19,8 +19,7 @@ class TgBot:
         shop_bot_token = env.str("SHOP_BOT_TOKEN")
 
         return TgBot(
-                admin_bot_token=admin_bot_token,
-                shop_bot_token=shop_bot_token
+            admin_bot_token=admin_bot_token, shop_bot_token=shop_bot_token
         )
 
 
@@ -35,8 +34,7 @@ def load_config() -> Config:
     env.read_env(".env")
 
     config = Config(
-            tg_bot=TgBot.from_env(env),
-            webhook=WebhookConfig.from_env(env)
+        tg_bot=TgBot.from_env(env), webhook=WebhookConfig.from_env(env)
     )
 
     logger.info("Config successfully loaded")

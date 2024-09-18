@@ -1,4 +1,4 @@
-from aiogram import Router, F
+from aiogram import F, Router
 from aiogram.types import Message
 from dishka import FromDishka
 
@@ -9,13 +9,12 @@ router = Router()
 
 @router.message(F.text == "👤 Профіль")
 async def user_profile(
-        msg: Message,
-        id_provider: FromDishka[IdentityProvider]
+    msg: Message, id_provider: FromDishka[IdentityProvider]
 ):
     user = await id_provider.get_user()
 
     await msg.answer(
-            "👤 <b>Ваш профіль</b> \n\n"
-            f"🆔 <b>Ваш ID:</b> <code>{user.user_id}</code> \n"
-            f"📞 <b>Ваш номер телефона:</b> {user.phone_number}"
+        "👤 <b>Ваш профіль</b> \n\n"
+        f"🆔 <b>Ваш ID:</b> <code>{user.user_id}</code> \n"
+        f"📞 <b>Ваш номер телефона:</b> {user.phone_number}",
     )

@@ -6,19 +6,16 @@ from entities.user.models import User
 
 
 class ShopService:
-    def __init__(
-            self,
-            token_verifier: TokenVerifier
-    ):
+    def __init__(self, token_verifier: TokenVerifier):
         self._token_verifier = token_verifier
 
     async def create_shop(
-            self,
-            user: User,
-            shop_id: int,
-            title: str,
-            token: str,
-            regular_days_off: list[int]
+        self,
+        user: User,
+        shop_id: int,
+        title: str,
+        token: str,
+        regular_days_off: list[int],
     ) -> Shop:
         shop_id = ShopId(shop_id)
         title = ShopTitle(title)
@@ -31,10 +28,10 @@ class ShopService:
             raise UserIsNotActiveError(user.user_id)
 
         shop = Shop(
-                shop_id=shop_id,
-                title=title,
-                token=token,
-                regular_days_off=regular_days_off
+            shop_id=shop_id,
+            title=title,
+            token=token,
+            regular_days_off=regular_days_off,
         )
 
         shop.users.append(user)

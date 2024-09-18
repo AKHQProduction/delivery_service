@@ -3,7 +3,6 @@ import pytest
 from application.common.access_service import AccessService
 from application.errors.access import AccessDeniedError
 from application.shop.errors import UserNotHaveShopError
-
 from application.shop.interactors.delete_shop import DeleteShop
 from application.user.errors import UserIsNotExistError
 from entities.user.models import UserId
@@ -16,31 +15,31 @@ from tests.mocks.gateways.shop import FakeShopGateway
 @pytest.mark.application
 @pytest.mark.shop
 @pytest.mark.parametrize(
-        ["user_id", "shop_id", "exc_class"],
-        [
-            (1, 1234567898, None),
-            (4, 9876543212, UserIsNotExistError),
-            (3, 1234567898, AccessDeniedError),
-            (2, 1234567898, UserNotHaveShopError)
-        ]
+    ["user_id", "shop_id", "exc_class"],
+    [
+        (1, 1234567898, None),
+        (4, 9876543212, UserIsNotExistError),
+        (3, 1234567898, AccessDeniedError),
+        (2, 1234567898, UserNotHaveShopError),
+    ],
 )
 async def test_delete_shop(
-        shop_gateway: FakeShopGateway,
-        identity_provider: FakeIdentityProvider,
-        webhook_manager: FakeWebhookManager,
-        commiter: FakeCommiter,
-        access_service: AccessService,
-        user_id: UserId,
-        shop_id: int,
-        exc_class
+    shop_gateway: FakeShopGateway,
+    identity_provider: FakeIdentityProvider,
+    webhook_manager: FakeWebhookManager,
+    commiter: FakeCommiter,
+    access_service: AccessService,
+    user_id: UserId,
+    shop_id: int,
+    exc_class,
 ) -> None:
     action = DeleteShop(
-            shop_saver=shop_gateway,
-            shop_reader=shop_gateway,
-            identity_provider=identity_provider,
-            webhook_manager=webhook_manager,
-            commiter=commiter,
-            access_service=access_service,
+        shop_saver=shop_gateway,
+        shop_reader=shop_gateway,
+        identity_provider=identity_provider,
+        webhook_manager=webhook_manager,
+        commiter=commiter,
+        access_service=access_service,
     )
 
     coro = action()
@@ -61,4 +60,4 @@ async def test_delete_shop(
         assert commiter.commited
         assert shop_gateway.deleted
         assert webhook_manager.dropped
-        assert shop_id not in shop_gateway.shops.keys()
+        assert shop_id not in shop_gateway.shops

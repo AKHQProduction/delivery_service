@@ -10,7 +10,6 @@ from application.shop.errors import UserNotHaveShopError
 from application.shop.gateway import ShopReader
 from application.user.errors import UserIsNotExistError
 from application.user.gateway import UserReader
-
 from entities.employee.models import Employee, EmployeeRole
 from entities.user.models import UserId
 
@@ -23,13 +22,13 @@ class AddEmployeeInputData:
 
 class AddEmployee(Interactor[AddEmployeeInputData, None]):
     def __init__(
-            self,
-            identity_provider: IdentityProvider,
-            employee_saver: EmployeeSaver,
-            shop_reader: ShopReader,
-            user_reader: UserReader,
-            access_service: AccessService,
-            commiter: Commiter
+        self,
+        identity_provider: IdentityProvider,
+        employee_saver: EmployeeSaver,
+        shop_reader: ShopReader,
+        user_reader: UserReader,
+        access_service: AccessService,
+        commiter: Commiter,
     ):
         self._identity_provider = identity_provider
         self._employee_saver = employee_saver
@@ -58,17 +57,19 @@ class AddEmployee(Interactor[AddEmployeeInputData, None]):
         if not user:
             raise UserIsNotExistError(data.user_id)
 
-        await self._access_service.ensure_can_create_employee(shop_id)
+        await self._access_service.ensure_can_create_employee(
+            actor.user_id, shop_id
+        )
 
         await self._employee_saver.save(
-                Employee(
-                        employee_id=None,
-                        user_id=user_id,
-                        shop_id=shop_id,
-                        role=data.role
-                )
+            Employee(
+                employee_id=None,
+                user_id=user_id,
+                shop_id=shop_id,
+                role=data.role,
+            ),
         )
 
         await self._commiter.commit()
 
-        logging.info(f"AddEmployee: user={data.user_id} add to employees")
+        logging.info("AddEmployee: user=%s add to employees", data.user_id)

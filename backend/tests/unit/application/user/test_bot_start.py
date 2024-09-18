@@ -9,30 +9,21 @@ from tests.mocks.gateways.user import FakeUserGateway
 
 @pytest.mark.application
 @pytest.mark.user
-@pytest.mark.parametrize(
-        ["user_id"],
-        [
-            (1,),
-            (2,)
-        ]
-)
+@pytest.mark.parametrize(["user_id"], [(1,), (2,)])
 async def test_bot_start_with_already_created_user(
-        user_gateway: FakeUserGateway,
-        commiter: FakeCommiter,
-        identity_provider: FakeIdentityProvider,
-        user_id: UserId
+    user_gateway: FakeUserGateway,
+    commiter: FakeCommiter,
+    identity_provider: FakeIdentityProvider,
+    user_id: UserId,
 ) -> None:
     action = BotStart(
-            user_reader=user_gateway,
-            user_saver=user_gateway,
-            commiter=commiter,
-            identity_provider=identity_provider
+        user_reader=user_gateway,
+        user_saver=user_gateway,
+        commiter=commiter,
+        identity_provider=identity_provider,
     )
 
-    input_data = BotStartInputData(
-            user_id=user_id,
-            full_name="Test Test Test"
-    )
+    input_data = BotStartInputData(user_id=user_id, full_name="Test Test Test")
 
     output_data = await action(input_data)
 
@@ -45,30 +36,21 @@ async def test_bot_start_with_already_created_user(
 
 @pytest.mark.application
 @pytest.mark.user
-@pytest.mark.parametrize(
-        ["user_id"],
-        [
-            (4,),
-            (5,)
-        ]
-)
+@pytest.mark.parametrize(["user_id"], [(4,), (5,)])
 async def test_bot_start_when_create_new_user(
-        user_gateway: FakeUserGateway,
-        commiter: FakeCommiter,
-        identity_provider: FakeIdentityProvider,
-        user_id: UserId
+    user_gateway: FakeUserGateway,
+    commiter: FakeCommiter,
+    identity_provider: FakeIdentityProvider,
+    user_id: UserId,
 ) -> None:
     action = BotStart(
-            user_reader=user_gateway,
-            user_saver=user_gateway,
-            commiter=commiter,
-            identity_provider=identity_provider
+        user_reader=user_gateway,
+        user_saver=user_gateway,
+        commiter=commiter,
+        identity_provider=identity_provider,
     )
 
-    input_data = BotStartInputData(
-            user_id=user_id,
-            full_name="Test Test Test"
-    )
+    input_data = BotStartInputData(user_id=user_id, full_name="Test Test Test")
 
     output_data = await action(input_data)
 

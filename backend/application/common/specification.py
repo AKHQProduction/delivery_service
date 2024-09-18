@@ -34,8 +34,8 @@ class _And(_MultipleCompositeSpecification):
 
     def is_satisfied_by(self, candidate: Any) -> bool:
         return all(
-                specification.is_satisfied_by(candidate)
-                for specification in self.specifications
+            specification.is_satisfied_by(candidate)
+            for specification in self.specifications
         )
 
 
@@ -47,8 +47,8 @@ class _Or(_MultipleCompositeSpecification):
 
     def is_satisfied_by(self, candidate: Any) -> bool:
         return any(
-                specification.is_satisfied_by(candidate)
-                for specification in self.specifications
+            specification.is_satisfied_by(candidate)
+            for specification in self.specifications
         )
 
 

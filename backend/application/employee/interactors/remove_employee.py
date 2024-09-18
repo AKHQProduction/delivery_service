@@ -10,7 +10,6 @@ from application.shop.errors import UserNotHaveShopError
 from application.shop.gateway import ShopReader
 from application.user.errors import UserIsNotExistError
 from entities.employee.models import EmployeeId
-from entities.shop.models import ShopId
 
 
 @dataclass(frozen=True)
@@ -20,12 +19,12 @@ class RemoveEmployeeInputData:
 
 class RemoveEmployee(Interactor[RemoveEmployeeInputData, None]):
     def __init__(
-            self,
-            identity_provider: IdentityProvider,
-            shop_reader: ShopReader,
-            access_service: AccessService,
-            employee_saver: EmployeeSaver,
-            commiter: Commiter
+        self,
+        identity_provider: IdentityProvider,
+        shop_reader: ShopReader,
+        access_service: AccessService,
+        employee_saver: EmployeeSaver,
+        commiter: Commiter,
     ) -> None:
         self._identity_provider = identity_provider
         self._shop_reader = shop_reader
@@ -47,12 +46,14 @@ class RemoveEmployee(Interactor[RemoveEmployeeInputData, None]):
         employee_id = EmployeeId(data.employee_id)
         shop_id = shop.shop_id
 
-        await self._access_service.ensure_can_edit_employee(shop_id)
+        await self._access_service.ensure_can_edit_employee(
+            actor.user_id, shop_id
+        )
 
         await self._employee_saver.delete(employee_id)
 
         await self._commiter.commit()
 
         logging.info(
-                f"RemoveEmployee: employee={employee_id} remove from employees"
+            "RemoveEmployee: employee=%s remove from employees", employee_id
         )

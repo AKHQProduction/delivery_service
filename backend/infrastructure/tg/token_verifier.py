@@ -14,7 +14,7 @@ class TgTokenVerifier(TokenVerifier):
 
         try:
             await new_bot.get_me()
-        except TelegramUnauthorizedError:
-            raise ShopTokenUnauthorizedError(token)
+        except TelegramUnauthorizedError as error:
+            raise ShopTokenUnauthorizedError(token) from error
         else:
             await new_bot.session.close()

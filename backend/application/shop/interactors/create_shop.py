@@ -25,16 +25,15 @@ class CreateShopInputData:
 
 class CreateShop(Interactor[CreateShopInputData, ShopId]):
     def __init__(
-            self,
-            shop_saver: ShopSaver,
-            user_saver: UserSaver,
-            employee_saver: EmployeeSaver,
-            commiter: Commiter,
-            identity_provider: IdentityProvider,
-            shop_service: ShopService,
-            webhook_manager: WebhookManager,
-            access_service: AccessService
-
+        self,
+        shop_saver: ShopSaver,
+        user_saver: UserSaver,
+        employee_saver: EmployeeSaver,
+        commiter: Commiter,
+        identity_provider: IdentityProvider,
+        shop_service: ShopService,
+        webhook_manager: WebhookManager,
+        access_service: AccessService,
     ) -> None:
         self._shop_saver = shop_saver
         self._user_saver = user_saver
@@ -51,24 +50,24 @@ class CreateShop(Interactor[CreateShopInputData, ShopId]):
         if not user:
             raise UserIsNotExistError()
 
-        await self._access_service.ensure_can_create_shop(user)
+        await self._access_service.ensure_can_create_shop(user.user_id)
 
         shop = await self._shop_service.create_shop(
-                user,
-                data.shop_id,
-                data.title,
-                data.token,
-                data.regular_days_off
+            user,
+            data.shop_id,
+            data.title,
+            data.token,
+            data.regular_days_off,
         )
 
         await self._shop_saver.save(shop)
         await self._employee_saver.save(
-                Employee(
-                        employee_id=None,
-                        user_id=user.user_id,
-                        shop_id=shop.shop_id,
-                        role=EmployeeRole.ADMIN
-                )
+            Employee(
+                employee_id=None,
+                user_id=user.user_id,
+                shop_id=shop.shop_id,
+                role=EmployeeRole.ADMIN,
+            ),
         )
 
         await self._webhook_manager.setup_webhook(data.token)
@@ -76,7 +75,7 @@ class CreateShop(Interactor[CreateShopInputData, ShopId]):
         await self._commiter.commit()
 
         logging.info(
-                f"CreateShop: User={user.user_id} created shop={shop.shop_id}"
+            "CreateShop: User=%s created shop=%s", user.user_id, shop.shop_id
         )
 
         return shop.shop_id
