@@ -3,10 +3,12 @@ import pytest
 from application.common.access_service import AccessService
 from entities.user.models import UserId
 from tests.mocks.common.commiter import FakeCommiter
+from tests.mocks.common.file_manager import FakeFileManager
 from tests.mocks.common.identity_provider import FakeIdentityProvider
 from tests.mocks.common.token_verifier import FakeTokenVerifier
 from tests.mocks.common.webhook_manager import FakeWebhookManager
 from tests.mocks.gateways.employee import FakeEmployeeGateway
+from tests.mocks.gateways.goods import FakeGoodsGateway
 from tests.mocks.gateways.shop import FakeShopGateway
 from tests.mocks.gateways.user import FakeUserGateway
 
@@ -56,3 +58,13 @@ def access_service(
     return AccessService(
         employee_reader=employee_gateway,
     )
+
+
+@pytest.fixture
+def goods_gateway() -> FakeGoodsGateway:
+    return FakeGoodsGateway()
+
+
+@pytest.fixture
+def file_manager() -> FakeFileManager:
+    return FakeFileManager()
