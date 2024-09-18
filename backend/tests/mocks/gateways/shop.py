@@ -1,4 +1,4 @@
-from application.shop.errors import ShopAlreadyExistError, ShopIsNotExistError
+from application.shop.errors import ShopAlreadyExistError
 from application.shop.gateway import ShopReader, ShopSaver
 from entities.shop.models import Shop, ShopId
 from entities.shop.value_objects import ShopTitle, ShopToken
@@ -46,9 +46,7 @@ class FakeShopGateway(ShopReader, ShopSaver):
     async def delete(self, shop_id: ShopId) -> None:
         shop = self.shops.get(shop_id, None)
 
-        if not shop:
-            raise ShopIsNotExistError(shop_id=shop_id)
-
-        del self.shops[shop_id]
+        if shop:
+            del self.shops[shop_id]
 
         self.deleted = True
