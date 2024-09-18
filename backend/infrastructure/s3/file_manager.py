@@ -26,3 +26,8 @@ class S3FileManager(FileManager):
 
         with BytesIO(payload) as file_obj:
             s3.upload_fileobj(file_obj, "goods", path)
+
+    def delete(self, path: str) -> None:
+        s3 = self._client()
+
+        s3.delete_object(Bucket="goods", Key=path)

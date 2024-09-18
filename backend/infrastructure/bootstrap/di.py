@@ -17,8 +17,9 @@ from application.common.webhook_manager import WebhookManager
 from application.employee.gateway import EmployeeReader, EmployeeSaver
 from application.employee.interactors.add_employee import AddEmployee
 from application.employee.interactors.remove_employee import RemoveEmployee
-from application.goods.gateway import GoodsSaver
+from application.goods.gateway import GoodsReader, GoodsSaver
 from application.goods.interactors.add_goods import AddGoods
+from application.goods.interactors.delete_goods import DeleteGoods
 from application.shop.gateway import ShopReader, ShopSaver
 from application.shop.interactors.change_regular_days_off import (
     ChangeRegularDaysOff,
@@ -81,7 +82,9 @@ def gateway_provider() -> Provider:
     )
 
     provider.provide(
-        GoodsGateway, scope=Scope.REQUEST, provides=AnyOf[GoodsSaver]
+        GoodsGateway,
+        scope=Scope.REQUEST,
+        provides=AnyOf[GoodsSaver, GoodsReader],
     )
 
     provider.provide(
@@ -126,6 +129,7 @@ def interactor_provider() -> Provider:
     provider.provide(ChangeSpecialDaysOff, scope=Scope.REQUEST)
 
     provider.provide(AddGoods, scope=Scope.REQUEST)
+    provider.provide(DeleteGoods, scope=Scope.REQUEST)
 
     provider.provide(AddEmployee, scope=Scope.REQUEST)
     provider.provide(RemoveEmployee, scope=Scope.REQUEST)

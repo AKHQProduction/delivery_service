@@ -11,3 +11,12 @@ class GoodsAlreadyExistError(ApplicationError):
     @property
     def message(self):
         return f"Goods with id={self.goods_id} already exists"
+
+
+@dataclass(eq=False)
+class GoodsIsNotExistError(ApplicationError):
+    goods_id: UUID
+
+    @property
+    def message(self):
+        return f"Goods with id={self.goods_id} is not exists"
