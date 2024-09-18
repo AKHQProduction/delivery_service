@@ -13,6 +13,7 @@ from application.shop.gateway import ShopReader
 from application.user.errors import UserIsNotExistError
 from entities.goods.models import Goods, GoodsId
 from entities.goods.value_objects import GoodsPrice, GoodsTitle
+from entities.shop.models import ShopId
 
 
 @dataclass(frozen=True)
@@ -59,7 +60,9 @@ class AddGoods(Interactor[AddGoodsInputData, GoodsId]):
         )
 
         goods_id = GoodsId(uuid.uuid4())
-        metadata = self._process_file_metadata(goods_id, data.metadata)
+        metadata = self._process_file_metadata(
+            goods_id, shop.shop_id, data.metadata
+        )
 
         new_goods = Goods(
             goods_id=goods_id,
@@ -76,12 +79,12 @@ class AddGoods(Interactor[AddGoodsInputData, GoodsId]):
         return new_goods.goods_id
 
     def _process_file_metadata(
-        self, goods_id: GoodsId, metadata: FileMetadata | None
+        self, goods_id: GoodsId, shop_id: ShopId, metadata: FileMetadata | None
     ) -> str | None:
         if not metadata:
             return None
 
-        key = f"{goods_id}.{metadata.extension}"
+        key = f"{shop_id}/{goods_id}.{metadata.extension}"
 
         self._file_manager.save(payload=metadata.payload, path=key)
 
