@@ -1,3 +1,4 @@
+import logging
 import uuid
 from dataclasses import dataclass
 from decimal import Decimal
@@ -75,6 +76,8 @@ class AddGoods(Interactor[AddGoodsInputData, GoodsId]):
         await self._goods_saver.save(new_goods)
 
         await self._commiter.commit()
+
+        logging.info("Goods with=%s successfully created", goods_id)
 
         return new_goods.goods_id
 
