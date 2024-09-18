@@ -16,7 +16,7 @@ goods_table = sa.Table(
     ),
     sa.Column("goods_title", sa.String(length=20), nullable=False),
     sa.Column("goods_price", sa.DECIMAL(10, 2), nullable=False),
-    sa.Column("metadata_key", sa.String(), nullable=True),
+    sa.Column("metadata_path", sa.String(), nullable=True),
     sa.Column(
         "created_at",
         sa.DateTime,

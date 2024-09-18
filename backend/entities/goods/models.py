@@ -14,4 +14,4 @@ class Goods:
     shop_id: ShopId
     title: GoodsTitle
     price: GoodsPrice
-    metadata_key: str | None = None
+    metadata_path: str | None = None

@@ -60,7 +60,7 @@ class AddGoods(Interactor[AddGoodsInputData, GoodsId]):
         )
 
         goods_id = GoodsId(uuid.uuid4())
-        metadata = self._process_file_metadata(
+        path = self._process_file_metadata(
             goods_id, shop.shop_id, data.metadata
         )
 
@@ -69,7 +69,7 @@ class AddGoods(Interactor[AddGoodsInputData, GoodsId]):
             shop_id=shop.shop_id,
             title=GoodsTitle(data.title),
             price=GoodsPrice(data.price),
-            metadata_key=metadata,
+            metadata_path=path,
         )
 
         await self._goods_saver.save(new_goods)
@@ -84,8 +84,8 @@ class AddGoods(Interactor[AddGoodsInputData, GoodsId]):
         if not metadata:
             return None
 
-        key = f"{shop_id}/{goods_id}.{metadata.extension}"
+        path = f"{shop_id}/{goods_id}.{metadata.extension}"
 
-        self._file_manager.save(payload=metadata.payload, path=key)
+        self._file_manager.save(payload=metadata.payload, path=path)
 
-        return key
+        return path
