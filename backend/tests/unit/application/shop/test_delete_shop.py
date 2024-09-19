@@ -7,6 +7,7 @@ from application.shop.interactors.delete_shop import DeleteShop
 from application.user.errors import UserIsNotExistError
 from entities.user.models import UserId
 from tests.mocks.common.commiter import FakeCommiter
+from tests.mocks.common.file_manager import FakeFileManager
 from tests.mocks.common.identity_provider import FakeIdentityProvider
 from tests.mocks.common.webhook_manager import FakeWebhookManager
 from tests.mocks.gateways.shop import FakeShopGateway
@@ -29,6 +30,7 @@ async def test_delete_shop(
     webhook_manager: FakeWebhookManager,
     commiter: FakeCommiter,
     access_service: AccessService,
+    file_manager: FakeFileManager,
     user_id: UserId,
     shop_id: int,
     exc_class,
@@ -38,6 +40,7 @@ async def test_delete_shop(
         shop_reader=shop_gateway,
         identity_provider=identity_provider,
         webhook_manager=webhook_manager,
+        file_manager=file_manager,
         commiter=commiter,
         access_service=access_service,
     )
@@ -51,6 +54,7 @@ async def test_delete_shop(
         assert not commiter.commited
         assert not shop_gateway.deleted
         assert not webhook_manager.dropped
+        assert not file_manager.deleted
 
     else:
         output_data = await coro
@@ -61,3 +65,4 @@ async def test_delete_shop(
         assert shop_gateway.deleted
         assert webhook_manager.dropped
         assert shop_id not in shop_gateway.shops
+        assert file_manager.deleted

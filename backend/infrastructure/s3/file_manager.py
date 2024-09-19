@@ -27,7 +27,19 @@ class S3FileManager(FileManager):
         with BytesIO(payload) as file_obj:
             s3.upload_fileobj(file_obj, "goods", path)
 
-    def delete(self, path: str) -> None:
+    def delete_object(self, path: str) -> None:
         s3 = self._client()
 
         s3.delete_object(Bucket="goods", Key=path)
+
+    def delete_folder(self, folder: str) -> None:
+        s3 = self._client()
+
+        objects_to_delete = s3.list_objects_v2(
+            Bucket="goods",
+            Prefix=folder,
+        )
+
+        if "Contents" in objects_to_delete:
+            for obj in objects_to_delete["Contents"]:
+                s3.delete_object(Bucket="goods", Key=obj["Key"])

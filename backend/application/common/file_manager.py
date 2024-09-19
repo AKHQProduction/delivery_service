@@ -8,5 +8,9 @@ class FileManager(Protocol):
         raise NotImplementedError
 
     @abstractmethod
-    def delete(self, path: str) -> None:
+    def delete_object(self, path: str) -> None:
+        raise NotImplementedError
+
+    @abstractmethod
+    def delete_folder(self, folder: str) -> None:
         raise NotImplementedError

@@ -18,6 +18,7 @@ class FakeGoodsGateway(GoodsSaver, GoodsReader):
                 shop_id=ShopId(1234567898),
                 title=GoodsTitle("Test Goods"),
                 price=GoodsPrice(Decimal("2.50")),
+                metadata_path=f"1234567898/{fake_goods_uuid}.jpg",
             )
         }
 

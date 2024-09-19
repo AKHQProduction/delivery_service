@@ -9,5 +9,8 @@ class FakeFileManager(FileManager):
     def save(self, payload: bytes, path: str) -> None:
         self.saved = True
 
-    def delete(self, path: str) -> None:
+    def delete_object(self, path: str) -> None:
+        self.deleted = True
+
+    def delete_folder(self, folder: str) -> None:
         self.deleted = True

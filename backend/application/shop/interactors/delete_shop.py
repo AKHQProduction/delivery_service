@@ -2,6 +2,7 @@ import logging
 
 from application.common.access_service import AccessService
 from application.common.commiter import Commiter
+from application.common.file_manager import FileManager
 from application.common.identity_provider import IdentityProvider
 from application.common.interactor import Interactor
 from application.common.webhook_manager import WebhookManager
@@ -19,6 +20,7 @@ class DeleteShop(Interactor[None, None]):
         access_service: AccessService,
         commiter: Commiter,
         webhook_manager: WebhookManager,
+        file_manager: FileManager,
     ):
         self._identity_provider = identity_provider
         self._shop_reader = shop_reader
@@ -26,15 +28,14 @@ class DeleteShop(Interactor[None, None]):
         self._access_service = access_service
         self._commiter = commiter
         self._webhook_manager = webhook_manager
+        self._file_manager = file_manager
 
     async def __call__(self, data: None = None) -> None:
         actor = await self._identity_provider.get_user()
-
         if not actor:
             raise UserIsNotExistError()
 
         shop = await self._shop_reader.by_identity(actor.user_id)
-
         if shop is None:
             raise UserNotHaveShopError(actor.user_id)
 
@@ -45,6 +46,8 @@ class DeleteShop(Interactor[None, None]):
         )
 
         await self._shop_saver.delete(shop_id)
+
+        self._file_manager.delete_folder(str(shop_id))
 
         await self._webhook_manager.drop_webhook(shop.token.value)
 
