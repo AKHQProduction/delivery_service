@@ -6,6 +6,7 @@ from aiogram.client.default import DefaultBotProperties
 from aiogram.client.session.aiohttp import AiohttpSession
 from aiogram.enums import ParseMode
 from aiogram.exceptions import TelegramUnauthorizedError
+from aiogram.fsm.storage.memory import SimpleEventIsolation
 from aiogram.webhook.aiohttp_server import (
     SimpleRequestHandler,
     TokenBasedRequestHandler,
@@ -23,7 +24,7 @@ from presentation.admin.handlers.setup import setup_all
 
 
 def get_admin_dispatcher() -> Dispatcher:
-    dp = Dispatcher()
+    dp = Dispatcher(events_isolation=SimpleEventIsolation())
 
     setup_dishka(container=setup_di(), router=dp, auto_inject=True)
 
@@ -35,7 +36,7 @@ def get_admin_dispatcher() -> Dispatcher:
 
 
 def get_shop_dispatcher() -> Dispatcher:
-    dp = Dispatcher()
+    dp = Dispatcher(events_isolation=SimpleEventIsolation())
 
     return dp
 
