@@ -9,18 +9,13 @@ from application.common.file_manager import FileManager
 from application.common.identity_provider import IdentityProvider
 from application.common.interactor import Interactor
 from application.goods.gateway import GoodsSaver
+from application.goods.input_data import FileMetadata
 from application.shop.errors import UserNotHaveShopError
 from application.shop.gateway import ShopReader
 from application.user.errors import UserIsNotExistError
 from entities.goods.models import Goods, GoodsId
 from entities.goods.value_objects import GoodsPrice, GoodsTitle
 from entities.shop.models import ShopId
-
-
-@dataclass(frozen=True)
-class FileMetadata:
-    payload: bytes
-    extension: str = "jpg"
 
 
 @dataclass(frozen=True)

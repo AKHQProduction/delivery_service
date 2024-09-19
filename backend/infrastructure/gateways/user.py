@@ -2,7 +2,7 @@ from sqlalchemy import func, select
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from application.common.request_data import Pagination, SortOrder
+from application.common.input_data import Pagination, SortOrder
 from application.user.errors import UserAlreadyExistError
 from application.user.gateway import GetUsersFilters, UserReader, UserSaver
 from entities.user.models import User, UserId

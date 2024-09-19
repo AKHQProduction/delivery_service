@@ -2,7 +2,7 @@ from abc import abstractmethod
 from dataclasses import dataclass
 from typing import Protocol
 
-from application.common.request_data import Pagination
+from application.common.input_data import Pagination
 from entities.user.models import User, UserId
 
 

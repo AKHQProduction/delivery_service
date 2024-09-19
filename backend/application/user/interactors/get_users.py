@@ -2,8 +2,8 @@ import asyncio
 import logging
 from dataclasses import dataclass
 
+from application.common.input_data import Pagination
 from application.common.interactor import Interactor
-from application.common.request_data import Pagination
 from application.user.gateway import GetUsersFilters, UserReader
 from entities.user.models import User
 

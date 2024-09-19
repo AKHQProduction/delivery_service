@@ -1,4 +1,4 @@
-from application.common.request_data import Pagination
+from application.common.input_data import Pagination
 from application.user.errors import UserAlreadyExistError
 from application.user.gateway import GetUsersFilters, UserReader, UserSaver
 from entities.user.models import User, UserId
