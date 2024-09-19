@@ -20,6 +20,7 @@ from application.employee.interactors.remove_employee import RemoveEmployee
 from application.goods.gateway import GoodsReader, GoodsSaver
 from application.goods.interactors.add_goods import AddGoods
 from application.goods.interactors.delete_goods import DeleteGoods
+from application.goods.interactors.edit_goods_pic import EditGoodsPic
 from application.shop.gateway import ShopReader, ShopSaver
 from application.shop.interactors.change_regular_days_off import (
     ChangeRegularDaysOff,
@@ -130,6 +131,7 @@ def interactor_provider() -> Provider:
 
     provider.provide(AddGoods, scope=Scope.REQUEST)
     provider.provide(DeleteGoods, scope=Scope.REQUEST)
+    provider.provide(EditGoodsPic, scope=Scope.REQUEST)
 
     provider.provide(AddEmployee, scope=Scope.REQUEST)
     provider.provide(RemoveEmployee, scope=Scope.REQUEST)

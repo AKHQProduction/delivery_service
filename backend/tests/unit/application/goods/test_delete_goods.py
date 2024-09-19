@@ -11,6 +11,7 @@ from application.goods.interactors.delete_goods import (
 )
 from application.shop.errors import UserNotHaveShopError
 from application.user.errors import UserIsNotExistError
+from entities.goods.models import GoodsId
 from entities.user.models import UserId
 from tests.mocks.common.commiter import FakeCommiter
 from tests.mocks.common.file_manager import FakeFileManager
@@ -45,7 +46,7 @@ async def test_delete_goods(
     file_manager: FakeFileManager,
     commiter: FakeCommiter,
     user_id: UserId,
-    goods_id: UUID,
+    goods_id: GoodsId,
     exc_class,
 ) -> None:
     start_length_goods_in_memory = len(goods_gateway.goods)
