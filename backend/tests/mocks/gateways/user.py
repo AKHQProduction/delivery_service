@@ -24,7 +24,7 @@ class FakeUserGateway(UserReader, UserSaver):
 
         return list(users)
 
-    async def total_users(self, filters: GetUsersFilters) -> int:
+    async def total(self, filters: GetUsersFilters) -> int:
         return len(self.users)
 
     async def save(self, user: User) -> None:

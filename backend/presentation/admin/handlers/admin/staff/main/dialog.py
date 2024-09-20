@@ -12,7 +12,10 @@ from magic_filter import MagicFilter
 
 from application.common.input_data import Pagination
 from application.user.gateway import GetUsersFilters
-from application.user.interactors.get_users import GetUsers, GetUsersInputData
+from application.user.interactors.get_users import (
+    GetUsers,
+    GetUsersInputData,
+)
 from entities.user.models import UserId
 from presentation.admin.consts import STAFF_BTN_TXT
 from presentation.admin.handlers.admin.staff.add_user_to_staff.states import (

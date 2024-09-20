@@ -47,8 +47,8 @@ class UserGateway(UserReader, UserSaver):
 
         return list(result.all())
 
-    async def total_users(self, filters: GetUsersFilters) -> int:
-        query = select(func.count(User))
+    async def total(self, filters: GetUsersFilters) -> int:
+        query = select(func.count(users_table.c.user_id))
 
         total: int = await self.session.scalar(query)
 

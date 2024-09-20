@@ -29,7 +29,7 @@ class GetUsers(Interactor[GetUsersInputData, GetUsersOutputData]):
 
     async def __call__(self, data: GetUsersInputData) -> GetUsersOutputData:
         total_users: int = await asyncio.create_task(
-            self._user_reader.total_users(data.filters),
+            self._user_reader.total(data.filters),
         )
         users: list[User] = await asyncio.create_task(
             self._user_reader.all(data.filters, data.pagination),

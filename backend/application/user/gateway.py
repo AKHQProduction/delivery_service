@@ -23,7 +23,7 @@ class UserReader(Protocol):
         raise NotImplementedError
 
     @abstractmethod
-    async def total_users(self, filters: GetUsersFilters) -> int:
+    async def total(self, filters: GetUsersFilters) -> int:
         raise NotImplementedError
 
 
