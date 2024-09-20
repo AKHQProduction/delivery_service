@@ -1,4 +1,4 @@
-from application.common.request_data import Pagination
+from application.common.input_data import Pagination
 from application.user.errors import UserAlreadyExistError
 from application.user.gateway import GetUsersFilters, UserReader, UserSaver
 from entities.user.models import User, UserId
@@ -24,7 +24,7 @@ class FakeUserGateway(UserReader, UserSaver):
 
         return list(users)
 
-    async def total_users(self, filters: GetUsersFilters) -> int:
+    async def total(self, filters: GetUsersFilters) -> int:
         return len(self.users)
 
     async def save(self, user: User) -> None:

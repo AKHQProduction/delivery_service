@@ -1,48 +1,45 @@
 import logging
-import uuid
 from dataclasses import dataclass
-from decimal import Decimal
+from uuid import UUID
 
 from application.common.access_service import AccessService
 from application.common.commiter import Commiter
 from application.common.file_manager import FileManager
 from application.common.identity_provider import IdentityProvider
 from application.common.interactor import Interactor
-from application.goods.gateway import GoodsSaver
+from application.goods.errors import GoodsIsNotExistError
+from application.goods.gateway import GoodsReader
 from application.goods.input_data import FileMetadata
 from application.shop.errors import UserNotHaveShopError
 from application.shop.gateway import ShopReader
 from application.user.errors import UserIsNotExistError
 from entities.goods.models import Goods, GoodsId
-from entities.goods.value_objects import GoodsPrice, GoodsTitle
-from entities.shop.models import ShopId
 
 
 @dataclass(frozen=True)
-class AddGoodsInputData:
-    title: str
-    price: Decimal
+class EditGoodsPicInputData:
+    goods_id: UUID
     metadata: FileMetadata | None = None
 
 
-class AddGoods(Interactor[AddGoodsInputData, GoodsId]):
+class EditGoodsPic(Interactor[EditGoodsPicInputData, None]):
     def __init__(
         self,
         identity_provider: IdentityProvider,
         access_service: AccessService,
         shop_reader: ShopReader,
-        goods_saver: GoodsSaver,
+        goods_reader: GoodsReader,
         file_manager: FileManager,
         commiter: Commiter,
     ):
         self._identity_provider = identity_provider
-        self._access_service = access_service
         self._shop_reader = shop_reader
-        self._goods_saver = goods_saver
+        self._access_service = access_service
+        self._goods_reader = goods_reader
         self._file_manager = file_manager
         self._commiter = commiter
 
-    async def __call__(self, data: AddGoodsInputData) -> GoodsId:
+    async def __call__(self, data: EditGoodsPicInputData) -> None:
         actor = await self._identity_provider.get_user()
         if not actor:
             raise UserIsNotExistError()
@@ -51,39 +48,33 @@ class AddGoods(Interactor[AddGoodsInputData, GoodsId]):
         if not shop:
             raise UserNotHaveShopError(actor.user_id)
 
-        await self._access_service.ensure_can_create_goods(
+        await self._access_service.ensure_can_edit_goods(
             actor.user_id, shop.shop_id
         )
 
-        goods_id = GoodsId(uuid.uuid4())
-        path = self._process_file_metadata(
-            goods_id, shop.shop_id, data.metadata
-        )
+        goods_id = GoodsId(data.goods_id)
 
-        new_goods = Goods(
-            goods_id=goods_id,
-            shop_id=shop.shop_id,
-            title=GoodsTitle(data.title),
-            price=GoodsPrice(data.price),
-            metadata_path=path,
-        )
+        goods = await self._goods_reader.by_id(goods_id)
+        if not goods:
+            raise GoodsIsNotExistError(goods_id)
 
-        await self._goods_saver.save(new_goods)
+        goods.metadata_path = self._process_file_metadata(goods, data.metadata)
 
         await self._commiter.commit()
 
-        logging.info("Goods with=%s successfully created", goods_id)
-
-        return new_goods.goods_id
+        logging.info("Edit goods pic with id=%s", goods_id)
 
     def _process_file_metadata(
-        self, goods_id: GoodsId, shop_id: ShopId, metadata: FileMetadata | None
+        self, goods: Goods, metadata: FileMetadata | None
     ) -> str | None:
-        if not metadata:
+        if not goods.metadata_path and not metadata:
             return None
 
-        path = f"{shop_id}/{goods_id}.{metadata.extension}"
+        if goods.metadata_path and not metadata:
+            return self._file_manager.delete_object(goods.metadata_path)
 
-        self._file_manager.save(payload=metadata.payload, path=path)
+        path = f"{goods.shop_id}/{goods.goods_id}.{metadata.extension}"
+
+        self._file_manager.save(metadata.payload, path)
 
         return path

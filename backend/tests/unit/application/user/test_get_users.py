@@ -1,6 +1,6 @@
 import pytest
 
-from application.common.request_data import Pagination
+from application.common.input_data import Pagination
 from application.user.gateway import GetUsersFilters
 from application.user.interactors.get_users import (
     GetUsers,

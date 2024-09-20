@@ -1,8 +1,13 @@
 from decimal import Decimal
 from uuid import UUID
 
+from application.common.input_data import Pagination
 from application.goods.errors import GoodsAlreadyExistError
-from application.goods.gateway import GoodsReader, GoodsSaver
+from application.goods.gateway import (
+    GetManyGoodsFilters,
+    GoodsReader,
+    GoodsSaver,
+)
 from entities.goods.models import Goods, GoodsId
 from entities.goods.value_objects import GoodsPrice, GoodsTitle
 from entities.shop.models import ShopId
@@ -18,6 +23,7 @@ class FakeGoodsGateway(GoodsSaver, GoodsReader):
                 shop_id=ShopId(1234567898),
                 title=GoodsTitle("Test Goods"),
                 price=GoodsPrice(Decimal("2.50")),
+                metadata_path=f"1234567898/{fake_goods_uuid}.jpg",
             )
         }
 
@@ -34,6 +40,14 @@ class FakeGoodsGateway(GoodsSaver, GoodsReader):
 
     async def by_id(self, goods_id: GoodsId) -> Goods | None:
         return self.goods.get(goods_id, None)
+
+    async def all(
+        self, filters: GetManyGoodsFilters, pagination: Pagination
+    ) -> list[Goods]:
+        return list(self.goods.values())
+
+    async def total(self, filters: GetManyGoodsFilters) -> int:
+        return len(list(self.goods.values()))
 
     async def delete(self, goods: Goods) -> None:
         goods = await self.by_id(goods_id=goods.goods_id)

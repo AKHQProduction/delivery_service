@@ -2,7 +2,7 @@ from abc import abstractmethod
 from dataclasses import dataclass
 from typing import Protocol
 
-from application.common.request_data import Pagination
+from application.common.input_data import Pagination
 from entities.user.models import User, UserId
 
 
@@ -23,7 +23,7 @@ class UserReader(Protocol):
         raise NotImplementedError
 
     @abstractmethod
-    async def total_users(self, filters: GetUsersFilters) -> int:
+    async def total(self, filters: GetUsersFilters) -> int:
         raise NotImplementedError
 
 

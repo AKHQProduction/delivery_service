@@ -56,10 +56,10 @@ class DeleteGoods(Interactor[DeleteGoodsInputData, None]):
 
         goods = await self._goods_reader.by_id(goods_id)
         if not goods:
-            GoodsIsNotExistError(goods_id)
+            raise GoodsIsNotExistError(goods_id)
 
         if goods.metadata_path:
-            self._file_manager.delete(goods.metadata_path)
+            self._file_manager.delete_object(goods.metadata_path)
 
         await self._goods_saver.delete(goods)
 

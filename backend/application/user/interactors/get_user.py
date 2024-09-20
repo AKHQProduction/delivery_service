@@ -35,7 +35,7 @@ class GetUser(Interactor[GetUserInputData, GetUserOutputData]):
             logging.info("GetUser: user with id %s not found", user_id)
             raise UserIsNotExistError(user_id)
 
-        logging.info("GetUser: successfully get user %s", user_id)
+        logging.info("GetUser: successfully get user with id=%s", user_id)
 
         return GetUserOutputData(
             user_id=user_id,

@@ -15,6 +15,7 @@ class Permission(Enum):
     CAN_CREATE_EMPLOYEE = auto()
     CAN_EDIT_EMPLOYEE = auto()
     CAN_CREATE_GOODS = auto()
+    CAN_EDIT_GOODS = auto()
     CAN_DELETE_GOODS = auto()
 
 
@@ -26,6 +27,7 @@ class RolePermission(Enum):
         Permission.CAN_EDIT_EMPLOYEE,
         Permission.CAN_CREATE_GOODS,
         Permission.CAN_DELETE_GOODS,
+        Permission.CAN_EDIT_GOODS,
     }
     DEFAULT: ClassVar[set[Permission]] = {
         Permission.CAN_CREATE_SHOP,
@@ -107,6 +109,13 @@ class AccessService:
     ) -> None:
         await self._ensure_has_permission(
             user_id, Permission.CAN_CREATE_GOODS, shop_id
+        )
+
+    async def ensure_can_edit_goods(
+        self, user_id: UserId, shop_id: ShopId
+    ) -> None:
+        await self._ensure_has_permission(
+            user_id, Permission.CAN_EDIT_GOODS, shop_id
         )
 
     async def ensure_can_delete_goods(

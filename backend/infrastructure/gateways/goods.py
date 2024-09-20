@@ -1,9 +1,14 @@
-from sqlalchemy import delete, select
+from sqlalchemy import delete, func, select
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from application.common.input_data import Pagination, SortOrder
 from application.goods.errors import GoodsAlreadyExistError
-from application.goods.gateway import GoodsReader, GoodsSaver
+from application.goods.gateway import (
+    GetManyGoodsFilters,
+    GoodsReader,
+    GoodsSaver,
+)
 from entities.goods.models import Goods, GoodsId
 from infrastructure.persistence.models.goods import goods_table
 
@@ -26,6 +31,38 @@ class GoodsGateway(GoodsSaver, GoodsReader):
         result = await self.session.execute(query)
 
         return result.scalar_one_or_none()
+
+    async def all(
+        self, filters: GetManyGoodsFilters, pagination: Pagination
+    ) -> list[Goods]:
+        query = select(Goods)
+
+        if filters.shop_id:
+            query = query.where(goods_table.c.shop_id == filters.shop_id)
+
+        if pagination.order is SortOrder.ASC:
+            query = query.order_by(goods_table.c.created_at.asc())
+        else:
+            query = query.order_by(goods_table.c.created_at.desc())
+
+        if pagination.offset is not None:
+            query = query.offset(pagination.offset)
+        if pagination.limit is not None:
+            query = query.offset(pagination.limit)
+
+        result = await self.session.scalars(query)
+
+        return list(result.all())
+
+    async def total(self, filters: GetManyGoodsFilters) -> int:
+        query = select(func.count(goods_table.c.goods_id))
+
+        if filters.shop_id:
+            query = query.where(goods_table.c.shop_id == filters.shop_id)
+
+        total: int = await self.session.scalar(query)
+
+        return total
 
     async def delete(self, goods: Goods) -> None:
         query = delete(Goods).where(goods_table.c.goods_id == goods.goods_id)
