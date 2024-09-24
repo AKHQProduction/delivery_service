@@ -8,7 +8,7 @@ from infrastructure.persistence.models import mapper_registry
 employees_table = sa.Table(
     "employees",
     mapper_registry.metadata,
-    sa.Column("employee_id", sa.Integer, primary_key=True, unique=True),
+    sa.Column("employee_id", sa.Integer, primary_key=True, autoincrement=True),
     sa.Column(
         "user_id",
         sa.BigInteger,

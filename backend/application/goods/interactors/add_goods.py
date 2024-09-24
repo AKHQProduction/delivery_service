@@ -72,7 +72,7 @@ class AddGoods(Interactor[AddGoodsInputData, GoodsId]):
 
         await self._commiter.commit()
 
-        logging.info("Goods with=%s successfully created", goods_id)
+        logging.info("Goods with id=%s successfully created", goods_id)
 
         return new_goods.goods_id
 

@@ -4,10 +4,10 @@ from decimal import Decimal
 import pytest
 from zoneinfo import ZoneInfo
 
+from entities.common.errors import InvalidPriceError
 from entities.goods.errors import (
     GoodsTitleTooLongError,
     GoodsTitleTooShortError,
-    InvalidGoodsPriceError,
 )
 from entities.goods.value_objects import GoodsPrice, GoodsTitle
 from entities.shop.errors import (
@@ -139,8 +139,8 @@ def test_goods_title(goods_title: str, exc_class) -> None:
     ["value", "exc_class"],
     [
         ("2.50", None),
-        ("0", InvalidGoodsPriceError),
-        ("-2.50", InvalidGoodsPriceError),
+        ("0", InvalidPriceError),
+        ("-2.50", InvalidPriceError),
         (2.50, None),
     ],
 )

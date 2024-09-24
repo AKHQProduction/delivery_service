@@ -23,6 +23,8 @@ from application.goods.interactors.delete_goods import DeleteGoods
 from application.goods.interactors.edit_goods_pic import EditGoodsPic
 from application.goods.interactors.get_goods import GetGoods
 from application.goods.interactors.get_many_goods import GetManyGoods
+from application.order.gateway import OrderItemSaver, OrderSaver
+from application.order.interactors.create_order import CreateOrder
 from application.shop.gateway import ShopReader, ShopSaver
 from application.shop.interactors.change_regular_days_off import (
     ChangeRegularDaysOff,
@@ -44,6 +46,7 @@ from infrastructure.auth.tg_auth import TgIdentityProvider
 from infrastructure.bootstrap.configs import load_all_configs
 from infrastructure.gateways.employee import EmployeeGateway
 from infrastructure.gateways.goods import GoodsGateway
+from infrastructure.gateways.order import OrderGateway
 from infrastructure.gateways.shop import ShopGateway
 from infrastructure.gateways.user import UserGateway
 from infrastructure.geopy.config import GeoConfig
@@ -88,6 +91,12 @@ def gateway_provider() -> Provider:
         GoodsGateway,
         scope=Scope.REQUEST,
         provides=AnyOf[GoodsSaver, GoodsReader],
+    )
+
+    provider.provide(
+        OrderGateway,
+        scope=Scope.REQUEST,
+        provides=AnyOf[OrderSaver, OrderItemSaver],
     )
 
     provider.provide(
@@ -139,6 +148,8 @@ def interactor_provider() -> Provider:
 
     provider.provide(AddEmployee, scope=Scope.REQUEST)
     provider.provide(RemoveEmployee, scope=Scope.REQUEST)
+
+    provider.provide(CreateOrder, scope=Scope.REQUEST)
 
     return provider
 
