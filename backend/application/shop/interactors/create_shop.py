@@ -12,7 +12,7 @@ from application.user.errors import UserIsNotExistError
 from application.user.gateway import UserSaver
 from entities.employee.models import Employee, EmployeeRole
 from entities.shop.models import ShopId
-from entities.shop.services import ShopFabric
+from entities.shop.services import ShopService
 
 
 @dataclass(frozen=True)
@@ -31,7 +31,7 @@ class CreateShop(Interactor[CreateShopInputData, ShopId]):
         employee_saver: EmployeeSaver,
         commiter: Commiter,
         identity_provider: IdentityProvider,
-        shop_service: ShopFabric,
+        shop_service: ShopService,
         webhook_manager: WebhookManager,
         access_service: AccessService,
     ) -> None:

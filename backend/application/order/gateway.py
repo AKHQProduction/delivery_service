@@ -9,10 +9,18 @@ class OrderSaver(Protocol):
     async def save(self, order: Order) -> None:
         raise NotImplementedError
 
+    @abstractmethod
+    async def delete(self, order: Order) -> None:
+        raise NotImplementedError
+
 
 class OrderItemSaver(Protocol):
     @abstractmethod
     async def save_items(self, order_items: list[OrderItem]) -> None:
+        raise NotImplementedError
+
+    @abstractmethod
+    async def delete(self, order_item: OrderItem) -> None:
         raise NotImplementedError
 
 

@@ -30,10 +30,12 @@ from application.order.gateway import (
     OrderSaver,
 )
 from application.order.interactors.create_order import CreateOrder
+from application.order.interactors.delete_order_item import DeleteOrderItem
 from application.order.interactors.edit_order_item_quantity import (
     EditOrderItemQuantity,
 )
 from application.order.interactors.get_order import GetOrder
+from application.order.shop_validate import ShopValidationService
 from application.shop.gateway import ShopReader, ShopSaver
 from application.shop.interactors.change_regular_days_off import (
     ChangeRegularDaysOff,
@@ -50,7 +52,7 @@ from application.user.interactors.bot_start import BotStart
 from application.user.interactors.get_user import GetUser
 from application.user.interactors.get_users import GetUsers
 from entities.common.token_verifier import TokenVerifier
-from entities.shop.services import ShopFabric
+from entities.shop.services import ShopService
 from infrastructure.auth.tg_auth import TgIdentityProvider
 from infrastructure.bootstrap.configs import load_all_configs
 from infrastructure.gateways.employee import EmployeeGateway
@@ -167,22 +169,17 @@ def interactor_provider() -> Provider:
     provider.provide(CreateOrder, scope=Scope.REQUEST)
     provider.provide(GetOrder, scope=Scope.REQUEST)
     provider.provide(EditOrderItemQuantity, scope=Scope.REQUEST)
+    provider.provide(DeleteOrderItem, scope=Scope.REQUEST)
 
     return provider
 
 
-def fabric_provider() -> Provider:
+def service_provider() -> Provider:
     provider = Provider()
 
-    provider.provide(ShopFabric, scope=Scope.REQUEST)
-
-    return provider
-
-
-def access_provider() -> Provider:
-    provider = Provider()
-
+    provider.provide(ShopService, scope=Scope.REQUEST)
     provider.provide(AccessService, scope=Scope.REQUEST)
+    provider.provide(ShopValidationService, scope=Scope.REQUEST)
 
     return provider
 
@@ -249,8 +246,7 @@ def setup_providers() -> list[Provider]:
         interactor_provider(),
         db_provider(),
         geo_provider(),
-        fabric_provider(),
-        access_provider(),
+        service_provider(),
         infrastructure_provider(),
         config_provider(),
     ]

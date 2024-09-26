@@ -1,4 +1,4 @@
-from sqlalchemy import select
+from sqlalchemy import delete, select
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -35,6 +35,11 @@ class OrderGateway(OrderSaver, OrderReader):
 
         return result.scalar_one_or_none()
 
+    async def delete(self, order: Order) -> None:
+        query = delete(Order).where(orders_table.c.order_id == order.order_id)
+
+        await self.session.execute(query)
+
 
 class OrderItemGateway(OrderItemSaver, OrderItemReader):
     def __init__(self, session: AsyncSession):
@@ -65,3 +70,10 @@ class OrderItemGateway(OrderItemSaver, OrderItemReader):
         result = await self.session.execute(query)
 
         return result.scalar_one_or_none()
+
+    async def delete(self, order_item: OrderItem) -> None:
+        query = delete(OrderItem).where(
+            order_items_table.c.order_item_id == order_item.order_item_id
+        )
+
+        await self.session.execute(query)

@@ -7,7 +7,7 @@ from application.common.identity_provider import IdentityProvider
 from application.common.interactor import Interactor
 from application.goods.gateway import GoodsReader
 from application.order.gateway import OrderItemSaver, OrderSaver
-from application.shop.errors import ShopIsNotActiveError, ShopIsNotExistError
+from application.order.shop_validate import ShopValidationService
 from application.shop.gateway import ShopReader
 from entities.order.models import Order, OrderId, OrderItem, OrderStatus
 from entities.order.service import total_price
@@ -38,6 +38,7 @@ class CreateOrder(Interactor[CreateOrderInputData, CreateOrderOutputData]):
         self,
         identity_provider: IdentityProvider,
         shop_reader: ShopReader,
+        shop_validation: ShopValidationService,
         order_saver: OrderSaver,
         order_items_saver: OrderItemSaver,
         goods_reader: GoodsReader,
@@ -45,6 +46,7 @@ class CreateOrder(Interactor[CreateOrderInputData, CreateOrderOutputData]):
     ):
         self._identity_provider = identity_provider
         self._shop_reader = shop_reader
+        self._shop_validation = shop_validation
         self._order_saver = order_saver
         self._order_item_saver = order_items_saver
         self._goods_reader = goods_reader
@@ -55,13 +57,7 @@ class CreateOrder(Interactor[CreateOrderInputData, CreateOrderOutputData]):
     ) -> CreateOrderOutputData:
         shop_id = ShopId(data.shop_id)
 
-        shop = await self._shop_reader.by_id(shop_id)
-
-        if not shop:
-            raise ShopIsNotExistError(shop_id)
-
-        if not shop.is_active:
-            raise ShopIsNotActiveError(shop.shop_id)
+        await self._shop_validation.check_shop(shop_id)
 
         actor = await self._identity_provider.get_user()
 
