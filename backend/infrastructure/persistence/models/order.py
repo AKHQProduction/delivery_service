@@ -2,7 +2,7 @@ import sqlalchemy as sa
 from sqlalchemy.orm import composite, relationship
 
 from entities.order.models import Order, OrderItem, OrderStatus
-from entities.order.value_objects import OrderItemQuantity
+from entities.order.value_objects import OrderItemAmount, OrderTotalPrice
 from infrastructure.persistence.models import mapper_registry
 
 orders_table = sa.Table(
@@ -14,6 +14,7 @@ orders_table = sa.Table(
         sa.Enum(OrderStatus),
         default=OrderStatus.NEW,
     ),
+    sa.Column("order_total_price", sa.DECIMAL(10, 2), nullable=False),
     sa.Column(
         "user_id",
         sa.BigInteger,
@@ -47,15 +48,11 @@ order_items_table = sa.Table(
         "order_item_id", sa.Integer, primary_key=True, autoincrement=True
     ),
     sa.Column("item_quantity", sa.Integer, nullable=False),
+    sa.Column("price_per_order_item", sa.DECIMAL(10, 2), nullable=False),
     sa.Column(
         "order_id",
         sa.Integer,
         sa.ForeignKey("orders.order_id", ondelete="CASCADE"),
-    ),
-    sa.Column(
-        "goods_id",
-        sa.UUID,
-        sa.ForeignKey("goods.goods_id", ondelete="CASCADE"),
     ),
     sa.Column(
         "created_at",
@@ -82,6 +79,9 @@ def map_orders_table() -> None:
             "user": relationship("User", back_populates="order"),
             "shop": relationship("Shop", back_populates="order"),
             "order_item": relationship("OrderItem", back_populates="order"),
+            "total_price": composite(
+                OrderTotalPrice, orders_table.c.order_total_price
+            ),
         },
     )
 
@@ -92,9 +92,10 @@ def map_order_items_table() -> None:
         order_items_table,
         properties={
             "order": relationship("Order", back_populates="order_item"),
-            "goods": relationship("Goods", back_populates="order_item"),
-            "quantity": composite(
-                OrderItemQuantity, order_items_table.c.item_quantity
+            "amount": composite(
+                OrderItemAmount,
+                order_items_table.c.item_quantity,
+                order_items_table.c.price_per_order_item,
             ),
         },
     )

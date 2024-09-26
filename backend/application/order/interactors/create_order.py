@@ -1,16 +1,19 @@
 import logging
 from dataclasses import dataclass
+from decimal import Decimal
 from uuid import UUID
 
 from application.common.commiter import Commiter
 from application.common.identity_provider import IdentityProvider
 from application.common.interactor import Interactor
+from application.goods.gateway import GoodsReader
 from application.order.gateway import OrderItemSaver, OrderSaver
 from application.shop.errors import ShopIsNotActiveError
 from application.shop.gateway import ShopReader
 from entities.goods.models import GoodsId
-from entities.order.models import Order, OrderItem, OrderStatus
-from entities.order.value_objects import OrderItemQuantity
+from entities.order.models import Order, OrderId, OrderItem, OrderStatus
+from entities.order.service import total_price
+from entities.order.value_objects import OrderItemAmount, OrderTotalPrice
 from entities.shop.models import ShopId
 
 
@@ -38,12 +41,14 @@ class CreateOrder(Interactor[CreateOrderInputData, CreateOrderOutputData]):
         shop_reader: ShopReader,
         order_saver: OrderSaver,
         order_items_saver: OrderItemSaver,
+        goods_reader: GoodsReader,
         commiter: Commiter,
     ):
         self._identity_provider = identity_provider
         self._shop_reader = shop_reader
         self._order_saver = order_saver
         self._order_item_saver = order_items_saver
+        self._goods_reader = goods_reader
         self._commiter = commiter
 
     async def __call__(
@@ -63,19 +68,17 @@ class CreateOrder(Interactor[CreateOrderInputData, CreateOrderOutputData]):
             user_id=actor.user_id,
             shop_id=shop_id,
             status=OrderStatus.NEW,
+            total_price=OrderTotalPrice(Decimal(0)),
         )
 
         await self._order_saver.save(order)
 
-        order_items = [
-            OrderItem(
-                order_item_id=None,
-                order_id=order.order_id,
-                goods_id=GoodsId(item.goods_id),
-                quantity=OrderItemQuantity(item.quantity),
-            )
-            for item in data.items
-        ]
+        order_items = await self._create_order_items(
+            order.order_id,
+            data.items,
+        )
+
+        order.total_price = OrderTotalPrice(total_price(order_items))
 
         await self._order_item_saver.save_items(order_items)
 
@@ -86,3 +89,23 @@ class CreateOrder(Interactor[CreateOrderInputData, CreateOrderOutputData]):
         )
 
         return CreateOrderOutputData(order_id=order.order_id)
+
+    async def _create_order_items(
+        self,
+        order_id: OrderId,
+        items: list[OrderItemData],
+    ):
+        return [
+            OrderItem(
+                order_id=order_id,
+                order_item_id=None,
+                goods_title=goods.title,
+                amount=OrderItemAmount(
+                    quantity=item.quantity, price_per_item=goods.price.value
+                ),
+            )
+            for item in items
+            if (
+                goods := await self._goods_reader.by_id(GoodsId(item.goods_id))
+            )
+        ]

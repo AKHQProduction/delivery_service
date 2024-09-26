@@ -5,7 +5,7 @@ from entities.user.errors import UserIsNotActiveError
 from entities.user.models import User
 
 
-class ShopService:
+class ShopFabric:
     def __init__(self, token_verifier: TokenVerifier):
         self._token_verifier = token_verifier
 

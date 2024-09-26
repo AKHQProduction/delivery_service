@@ -1,7 +1,7 @@
 import pytest
 
 from entities.shop.models import Shop, ShopId
-from entities.shop.services import ShopService
+from entities.shop.services import ShopFabric
 from entities.shop.value_objects import ShopTitle, ShopToken
 from entities.user.errors import UserIsNotActiveError
 from entities.user.models import User, UserId
@@ -19,7 +19,7 @@ async def test_create_shop_service(
     user_is_active: bool,
     exc_class,
 ) -> None:
-    service = ShopService(token_verifier)
+    service = ShopFabric(token_verifier)
 
     shop_id = ShopId(1)
     shop_title = ShopTitle("TestShop")

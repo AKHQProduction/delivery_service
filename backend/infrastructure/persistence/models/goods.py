@@ -40,7 +40,6 @@ def map_goods_table() -> None:
         goods_table,
         properties={
             "shop": relationship("Shop", back_populates="goods"),
-            "order_item": relationship("OrderItem", back_populates="goods"),
             "title": composite(GoodsTitle, goods_table.c.goods_title),
             "price": composite(GoodsPrice, goods_table.c.goods_price),
         },

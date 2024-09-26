@@ -41,7 +41,7 @@ from application.user.interactors.bot_start import BotStart
 from application.user.interactors.get_user import GetUser
 from application.user.interactors.get_users import GetUsers
 from entities.common.token_verifier import TokenVerifier
-from entities.shop.services import ShopService
+from entities.shop.services import ShopFabric
 from infrastructure.auth.tg_auth import TgIdentityProvider
 from infrastructure.bootstrap.configs import load_all_configs
 from infrastructure.gateways.employee import EmployeeGateway
@@ -154,10 +154,10 @@ def interactor_provider() -> Provider:
     return provider
 
 
-def service_provider() -> Provider:
+def fabric_provider() -> Provider:
     provider = Provider()
 
-    provider.provide(ShopService, scope=Scope.REQUEST)
+    provider.provide(ShopFabric, scope=Scope.REQUEST)
 
     return provider
 
@@ -232,7 +232,7 @@ def setup_providers() -> list[Provider]:
         interactor_provider(),
         db_provider(),
         geo_provider(),
-        service_provider(),
+        fabric_provider(),
         access_provider(),
         infrastructure_provider(),
         config_provider(),

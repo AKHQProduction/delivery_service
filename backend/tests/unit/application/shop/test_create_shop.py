@@ -8,7 +8,7 @@ from application.shop.interactors.create_shop import (
     CreateShopInputData,
 )
 from application.user.errors import UserIsNotExistError
-from entities.shop.services import ShopService
+from entities.shop.services import ShopFabric
 from entities.user.models import UserId
 from tests.mocks.common.commiter import FakeCommiter
 from tests.mocks.common.identity_provider import FakeIdentityProvider
@@ -43,7 +43,7 @@ async def test_create_shop(
     shop_id: int,
     exc_class,
 ) -> None:
-    shop_service = ShopService(token_verifier)
+    shop_service = ShopFabric(token_verifier)
 
     shop_title = "TestShop"
     shop_token = "9876543212:AAGzbSDaSqQ-mOQEJfPLE1wBH0Y4J40xT48"  # noqa: S105
