@@ -30,12 +30,12 @@ from application.order.gateway import (
     OrderSaver,
 )
 from application.order.interactors.create_order import CreateOrder
+from application.order.interactors.delete_order import DeleteOrder
 from application.order.interactors.delete_order_item import DeleteOrderItem
 from application.order.interactors.edit_order_item_quantity import (
     EditOrderItemQuantity,
 )
 from application.order.interactors.get_order import GetOrder
-from application.order.shop_validate import ShopValidationService
 from application.shop.gateway import ShopReader, ShopSaver
 from application.shop.interactors.change_regular_days_off import (
     ChangeRegularDaysOff,
@@ -47,6 +47,7 @@ from application.shop.interactors.create_shop import CreateShop
 from application.shop.interactors.delete_shop import DeleteShop
 from application.shop.interactors.resume_shop import ResumeShop
 from application.shop.interactors.stop_shop import StopShop
+from application.shop.shop_validate import ShopValidationService
 from application.user.gateway import UserReader, UserSaver
 from application.user.interactors.bot_start import BotStart
 from application.user.interactors.get_user import GetUser
@@ -170,6 +171,7 @@ def interactor_provider() -> Provider:
     provider.provide(GetOrder, scope=Scope.REQUEST)
     provider.provide(EditOrderItemQuantity, scope=Scope.REQUEST)
     provider.provide(DeleteOrderItem, scope=Scope.REQUEST)
+    provider.provide(DeleteOrder, scope=Scope.REQUEST)
 
     return provider
 

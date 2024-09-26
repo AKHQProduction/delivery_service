@@ -20,6 +20,7 @@ class Permission(Enum):
     CAN_DELETE_GOODS = auto()
     CAN_GET_ORDER = auto()
     CAN_EDIT_ORDER = auto()
+    CAN_DElETE_ORDER = auto()
 
 
 class RolePermission(Enum):
@@ -33,10 +34,12 @@ class RolePermission(Enum):
         Permission.CAN_EDIT_GOODS,
         Permission.CAN_GET_ORDER,
         Permission.CAN_EDIT_ORDER,
+        Permission.CAN_DElETE_ORDER,
     }
     MANAGER: ClassVar[set[Permission]] = {
         Permission.CAN_GET_ORDER,
         Permission.CAN_EDIT_ORDER,
+        Permission.CAN_DElETE_ORDER,
     }
     DEFAULT: ClassVar[set[Permission]] = {
         Permission.CAN_CREATE_SHOP,
@@ -142,6 +145,11 @@ class AccessService:
         ) or order.user_id == user_id
 
     async def ensure_can_edit_order(self, user_id: UserId, order: Order):
+        await self._ensure_has_permission(
+            user_id, Permission.CAN_EDIT_ORDER, order.shop_id
+        ) or order.user_id == user_id
+
+    async def ensure_can_delete_order(self, user_id: UserId, order: Order):
         await self._ensure_has_permission(
             user_id, Permission.CAN_EDIT_ORDER, order.shop_id
         ) or order.user_id == user_id

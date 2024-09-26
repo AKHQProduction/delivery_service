@@ -1,3 +1,4 @@
+import logging
 from dataclasses import dataclass
 
 from application.common.access_service import AccessService
@@ -8,7 +9,7 @@ from application.order.errors import (
     OrderItemIsNotExistError,
 )
 from application.order.gateway import OrderItemReader, OrderReader
-from application.order.shop_validate import ShopValidationService
+from application.shop.shop_validate import ShopValidationService
 from application.user.errors import UserIsNotExistError
 from entities.order.models import OrderItemId
 from entities.order.service import total_price
@@ -65,5 +66,11 @@ class EditOrderItemQuantity(Interactor[EditOrderItemQuantityInputData, None]):
         order_items = await self._order_item_reader.by_order_id(order.order_id)
 
         order.total_price = OrderTotalPrice(total_price(order_items))
+
+        logging.info(
+            "Order item with id=%s change his quantity to %s",
+            data.order_item_id,
+            data.quantity,
+        )
 
         await self._commiter.commit()

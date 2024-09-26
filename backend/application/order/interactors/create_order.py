@@ -7,8 +7,8 @@ from application.common.identity_provider import IdentityProvider
 from application.common.interactor import Interactor
 from application.goods.gateway import GoodsReader
 from application.order.gateway import OrderItemSaver, OrderSaver
-from application.order.shop_validate import ShopValidationService
 from application.shop.gateway import ShopReader
+from application.shop.shop_validate import ShopValidationService
 from entities.order.models import Order, OrderId, OrderItem, OrderStatus
 from entities.order.service import total_price
 from entities.order.value_objects import OrderItemAmount, OrderTotalPrice
