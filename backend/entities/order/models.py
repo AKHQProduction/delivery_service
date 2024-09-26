@@ -2,7 +2,6 @@ from dataclasses import dataclass
 from enum import StrEnum, auto
 from typing import NewType
 
-from entities.goods.value_objects import GoodsTitle
 from entities.order.value_objects import OrderItemAmount, OrderTotalPrice
 from entities.shop.models import ShopId
 from entities.user.models import UserId
@@ -21,12 +20,12 @@ class Order:
     user_id: UserId
     shop_id: ShopId
     status: OrderStatus
-    total_price: OrderTotalPrice | None
+    total_price: OrderTotalPrice
 
 
 @dataclass
 class OrderItem:
     order_item_id: OrderItemId | None
     order_id: OrderId
-    goods_title: GoodsTitle
+    order_item_title: str
     amount: OrderItemAmount

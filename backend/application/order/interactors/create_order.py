@@ -1,7 +1,6 @@
 import logging
 from dataclasses import dataclass
 from decimal import Decimal
-from uuid import UUID
 
 from application.common.commiter import Commiter
 from application.common.identity_provider import IdentityProvider
@@ -10,7 +9,6 @@ from application.goods.gateway import GoodsReader
 from application.order.gateway import OrderItemSaver, OrderSaver
 from application.shop.errors import ShopIsNotActiveError
 from application.shop.gateway import ShopReader
-from entities.goods.models import GoodsId
 from entities.order.models import Order, OrderId, OrderItem, OrderStatus
 from entities.order.service import total_price
 from entities.order.value_objects import OrderItemAmount, OrderTotalPrice
@@ -19,8 +17,9 @@ from entities.shop.models import ShopId
 
 @dataclass(frozen=True)
 class OrderItemData:
-    goods_id: UUID
     quantity: int
+    price: Decimal
+    title: str
 
 
 @dataclass(frozen=True)
@@ -73,7 +72,7 @@ class CreateOrder(Interactor[CreateOrderInputData, CreateOrderOutputData]):
 
         await self._order_saver.save(order)
 
-        order_items = await self._create_order_items(
+        order_items = self._create_order_items(
             order.order_id,
             data.items,
         )
@@ -90,22 +89,19 @@ class CreateOrder(Interactor[CreateOrderInputData, CreateOrderOutputData]):
 
         return CreateOrderOutputData(order_id=order.order_id)
 
-    async def _create_order_items(
-        self,
+    @staticmethod
+    def _create_order_items(
         order_id: OrderId,
         items: list[OrderItemData],
-    ):
+    ) -> list[OrderItem]:
         return [
             OrderItem(
                 order_id=order_id,
                 order_item_id=None,
-                goods_title=goods.title,
+                order_item_title=item.title,
                 amount=OrderItemAmount(
-                    quantity=item.quantity, price_per_item=goods.price.value
+                    quantity=item.quantity, price_per_item=item.price
                 ),
             )
             for item in items
-            if (
-                goods := await self._goods_reader.by_id(GoodsId(item.goods_id))
-            )
         ]

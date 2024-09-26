@@ -23,8 +23,14 @@ from application.goods.interactors.delete_goods import DeleteGoods
 from application.goods.interactors.edit_goods_pic import EditGoodsPic
 from application.goods.interactors.get_goods import GetGoods
 from application.goods.interactors.get_many_goods import GetManyGoods
-from application.order.gateway import OrderItemSaver, OrderSaver
+from application.order.gateway import (
+    OrderItemReader,
+    OrderItemSaver,
+    OrderReader,
+    OrderSaver,
+)
 from application.order.interactors.create_order import CreateOrder
+from application.order.interactors.get_order import GetOrder
 from application.shop.gateway import ShopReader, ShopSaver
 from application.shop.interactors.change_regular_days_off import (
     ChangeRegularDaysOff,
@@ -96,7 +102,9 @@ def gateway_provider() -> Provider:
     provider.provide(
         OrderGateway,
         scope=Scope.REQUEST,
-        provides=AnyOf[OrderSaver, OrderItemSaver],
+        provides=AnyOf[
+            OrderSaver, OrderItemSaver, OrderReader, OrderItemReader
+        ],
     )
 
     provider.provide(
@@ -150,6 +158,7 @@ def interactor_provider() -> Provider:
     provider.provide(RemoveEmployee, scope=Scope.REQUEST)
 
     provider.provide(CreateOrder, scope=Scope.REQUEST)
+    provider.provide(GetOrder, scope=Scope.REQUEST)
 
     return provider
 

@@ -4,12 +4,11 @@ from dataclasses import dataclass
 
 from application.common.input_data import Pagination
 from entities.goods.models import Goods, GoodsId
-from entities.shop.models import ShopId
 
 
 @dataclass(frozen=True)
 class GetManyGoodsFilters:
-    shop_id: ShopId | None = None
+    shop_id: int | None = None
 
 
 class GoodsSaver(Protocol):

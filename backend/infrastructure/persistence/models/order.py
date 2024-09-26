@@ -47,6 +47,7 @@ order_items_table = sa.Table(
     sa.Column(
         "order_item_id", sa.Integer, primary_key=True, autoincrement=True
     ),
+    sa.Column("order_item_title", sa.String, nullable=False),
     sa.Column("item_quantity", sa.Integer, nullable=False),
     sa.Column("price_per_order_item", sa.DECIMAL(10, 2), nullable=False),
     sa.Column(
