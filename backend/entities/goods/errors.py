@@ -19,10 +19,3 @@ class GoodsTitleTooLongError(DomainError):
     @property
     def message(self):
         return f"Goods title={self.title} is too long"
-
-
-@dataclass(eq=False)
-class InvalidGoodsPriceError(DomainError):
-    @property
-    def message(self):
-        return "Goods price must be greater than 0"

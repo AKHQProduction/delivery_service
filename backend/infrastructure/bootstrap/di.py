@@ -23,6 +23,19 @@ from application.goods.interactors.delete_goods import DeleteGoods
 from application.goods.interactors.edit_goods_pic import EditGoodsPic
 from application.goods.interactors.get_goods import GetGoods
 from application.goods.interactors.get_many_goods import GetManyGoods
+from application.order.gateway import (
+    OrderItemReader,
+    OrderItemSaver,
+    OrderReader,
+    OrderSaver,
+)
+from application.order.interactors.create_order import CreateOrder
+from application.order.interactors.delete_order import DeleteOrder
+from application.order.interactors.delete_order_item import DeleteOrderItem
+from application.order.interactors.edit_order_item_quantity import (
+    EditOrderItemQuantity,
+)
+from application.order.interactors.get_order import GetOrder
 from application.shop.gateway import ShopReader, ShopSaver
 from application.shop.interactors.change_regular_days_off import (
     ChangeRegularDaysOff,
@@ -34,6 +47,7 @@ from application.shop.interactors.create_shop import CreateShop
 from application.shop.interactors.delete_shop import DeleteShop
 from application.shop.interactors.resume_shop import ResumeShop
 from application.shop.interactors.stop_shop import StopShop
+from application.shop.shop_validate import ShopValidationService
 from application.user.gateway import UserReader, UserSaver
 from application.user.interactors.bot_start import BotStart
 from application.user.interactors.get_user import GetUser
@@ -44,6 +58,7 @@ from infrastructure.auth.tg_auth import TgIdentityProvider
 from infrastructure.bootstrap.configs import load_all_configs
 from infrastructure.gateways.employee import EmployeeGateway
 from infrastructure.gateways.goods import GoodsGateway
+from infrastructure.gateways.order import OrderGateway, OrderItemGateway
 from infrastructure.gateways.shop import ShopGateway
 from infrastructure.gateways.user import UserGateway
 from infrastructure.geopy.config import GeoConfig
@@ -88,6 +103,18 @@ def gateway_provider() -> Provider:
         GoodsGateway,
         scope=Scope.REQUEST,
         provides=AnyOf[GoodsSaver, GoodsReader],
+    )
+
+    provider.provide(
+        OrderGateway,
+        scope=Scope.REQUEST,
+        provides=AnyOf[OrderSaver, OrderReader],
+    )
+
+    provider.provide(
+        OrderItemGateway,
+        scope=Scope.REQUEST,
+        provides=AnyOf[OrderItemSaver, OrderItemReader],
     )
 
     provider.provide(
@@ -140,6 +167,12 @@ def interactor_provider() -> Provider:
     provider.provide(AddEmployee, scope=Scope.REQUEST)
     provider.provide(RemoveEmployee, scope=Scope.REQUEST)
 
+    provider.provide(CreateOrder, scope=Scope.REQUEST)
+    provider.provide(GetOrder, scope=Scope.REQUEST)
+    provider.provide(EditOrderItemQuantity, scope=Scope.REQUEST)
+    provider.provide(DeleteOrderItem, scope=Scope.REQUEST)
+    provider.provide(DeleteOrder, scope=Scope.REQUEST)
+
     return provider
 
 
@@ -147,14 +180,8 @@ def service_provider() -> Provider:
     provider = Provider()
 
     provider.provide(ShopService, scope=Scope.REQUEST)
-
-    return provider
-
-
-def access_provider() -> Provider:
-    provider = Provider()
-
     provider.provide(AccessService, scope=Scope.REQUEST)
+    provider.provide(ShopValidationService, scope=Scope.REQUEST)
 
     return provider
 
@@ -222,7 +249,6 @@ def setup_providers() -> list[Provider]:
         db_provider(),
         geo_provider(),
         service_provider(),
-        access_provider(),
         infrastructure_provider(),
         config_provider(),
     ]

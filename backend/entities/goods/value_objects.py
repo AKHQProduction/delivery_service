@@ -1,10 +1,10 @@
 from dataclasses import dataclass
 from decimal import Decimal, InvalidOperation
 
+from entities.common.errors import InvalidPriceError
 from entities.goods.errors import (
     GoodsTitleTooLongError,
     GoodsTitleTooShortError,
-    InvalidGoodsPriceError,
 )
 
 
@@ -39,4 +39,4 @@ class GoodsPrice:
                 ) from error
 
         if self.value <= 0:
-            raise InvalidGoodsPriceError()
+            raise InvalidPriceError()

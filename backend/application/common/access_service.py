@@ -4,6 +4,7 @@ from typing import ClassVar
 from application.employee.gateway import EmployeeReader
 from application.errors.access import AccessDeniedError
 from entities.employee.models import Employee
+from entities.order.models import Order
 from entities.shop.models import ShopId
 from entities.user.models import UserId
 
@@ -17,6 +18,9 @@ class Permission(Enum):
     CAN_CREATE_GOODS = auto()
     CAN_EDIT_GOODS = auto()
     CAN_DELETE_GOODS = auto()
+    CAN_GET_ORDER = auto()
+    CAN_EDIT_ORDER = auto()
+    CAN_DElETE_ORDER = auto()
 
 
 class RolePermission(Enum):
@@ -28,6 +32,14 @@ class RolePermission(Enum):
         Permission.CAN_CREATE_GOODS,
         Permission.CAN_DELETE_GOODS,
         Permission.CAN_EDIT_GOODS,
+        Permission.CAN_GET_ORDER,
+        Permission.CAN_EDIT_ORDER,
+        Permission.CAN_DElETE_ORDER,
+    }
+    MANAGER: ClassVar[set[Permission]] = {
+        Permission.CAN_GET_ORDER,
+        Permission.CAN_EDIT_ORDER,
+        Permission.CAN_DElETE_ORDER,
     }
     DEFAULT: ClassVar[set[Permission]] = {
         Permission.CAN_CREATE_SHOP,
@@ -124,3 +136,20 @@ class AccessService:
         await self._ensure_has_permission(
             user_id, Permission.CAN_DELETE_GOODS, shop_id
         )
+
+    async def ensure_can_get_order(
+        self, user_id: UserId, order: Order
+    ) -> None:
+        await self._ensure_has_permission(
+            user_id, Permission.CAN_GET_ORDER, order.shop_id
+        ) or order.user_id == user_id
+
+    async def ensure_can_edit_order(self, user_id: UserId, order: Order):
+        await self._ensure_has_permission(
+            user_id, Permission.CAN_EDIT_ORDER, order.shop_id
+        ) or order.user_id == user_id
+
+    async def ensure_can_delete_order(self, user_id: UserId, order: Order):
+        await self._ensure_has_permission(
+            user_id, Permission.CAN_EDIT_ORDER, order.shop_id
+        ) or order.user_id == user_id
