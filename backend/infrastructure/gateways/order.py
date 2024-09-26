@@ -9,27 +9,19 @@ from application.order.gateway import (
     OrderReader,
     OrderSaver,
 )
-from entities.order.models import Order, OrderId, OrderItem
+from entities.order.models import Order, OrderId, OrderItem, OrderItemId
 from infrastructure.persistence.models.order import (
     order_items_table,
     orders_table,
 )
 
 
-class OrderGateway(OrderSaver, OrderItemSaver, OrderItemReader, OrderReader):
+class OrderGateway(OrderSaver, OrderReader):
     def __init__(self, session: AsyncSession):
         self.session: AsyncSession = session
 
     async def save(self, order: Order) -> None:
         self.session.add(order)
-
-        try:
-            await self.session.flush()
-        except IntegrityError as error:
-            raise ApplicationError() from error
-
-    async def save_items(self, order_items: list[OrderItem]) -> None:
-        self.session.add_all(order_items)
 
         try:
             await self.session.flush()
@@ -43,6 +35,19 @@ class OrderGateway(OrderSaver, OrderItemSaver, OrderItemReader, OrderReader):
 
         return result.scalar_one_or_none()
 
+
+class OrderItemGateway(OrderItemSaver, OrderItemReader):
+    def __init__(self, session: AsyncSession):
+        self.session: AsyncSession = session
+
+    async def save_items(self, order_items: list[OrderItem]) -> None:
+        self.session.add_all(order_items)
+
+        try:
+            await self.session.flush()
+        except IntegrityError as error:
+            raise ApplicationError() from error
+
     async def by_order_id(self, order_id: OrderId) -> list[OrderItem]:
         query = select(OrderItem).where(
             order_items_table.c.order_id == order_id
@@ -51,3 +56,12 @@ class OrderGateway(OrderSaver, OrderItemSaver, OrderItemReader, OrderReader):
         result = await self.session.scalars(query)
 
         return list(result.all())
+
+    async def by_id(self, order_item_id: OrderItemId) -> OrderItem | None:
+        query = select(OrderItem).where(
+            order_items_table.c.order_item_id == order_item_id
+        )
+
+        result = await self.session.execute(query)
+
+        return result.scalar_one_or_none()

@@ -19,6 +19,11 @@ class OrderItemAmount:
     def total_price(self) -> Decimal:
         return self.quantity * self.price_per_item
 
+    def edit_quantity(self, quantity: int) -> "OrderItemAmount":
+        return OrderItemAmount(
+            quantity=quantity, price_per_item=self.price_per_item
+        )
+
 
 @dataclass(slots=True, frozen=True, eq=True, unsafe_hash=True)
 class OrderTotalPrice:

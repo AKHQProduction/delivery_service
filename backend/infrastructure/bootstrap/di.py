@@ -30,6 +30,9 @@ from application.order.gateway import (
     OrderSaver,
 )
 from application.order.interactors.create_order import CreateOrder
+from application.order.interactors.edit_order_item_quantity import (
+    EditOrderItemQuantity,
+)
 from application.order.interactors.get_order import GetOrder
 from application.shop.gateway import ShopReader, ShopSaver
 from application.shop.interactors.change_regular_days_off import (
@@ -52,7 +55,7 @@ from infrastructure.auth.tg_auth import TgIdentityProvider
 from infrastructure.bootstrap.configs import load_all_configs
 from infrastructure.gateways.employee import EmployeeGateway
 from infrastructure.gateways.goods import GoodsGateway
-from infrastructure.gateways.order import OrderGateway
+from infrastructure.gateways.order import OrderGateway, OrderItemGateway
 from infrastructure.gateways.shop import ShopGateway
 from infrastructure.gateways.user import UserGateway
 from infrastructure.geopy.config import GeoConfig
@@ -102,9 +105,13 @@ def gateway_provider() -> Provider:
     provider.provide(
         OrderGateway,
         scope=Scope.REQUEST,
-        provides=AnyOf[
-            OrderSaver, OrderItemSaver, OrderReader, OrderItemReader
-        ],
+        provides=AnyOf[OrderSaver, OrderReader],
+    )
+
+    provider.provide(
+        OrderItemGateway,
+        scope=Scope.REQUEST,
+        provides=AnyOf[OrderItemSaver, OrderItemReader],
     )
 
     provider.provide(
@@ -159,6 +166,7 @@ def interactor_provider() -> Provider:
 
     provider.provide(CreateOrder, scope=Scope.REQUEST)
     provider.provide(GetOrder, scope=Scope.REQUEST)
+    provider.provide(EditOrderItemQuantity, scope=Scope.REQUEST)
 
     return provider
 

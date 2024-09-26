@@ -1,7 +1,7 @@
 from abc import abstractmethod
 from asyncio import Protocol
 
-from entities.order.models import Order, OrderId, OrderItem
+from entities.order.models import Order, OrderId, OrderItem, OrderItemId
 
 
 class OrderSaver(Protocol):
@@ -25,4 +25,8 @@ class OrderReader(Protocol):
 class OrderItemReader(Protocol):
     @abstractmethod
     async def by_order_id(self, order_id: OrderId) -> list[OrderItem]:
+        raise NotImplementedError
+
+    @abstractmethod
+    async def by_id(self, order_item_id: OrderItemId) -> OrderItem | None:
         raise NotImplementedError
