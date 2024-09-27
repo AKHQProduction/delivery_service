@@ -13,6 +13,7 @@ from application.goods.interactors.add_goods import (
 )
 from application.shop.errors import UserNotHaveShopError
 from application.user.errors import UserIsNotExistError
+from entities.goods.models import GoodsType
 from entities.user.models import UserId
 from tests.mocks.common.commiter import FakeCommiter
 from tests.mocks.common.file_manager import FakeFileManager
@@ -24,12 +25,40 @@ from tests.mocks.gateways.shop import FakeShopGateway
 @pytest.mark.application
 @pytest.mark.goods
 @pytest.mark.parametrize(
-    ["user_id", "title", "price", "payload", "exc_class"],
+    ["user_id", "title", "price", "payload", "goods_type", "exc_class"],
     [
-        (1, "New Test Goods", "10.00", BytesIO(b"test"), None),
-        (4, "New Test Goods", "10.00", BytesIO(b"test"), UserIsNotExistError),
-        (2, "New Test Goods", "10.00", BytesIO(b"test"), UserNotHaveShopError),
-        (3, "New Test Goods", "10.00", BytesIO(b"test"), AccessDeniedError),
+        (
+            1,
+            "New Test Goods",
+            "10.00",
+            BytesIO(b"test"),
+            GoodsType.OTHER,
+            None,
+        ),
+        (
+            4,
+            "New Test Goods",
+            "10.00",
+            BytesIO(b"test"),
+            GoodsType.OTHER,
+            UserIsNotExistError,
+        ),
+        (
+            2,
+            "New Test Goods",
+            "10.00",
+            BytesIO(b"test"),
+            GoodsType.OTHER,
+            UserNotHaveShopError,
+        ),
+        (
+            3,
+            "New Test Goods",
+            "10.00",
+            BytesIO(b"test"),
+            GoodsType.OTHER,
+            AccessDeniedError,
+        ),
     ],
 )
 async def test_add_goods(
@@ -43,6 +72,7 @@ async def test_add_goods(
     title: str,
     price: Decimal,
     payload: bytes,
+    goods_type: GoodsType,
     exc_class,
 ) -> None:
     start_length_goods_in_memory = len(goods_gateway.goods)
@@ -60,6 +90,7 @@ async def test_add_goods(
         title=title,
         price=price,
         metadata=FileMetadata(payload) if payload else None,
+        goods_type=goods_type,
     )
 
     coro = action(input_data)

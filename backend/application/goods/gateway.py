@@ -8,7 +8,7 @@ from entities.goods.models import Goods, GoodsId
 
 @dataclass(frozen=True)
 class GetManyGoodsFilters:
-    shop_id: int | None = None
+    shop_id: int
 
 
 class GoodsSaver(Protocol):

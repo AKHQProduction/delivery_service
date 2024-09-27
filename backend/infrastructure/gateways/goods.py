@@ -35,10 +35,7 @@ class GoodsGateway(GoodsSaver, GoodsReader):
     async def all(
         self, filters: GetManyGoodsFilters, pagination: Pagination
     ) -> list[Goods]:
-        query = select(Goods)
-
-        if filters.shop_id:
-            query = query.where(goods_table.c.shop_id == filters.shop_id)
+        query = select(Goods).where(goods_table.c.shop_id == filters.shop_id)
 
         if pagination.order is SortOrder.ASC:
             query = query.order_by(goods_table.c.created_at.asc())

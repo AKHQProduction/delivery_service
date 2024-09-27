@@ -4,6 +4,7 @@ import pytest
 
 from application.goods.errors import GoodsIsNotExistError
 from application.goods.interactors.get_goods import GetGoods, GetGoodsInputData
+from application.shop.shop_validate import ShopValidationService
 from entities.goods.models import Goods
 from tests.mocks.gateways.goods import FakeGoodsGateway
 from tests.mocks.gateways.shop import FakeShopGateway
@@ -23,10 +24,15 @@ fake_goods_uuid = UUID("00012f9e-f610-4ec1-8ceb-8e7f42425474")
 async def test_get_goods(
     goods_gateway: FakeGoodsGateway,
     shop_gateway: FakeShopGateway,
+    shop_validation: ShopValidationService,
     goods_id: UUID,
     exc_class,
 ) -> None:
-    action = GetGoods(goods_reader=goods_gateway, shop_reader=shop_gateway)
+    action = GetGoods(
+        goods_reader=goods_gateway,
+        shop_reader=shop_gateway,
+        shop_validation=shop_validation,
+    )
 
     input_data = GetGoodsInputData(goods_id=goods_id)
 
