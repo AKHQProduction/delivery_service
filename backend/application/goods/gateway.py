@@ -3,12 +3,13 @@ from asyncio import Protocol
 from dataclasses import dataclass
 
 from application.common.input_data import Pagination
-from entities.goods.models import Goods, GoodsId
+from entities.goods.models import Goods, GoodsId, GoodsType
 
 
 @dataclass(frozen=True)
 class GetManyGoodsFilters:
     shop_id: int
+    goods_type: GoodsType | None = None
 
 
 class GoodsSaver(Protocol):
