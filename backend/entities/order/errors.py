@@ -15,3 +15,10 @@ class InvalidOrderTotalPriceError(DomainError):
     @property
     def message(self):
         return "Quantity must be positive number"
+
+
+@dataclass(eq=False)
+class InvalidBottlesQuantityError(DomainError):
+    @property
+    def message(self):
+        return "Quantity bottles to exchange must be greate"

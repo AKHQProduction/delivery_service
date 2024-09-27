@@ -9,9 +9,13 @@ from application.goods.gateway import GoodsReader
 from application.order.gateway import OrderItemSaver, OrderSaver
 from application.shop.gateway import ShopReader
 from application.shop.shop_validate import ShopValidationService
-from entities.order.models import Order, OrderId, OrderItem, OrderStatus
+from entities.order.models import Order, OrderItem, OrderStatus
 from entities.order.service import total_price
-from entities.order.value_objects import OrderItemAmount, OrderTotalPrice
+from entities.order.value_objects import (
+    BottlesToExchange,
+    OrderItemAmount,
+    OrderTotalPrice,
+)
 from entities.shop.models import ShopId
 
 
@@ -25,6 +29,7 @@ class OrderItemData:
 @dataclass(frozen=True)
 class CreateOrderInputData:
     shop_id: int
+    bottles_to_exchange: int
     items: list[OrderItemData]
 
 
@@ -67,14 +72,22 @@ class CreateOrder(Interactor[CreateOrderInputData, CreateOrderOutputData]):
             shop_id=shop_id,
             status=OrderStatus.NEW,
             total_price=OrderTotalPrice(Decimal(0)),
+            bottles_to_exchange=BottlesToExchange(data.bottles_to_exchange),
         )
 
         await self._order_saver.save(order)
 
-        order_items = self._create_order_items(
-            order.order_id,
-            data.items,
-        )
+        order_items = [
+            OrderItem(
+                order_id=order.order_id,
+                order_item_id=None,
+                order_item_title=item.title,
+                amount=OrderItemAmount(
+                    quantity=item.quantity, price_per_item=item.price
+                ),
+            )
+            for item in data.items
+        ]
 
         order.total_price = OrderTotalPrice(total_price(order_items))
 
@@ -87,20 +100,3 @@ class CreateOrder(Interactor[CreateOrderInputData, CreateOrderOutputData]):
         )
 
         return CreateOrderOutputData(order_id=order.order_id)
-
-    @staticmethod
-    def _create_order_items(
-        order_id: OrderId,
-        items: list[OrderItemData],
-    ) -> list[OrderItem]:
-        return [
-            OrderItem(
-                order_id=order_id,
-                order_item_id=None,
-                order_item_title=item.title,
-                amount=OrderItemAmount(
-                    quantity=item.quantity, price_per_item=item.price
-                ),
-            )
-            for item in items
-        ]

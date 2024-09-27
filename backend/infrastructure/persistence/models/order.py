@@ -2,7 +2,11 @@ import sqlalchemy as sa
 from sqlalchemy.orm import composite, relationship
 
 from entities.order.models import Order, OrderItem, OrderStatus
-from entities.order.value_objects import OrderItemAmount, OrderTotalPrice
+from entities.order.value_objects import (
+    BottlesToExchange,
+    OrderItemAmount,
+    OrderTotalPrice,
+)
 from infrastructure.persistence.models import mapper_registry
 
 orders_table = sa.Table(
@@ -15,6 +19,7 @@ orders_table = sa.Table(
         default=OrderStatus.NEW,
     ),
     sa.Column("order_total_price", sa.DECIMAL(10, 2), nullable=False),
+    sa.Column("bottles_quantity_to_exchange", sa.Integer, nullable=False),
     sa.Column(
         "user_id",
         sa.BigInteger,
@@ -82,6 +87,9 @@ def map_orders_table() -> None:
             "order_item": relationship("OrderItem", back_populates="order"),
             "total_price": composite(
                 OrderTotalPrice, orders_table.c.order_total_price
+            ),
+            "bottles_to_exchange": composite(
+                BottlesToExchange, orders_table.c.bottles_quantity_to_exchange
             ),
         },
     )

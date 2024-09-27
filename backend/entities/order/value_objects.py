@@ -2,6 +2,7 @@ from dataclasses import dataclass
 from decimal import Decimal
 
 from entities.order.errors import (
+    InvalidBottlesQuantityError,
     InvalidOrderItemQuantityError,
     InvalidOrderTotalPriceError,
 )
@@ -32,3 +33,12 @@ class OrderTotalPrice:
     def __post_init__(self) -> None:
         if self.price < 0:
             raise InvalidOrderTotalPriceError()
+
+
+@dataclass(slots=True, frozen=True, eq=True, unsafe_hash=True)
+class BottlesToExchange:
+    quantity: int
+
+    def __post_init__(self) -> None:
+        if self.quantity < 0:
+            raise InvalidBottlesQuantityError()
