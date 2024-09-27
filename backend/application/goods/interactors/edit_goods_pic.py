@@ -4,7 +4,7 @@ from uuid import UUID
 
 from application.common.access_service import AccessService
 from application.common.commiter import Commiter
-from application.common.file_manager import FileManager
+from application.common.file_manager import FileManager, file_path_creator
 from application.common.identity_provider import IdentityProvider
 from application.common.interactor import Interactor
 from application.goods.errors import GoodsIsNotExistError
@@ -73,7 +73,7 @@ class EditGoodsPic(Interactor[EditGoodsPicInputData, None]):
         if goods.metadata_path and not metadata:
             return self._file_manager.delete_object(goods.metadata_path)
 
-        path = f"{goods.shop_id}/{goods.goods_id}.{metadata.extension}"
+        path = file_path_creator(goods.shop_id, goods.goods_id)
 
         self._file_manager.save(metadata.payload, path)
 

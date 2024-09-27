@@ -5,7 +5,7 @@ from decimal import Decimal
 
 from application.common.access_service import AccessService
 from application.common.commiter import Commiter
-from application.common.file_manager import FileManager
+from application.common.file_manager import FileManager, file_path_creator
 from application.common.identity_provider import IdentityProvider
 from application.common.interactor import Interactor
 from application.goods.gateway import GoodsSaver
@@ -84,7 +84,7 @@ class AddGoods(Interactor[AddGoodsInputData, GoodsId]):
         if not metadata:
             return None
 
-        path = f"{shop_id}/{goods_id}.{metadata.extension}"
+        path = file_path_creator(shop_id, goods_id)
 
         self._file_manager.save(payload=metadata.payload, path=path)
 
