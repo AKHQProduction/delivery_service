@@ -7,12 +7,12 @@ from application.common.commiter import Commiter
 from application.common.file_manager import FileManager, file_path_creator
 from application.common.identity_provider import IdentityProvider
 from application.common.interactor import Interactor
-from application.goods.errors import GoodsIsNotExistError
+from application.goods.errors import GoodsNotFoundError
 from application.goods.gateway import GoodsReader
 from application.goods.input_data import FileMetadata
 from application.shop.errors import UserNotHaveShopError
 from application.shop.gateway import ShopReader
-from application.user.errors import UserIsNotExistError
+from application.user.errors import UserNotFoundError
 from entities.goods.models import Goods, GoodsId
 
 
@@ -42,7 +42,7 @@ class EditGoodsPic(Interactor[EditGoodsPicInputData, None]):
     async def __call__(self, data: EditGoodsPicInputData) -> None:
         actor = await self._identity_provider.get_user()
         if not actor:
-            raise UserIsNotExistError()
+            raise UserNotFoundError()
 
         shop = await self._shop_reader.by_identity(actor.user_id)
         if not shop:
@@ -56,7 +56,7 @@ class EditGoodsPic(Interactor[EditGoodsPicInputData, None]):
 
         goods = await self._goods_reader.by_id(goods_id)
         if not goods:
-            raise GoodsIsNotExistError(goods_id)
+            raise GoodsNotFoundError(goods_id)
 
         goods.metadata_path = self._process_file_metadata(goods, data.metadata)
 

@@ -1,6 +1,6 @@
 import pytest
 
-from application.user.errors import UserIsNotExistError
+from application.user.errors import UserNotFoundError
 from application.user.interactors.get_user import (
     GetUser,
     GetUserInputData,
@@ -14,7 +14,7 @@ from tests.mocks.gateways.user import FakeUserGateway
 @pytest.mark.user
 @pytest.mark.parametrize(
     ["user_id", "exc_class"],
-    [(1, None), (4, UserIsNotExistError)],
+    [(1, None), (4, UserNotFoundError)],
 )
 async def test_get_user(
     user_gateway: FakeUserGateway,

@@ -14,7 +14,7 @@ class GoodsAlreadyExistError(ApplicationError):
 
 
 @dataclass(eq=False)
-class GoodsIsNotExistError(ApplicationError):
+class GoodsNotFoundError(ApplicationError):
     goods_id: UUID
 
     @property

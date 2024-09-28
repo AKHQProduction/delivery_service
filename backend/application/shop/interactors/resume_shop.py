@@ -7,7 +7,7 @@ from application.common.interactor import Interactor
 from application.common.webhook_manager import WebhookManager
 from application.shop.errors import UserNotHaveShopError
 from application.shop.gateway import ShopReader
-from application.user.errors import UserIsNotExistError
+from application.user.errors import UserNotFoundError
 
 
 class ResumeShop(Interactor[None, None]):
@@ -29,7 +29,7 @@ class ResumeShop(Interactor[None, None]):
         actor = await self._identity_provider.get_user()
 
         if not actor:
-            raise UserIsNotExistError()
+            raise UserNotFoundError()
 
         shop = await self._shop_reader.by_identity(actor.user_id)
 

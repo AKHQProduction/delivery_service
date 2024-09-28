@@ -1,6 +1,6 @@
 from application.employee.errors import (
     EmployeeAlreadyExistError,
-    EmployeeIsNotExistError,
+    EmployeeNotFoundError,
 )
 from application.employee.gateway import EmployeeReader, EmployeeSaver
 from entities.employee.models import Employee, EmployeeId, EmployeeRole
@@ -55,7 +55,7 @@ class FakeEmployeeGateway(EmployeeReader, EmployeeSaver):
         employee = self.employees.get(employee_id, None)
 
         if not employee:
-            raise EmployeeIsNotExistError(employee_id)
+            raise EmployeeNotFoundError(employee_id)
 
         del self.employees[employee_id]
 

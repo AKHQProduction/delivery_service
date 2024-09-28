@@ -7,7 +7,7 @@ from application.shop.interactors.create_shop import (
     CreateShop,
     CreateShopInputData,
 )
-from application.user.errors import UserIsNotExistError
+from application.user.errors import UserNotFoundError
 from entities.shop.services import ShopService
 from entities.user.models import UserId
 from tests.mocks.common.commiter import FakeCommiter
@@ -25,7 +25,7 @@ from tests.mocks.gateways.user import FakeUserGateway
     ["user_id", "shop_id", "exc_class"],
     [
         (2, 9876543212, None),
-        (4, 9876543212, UserIsNotExistError),
+        (4, 9876543212, UserNotFoundError),
         (1, 9876543212, AccessDeniedError),
         (2, 1234567898, ShopAlreadyExistError),
     ],

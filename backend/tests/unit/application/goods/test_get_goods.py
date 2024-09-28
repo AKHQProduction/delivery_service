@@ -2,7 +2,7 @@ from uuid import UUID
 
 import pytest
 
-from application.goods.errors import GoodsIsNotExistError
+from application.goods.errors import GoodsNotFoundError
 from application.goods.interactors.get_goods import GetGoods, GetGoodsInputData
 from application.shop.shop_validate import ShopValidationService
 from entities.goods.models import Goods
@@ -18,7 +18,7 @@ fake_goods_uuid = UUID("00012f9e-f610-4ec1-8ceb-8e7f42425474")
     ["goods_id", "exc_class"],
     [
         (fake_goods_uuid, None),
-        (UUID("00012f9e-f610-4ea1-8ceb-8e7f42425474"), GoodsIsNotExistError),
+        (UUID("00012f9e-f610-4ea1-8ceb-8e7f42425474"), GoodsNotFoundError),
     ],
 )
 async def test_get_goods(

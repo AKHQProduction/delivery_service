@@ -4,7 +4,7 @@ from application.common.error import ApplicationError
 
 
 @dataclass(eq=False)
-class UserIsNotExistError(ApplicationError):
+class UserNotFoundError(ApplicationError):
     user_id: int | None = None
 
     @property

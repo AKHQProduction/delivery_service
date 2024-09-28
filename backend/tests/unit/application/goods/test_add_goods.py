@@ -12,7 +12,7 @@ from application.goods.interactors.add_goods import (
     FileMetadata,
 )
 from application.shop.errors import UserNotHaveShopError
-from application.user.errors import UserIsNotExistError
+from application.user.errors import UserNotFoundError
 from entities.goods.models import GoodsType
 from entities.user.models import UserId
 from tests.mocks.common.commiter import FakeCommiter
@@ -41,7 +41,7 @@ from tests.mocks.gateways.shop import FakeShopGateway
             "10.00",
             BytesIO(b"test"),
             GoodsType.OTHER,
-            UserIsNotExistError,
+            UserNotFoundError,
         ),
         (
             2,

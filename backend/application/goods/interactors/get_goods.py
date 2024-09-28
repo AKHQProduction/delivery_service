@@ -3,7 +3,7 @@ from dataclasses import dataclass
 from uuid import UUID
 
 from application.common.interactor import Interactor
-from application.goods.errors import GoodsIsNotExistError
+from application.goods.errors import GoodsNotFoundError
 from application.goods.gateway import GoodsReader
 from application.shop.gateway import ShopReader
 from application.shop.shop_validate import ShopValidationService
@@ -37,7 +37,7 @@ class GetGoods(Interactor[GetGoodsInputData, Goods]):
 
         if not goods:
             logging.info("GetGoods: goods with id=%s not found", goods_id)
-            raise GoodsIsNotExistError(data.goods_id)
+            raise GoodsNotFoundError(data.goods_id)
 
         logging.info("GetGoods: successfully get goods with id=%s", goods_id)
         return goods

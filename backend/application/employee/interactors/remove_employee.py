@@ -8,7 +8,7 @@ from application.common.interactor import Interactor
 from application.employee.gateway import EmployeeSaver
 from application.shop.errors import UserNotHaveShopError
 from application.shop.gateway import ShopReader
-from application.user.errors import UserIsNotExistError
+from application.user.errors import UserNotFoundError
 from entities.employee.models import EmployeeId
 
 
@@ -36,7 +36,7 @@ class RemoveEmployee(Interactor[RemoveEmployeeInputData, None]):
         actor = await self._identity_provider.get_user()
 
         if not actor:
-            raise UserIsNotExistError()
+            raise UserNotFoundError()
 
         shop = await self._shop_reader.by_identity(actor.user_id)
 

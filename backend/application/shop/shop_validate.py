@@ -1,4 +1,4 @@
-from application.shop.errors import ShopIsNotActiveError, ShopIsNotExistError
+from application.shop.errors import ShopIsNotActiveError, ShopNotFoundError
 from application.shop.gateway import ShopReader
 from entities.shop.models import Shop, ShopId
 
@@ -11,7 +11,7 @@ class ShopValidationService:
         shop = await self._shop_reader.by_id(shop_id)
 
         if not shop:
-            raise ShopIsNotExistError(shop_id)
+            raise ShopNotFoundError(shop_id)
 
         if not shop.is_active:
             raise ShopIsNotActiveError(shop_id)

@@ -1,14 +1,14 @@
 import pytest
 
 from application.common.access_service import AccessService
-from application.employee.errors import EmployeeIsNotExistError
+from application.employee.errors import EmployeeNotFoundError
 from application.employee.interactors.remove_employee import (
     RemoveEmployee,
     RemoveEmployeeInputData,
 )
 from application.errors.access import AccessDeniedError
 from application.shop.errors import UserNotHaveShopError
-from application.user.errors import UserIsNotExistError
+from application.user.errors import UserNotFoundError
 from entities.user.models import UserId
 from tests.mocks.common.commiter import FakeCommiter
 from tests.mocks.common.identity_provider import FakeIdentityProvider
@@ -22,10 +22,10 @@ from tests.mocks.gateways.shop import FakeShopGateway
     ["user_id", "employee_id_to_del", "exc_class"],
     [
         (1, 2, None),
-        (4, 2, UserIsNotExistError),
+        (4, 2, UserNotFoundError),
         (2, 4, UserNotHaveShopError),
         (3, 2, AccessDeniedError),
-        (1, 3, EmployeeIsNotExistError),
+        (1, 3, EmployeeNotFoundError),
     ],
 )
 async def test_remove_employee(

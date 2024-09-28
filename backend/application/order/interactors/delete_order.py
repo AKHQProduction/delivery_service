@@ -5,10 +5,10 @@ from application.common.access_service import AccessService
 from application.common.commiter import Commiter
 from application.common.identity_provider import IdentityProvider
 from application.common.interactor import Interactor
-from application.order.errors import OrderIsNotExistError
+from application.order.errors import OrderNotFoundError
 from application.order.gateway import OrderReader, OrderSaver
 from application.shop.shop_validate import ShopValidationService
-from application.user.errors import UserIsNotExistError
+from application.user.errors import UserNotFoundError
 from entities.order.models import OrderId
 from entities.shop.models import ShopId
 
@@ -43,12 +43,12 @@ class DeleteOrder(Interactor[DeleteOrderInputData, None]):
         actor = await self._identity_provider.get_user()
 
         if not actor:
-            raise UserIsNotExistError()
+            raise UserNotFoundError()
 
         order = await self._order_reader.by_id(OrderId(data.order_id))
 
         if not order:
-            raise OrderIsNotExistError(data.order_id)
+            raise OrderNotFoundError(data.order_id)
 
         await self._access_service.ensure_can_delete_order(
             actor.user_id, order

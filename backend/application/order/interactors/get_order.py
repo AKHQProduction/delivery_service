@@ -7,7 +7,7 @@ from application.common.identity_provider import IdentityProvider
 from application.common.interactor import Interactor
 from application.order.gateway import OrderItemReader, OrderReader
 from application.shop.shop_validate import ShopValidationService
-from application.user.errors import UserIsNotExistError
+from application.user.errors import UserNotFoundError
 from entities.order.models import OrderId, OrderItem, OrderStatus
 from entities.shop.models import ShopId
 
@@ -47,7 +47,7 @@ class GetOrder(Interactor[GetOrderInputData, GetOrderOutputData]):
         actor = await self._identity_provider.get_user()
 
         if not actor:
-            raise UserIsNotExistError()
+            raise UserNotFoundError()
 
         order = await self._order_reader.by_id(OrderId(data.order_id))
 

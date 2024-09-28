@@ -13,7 +13,7 @@ class EmployeeAlreadyExistError(ApplicationError):
 
 
 @dataclass(eq=False)
-class EmployeeIsNotExistError(ApplicationError):
+class EmployeeNotFoundError(ApplicationError):
     employee_id: int
 
     @property

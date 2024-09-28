@@ -6,11 +6,11 @@ from application.common.commiter import Commiter
 from application.common.identity_provider import IdentityProvider
 from application.common.interactor import Interactor
 from application.order.errors import (
-    OrderItemIsNotExistError,
+    OrderItemNotFoundError,
 )
 from application.order.gateway import OrderItemReader, OrderReader
 from application.shop.shop_validate import ShopValidationService
-from application.user.errors import UserIsNotExistError
+from application.user.errors import UserNotFoundError
 from entities.order.models import OrderItemId
 from entities.order.service import total_price
 from entities.order.value_objects import OrderTotalPrice
@@ -50,14 +50,14 @@ class EditOrderItemQuantity(Interactor[EditOrderItemQuantityInputData, None]):
         )
 
         if not order_item:
-            raise OrderItemIsNotExistError(data.order_item_id)
+            raise OrderItemNotFoundError(data.order_item_id)
 
         order = await self._order_reader.by_id(order_item.order_id)
 
         actor = await self._identity_provider.get_user()
 
         if not actor:
-            raise UserIsNotExistError()
+            raise UserNotFoundError()
 
         await self._access_service.ensure_can_edit_order(actor.user_id, order)
 

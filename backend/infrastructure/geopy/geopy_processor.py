@@ -7,7 +7,7 @@ from geopy.geocoders import Nominatim
 
 from infrastructure.geopy.config import GeoConfig
 from infrastructure.geopy.errors import (
-    AddressIsNotExistError,
+    AddressNotFoundError,
     GeolocatorBadGatewayError,
 )
 
@@ -52,6 +52,6 @@ class PyGeoProcessor(GeoProcessor):
             raise GeolocatorBadGatewayError() from error
 
         if coordinates is None or not self._check_address_in_city(coordinates):
-            raise AddressIsNotExistError(address, self.city)
+            raise AddressNotFoundError(address, self.city)
 
         return coordinates.latitude, coordinates.longitude

@@ -8,7 +8,7 @@ from application.common.interactor import Interactor
 from application.common.webhook_manager import WebhookManager
 from application.shop.errors import UserNotHaveShopError
 from application.shop.gateway import ShopReader, ShopSaver
-from application.user.errors import UserIsNotExistError
+from application.user.errors import UserNotFoundError
 
 
 class DeleteShop(Interactor[None, None]):
@@ -33,7 +33,7 @@ class DeleteShop(Interactor[None, None]):
     async def __call__(self, data: None = None) -> None:
         actor = await self._identity_provider.get_user()
         if not actor:
-            raise UserIsNotExistError()
+            raise UserNotFoundError()
 
         shop = await self._shop_reader.by_identity(actor.user_id)
         if shop is None:

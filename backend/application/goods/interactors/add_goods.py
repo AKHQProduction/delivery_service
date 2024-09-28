@@ -12,7 +12,7 @@ from application.goods.gateway import GoodsSaver
 from application.goods.input_data import FileMetadata
 from application.shop.errors import UserNotHaveShopError
 from application.shop.gateway import ShopReader
-from application.user.errors import UserIsNotExistError
+from application.user.errors import UserNotFoundError
 from entities.goods.models import Goods, GoodsId, GoodsType
 from entities.goods.value_objects import GoodsPrice, GoodsTitle
 from entities.shop.models import ShopId
@@ -46,7 +46,7 @@ class AddGoods(Interactor[AddGoodsInputData, GoodsId]):
     async def __call__(self, data: AddGoodsInputData) -> GoodsId:
         actor = await self._identity_provider.get_user()
         if not actor:
-            raise UserIsNotExistError()
+            raise UserNotFoundError()
 
         shop = await self._shop_reader.by_identity(actor.user_id)
         if not shop:

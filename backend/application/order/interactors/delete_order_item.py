@@ -6,8 +6,8 @@ from application.common.commiter import Commiter
 from application.common.identity_provider import IdentityProvider
 from application.common.interactor import Interactor
 from application.order.errors import (
-    OrderIsNotExistError,
-    OrderItemIsNotExistError,
+    OrderItemNotFoundError,
+    OrderNotFoundError,
 )
 from application.order.gateway import (
     OrderItemReader,
@@ -16,7 +16,7 @@ from application.order.gateway import (
     OrderSaver,
 )
 from application.shop.shop_validate import ShopValidationService
-from application.user.errors import UserIsNotExistError
+from application.user.errors import UserNotFoundError
 from entities.order.models import OrderItemId
 from entities.shop.models import ShopId
 
@@ -55,19 +55,19 @@ class DeleteOrderItem(Interactor[DeleteOrderItemInputData, None]):
         actor = await self._identity_provider.get_user()
 
         if not actor:
-            raise UserIsNotExistError()
+            raise UserNotFoundError()
 
         order_item = await self._order_item_reader.by_id(
             OrderItemId(data.order_item_id)
         )
 
         if not order_item:
-            raise OrderItemIsNotExistError(data.order_item_id)
+            raise OrderItemNotFoundError(data.order_item_id)
 
         order = await self._order_reader.by_id(order_item.order_id)
 
         if not order:
-            raise OrderIsNotExistError(order_item.order_id)
+            raise OrderNotFoundError(order_item.order_id)
 
         await self._access_service.ensure_can_edit_order(actor.user_id, order)
 
