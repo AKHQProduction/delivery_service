@@ -34,6 +34,10 @@ class ShopService:
             regular_days_off=regular_days_off,
         )
 
-        shop.users.append(user)
+        add_user_to_shop(shop, user)
 
         return shop
+
+
+def add_user_to_shop(shop: Shop, user: User) -> None:
+    shop.users.append(user)

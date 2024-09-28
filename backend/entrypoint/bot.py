@@ -1,11 +1,9 @@
-import contextlib
 import logging
 
 from aiogram import Bot, Dispatcher
 from aiogram.client.default import DefaultBotProperties
 from aiogram.client.session.aiohttp import AiohttpSession
 from aiogram.enums import ParseMode
-from aiogram.exceptions import TelegramUnauthorizedError
 from aiogram.fsm.storage.memory import SimpleEventIsolation
 from aiogram.webhook.aiohttp_server import (
     SimpleRequestHandler,
@@ -20,7 +18,8 @@ from entrypoint.config import Config, load_config
 from infrastructure.bootstrap.di import setup_di
 from infrastructure.persistence.models import map_tables
 from infrastructure.tg.bot_webhook_manager import BotWebhookManager
-from presentation.admin.handlers.setup import setup_all
+from presentation.admin.handlers.setup import setup_all_admin_bot_handlers
+from presentation.shop.handlers.setup import setup_all_shop_bot_handlers
 
 
 def get_admin_dispatcher() -> Dispatcher:
@@ -28,7 +27,8 @@ def get_admin_dispatcher() -> Dispatcher:
 
     setup_dishka(container=setup_di(), router=dp, auto_inject=True)
 
-    setup_all(dp)
+    # Setup handlers and dialogs
+    setup_all_admin_bot_handlers(dp)
 
     setup_dialogs(dp)
 
@@ -37,6 +37,10 @@ def get_admin_dispatcher() -> Dispatcher:
 
 def get_shop_dispatcher() -> Dispatcher:
     dp = Dispatcher(events_isolation=SimpleEventIsolation())
+
+    setup_dishka(container=setup_di(), router=dp, auto_inject=True)
+
+    setup_all_shop_bot_handlers(dp)
 
     return dp
 
@@ -49,23 +53,6 @@ async def on_startup_admin_bot(bot: Bot, config: Config) -> None:
 
     await BotWebhookManager(config.webhook).setup_webhook(
         config.tg_bot.shop_bot_token
-    )
-
-
-async def add_shop_bot(bot: Bot, new_bot_token: str, config: Config):
-    new_bot = Bot(token=new_bot_token, session=bot.session)
-
-    with contextlib.suppress(TelegramUnauthorizedError):
-        await new_bot.get_me()
-
-    await new_bot.delete_webhook(drop_pending_updates=True)
-
-    webhook_shop_path = config.webhook.webhook_shop_path.format(
-        bot_token=new_bot_token
-    )
-
-    await new_bot.set_webhook(
-        f"{config.webhook.webhook_url}" f"{webhook_shop_path}"
     )
 
 

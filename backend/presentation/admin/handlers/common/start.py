@@ -3,7 +3,10 @@ from aiogram.filters import CommandStart
 from aiogram.types import Message
 from dishka import FromDishka
 
-from application.user.interactors.bot_start import BotStart, BotStartInputData
+from application.user.interactors.admin_bot_start import (
+    AdminBotStart,
+    AdminBotStartInputData,
+)
 from presentation.admin.keyboards.main_reply import MainReplyKeyboard
 
 router = Router()
@@ -12,14 +15,14 @@ router = Router()
 @router.message(CommandStart())
 async def cmd_start(
     msg: Message,
-    action: FromDishka[BotStart],
+    action: FromDishka[AdminBotStart],
 ):
     user_id: int = msg.from_user.id
     full_name: str = msg.from_user.full_name
     username: str | None = msg.from_user.username
 
     await action(
-        BotStartInputData(
+        AdminBotStartInputData(
             user_id=user_id, full_name=full_name, username=username
         ),
     )

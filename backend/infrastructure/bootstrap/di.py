@@ -36,6 +36,7 @@ from application.order.interactors.edit_order_item_quantity import (
     EditOrderItemQuantity,
 )
 from application.order.interactors.get_order import GetOrder
+from application.profile.gateway import ProfileSaver
 from application.shop.gateway import ShopReader, ShopSaver
 from application.shop.interactors.change_regular_days_off import (
     ChangeRegularDaysOff,
@@ -49,9 +50,10 @@ from application.shop.interactors.resume_shop import ResumeShop
 from application.shop.interactors.stop_shop import StopShop
 from application.shop.shop_validate import ShopValidationService
 from application.user.gateway import UserReader, UserSaver
-from application.user.interactors.bot_start import BotStart
+from application.user.interactors.admin_bot_start import AdminBotStart
 from application.user.interactors.get_user import GetUser
 from application.user.interactors.get_users import GetUsers
+from application.user.interactors.shop_bot_start import ShopBotStart
 from entities.common.token_verifier import TokenVerifier
 from entities.shop.services import ShopService
 from infrastructure.auth.tg_auth import TgIdentityProvider
@@ -59,6 +61,7 @@ from infrastructure.bootstrap.configs import load_all_configs
 from infrastructure.gateways.employee import EmployeeGateway
 from infrastructure.gateways.goods import GoodsGateway
 from infrastructure.gateways.order import OrderGateway, OrderItemGateway
+from infrastructure.gateways.profile import ProfileGateway
 from infrastructure.gateways.shop import ShopGateway
 from infrastructure.gateways.user import UserGateway
 from infrastructure.geopy.config import GeoConfig
@@ -118,6 +121,10 @@ def gateway_provider() -> Provider:
     )
 
     provider.provide(
+        ProfileGateway, scope=Scope.REQUEST, provides=AnyOf[ProfileSaver]
+    )
+
+    provider.provide(
         SACommiter,
         scope=Scope.REQUEST,
         provides=Commiter,
@@ -147,7 +154,9 @@ def geo_provider() -> Provider:
 def interactor_provider() -> Provider:
     provider = Provider()
 
-    provider.provide(BotStart, scope=Scope.REQUEST)
+    provider.provide(ShopBotStart, scope=Scope.REQUEST)
+    provider.provide(AdminBotStart, scope=Scope.REQUEST)
+
     provider.provide(GetUser, scope=Scope.REQUEST)
     provider.provide(GetUsers, scope=Scope.REQUEST)
 

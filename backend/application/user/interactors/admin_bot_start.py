@@ -9,13 +9,13 @@ from entities.user.models import User, UserId
 
 
 @dataclass(frozen=True)
-class BotStartInputData:
+class AdminBotStartInputData:
     user_id: int
     full_name: str
-    username: str | None = None
+    username: str | None
 
 
-class BotStart(Interactor[BotStartInputData, UserId]):
+class AdminBotStart(Interactor[AdminBotStartInputData, UserId]):
     def __init__(
         self,
         user_reader: UserReader,
@@ -28,22 +28,23 @@ class BotStart(Interactor[BotStartInputData, UserId]):
         self._commiter = commiter
         self._identity_provider = identity_provider
 
-    async def __call__(self, data: BotStartInputData) -> UserId:
-        user = await self._identity_provider.get_user()
+    async def __call__(self, data: AdminBotStartInputData) -> UserId:
+        actor = await self._identity_provider.get_user()
 
-        if not user:
-            await self._user_saver.save(
-                User(
-                    user_id=UserId(data.user_id),
-                    full_name=data.full_name,
-                    username=data.username,
-                ),
-            )
+        if actor:
+            logging.info("Get user %s", data.user_id)
+            return actor.user_id
 
-            await self._commiter.commit()
+        await self._user_saver.save(
+            User(
+                user_id=UserId(data.user_id),
+                full_name=data.full_name,
+                username=data.username,
+            ),
+        )
 
-            logging.info("New user created %s", data.user_id)
+        await self._commiter.commit()
 
-        logging.info("Get user %s", data.user_id)
+        logging.info("New user created %s", data.user_id)
 
         return UserId(data.user_id)
