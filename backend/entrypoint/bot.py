@@ -40,6 +40,7 @@ def get_shop_dispatcher() -> Dispatcher:
 
     setup_dishka(container=setup_di(), router=dp, auto_inject=True)
 
+    # Setup handlers and dialogs
     setup_all_shop_bot_handlers(dp)
 
     return dp

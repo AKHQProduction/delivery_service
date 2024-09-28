@@ -52,7 +52,7 @@ def map_profile_table() -> None:
         properties={
             "shop": relationship("Shop", back_populates="profile"),
             "user": relationship("User", back_populates="profile"),
-            "address": composite(
+            "user_address": composite(
                 UserAddress,
                 profiles_table.c.address_city,
                 profiles_table.c.address_street,
