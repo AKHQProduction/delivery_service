@@ -242,10 +242,12 @@ class TgProvider(Provider):
         self,
         user_id: int,
         user_gateway: UserReader,
+        employee_gateway: EmployeeReader,
     ) -> IdentityProvider:
         identity_provider = TgIdentityProvider(
             user_id=user_id,
             user_gateway=user_gateway,
+            employee_gateway=employee_gateway,
         )
 
         return identity_provider

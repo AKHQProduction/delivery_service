@@ -3,6 +3,7 @@ import pytest
 from application.user.interactors.admin_bot_start import (
     AdminBotStart,
     AdminBotStartInputData,
+    AdminBotStartOutputData,
 )
 from entities.user.models import UserId
 from tests.mocks.common.commiter import FakeCommiter
@@ -33,10 +34,9 @@ async def test_bot_start_with_already_created_user(
     output_data = await action(input_data)
 
     assert output_data
-    assert isinstance(output_data, int)
+    assert isinstance(output_data, AdminBotStartOutputData)
     assert not user_gateway.saved
     assert not commiter.commited
-    assert output_data == user_id
 
 
 @pytest.mark.application
@@ -62,7 +62,6 @@ async def test_bot_start_when_create_new_user(
     output_data = await action(input_data)
 
     assert output_data
-    assert isinstance(output_data, int)
+    assert isinstance(output_data, AdminBotStartOutputData)
     assert user_gateway.saved
     assert commiter.commited
-    assert output_data == user_id
