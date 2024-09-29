@@ -19,9 +19,11 @@ class TgIdentityProvider(IdentityProvider):
     async def get_user(self) -> User:
         return await self._user_gateway.by_id(UserId(self._user_id))
 
-    async def get_role(self) -> EmployeeRole:
+    async def get_role(self) -> EmployeeRole | None:
         employee = await self._employee_gateway.by_identity(
             UserId(self._user_id)
         )
 
+        if not employee:
+            return None
         return employee.role

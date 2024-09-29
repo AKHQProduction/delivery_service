@@ -23,8 +23,9 @@ def token_verifier() -> FakeTokenVerifier:
 def identity_provider(
     user_id: UserId,
     user_gateway: FakeUserGateway,
+    employee_gateway: FakeEmployeeGateway,
 ) -> FakeIdentityProvider:
-    return FakeIdentityProvider(user_id, user_gateway)
+    return FakeIdentityProvider(user_id, user_gateway, employee_gateway)
 
 
 @pytest.fixture
