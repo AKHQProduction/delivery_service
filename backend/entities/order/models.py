@@ -18,6 +18,11 @@ class OrderStatus(StrEnum):
     NEW = auto()
 
 
+class DeliveryPreference(StrEnum):
+    MORNING = auto()
+    AFTERNOON = auto()
+
+
 @dataclass
 class Order:
     order_id: OrderId | None
@@ -25,6 +30,7 @@ class Order:
     shop_id: ShopId
     status: OrderStatus
     total_price: OrderTotalPrice
+    delivery_preference: DeliveryPreference
     bottles_to_exchange: BottlesToExchange
 
 

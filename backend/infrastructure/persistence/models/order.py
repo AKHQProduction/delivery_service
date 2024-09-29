@@ -1,7 +1,12 @@
 import sqlalchemy as sa
 from sqlalchemy.orm import composite, relationship
 
-from entities.order.models import Order, OrderItem, OrderStatus
+from entities.order.models import (
+    DeliveryPreference,
+    Order,
+    OrderItem,
+    OrderStatus,
+)
 from entities.order.value_objects import (
     BottlesToExchange,
     OrderItemAmount,
@@ -20,6 +25,9 @@ orders_table = sa.Table(
     ),
     sa.Column("order_total_price", sa.DECIMAL(10, 2), nullable=False),
     sa.Column("bottles_quantity_to_exchange", sa.Integer, nullable=False),
+    sa.Column(
+        "delivery_preference", sa.Enum(DeliveryPreference), nullable=False
+    ),
     sa.Column(
         "user_id",
         sa.BigInteger,
