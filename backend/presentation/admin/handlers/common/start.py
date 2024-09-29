@@ -7,7 +7,7 @@ from application.user.interactors.admin_bot_start import (
     AdminBotStart,
     AdminBotStartInputData,
 )
-from presentation.admin.keyboards.main_reply import MainReplyKeyboard
+from presentation.admin.keyboards.main_menu_kb import MainReplyKeyboard
 
 router = Router()
 
@@ -21,7 +21,7 @@ async def cmd_start(
     full_name: str = msg.from_user.full_name
     username: str | None = msg.from_user.username
 
-    await action(
+    output_data = await action(
         AdminBotStartInputData(
             user_id=user_id, full_name=full_name, username=username
         ),
@@ -29,5 +29,7 @@ async def cmd_start(
 
     await msg.answer(
         text=f"Hello, {full_name}",
-        reply_markup=(await MainReplyKeyboard().render_keyboard()),
+        reply_markup=(
+            await MainReplyKeyboard(output_data.role).render_keyboard()
+        ),
     )
