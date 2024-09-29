@@ -42,3 +42,10 @@ class InvalidSpecialDayOffError(DomainError):
     @property
     def message(self):
         return "The date must be in the future"
+
+
+@dataclass(eq=False)
+class InvalidDeliveryDistanceError(DomainError):
+    @property
+    def message(self):
+        return "You need to specify a longer distance for delivery"

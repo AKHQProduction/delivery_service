@@ -27,7 +27,7 @@ async def test_bot_start_with_already_created_user(
     )
 
     input_data = AdminBotStartInputData(
-        user_id=user_id, full_name="Test Test Test"
+        user_id=user_id, full_name="Test Test Test", username="TestUsername"
     )
 
     output_data = await action(input_data)
@@ -56,7 +56,7 @@ async def test_bot_start_when_create_new_user(
     )
 
     input_data = AdminBotStartInputData(
-        user_id=user_id, full_name="Test Test Test"
+        user_id=user_id, full_name="Test Test Test", username="TestUsername"
     )
 
     output_data = await action(input_data)

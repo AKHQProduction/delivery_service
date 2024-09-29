@@ -20,6 +20,8 @@ class CreateShopInputData:
     shop_id: int
     title: str
     token: str
+    delivery_distance: int
+    location: tuple[float, float]
     regular_days_off: list[int] = field(default_factory=list)
 
 
@@ -58,6 +60,8 @@ class CreateShop(Interactor[CreateShopInputData, ShopId]):
             data.title,
             data.token,
             data.regular_days_off,
+            data.delivery_distance,
+            data.location,
         )
 
         await self._shop_saver.save(shop)

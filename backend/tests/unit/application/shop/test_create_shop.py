@@ -47,6 +47,8 @@ async def test_create_shop(
 
     shop_title = "TestShop"
     shop_token = "9876543212:AAGzbSDaSqQ-mOQEJfPLE1wBH0Y4J40xT48"  # noqa: S105
+    delivery_distance = 50
+    location = (48.5035903, 31.0787222)
 
     action = CreateShop(
         user_saver=user_gateway,
@@ -63,6 +65,8 @@ async def test_create_shop(
         shop_id=shop_id,
         token=shop_token,
         title=shop_title,
+        delivery_distance=delivery_distance,
+        location=location,
     )
 
     coro = action(input_data)

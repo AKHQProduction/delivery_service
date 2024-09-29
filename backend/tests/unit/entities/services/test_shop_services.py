@@ -2,7 +2,12 @@ import pytest
 
 from entities.shop.models import Shop, ShopId
 from entities.shop.services import ShopService
-from entities.shop.value_objects import ShopTitle, ShopToken
+from entities.shop.value_objects import (
+    DeliveryDistance,
+    ShopLocation,
+    ShopTitle,
+    ShopToken,
+)
 from entities.user.errors import UserIsNotActiveError
 from entities.user.models import User, UserId
 from tests.mocks.common.token_verifier import FakeTokenVerifier
@@ -24,6 +29,8 @@ async def test_create_shop_service(
     shop_id = ShopId(1)
     shop_title = ShopTitle("TestShop")
     shop_token = ShopToken("1234567898:AAGzbSDaSqQ-mOQEJfPLE1wBH0Y4J40xT48")
+    delivery_distance = DeliveryDistance(50)
+    location = ShopLocation(latitude=48.5035903, longitude=31.0787222)
 
     user = User(user_id=UserId(1), full_name="Test Test Test")
     user.is_active = user_is_active
@@ -35,6 +42,8 @@ async def test_create_shop_service(
                 shop_id=shop_id,
                 title=shop_title.title,
                 token=shop_token.value,
+                delivery_distance=delivery_distance.kilometers,
+                location=(location.latitude, location.longitude),
                 regular_days_off=[],
             )
     else:
@@ -43,6 +52,8 @@ async def test_create_shop_service(
             shop_id=shop_id,
             title=shop_title.title,
             token=shop_token.value,
+            delivery_distance=delivery_distance.kilometers,
+            location=(location.latitude, location.longitude),
             regular_days_off=[],
         )
 

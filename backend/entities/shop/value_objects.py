@@ -6,6 +6,7 @@ from zoneinfo import ZoneInfo
 
 from entities.shop.errors import (
     InvalidBotTokenError,
+    InvalidDeliveryDistanceError,
     InvalidRegularDayOffError,
     InvalidSpecialDayOffError,
     ShopTitleTooLongError,
@@ -62,3 +63,18 @@ class SpecialDaysOff:
 
         if any(now > day for day in self.days):
             raise InvalidSpecialDayOffError()
+
+
+@dataclass(slots=True, frozen=True, eq=True, unsafe_hash=True)
+class DeliveryDistance:
+    kilometers: int
+
+    def __post_init__(self) -> None:
+        if self.kilometers <= 0:
+            raise InvalidDeliveryDistanceError()
+
+
+@dataclass(slots=True, frozen=True, eq=True, unsafe_hash=True)
+class ShopLocation:
+    latitude: float
+    longitude: float
