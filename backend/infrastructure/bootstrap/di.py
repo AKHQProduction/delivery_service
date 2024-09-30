@@ -13,6 +13,7 @@ from application.common.access_service import AccessService
 from application.common.commiter import Commiter
 from application.common.file_manager import FileManager
 from application.common.identity_provider import IdentityProvider
+from application.common.token_verifier import TokenVerifier
 from application.common.webhook_manager import WebhookManager
 from application.employee.gateway import EmployeeReader, EmployeeSaver
 from application.employee.interactors.add_employee import AddEmployee
@@ -55,8 +56,6 @@ from application.user.interactors.admin_bot_start import AdminBotStart
 from application.user.interactors.get_user import GetUser
 from application.user.interactors.get_users import GetUsers
 from application.user.interactors.shop_bot_start import ShopBotStart
-from entities.common.token_verifier import TokenVerifier
-from entities.shop.services import ShopService
 from infrastructure.auth.tg_auth import TgIdentityProvider
 from infrastructure.bootstrap.configs import load_all_configs
 from infrastructure.gateways.employee import EmployeeGateway
@@ -190,7 +189,6 @@ def interactor_provider() -> Provider:
 def service_provider() -> Provider:
     provider = Provider()
 
-    provider.provide(ShopService, scope=Scope.REQUEST)
     provider.provide(AccessService, scope=Scope.REQUEST)
     provider.provide(ShopValidationService, scope=Scope.REQUEST)
 

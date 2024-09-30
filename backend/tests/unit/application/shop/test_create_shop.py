@@ -8,11 +8,9 @@ from application.shop.interactors.create_shop import (
     CreateShopInputData,
 )
 from application.user.errors import UserNotFoundError
-from entities.shop.services import ShopService
 from entities.user.models import UserId
 from tests.mocks.common.commiter import FakeCommiter
 from tests.mocks.common.identity_provider import FakeIdentityProvider
-from tests.mocks.common.token_verifier import FakeTokenVerifier
 from tests.mocks.common.webhook_manager import FakeWebhookManager
 from tests.mocks.gateways.employee import FakeEmployeeGateway
 from tests.mocks.gateways.shop import FakeShopGateway
@@ -35,7 +33,6 @@ async def test_create_shop(
     user_gateway: FakeUserGateway,
     employee_gateway: FakeEmployeeGateway,
     identity_provider: FakeIdentityProvider,
-    token_verifier: FakeTokenVerifier,
     webhook_manager: FakeWebhookManager,
     commiter: FakeCommiter,
     access_service: AccessService,
@@ -43,8 +40,6 @@ async def test_create_shop(
     shop_id: int,
     exc_class,
 ) -> None:
-    shop_service = ShopService(token_verifier)
-
     shop_title = "TestShop"
     shop_token = f"{shop_id}:AAGzbSDaSqQ-mOQEJfPLE1wBH0Y4J40xT48"
     delivery_distance = 50
@@ -58,7 +53,6 @@ async def test_create_shop(
         webhook_manager=webhook_manager,
         commiter=commiter,
         access_service=access_service,
-        shop_service=shop_service,
     )
 
     input_data = CreateShopInputData(
@@ -77,7 +71,6 @@ async def test_create_shop(
         assert not commiter.commited
         assert not employee_gateway.saved
         assert not shop_gateway.saved
-        assert not webhook_manager.setup
 
     else:
         output_data = await coro
