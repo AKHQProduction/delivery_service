@@ -42,7 +42,7 @@ class StopShop(Interactor[None, None]):
 
         shop.is_active = False
 
-        await self._webhook_manager.drop_webhook(shop.token.value)
+        await self._webhook_manager.drop_webhook(shop.token)
 
         await self._commiter.commit()
 

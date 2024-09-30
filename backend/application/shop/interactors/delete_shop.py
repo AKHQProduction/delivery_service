@@ -49,7 +49,7 @@ class DeleteShop(Interactor[None, None]):
 
         self._file_manager.delete_folder(str(shop_id))
 
-        await self._webhook_manager.drop_webhook(shop.token.value)
+        await self._webhook_manager.drop_webhook(shop.token)
 
         await self._commiter.commit()
 

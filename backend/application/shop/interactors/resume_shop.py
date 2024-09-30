@@ -42,7 +42,7 @@ class ResumeShop(Interactor[None, None]):
 
         shop.is_active = True
 
-        await self._webhook_manager.setup_webhook(shop.token.value)
+        await self._webhook_manager.setup_webhook(shop.token)
 
         await self._commiter.commit()
 

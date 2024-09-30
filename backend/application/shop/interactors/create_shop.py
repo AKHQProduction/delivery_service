@@ -13,6 +13,7 @@ from application.user.gateway import UserSaver
 from entities.employee.models import Employee, EmployeeRole
 from entities.shop.models import ShopId
 from entities.shop.services import ShopService
+from entities.shop.value_objects import ShopToken
 
 
 @dataclass(frozen=True)
@@ -74,7 +75,7 @@ class CreateShop(Interactor[CreateShopInputData, ShopId]):
             ),
         )
 
-        await self._webhook_manager.setup_webhook(data.token)
+        await self._webhook_manager.setup_webhook(ShopToken(data.token))
 
         await self._commiter.commit()
 

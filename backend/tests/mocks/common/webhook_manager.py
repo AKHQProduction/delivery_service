@@ -1,4 +1,5 @@
 from application.common.webhook_manager import WebhookManager
+from entities.shop.value_objects import ShopToken
 
 
 class FakeWebhookManager(WebhookManager):
@@ -6,8 +7,8 @@ class FakeWebhookManager(WebhookManager):
         self.setup = False
         self.dropped = False
 
-    async def setup_webhook(self, token: str):
+    async def setup_webhook(self, token: ShopToken):
         self.setup = True
 
-    async def drop_webhook(self, token: str):
+    async def drop_webhook(self, token: ShopToken):
         self.dropped = True
