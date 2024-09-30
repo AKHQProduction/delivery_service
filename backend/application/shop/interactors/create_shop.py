@@ -18,7 +18,6 @@ from entities.shop.value_objects import ShopToken
 
 @dataclass(frozen=True)
 class CreateShopInputData:
-    shop_id: int
     title: str
     token: str
     delivery_distance: int
@@ -57,7 +56,6 @@ class CreateShop(Interactor[CreateShopInputData, ShopId]):
 
         shop = await self._shop_service.create_shop(
             user,
-            data.shop_id,
             data.title,
             data.token,
             data.regular_days_off,

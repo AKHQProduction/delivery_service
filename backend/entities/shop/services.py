@@ -18,19 +18,18 @@ class ShopService:
     async def create_shop(
         self,
         user: User,
-        shop_id: int,
         title: str,
         token: str,
         regular_days_off: list[int],
         delivery_distance: int,
         location: tuple[float, float],
     ) -> Shop:
-        shop_id = ShopId(shop_id)
+        shop_id = ShopId(int(token.split(":")[0]))
         title = ShopTitle(title)
         token = ShopToken(token)
         delivery_distance = DeliveryDistance(delivery_distance)
         location = ShopLocation(latitude=location[0], longitude=location[1])
-        regular_days_off = RegularDaysOff(regular_days_off)
+        regular_days_off = RegularDaysOff(regular_days=regular_days_off)
 
         await self._token_verifier.verify_token(token)
 
