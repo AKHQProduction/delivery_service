@@ -3,6 +3,7 @@ import pytest
 from application.common.access_service import AccessService
 from application.shop.shop_validate import ShopValidationService
 from entities.user.models import UserId
+from infrastructure.tg.config import ProjectConfig
 from tests.mocks.common.commiter import FakeCommiter
 from tests.mocks.common.file_manager import FakeFileManager
 from tests.mocks.common.identity_provider import FakeIdentityProvider
@@ -54,11 +55,16 @@ def user_gateway() -> FakeUserGateway:
 
 
 @pytest.fixture
+def project_config() -> ProjectConfig:
+    return ProjectConfig(admin_id=1)
+
+
+@pytest.fixture
 def access_service(
-    employee_gateway: FakeEmployeeGateway,
+    employee_gateway: FakeEmployeeGateway, project_config: ProjectConfig
 ) -> AccessService:
     return AccessService(
-        employee_reader=employee_gateway,
+        employee_reader=employee_gateway, project_config=project_config
     )
 
 

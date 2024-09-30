@@ -7,7 +7,7 @@ from entities.user.models import User
 
 class IdentityProvider(Protocol):
     @abstractmethod
-    async def get_user(self) -> User:
+    async def get_user(self) -> User | None:
         raise NotImplementedError()
 
     @abstractmethod

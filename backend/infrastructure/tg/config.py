@@ -4,6 +4,11 @@ from environs import Env
 
 
 @dataclass
+class ProjectConfig:
+    admin_id: int
+
+
+@dataclass
 class WebhookConfig:
     webhook_url: str
     webhook_admin_path: str

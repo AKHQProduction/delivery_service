@@ -77,7 +77,7 @@ from infrastructure.persistence.provider import (
 from infrastructure.s3.config import S3Config
 from infrastructure.s3.file_manager import S3FileManager
 from infrastructure.tg.bot_webhook_manager import BotWebhookManager
-from infrastructure.tg.config import WebhookConfig
+from infrastructure.tg.config import ProjectConfig, WebhookConfig
 from infrastructure.tg.token_verifier import TgTokenVerifier
 
 
@@ -226,6 +226,9 @@ def config_provider() -> Provider:
         lambda: config.webhook, scope=Scope.APP, provides=WebhookConfig
     )
     provider.provide(lambda: config.s3, scope=Scope.APP, provides=S3Config)
+    provider.provide(
+        lambda: config.settings, scope=Scope.APP, provides=ProjectConfig
+    )
 
     return provider
 

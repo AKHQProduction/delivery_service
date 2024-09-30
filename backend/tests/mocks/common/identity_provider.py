@@ -16,7 +16,7 @@ class FakeIdentityProvider(IdentityProvider):
         self.user_gateway = user_gateway
         self.employee_gateway = employee_gateway
 
-    async def get_user(self) -> User:
+    async def get_user(self) -> User | None:
         return await self.user_gateway.by_id(self.user_id)
 
     async def get_role(self) -> EmployeeRole | None:
