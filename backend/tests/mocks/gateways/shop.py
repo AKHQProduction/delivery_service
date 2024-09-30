@@ -1,5 +1,6 @@
+from application.common.input_data import Pagination
 from application.shop.errors import ShopAlreadyExistError
-from application.shop.gateway import ShopReader, ShopSaver
+from application.shop.gateway import ShopFilters, ShopReader, ShopSaver
 from entities.shop.models import Shop, ShopId
 from entities.shop.value_objects import (
     DeliveryDistance,
@@ -51,3 +52,11 @@ class FakeShopGateway(ShopReader, ShopSaver):
             del self.shops[shop_id]
 
         self.deleted = True
+
+    async def all(
+        self, filters: ShopFilters, pagination: Pagination
+    ) -> list[Shop]:
+        pass
+
+    async def total(self, filters: ShopFilters) -> int:
+        return len(self.shops)

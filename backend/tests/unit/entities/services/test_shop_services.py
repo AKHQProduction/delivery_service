@@ -1,6 +1,6 @@
 import pytest
 
-from entities.shop.models import Shop, ShopId
+from entities.shop.models import Shop
 from entities.shop.services import ShopService
 from entities.shop.value_objects import (
     DeliveryDistance,
@@ -26,7 +26,6 @@ async def test_create_shop_service(
 ) -> None:
     service = ShopService(token_verifier)
 
-    shop_id = ShopId(1)
     shop_title = ShopTitle("TestShop")
     shop_token = ShopToken("1234567898:AAGzbSDaSqQ-mOQEJfPLE1wBH0Y4J40xT48")
     delivery_distance = DeliveryDistance(50)
@@ -39,7 +38,6 @@ async def test_create_shop_service(
         with pytest.raises(exc_class):
             await service.create_shop(
                 user=user,
-                shop_id=shop_id,
                 title=shop_title.title,
                 token=shop_token.value,
                 delivery_distance=delivery_distance.kilometers,
@@ -49,7 +47,6 @@ async def test_create_shop_service(
     else:
         output_data = await service.create_shop(
             user=user,
-            shop_id=shop_id,
             title=shop_title.title,
             token=shop_token.value,
             delivery_distance=delivery_distance.kilometers,

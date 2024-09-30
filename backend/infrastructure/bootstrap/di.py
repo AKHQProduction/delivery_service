@@ -46,6 +46,7 @@ from application.shop.interactors.change_special_days_off import (
 )
 from application.shop.interactors.create_shop import CreateShop
 from application.shop.interactors.delete_shop import DeleteShop
+from application.shop.interactors.get_shops import SetupAllShop
 from application.shop.interactors.resume_shop import ResumeShop
 from application.shop.interactors.stop_shop import StopShop
 from application.shop.shop_validate import ShopValidationService
@@ -166,6 +167,7 @@ def interactor_provider() -> Provider:
     provider.provide(DeleteShop, scope=Scope.REQUEST)
     provider.provide(ChangeRegularDaysOff, scope=Scope.REQUEST)
     provider.provide(ChangeSpecialDaysOff, scope=Scope.REQUEST)
+    provider.provide(SetupAllShop, scope=Scope.REQUEST)
 
     provider.provide(AddGoods, scope=Scope.REQUEST)
     provider.provide(DeleteGoods, scope=Scope.REQUEST)

@@ -46,7 +46,7 @@ async def test_create_shop(
     shop_service = ShopService(token_verifier)
 
     shop_title = "TestShop"
-    shop_token = "9876543212:AAGzbSDaSqQ-mOQEJfPLE1wBH0Y4J40xT48"  # noqa: S105
+    shop_token = f"{shop_id}:AAGzbSDaSqQ-mOQEJfPLE1wBH0Y4J40xT48"
     delivery_distance = 50
     location = (48.5035903, 31.0787222)
 
@@ -62,7 +62,6 @@ async def test_create_shop(
     )
 
     input_data = CreateShopInputData(
-        shop_id=shop_id,
         token=shop_token,
         title=shop_title,
         delivery_distance=delivery_distance,
