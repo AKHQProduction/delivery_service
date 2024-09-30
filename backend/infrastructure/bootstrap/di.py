@@ -13,7 +13,6 @@ from application.common.access_service import AccessService
 from application.common.commiter import Commiter
 from application.common.file_manager import FileManager
 from application.common.identity_provider import IdentityProvider
-from application.common.token_verifier import TokenVerifier
 from application.common.webhook_manager import WebhookManager
 from application.employee.gateway import EmployeeReader, EmployeeSaver
 from application.employee.interactors.add_employee import AddEmployee
@@ -50,7 +49,6 @@ from application.shop.interactors.delete_shop import DeleteShop
 from application.shop.interactors.resume_shop import ResumeShop
 from application.shop.interactors.setup_all_shops import SetupAllShop
 from application.shop.interactors.stop_shop import StopShop
-from application.shop.shop_validate import ShopValidationService
 from application.user.gateway import UserReader, UserSaver
 from application.user.interactors.admin_bot_start import AdminBotStart
 from application.user.interactors.get_user import GetUser
@@ -78,7 +76,6 @@ from infrastructure.s3.config import S3Config
 from infrastructure.s3.file_manager import S3FileManager
 from infrastructure.tg.bot_webhook_manager import BotWebhookManager
 from infrastructure.tg.config import ProjectConfig, WebhookConfig
-from infrastructure.tg.token_verifier import TgTokenVerifier
 
 
 def gateway_provider() -> Provider:
@@ -190,7 +187,6 @@ def service_provider() -> Provider:
     provider = Provider()
 
     provider.provide(AccessService, scope=Scope.REQUEST)
-    provider.provide(ShopValidationService, scope=Scope.REQUEST)
 
     return provider
 
@@ -200,10 +196,6 @@ def infrastructure_provider() -> Provider:
 
     provider.provide(
         PyGeoProcessor, scope=Scope.REQUEST, provides=GeoProcessor
-    )
-
-    provider.provide(
-        TgTokenVerifier, scope=Scope.REQUEST, provides=TokenVerifier
     )
 
     provider.provide(

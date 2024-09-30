@@ -9,7 +9,8 @@ from application.order.errors import (
     OrderItemNotFoundError,
 )
 from application.order.gateway import OrderItemReader, OrderReader
-from application.shop.shop_validate import ShopValidationService
+from application.shop.errors import ShopIsNotActiveError, ShopNotFoundError
+from application.shop.gateway import ShopReader
 from application.user.errors import UserNotFoundError
 from entities.order.models import OrderItemId
 from entities.order.service import total_price
@@ -29,21 +30,27 @@ class EditOrderItemQuantity(Interactor[EditOrderItemQuantityInputData, None]):
         self,
         identity_provider: IdentityProvider,
         access_service: AccessService,
-        shop_validation: ShopValidationService,
+        shop_reader: ShopReader,
         order_item_reader: OrderItemReader,
         order_reader: OrderReader,
         commiter: Commiter,
     ):
         self._identity_provider = identity_provider
         self._access_service = access_service
-        self._shop_validation = shop_validation
+        self._shop_reader = shop_reader
         self._order_item_reader = order_item_reader
         self._order_reader = order_reader
         self._commiter = commiter
 
     async def __call__(self, data: EditOrderItemQuantityInputData) -> None:
         if data.shop_id:
-            await self._shop_validation.check_shop(ShopId(data.shop_id))
+            shop = await self._shop_reader.by_id(ShopId(data.shop_id))
+
+            if not shop:
+                raise ShopNotFoundError(data.shop_id)
+
+            if not shop.is_active:
+                raise ShopIsNotActiveError(data.shop_id)
 
         order_item = await self._order_item_reader.by_id(
             OrderItemId(data.order_item_id)

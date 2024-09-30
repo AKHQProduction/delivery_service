@@ -1,7 +1,6 @@
 import pytest
 
 from application.common.access_service import AccessService
-from application.shop.shop_validate import ShopValidationService
 from entities.user.models import UserId
 from infrastructure.tg.config import ProjectConfig
 from tests.mocks.common.commiter import FakeCommiter
@@ -60,11 +59,6 @@ def access_service(
     return AccessService(
         employee_reader=employee_gateway, project_config=project_config
     )
-
-
-@pytest.fixture
-def shop_validation(shop_gateway: FakeShopGateway) -> ShopValidationService:
-    return ShopValidationService(shop_reader=shop_gateway)
 
 
 @pytest.fixture

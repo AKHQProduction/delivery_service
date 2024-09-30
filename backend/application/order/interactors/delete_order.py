@@ -7,7 +7,8 @@ from application.common.identity_provider import IdentityProvider
 from application.common.interactor import Interactor
 from application.order.errors import OrderNotFoundError
 from application.order.gateway import OrderReader, OrderSaver
-from application.shop.shop_validate import ShopValidationService
+from application.shop.errors import ShopIsNotActiveError, ShopNotFoundError
+from application.shop.gateway import ShopReader
 from application.user.errors import UserNotFoundError
 from entities.order.models import OrderId
 from entities.shop.models import ShopId
@@ -22,14 +23,14 @@ class DeleteOrderInputData:
 class DeleteOrder(Interactor[DeleteOrderInputData, None]):
     def __init__(
         self,
-        shop_validation: ShopValidationService,
+        shop_reader: ShopReader,
         identity_provider: IdentityProvider,
         access_service: AccessService,
         order_reader: OrderReader,
         order_saver: OrderSaver,
         commiter: Commiter,
     ):
-        self._shop_validation = shop_validation
+        self._shop_reader = shop_reader
         self._identity_provider = identity_provider
         self._access_service = access_service
         self._order_reader = order_reader
@@ -38,7 +39,13 @@ class DeleteOrder(Interactor[DeleteOrderInputData, None]):
 
     async def __call__(self, data: DeleteOrderInputData) -> None:
         if data.shop_id:
-            await self._shop_validation.check_shop(ShopId(data.shop_id))
+            shop = await self._shop_reader.by_id(ShopId(data.shop_id))
+
+            if not shop:
+                raise ShopNotFoundError(data.shop_id)
+
+            if not shop.is_active:
+                raise ShopIsNotActiveError(data.shop_id)
 
         actor = await self._identity_provider.get_user()
 

@@ -4,7 +4,8 @@ from application.common.commiter import Commiter
 from application.common.identity_provider import IdentityProvider
 from application.common.interactor import Interactor
 from application.profile.gateway import ProfileSaver
-from application.shop.shop_validate import ShopValidationService
+from application.shop.errors import ShopIsNotActiveError, ShopNotFoundError
+from application.shop.gateway import ShopReader
 from application.user.gateway import UserSaver
 from entities.profile.services import create_user_profile
 from entities.profile.value_objects import UserAddress
@@ -39,13 +40,13 @@ class ShopBotStart(Interactor[ShopBotStartInputData, UserId]):
         identity_provider: IdentityProvider,
         user_saver: UserSaver,
         profile_saver: ProfileSaver,
-        shop_validation: ShopValidationService,
+        shop_reader: ShopReader,
         commiter: Commiter,
     ):
         self._identity_provider = identity_provider
         self._user_saver = user_saver
         self._profile_saver = profile_saver
-        self._shop_validation = shop_validation
+        self._shop_reader = shop_reader
         self._commiter = commiter
 
     async def __call__(self, data: ShopBotStartInputData) -> UserId:
@@ -60,7 +61,13 @@ class ShopBotStart(Interactor[ShopBotStartInputData, UserId]):
             username=data.username,
         )
 
-        shop = await self._shop_validation.check_shop(ShopId(data.shop_id))
+        shop = await self._shop_reader.by_id(ShopId(data.shop_id))
+
+        if not shop:
+            raise ShopNotFoundError(data.shop_id)
+
+        if not shop.is_active:
+            raise ShopIsNotActiveError(data.shop_id)
 
         add_user_to_shop(shop, user)
 

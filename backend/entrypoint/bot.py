@@ -15,7 +15,7 @@ from aiohttp import web
 from dishka import AsyncContainer
 from dishka.integrations.aiogram import setup_dishka
 
-from application.shop.interactors.get_shops import SetupAllShop
+from application.shop.interactors.setup_all_shops import SetupAllShop
 from entrypoint.config import Config, load_config
 from infrastructure.bootstrap.di import setup_di
 from infrastructure.persistence.models import map_tables
