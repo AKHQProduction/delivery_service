@@ -8,8 +8,8 @@ from entities.user.models import User
 class IdentityProvider(Protocol):
     @abstractmethod
     async def get_user(self) -> User | None:
-        raise NotImplementedError()
+        raise NotImplementedError
 
     @abstractmethod
     async def get_role(self) -> EmployeeRole | None:
-        raise NotImplementedError()
+        raise NotImplementedError

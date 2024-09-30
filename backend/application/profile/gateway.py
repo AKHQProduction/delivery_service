@@ -7,4 +7,4 @@ from entities.profile.models import Profile
 class ProfileSaver(Protocol):
     @abstractmethod
     async def save(self, profile: Profile) -> None:
-        raise NotImplementedError()
+        raise NotImplementedError
