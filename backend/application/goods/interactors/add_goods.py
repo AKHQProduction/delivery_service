@@ -5,15 +5,15 @@ from decimal import Decimal
 
 from application.common.access_service import AccessService
 from application.common.commiter import Commiter
-from application.common.file_manager import FileManager
+from application.common.file_manager import FileManager, file_path_creator
 from application.common.identity_provider import IdentityProvider
 from application.common.interactor import Interactor
 from application.goods.gateway import GoodsSaver
 from application.goods.input_data import FileMetadata
 from application.shop.errors import UserNotHaveShopError
 from application.shop.gateway import ShopReader
-from application.user.errors import UserIsNotExistError
-from entities.goods.models import Goods, GoodsId
+from application.user.errors import UserNotFoundError
+from entities.goods.models import Goods, GoodsId, GoodsType
 from entities.goods.value_objects import GoodsPrice, GoodsTitle
 from entities.shop.models import ShopId
 
@@ -22,6 +22,7 @@ from entities.shop.models import ShopId
 class AddGoodsInputData:
     title: str
     price: Decimal
+    goods_type: GoodsType
     metadata: FileMetadata | None = None
 
 
@@ -45,7 +46,7 @@ class AddGoods(Interactor[AddGoodsInputData, GoodsId]):
     async def __call__(self, data: AddGoodsInputData) -> GoodsId:
         actor = await self._identity_provider.get_user()
         if not actor:
-            raise UserIsNotExistError()
+            raise UserNotFoundError()
 
         shop = await self._shop_reader.by_identity(actor.user_id)
         if not shop:
@@ -65,6 +66,7 @@ class AddGoods(Interactor[AddGoodsInputData, GoodsId]):
             shop_id=shop.shop_id,
             title=GoodsTitle(data.title),
             price=GoodsPrice(data.price),
+            goods_type=data.goods_type,
             metadata_path=path,
         )
 
@@ -82,7 +84,7 @@ class AddGoods(Interactor[AddGoodsInputData, GoodsId]):
         if not metadata:
             return None
 
-        path = f"{shop_id}/{goods_id}.{metadata.extension}"
+        path = file_path_creator(shop_id, goods_id)
 
         self._file_manager.save(payload=metadata.payload, path=path)
 

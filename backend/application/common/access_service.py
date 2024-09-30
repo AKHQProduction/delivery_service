@@ -7,6 +7,7 @@ from entities.employee.models import Employee
 from entities.order.models import Order
 from entities.shop.models import ShopId
 from entities.user.models import UserId
+from infrastructure.tg.config import ProjectConfig
 
 
 class Permission(Enum):
@@ -48,10 +49,14 @@ class RolePermission(Enum):
 
 class AccessService:
     def __init__(
-        self,
-        employee_reader: EmployeeReader,
+        self, employee_reader: EmployeeReader, project_config: ProjectConfig
     ) -> None:
         self._employee_reader = employee_reader
+        self._project_config = project_config
+
+    def _is_superuser(self, user_id: UserId) -> None:
+        if not user_id == self._project_config.admin_id:
+            raise AccessDeniedError()
 
     @staticmethod
     def _has_permission(
@@ -83,6 +88,9 @@ class AccessService:
 
     async def ensure_can_create_shop(self, user_id: UserId) -> None:
         await self._ensure_has_permission(user_id, Permission.CAN_CREATE_SHOP)
+
+    def ensure_can_get_all_shop(self, user_id: UserId | None) -> None:
+        self._is_superuser(user_id)
 
     async def ensure_can_edit_shop(
         self, user_id: UserId, shop_id: ShopId

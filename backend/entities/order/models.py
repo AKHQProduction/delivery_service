@@ -2,7 +2,11 @@ from dataclasses import dataclass
 from enum import StrEnum, auto
 from typing import NewType
 
-from entities.order.value_objects import OrderItemAmount, OrderTotalPrice
+from entities.order.value_objects import (
+    BottlesToExchange,
+    OrderItemAmount,
+    OrderTotalPrice,
+)
 from entities.shop.models import ShopId
 from entities.user.models import UserId
 
@@ -14,6 +18,11 @@ class OrderStatus(StrEnum):
     NEW = auto()
 
 
+class DeliveryPreference(StrEnum):
+    MORNING = auto()
+    AFTERNOON = auto()
+
+
 @dataclass
 class Order:
     order_id: OrderId | None
@@ -21,6 +30,8 @@ class Order:
     shop_id: ShopId
     status: OrderStatus
     total_price: OrderTotalPrice
+    delivery_preference: DeliveryPreference
+    bottles_to_exchange: BottlesToExchange
 
 
 @dataclass

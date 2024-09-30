@@ -8,7 +8,7 @@ from application.employee.interactors.add_employee import (
 )
 from application.errors.access import AccessDeniedError
 from application.shop.errors import UserNotHaveShopError
-from application.user.errors import UserIsNotExistError
+from application.user.errors import UserNotFoundError
 from entities.employee.models import EmployeeRole
 from entities.user.models import UserId
 from tests.mocks.common.commiter import FakeCommiter
@@ -24,10 +24,10 @@ from tests.mocks.gateways.user import FakeUserGateway
     ["user_id", "user_id_to_add", "exc_class"],
     [
         (1, 2, None),
-        (4, 2, UserIsNotExistError),
+        (4, 2, UserNotFoundError),
         (1, 1, EmployeeAlreadyExistError),
         (2, 4, UserNotHaveShopError),
-        (1, 4, UserIsNotExistError),
+        (1, 4, UserNotFoundError),
         (3, 2, AccessDeniedError),
     ],
 )

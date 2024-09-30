@@ -7,7 +7,7 @@ from geopy.geocoders import Nominatim
 
 from infrastructure.geopy.config import GeoConfig
 from infrastructure.geopy.errors import (
-    AddressIsNotExistError,
+    AddressNotFoundError,
     GeolocatorBadGatewayError,
 )
 
@@ -20,11 +20,15 @@ class GeoProcessor(ABC):
     async def get_coordinates(self, address: Address) -> GeoPayload:
         raise NotImplementedError
 
+    @abstractmethod
+    async def get_location(self, coordinates: GeoPayload) -> Address:
+        raise NotImplementedError
+
 
 class PyGeoProcessor(GeoProcessor):
     def __init__(self, config: GeoConfig, geolocator: Nominatim) -> None:
         self.city = config.city
-        self.geolocator = geolocator
+        self._geolocator = geolocator
 
     def _check_address_in_city(self, coordinates: Location) -> bool:
         address: dict[str, Any] = coordinates.raw.get("address", {})
@@ -43,7 +47,7 @@ class PyGeoProcessor(GeoProcessor):
         full_address: str = f"{address}, {self.city}"
 
         try:
-            coordinates: Location | None = await self.geolocator.geocode(
+            coordinates: Location | None = await self._geolocator.geocode(
                 full_address,
                 addressdetails=True,
                 language="UA",
@@ -52,6 +56,13 @@ class PyGeoProcessor(GeoProcessor):
             raise GeolocatorBadGatewayError() from error
 
         if coordinates is None or not self._check_address_in_city(coordinates):
-            raise AddressIsNotExistError(address, self.city)
+            raise AddressNotFoundError(address, self.city)
 
         return coordinates.latitude, coordinates.longitude
+
+    async def get_location(self, coordinates: GeoPayload) -> Address:
+        location = await self._geolocator.reverse(
+            coordinates, addressdetails=True
+        )
+
+        return Address(location.address)

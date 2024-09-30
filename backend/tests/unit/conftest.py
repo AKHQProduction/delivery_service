@@ -2,10 +2,10 @@ import pytest
 
 from application.common.access_service import AccessService
 from entities.user.models import UserId
+from infrastructure.tg.config import ProjectConfig
 from tests.mocks.common.commiter import FakeCommiter
 from tests.mocks.common.file_manager import FakeFileManager
 from tests.mocks.common.identity_provider import FakeIdentityProvider
-from tests.mocks.common.token_verifier import FakeTokenVerifier
 from tests.mocks.common.webhook_manager import FakeWebhookManager
 from tests.mocks.gateways.employee import FakeEmployeeGateway
 from tests.mocks.gateways.goods import FakeGoodsGateway
@@ -14,16 +14,12 @@ from tests.mocks.gateways.user import FakeUserGateway
 
 
 @pytest.fixture
-def token_verifier() -> FakeTokenVerifier:
-    return FakeTokenVerifier()
-
-
-@pytest.fixture
 def identity_provider(
     user_id: UserId,
     user_gateway: FakeUserGateway,
+    employee_gateway: FakeEmployeeGateway,
 ) -> FakeIdentityProvider:
-    return FakeIdentityProvider(user_id, user_gateway)
+    return FakeIdentityProvider(user_id, user_gateway, employee_gateway)
 
 
 @pytest.fixture
@@ -52,11 +48,16 @@ def user_gateway() -> FakeUserGateway:
 
 
 @pytest.fixture
+def project_config() -> ProjectConfig:
+    return ProjectConfig(admin_id=1)
+
+
+@pytest.fixture
 def access_service(
-    employee_gateway: FakeEmployeeGateway,
+    employee_gateway: FakeEmployeeGateway, project_config: ProjectConfig
 ) -> AccessService:
     return AccessService(
-        employee_reader=employee_gateway,
+        employee_reader=employee_gateway, project_config=project_config
     )
 
 

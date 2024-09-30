@@ -8,18 +8,21 @@ from application.common.interactor import Interactor
 from application.common.webhook_manager import WebhookManager
 from application.employee.gateway import EmployeeSaver
 from application.shop.gateway import ShopSaver
-from application.user.errors import UserIsNotExistError
+from application.user.errors import UserNotFoundError
 from application.user.gateway import UserSaver
 from entities.employee.models import Employee, EmployeeRole
 from entities.shop.models import ShopId
-from entities.shop.services import ShopService
+from entities.shop.services import add_user_to_shop, create_shop
+from entities.shop.value_objects import ShopToken
+from entities.user.errors import UserIsNotActiveError
 
 
 @dataclass(frozen=True)
 class CreateShopInputData:
-    shop_id: int
     title: str
     token: str
+    delivery_distance: int
+    location: tuple[float, float]
     regular_days_off: list[int] = field(default_factory=list)
 
 
@@ -31,7 +34,6 @@ class CreateShop(Interactor[CreateShopInputData, ShopId]):
         employee_saver: EmployeeSaver,
         commiter: Commiter,
         identity_provider: IdentityProvider,
-        shop_service: ShopService,
         webhook_manager: WebhookManager,
         access_service: AccessService,
     ) -> None:
@@ -40,7 +42,6 @@ class CreateShop(Interactor[CreateShopInputData, ShopId]):
         self._employee_saver = employee_saver
         self._commiter = commiter
         self._identity_provider = identity_provider
-        self._shop_service = shop_service
         self._webhook_manager = webhook_manager
         self._access_service = access_service
 
@@ -48,17 +49,24 @@ class CreateShop(Interactor[CreateShopInputData, ShopId]):
         user = await self._identity_provider.get_user()
 
         if not user:
-            raise UserIsNotExistError()
+            raise UserNotFoundError()
+
+        if not user.is_active:
+            raise UserIsNotActiveError(user.user_id)
 
         await self._access_service.ensure_can_create_shop(user.user_id)
 
-        shop = await self._shop_service.create_shop(
-            user,
-            data.shop_id,
+        await self._webhook_manager.setup_webhook(ShopToken(data.token))
+
+        shop = create_shop(
             data.title,
             data.token,
             data.regular_days_off,
+            data.delivery_distance,
+            data.location,
         )
+
+        add_user_to_shop(shop, user)
 
         await self._shop_saver.save(shop)
         await self._employee_saver.save(
@@ -69,8 +77,6 @@ class CreateShop(Interactor[CreateShopInputData, ShopId]):
                 role=EmployeeRole.ADMIN,
             ),
         )
-
-        await self._webhook_manager.setup_webhook(data.token)
 
         await self._commiter.commit()
 

@@ -13,7 +13,7 @@ class ShopTokenUnauthorizedError(ApplicationError):
 
 
 @dataclass(eq=False)
-class ShopIsNotExistError(ApplicationError):
+class ShopNotFoundError(ApplicationError):
     shop_id: int
 
     @property

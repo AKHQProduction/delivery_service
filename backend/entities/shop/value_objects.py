@@ -6,6 +6,7 @@ from zoneinfo import ZoneInfo
 
 from entities.shop.errors import (
     InvalidBotTokenError,
+    InvalidDeliveryDistanceError,
     InvalidRegularDayOffError,
     InvalidSpecialDayOffError,
     ShopTitleTooLongError,
@@ -43,22 +44,39 @@ class ShopTitle:
 
 @dataclass(slots=True, frozen=True, eq=True, unsafe_hash=True)
 class RegularDaysOff:
-    days: list[int] = field(default_factory=list)
+    regular_days: list[int] = field(default_factory=list)
 
     MONDAY = 0
     SUNDAY = 6
 
     def __post_init__(self) -> None:
-        if any(day < self.MONDAY or day > self.SUNDAY for day in self.days):
+        if any(
+            day < self.MONDAY or day > self.SUNDAY for day in self.regular_days
+        ):
             raise InvalidRegularDayOffError()
 
 
 @dataclass(slots=True, frozen=True, eq=True, unsafe_hash=True)
 class SpecialDaysOff:
-    days: list[datetime] = field(default=list)
+    special_days: list[datetime] = field(default_factory=list)
 
     def __post_init__(self) -> None:
         now = datetime.now(tz=ZoneInfo("Europe/Kiev"))
 
-        if any(now > day for day in self.days):
+        if any(now > day for day in self.special_days):
             raise InvalidSpecialDayOffError()
+
+
+@dataclass(slots=True, frozen=True, eq=True, unsafe_hash=True)
+class DeliveryDistance:
+    kilometers: int
+
+    def __post_init__(self) -> None:
+        if self.kilometers <= 0:
+            raise InvalidDeliveryDistanceError()
+
+
+@dataclass(slots=True, frozen=True, eq=True, unsafe_hash=True)
+class ShopLocation:
+    latitude: float
+    longitude: float

@@ -1,7 +1,7 @@
 import re
 from dataclasses import dataclass
 
-from entities.user.errors import InvalidPhoneNumberError
+from entities.profile.errors import InvalidPhoneNumberError
 
 
 @dataclass(slots=True, frozen=True, eq=True, unsafe_hash=True)
@@ -13,3 +13,13 @@ class PhoneNumber:
 
         if not re.match(pattern, self.value):
             raise InvalidPhoneNumberError(self.value)
+
+
+@dataclass(slots=True, frozen=True, eq=True, unsafe_hash=True)
+class UserAddress:
+    city: str
+    street: str
+    house_number: int
+    apartment_number: int | None
+    floor: int | None
+    intercom_code: int | None

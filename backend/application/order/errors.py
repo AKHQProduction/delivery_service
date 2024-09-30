@@ -4,7 +4,7 @@ from application.common.error import ApplicationError
 
 
 @dataclass(eq=False)
-class OrderItemIsNotExistError(ApplicationError):
+class OrderItemNotFoundError(ApplicationError):
     order_item_id: int
 
     @property
@@ -13,7 +13,7 @@ class OrderItemIsNotExistError(ApplicationError):
 
 
 @dataclass(eq=False)
-class OrderIsNotExistError(ApplicationError):
+class OrderNotFoundError(ApplicationError):
     order_id: int
 
     @property

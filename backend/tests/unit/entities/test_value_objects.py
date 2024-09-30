@@ -84,7 +84,7 @@ def test_regular_days_off(regular_days_off: list[int], exc_class) -> None:
     else:
         days_off = RegularDaysOff(regular_days_off)
 
-        assert days_off.days == regular_days_off
+        assert days_off.regular_days == regular_days_off
         assert isinstance(days_off, RegularDaysOff)
 
 
@@ -108,7 +108,7 @@ def test_special_days_off(special_days_off: list[datetime], exc_class) -> None:
     else:
         days_off = SpecialDaysOff(special_days_off)
 
-        assert days_off.days == special_days_off
+        assert days_off.special_days == special_days_off
         assert isinstance(days_off, SpecialDaysOff)
 
 

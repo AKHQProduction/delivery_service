@@ -4,13 +4,13 @@ import pytest
 
 from application.common.access_service import AccessService
 from application.errors.access import AccessDeniedError
-from application.goods.errors import GoodsIsNotExistError
+from application.goods.errors import GoodsNotFoundError
 from application.goods.interactors.delete_goods import (
     DeleteGoods,
     DeleteGoodsInputData,
 )
 from application.shop.errors import UserNotHaveShopError
-from application.user.errors import UserIsNotExistError
+from application.user.errors import UserNotFoundError
 from entities.goods.models import GoodsId
 from entities.user.models import UserId
 from tests.mocks.common.commiter import FakeCommiter
@@ -28,13 +28,13 @@ fake_goods_uuid = UUID("00012f9e-f610-4ec1-8ceb-8e7f42425474")
     ["user_id", "goods_id", "exc_class"],
     [
         (1, fake_goods_uuid, None),
-        (4, fake_goods_uuid, UserIsNotExistError),
+        (4, fake_goods_uuid, UserNotFoundError),
         (2, fake_goods_uuid, UserNotHaveShopError),
         (3, fake_goods_uuid, AccessDeniedError),
         (
             1,
             UUID("00012f9e-f610-4bb1-8ceb-8e7f42425474"),
-            GoodsIsNotExistError,
+            GoodsNotFoundError,
         ),
     ],
 )

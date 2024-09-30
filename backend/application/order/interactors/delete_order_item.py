@@ -6,8 +6,8 @@ from application.common.commiter import Commiter
 from application.common.identity_provider import IdentityProvider
 from application.common.interactor import Interactor
 from application.order.errors import (
-    OrderIsNotExistError,
-    OrderItemIsNotExistError,
+    OrderItemNotFoundError,
+    OrderNotFoundError,
 )
 from application.order.gateway import (
     OrderItemReader,
@@ -15,8 +15,9 @@ from application.order.gateway import (
     OrderReader,
     OrderSaver,
 )
-from application.shop.shop_validate import ShopValidationService
-from application.user.errors import UserIsNotExistError
+from application.shop.errors import ShopIsNotActiveError, ShopNotFoundError
+from application.shop.gateway import ShopReader
+from application.user.errors import UserNotFoundError
 from entities.order.models import OrderItemId
 from entities.shop.models import ShopId
 
@@ -32,7 +33,7 @@ class DeleteOrderItem(Interactor[DeleteOrderItemInputData, None]):
         self,
         identity_provider: IdentityProvider,
         access_service: AccessService,
-        shop_validation: ShopValidationService,
+        shop_reader: ShopReader,
         order_item_reader: OrderItemReader,
         order_item_saver: OrderItemSaver,
         order_reader: OrderReader,
@@ -41,7 +42,7 @@ class DeleteOrderItem(Interactor[DeleteOrderItemInputData, None]):
     ):
         self._identity_provider = identity_provider
         self._access_service = access_service
-        self._shop_validation = shop_validation
+        self._shop_reader = shop_reader
         self._order_item_reader = order_item_reader
         self._order_item_saver = order_item_saver
         self._order_reader = order_reader
@@ -50,24 +51,30 @@ class DeleteOrderItem(Interactor[DeleteOrderItemInputData, None]):
 
     async def __call__(self, data: DeleteOrderItemInputData) -> None:
         if data.shop_id:
-            await self._shop_validation.check_shop(ShopId(data.shop_id))
+            shop = await self._shop_reader.by_id(ShopId(data.shop_id))
+
+            if not shop:
+                raise ShopNotFoundError(data.shop_id)
+
+            if not shop.is_active:
+                raise ShopIsNotActiveError(data.shop_id)
 
         actor = await self._identity_provider.get_user()
 
         if not actor:
-            raise UserIsNotExistError()
+            raise UserNotFoundError()
 
         order_item = await self._order_item_reader.by_id(
             OrderItemId(data.order_item_id)
         )
 
         if not order_item:
-            raise OrderItemIsNotExistError(data.order_item_id)
+            raise OrderItemNotFoundError(data.order_item_id)
 
         order = await self._order_reader.by_id(order_item.order_id)
 
         if not order:
-            raise OrderIsNotExistError(order_item.order_id)
+            raise OrderNotFoundError(order_item.order_id)
 
         await self._access_service.ensure_can_edit_order(actor.user_id, order)
 

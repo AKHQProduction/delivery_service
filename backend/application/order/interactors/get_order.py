@@ -6,8 +6,9 @@ from application.common.access_service import AccessService
 from application.common.identity_provider import IdentityProvider
 from application.common.interactor import Interactor
 from application.order.gateway import OrderItemReader, OrderReader
-from application.shop.shop_validate import ShopValidationService
-from application.user.errors import UserIsNotExistError
+from application.shop.errors import ShopIsNotActiveError, ShopNotFoundError
+from application.shop.gateway import ShopReader
+from application.user.errors import UserNotFoundError
 from entities.order.models import OrderId, OrderItem, OrderStatus
 from entities.shop.models import ShopId
 
@@ -32,22 +33,28 @@ class GetOrder(Interactor[GetOrderInputData, GetOrderOutputData]):
         access_service: AccessService,
         order_reader: OrderReader,
         order_item_reader: OrderItemReader,
-        shop_validation: ShopValidationService,
+        shop_reader: ShopReader,
     ):
         self._identity_provider = identity_provider
         self._access_service = access_service
         self._order_reader = order_reader
         self._order_item_reader = order_item_reader
-        self._shop_validation = shop_validation
+        self._shop_reader = shop_reader
 
     async def __call__(self, data: GetOrderInputData) -> GetOrderOutputData:
         if data.shop_id:
-            await self._shop_validation.check_shop(ShopId(data.shop_id))
+            shop = await self._shop_reader.by_id(ShopId(data.shop_id))
+
+            if not shop:
+                raise ShopNotFoundError(data.shop_id)
+
+            if not shop.is_active:
+                raise ShopIsNotActiveError(data.shop_id)
 
         actor = await self._identity_provider.get_user()
 
         if not actor:
-            raise UserIsNotExistError()
+            raise UserNotFoundError()
 
         order = await self._order_reader.by_id(OrderId(data.order_id))
 

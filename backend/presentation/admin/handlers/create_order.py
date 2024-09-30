@@ -20,7 +20,7 @@ from dishka.integrations.aiogram_dialog import inject
 
 from entities.user.value_objects import PhoneNumber
 from infrastructure.geopy.errors import (
-    AddressIsNotExistError,
+    AddressNotFoundError,
     GeolocatorBadGatewayError,
 )
 from infrastructure.geopy.geopy_processor import GeoProcessor
@@ -146,7 +146,7 @@ async def on_input_user_address(
         manager.dialog_data["address"] = msg.text
 
         await manager.next()
-    except AddressIsNotExistError:
+    except AddressNotFoundError:
         await msg.answer("😥 На жаль, ми не змогли знайти Вашої адреси")
     except GeolocatorBadGatewayError:
         await msg.answer(

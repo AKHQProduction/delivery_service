@@ -61,5 +61,10 @@ def map_users_table() -> None:
                 back_populates="user",
                 cascade="all, delete-orphan",
             ),
+            "profile": relationship(
+                "Profile",
+                back_populates="user",
+                cascade="all, delete-orphan",
+            ),
         },
     )

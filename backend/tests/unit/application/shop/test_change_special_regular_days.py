@@ -10,7 +10,7 @@ from application.shop.interactors.change_special_days_off import (
     ChangeSpecialDaysOff,
     ChangeSpecialDaysOffInputData,
 )
-from application.user.errors import UserIsNotExistError
+from application.user.errors import UserNotFoundError
 from entities.user.models import UserId
 from tests.mocks.common.commiter import FakeCommiter
 from tests.mocks.common.identity_provider import FakeIdentityProvider
@@ -23,7 +23,7 @@ from tests.mocks.gateways.shop import FakeShopGateway
     ["user_id", "special_days_off", "exc_class"],
     [
         (1, [datetime.now(ZoneInfo("Europe/Kiev")) + timedelta(days=1)], None),
-        (10, [], UserIsNotExistError),
+        (10, [], UserNotFoundError),
         (2, [], UserNotHaveShopError),
         (3, [], AccessDeniedError),
     ],

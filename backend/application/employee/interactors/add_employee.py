@@ -8,7 +8,7 @@ from application.common.interactor import Interactor
 from application.employee.gateway import EmployeeSaver
 from application.shop.errors import UserNotHaveShopError
 from application.shop.gateway import ShopReader
-from application.user.errors import UserIsNotExistError
+from application.user.errors import UserNotFoundError
 from application.user.gateway import UserReader
 from entities.employee.models import Employee, EmployeeRole
 from entities.user.models import UserId
@@ -41,7 +41,7 @@ class AddEmployee(Interactor[AddEmployeeInputData, None]):
         actor = await self._identity_provider.get_user()
 
         if not actor:
-            raise UserIsNotExistError()
+            raise UserNotFoundError()
 
         shop = await self._shop_reader.by_identity(actor.user_id)
 
@@ -55,7 +55,7 @@ class AddEmployee(Interactor[AddEmployeeInputData, None]):
         user = await self._user_reader.by_id(user_id)
 
         if not user:
-            raise UserIsNotExistError(data.user_id)
+            raise UserNotFoundError(data.user_id)
 
         await self._access_service.ensure_can_create_employee(
             actor.user_id, shop_id

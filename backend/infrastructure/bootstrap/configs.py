@@ -7,11 +7,12 @@ from dotenv import load_dotenv
 from infrastructure.geopy.config import GeoConfig
 from infrastructure.persistence.config import DBConfig
 from infrastructure.s3.config import S3Config
-from infrastructure.tg.config import WebhookConfig
+from infrastructure.tg.config import ProjectConfig, WebhookConfig
 
 
 @dataclass
 class AllConfigs:
+    settings: ProjectConfig
     db: DBConfig
     geo: GeoConfig
     webhook: WebhookConfig
@@ -20,6 +21,8 @@ class AllConfigs:
 
 def load_all_configs() -> AllConfigs:
     load_dotenv()
+
+    project_config = ProjectConfig(admin_id=int(os.getenv("ADMIN_ID")))
 
     db_config = DBConfig(
         host=os.getenv("DB_HOST"),
@@ -50,5 +53,9 @@ def load_all_configs() -> AllConfigs:
     logging.info("Config loaded.")
 
     return AllConfigs(
-        db=db_config, geo=geo_config, webhook=webhook_config, s3=s3_config
+        db=db_config,
+        geo=geo_config,
+        webhook=webhook_config,
+        s3=s3_config,
+        settings=project_config,
     )

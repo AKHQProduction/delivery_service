@@ -2,7 +2,7 @@ from dataclasses import dataclass
 
 
 @dataclass(eq=False)
-class AddressIsNotExistError(Exception):
+class AddressNotFoundError(Exception):
     address: str
     city: str
 

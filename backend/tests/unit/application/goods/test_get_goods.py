@@ -2,7 +2,7 @@ from uuid import UUID
 
 import pytest
 
-from application.goods.errors import GoodsIsNotExistError
+from application.goods.errors import GoodsNotFoundError
 from application.goods.interactors.get_goods import GetGoods, GetGoodsInputData
 from entities.goods.models import Goods
 from tests.mocks.gateways.goods import FakeGoodsGateway
@@ -17,7 +17,7 @@ fake_goods_uuid = UUID("00012f9e-f610-4ec1-8ceb-8e7f42425474")
     ["goods_id", "exc_class"],
     [
         (fake_goods_uuid, None),
-        (UUID("00012f9e-f610-4ea1-8ceb-8e7f42425474"), GoodsIsNotExistError),
+        (UUID("00012f9e-f610-4ea1-8ceb-8e7f42425474"), GoodsNotFoundError),
     ],
 )
 async def test_get_goods(
@@ -26,7 +26,10 @@ async def test_get_goods(
     goods_id: UUID,
     exc_class,
 ) -> None:
-    action = GetGoods(goods_reader=goods_gateway, shop_reader=shop_gateway)
+    action = GetGoods(
+        goods_reader=goods_gateway,
+        shop_reader=shop_gateway,
+    )
 
     input_data = GetGoodsInputData(goods_id=goods_id)
 

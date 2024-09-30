@@ -2,7 +2,7 @@ import logging
 from dataclasses import dataclass
 
 from application.common.interactor import Interactor
-from application.user.errors import UserIsNotExistError
+from application.user.errors import UserNotFoundError
 from application.user.gateway import UserReader
 from entities.user.models import UserId
 
@@ -33,7 +33,7 @@ class GetUser(Interactor[GetUserInputData, GetUserOutputData]):
 
         if user is None:
             logging.info("GetUser: user with id %s not found", user_id)
-            raise UserIsNotExistError(user_id)
+            raise UserNotFoundError(user_id)
 
         logging.info("GetUser: successfully get user with id=%s", user_id)
 

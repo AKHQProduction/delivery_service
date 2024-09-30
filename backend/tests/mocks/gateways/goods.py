@@ -8,7 +8,7 @@ from application.goods.gateway import (
     GoodsReader,
     GoodsSaver,
 )
-from entities.goods.models import Goods, GoodsId
+from entities.goods.models import Goods, GoodsId, GoodsType
 from entities.goods.value_objects import GoodsPrice, GoodsTitle
 from entities.shop.models import ShopId
 
@@ -23,6 +23,7 @@ class FakeGoodsGateway(GoodsSaver, GoodsReader):
                 shop_id=ShopId(1234567898),
                 title=GoodsTitle("Test Goods"),
                 price=GoodsPrice(Decimal("2.50")),
+                goods_type=GoodsType.OTHER,
                 metadata_path=f"1234567898/{fake_goods_uuid}.jpg",
             )
         }

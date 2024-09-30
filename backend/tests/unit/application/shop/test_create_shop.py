@@ -7,12 +7,10 @@ from application.shop.interactors.create_shop import (
     CreateShop,
     CreateShopInputData,
 )
-from application.user.errors import UserIsNotExistError
-from entities.shop.services import ShopService
+from application.user.errors import UserNotFoundError
 from entities.user.models import UserId
 from tests.mocks.common.commiter import FakeCommiter
 from tests.mocks.common.identity_provider import FakeIdentityProvider
-from tests.mocks.common.token_verifier import FakeTokenVerifier
 from tests.mocks.common.webhook_manager import FakeWebhookManager
 from tests.mocks.gateways.employee import FakeEmployeeGateway
 from tests.mocks.gateways.shop import FakeShopGateway
@@ -25,7 +23,7 @@ from tests.mocks.gateways.user import FakeUserGateway
     ["user_id", "shop_id", "exc_class"],
     [
         (2, 9876543212, None),
-        (4, 9876543212, UserIsNotExistError),
+        (4, 9876543212, UserNotFoundError),
         (1, 9876543212, AccessDeniedError),
         (2, 1234567898, ShopAlreadyExistError),
     ],
@@ -35,7 +33,6 @@ async def test_create_shop(
     user_gateway: FakeUserGateway,
     employee_gateway: FakeEmployeeGateway,
     identity_provider: FakeIdentityProvider,
-    token_verifier: FakeTokenVerifier,
     webhook_manager: FakeWebhookManager,
     commiter: FakeCommiter,
     access_service: AccessService,
@@ -43,10 +40,10 @@ async def test_create_shop(
     shop_id: int,
     exc_class,
 ) -> None:
-    shop_service = ShopService(token_verifier)
-
     shop_title = "TestShop"
-    shop_token = "9876543212:AAGzbSDaSqQ-mOQEJfPLE1wBH0Y4J40xT48"  # noqa: S105
+    shop_token = f"{shop_id}:AAGzbSDaSqQ-mOQEJfPLE1wBH0Y4J40xT48"
+    delivery_distance = 50
+    location = (48.5035903, 31.0787222)
 
     action = CreateShop(
         user_saver=user_gateway,
@@ -56,13 +53,13 @@ async def test_create_shop(
         webhook_manager=webhook_manager,
         commiter=commiter,
         access_service=access_service,
-        shop_service=shop_service,
     )
 
     input_data = CreateShopInputData(
-        shop_id=shop_id,
         token=shop_token,
         title=shop_title,
+        delivery_distance=delivery_distance,
+        location=location,
     )
 
     coro = action(input_data)
@@ -74,7 +71,6 @@ async def test_create_shop(
         assert not commiter.commited
         assert not employee_gateway.saved
         assert not shop_gateway.saved
-        assert not webhook_manager.setup
 
     else:
         output_data = await coro

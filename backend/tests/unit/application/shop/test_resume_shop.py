@@ -4,7 +4,7 @@ from application.common.access_service import AccessService
 from application.errors.access import AccessDeniedError
 from application.shop.errors import UserNotHaveShopError
 from application.shop.interactors.resume_shop import ResumeShop
-from application.user.errors import UserIsNotExistError
+from application.user.errors import UserNotFoundError
 from entities.user.models import UserId
 from tests.mocks.common.commiter import FakeCommiter
 from tests.mocks.common.identity_provider import FakeIdentityProvider
@@ -18,7 +18,7 @@ from tests.mocks.gateways.shop import FakeShopGateway
     ["user_id", "shop_id", "exc_class"],
     [
         (1, 1234567898, None),
-        (4, 9876543212, UserIsNotExistError),
+        (4, 9876543212, UserNotFoundError),
         (3, 1234567898, AccessDeniedError),
         (2, 1234567898, UserNotHaveShopError),
     ],
