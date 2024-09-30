@@ -24,4 +24,4 @@ class SetupAllShop(Interactor[None, None]):
         for shop in shops:
             await self._webhook_manager.setup_webhook(shop.token)
 
-        logging.info("The stores were launched, in total=%s", total)
+        logging.info("All shops were launched, in total=%s", total)
