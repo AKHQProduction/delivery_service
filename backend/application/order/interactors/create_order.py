@@ -9,7 +9,12 @@ from application.goods.gateway import GoodsReader
 from application.order.gateway import OrderItemSaver, OrderSaver
 from application.shop.gateway import ShopReader
 from application.shop.shop_validate import ShopValidationService
-from entities.order.models import Order, OrderItem, OrderStatus
+from entities.order.models import (
+    DeliveryPreference,
+    Order,
+    OrderItem,
+    OrderStatus,
+)
 from entities.order.service import total_price
 from entities.order.value_objects import (
     BottlesToExchange,
@@ -30,6 +35,7 @@ class OrderItemData:
 class CreateOrderInputData:
     shop_id: int
     bottles_to_exchange: int
+    delivery_preference: DeliveryPreference
     items: list[OrderItemData]
 
 
@@ -73,6 +79,7 @@ class CreateOrder(Interactor[CreateOrderInputData, CreateOrderOutputData]):
             status=OrderStatus.NEW,
             total_price=OrderTotalPrice(Decimal(0)),
             bottles_to_exchange=BottlesToExchange(data.bottles_to_exchange),
+            delivery_preference=data.delivery_preference,
         )
 
         await self._order_saver.save(order)
