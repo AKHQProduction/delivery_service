@@ -10,6 +10,8 @@ from presentation.admin.consts import (
     STAFF_BTN_TXT,
 )
 
+faq_btn = KeyboardButton(text=FAQ_BTN_TXT)
+
 
 class KeyboardByRole(ABC):
     @abstractmethod
@@ -23,6 +25,7 @@ class AdminKeyboard(KeyboardByRole):
             keyboard=[
                 [KeyboardButton(text=STAFF_BTN_TXT)],
                 [KeyboardButton(text=GOODS_BTN_TEXT)],
+                [faq_btn],
             ],
             resize_keyboard=True,
         )
@@ -33,7 +36,7 @@ class UserKeyboard(KeyboardByRole):
         return ReplyKeyboardMarkup(
             keyboard=[
                 [KeyboardButton(text=CREATE_NEW_SHOP_BTN_TXT)],
-                [KeyboardButton(text=FAQ_BTN_TXT)],
+                [faq_btn],
             ],
             resize_keyboard=True,
         )
