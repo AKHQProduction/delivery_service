@@ -10,6 +10,7 @@ profiles_table = sa.Table(
     "profiles",
     mapper_registry.metadata,
     sa.Column("profiles_id", sa.Integer, primary_key=True, autoincrement=True),
+    sa.Column("full_name", sa.String(128), nullable=False),
     sa.Column("phone_number", sa.String(13), nullable=True),
     sa.Column("address_city", sa.String, nullable=True),
     sa.Column("address_street", sa.String, nullable=True),
