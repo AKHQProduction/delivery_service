@@ -13,6 +13,7 @@ from tests.mocks.common.commiter import FakeCommiter
 from tests.mocks.common.identity_provider import FakeIdentityProvider
 from tests.mocks.common.webhook_manager import FakeWebhookManager
 from tests.mocks.gateways.employee import FakeEmployeeGateway
+from tests.mocks.gateways.profile import FakeProfileGateway
 from tests.mocks.gateways.shop import FakeShopGateway
 from tests.mocks.gateways.user import FakeUserGateway
 
@@ -36,6 +37,7 @@ async def test_create_shop(
     webhook_manager: FakeWebhookManager,
     commiter: FakeCommiter,
     access_service: AccessService,
+    profile_gateway: FakeProfileGateway,
     user_id: UserId,
     shop_id: int,
     exc_class,
@@ -53,6 +55,7 @@ async def test_create_shop(
         webhook_manager=webhook_manager,
         commiter=commiter,
         access_service=access_service,
+        profile_reader=profile_gateway,
     )
 
     input_data = CreateShopInputData(

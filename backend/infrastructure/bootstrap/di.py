@@ -36,7 +36,7 @@ from application.order.interactors.edit_order_item_quantity import (
     EditOrderItemQuantity,
 )
 from application.order.interactors.get_order import GetOrder
-from application.profile.gateway import ProfileSaver
+from application.profile.gateway import ProfileReader, ProfileSaver
 from application.shop.gateway import ShopReader, ShopSaver
 from application.shop.interactors.change_regular_days_off import (
     ChangeRegularDaysOff,
@@ -118,7 +118,9 @@ def gateway_provider() -> Provider:
     )
 
     provider.provide(
-        ProfileGateway, scope=Scope.REQUEST, provides=AnyOf[ProfileSaver]
+        ProfileGateway,
+        scope=Scope.REQUEST,
+        provides=AnyOf[ProfileSaver, ProfileReader],
     )
 
     provider.provide(
