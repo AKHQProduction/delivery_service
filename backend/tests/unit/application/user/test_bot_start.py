@@ -8,6 +8,7 @@ from application.user.interactors.admin_bot_start import (
 from entities.user.models import UserId
 from tests.mocks.common.commiter import FakeCommiter
 from tests.mocks.common.identity_provider import FakeIdentityProvider
+from tests.mocks.gateways.profile import FakeProfileGateway
 from tests.mocks.gateways.user import FakeUserGateway
 
 
@@ -18,6 +19,7 @@ async def test_bot_start_with_already_created_user(
     user_gateway: FakeUserGateway,
     commiter: FakeCommiter,
     identity_provider: FakeIdentityProvider,
+    profile_gateway: FakeProfileGateway,
     user_id: UserId,
 ) -> None:
     action = AdminBotStart(
@@ -25,6 +27,7 @@ async def test_bot_start_with_already_created_user(
         user_saver=user_gateway,
         commiter=commiter,
         identity_provider=identity_provider,
+        profile_saver=profile_gateway,
     )
 
     input_data = AdminBotStartInputData(
@@ -46,6 +49,7 @@ async def test_bot_start_when_create_new_user(
     user_gateway: FakeUserGateway,
     commiter: FakeCommiter,
     identity_provider: FakeIdentityProvider,
+    profile_gateway: FakeProfileGateway,
     user_id: UserId,
 ) -> None:
     action = AdminBotStart(
@@ -53,6 +57,7 @@ async def test_bot_start_when_create_new_user(
         user_saver=user_gateway,
         commiter=commiter,
         identity_provider=identity_provider,
+        profile_saver=profile_gateway,
     )
 
     input_data = AdminBotStartInputData(
