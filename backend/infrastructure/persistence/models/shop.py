@@ -69,7 +69,7 @@ def map_shops_table() -> None:
                 cascade="all, delete-orphan",
             ),
             "profile": relationship(
-                "Profile", back_populates="shop", cascade="all, delete-orphan"
+                "Profile", back_populates="shop", cascade="all"
             ),
             "title": composite(ShopTitle, shops_table.c.shop_title),
             "token": composite(ShopToken, shops_table.c.shop_token),

@@ -1,7 +1,7 @@
 from aiogram import F, Router
 from aiogram.types import Message
 
-from presentation.admin.consts import FAQ_BTN_TXT
+from presentation.common.consts import FAQ_BTN_TXT
 
 router = Router()
 

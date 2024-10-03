@@ -8,9 +8,9 @@ from aiogram_dialog.widgets.kbd import Cancel, Group, Row, Select, Start
 from aiogram_dialog.widgets.text import Const, Format, Multi
 from dishka.integrations.aiogram_dialog import inject
 
-from presentation.admin.dialogs.getters.user import get_user_getter
-from presentation.admin.dialogs.widgets.user.user_card import user_card
 from presentation.admin.handlers.admin.staff.main.states import StaffWorkflow
+from presentation.common.getters.user import get_user_getter
+from presentation.common.widgets.user.user_card import user_card
 
 from . import states
 

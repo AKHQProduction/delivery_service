@@ -1,9 +1,14 @@
-from sqlalchemy import delete, select
+from sqlalchemy import delete, func, select
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from application.common.input_data import Pagination, SortOrder
 from application.employee.errors import EmployeeAlreadyExistError
-from application.employee.gateway import EmployeeReader, EmployeeSaver
+from application.employee.gateway import (
+    EmployeeFilters,
+    EmployeeReader,
+    EmployeeSaver,
+)
 from entities.employee.models import Employee, EmployeeId
 from entities.user.models import UserId
 from infrastructure.persistence.models.employee import employees_table
@@ -34,3 +39,35 @@ class EmployeeGateway(EmployeeSaver, EmployeeReader):
         )
 
         await self.session.execute(query)
+
+    async def all(
+        self, filters: EmployeeFilters, pagination: Pagination
+    ) -> list[Employee]:
+        query = select(Employee)
+
+        if filters and filters.shop_id:
+            query = query.where(employees_table.c.shop_id == filters.shop_id)
+
+        if pagination.order is SortOrder.ASC:
+            query = query.order_by(employees_table.c.created_at.asc())
+        else:
+            query = query.order_by(employees_table.c.created_at.desc())
+
+        if pagination.offset is not None:
+            query = query.offset(pagination.offset)
+        if pagination.limit is not None:
+            query = query.offset(pagination.limit)
+
+        result = await self.session.scalars(query)
+
+        return list(result.all())
+
+    async def total(self, filters: EmployeeFilters) -> int:
+        query = select(func.count(employees_table.c.employee_id))
+
+        if filters and filters.shop_id:
+            query = query.where(employees_table.c.shop_id == filters.shop_id)
+
+        total: int = await self.session.scalar(query)
+
+        return total

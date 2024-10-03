@@ -5,8 +5,8 @@ from aiogram_dialog import Dialog, DialogManager, Window
 from aiogram_dialog.widgets.kbd import Button
 from aiogram_dialog.widgets.text import Const
 
-from presentation.admin.dialogs.getters.user import get_user_getter
-from presentation.admin.dialogs.widgets.user.user_card import user_card
+from presentation.common.getters.user import get_user_getter
+from presentation.common.widgets.user.user_card import user_card
 
 from ..delete_user_from_staff.states import DeleteUserFromStaff
 from .states import ViewStaff

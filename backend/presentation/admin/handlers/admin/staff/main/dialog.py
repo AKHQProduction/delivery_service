@@ -17,7 +17,6 @@ from application.user.interactors.get_users import (
     GetUsersInputData,
 )
 from entities.user.models import UserId
-from presentation.admin.consts import STAFF_BTN_TXT
 from presentation.admin.handlers.admin.staff.add_user_to_staff.states import (
     ChangeUserRole,
 )
@@ -25,6 +24,7 @@ from presentation.admin.handlers.admin.staff.main import states
 from presentation.admin.handlers.admin.staff.view_staff_card.states import (
     ViewStaff,
 )
+from presentation.common.consts import STAFF_BTN_TXT
 
 router = Router()
 

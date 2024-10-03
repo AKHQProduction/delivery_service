@@ -25,11 +25,11 @@ from infrastructure.geopy.errors import (
 )
 from infrastructure.geopy.geopy_processor import GeoProcessor
 from presentation.admin import states
-from presentation.admin.dialogs.widgets.common.calendar import CustomCalendar
 from presentation.admin.helpers import (
     is_address_specific_enough,
     is_contains_emoji,
 )
+from presentation.common.widgets.common.calendar import CustomCalendar
 
 router = Router()
 

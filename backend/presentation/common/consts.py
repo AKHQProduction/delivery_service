@@ -6,5 +6,5 @@ MY_ORDERS_BTN_TXT = "🗄 Мої замовлення"
 
 PROFILE_BTN_TXT = "👤 Профіль"
 
-CREATE_NEW_SHOP_BTN_TXT = "🏪 Створити магазин"
+CREATE_SHOP_BTN_TXT = "🏪 Створити магазин"
 FAQ_BTN_TXT = "ℹ️ FAQ"

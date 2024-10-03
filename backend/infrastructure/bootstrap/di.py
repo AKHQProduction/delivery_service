@@ -13,7 +13,7 @@ from application.common.access_service import AccessService
 from application.common.commiter import Commiter
 from application.common.file_manager import FileManager
 from application.common.identity_provider import IdentityProvider
-from application.common.webhook_manager import WebhookManager
+from application.common.webhook_manager import TokenVerifier, WebhookManager
 from application.employee.gateway import EmployeeReader, EmployeeSaver
 from application.employee.interactors.add_employee import AddEmployee
 from application.employee.interactors.remove_employee import RemoveEmployee
@@ -201,7 +201,9 @@ def infrastructure_provider() -> Provider:
     )
 
     provider.provide(
-        BotWebhookManager, scope=Scope.REQUEST, provides=WebhookManager
+        BotWebhookManager,
+        scope=Scope.REQUEST,
+        provides=AnyOf[WebhookManager, TokenVerifier],
     )
 
     provider.provide(S3FileManager, scope=Scope.REQUEST, provides=FileManager)

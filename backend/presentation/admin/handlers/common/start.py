@@ -1,6 +1,6 @@
-from aiogram import Router
+from aiogram import Bot, Router
 from aiogram.filters import CommandStart
-from aiogram.types import Message
+from aiogram.types import CallbackQuery, Message
 from dishka import FromDishka
 
 from application.user.interactors.admin_bot_start import (
@@ -14,7 +14,8 @@ router = Router()
 
 @router.message(CommandStart())
 async def cmd_start(
-    msg: Message,
+    msg: Message | CallbackQuery,
+    bot: Bot,
     action: FromDishka[AdminBotStart],
 ):
     user_id: int = msg.from_user.id
@@ -27,8 +28,9 @@ async def cmd_start(
         ),
     )
 
-    await msg.answer(
+    await bot.send_message(
         text=f"Hello, {full_name}",
+        chat_id=user_id,
         reply_markup=(
             await MainReplyKeyboard(output_data.role).render_keyboard()
         ),

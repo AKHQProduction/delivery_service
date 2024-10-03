@@ -21,7 +21,7 @@ profiles_table = sa.Table(
     sa.Column(
         "shop_id",
         sa.BigInteger,
-        sa.ForeignKey("shops.shop_id", ondelete="CASCADE"),
+        sa.ForeignKey("shops.shop_id", ondelete="SET NULL"),
     ),
     sa.Column(
         "user_id",

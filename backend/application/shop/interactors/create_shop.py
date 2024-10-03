@@ -51,10 +51,8 @@ class CreateShop(Interactor[CreateShopInputData, ShopId]):
 
     async def __call__(self, data: CreateShopInputData) -> ShopId:
         actor = await self._identity_provider.get_user()
-
         if not actor:
             raise UserNotFoundError()
-
         if not actor.is_active:
             raise UserIsNotActiveError(actor.user_id)
 
@@ -71,7 +69,6 @@ class CreateShop(Interactor[CreateShopInputData, ShopId]):
         )
 
         profile = await self._profile_reader.by_identity(actor.user_id)
-
         if not profile:
             raise ProfileNotFoundError(actor.user_id)
 
