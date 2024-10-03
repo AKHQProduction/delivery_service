@@ -1,6 +1,6 @@
 from dataclasses import dataclass
 
-from aiogram import F, Router
+from aiogram import Bot, F, Router
 from aiogram.types import CallbackQuery, Message
 from aiogram_dialog import Dialog, DialogManager, ShowMode, StartMode, Window
 from aiogram_dialog.widgets.input import (
@@ -10,6 +10,7 @@ from aiogram_dialog.widgets.input import (
 )
 from aiogram_dialog.widgets.kbd import (
     Button,
+    Cancel,
     ManagedMultiselect,
     Multiselect,
     Next,
@@ -31,6 +32,7 @@ from application.shop.interactors.create_shop import (
     CreateShop,
     CreateShopInputData,
 )
+from application.user.interactors.admin_bot_start import AdminBotStart
 from infrastructure.geopy.geopy_processor import GeoProcessor
 from presentation.common.consts import CREATE_SHOP_BTN_TXT
 from presentation.common.helpers import step_toggler_in_form
@@ -39,6 +41,7 @@ from presentation.common.widgets.common.cancel_btn import (
     setup_input_error_flag,
 )
 
+from ...common.start import cmd_start
 from . import states
 
 router = Router()
@@ -54,7 +57,7 @@ async def create_shop_handler(_: Message, dialog_manager: DialogManager):
 dialog_has_mistakes_in_input = F["dialog_data"]["input_has_mistake"]
 
 cancel_btn = back_to_main_menu_btn(
-    "Скасувати", when=dialog_has_mistakes_in_input
+    "❌ Скасувати", when=dialog_has_mistakes_in_input
 )
 back_to_main_menu_btn = back_to_main_menu_btn("🔙 Головне меню")
 
@@ -143,6 +146,20 @@ async def check_after_success_input_delivery_distance(
 
 
 @inject
+async def on_back_to_main_menu_from_location_input(
+    call: CallbackQuery,
+    _: Cancel,
+    manager: DialogManager,
+    action: FromDishka[AdminBotStart],
+):
+    bot: Bot = manager.middleware_data["bot"]
+
+    await manager.done()
+
+    await cmd_start(call, bot, action)
+
+
+@inject
 async def on_input_shop_location(
     msg: Message,
     _: MessageInput,
@@ -162,6 +179,18 @@ async def on_input_shop_location(
     await step_toggler_in_form(
         manager, "form_is_completed", states.CreateShopStates.REVIEW
     )
+
+
+@inject
+async def on_reject_input_location(
+    call: CallbackQuery,
+    _: Button,
+    manager: DialogManager,
+    action: FromDishka[AdminBotStart],
+):
+    bot: Bot = manager.middleware_data["bot"]
+
+    await cmd_start(call, bot, action)
 
 
 async def create_shop_form_getter(
@@ -287,6 +316,10 @@ create_shop_dialog = Dialog(
             func=on_input_shop_location,  # noqa: igore
         ),
         RequestLocation(Const("📍 Поділитися локацієй")),
+        Cancel(
+            Const("❌ Скасувати"),
+            on_click=on_reject_input_location,  # noqa: igore
+        ),
         markup_factory=ReplyKeyboardFactory(
             resize_keyboard=True, one_time_keyboard=True
         ),

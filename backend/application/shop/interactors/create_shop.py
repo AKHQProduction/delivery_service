@@ -1,3 +1,4 @@
+import asyncio
 import logging
 from dataclasses import dataclass, field
 
@@ -50,15 +51,19 @@ class CreateShop(Interactor[CreateShopInputData, ShopId]):
         self._profile_reader = profile_reader
 
     async def __call__(self, data: CreateShopInputData) -> ShopId:
-        actor = await self._identity_provider.get_user()
+        actor = await asyncio.create_task(self._identity_provider.get_user())
         if not actor:
             raise UserNotFoundError()
         if not actor.is_active:
             raise UserIsNotActiveError(actor.user_id)
 
-        await self._access_service.ensure_can_create_shop(actor.user_id)
+        await asyncio.create_task(
+            self._access_service.ensure_can_create_shop(actor.user_id)
+        )
 
-        await self._webhook_manager.setup_webhook(ShopToken(data.token))
+        await asyncio.create_task(
+            self._webhook_manager.setup_webhook(ShopToken(data.token))
+        )
 
         shop = create_shop(
             data.title,
@@ -68,7 +73,9 @@ class CreateShop(Interactor[CreateShopInputData, ShopId]):
             data.location,
         )
 
-        profile = await self._profile_reader.by_identity(actor.user_id)
+        profile = await asyncio.create_task(
+            self._profile_reader.by_identity(actor.user_id)
+        )
         if not profile:
             raise ProfileNotFoundError(actor.user_id)
 
@@ -76,14 +83,16 @@ class CreateShop(Interactor[CreateShopInputData, ShopId]):
 
         add_user_to_shop(shop, actor)
 
-        await self._shop_saver.save(shop)
-        await self._employee_saver.save(
-            Employee(
-                employee_id=None,
-                user_id=actor.user_id,
-                shop_id=shop.shop_id,
-                role=EmployeeRole.ADMIN,
-            ),
+        await asyncio.create_task(self._shop_saver.save(shop))
+        await asyncio.create_task(
+            self._employee_saver.save(
+                Employee(
+                    employee_id=None,
+                    user_id=actor.user_id,
+                    shop_id=shop.shop_id,
+                    role=EmployeeRole.ADMIN,
+                ),
+            )
         )
 
         await self._commiter.commit()

@@ -1,3 +1,4 @@
+import asyncio
 import logging
 from dataclasses import dataclass
 
@@ -43,26 +44,30 @@ class AdminBotStart(
     async def __call__(
         self, data: AdminBotStartInputData
     ) -> AdminBotStartOutputData:
-        actor = await self._identity_provider.get_user()
-        role = await self._identity_provider.get_role()
+        actor = await asyncio.create_task(self._identity_provider.get_user())
+        role = await asyncio.create_task(self._identity_provider.get_role())
 
         if not actor:
             user_id = UserId(data.user_id)
 
-            await self._user_saver.save(
-                User(
-                    user_id=user_id,
-                    full_name=data.full_name,
-                    username=data.username,
+            await asyncio.create_task(
+                self._user_saver.save(
+                    User(
+                        user_id=user_id,
+                        full_name=data.full_name,
+                        username=data.username,
+                    )
                 )
             )
 
-            await self._profile_saver.save(
-                create_user_profile(
-                    shop_id=None,
-                    full_name=data.full_name,
-                    address=None,
-                    user_id=user_id,
+            await asyncio.create_task(
+                self._profile_saver.save(
+                    create_user_profile(
+                        shop_id=None,
+                        full_name=data.full_name,
+                        address=None,
+                        user_id=user_id,
+                    )
                 )
             )
 
