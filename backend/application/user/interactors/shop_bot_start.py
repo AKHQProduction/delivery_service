@@ -85,7 +85,10 @@ class ShopBotStart(Interactor[ShopBotStartInputData, UserId]):
         )
 
         profile = create_user_profile(
-            shop_id=shop.shop_id, address=user_address, user_id=user.user_id
+            shop_id=shop.shop_id,
+            address=user_address,
+            user_id=user.user_id,
+            full_name=data.full_name,
         )
 
         await self._user_saver.save(user)
