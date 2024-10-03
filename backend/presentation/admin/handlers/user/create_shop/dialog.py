@@ -334,7 +334,7 @@ create_shop_dialog = Dialog(
                 Format("📅 <b>Вихідні дні:</b> {selected_days}"),
                 Format(
                     "📏 <b>Макс. відстань доставки:</b> "
-                    "{shop_delivery_distance}"
+                    "{shop_delivery_distance} км"
                 ),
                 Format("📍 <b>Локація:</b> {location}"),
             ),
