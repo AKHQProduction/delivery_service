@@ -15,7 +15,7 @@ from application.employee.query.get_employee_card import (
     GetEmployeeCard,
     GetEmployeeCardInputData,
 )
-from presentation.common.consts import ACTUAL_ROLES
+from presentation.common.consts import ACTUAL_ROLES, CANCEL_BTN_TXT
 
 from ..common.widgets import (
     get_actual_employee_roles,
@@ -67,6 +67,7 @@ change_employee_role_dialog = Dialog(
     Window(
         Const("Виберіть посаду👇"),
         select_employee_role_widget,
+        Row(Cancel(Const(CANCEL_BTN_TXT))),
         state=states.ChangeRole.SELECT_EMPLOYEE_ROLE,
         getter=get_actual_employee_roles,
     ),
