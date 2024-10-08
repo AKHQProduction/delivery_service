@@ -1,3 +1,4 @@
+import logging
 from dataclasses import dataclass
 
 from application.employee.gateway import EmployeeGateway
@@ -15,6 +16,12 @@ class GetEmployeeCard:
     employee_gateway: EmployeeGateway
 
     async def __call__(self, data: GetEmployeeCardInputData) -> EmployeeCard:
-        return await self.employee_gateway.card_by_id(
+        card = await self.employee_gateway.card_by_id(
             EmployeeId(data.employee_id)
         )
+
+        logging.info(
+            "Get employee card for employee with id=%s", data.employee_id
+        )
+
+        return card

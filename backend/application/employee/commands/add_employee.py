@@ -85,4 +85,6 @@ class AddEmployee(Interactor[AddEmployeeInputData, None]):
 
         await self._commiter.commit()
 
-        logging.info("AddEmployee: user=%s add to employees", data.user_id)
+        logging.info(
+            "AddEmployee: with user_id=%s add to employees", data.user_id
+        )

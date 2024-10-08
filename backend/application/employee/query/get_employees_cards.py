@@ -1,3 +1,4 @@
+import logging
 from dataclasses import dataclass
 from typing import Iterable
 
@@ -52,6 +53,8 @@ class GetEmployeeCards:
         )
 
         total = await self.employee_gateway.total(filters=filters)
+
+        logging.info("Get employee cards, total=%s", total)
 
         return GetEmployeeCardsOutputData(
             total=total, employees_card=employee_cards
