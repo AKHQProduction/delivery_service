@@ -20,7 +20,7 @@ profiles_table = sa.Table(
     sa.Column(
         "shop_id",
         sa.BigInteger,
-        sa.ForeignKey("shops.shop_id", ondelete="CASCADE"),
+        sa.ForeignKey("shops.shop_id", ondelete="SET NULL"),
     ),
     sa.Column(
         "user_id",
@@ -41,7 +41,9 @@ profiles_table = sa.Table(
         onupdate=sa.func.now(),
         server_onupdate=sa.func.now(),
     ),
-    UniqueConstraint("user_id", "phone_number", name="uq_phone_user_number"),
+    UniqueConstraint(
+        "user_id", "shop_id", "phone_number", name="uq_phone_user_number"
+    ),
 )
 
 

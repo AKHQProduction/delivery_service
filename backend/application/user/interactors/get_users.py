@@ -10,8 +10,8 @@ from entities.user.models import User
 
 @dataclass(frozen=True)
 class GetUsersInputData:
-    pagination: Pagination
     filters: GetUsersFilters
+    pagination: Pagination
 
 
 @dataclass

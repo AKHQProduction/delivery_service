@@ -4,7 +4,7 @@ from aiogram.types import Message
 from aiogram_dialog import Dialog, DialogManager, StartMode, Window
 from aiogram_dialog.widgets.text import Const
 
-from presentation.admin.consts import GOODS_BTN_TEXT
+from presentation.common.consts import GOODS_BTN_TEXT
 
 from . import states
 

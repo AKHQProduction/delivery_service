@@ -1,13 +1,11 @@
 from aiogram import F, Router
 from aiogram.types import Message
 
-from presentation.admin.consts import CREATE_NEW_SHOP_TXT
+from presentation.common.consts import FAQ_BTN_TXT
 
 router = Router()
 
 
-@router.message(F.text == CREATE_NEW_SHOP_TXT)
-async def create_new_shop_btn(
-    msg: Message,
-):
-    await msg.answer(CREATE_NEW_SHOP_TXT)
+@router.message(F.text == FAQ_BTN_TXT)
+async def faq_btn_handler(msg: Message):
+    await msg.answer("Тестовый магазин - @SomeTest_robot")

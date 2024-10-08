@@ -10,3 +10,12 @@ class ProfileAlreadyExistError(ApplicationError):
     @property
     def message(self):
         return f"Profile with id={self.profile_id} already exists"
+
+
+@dataclass(eq=False)
+class ProfileNotFoundError(ApplicationError):
+    user_id: int
+
+    @property
+    def message(self):
+        return f"Profile for user id={self.user_id} not found"

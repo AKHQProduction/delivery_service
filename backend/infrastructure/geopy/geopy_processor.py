@@ -61,8 +61,18 @@ class PyGeoProcessor(GeoProcessor):
         return coordinates.latitude, coordinates.longitude
 
     async def get_location(self, coordinates: GeoPayload) -> Address:
-        location = await self._geolocator.reverse(
+        location: Location = await self._geolocator.reverse(
             coordinates, addressdetails=True
         )
 
-        return Address(location.address)
+        full_address: dict[str, Any] = location.raw.get("address", {})
+
+        location_city = full_address.get("city")
+        location_town = full_address.get("town")
+
+        city = location_city if location_city else location_town
+
+        house_number = full_address.get("house_number")
+        road = full_address.get("road")
+
+        return Address(f"{city}, {road} {house_number}")

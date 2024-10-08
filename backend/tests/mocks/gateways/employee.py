@@ -2,13 +2,15 @@ from application.employee.errors import (
     EmployeeAlreadyExistError,
     EmployeeNotFoundError,
 )
-from application.employee.gateway import EmployeeReader, EmployeeSaver
+from application.employee.gateway import (
+    EmployeeGateway,
+)
 from entities.employee.models import Employee, EmployeeId, EmployeeRole
 from entities.shop.models import ShopId
 from entities.user.models import UserId
 
 
-class FakeEmployeeGateway(EmployeeReader, EmployeeSaver):
+class FakeEmployeeGateway(EmployeeGateway):
     def __init__(self):
         self.employees: dict[int, Employee] = {
             1: Employee(
