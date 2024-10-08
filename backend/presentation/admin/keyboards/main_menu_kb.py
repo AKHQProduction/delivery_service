@@ -5,10 +5,10 @@ from aiogram.types import KeyboardButton, ReplyKeyboardMarkup
 from entities.employee.models import EmployeeRole
 from presentation.common.consts import (
     CREATE_SHOP_BTN_TXT,
+    EMPLOYEE_BTN_TXT,
     FAQ_BTN_TXT,
     GOODS_BTN_TEXT,
     PROFILE_BTN_TXT,
-    STAFF_BTN_TXT,
 )
 
 faq_btn = KeyboardButton(text=FAQ_BTN_TXT)
@@ -27,7 +27,7 @@ class AdminKeyboard(KeyboardByRole):
             keyboard=[
                 [profile_btn],
                 [
-                    KeyboardButton(text=STAFF_BTN_TXT),
+                    KeyboardButton(text=EMPLOYEE_BTN_TXT),
                     KeyboardButton(text=GOODS_BTN_TEXT),
                 ],
                 [faq_btn],

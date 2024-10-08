@@ -1,7 +1,10 @@
 from aiogram import Dispatcher
 
+from .employee import (
+    setup_staff_workflow_dialogs,
+    setup_staff_workflow_handlers,
+)
 from .good import setup_good_workflow_dialogs, setup_good_workflow_handlers
-from .staff import setup_staff_workflow_dialogs, setup_staff_workflow_handlers
 
 
 def setup_admin_handlers(dp: Dispatcher):

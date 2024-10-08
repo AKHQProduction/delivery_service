@@ -64,7 +64,6 @@ class AdminBotStart(
                 self._profile_saver.save(
                     create_user_profile(
                         shop_id=None,
-                        full_name=data.full_name,
                         address=None,
                         user_id=user_id,
                     )

@@ -29,6 +29,7 @@ from presentation.admin.helpers import (
     is_address_specific_enough,
     is_contains_emoji,
 )
+from presentation.common.consts import CANCEL_BTN_TXT
 from presentation.common.widgets.common.calendar import CustomCalendar
 
 router = Router()
@@ -347,7 +348,7 @@ create_order_dialog = Dialog(
             on_click=on_successful_confirm_order,
         ),
         Cancel(
-            Const("❌ Відмовитись"),
+            Const(CANCEL_BTN_TXT),
             id="reject_order",
             on_click=on_reject_order,
         ),

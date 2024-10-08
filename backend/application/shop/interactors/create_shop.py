@@ -7,7 +7,7 @@ from application.common.commiter import Commiter
 from application.common.identity_provider import IdentityProvider
 from application.common.interactor import Interactor
 from application.common.webhook_manager import WebhookManager
-from application.employee.gateway import EmployeeSaver
+from application.employee.gateway import EmployeeGateway
 from application.profile.errors import ProfileNotFoundError
 from application.profile.gateway import ProfileReader
 from application.shop.gateway import ShopSaver
@@ -34,7 +34,7 @@ class CreateShop(Interactor[CreateShopInputData, ShopId]):
         self,
         shop_saver: ShopSaver,
         user_saver: UserSaver,
-        employee_saver: EmployeeSaver,
+        employee_saver: EmployeeGateway,
         commiter: Commiter,
         identity_provider: IdentityProvider,
         webhook_manager: WebhookManager,

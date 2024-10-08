@@ -10,7 +10,6 @@ profiles_table = sa.Table(
     "profiles",
     mapper_registry.metadata,
     sa.Column("profiles_id", sa.Integer, primary_key=True, autoincrement=True),
-    sa.Column("full_name", sa.String(128), nullable=False),
     sa.Column("phone_number", sa.String(13), nullable=True),
     sa.Column("address_city", sa.String, nullable=True),
     sa.Column("address_street", sa.String, nullable=True),
@@ -42,7 +41,9 @@ profiles_table = sa.Table(
         onupdate=sa.func.now(),
         server_onupdate=sa.func.now(),
     ),
-    UniqueConstraint("user_id", "phone_number", name="uq_phone_user_number"),
+    UniqueConstraint(
+        "user_id", "shop_id", "phone_number", name="uq_phone_user_number"
+    ),
 )
 
 

@@ -14,9 +14,18 @@ from application.common.commiter import Commiter
 from application.common.file_manager import FileManager
 from application.common.identity_provider import IdentityProvider
 from application.common.webhook_manager import TokenVerifier, WebhookManager
-from application.employee.gateway import EmployeeReader, EmployeeSaver
-from application.employee.interactors.add_employee import AddEmployee
-from application.employee.interactors.remove_employee import RemoveEmployee
+from application.employee.commands.add_employee import AddEmployee
+from application.employee.commands.change_employee_role import (
+    ChangeEmployeeRole,
+)
+from application.employee.commands.remove_employee import RemoveEmployee
+from application.employee.gateway import (
+    EmployeeGateway,
+)
+from application.employee.query.get_employee_card import GetEmployeeCard
+from application.employee.query.get_employees_cards import (
+    GetEmployeeCards,
+)
 from application.goods.gateway import GoodsReader, GoodsSaver
 from application.goods.interactors.add_goods import AddGoods
 from application.goods.interactors.delete_goods import DeleteGoods
@@ -37,6 +46,7 @@ from application.order.interactors.edit_order_item_quantity import (
 )
 from application.order.interactors.get_order import GetOrder
 from application.profile.gateway import ProfileReader, ProfileSaver
+from application.profile.query.get_profile_card import GetProfileCard
 from application.shop.gateway import ShopReader, ShopSaver
 from application.shop.interactors.change_regular_days_off import (
     ChangeRegularDaysOff,
@@ -56,7 +66,9 @@ from application.user.interactors.get_users import GetUsers
 from application.user.interactors.shop_bot_start import ShopBotStart
 from infrastructure.auth.tg_auth import TgIdentityProvider
 from infrastructure.bootstrap.configs import load_all_configs
-from infrastructure.gateways.employee import EmployeeGateway
+from infrastructure.gateways.employee import (
+    EmployeeMapper,
+)
 from infrastructure.gateways.goods import GoodsGateway
 from infrastructure.gateways.order import OrderGateway, OrderItemGateway
 from infrastructure.gateways.profile import ProfileGateway
@@ -94,9 +106,7 @@ def gateway_provider() -> Provider:
     )
 
     provider.provide(
-        EmployeeGateway,
-        scope=Scope.REQUEST,
-        provides=AnyOf[EmployeeReader, EmployeeSaver],
+        EmployeeMapper, scope=Scope.REQUEST, provides=EmployeeGateway
     )
 
     provider.provide(
@@ -173,14 +183,19 @@ def interactor_provider() -> Provider:
     provider.provide(GetGoods, scope=Scope.REQUEST)
     provider.provide(GetManyGoods, scope=Scope.REQUEST)
 
+    provider.provide(GetEmployeeCards, scope=Scope.REQUEST)
+    provider.provide(GetEmployeeCard, scope=Scope.REQUEST)
     provider.provide(AddEmployee, scope=Scope.REQUEST)
     provider.provide(RemoveEmployee, scope=Scope.REQUEST)
+    provider.provide(ChangeEmployeeRole, scope=Scope.REQUEST)
 
     provider.provide(CreateOrder, scope=Scope.REQUEST)
     provider.provide(GetOrder, scope=Scope.REQUEST)
     provider.provide(EditOrderItemQuantity, scope=Scope.REQUEST)
     provider.provide(DeleteOrderItem, scope=Scope.REQUEST)
     provider.provide(DeleteOrder, scope=Scope.REQUEST)
+
+    provider.provide(GetProfileCard, scope=Scope.REQUEST)
 
     return provider
 
@@ -241,7 +256,7 @@ class TgProvider(Provider):
         self,
         user_id: int,
         user_gateway: UserReader,
-        employee_gateway: EmployeeReader,
+        employee_gateway: EmployeeGateway,
     ) -> IdentityProvider:
         identity_provider = TgIdentityProvider(
             user_id=user_id,

@@ -1,7 +1,7 @@
 from enum import Enum, auto
 from typing import ClassVar
 
-from application.employee.gateway import EmployeeReader
+from application.employee.gateway import EmployeeGateway
 from application.errors.access import AccessDeniedError
 from entities.employee.models import Employee
 from entities.order.models import Order
@@ -49,7 +49,7 @@ class RolePermission(Enum):
 
 class AccessService:
     def __init__(
-        self, employee_reader: EmployeeReader, project_config: ProjectConfig
+        self, employee_reader: EmployeeGateway, project_config: ProjectConfig
     ) -> None:
         self._employee_reader = employee_reader
         self._project_config = project_config
@@ -116,10 +116,11 @@ class AccessService:
         )
 
     async def ensure_can_edit_employee(
-        self,
-        user_id: UserId,
-        shop_id: ShopId,
+        self, user_id: UserId, shop_id: ShopId, employee: Employee
     ) -> None:
+        if user_id == employee.user_id:
+            raise AccessDeniedError()
+
         await self._ensure_has_permission(
             user_id, Permission.CAN_EDIT_EMPLOYEE, shop_id
         )

@@ -34,10 +34,11 @@ from application.shop.interactors.create_shop import (
 )
 from application.user.interactors.admin_bot_start import AdminBotStart
 from infrastructure.geopy.geopy_processor import GeoProcessor
-from presentation.common.consts import CREATE_SHOP_BTN_TXT
+from presentation.common.consts import CANCEL_BTN_TXT, CREATE_SHOP_BTN_TXT
 from presentation.common.helpers import step_toggler_in_form
 from presentation.common.widgets.common.cancel_btn import (
     back_to_main_menu_btn,
+    dialog_has_mistakes_in_input,
     setup_input_error_flag,
 )
 
@@ -54,10 +55,8 @@ async def create_shop_handler(_: Message, dialog_manager: DialogManager):
     )
 
 
-dialog_has_mistakes_in_input = F["dialog_data"]["input_has_mistake"]
-
 cancel_btn = back_to_main_menu_btn(
-    "❌ Скасувати", when=dialog_has_mistakes_in_input
+    CANCEL_BTN_TXT, when=dialog_has_mistakes_in_input
 )
 back_to_main_menu_btn = back_to_main_menu_btn("🔙 Головне меню")
 
@@ -205,7 +204,7 @@ async def create_shop_form_getter(
     week_days: list = (await week_day_getter())["week_days"]
 
     selected_days = [
-        day.name.lower() for day in week_days if day.id in days_id
+        day.full_name.lower() for day in week_days if day.id in days_id
     ]
 
     dialog_manager.dialog_data["selected_days"] = (
@@ -317,7 +316,7 @@ create_shop_dialog = Dialog(
         ),
         RequestLocation(Const("📍 Поділитися локацієй")),
         Cancel(
-            Const("❌ Скасувати"),
+            Const(CANCEL_BTN_TXT),
             on_click=on_reject_input_location,  # noqa: igore
         ),
         markup_factory=ReplyKeyboardFactory(
@@ -365,7 +364,7 @@ create_shop_dialog = Dialog(
             ),
         ),
         Button(
-            text=Const("Підвердити"),
+            text=Const("Підтвердити"),
             id="accept_shop_creation_form",
             on_click=on_accept_shop_creation_form,  # noqa: ignore
         ),

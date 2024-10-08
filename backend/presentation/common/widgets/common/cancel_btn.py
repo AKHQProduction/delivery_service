@@ -1,14 +1,16 @@
-from aiogram import Bot, MagicFilter
+from aiogram import Bot, F
 from aiogram.types import CallbackQuery
 from aiogram_dialog import DialogManager
-from aiogram_dialog.widgets.common.when import Predicate
 from aiogram_dialog.widgets.kbd import Button
 from aiogram_dialog.widgets.text import Const
 from dishka import FromDishka
 from dishka.integrations.aiogram_dialog import inject
+from magic_filter import MagicFilter
 
 from application.user.interactors.admin_bot_start import AdminBotStart
 from presentation.admin.handlers.common.start import cmd_start
+
+dialog_has_mistakes_in_input = F["dialog_data"]["input_has_mistake"]
 
 
 def setup_input_error_flag(manager: DialogManager, flag: bool) -> None:
@@ -30,7 +32,7 @@ async def handle_back_to_main_menu_btn(
 
 
 def back_to_main_menu_btn(
-    btn_txt: str, when: str | MagicFilter | Predicate | None = None
+    btn_txt: str, when: str | MagicFilter | None = None
 ) -> Button:
     return Button(
         text=Const(btn_txt),

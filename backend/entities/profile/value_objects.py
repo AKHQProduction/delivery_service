@@ -17,9 +17,15 @@ class PhoneNumber:
 
 @dataclass(slots=True, frozen=True, eq=True, unsafe_hash=True)
 class UserAddress:
-    city: str
-    street: str
-    house_number: int
+    city: str | None
+    street: str | None
+    house_number: int | None
     apartment_number: int | None
     floor: int | None
     intercom_code: int | None
+
+    @property
+    def full_address(self) -> str | None:
+        if self.city:
+            return f"{self.city}, {self.street} {self.house_number}"
+        return None
