@@ -56,5 +56,5 @@ class RemoveEmployee(Interactor[RemoveEmployeeInputData, None]):
         await self._commiter.commit()
 
         logging.info(
-            "RemoveEmployee: employee=%s remove from employees", employee_id
+            "RemoveEmployee: employee id=%s remove from employees", employee_id
         )

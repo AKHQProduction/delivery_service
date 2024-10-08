@@ -1,3 +1,4 @@
+import logging
 from dataclasses import dataclass
 
 from application.common.commiter import Commiter
@@ -45,6 +46,9 @@ class ShopBotStart(Interactor[ShopBotStartInputData, UserId]):
             profile = await self._profile_reader.by_identity(actor.user_id)
 
             if not profile.shop_id:
+                logging.info(
+                    "New profile created to user_id=%s", actor.user_id
+                )
                 profile.shop_id = data.shop_id
 
                 await self._commiter.commit()
@@ -56,6 +60,8 @@ class ShopBotStart(Interactor[ShopBotStartInputData, UserId]):
             full_name=data.full_name,
             username=data.username,
         )
+
+        logging.info("New user created, with_id=%s", user.user_id)
 
         shop = await self._shop_reader.by_id(ShopId(data.shop_id))
         if not shop:

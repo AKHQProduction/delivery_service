@@ -1,3 +1,4 @@
+import logging
 from dataclasses import dataclass
 
 from application.common.identity_provider import IdentityProvider
@@ -34,6 +35,8 @@ class GetProfileCard:
         profile = await self.profile_reader.by_identity(user_id)
         if not profile:
             raise ProfileNotFoundError(user_id)
+
+        logging.info("Get profile card for user_id=%s", data.user_id)
 
         return UserProfileCardOutputData(
             user_id=user_id,

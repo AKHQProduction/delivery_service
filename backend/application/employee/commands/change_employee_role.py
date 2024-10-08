@@ -1,3 +1,4 @@
+import logging
 from dataclasses import dataclass
 
 from application.common.access_service import AccessService
@@ -47,3 +48,9 @@ class ChangeEmployeeRole:
         employee.role = data.role
 
         await self.commiter.commit()
+
+        logging.info(
+            "Change role to user with id=%s, new role=%s",
+            employee.user_id,
+            data.role,
+        )
