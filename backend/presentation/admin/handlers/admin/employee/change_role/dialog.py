@@ -1,5 +1,3 @@
-from typing import Any
-
 from aiogram.types import CallbackQuery
 from aiogram_dialog import Dialog, DialogManager, Window
 from aiogram_dialog.widgets.kbd import Button, Cancel, Row
@@ -11,11 +9,8 @@ from application.employee.commands.change_employee_role import (
     ChangeEmployeeRole,
     ChangeEmployeeRoleInputData,
 )
-from application.employee.query.get_employee_card import (
-    GetEmployeeCard,
-    GetEmployeeCardInputData,
-)
-from presentation.common.consts import ACTUAL_ROLES, CANCEL_BTN_TXT
+from presentation.common.consts import CANCEL_BTN_TXT
+from presentation.common.helpers import default_on_start_handler
 
 from ..common.widgets import (
     get_actual_employee_roles,
@@ -24,32 +19,10 @@ from ..common.widgets import (
 from . import states
 
 
-async def on_start_change_employee_role_dialog(
-    data: dict[str, Any],
-    manager: DialogManager,
-):
-    manager.dialog_data["employee_id"] = data["employee_id"]
-
-
-@inject
-async def on_close_change_employee_role_dialog(
-    _: dict[str, Any],
-    manager: DialogManager,
-    action: FromDishka[GetEmployeeCard],
-):
-    employee_id = manager.dialog_data["employee_id"]
-
-    output_data = await action(GetEmployeeCardInputData(employee_id))
-
-    manager.dialog_data["user_id"] = output_data.user_id
-    manager.dialog_data["employee_id"] = employee_id
-    manager.dialog_data["role"] = ACTUAL_ROLES[output_data.role]
-
-
 @inject
 async def on_accept_role_change(
     _: CallbackQuery,
-    __: Cancel,
+    __: Button,
     manager: DialogManager,
     action: FromDishka[ChangeEmployeeRole],
 ):
@@ -86,6 +59,5 @@ change_employee_role_dialog = Dialog(
         ),
         state=states.ChangeRole.CONFIRMATION,
     ),
-    on_start=on_start_change_employee_role_dialog,
-    on_close=on_close_change_employee_role_dialog,  # noqa: ignore
+    on_start=default_on_start_handler,
 )

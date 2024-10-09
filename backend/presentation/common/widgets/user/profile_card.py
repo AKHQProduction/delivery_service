@@ -7,7 +7,7 @@ from aiogram_dialog.widgets.text import Case, Const, Format, Multi
 from dishka import FromDishka
 from dishka.integrations.aiogram_dialog import inject
 
-from application.profile.query.get_profile_card import (
+from application.profile.queries.get_profile_card import (
     GetProfileCard,
     GetProfileCardInputData,
 )

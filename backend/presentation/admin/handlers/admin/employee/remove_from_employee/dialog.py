@@ -1,5 +1,3 @@
-from typing import Any
-
 from aiogram.types import CallbackQuery
 from aiogram_dialog import Dialog, DialogManager, StartMode, Window
 from aiogram_dialog.widgets.kbd import Button, Cancel, Row, Start
@@ -11,17 +9,11 @@ from application.employee.commands.remove_employee import (
     RemoveEmployee,
     RemoveEmployeeInputData,
 )
+from presentation.common.helpers import default_on_start_handler
 
 from ..view_employee.states import ViewEmployee
 from ..view_employees.states import ViewEmployees
 from .states import RemoveFromEmployee
-
-
-async def on_start_remove_from_employee_dialog(
-    data: dict[str, Any],
-    manager: DialogManager,
-):
-    manager.dialog_data["employee_id"] = data["employee_id"]
 
 
 @inject
@@ -67,5 +59,5 @@ remove_from_employee_dialog = Dialog(
         ),
         state=RemoveFromEmployee.CONFIRMATION,
     ),
-    on_start=on_start_remove_from_employee_dialog,
+    on_start=default_on_start_handler,
 )

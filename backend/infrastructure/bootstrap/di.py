@@ -45,8 +45,11 @@ from application.order.interactors.edit_order_item_quantity import (
     EditOrderItemQuantity,
 )
 from application.order.interactors.get_order import GetOrder
+from application.profile.commands.update_phone_number_by_yourself import (
+    UpdatePhoneNumberByYourself,
+)
 from application.profile.gateway import ProfileReader, ProfileSaver
-from application.profile.query.get_profile_card import GetProfileCard
+from application.profile.queries.get_profile_card import GetProfileCard
 from application.shop.gateway import ShopReader, ShopSaver
 from application.shop.interactors.change_regular_days_off import (
     ChangeRegularDaysOff,
@@ -196,6 +199,7 @@ def interactor_provider() -> Provider:
     provider.provide(DeleteOrder, scope=Scope.REQUEST)
 
     provider.provide(GetProfileCard, scope=Scope.REQUEST)
+    provider.provide(UpdatePhoneNumberByYourself, scope=Scope.REQUEST)
 
     return provider
 
