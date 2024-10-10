@@ -19,7 +19,7 @@ class PhoneNumber:
 class UserAddress:
     city: str | None
     street: str | None
-    house_number: int | None
+    house_number: str | None
     apartment_number: int | None
     floor: int | None
     intercom_code: int | None

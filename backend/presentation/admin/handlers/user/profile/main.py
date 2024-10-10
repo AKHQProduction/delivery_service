@@ -1,7 +1,7 @@
 from aiogram import F, Router
 from aiogram.types import Message
 from aiogram_dialog import Dialog, DialogManager, StartMode, Window
-from aiogram_dialog.widgets.kbd import Button, Row, Start
+from aiogram_dialog.widgets.kbd import Row, Start
 from aiogram_dialog.widgets.text import Const
 
 from presentation.admin.handlers.user.profile import states
@@ -16,13 +16,9 @@ router = Router()
 
 
 @router.message(F.text == PROFILE_BTN_TXT)
-async def profile_handler(msg: Message, dialog_manager: DialogManager):
-    user_id = msg.from_user.id
-
+async def profile_handler(_: Message, dialog_manager: DialogManager):
     await dialog_manager.start(
-        state=states.ProfileMainMenu.MAIN,
-        mode=StartMode.RESET_STACK,
-        data={"user_id": user_id},
+        state=states.ProfileMainMenu.MAIN, mode=StartMode.RESET_STACK
     )
 
 
@@ -35,7 +31,11 @@ profile_in_admin_bot_dialog = Dialog(
                 text=Const("Змінити телефон"),
                 state=states.ProfileChangePhone.NEW_PHONE,
             ),
-            Button(id="test", text=Const("Змінити адресу")),
+            Start(
+                id="change_address_in_profile",
+                text=Const("Змінити адресу"),
+                state=states.ProfileChangeAddress.NEW_ADDRESS,
+            ),
         ),
         state=states.ProfileMainMenu.MAIN,
         getter=get_profile_card,

@@ -63,7 +63,7 @@ async def on_accept_phone_number_change(
     await manager.done()
 
 
-change_phone_dialog = Dialog(
+change_phone_number_dialog = Dialog(
     Window(
         Const("Введіть Ваш номер телефону"),
         TextInput(

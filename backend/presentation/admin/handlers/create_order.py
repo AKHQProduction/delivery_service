@@ -18,12 +18,12 @@ from aiogram_dialog.widgets.text import Case, Const, Format, Jinja, Multi
 from dishka import FromDishka
 from dishka.integrations.aiogram_dialog import inject
 
+from application.common.geo import GeoProcessor
 from entities.user.value_objects import PhoneNumber
 from infrastructure.geopy.errors import (
-    AddressNotFoundError,
+    AddressNotFoundInCityError,
     GeolocatorBadGatewayError,
 )
-from infrastructure.geopy.geopy_processor import GeoProcessor
 from presentation.admin import states
 from presentation.admin.helpers import (
     is_address_specific_enough,
@@ -147,7 +147,7 @@ async def on_input_user_address(
         manager.dialog_data["address"] = msg.text
 
         await manager.next()
-    except AddressNotFoundError:
+    except AddressNotFoundInCityError:
         await msg.answer("😥 На жаль, ми не змогли знайти Вашої адреси")
     except GeolocatorBadGatewayError:
         await msg.answer(

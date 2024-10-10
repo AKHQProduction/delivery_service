@@ -12,6 +12,7 @@ from dishka import (
 from application.common.access_service import AccessService
 from application.common.commiter import Commiter
 from application.common.file_manager import FileManager
+from application.common.geo import GeoProcessor
 from application.common.identity_provider import IdentityProvider
 from application.common.webhook_manager import TokenVerifier, WebhookManager
 from application.employee.commands.add_employee import AddEmployee
@@ -45,6 +46,12 @@ from application.order.interactors.edit_order_item_quantity import (
     EditOrderItemQuantity,
 )
 from application.order.interactors.get_order import GetOrder
+from application.profile.commands.check_address_by_coordinates import (
+    CheckAddressByCoordinates,
+)
+from application.profile.commands.update_address_by_yourself import (
+    ChangeAddress,
+)
 from application.profile.commands.update_phone_number_by_yourself import (
     UpdatePhoneNumberByYourself,
 )
@@ -78,7 +85,7 @@ from infrastructure.gateways.profile import ProfileGateway
 from infrastructure.gateways.shop import ShopGateway
 from infrastructure.gateways.user import UserGateway
 from infrastructure.geopy.config import GeoConfig
-from infrastructure.geopy.geopy_processor import GeoProcessor, PyGeoProcessor
+from infrastructure.geopy.geopy_processor import PyGeoProcessor
 from infrastructure.geopy.provider import get_geolocator
 from infrastructure.persistence.commiter import SACommiter
 from infrastructure.persistence.config import DBConfig
@@ -168,6 +175,8 @@ def interactor_provider() -> Provider:
 
     provider.provide(ShopBotStart, scope=Scope.REQUEST)
     provider.provide(AdminBotStart, scope=Scope.REQUEST)
+    provider.provide(CheckAddressByCoordinates, scope=Scope.REQUEST)
+    provider.provide(ChangeAddress, scope=Scope.REQUEST)
 
     provider.provide(GetUser, scope=Scope.REQUEST)
     provider.provide(GetUsers, scope=Scope.REQUEST)

@@ -48,6 +48,9 @@ class UserKeyboard(KeyboardByRole):
         )
 
 
+keyboards = {EmployeeRole.ADMIN: AdminKeyboard, "DEFAULT": UserKeyboard}
+
+
 class MainReplyKeyboard:
     def __init__(self, role: EmployeeRole | None):
         self.role = role
@@ -55,6 +58,4 @@ class MainReplyKeyboard:
     async def render_keyboard(self) -> ReplyKeyboardMarkup | None:
         if not self.role:
             return UserKeyboard().render_keyboard()
-        if self.role == EmployeeRole.ADMIN:
-            return AdminKeyboard().render_keyboard()
-        return None
+        return keyboards[self.role]().render_keyboard()

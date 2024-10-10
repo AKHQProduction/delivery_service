@@ -23,6 +23,7 @@ from aiogram_dialog.widgets.text import Const, Format, Multi
 from dishka import FromDishka
 from dishka.integrations.aiogram_dialog import inject
 
+from application.common.geo import GeoProcessor
 from application.common.specs.length import HasGreateLength, HasLessLength
 from application.common.specs.pattern import MatchPattern
 from application.common.specs.value import Greate
@@ -33,7 +34,6 @@ from application.shop.interactors.create_shop import (
     CreateShopInputData,
 )
 from application.user.interactors.admin_bot_start import AdminBotStart
-from infrastructure.geopy.geopy_processor import GeoProcessor
 from presentation.common.consts import CANCEL_BTN_TXT, CREATE_SHOP_BTN_TXT
 from presentation.common.helpers import step_toggler_in_form
 from presentation.common.widgets.common.cancel_btn import (

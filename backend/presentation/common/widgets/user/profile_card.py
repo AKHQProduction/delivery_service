@@ -19,7 +19,9 @@ async def get_profile_card(
     action: FromDishka[GetProfileCard],
     **_kwargs,
 ) -> dict[str, Any]:
-    user_id = dialog_manager.dialog_data["user_id"]
+    user_id = dialog_manager.dialog_data.get(
+        "user_id", dialog_manager.event.from_user.id
+    )
 
     user_profile_card = await action(GetProfileCardInputData(user_id=user_id))
 
