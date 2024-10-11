@@ -7,52 +7,50 @@ from geopy.geocoders import Nominatim
 from application.common.geo import Address, GeoPayload, GeoProcessor
 from infrastructure.geopy.config import GeoConfig
 from infrastructure.geopy.errors import (
-    AddressNotFoundByCoordinatesError,
-    AddressNotFoundInCityError,
     GeolocatorBadGatewayError,
+    InvalidAddressInputError,
 )
 
 
 class PyGeoProcessor(GeoProcessor):
     def __init__(self, config: GeoConfig, geolocator: Nominatim) -> None:
-        self.city = config.city
         self._geolocator = geolocator
 
-    def _check_address_in_city(self, coordinates: Location) -> bool:
-        address: dict[str, Any] = coordinates.raw.get("address", {})
-
-        location_city = address.get("city", "")
-        location_town = address.get("town", "")
-
-        house_number = address.get("house_number")
-
-        return (
-            self.city in [location_city, location_town]
-            and house_number is not None
-        )
-
     async def get_coordinates(self, address: Address) -> GeoPayload:
-        full_address: str = f"{address}, {self.city}"
-
         try:
             coordinates: Location | None = await self._geolocator.geocode(
-                full_address,
+                address,
                 addressdetails=True,
                 language="UA",
             )
         except GeocoderTimedOut as error:
             raise GeolocatorBadGatewayError() from error
 
-        if coordinates is None or not self._check_address_in_city(coordinates):
-            raise AddressNotFoundInCityError(address, self.city)
+        return GeoPayload(coordinates.latitude, coordinates.longitude)
 
-        return coordinates.latitude, coordinates.longitude
-
-    async def get_location(self, coordinates: GeoPayload) -> Address:
-        location: Location = await self._geolocator.reverse(
+    async def get_location_with_coordinates(
+        self, coordinates: GeoPayload
+    ) -> Address:
+        location: Location | None = await self._geolocator.reverse(
             coordinates, addressdetails=True
         )
 
+        if not location:
+            InvalidAddressInputError()
+
+        return self._check_location(location)
+
+    async def get_location_with_row(self, row: str) -> Address:
+        location: Location | None = await self._geolocator.geocode(
+            row, addressdetails=True, namedetails=True
+        )
+
+        if not location:
+            InvalidAddressInputError()
+
+        return self._check_location(location)
+
+    def _check_location(self, location: Location) -> Address:
         full_address: dict[str, Any] = location.raw.get("address", {})
 
         city = full_address.get("city") or full_address.get("town")
@@ -60,6 +58,6 @@ class PyGeoProcessor(GeoProcessor):
         house_number = full_address.get("house_number")
 
         if not all([city, road, house_number]):
-            raise AddressNotFoundByCoordinatesError(coordinates)
+            raise InvalidAddressInputError()
 
         return Address(f"{city}, {road} {house_number}")

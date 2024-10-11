@@ -12,15 +12,8 @@ class AddressNotFoundInCityError(Exception):
 
 
 @dataclass(eq=False)
-class AddressNotFoundByCoordinatesError(Exception):
-    coordinates: tuple[float, float]
-
-    @property
-    def message(self):
-        return (
-            "No addresses were found at these coordinates "
-            f"- {self.coordinates}"
-        )
+class InvalidAddressInputError(Exception):
+    pass
 
 
 @dataclass(eq=False)

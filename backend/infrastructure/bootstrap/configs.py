@@ -32,7 +32,6 @@ def load_all_configs() -> AllConfigs:
     )
 
     geo_config = GeoConfig(
-        city=os.getenv("CITY"),
         user_agent=os.getenv("GEO_USER_AGENT"),
     )
 

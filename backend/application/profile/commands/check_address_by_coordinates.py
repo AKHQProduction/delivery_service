@@ -20,6 +20,8 @@ class CheckAddressByCoordinates:
     async def __call__(
         self, data: CheckAddressByCoordinatesInputData
     ) -> CheckAddressByCoordinatesOutputData:
-        address = await self.geo.get_location(data.coordinates)
+        address = await self.geo.get_location_with_coordinates(
+            data.coordinates
+        )
 
         return CheckAddressByCoordinatesOutputData(address=address)

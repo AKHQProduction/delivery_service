@@ -29,11 +29,17 @@ from application.profile.commands.check_address_by_coordinates import (
     CheckAddressByCoordinates,
     CheckAddressByCoordinatesInputData,
 )
+from application.profile.commands.check_address_by_row import (
+    CheckAddressByRow,
+    CheckAddressByRowInputData,
+)
 from application.profile.commands.update_address_by_yourself import (
     ChangeAddress,
     ChangeAddressInputData,
 )
-from infrastructure.geopy.errors import AddressNotFoundByCoordinatesError
+from infrastructure.geopy.errors import (
+    InvalidAddressInputError,
+)
 from presentation.admin.keyboards.main_menu_kb import MainReplyKeyboard
 from presentation.common.consts import BACK_BTN_TXT, CANCEL_BTN_TXT
 from presentation.common.helpers import (
@@ -47,7 +53,11 @@ from . import states
 change_address_dialog = Dialog(
     Window(
         Const("Виберіть спосіб зміни адреси"),
-        Button(id="Test", text=Const("✍️ Вказати адресу")),
+        Start(
+            id="send_location_from_user",
+            text=Const("✍️ Вказати адресу"),
+            state=states.AddressInputByUser.INPUT_LOCATION,
+        ),
         Start(
             id="send_location_from_tg",
             text=Const("📍 Поділитись адресою"),
@@ -73,7 +83,7 @@ async def on_input_user_location_from_tg(
         output_data = await action(
             CheckAddressByCoordinatesInputData(coordinates)
         )
-    except AddressNotFoundByCoordinatesError:
+    except InvalidAddressInputError:
         await msg.answer("Не вдалось знайти вашої адреси, повторіть спробу")
     else:
         manager.dialog_data["address"] = output_data.address
@@ -134,6 +144,41 @@ send_address_by_telegram_dialog = Dialog(
         ),
         state=states.AddressInputByTg.CONFIRMATION,
     ),
+)
+
+
+@inject
+async def on_input_address_from_user(
+    msg: Message,
+    __: ManagedTextInput,
+    manager: DialogManager,
+    value: str,
+    check_input: FromDishka[CheckAddressByRow],
+) -> None:
+    try:
+        output_data = await check_input(CheckAddressByRowInputData(value))
+    except InvalidAddressInputError:
+        await msg.answer("Не вдалось знайти вашої адреси, повторіть спробу")
+    else:
+        await manager.start(
+            state=states.OtherInformationAboutAddress.APARTMENT_NUMBER,
+            data={"address": output_data.address},
+        )
+
+
+send_address_by_user_dialog = Dialog(
+    Window(
+        Multi(
+            Const("Введіть Вашу адресу"),
+            Const("<i>Наприклад: Черкаси бульвар Шевченка 123</i>"),
+        ),
+        TextInput(
+            id="on_input_address_from_user",
+            on_success=on_input_address_from_user,  # noqa: ignore
+        ),
+        Cancel(Const(BACK_BTN_TXT)),
+        state=states.AddressInputByUser.INPUT_LOCATION,
+    )
 )
 
 

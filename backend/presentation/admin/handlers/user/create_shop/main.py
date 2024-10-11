@@ -165,7 +165,7 @@ async def on_input_shop_location(
     manager: DialogManager,
     geo: FromDishka[GeoProcessor],
 ):
-    location = await geo.get_location(
+    location = await geo.get_location_with_coordinates(
         (msg.location.latitude, msg.location.longitude)
     )
 

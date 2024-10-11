@@ -19,6 +19,10 @@ class AddressInputByTg(StatesGroup):
     CONFIRMATION = State()
 
 
+class AddressInputByUser(StatesGroup):
+    INPUT_LOCATION = State()
+
+
 class OtherInformationAboutAddress(StatesGroup):
     APARTMENT_NUMBER = State()
     FLOOR = State()

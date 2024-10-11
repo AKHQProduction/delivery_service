@@ -11,5 +11,11 @@ class GeoProcessor(ABC):
         raise NotImplementedError
 
     @abstractmethod
-    async def get_location(self, coordinates: GeoPayload) -> Address:
+    async def get_location_with_coordinates(
+        self, coordinates: GeoPayload
+    ) -> Address:
+        raise NotImplementedError
+
+    @abstractmethod
+    async def get_location_with_row(self, row: str) -> Address:
         raise NotImplementedError

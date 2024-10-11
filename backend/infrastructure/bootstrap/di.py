@@ -49,6 +49,7 @@ from application.order.interactors.get_order import GetOrder
 from application.profile.commands.check_address_by_coordinates import (
     CheckAddressByCoordinates,
 )
+from application.profile.commands.check_address_by_row import CheckAddressByRow
 from application.profile.commands.update_address_by_yourself import (
     ChangeAddress,
 )
@@ -175,7 +176,6 @@ def interactor_provider() -> Provider:
 
     provider.provide(ShopBotStart, scope=Scope.REQUEST)
     provider.provide(AdminBotStart, scope=Scope.REQUEST)
-    provider.provide(CheckAddressByCoordinates, scope=Scope.REQUEST)
     provider.provide(ChangeAddress, scope=Scope.REQUEST)
 
     provider.provide(GetUser, scope=Scope.REQUEST)
@@ -209,6 +209,8 @@ def interactor_provider() -> Provider:
 
     provider.provide(GetProfileCard, scope=Scope.REQUEST)
     provider.provide(UpdatePhoneNumberByYourself, scope=Scope.REQUEST)
+    provider.provide(CheckAddressByCoordinates, scope=Scope.REQUEST)
+    provider.provide(CheckAddressByRow, scope=Scope.REQUEST)
 
     return provider
 
