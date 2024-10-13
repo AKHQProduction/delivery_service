@@ -1,5 +1,6 @@
 import logging
 from dataclasses import dataclass
+from decimal import Decimal
 from uuid import UUID
 
 from application.common.access_service import AccessService
@@ -13,16 +14,20 @@ from application.goods.input_data import FileMetadata
 from application.shop.errors import UserNotHaveShopError
 from application.shop.gateway import ShopReader
 from application.user.errors import UserNotFoundError
-from entities.goods.models import Goods, GoodsId
+from entities.goods.models import Goods, GoodsId, GoodsType
+from entities.goods.value_objects import GoodsPrice, GoodsTitle
 
 
 @dataclass(frozen=True)
-class EditGoodsPicInputData:
+class EditGoodsInputData:
     goods_id: UUID
-    metadata: FileMetadata | None = None
+    title: str
+    price: Decimal
+    goods_type: GoodsType
+    metadata: FileMetadata | None
 
 
-class EditGoodsPic(Interactor[EditGoodsPicInputData, None]):
+class EditGoods(Interactor[EditGoodsInputData, None]):
     def __init__(
         self,
         identity_provider: IdentityProvider,
@@ -39,7 +44,7 @@ class EditGoodsPic(Interactor[EditGoodsPicInputData, None]):
         self._file_manager = file_manager
         self._commiter = commiter
 
-    async def __call__(self, data: EditGoodsPicInputData) -> None:
+    async def __call__(self, data: EditGoodsInputData) -> None:
         actor = await self._identity_provider.get_user()
         if not actor:
             raise UserNotFoundError()
@@ -58,15 +63,21 @@ class EditGoodsPic(Interactor[EditGoodsPicInputData, None]):
         if not goods:
             raise GoodsNotFoundError(goods_id)
 
+        goods.title = GoodsTitle(data.title)
+        goods.price = GoodsPrice(data.price)
+        goods.goods_type = data.goods_type
         goods.metadata_path = self._process_file_metadata(goods, data.metadata)
 
         await self._commiter.commit()
 
-        logging.info("Edit goods pic with id=%s", goods_id)
+        logging.info("Edit goods with id=%s", goods_id)
 
     def _process_file_metadata(
         self, goods: Goods, metadata: FileMetadata | None
     ) -> str | None:
+        if metadata and not metadata.payload:
+            return goods.metadata_path
+
         if not goods.metadata_path and not metadata:
             return None
 
@@ -74,7 +85,6 @@ class EditGoodsPic(Interactor[EditGoodsPicInputData, None]):
             return self._file_manager.delete_object(goods.metadata_path)
 
         path = file_path_creator(goods.shop_id, goods.goods_id)
-
         self._file_manager.save(metadata.payload, path)
 
         return path

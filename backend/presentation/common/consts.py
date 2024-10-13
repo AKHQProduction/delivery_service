@@ -1,4 +1,5 @@
 from entities.employee.models import EmployeeRole
+from entities.goods.models import GoodsType
 
 EMPLOYEE_BTN_TXT = "👥 Співробітники"
 GOODS_BTN_TEXT = "📦 Товари"
@@ -19,3 +20,5 @@ ACTUAL_ROLES = {
     EmployeeRole.MANAGER: "🧑‍💻 Менеджер",
     EmployeeRole.DRIVER: "🚚 Водій",
 }
+
+ACTUAL_GOODS_TYPES = {GoodsType.WATER: "💧 Вода", GoodsType.OTHER: "📦 Інше"}

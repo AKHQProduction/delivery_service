@@ -7,8 +7,8 @@ from entities.goods.models import Goods, GoodsId, GoodsType
 
 
 @dataclass(frozen=True)
-class GetManyGoodsFilters:
-    shop_id: int
+class GoodsFilters:
+    shop_id: int | None = None
     goods_type: GoodsType | None = None
 
 
@@ -29,10 +29,10 @@ class GoodsReader(Protocol):
 
     @abstractmethod
     async def all(
-        self, filters: GetManyGoodsFilters, pagination: Pagination
+        self, filters: GoodsFilters, pagination: Pagination
     ) -> list[Goods]:
         raise NotImplementedError
 
     @abstractmethod
-    async def total(self, filters: GetManyGoodsFilters) -> int:
+    async def total(self, filters: GoodsFilters) -> int:
         raise NotImplementedError

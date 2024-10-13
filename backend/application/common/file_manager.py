@@ -17,6 +17,10 @@ class FileManager(Protocol):
         raise NotImplementedError
 
     @abstractmethod
+    def get_by_file_id(self, file_path: str) -> bytes | None:
+        raise NotImplementedError
+
+    @abstractmethod
     def delete_object(self, path: str) -> None:
         raise NotImplementedError
 

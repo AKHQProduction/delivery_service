@@ -11,7 +11,7 @@ from presentation.common.consts import ACTUAL_ROLES
 
 
 async def get_actual_employee_roles(**_kwargs) -> dict[str, Any]:
-    return {"roles": [(value, key) for key, value in ACTUAL_ROLES.items()]}
+    return {"roles": list(ACTUAL_ROLES.items())}
 
 
 async def on_role_selected(
@@ -24,10 +24,10 @@ async def on_role_selected(
 
 select_employee_role_widget = Group(
     Select(
-        text=Format("{item[0]}"),
+        text=Format("{item[1]}"),
         id="select_employee_role",
         items="roles",
-        item_id_getter=operator.itemgetter(1),
+        item_id_getter=operator.itemgetter(0),
         type_factory=lambda x: EmployeeRole(x),
         on_click=on_role_selected,  # type: ignore[arg-type]
     ),

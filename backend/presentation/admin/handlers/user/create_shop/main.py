@@ -55,9 +55,10 @@ async def create_shop_handler(_: Message, dialog_manager: DialogManager):
     )
 
 
-cancel_btn = back_to_main_menu_btn(
+cancel_btn_when = back_to_main_menu_btn(
     CANCEL_BTN_TXT, when=dialog_has_mistakes_in_input
 )
+cancel_btn = back_to_main_menu_btn(CANCEL_BTN_TXT)
 back_to_main_menu_btn = back_to_main_menu_btn("🔙 Головне меню")
 
 
@@ -199,12 +200,12 @@ async def create_shop_form_getter(
         "new_shop_regular_day_off_select"
     )
 
-    days_id = (int(x) for x in regular_days_selector.get_checked())
+    days_id = [int(x) for x in regular_days_selector.get_checked()]
 
     week_days: list = (await week_day_getter())["week_days"]
 
     selected_days = [
-        day.full_name.lower() for day in week_days if day.id in days_id
+        day.name.lower() for day in week_days if day.id in days_id
     ]
 
     dialog_manager.dialog_data["selected_days"] = (
@@ -260,7 +261,7 @@ create_shop_dialog = Dialog(
             id="new_shop_title_input",
             on_success=check_after_success_input_shop_title,
         ),
-        cancel_btn,
+        cancel_btn_when,
         state=states.CreateShopStates.TITLE,
     ),
     Window(
@@ -269,7 +270,7 @@ create_shop_dialog = Dialog(
             id="new_shop_token_input",
             on_success=check_after_success_input_shop_token,  # noqa: ignore
         ),
-        cancel_btn,
+        cancel_btn_when,
         state=states.CreateShopStates.TOKEN,
     ),
     Window(
@@ -305,7 +306,7 @@ create_shop_dialog = Dialog(
             type_factory=int,
             on_success=check_after_success_input_delivery_distance,
         ),
-        cancel_btn,
+        cancel_btn_when,
         state=states.CreateShopStates.DELIVERY_DISTANCE,
     ),
     Window(
@@ -364,7 +365,7 @@ create_shop_dialog = Dialog(
             ),
         ),
         Button(
-            text=Const("Підтвердити"),
+            text=Const("✅ Підтвердити"),
             id="accept_shop_creation_form",
             on_click=on_accept_shop_creation_form,  # noqa: ignore
         ),

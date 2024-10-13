@@ -30,9 +30,12 @@ from application.employee.query.get_employees_cards import (
 from application.goods.gateway import GoodsReader, GoodsSaver
 from application.goods.interactors.add_goods import AddGoods
 from application.goods.interactors.delete_goods import DeleteGoods
-from application.goods.interactors.edit_goods_pic import EditGoodsPic
+from application.goods.interactors.edit_goods import EditGoods
 from application.goods.interactors.get_goods import GetGoods
 from application.goods.interactors.get_many_goods import GetManyGoods
+from application.goods.interactors.get_many_goods_by_admin import (
+    GetManyGoodsByAdmin,
+)
 from application.order.gateway import (
     OrderItemReader,
     OrderItemSaver,
@@ -191,9 +194,10 @@ def interactor_provider() -> Provider:
 
     provider.provide(AddGoods, scope=Scope.REQUEST)
     provider.provide(DeleteGoods, scope=Scope.REQUEST)
-    provider.provide(EditGoodsPic, scope=Scope.REQUEST)
+    provider.provide(EditGoods, scope=Scope.REQUEST)
     provider.provide(GetGoods, scope=Scope.REQUEST)
     provider.provide(GetManyGoods, scope=Scope.REQUEST)
+    provider.provide(GetManyGoodsByAdmin, scope=Scope.REQUEST)
 
     provider.provide(GetEmployeeCards, scope=Scope.REQUEST)
     provider.provide(GetEmployeeCard, scope=Scope.REQUEST)
@@ -236,7 +240,7 @@ def infrastructure_provider() -> Provider:
         provides=AnyOf[WebhookManager, TokenVerifier],
     )
 
-    provider.provide(S3FileManager, scope=Scope.REQUEST, provides=FileManager)
+    provider.provide(S3FileManager, scope=Scope.APP, provides=FileManager)
 
     return provider
 

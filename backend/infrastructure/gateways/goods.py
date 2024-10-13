@@ -5,7 +5,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from application.common.input_data import Pagination, SortOrder
 from application.goods.errors import GoodsAlreadyExistError
 from application.goods.gateway import (
-    GetManyGoodsFilters,
+    GoodsFilters,
     GoodsReader,
     GoodsSaver,
 )
@@ -33,7 +33,7 @@ class GoodsGateway(GoodsSaver, GoodsReader):
         return result.scalar_one_or_none()
 
     async def all(
-        self, filters: GetManyGoodsFilters, pagination: Pagination
+        self, filters: GoodsFilters, pagination: Pagination
     ) -> list[Goods]:
         query = select(Goods).where(goods_table.c.shop_id == filters.shop_id)
 
@@ -54,7 +54,7 @@ class GoodsGateway(GoodsSaver, GoodsReader):
 
         return list(result.all())
 
-    async def total(self, filters: GetManyGoodsFilters) -> int:
+    async def total(self, filters: GoodsFilters) -> int:
         query = select(func.count(goods_table.c.goods_id))
 
         if filters.shop_id:

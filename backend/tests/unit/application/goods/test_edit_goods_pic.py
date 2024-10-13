@@ -4,9 +4,9 @@ import pytest
 
 from application.common.access_service import AccessService
 from application.goods.input_data import FileMetadata
-from application.goods.interactors.edit_goods_pic import (
-    EditGoodsPic,
-    EditGoodsPicInputData,
+from application.goods.interactors.edit_goods import (
+    EditGoods,
+    EditGoodsInputData,
 )
 from entities.goods.models import GoodsId
 from entities.user.models import UserId
@@ -37,7 +37,7 @@ async def test_edit_goods_pic(
     payload: bytes | None,
     exc_class,
 ) -> None:
-    action = EditGoodsPic(
+    action = EditGoods(
         identity_provider=identity_provider,
         access_service=access_service,
         shop_reader=shop_gateway,
@@ -48,9 +48,7 @@ async def test_edit_goods_pic(
 
     input_payload = FileMetadata(payload) if payload else None
 
-    input_data = EditGoodsPicInputData(
-        goods_id=goods_id, metadata=input_payload
-    )
+    input_data = EditGoodsInputData(goods_id=goods_id, metadata=input_payload)
 
     coro = action(input_data)
 

@@ -4,7 +4,7 @@ from uuid import UUID
 from application.common.input_data import Pagination
 from application.goods.errors import GoodsAlreadyExistError
 from application.goods.gateway import (
-    GetManyGoodsFilters,
+    GoodsFilters,
     GoodsReader,
     GoodsSaver,
 )
@@ -43,11 +43,11 @@ class FakeGoodsGateway(GoodsSaver, GoodsReader):
         return self.goods.get(goods_id, None)
 
     async def all(
-        self, filters: GetManyGoodsFilters, pagination: Pagination
+        self, filters: GoodsFilters, pagination: Pagination
     ) -> list[Goods]:
         return list(self.goods.values())
 
-    async def total(self, filters: GetManyGoodsFilters) -> int:
+    async def total(self, filters: GoodsFilters) -> int:
         return len(list(self.goods.values()))
 
     async def delete(self, goods: Goods) -> None:

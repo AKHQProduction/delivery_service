@@ -4,7 +4,7 @@ from .employee import (
     setup_employee_workflow_dialogs,
     setup_employee_workflow_handlers,
 )
-from .good import setup_good_workflow_dialogs, setup_good_workflow_handlers
+from .goods import setup_good_workflow_dialogs, setup_good_workflow_handlers
 
 
 def setup_admin_handlers(dp: Dispatcher):
