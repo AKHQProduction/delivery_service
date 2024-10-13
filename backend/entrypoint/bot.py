@@ -4,7 +4,9 @@ from aiogram import Bot, Dispatcher
 from aiogram.client.default import DefaultBotProperties
 from aiogram.client.session.aiohttp import AiohttpSession
 from aiogram.enums import ParseMode
-from aiogram.fsm.storage.memory import SimpleEventIsolation
+from aiogram.fsm.storage.base import BaseStorage, DefaultKeyBuilder
+from aiogram.fsm.storage.memory import MemoryStorage, SimpleEventIsolation
+from aiogram.fsm.storage.redis import RedisStorage
 from aiogram.webhook.aiohttp_server import (
     SimpleRequestHandler,
     TokenBasedRequestHandler,
@@ -20,24 +22,44 @@ from entrypoint.config import Config, load_config
 from infrastructure.bootstrap.di import setup_di
 from infrastructure.persistence.models import map_tables
 from presentation.admin.handlers.setup import setup_all_admin_bot_handlers
+from presentation.common.widgets.common.message_manager import (
+    CustomMessageManager,
+)
 from presentation.shop.handlers.setup import setup_all_shop_bot_handlers
 
 
-def get_admin_dispatcher(container: AsyncContainer) -> Dispatcher:
-    dp = Dispatcher(events_isolation=SimpleEventIsolation())
+def get_storage(config: Config) -> BaseStorage:
+    if config.tg_bot.use_redis:
+        return RedisStorage.from_url(
+            config.redis.dsn(),
+            key_builder=DefaultKeyBuilder(with_bot_id=True, with_destiny=True),
+        )
+    return MemoryStorage()
+
+
+def get_admin_dispatcher(
+    container: AsyncContainer, config: Config
+) -> Dispatcher:
+    dp = Dispatcher(
+        events_isolation=SimpleEventIsolation(), storage=get_storage(config)
+    )
 
     setup_dishka(container=container, router=dp, auto_inject=True)
 
     # Setup handlers and dialogs
     setup_all_admin_bot_handlers(dp)
 
-    setup_dialogs(dp)
+    setup_dialogs(dp, message_manager=CustomMessageManager(container))
 
     return dp
 
 
-def get_shop_dispatcher(container: AsyncContainer) -> Dispatcher:
-    dp = Dispatcher(events_isolation=SimpleEventIsolation())
+def get_shop_dispatcher(
+    container: AsyncContainer, config: Config
+) -> Dispatcher:
+    dp = Dispatcher(
+        events_isolation=SimpleEventIsolation(), storage=get_storage(config)
+    )
 
     setup_dishka(container=container, router=dp, auto_inject=True)
 
@@ -76,8 +98,8 @@ def main():
 
     admin_bot = Bot(token=config.tg_bot.admin_bot_token, **bot_settings)
 
-    admin_dp = get_admin_dispatcher(container)
-    shop_dp = get_shop_dispatcher(container)
+    admin_dp = get_admin_dispatcher(container, config)
+    shop_dp = get_shop_dispatcher(container, config)
 
     admin_request_handler = SimpleRequestHandler(admin_dp, admin_bot)
 
