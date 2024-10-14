@@ -7,6 +7,7 @@ from application.user.interactors.shop_bot_start import (
     ShopBotStart,
     ShopBotStartInputData,
 )
+from presentation.shop.main_keyboard import main_menu_shop_bot
 
 router = Router()
 
@@ -26,4 +27,4 @@ async def shop_cmd_start(
         )
     )
 
-    await msg.answer(f"Hello, {name}!")
+    await msg.answer(f"Hello, {name}!", reply_markup=main_menu_shop_bot())

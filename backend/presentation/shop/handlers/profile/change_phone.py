@@ -60,8 +60,6 @@ async def on_accept_phone_number_change(
 
     await action(UpdatePhoneNumberByYourselfInputData(phone_number))
 
-    await manager.done()
-
 
 change_phone_number_dialog = Dialog(
     Window(
@@ -78,12 +76,12 @@ change_phone_number_dialog = Dialog(
             "на {dialog_data[phone_number]}"
         ),
         Row(
-            Button(
+            Cancel(
                 Const("Так"),
                 id="accept_change_new_phone",
                 on_click=on_accept_phone_number_change,  # noqa: ignore
             ),
-            Cancel(Const("Ні")),
+            Cancel(Const("Ні"), id="reject_change_new_phone"),
         ),
         state=states.ProfileChangePhone.CONFIRMATION,
     ),

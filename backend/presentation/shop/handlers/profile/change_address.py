@@ -2,7 +2,7 @@ from typing import Any
 
 from aiogram import F
 from aiogram.types import CallbackQuery, Message
-from aiogram_dialog import Dialog, DialogManager, StartMode, Window
+from aiogram_dialog import Data, Dialog, DialogManager, Window
 from aiogram_dialog.api.internal import ReplyCallbackQuery
 from aiogram_dialog.widgets.input import (
     ManagedTextInput,
@@ -49,137 +49,6 @@ from presentation.common.helpers import (
 )
 
 from . import states
-
-change_address_dialog = Dialog(
-    Window(
-        Const("Виберіть спосіб зміни адреси"),
-        Start(
-            id="send_location_from_user",
-            text=Const("✍️ Вказати адресу"),
-            state=states.AddressInputByUser.INPUT_LOCATION,
-        ),
-        Start(
-            id="send_location_from_tg",
-            text=Const("📍 Поділитись адресою"),
-            state=states.AddressInputByTg.SEND_LOCATION,
-        ),
-        Cancel(Const(BACK_BTN_TXT)),
-        state=states.ProfileChangeAddress.NEW_ADDRESS,
-    )
-)
-
-
-@inject
-async def on_input_user_location_from_tg(
-    msg: Message,
-    _: MessageInput,
-    manager: DialogManager,
-    action: FromDishka[CheckAddressByCoordinates],
-    id_provider: FromDishka[IdentityProvider],
-) -> None:
-    coordinates = (msg.location.latitude, msg.location.longitude)
-
-    try:
-        output_data = await action(
-            CheckAddressByCoordinatesInputData(coordinates)
-        )
-    except InvalidAddressInputError:
-        await msg.answer("Не вдалось знайти вашої адреси, повторіть спробу")
-    else:
-        manager.dialog_data["address"] = output_data.address
-        await send_main_keyboard(manager, "⏳", id_provider)
-        await manager.next()
-
-
-@inject
-async def on_close_send_location_dialog(
-    msg: ReplyCallbackQuery,
-    _: Button,
-    __: DialogManager,
-    id_provider: FromDishka[IdentityProvider],
-):
-    await msg.original_message.delete()
-
-    role = await id_provider.get_role()
-
-    await msg.original_message.answer(
-        text=CANCEL_BTN_TXT,
-        reply_markup=await MainReplyKeyboard(role).render_keyboard(),
-    )
-
-
-async def on_accept_find_address(
-    _: CallbackQuery, __: Button, manager: DialogManager
-) -> None:
-    await manager.start(
-        state=states.OtherInformationAboutAddress.APARTMENT_NUMBER,
-        data={"address": manager.dialog_data["address"]},
-    )
-
-
-send_address_by_telegram_dialog = Dialog(
-    Window(
-        Const("Відправте Вашу геопозицію або виберіть локацію на мапі"),
-        MessageInput(
-            filter=F.location,
-            func=on_input_user_location_from_tg,  # noqa: ignore
-        ),
-        RequestLocation(Const("📍 Поділитися адресою")),
-        Cancel(
-            Const(CANCEL_BTN_TXT),
-            on_click=on_close_send_location_dialog,  # noqa: ignore
-        ),
-        markup_factory=ReplyKeyboardFactory(resize_keyboard=True),
-        state=states.AddressInputByTg.SEND_LOCATION,
-    ),
-    Window(
-        Format("Ваша адреса: <code>{dialog_data[address]}</code>?"),
-        Row(
-            Button(
-                id="back_to_confirmation_change",
-                text=Const("Так"),
-                on_click=on_accept_find_address,
-            ),
-            Back(Const("Ні")),
-        ),
-        state=states.AddressInputByTg.CONFIRMATION,
-    ),
-)
-
-
-@inject
-async def on_input_address_from_user(
-    msg: Message,
-    __: ManagedTextInput,
-    manager: DialogManager,
-    value: str,
-    check_input: FromDishka[CheckAddressByRow],
-) -> None:
-    try:
-        output_data = await check_input(CheckAddressByRowInputData(value))
-    except InvalidAddressInputError:
-        await msg.answer("Не вдалось знайти вашої адреси, повторіть спробу")
-    else:
-        await manager.start(
-            state=states.OtherInformationAboutAddress.APARTMENT_NUMBER,
-            data={"address": output_data.address},
-        )
-
-
-send_address_by_user_dialog = Dialog(
-    Window(
-        Multi(
-            Const("Введіть Вашу адресу"),
-            Const("<i>Наприклад: Черкаси бульвар Шевченка 123</i>"),
-        ),
-        TextInput(
-            id="on_input_address_from_user",
-            on_success=on_input_address_from_user,  # noqa: ignore
-        ),
-        Cancel(Const(BACK_BTN_TXT)),
-        state=states.AddressInputByUser.INPUT_LOCATION,
-    )
-)
 
 
 async def on_input_apartment_number(
@@ -247,7 +116,33 @@ async def accept_update_address_in_profile(
     )
 
 
-other_information_about_address_dialog = Dialog(
+async def on_after_successfully_input_address(
+    _: Data, result: Any, manager: DialogManager
+):
+    if result:
+        manager.dialog_data["address"] = result["address"]
+
+        await manager.switch_to(
+            state=states.ProfileChangeAddress.APARTMENT_NUMBER
+        )
+
+
+change_address_dialog = Dialog(
+    Window(
+        Const("Виберіть спосіб зміни адреси"),
+        Start(
+            id="send_location_from_user",
+            text=Const("✍️ Вказати адресу"),
+            state=states.AddressInputByUser.INPUT_LOCATION,
+        ),
+        Start(
+            id="send_location_from_tg",
+            text=Const("📍 Поділитись адресою"),
+            state=states.AddressInputByTg.SEND_LOCATION,
+        ),
+        Cancel(Const(BACK_BTN_TXT)),
+        state=states.ProfileChangeAddress.NEW_ADDRESS,
+    ),
     Window(
         Const("Введіть номер вашої квартири"),
         TextInput(
@@ -258,16 +153,16 @@ other_information_about_address_dialog = Dialog(
         SwitchTo(
             Const("Це приватний будинок"),
             id="private_house",
-            state=states.OtherInformationAboutAddress.CONFIRMATION,
+            state=states.ProfileChangeAddress.CONFIRMATION,
         ),
-        state=states.OtherInformationAboutAddress.APARTMENT_NUMBER,
+        state=states.ProfileChangeAddress.APARTMENT_NUMBER,
     ),
     Window(
         Const("Введіть Ваш поверх"),
         TextInput(
             id="floor_input", type_factory=int, on_success=on_input_floor
         ),
-        state=states.OtherInformationAboutAddress.FLOOR,
+        state=states.ProfileChangeAddress.FLOOR,
     ),
     Window(
         Const("Введіть код від домофону"),
@@ -277,7 +172,7 @@ other_information_about_address_dialog = Dialog(
             on_success=on_input_intercom_code,
         ),
         Next(Const("Відсутній")),
-        state=states.OtherInformationAboutAddress.INTERCOM_CODE,
+        state=states.ProfileChangeAddress.INTERCOM_CODE,
     ),
     Window(
         Multi(
@@ -293,21 +188,125 @@ other_information_about_address_dialog = Dialog(
             Const("Підтвердіть зміну адреси"),
             sep="\n\n",
         ),
-        Start(
+        Cancel(
             Const("Так"),
-            id="back_to_profile_menu",
-            state=states.ProfileMainMenu.MAIN,
+            id="accept_change_address",
             on_click=accept_update_address_in_profile,  # noqa: ignore
-            mode=StartMode.RESET_STACK,
         ),
-        Start(
+        Cancel(
             Const("Ні"),
-            id="back_to_profile_menu",
-            state=states.ProfileMainMenu.MAIN,
-            mode=StartMode.RESET_STACK,
+            id="reject_change_address",
         ),
-        state=states.OtherInformationAboutAddress.CONFIRMATION,
+        state=states.ProfileChangeAddress.CONFIRMATION,
         getter=get_all_address_data,
     ),
     on_start=default_on_start_handler,
+    on_process_result=on_after_successfully_input_address,
+)
+
+
+@inject
+async def on_input_user_location_from_tg(
+    msg: Message,
+    _: MessageInput,
+    manager: DialogManager,
+    action: FromDishka[CheckAddressByCoordinates],
+    id_provider: FromDishka[IdentityProvider],
+) -> None:
+    coordinates = (msg.location.latitude, msg.location.longitude)
+
+    try:
+        output_data = await action(
+            CheckAddressByCoordinatesInputData(coordinates)
+        )
+    except InvalidAddressInputError:
+        await msg.answer("Не вдалось знайти вашої адреси, повторіть спробу")
+    else:
+        manager.dialog_data["address"] = output_data.address
+        await send_main_keyboard(manager, "⏳", id_provider)
+        await manager.next()
+
+
+@inject
+async def on_close_send_location_dialog(
+    msg: ReplyCallbackQuery,
+    _: Button,
+    __: DialogManager,
+    id_provider: FromDishka[IdentityProvider],
+):
+    await msg.original_message.delete()
+
+    role = await id_provider.get_role()
+
+    await msg.original_message.answer(
+        text=CANCEL_BTN_TXT,
+        reply_markup=await MainReplyKeyboard(role).render_keyboard(),
+    )
+
+
+async def on_accept_find_address(
+    _: CallbackQuery, __: Button, manager: DialogManager
+) -> None:
+    await manager.done({"address": manager.dialog_data["address"]})
+
+
+send_address_by_telegram_dialog = Dialog(
+    Window(
+        Const("Відправте Вашу геопозицію або виберіть локацію на мапі"),
+        MessageInput(
+            filter=F.location,
+            func=on_input_user_location_from_tg,  # noqa: ignore
+        ),
+        RequestLocation(Const("📍 Поділитися адресою")),
+        Cancel(
+            Const(CANCEL_BTN_TXT),
+            on_click=on_close_send_location_dialog,  # noqa: ignore
+        ),
+        markup_factory=ReplyKeyboardFactory(resize_keyboard=True),
+        state=states.AddressInputByTg.SEND_LOCATION,
+    ),
+    Window(
+        Format("Ваша адреса: <code>{dialog_data[address]}</code>?"),
+        Row(
+            Button(
+                id="back_to_confirmation_change",
+                text=Const("Так"),
+                on_click=on_accept_find_address,
+            ),
+            Back(Const("Ні")),
+        ),
+        state=states.AddressInputByTg.CONFIRMATION,
+    ),
+)
+
+
+@inject
+async def on_input_address_from_user(
+    msg: Message,
+    __: ManagedTextInput,
+    manager: DialogManager,
+    value: str,
+    check_input: FromDishka[CheckAddressByRow],
+) -> None:
+    try:
+        output_data = await check_input(CheckAddressByRowInputData(value))
+    except InvalidAddressInputError:
+        await msg.answer("Не вдалось знайти вашої адреси, повторіть спробу")
+    else:
+        await manager.done({"address": output_data.address})
+
+
+send_address_by_user_dialog = Dialog(
+    Window(
+        Multi(
+            Const("Введіть Вашу адресу"),
+            Const("<i>Наприклад: Черкаси бульвар Шевченка 123</i>"),
+        ),
+        TextInput(
+            id="on_input_address_from_user",
+            on_success=on_input_address_from_user,  # noqa: ignore
+        ),
+        Cancel(Const(BACK_BTN_TXT)),
+        state=states.AddressInputByUser.INPUT_LOCATION,
+    )
 )

@@ -69,6 +69,8 @@ def get_shop_dispatcher(
     # Setup handlers and dialogs
     setup_all_shop_bot_handlers(dp)
 
+    setup_dialogs(dp, message_manager=CustomMessageManager(container))
+
     return dp
 
 
