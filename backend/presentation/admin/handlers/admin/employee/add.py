@@ -18,7 +18,9 @@ from application.employee.errors import EmployeeAlreadyExistError
 from application.user.errors import UserNotFoundError
 from application.user.interactors.get_user import GetUser, GetUserInputData
 from presentation.admin.handlers.admin.employee.common import (
+    employee_card,
     get_actual_employee_roles,
+    get_employee_card,
     select_employee_role_widget,
 )
 from presentation.common.consts import (
@@ -27,10 +29,6 @@ from presentation.common.consts import (
 )
 from presentation.common.widgets.common.cancel_btn import (
     setup_input_error_flag,
-)
-from presentation.common.widgets.user.profile_card import (
-    get_profile_card,
-    profile_card,
 )
 
 from . import states
@@ -96,7 +94,7 @@ add_to_employee_dialog = Dialog(
     Window(
         Multi(
             Const("<b>Користувач знайден</b>"),
-            profile_card,
+            employee_card,
             Const("Виберіть посаду👇"),
             sep="\n\n",
         ),
@@ -104,7 +102,7 @@ add_to_employee_dialog = Dialog(
         Row(Cancel(Const(CANCEL_BTN_TXT))),
         Row(Back(Const(BACK_BTN_TXT))),
         state=states.AddToEmployee.SELECT_EMPLOYEE_ROLE,
-        getter=[get_actual_employee_roles, get_profile_card],
+        getter=[get_actual_employee_roles, get_employee_card],
     ),
     Window(
         Const("Підтвердіть Ваше рішення"),
