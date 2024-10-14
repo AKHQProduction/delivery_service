@@ -19,7 +19,13 @@ from presentation.common.consts import ACTUAL_ROLES
 
 
 async def get_actual_employee_roles(**_kwargs) -> dict[str, Any]:
-    return {"roles": list(ACTUAL_ROLES.items())}
+    return {
+        "roles": [
+            (key, value)
+            for key, value in ACTUAL_ROLES.items()
+            if key != EmployeeRole.ADMIN
+        ]
+    }
 
 
 async def on_role_selected(

@@ -10,6 +10,7 @@ from application.shop.errors import UserNotHaveShopError
 from application.shop.gateway import ShopReader
 from application.user.errors import UserNotFoundError
 from entities.employee.models import EmployeeId, EmployeeRole
+from entities.employee.services import change_employee_role
 
 
 @dataclass(frozen=True)
@@ -42,10 +43,10 @@ class ChangeEmployee:
             raise EmployeeNotFoundError(data.employee_id)
 
         await self.access_service.ensure_can_edit_employee(
-            actor.user_id, shop.shop_id, employee
+            actor.user_id, shop.shop_id
         )
 
-        employee.role = data.role
+        change_employee_role(employee, data.role)
 
         await self.commiter.commit()
 
