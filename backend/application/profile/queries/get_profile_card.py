@@ -1,7 +1,8 @@
 import logging
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
 
 from application.common.identity_provider import IdentityProvider
+from application.employee.gateway import EmployeeGateway
 from application.profile.data.output import UserProfileCardOutputData
 from application.profile.errors import ProfileNotFoundError
 from application.profile.gateway import ProfileReader
@@ -22,6 +23,7 @@ class GetProfileCard:
     shop_reader: ShopReader
     profile_reader: ProfileReader
     user_reader: UserReader
+    employee_reader: EmployeeGateway
 
     async def __call__(
         self, data: GetProfileCardInputData
@@ -36,12 +38,21 @@ class GetProfileCard:
         if not profile:
             raise ProfileNotFoundError(user_id)
 
-        logging.info("Get profile card for user_id=%s", data.user_id)
-
-        return UserProfileCardOutputData(
+        profile_card = UserProfileCardOutputData(
             user_id=user_id,
             full_name=user.full_name,
             username=user.username,
             phone_number=profile.phone_number,
             address=profile.user_address.full_address,
         )
+
+        if employee_data := await self.employee_reader.by_identity(user_id):
+            profile_card = replace(
+                profile_card,
+                employee_id=employee_data.employee_id,
+                role=employee_data.role,
+            )
+
+        logging.info("Get profile card for user_id=%s", data.user_id)
+
+        return profile_card

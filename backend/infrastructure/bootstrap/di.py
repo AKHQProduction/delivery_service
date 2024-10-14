@@ -16,8 +16,8 @@ from application.common.geo import GeoProcessor
 from application.common.identity_provider import IdentityProvider
 from application.common.webhook_manager import TokenVerifier, WebhookManager
 from application.employee.commands.add_employee import AddEmployee
-from application.employee.commands.change_employee_role import (
-    ChangeEmployeeRole,
+from application.employee.commands.edit_employee import (
+    ChangeEmployee,
 )
 from application.employee.commands.remove_employee import RemoveEmployee
 from application.employee.gateway import (
@@ -203,7 +203,7 @@ def interactor_provider() -> Provider:
     provider.provide(GetEmployeeCard, scope=Scope.REQUEST)
     provider.provide(AddEmployee, scope=Scope.REQUEST)
     provider.provide(RemoveEmployee, scope=Scope.REQUEST)
-    provider.provide(ChangeEmployeeRole, scope=Scope.REQUEST)
+    provider.provide(ChangeEmployee, scope=Scope.REQUEST)
 
     provider.provide(CreateOrder, scope=Scope.REQUEST)
     provider.provide(GetOrder, scope=Scope.REQUEST)

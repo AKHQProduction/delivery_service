@@ -1,21 +1,17 @@
 from aiogram import F, Router
 from aiogram.filters import Command
-from aiogram.types import Message
+from aiogram.types import CallbackQuery, Message
 from aiogram_dialog import Dialog, DialogManager, StartMode, Window
-from aiogram_dialog.widgets.kbd import Start
+from aiogram_dialog.widgets.kbd import ScrollingGroup, Select, Start
 from aiogram_dialog.widgets.text import Case, Const, Format
 from magic_filter import MagicFilter
 
-from presentation.admin.handlers.admin.employee.add_to_employee import (
-    AddToEmployee,
-)
-from presentation.admin.handlers.admin.employee.getters import (
+from entities.user.models import UserId
+from presentation.admin.handlers.admin.employee import states
+from presentation.admin.handlers.admin.employee.common import (
     get_employee_cards,
 )
-from presentation.admin.handlers.admin.employee.main import states
-from presentation.admin.handlers.admin.employee.view_employees.states import (
-    ViewEmployees,
-)
+from presentation.admin.handlers.admin.employee.states import AddToEmployee
 from presentation.common.consts import EMPLOYEE_BTN_TXT
 
 router = Router()
@@ -34,6 +30,18 @@ async def run_employee_workflow_dialog(
 
 is_only_admin_in_employees: MagicFilter = F["dialog_data"]["total"] == 1
 
+
+async def on_selected_employee_from_list(
+    _: CallbackQuery,
+    __: Select,
+    manager: DialogManager,
+    value: UserId,
+):
+    await manager.start(
+        state=states.ViewEmployee.VIEW, data={"user_id": value}
+    )
+
+
 employee_workflow_dialog = Dialog(
     Window(
         Case(
@@ -50,11 +58,19 @@ employee_workflow_dialog = Dialog(
             id="add_to_employee",
             state=AddToEmployee.FIND,
         ),
-        Start(
-            Const("📋 Список співробітників"),
-            id="show_employee_cards",
-            state=ViewEmployees.VIEW,
-            mode=StartMode.RESET_STACK,
+        ScrollingGroup(
+            Select(
+                id="select_employee_from_cards",
+                text=Format("{item[2]} | {item[3]}"),
+                items="employee_cards",
+                item_id_getter=lambda item: item[1],
+                type_factory=lambda item: UserId(item),
+                on_click=on_selected_employee_from_list,
+            ),
+            id="employee_cards_list",
+            hide_on_single_page=True,
+            width=2,
+            height=10,
             when=~is_only_admin_in_employees,
         ),
         state=states.EmployeeWorkflow.MAIN_MENU,

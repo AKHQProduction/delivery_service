@@ -13,20 +13,20 @@ from entities.employee.models import EmployeeId, EmployeeRole
 
 
 @dataclass(frozen=True)
-class ChangeEmployeeRoleInputData:
+class ChangeEmployeeInputData:
     employee_id: int
     role: EmployeeRole
 
 
 @dataclass
-class ChangeEmployeeRole:
+class ChangeEmployee:
     identity_provider: IdentityProvider
     shop_reader: ShopReader
     access_service: AccessService
     employee_gateway: EmployeeGateway
     commiter: Commiter
 
-    async def __call__(self, data: ChangeEmployeeRoleInputData) -> None:
+    async def __call__(self, data: ChangeEmployeeInputData) -> None:
         actor = await self.identity_provider.get_user()
         if not actor:
             raise UserNotFoundError()
@@ -50,7 +50,6 @@ class ChangeEmployeeRole:
         await self.commiter.commit()
 
         logging.info(
-            "Change role to user with id=%s, new role=%s",
+            "Edit employee with user_id=%s",
             employee.user_id,
-            data.role,
         )
