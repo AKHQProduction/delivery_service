@@ -26,6 +26,7 @@ from presentation.common.widgets.common.message_manager import (
     CustomMessageManager,
 )
 from presentation.shop.handlers.setup import setup_all_shop_bot_handlers
+from presentation.shop.middlewares import setup_shop_bot_middlewares
 
 
 def get_storage(config: Config) -> BaseStorage:
@@ -60,6 +61,8 @@ def get_shop_dispatcher(
     dp = Dispatcher(
         events_isolation=SimpleEventIsolation(), storage=get_storage(config)
     )
+
+    setup_shop_bot_middlewares(dp)
 
     setup_dishka(container=container, router=dp, auto_inject=True)
 
