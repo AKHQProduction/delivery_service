@@ -40,7 +40,6 @@ from application.profile.commands.update_address_by_yourself import (
 from infrastructure.geopy.errors import (
     InvalidAddressInputError,
 )
-from presentation.admin.keyboards.main_menu_kb import MainReplyKeyboard
 from presentation.common.consts import BACK_BTN_TXT, CANCEL_BTN_TXT
 from presentation.common.helpers import (
     default_on_start_handler,
@@ -223,25 +222,18 @@ async def on_input_user_location_from_tg(
         await msg.answer("Не вдалось знайти вашої адреси, повторіть спробу")
     else:
         manager.dialog_data["address"] = output_data.address
-        await send_main_keyboard(manager, "⏳", id_provider)
+        await send_main_keyboard(manager, "⏳")
         await manager.next()
 
 
-@inject
 async def on_close_send_location_dialog(
     msg: ReplyCallbackQuery,
     _: Button,
-    __: DialogManager,
-    id_provider: FromDishka[IdentityProvider],
+    manager: DialogManager,
 ):
     await msg.original_message.delete()
 
-    role = await id_provider.get_role()
-
-    await msg.original_message.answer(
-        text=CANCEL_BTN_TXT,
-        reply_markup=await MainReplyKeyboard(role).render_keyboard(),
-    )
+    await send_main_keyboard(manager, "⏳")
 
 
 async def on_accept_find_address(
