@@ -4,7 +4,10 @@ from typing import Iterable
 
 from application.common.identity_provider import IdentityProvider
 from application.common.input_data import Pagination
-from application.employee.gateway import EmployeeFilters, EmployeeGateway
+from application.employee.gateway import (
+    EmployeeFilters,
+    EmployeeReader,
+)
 from application.employee.output_data import EmployeeCard
 from application.shop.errors import (
     ShopIsNotActiveError,
@@ -30,7 +33,7 @@ class GetEmployeeCardsOutputData:
 class GetEmployeeCards:
     identity_provider: IdentityProvider
     shop_reader: ShopReader
-    employee_gateway: EmployeeGateway
+    employee_reader: EmployeeReader
 
     async def __call__(
         self, data: GetEmployeeCardInputData
@@ -48,11 +51,11 @@ class GetEmployeeCards:
 
         filters = EmployeeFilters(shop_id=shop.shop_id)
 
-        employee_cards = await self.employee_gateway.all_cards(
+        employee_cards = await self.employee_reader.all_cards(
             filters=filters, pagination=Pagination()
         )
 
-        total = await self.employee_gateway.total(filters=filters)
+        total = await self.employee_reader.total(filters=filters)
 
         logging.info("Get employee cards, total=%s", total)
 

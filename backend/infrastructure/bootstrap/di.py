@@ -22,6 +22,7 @@ from application.employee.commands.edit_employee import (
 from application.employee.commands.remove_employee import RemoveEmployee
 from application.employee.gateway import (
     EmployeeGateway,
+    EmployeeReader,
 )
 from application.employee.query.get_employee_card import GetEmployeeCard
 from application.employee.query.get_employees_cards import (
@@ -120,7 +121,9 @@ def gateway_provider() -> Provider:
     )
 
     provider.provide(
-        EmployeeMapper, scope=Scope.REQUEST, provides=EmployeeGateway
+        EmployeeMapper,
+        scope=Scope.REQUEST,
+        provides=AnyOf[EmployeeGateway, EmployeeReader],
     )
 
     provider.provide(

@@ -35,6 +35,8 @@ class EmployeeGateway(Protocol):
     async def by_id(self, employee_id: EmployeeId) -> Employee | None:
         raise NotImplementedError
 
+
+class EmployeeReader(Protocol):
     @abstractmethod
     async def all_cards(
         self, filters: EmployeeFilters, pagination: Pagination

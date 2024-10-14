@@ -6,7 +6,11 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from application.common.input_data import Pagination, SortOrder
 from application.employee.errors import EmployeeAlreadyExistError
-from application.employee.gateway import EmployeeFilters, EmployeeGateway
+from application.employee.gateway import (
+    EmployeeFilters,
+    EmployeeGateway,
+    EmployeeReader,
+)
 from application.employee.output_data import EmployeeCard
 from entities.employee.models import Employee, EmployeeId
 from entities.user.models import UserId
@@ -25,7 +29,7 @@ def map_rows_to_employee_card(
     )
 
 
-class EmployeeMapper(EmployeeGateway):
+class EmployeeMapper(EmployeeGateway, EmployeeReader):
     def __init__(self, session: AsyncSession) -> None:
         self.session: AsyncSession = session
 
