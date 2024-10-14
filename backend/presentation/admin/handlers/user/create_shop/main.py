@@ -28,7 +28,10 @@ from application.common.specs.length import HasGreateLength, HasLessLength
 from application.common.specs.pattern import MatchPattern
 from application.common.specs.value import Greate
 from application.common.webhook_manager import TokenVerifier
-from application.shop.errors import ShopTokenUnauthorizedError
+from application.shop.errors import (
+    ShopAlreadyExistError,
+    ShopTokenUnauthorizedError,
+)
 from application.shop.interactors.create_shop import (
     CreateShop,
     CreateShopInputData,
@@ -232,19 +235,23 @@ async def on_accept_shop_creation_form(
 
     data = manager.dialog_data
 
-    await create_shop(
-        CreateShopInputData(
-            title=data["shop_title"],
-            token=data["shop_token"],
-            delivery_distance=data["shop_delivery_distance"],
-            location=data["coordinates"],
-            regular_days_off=data["regular_days"],
+    try:
+        await create_shop(
+            CreateShopInputData(
+                title=data["shop_title"],
+                token=data["shop_token"],
+                delivery_distance=data["shop_delivery_distance"],
+                location=data["coordinates"],
+                regular_days_off=data["regular_days"],
+            )
         )
-    )
+    except ShopAlreadyExistError:
+        await wait_emoji_msg.delete()
+        await call.message.answer("Токен бота уже використовується")
+    else:
+        await wait_emoji_msg.delete()
 
-    await wait_emoji_msg.delete()
-
-    await manager.next()
+        await manager.next()
 
 
 create_shop_dialog = Dialog(
