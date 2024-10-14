@@ -6,6 +6,7 @@ from aiogram_dialog.widgets.kbd import ScrollingGroup, Select, Start
 from aiogram_dialog.widgets.text import Case, Const, Format
 from magic_filter import MagicFilter
 
+from entities.employee.models import EmployeeId
 from entities.user.models import UserId
 from presentation.admin.handlers.admin.employee import states
 from presentation.admin.handlers.admin.employee.common import (
@@ -38,7 +39,7 @@ async def on_selected_employee_from_list(
     value: UserId,
 ):
     await manager.start(
-        state=states.ViewEmployee.VIEW, data={"user_id": value}
+        state=states.ViewEmployee.VIEW, data={"employee_id": value}
     )
 
 
@@ -63,8 +64,8 @@ employee_workflow_dialog = Dialog(
                 id="select_employee_from_cards",
                 text=Format("{item[2]} | {item[3]}"),
                 items="employee_cards",
-                item_id_getter=lambda item: item[1],
-                type_factory=lambda item: UserId(item),
+                item_id_getter=lambda item: item[0],
+                type_factory=lambda item: EmployeeId(item),
                 on_click=on_selected_employee_from_list,
             ),
             id="employee_cards_list",

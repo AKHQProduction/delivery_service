@@ -4,15 +4,19 @@ from typing import Any
 from aiogram.types import CallbackQuery
 from aiogram_dialog import DialogManager
 from aiogram_dialog.widgets.kbd import Group, Select
-from aiogram_dialog.widgets.text import Format
+from aiogram_dialog.widgets.text import Format, Multi
 from dishka import FromDishka
 from dishka.integrations.aiogram_dialog import inject
 
 from application.common.input_data import Pagination
 from application.employee.gateway import EmployeeFilters
-from application.employee.query.get_employees_cards import (
+from application.employee.query.get_employee_card import (
+    GetEmployeeCard,
     GetEmployeeCardInputData,
+)
+from application.employee.query.get_employees_cards import (
     GetEmployeeCards,
+    GetEmployeeCardsInputData,
 )
 from entities.employee.models import EmployeeRole
 from presentation.common.consts import ACTUAL_ROLES
@@ -56,7 +60,7 @@ async def get_employee_cards(
     **_kwargs,
 ) -> dict[str, Any]:
     output_data = await action(
-        GetEmployeeCardInputData(
+        GetEmployeeCardsInputData(
             filters=EmployeeFilters(), pagination=Pagination()
         )
     )
@@ -71,5 +75,29 @@ async def get_employee_cards(
         )
         for card in output_data.employees_card
     ]
+
+    return dialog_manager.dialog_data
+
+
+employee_card = Multi(
+    Format("<b>Ім'я</b>: {dialog_data[full_name]}"),
+    Format("<b>Посада</b>: {dialog_data[role_txt]}"),
+)
+
+
+@inject
+async def get_employee_card(
+    action: FromDishka[GetEmployeeCard],
+    dialog_manager: DialogManager,
+    **_kwargs,
+) -> dict[str, Any]:
+    employee_id = int(dialog_manager.dialog_data["employee_id"])
+
+    output_data = await action(GetEmployeeCardInputData(employee_id))
+
+    dialog_manager.dialog_data["employee_id"] = employee_id
+    dialog_manager.dialog_data["full_name"] = output_data.full_name
+    dialog_manager.dialog_data["role"] = output_data.role
+    dialog_manager.dialog_data["role_txt"] = ACTUAL_ROLES[output_data.role]
 
     return dialog_manager.dialog_data

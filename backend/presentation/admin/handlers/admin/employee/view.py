@@ -11,12 +11,9 @@ from application.employee.commands.remove_employee import (
 )
 from presentation.common.consts import BACK_BTN_TXT
 from presentation.common.helpers import default_on_start_handler
-from presentation.common.widgets.user.profile_card import (
-    get_profile_card,
-    profile_card,
-)
 
 from . import states
+from .common import employee_card, get_employee_card
 
 
 @inject
@@ -42,7 +39,7 @@ async def on_change_employee_btn(
 
 view_employee_card_dialog = Dialog(
     Window(
-        profile_card,
+        employee_card,
         Button(
             text=Const("✏️ Редагувати"),
             id="change_employee_role",
@@ -57,10 +54,11 @@ view_employee_card_dialog = Dialog(
             id="back_from_employee_detail",
         ),
         state=states.ViewEmployee.VIEW,
-        getter=get_profile_card,
     ),
     Window(
-        Multi(profile_card, Const("<b>Підтвердіть видалення</b>"), sep="\n\n"),
+        Multi(
+            employee_card, Const("<b>Підтвердіть видалення</b>"), sep="\n\n"
+        ),
         Row(
             Cancel(
                 Const("Так"),
@@ -72,5 +70,5 @@ view_employee_card_dialog = Dialog(
         state=states.ViewEmployee.DELETE,
     ),
     on_start=default_on_start_handler,
-    getter=get_profile_card,
+    getter=get_employee_card,
 )

@@ -18,7 +18,7 @@ from application.user.errors import UserNotFoundError
 
 
 @dataclass(frozen=True)
-class GetEmployeeCardInputData:
+class GetEmployeeCardsInputData:
     filters: EmployeeFilters
     pagination: Pagination
 
@@ -36,7 +36,7 @@ class GetEmployeeCards:
     employee_reader: EmployeeReader
 
     async def __call__(
-        self, data: GetEmployeeCardInputData
+        self, data: GetEmployeeCardsInputData
     ) -> GetEmployeeCardsOutputData:
         actor = await self.identity_provider.get_user()
         if not actor:

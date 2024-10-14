@@ -7,16 +7,14 @@ from .change_address import (
     send_address_by_user_dialog,
 )
 from .change_phone import change_phone_number_dialog
-from .main import profile_in_admin_bot_dialog
-from .main import router as main_router
+from .main import router
 
 
 def setup_profile_handlers(dp: Dispatcher) -> None:
-    dp.include_router(main_router)
+    dp.include_router(router)
 
 
 def setup_profile_dialogs(dp: Dispatcher) -> None:
-    dp.include_router(profile_in_admin_bot_dialog)
     dp.include_router(change_phone_number_dialog)
     dp.include_router(change_address_dialog)
     dp.include_router(send_address_by_telegram_dialog)

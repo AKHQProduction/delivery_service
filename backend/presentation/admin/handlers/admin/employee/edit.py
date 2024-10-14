@@ -27,7 +27,7 @@ from entities.employee.models import EmployeeRole
 from presentation.common.consts import ACTUAL_ROLES, BACK_BTN_TXT
 
 from . import states
-from .common import get_actual_employee_roles
+from .common import employee_card, get_actual_employee_roles
 
 
 async def on_successfully_input(
@@ -67,11 +67,6 @@ edit_employee_kb = Group(
         on_click=on_save_editing_employee,  # noqa: ignore
     ),
     Cancel(Const(BACK_BTN_TXT)),
-)
-
-employee_card = Multi(
-    Format("<b>Имя</b>: {dialog_data[full_name]}"),
-    Format("<b>Посада</b>: {dialog_data[role_txt]}"),
 )
 
 
