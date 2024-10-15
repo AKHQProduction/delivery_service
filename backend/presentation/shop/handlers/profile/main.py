@@ -3,7 +3,7 @@ from typing import Any
 
 from aiogram import F, Router
 from aiogram.types import Message
-from aiogram_dialog import Dialog, DialogManager, Window
+from aiogram_dialog import Dialog, DialogManager, StartMode, Window
 from aiogram_dialog.widgets.kbd import Row, Start
 from aiogram_dialog.widgets.text import Case, Const, Format, Multi
 from dishka import FromDishka
@@ -22,7 +22,9 @@ router = Router()
 
 @router.message(F.text == PROFILE_BTN_TXT)
 async def shop_profile_btn_handler(_: Message, dialog_manager: DialogManager):
-    await dialog_manager.start(state=states.ProfileMenu.MAIN)
+    await dialog_manager.start(
+        state=states.ProfileMenu.MAIN, mode=StartMode.RESET_STACK
+    )
 
 
 profile_card = Multi(
