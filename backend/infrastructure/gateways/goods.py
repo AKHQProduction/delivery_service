@@ -48,7 +48,7 @@ class GoodsGateway(GoodsSaver, GoodsReader):
         if pagination.offset is not None:
             query = query.offset(pagination.offset)
         if pagination.limit is not None:
-            query = query.offset(pagination.limit)
+            query = query.limit(pagination.limit)
 
         result = await self.session.scalars(query)
 
