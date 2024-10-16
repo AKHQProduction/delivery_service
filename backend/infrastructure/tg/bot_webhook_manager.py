@@ -12,14 +12,11 @@ class BotWebhookManager(WebhookManager, TokenVerifier):
         self._config = config
 
     async def verify(self, token: str) -> None:
-        bot = Bot(token=token)
-
-        try:
-            await bot.get_me()
-        except TelegramUnauthorizedError as error:
-            raise ShopTokenUnauthorizedError(token) from error
-        else:
-            await bot.session.close()
+        async with Bot(token=token) as bot:
+            try:
+                await bot.get_me()
+            except TelegramUnauthorizedError as error:
+                raise ShopTokenUnauthorizedError(token) from error
 
     async def setup_webhook(self, token: ShopToken) -> None:
         await self.verify(token.value)

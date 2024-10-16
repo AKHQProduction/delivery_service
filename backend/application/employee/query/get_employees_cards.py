@@ -1,3 +1,4 @@
+import asyncio
 import logging
 from dataclasses import dataclass
 from typing import Iterable
@@ -51,14 +52,18 @@ class GetEmployeeCards:
 
         filters = EmployeeFilters(shop_id=shop.shop_id)
 
-        employee_cards = await self.employee_reader.all_cards(
+        employee_cards_task = self.employee_reader.all_cards(
             filters=filters, pagination=Pagination()
         )
 
-        total = await self.employee_reader.total(filters=filters)
+        total_cards_task = self.employee_reader.total(filters=filters)
 
-        logging.info("Get employee cards, total=%s", total)
+        employee_cards, total_cards = await asyncio.gather(
+            employee_cards_task, total_cards_task
+        )
+
+        logging.info("Get employee cards, total=%s", total_cards)
 
         return GetEmployeeCardsOutputData(
-            total=total, employees_card=employee_cards
+            total=total_cards, employees_card=employee_cards
         )

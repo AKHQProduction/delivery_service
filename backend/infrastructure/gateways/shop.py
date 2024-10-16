@@ -45,8 +45,7 @@ class ShopGateway(ShopSaver, ShopReader):
         query = select(Shop)
 
         if filters and filters.is_active:
-            query = query.where(shops_table.c.is_active)
-
+            query = query.where(shops_table.c.is_active.is_(filters.is_active))
         if pagination.order is SortOrder.ASC:
             query = query.order_by(shops_table.c.created_at.asc())
         else:
@@ -65,7 +64,7 @@ class ShopGateway(ShopSaver, ShopReader):
         query = select(func.count(shops_table.c.shop_id))
 
         if filters and filters.is_active:
-            query = query.where(shops_table.c.is_active)
+            query = query.where(shops_table.c.is_active.is_(filters.is_active))
 
         total: int = await self.session.scalar(query)
 

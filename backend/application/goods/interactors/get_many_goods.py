@@ -1,3 +1,4 @@
+import asyncio
 import logging
 from dataclasses import dataclass
 
@@ -42,15 +43,22 @@ class GetManyGoods(Interactor[GetManyGoodsInputData, GetManyGoodsOutputData]):
         if not shop.is_active:
             raise ShopIsNotActiveError(shop_id)
 
-        total_goods = await self._goods_reader.total(data.filters)
-        goods = await self._goods_reader.all(data.filters, data.pagination)
+        total_goods_task = self._goods_reader.total(data.filters)
+        get_goods_task = self._goods_reader.all(data.filters, data.pagination)
+
+        total_goods, goods = await asyncio.gather(
+            total_goods_task, get_goods_task
+        )
 
         logging.info(
-            "Get all goods",
+            "Fetched %s goods with filters %s and pagination %s",
+            total_goods,
+            data.filters,
+            data.pagination,
             extra={
-                "goods": goods,
-                "pagination": data.pagination,
+                "goods_count": len(goods),
                 "filters": data.filters,
+                "pagination": data.pagination,
             },
         )
 

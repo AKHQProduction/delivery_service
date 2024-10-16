@@ -1,3 +1,4 @@
+import asyncio
 import logging
 from dataclasses import dataclass
 
@@ -43,9 +44,13 @@ class GetManyGoodsByAdmin:
             shop_id=shop.shop_id, goods_type=data.filters.goods_type
         )
 
-        goods = await self.goods_reader.all(filters, data.pagination)
-        total = await self.goods_reader.total(filters)
+        get_goods_task = self.goods_reader.all(filters, data.pagination)
+        total_goods_task = self.goods_reader.total(filters)
+
+        goods, total_goods = await asyncio.gather(
+            get_goods_task, total_goods_task
+        )
 
         logging.info("Get goods for admin view")
 
-        return GetManyGoodsByAdminOutputData(total, goods)
+        return GetManyGoodsByAdminOutputData(total_goods, goods)
