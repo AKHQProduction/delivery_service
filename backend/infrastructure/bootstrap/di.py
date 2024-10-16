@@ -24,8 +24,8 @@ from application.employee.gateway import (
     EmployeeGateway,
     EmployeeReader,
 )
-from application.employee.query.get_employee_card import GetEmployeeCard
-from application.employee.query.get_employees_cards import (
+from application.employee.queries.get_employee_card import GetEmployeeCard
+from application.employee.queries.get_employees_cards import (
     GetEmployeeCards,
 )
 from application.goods.gateway import GoodsReader, GoodsSaver
@@ -83,6 +83,7 @@ from infrastructure.auth.tg_auth import TgIdentityProvider
 from infrastructure.bootstrap.configs import load_all_configs
 from infrastructure.gateways.employee import (
     EmployeeMapper,
+    SqlalchemyEmployeeReader,
 )
 from infrastructure.gateways.goods import GoodsGateway
 from infrastructure.gateways.order import OrderGateway, OrderItemGateway
@@ -123,7 +124,11 @@ def gateway_provider() -> Provider:
     provider.provide(
         EmployeeMapper,
         scope=Scope.REQUEST,
-        provides=AnyOf[EmployeeGateway, EmployeeReader],
+        provides=EmployeeGateway,
+    )
+
+    provider.provide(
+        SqlalchemyEmployeeReader, scope=Scope.REQUEST, provides=EmployeeReader
     )
 
     provider.provide(

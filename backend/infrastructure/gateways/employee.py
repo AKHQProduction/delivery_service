@@ -1,6 +1,4 @@
-from typing import Any
-
-from sqlalchemy import Row, and_, delete, exists, func, select
+from sqlalchemy import RowMapping, and_, delete, exists, func, select
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -18,18 +16,7 @@ from infrastructure.persistence.models.employee import employees_table
 from infrastructure.persistence.models.user import users_table
 
 
-def map_rows_to_employee_card(
-    row: Row[tuple[Any, Any, Any, Any]],
-) -> EmployeeCard:
-    return EmployeeCard(
-        employee_id=row.employee_id,
-        user_id=row.user_id,
-        full_name=row.full_name,
-        role=row.role,
-    )
-
-
-class EmployeeMapper(EmployeeGateway, EmployeeReader):
+class EmployeeMapper(EmployeeGateway):
     def __init__(self, session: AsyncSession) -> None:
         self.session: AsyncSession = session
 
@@ -71,6 +58,19 @@ class EmployeeMapper(EmployeeGateway, EmployeeReader):
 
         await self.session.execute(query)
 
+
+class SqlalchemyEmployeeReader(EmployeeReader):
+    def __init__(self, session: AsyncSession):
+        self.session = session
+
+    def _load_employee_card(self, row: RowMapping) -> EmployeeCard:
+        return EmployeeCard(
+            employee_id=row.employee_id,
+            user_id=row.user_id,
+            full_name=row.full_name,
+            role=row.role,
+        )
+
     async def total(self, filters: EmployeeFilters) -> int:
         query = select(func.count(employees_table.c.employee_id))
 
@@ -109,7 +109,7 @@ class EmployeeMapper(EmployeeGateway, EmployeeReader):
 
         result = await self.session.execute(query)
 
-        return [map_rows_to_employee_card(row) for row in result.fetchall()]
+        return [self._load_employee_card(row) for row in result.mappings()]
 
     async def card_by_id(self, employee_id: EmployeeId) -> EmployeeCard | None:
         query = (
@@ -128,8 +128,8 @@ class EmployeeMapper(EmployeeGateway, EmployeeReader):
 
         result = await self.session.execute(query)
 
-        row = result.fetchone()
+        row = result.mappings().one_or_none()
 
         if not row:
             return None
-        return map_rows_to_employee_card(row)
+        return self._load_employee_card(row)
