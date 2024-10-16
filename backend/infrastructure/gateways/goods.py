@@ -60,6 +60,9 @@ class GoodsGateway(GoodsSaver, GoodsReader):
         if filters.shop_id:
             query = query.where(goods_table.c.shop_id == filters.shop_id)
 
+        if filters.goods_type:
+            query = query.where(goods_table.c.goods_type == filters.goods_type)
+
         total: int = await self.session.scalar(query)
 
         return total
