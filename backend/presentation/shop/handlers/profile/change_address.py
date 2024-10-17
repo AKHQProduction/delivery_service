@@ -24,15 +24,7 @@ from aiogram_dialog.widgets.text import Const, Format, Multi
 from dishka import FromDishka
 from dishka.integrations.aiogram_dialog import inject
 
-from application.common.identity_provider import IdentityProvider
-from application.profile.commands.check_address_by_coordinates import (
-    CheckAddressByCoordinates,
-    CheckAddressByCoordinatesInputData,
-)
-from application.profile.commands.check_address_by_row import (
-    CheckAddressByRow,
-    CheckAddressByRowInputData,
-)
+from application.common.geo import GeoProcessor
 from application.profile.commands.update_address_by_yourself import (
     ChangeAddress,
     ChangeAddressInputData,
@@ -209,19 +201,16 @@ async def on_input_user_location_from_tg(
     msg: Message,
     _: MessageInput,
     manager: DialogManager,
-    action: FromDishka[CheckAddressByCoordinates],
-    id_provider: FromDishka[IdentityProvider],
+    geo: FromDishka[GeoProcessor],
 ) -> None:
     coordinates = (msg.location.latitude, msg.location.longitude)
 
     try:
-        output_data = await action(
-            CheckAddressByCoordinatesInputData(coordinates)
-        )
+        output_data = await geo.get_location_with_coordinates(coordinates)
     except InvalidAddressInputError:
         await msg.answer("Не вдалось знайти вашої адреси, повторіть спробу")
     else:
-        manager.dialog_data["address"] = output_data.address
+        manager.dialog_data["address"] = output_data
         await send_main_keyboard(manager, "⏳")
         await manager.next()
 
@@ -278,14 +267,14 @@ async def on_input_address_from_user(
     __: ManagedTextInput,
     manager: DialogManager,
     value: str,
-    check_input: FromDishka[CheckAddressByRow],
+    geo: FromDishka[GeoProcessor],
 ) -> None:
     try:
-        output_data = await check_input(CheckAddressByRowInputData(value))
+        output_data = await geo.get_location_with_row(value)
     except InvalidAddressInputError:
         await msg.answer("Не вдалось знайти вашої адреси, повторіть спробу")
     else:
-        await manager.done({"address": output_data.address})
+        await manager.done({"address": output_data})
 
 
 send_address_by_user_dialog = Dialog(
