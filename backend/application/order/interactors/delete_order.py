@@ -8,7 +8,7 @@ from application.common.interactor import Interactor
 from application.order.errors import OrderNotFoundError
 from application.order.gateway import OrderReader, OrderSaver
 from application.shop.errors import ShopIsNotActiveError, ShopNotFoundError
-from application.shop.gateway import ShopReader
+from application.shop.gateway import ShopGateway
 from application.user.errors import UserNotFoundError
 from entities.order.models import OrderId
 from entities.shop.models import ShopId
@@ -23,7 +23,7 @@ class DeleteOrderInputData:
 class DeleteOrder(Interactor[DeleteOrderInputData, None]):
     def __init__(
         self,
-        shop_reader: ShopReader,
+        shop_reader: ShopGateway,
         identity_provider: IdentityProvider,
         access_service: AccessService,
         order_reader: OrderReader,

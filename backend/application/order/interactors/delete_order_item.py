@@ -16,7 +16,7 @@ from application.order.gateway import (
     OrderSaver,
 )
 from application.shop.errors import ShopIsNotActiveError, ShopNotFoundError
-from application.shop.gateway import ShopReader
+from application.shop.gateway import ShopGateway
 from application.user.errors import UserNotFoundError
 from entities.order.models import OrderItemId
 from entities.shop.models import ShopId
@@ -33,7 +33,7 @@ class DeleteOrderItem(Interactor[DeleteOrderItemInputData, None]):
         self,
         identity_provider: IdentityProvider,
         access_service: AccessService,
-        shop_reader: ShopReader,
+        shop_reader: ShopGateway,
         order_item_reader: OrderItemReader,
         order_item_saver: OrderItemSaver,
         order_reader: OrderReader,

@@ -4,12 +4,12 @@ from dataclasses import dataclass
 
 from application.common.input_data import Pagination
 from application.common.webhook_manager import WebhookManager
-from application.shop.gateway import ShopFilters, ShopReader
+from application.shop.gateway import ShopFilters, ShopGateway
 
 
 @dataclass
 class SetupAllShop:
-    shop_reader: ShopReader
+    shop_reader: ShopGateway
     webhook_manager: WebhookManager
 
     async def __call__(self) -> None:

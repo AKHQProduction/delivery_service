@@ -1,6 +1,6 @@
 from application.common.input_data import Pagination
 from application.shop.errors import ShopAlreadyExistError
-from application.shop.gateway import ShopFilters, ShopReader, ShopSaver
+from application.shop.gateway import ShopFilters, ShopGateway, ShopSaver
 from entities.shop.models import Shop, ShopId
 from entities.shop.value_objects import (
     DeliveryDistance,
@@ -11,7 +11,7 @@ from entities.shop.value_objects import (
 from entities.user.models import UserId
 
 
-class FakeShopGateway(ShopReader, ShopSaver):
+class FakeShopGateway(ShopGateway, ShopSaver):
     def __init__(self):
         self.shops: dict[int, Shop] = {
             1234567898: Shop(

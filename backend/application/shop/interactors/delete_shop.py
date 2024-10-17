@@ -7,7 +7,7 @@ from application.common.identity_provider import IdentityProvider
 from application.common.interactor import Interactor
 from application.common.webhook_manager import WebhookManager
 from application.shop.errors import UserNotHaveShopError
-from application.shop.gateway import ShopReader, ShopSaver
+from application.shop.gateway import ShopGateway, ShopSaver
 from application.user.errors import UserNotFoundError
 
 
@@ -15,7 +15,7 @@ class DeleteShop(Interactor[None, None]):
     def __init__(
         self,
         identity_provider: IdentityProvider,
-        shop_reader: ShopReader,
+        shop_reader: ShopGateway,
         shop_saver: ShopSaver,
         access_service: AccessService,
         commiter: Commiter,

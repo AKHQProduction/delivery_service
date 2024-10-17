@@ -6,7 +6,7 @@ from application.common.identity_provider import IdentityProvider
 from application.common.interactor import Interactor
 from application.profile.gateway import ProfileReader, ProfileSaver
 from application.shop.errors import ShopIsNotActiveError, ShopNotFoundError
-from application.shop.gateway import ShopReader
+from application.shop.gateway import ShopGateway
 from application.user.gateway import UserSaver
 from entities.profile.services import create_user_profile
 from entities.shop.models import ShopId
@@ -30,7 +30,7 @@ class ShopBotStart(Interactor[ShopBotStartInputData, UserId]):
         user_saver: UserSaver,
         profile_saver: ProfileSaver,
         profile_reader: ProfileReader,
-        shop_reader: ShopReader,
+        shop_reader: ShopGateway,
         commiter: Commiter,
     ):
         self._identity_provider = identity_provider

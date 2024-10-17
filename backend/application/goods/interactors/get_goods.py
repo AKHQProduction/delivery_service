@@ -7,7 +7,7 @@ from application.common.interactor import Interactor
 from application.goods.errors import GoodsNotFoundError
 from application.goods.gateway import GoodsReader
 from application.shop.errors import ShopIsNotActiveError, ShopNotFoundError
-from application.shop.gateway import ShopReader
+from application.shop.gateway import ShopGateway
 from entities.goods.models import Goods, GoodsId
 from entities.shop.models import ShopId
 
@@ -22,7 +22,7 @@ class GetGoods(Interactor[GetGoodsInputData, Goods]):
     def __init__(
         self,
         goods_reader: GoodsReader,
-        shop_reader: ShopReader,
+        shop_reader: ShopGateway,
         file_manager: FileManager,
     ):
         self._goods_reader = goods_reader

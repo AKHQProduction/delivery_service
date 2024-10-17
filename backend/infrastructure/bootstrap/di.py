@@ -58,7 +58,7 @@ from application.profile.commands.update_phone_number_by_yourself import (
 )
 from application.profile.gateway import ProfileReader, ProfileSaver
 from application.profile.queries.get_profile_card import GetProfileCard
-from application.shop.gateway import ShopReader, ShopSaver
+from application.shop.gateway import ShopGateway, ShopReader, ShopSaver
 from application.shop.interactors.change_regular_days_off import (
     ChangeRegularDaysOff,
 )
@@ -70,6 +70,7 @@ from application.shop.interactors.delete_shop import DeleteShop
 from application.shop.interactors.resume_shop import ResumeShop
 from application.shop.interactors.setup_all_shops import SetupAllShop
 from application.shop.interactors.stop_shop import StopShop
+from application.shop.queries.get_shop_info import GetShopInfo
 from application.user.gateway import UserReader, UserSaver
 from application.user.interactors.admin_bot_start import AdminBotStart
 from application.user.interactors.get_user import GetUser
@@ -84,7 +85,7 @@ from infrastructure.gateways.employee import (
 from infrastructure.gateways.goods import GoodsGateway
 from infrastructure.gateways.order import OrderGateway, OrderItemGateway
 from infrastructure.gateways.profile import ProfileGateway
-from infrastructure.gateways.shop import ShopGateway
+from infrastructure.gateways.shop import ShopMapper, SqlalchemyShopReader
 from infrastructure.gateways.user import UserGateway
 from infrastructure.geopy.config import GeoConfig
 from infrastructure.geopy.geopy_processor import PyGeoProcessor
@@ -112,9 +113,13 @@ def gateway_provider() -> Provider:
     )
 
     provider.provide(
-        ShopGateway,
+        ShopMapper,
         scope=Scope.REQUEST,
-        provides=AnyOf[ShopReader, ShopSaver],
+        provides=AnyOf[ShopGateway, ShopSaver],
+    )
+
+    provider.provide(
+        SqlalchemyShopReader, scope=Scope.REQUEST, provides=ShopReader
     )
 
     provider.provide(
@@ -195,6 +200,7 @@ def interactor_provider() -> Provider:
     provider.provide(ChangeRegularDaysOff, scope=Scope.REQUEST)
     provider.provide(ChangeSpecialDaysOff, scope=Scope.REQUEST)
     provider.provide(SetupAllShop, scope=Scope.REQUEST)
+    provider.provide(GetShopInfo, scope=Scope.REQUEST)
 
     provider.provide(AddGoods, scope=Scope.REQUEST)
     provider.provide(DeleteGoods, scope=Scope.REQUEST)

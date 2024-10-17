@@ -10,7 +10,7 @@ from application.employee.gateway import EmployeeGateway
 from application.profile.errors import ProfileNotFoundError
 from application.profile.gateway import ProfileReader
 from application.shop.errors import UserNotHaveShopError
-from application.shop.gateway import ShopReader
+from application.shop.gateway import ShopGateway
 from application.user.errors import UserNotFoundError
 from application.user.gateway import UserReader
 from entities.employee.models import Employee, EmployeeRole
@@ -28,7 +28,7 @@ class AddEmployee(Interactor[AddEmployeeInputData, None]):
         self,
         identity_provider: IdentityProvider,
         employee_saver: EmployeeGateway,
-        shop_reader: ShopReader,
+        shop_reader: ShopGateway,
         user_reader: UserReader,
         profile_reader: ProfileReader,
         access_service: AccessService,

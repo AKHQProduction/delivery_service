@@ -6,7 +6,7 @@ from application.common.identity_provider import IdentityProvider
 from application.common.interactor import Interactor
 from application.common.webhook_manager import WebhookManager
 from application.shop.errors import UserNotHaveShopError
-from application.shop.gateway import ShopReader
+from application.shop.gateway import ShopGateway
 from application.user.errors import UserNotFoundError
 
 
@@ -14,7 +14,7 @@ class StopShop(Interactor[None, None]):
     def __init__(
         self,
         identity_provider: IdentityProvider,
-        shop_reader: ShopReader,
+        shop_reader: ShopGateway,
         access_service: AccessService,
         commiter: Commiter,
         webhook_manager: WebhookManager,

@@ -7,7 +7,7 @@ from application.common.identity_provider import IdentityProvider
 from application.employee.errors import EmployeeNotFoundError
 from application.employee.gateway import EmployeeGateway
 from application.shop.errors import UserNotHaveShopError
-from application.shop.gateway import ShopReader
+from application.shop.gateway import ShopGateway
 from application.user.errors import UserNotFoundError
 from entities.employee.models import EmployeeId, EmployeeRole
 from entities.employee.services import change_employee_role
@@ -22,7 +22,7 @@ class ChangeEmployeeInputData:
 @dataclass
 class ChangeEmployee:
     identity_provider: IdentityProvider
-    shop_reader: ShopReader
+    shop_reader: ShopGateway
     access_service: AccessService
     employee_gateway: EmployeeGateway
     commiter: Commiter

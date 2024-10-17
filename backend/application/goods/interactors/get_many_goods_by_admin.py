@@ -6,7 +6,7 @@ from application.common.identity_provider import IdentityProvider
 from application.common.input_data import Pagination
 from application.goods.gateway import GoodsFilters, GoodsReader
 from application.shop.errors import UserNotHaveShopError
-from application.shop.gateway import ShopReader
+from application.shop.gateway import ShopGateway
 from application.user.errors import UserNotFoundError
 from entities.goods.models import Goods
 
@@ -26,7 +26,7 @@ class GetManyGoodsByAdminOutputData:
 @dataclass
 class GetManyGoodsByAdmin:
     identity_provider: IdentityProvider
-    shop_reader: ShopReader
+    shop_reader: ShopGateway
     goods_reader: GoodsReader
 
     async def __call__(

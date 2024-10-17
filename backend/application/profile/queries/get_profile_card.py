@@ -6,7 +6,7 @@ from application.employee.gateway import EmployeeGateway
 from application.profile.data.output import UserProfileCardOutputData
 from application.profile.errors import ProfileNotFoundError
 from application.profile.gateway import ProfileReader
-from application.shop.gateway import ShopReader
+from application.shop.gateway import ShopGateway
 from application.user.errors import UserNotFoundError
 from application.user.gateway import UserReader
 from entities.user.models import UserId
@@ -20,7 +20,7 @@ class GetProfileCardInputData:
 @dataclass(frozen=True)
 class GetProfileCard:
     identity_provider: IdentityProvider
-    shop_reader: ShopReader
+    shop_reader: ShopGateway
     profile_reader: ProfileReader
     user_reader: UserReader
     employee_reader: EmployeeGateway

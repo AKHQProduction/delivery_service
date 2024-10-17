@@ -7,7 +7,7 @@ from application.common.identity_provider import IdentityProvider
 from application.common.interactor import Interactor
 from application.employee.gateway import EmployeeGateway
 from application.shop.errors import UserNotHaveShopError
-from application.shop.gateway import ShopReader
+from application.shop.gateway import ShopGateway
 from application.user.errors import UserNotFoundError
 from entities.employee.models import EmployeeId
 
@@ -21,7 +21,7 @@ class RemoveEmployee(Interactor[RemoveEmployeeInputData, None]):
     def __init__(
         self,
         identity_provider: IdentityProvider,
-        shop_reader: ShopReader,
+        shop_reader: ShopGateway,
         access_service: AccessService,
         employee_gateway: EmployeeGateway,
         commiter: Commiter,

@@ -12,7 +12,7 @@ from application.goods.errors import GoodsNotFoundError
 from application.goods.gateway import GoodsReader
 from application.goods.input_data import FileMetadata
 from application.shop.errors import UserNotHaveShopError
-from application.shop.gateway import ShopReader
+from application.shop.gateway import ShopGateway
 from application.user.errors import UserNotFoundError
 from entities.goods.models import Goods, GoodsId, GoodsType
 from entities.goods.value_objects import GoodsPrice, GoodsTitle
@@ -32,7 +32,7 @@ class EditGoods(Interactor[EditGoodsInputData, None]):
         self,
         identity_provider: IdentityProvider,
         access_service: AccessService,
-        shop_reader: ShopReader,
+        shop_reader: ShopGateway,
         goods_reader: GoodsReader,
         file_manager: FileManager,
         commiter: Commiter,

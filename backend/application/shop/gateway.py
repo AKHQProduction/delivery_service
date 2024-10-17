@@ -1,6 +1,7 @@
 from abc import abstractmethod
 from asyncio import Protocol
 from dataclasses import dataclass
+from datetime import datetime
 
 from application.common.input_data import Pagination
 from entities.shop.models import Shop, ShopId
@@ -12,7 +13,7 @@ class ShopFilters:
     is_active: bool | None = None
 
 
-class ShopReader(Protocol):
+class ShopGateway(Protocol):
     @abstractmethod
     async def by_id(self, shop_id: ShopId) -> Shop | None:
         raise NotImplementedError
@@ -39,4 +40,18 @@ class ShopSaver(Protocol):
 
     @abstractmethod
     async def delete(self, shop_id: ShopId) -> None:
+        raise NotImplementedError
+
+
+@dataclass(frozen=True)
+class ShopInfo:
+    title: str
+    delivery_distance: int
+    regular_days_off: list[int]
+    special_days_off: list[datetime]
+
+
+class ShopReader(Protocol):
+    @abstractmethod
+    async def get_by_id(self, shop_id: ShopId) -> ShopInfo | None:
         raise NotImplementedError

@@ -10,7 +10,7 @@ from application.order.errors import (
 )
 from application.order.gateway import OrderItemReader, OrderReader
 from application.shop.errors import ShopIsNotActiveError, ShopNotFoundError
-from application.shop.gateway import ShopReader
+from application.shop.gateway import ShopGateway
 from application.user.errors import UserNotFoundError
 from entities.order.models import OrderItemId
 from entities.order.service import total_price
@@ -30,7 +30,7 @@ class EditOrderItemQuantity(Interactor[EditOrderItemQuantityInputData, None]):
         self,
         identity_provider: IdentityProvider,
         access_service: AccessService,
-        shop_reader: ShopReader,
+        shop_reader: ShopGateway,
         order_item_reader: OrderItemReader,
         order_reader: OrderReader,
         commiter: Commiter,
