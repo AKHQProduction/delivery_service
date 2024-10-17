@@ -1,17 +1,15 @@
-from typing import TYPE_CHECKING
+from datetime import date, datetime
 
 from aiogram_dialog import DialogManager
 from aiogram_dialog.widgets.kbd import Calendar, CalendarScope
 from aiogram_dialog.widgets.kbd.calendar_kbd import (
+    DATE_TEXT,
     CalendarDaysView,
     CalendarMonthView,
     CalendarScopeView,
     CalendarYearsView,
 )
 from aiogram_dialog.widgets.text import Format, Text
-
-if TYPE_CHECKING:
-    from datetime import date
 
 DAY_OF_WEEK: dict[int, str] = {
     0: "Пн",
@@ -48,6 +46,32 @@ class WeekDay(Text):
         return DAY_OF_WEEK[week_day]
 
 
+class DaysOff(Text):
+    def __init__(self, other: Text):
+        super().__init__()
+        self.mark = "🟥"
+        self.other = other
+
+    async def _render_text(self, data, manager: DialogManager) -> str:
+        current_date: date = data["date"]
+
+        regular_days_off: list[int] = manager.dialog_data.get(
+            "regular_days_off", []
+        )
+        special_days_off_dates: list[date] = [
+            datetime.fromisoformat(day).date()
+            for day in manager.dialog_data.get("special_days_off", [])
+        ]
+
+        is_regular_day_off = current_date.weekday() in regular_days_off
+        is_special_day_off = current_date in special_days_off_dates
+
+        if is_regular_day_off or is_special_day_off:
+            return self.mark
+
+        return await self.other.render_text(data, manager)
+
+
 class Month(Text):
     async def _render_text(self, data, manager: DialogManager) -> str:
         selected_date: date = data["date"]
@@ -66,6 +90,7 @@ class CustomCalendar(Calendar):
                 weekday_text=WeekDay(),
                 next_month_text=Month() + " >>",
                 prev_month_text="<< " + Month(),
+                date_text=DaysOff(other=DATE_TEXT),
             ),
             CalendarScope.MONTHS: CalendarMonthView(
                 self._item_callback_data,
