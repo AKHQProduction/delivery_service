@@ -1,8 +1,6 @@
-from datetime import datetime, timedelta
 from decimal import Decimal
 
 import pytest
-from zoneinfo import ZoneInfo
 
 from entities.common.errors import InvalidPriceError
 from entities.goods.errors import (
@@ -13,7 +11,6 @@ from entities.goods.value_objects import GoodsPrice, GoodsTitle
 from entities.shop.errors import (
     InvalidBotTokenError,
     InvalidRegularDayOffError,
-    InvalidSpecialDayOffError,
     ShopTitleTooLongError,
     ShopTitleTooShortError,
 )
@@ -21,7 +18,6 @@ from entities.shop.value_objects import (
     RegularDaysOff,
     ShopTitle,
     ShopToken,
-    SpecialDaysOff,
 )
 
 
@@ -86,30 +82,6 @@ def test_regular_days_off(regular_days_off: list[int], exc_class) -> None:
 
         assert days_off.regular_days == regular_days_off
         assert isinstance(days_off, RegularDaysOff)
-
-
-@pytest.mark.entities
-@pytest.mark.value_objects
-@pytest.mark.parametrize(
-    ["special_days_off", "exc_class"],
-    [
-        ([datetime.now(ZoneInfo("Europe/Kiev")) + timedelta(days=1)], None),
-        (
-            [datetime.now(ZoneInfo("Europe/Kiev")) - timedelta(days=1)],
-            InvalidSpecialDayOffError,
-        ),
-        ([], None),
-    ],
-)
-def test_special_days_off(special_days_off: list[datetime], exc_class) -> None:
-    if exc_class:
-        with pytest.raises(exc_class):
-            SpecialDaysOff(special_days_off)
-    else:
-        days_off = SpecialDaysOff(special_days_off)
-
-        assert days_off.special_days == special_days_off
-        assert isinstance(days_off, SpecialDaysOff)
 
 
 @pytest.mark.entities

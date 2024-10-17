@@ -8,7 +8,7 @@ from application.common.interactor import Interactor
 from application.goods.gateway import GoodsReader
 from application.order.gateway import OrderItemSaver, OrderSaver
 from application.shop.errors import ShopIsNotActiveError, ShopNotFoundError
-from application.shop.gateway import ShopReader
+from application.shop.gateway import ShopGateway
 from entities.order.models import (
     DeliveryPreference,
     Order,
@@ -48,7 +48,7 @@ class CreateOrder(Interactor[CreateOrderInputData, CreateOrderOutputData]):
     def __init__(
         self,
         identity_provider: IdentityProvider,
-        shop_reader: ShopReader,
+        shop_reader: ShopGateway,
         order_saver: OrderSaver,
         order_items_saver: OrderItemSaver,
         goods_reader: GoodsReader,

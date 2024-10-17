@@ -28,6 +28,7 @@ orders_table = sa.Table(
     sa.Column(
         "delivery_preference", sa.Enum(DeliveryPreference), nullable=False
     ),
+    sa.Column("delivery_date", sa.DATE, nullable=False),
     sa.Column(
         "user_id",
         sa.BigInteger,

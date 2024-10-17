@@ -1,4 +1,5 @@
 from dataclasses import dataclass
+from datetime import date
 from enum import StrEnum, auto
 from typing import NewType
 
@@ -32,6 +33,7 @@ class Order:
     total_price: OrderTotalPrice
     delivery_preference: DeliveryPreference
     bottles_to_exchange: BottlesToExchange
+    delivery_date: date
 
 
 @dataclass

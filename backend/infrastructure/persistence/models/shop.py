@@ -25,7 +25,7 @@ shops_table = sa.Table(
     sa.Column("location_latitude", sa.Float, nullable=False),
     sa.Column("location_longitude", sa.Float, nullable=False),
     sa.Column("shop_regular_days_off", sa.ARRAY(sa.Integer), default=list),
-    sa.Column("shop_special_days_off", sa.ARRAY(sa.DateTime), default=list),
+    sa.Column("shop_special_days_off", sa.ARRAY(sa.DATE), default=list),
     sa.Column("is_active", sa.Boolean, nullable=False, default=True),
     sa.Column(
         "created_at",
