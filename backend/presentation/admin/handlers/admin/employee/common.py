@@ -10,11 +10,11 @@ from dishka.integrations.aiogram_dialog import inject
 
 from application.common.input_data import Pagination
 from application.employee.gateway import EmployeeFilters
-from application.employee.query.get_employee_card import (
+from application.employee.queries.get_employee_card import (
     GetEmployeeCard,
     GetEmployeeCardInputData,
 )
-from application.employee.query.get_employees_cards import (
+from application.employee.queries.get_employees_cards import (
     GetEmployeeCards,
     GetEmployeeCardsInputData,
 )

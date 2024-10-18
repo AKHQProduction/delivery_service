@@ -36,11 +36,10 @@ from presentation.common.consts import (
     BACK_BTN_TXT,
     CANCEL_BTN_TXT,
 )
-from presentation.common.getters.goods import get_goods_types
+from presentation.common.getters.goods import get_goods_types, photo_getter
 from presentation.common.helpers import step_toggler_in_form
 
 from . import states
-from .common import photo_getter
 
 
 async def on_input_title(

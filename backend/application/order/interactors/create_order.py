@@ -1,5 +1,6 @@
 import logging
 from dataclasses import dataclass
+from datetime import date
 from decimal import Decimal
 
 from application.common.commiter import Commiter
@@ -37,6 +38,7 @@ class CreateOrderInputData:
     bottles_to_exchange: int
     delivery_preference: DeliveryPreference
     items: list[OrderItemData]
+    delivery_date: date
 
 
 @dataclass(frozen=True)
@@ -84,6 +86,7 @@ class CreateOrder(Interactor[CreateOrderInputData, CreateOrderOutputData]):
             total_price=OrderTotalPrice(Decimal(0)),
             bottles_to_exchange=BottlesToExchange(data.bottles_to_exchange),
             delivery_preference=data.delivery_preference,
+            delivery_date=data.delivery_date,
         )
 
         await self._order_saver.save(order)

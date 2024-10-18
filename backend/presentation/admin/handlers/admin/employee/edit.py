@@ -19,7 +19,7 @@ from application.employee.commands.edit_employee import (
     ChangeEmployee,
     ChangeEmployeeInputData,
 )
-from application.employee.query.get_employee_card import (
+from application.employee.queries.get_employee_card import (
     GetEmployeeCard,
     GetEmployeeCardInputData,
 )

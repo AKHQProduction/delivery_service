@@ -32,13 +32,13 @@ from application.goods.interactors.edit_goods import (
 )
 from application.goods.interactors.get_goods import GetGoods, GetGoodsInputData
 from entities.goods.models import GoodsType
-from presentation.admin.handlers.admin.goods.common import (
+from presentation.common.consts import ACTUAL_GOODS_TYPES, BACK_BTN_TXT
+from presentation.common.getters.goods import (
+    get_goods_types,
     goods_card_photo,
     goods_card_txt,
     photo_getter,
 )
-from presentation.common.consts import ACTUAL_GOODS_TYPES, BACK_BTN_TXT
-from presentation.common.getters.goods import get_goods_types
 
 from . import states
 
