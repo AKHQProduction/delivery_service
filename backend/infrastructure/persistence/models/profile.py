@@ -9,7 +9,7 @@ from infrastructure.persistence.models import mapper_registry
 profiles_table = sa.Table(
     "profiles",
     mapper_registry.metadata,
-    sa.Column("profiles_id", sa.Integer, primary_key=True, autoincrement=True),
+    sa.Column("profile_id", sa.Integer, primary_key=True, autoincrement=True),
     sa.Column("phone_number", sa.String(13), nullable=True),
     sa.Column("address_city", sa.String, nullable=True),
     sa.Column("address_street", sa.String, nullable=True),
@@ -54,6 +54,7 @@ def map_profile_table() -> None:
         properties={
             "shop": relationship("Shop", back_populates="profile"),
             "user": relationship("User", back_populates="profile"),
+            "order": relationship("Order", back_populates="profile"),
             "user_address": composite(
                 UserAddress,
                 profiles_table.c.address_city,

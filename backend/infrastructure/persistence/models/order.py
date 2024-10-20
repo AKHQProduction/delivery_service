@@ -30,9 +30,9 @@ orders_table = sa.Table(
     ),
     sa.Column("delivery_date", sa.DATE, nullable=False),
     sa.Column(
-        "user_id",
-        sa.BigInteger,
-        sa.ForeignKey("users.user_id", ondelete="CASCADE"),
+        "profile_id",
+        sa.Integer,
+        sa.ForeignKey("profiles.profile_id", ondelete="CASCADE"),
     ),
     sa.Column(
         "shop_id",
@@ -91,7 +91,7 @@ def map_orders_table() -> None:
         Order,
         orders_table,
         properties={
-            "user": relationship("User", back_populates="order"),
+            "profile": relationship("Profile", back_populates="order"),
             "shop": relationship("Shop", back_populates="order"),
             "order_item": relationship("OrderItem", back_populates="order"),
             "total_price": composite(

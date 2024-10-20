@@ -8,8 +8,11 @@ from application.common.identity_provider import IdentityProvider
 from application.common.interactor import Interactor
 from application.goods.gateway import GoodsReader
 from application.order.gateway import OrderItemSaver, OrderSaver
+from application.profile.errors import ProfileNotFoundError
+from application.profile.gateway import ProfileReader
 from application.shop.errors import ShopIsNotActiveError, ShopNotFoundError
 from application.shop.gateway import ShopGateway
+from application.user.errors import UserNotFoundError
 from entities.order.models import (
     DeliveryPreference,
     Order,
@@ -50,6 +53,7 @@ class CreateOrder(Interactor[CreateOrderInputData, CreateOrderOutputData]):
     def __init__(
         self,
         identity_provider: IdentityProvider,
+        profile_reader: ProfileReader,
         shop_reader: ShopGateway,
         order_saver: OrderSaver,
         order_items_saver: OrderItemSaver,
@@ -57,6 +61,7 @@ class CreateOrder(Interactor[CreateOrderInputData, CreateOrderOutputData]):
         commiter: Commiter,
     ):
         self._identity_provider = identity_provider
+        self._profile_reader = profile_reader
         self._shop_reader = shop_reader
         self._order_saver = order_saver
         self._order_item_saver = order_items_saver
@@ -69,18 +74,22 @@ class CreateOrder(Interactor[CreateOrderInputData, CreateOrderOutputData]):
         shop_id = ShopId(data.shop_id)
 
         shop = await self._shop_reader.by_id(shop_id)
-
         if not shop:
             raise ShopNotFoundError(shop_id)
-
         if not shop.is_active:
             raise ShopIsNotActiveError(shop_id)
 
         actor = await self._identity_provider.get_user()
+        if not actor:
+            raise UserNotFoundError()
+
+        profile = await self._profile_reader.by_identity(actor.user_id)
+        if not profile:
+            raise ProfileNotFoundError()
 
         order = Order(
             order_id=None,
-            user_id=actor.user_id,
+            profile_id=profile.profile_id,
             shop_id=shop_id,
             status=OrderStatus.NEW,
             total_price=OrderTotalPrice(Decimal(0)),
