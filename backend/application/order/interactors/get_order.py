@@ -44,15 +44,12 @@ class GetOrder(Interactor[GetOrderInputData, GetOrderOutputData]):
     async def __call__(self, data: GetOrderInputData) -> GetOrderOutputData:
         if data.shop_id:
             shop = await self._shop_reader.by_id(ShopId(data.shop_id))
-
             if not shop:
                 raise ShopNotFoundError(data.shop_id)
-
             if not shop.is_active:
                 raise ShopIsNotActiveError(data.shop_id)
 
         actor = await self._identity_provider.get_user()
-
         if not actor:
             raise UserNotFoundError()
 

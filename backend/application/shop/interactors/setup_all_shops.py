@@ -15,12 +15,11 @@ class SetupAllShop:
     async def __call__(self) -> None:
         filters = ShopFilters(is_active=True)
 
-        shops = await asyncio.create_task(
-            self.shop_reader.all(filters=filters, pagination=Pagination())
+        shops = await self.shop_reader.all(
+            filters=filters, pagination=Pagination()
         )
-        total_shop = await asyncio.create_task(
-            self.shop_reader.total(filters=filters)
-        )
+
+        total_shop = await self.shop_reader.total(filters=filters)
 
         logging.info("Found %s active shops", total_shop)
 

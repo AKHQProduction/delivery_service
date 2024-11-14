@@ -27,12 +27,10 @@ class ResumeShop(Interactor[None, None]):
 
     async def __call__(self, data: None = None) -> None:
         actor = await self._identity_provider.get_user()
-
         if not actor:
             raise UserNotFoundError()
 
         shop = await self._shop_reader.by_identity(actor.user_id)
-
         if shop is None:
             raise UserNotHaveShopError(actor.user_id)
 

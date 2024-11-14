@@ -1,4 +1,3 @@
-import asyncio
 import logging
 from dataclasses import dataclass
 
@@ -47,10 +46,8 @@ class AdminBotStart(
         if not actor:
             user_id = UserId(data.user_id)
 
-            await asyncio.create_task(
-                self._user_saver.save(
-                    create_user(user_id, data.full_name, data.username)
-                )
+            await self._user_saver.save(
+                create_user(user_id, data.full_name, data.username)
             )
 
             logging.info("New user created %s", data.user_id)

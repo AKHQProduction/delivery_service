@@ -40,20 +40,16 @@ class DeleteOrder(Interactor[DeleteOrderInputData, None]):
     async def __call__(self, data: DeleteOrderInputData) -> None:
         if data.shop_id:
             shop = await self._shop_reader.by_id(ShopId(data.shop_id))
-
             if not shop:
                 raise ShopNotFoundError(data.shop_id)
-
             if not shop.is_active:
                 raise ShopIsNotActiveError(data.shop_id)
 
         actor = await self._identity_provider.get_user()
-
         if not actor:
             raise UserNotFoundError()
 
         order = await self._order_reader.by_id(OrderId(data.order_id))
-
         if not order:
             raise OrderNotFoundError(data.order_id)
 

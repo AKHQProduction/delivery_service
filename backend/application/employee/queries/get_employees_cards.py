@@ -44,7 +44,6 @@ class GetEmployeeCards:
             raise UserNotFoundError()
 
         shop = await self.shop_reader.by_identity(actor.user_id)
-
         if not shop:
             raise UserNotHaveShopError(actor.user_id)
         if not shop.is_active:

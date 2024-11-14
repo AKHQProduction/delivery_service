@@ -52,27 +52,22 @@ class DeleteOrderItem(Interactor[DeleteOrderItemInputData, None]):
     async def __call__(self, data: DeleteOrderItemInputData) -> None:
         if data.shop_id:
             shop = await self._shop_reader.by_id(ShopId(data.shop_id))
-
             if not shop:
                 raise ShopNotFoundError(data.shop_id)
-
             if not shop.is_active:
                 raise ShopIsNotActiveError(data.shop_id)
 
         actor = await self._identity_provider.get_user()
-
         if not actor:
             raise UserNotFoundError()
 
         order_item = await self._order_item_reader.by_id(
             OrderItemId(data.order_item_id)
         )
-
         if not order_item:
             raise OrderItemNotFoundError(data.order_item_id)
 
         order = await self._order_reader.by_id(order_item.order_id)
-
         if not order:
             raise OrderNotFoundError(order_item.order_id)
 

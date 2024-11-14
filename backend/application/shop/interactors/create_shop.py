@@ -1,4 +1,3 @@
-import asyncio
 import logging
 from dataclasses import dataclass, field
 
@@ -47,19 +46,15 @@ class CreateShop(Interactor[CreateShopInputData, ShopId]):
         self._access_service = access_service
 
     async def __call__(self, data: CreateShopInputData) -> ShopId:
-        actor = await asyncio.create_task(self._identity_provider.get_user())
+        actor = await self._identity_provider.get_user()
         if not actor:
             raise UserNotFoundError()
         if not actor.is_active:
             raise UserIsNotActiveError(actor.user_id)
 
-        await asyncio.create_task(
-            self._access_service.ensure_can_create_shop(actor.user_id)
-        )
+        await self._access_service.ensure_can_create_shop(actor.user_id)
 
-        await asyncio.create_task(
-            self._webhook_manager.setup_webhook(ShopToken(data.token))
-        )
+        await self._webhook_manager.setup_webhook(ShopToken(data.token))
 
         shop = create_shop(
             data.title,

@@ -32,7 +32,6 @@ class StopShop(Interactor[None, None]):
             raise UserNotFoundError()
 
         shop = await self._shop_reader.by_identity(actor.user_id)
-
         if shop is None:
             raise UserNotHaveShopError(actor.user_id)
 

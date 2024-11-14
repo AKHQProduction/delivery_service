@@ -43,12 +43,10 @@ class RemoveEmployee(Interactor[RemoveEmployeeInputData, None]):
 
         employee_id = EmployeeId(data.employee_id)
 
-        employee = await self._employee_gateway.by_id(employee_id)
-
         shop_id = shop.shop_id
 
         await self._access_service.ensure_can_edit_employee(
-            actor.user_id, shop_id, employee
+            actor.user_id, shop_id
         )
 
         await self._employee_gateway.delete(employee_id)
