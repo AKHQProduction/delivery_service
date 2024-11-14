@@ -13,13 +13,13 @@ from presentation.admin.handlers.admin.employee.common import (
     get_employee_cards,
 )
 from presentation.admin.handlers.admin.employee.states import AddToEmployee
-from presentation.common.consts import EMPLOYEE_BTN_TXT
+from presentation.common.consts import EMPLOYEES_BTN_TXT
 
 router = Router()
 
 
 @router.message(Command("employee"))
-@router.message(F.text == EMPLOYEE_BTN_TXT)
+@router.message(F.text == EMPLOYEES_BTN_TXT)
 async def run_employee_workflow_dialog(
     _: Message, dialog_manager: DialogManager
 ):

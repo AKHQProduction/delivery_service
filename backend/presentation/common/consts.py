@@ -2,8 +2,10 @@ from entities.employee.models import EmployeeRole
 from entities.goods.models import GoodsType
 from entities.order.models import DeliveryPreference
 
-EMPLOYEE_BTN_TXT = "👥 Співробітники"
+EMPLOYEES_BTN_TXT = "👥 Співробітники"
 GOODS_BTN_TEXT = "📦 Товари"
+
+CLIENTS_BTN_TXT = "🧍‍♂️ Клієнти"
 
 CREATE_ORDER_BTN_TXT = "🛒 Створити замовлення"
 MY_ORDERS_BTN_TXT = "🗄 Мої замовлення"
