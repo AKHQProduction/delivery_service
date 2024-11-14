@@ -56,8 +56,6 @@ from application.profile.commands.update_address_by_yourself import (
 from application.profile.commands.update_phone_number_by_yourself import (
     UpdatePhoneNumberByYourself,
 )
-from application.profile.gateway import ProfileReader, ProfileSaver
-from application.profile.queries.get_profile_card import GetProfileCard
 from application.shop.gateway import ShopGateway, ShopReader, ShopSaver
 from application.shop.interactors.change_regular_days_off import (
     ChangeRegularDaysOff,
@@ -84,7 +82,6 @@ from infrastructure.gateways.employee import (
 )
 from infrastructure.gateways.goods import GoodsGateway
 from infrastructure.gateways.order import OrderGateway, OrderItemGateway
-from infrastructure.gateways.profile import ProfileGateway
 from infrastructure.gateways.shop import ShopMapper, SqlalchemyShopReader
 from infrastructure.gateways.user import UserGateway
 from infrastructure.geopy.config import GeoConfig
@@ -148,12 +145,6 @@ def gateway_provider() -> Provider:
         OrderItemGateway,
         scope=Scope.REQUEST,
         provides=AnyOf[OrderItemSaver, OrderItemReader],
-    )
-
-    provider.provide(
-        ProfileGateway,
-        scope=Scope.REQUEST,
-        provides=AnyOf[ProfileSaver, ProfileReader],
     )
 
     provider.provide(
@@ -221,7 +212,6 @@ def interactor_provider() -> Provider:
     provider.provide(DeleteOrderItem, scope=Scope.REQUEST)
     provider.provide(DeleteOrder, scope=Scope.REQUEST)
 
-    provider.provide(GetProfileCard, scope=Scope.REQUEST)
     provider.provide(UpdatePhoneNumberByYourself, scope=Scope.REQUEST)
 
     return provider

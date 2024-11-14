@@ -3,10 +3,8 @@ from dataclasses import dataclass
 
 from application.common.commiter import Commiter
 from application.common.identity_provider import IdentityProvider
-from application.profile.errors import ProfileNotFoundError
-from application.profile.gateway import ProfileReader
 from application.user.errors import UserNotFoundError
-from entities.profile.value_objects import UserAddress
+from entities.user.value_objects import UserAddress
 
 
 @dataclass(frozen=True)
@@ -22,7 +20,6 @@ class ChangeAddressInputData:
 @dataclass
 class ChangeAddress:
     identity_provider: IdentityProvider
-    profile_reader: ProfileReader
     commiter: Commiter
 
     async def __call__(self, data: ChangeAddressInputData):
@@ -30,11 +27,7 @@ class ChangeAddress:
         if not actor:
             raise UserNotFoundError()
 
-        profile = await self.profile_reader.by_identity(actor.user_id)
-        if not profile:
-            raise ProfileNotFoundError(actor.user_id)
-
-        profile.user_address = UserAddress(
+        actor.user_address = UserAddress(
             city=data.city,
             street=data.street,
             house_number=data.house_number,
@@ -45,6 +38,4 @@ class ChangeAddress:
 
         await self.commiter.commit()
 
-        logging.info(
-            "Successfully updated user profile with id=%s", profile.user_id
-        )
+        logging.info("Successfully updated user with id=%s", actor.user_id)

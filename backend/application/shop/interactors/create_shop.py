@@ -8,8 +8,6 @@ from application.common.identity_provider import IdentityProvider
 from application.common.interactor import Interactor
 from application.common.webhook_manager import WebhookManager
 from application.employee.gateway import EmployeeGateway
-from application.profile.errors import ProfileNotFoundError
-from application.profile.gateway import ProfileReader
 from application.shop.gateway import ShopSaver
 from application.user.errors import UserNotFoundError
 from application.user.gateway import UserSaver
@@ -39,7 +37,6 @@ class CreateShop(Interactor[CreateShopInputData, ShopId]):
         identity_provider: IdentityProvider,
         webhook_manager: WebhookManager,
         access_service: AccessService,
-        profile_reader: ProfileReader,
     ) -> None:
         self._shop_saver = shop_saver
         self._user_saver = user_saver
@@ -48,7 +45,6 @@ class CreateShop(Interactor[CreateShopInputData, ShopId]):
         self._identity_provider = identity_provider
         self._webhook_manager = webhook_manager
         self._access_service = access_service
-        self._profile_reader = profile_reader
 
     async def __call__(self, data: CreateShopInputData) -> ShopId:
         actor = await asyncio.create_task(self._identity_provider.get_user())
@@ -73,26 +69,16 @@ class CreateShop(Interactor[CreateShopInputData, ShopId]):
             data.location,
         )
 
-        profile = await asyncio.create_task(
-            self._profile_reader.by_identity(actor.user_id)
-        )
-        if not profile:
-            raise ProfileNotFoundError(actor.user_id)
-
-        profile.shop_id = shop.shop_id
-
         add_user_to_shop(shop, actor)
 
-        await asyncio.create_task(self._shop_saver.save(shop))
-        await asyncio.create_task(
-            self._employee_saver.save(
-                Employee(
-                    employee_id=None,
-                    user_id=actor.user_id,
-                    shop_id=shop.shop_id,
-                    role=EmployeeRole.ADMIN,
-                ),
-            )
+        await self._shop_saver.save(shop)
+        await self._employee_saver.save(
+            Employee(
+                employee_id=None,
+                user_id=actor.user_id,
+                shop_id=shop.shop_id,
+                role=EmployeeRole.ADMIN,
+            ),
         )
 
         await self._commiter.commit()

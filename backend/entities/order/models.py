@@ -8,8 +8,8 @@ from entities.order.value_objects import (
     OrderItemAmount,
     OrderTotalPrice,
 )
-from entities.profile.models import ProfileId
 from entities.shop.models import ShopId
+from entities.user.models import UserId
 
 OrderId = NewType("OrderId", int)
 OrderItemId = NewType("OrderItemId", int)
@@ -27,7 +27,7 @@ class DeliveryPreference(StrEnum):
 @dataclass
 class Order:
     order_id: OrderId | None
-    profile_id: ProfileId
+    user_id: UserId
     shop_id: ShopId
     status: OrderStatus
     total_price: OrderTotalPrice
