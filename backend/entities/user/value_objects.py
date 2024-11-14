@@ -1,7 +1,7 @@
 import re
 from dataclasses import dataclass
 
-from entities.profile.errors import InvalidPhoneNumberError
+from entities.user.errors import InvalidPhoneNumberError
 
 
 @dataclass(slots=True, frozen=True, eq=True, unsafe_hash=True)
