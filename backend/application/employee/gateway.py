@@ -3,7 +3,7 @@ from asyncio import Protocol
 from dataclasses import dataclass
 from typing import Iterable
 
-from application.common.input_data import Pagination
+from application.common.interfaces.filters import Pagination
 from application.employee.output_data import EmployeeCard
 from entities.employee.models import Employee, EmployeeId
 from entities.user.models import UserId

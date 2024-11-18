@@ -24,6 +24,7 @@ from dishka import FromDishka
 from dishka.integrations.aiogram_dialog import inject
 
 from application.common.geo import GeoProcessor
+from application.common.identity_provider import IdentityProvider
 from application.common.specs.length import HasGreateLength, HasLessLength
 from application.common.specs.pattern import MatchPattern
 from application.common.specs.value import Greate
@@ -36,7 +37,7 @@ from application.shop.interactors.create_shop import (
     CreateShop,
     CreateShopInputData,
 )
-from application.user.interactors.admin_bot_start import AdminBotStart
+from application.user.commands.admin_bot_start import AdminBotStart
 from presentation.common.consts import CANCEL_BTN_TXT, CREATE_SHOP_BTN_TXT
 from presentation.common.helpers import step_toggler_in_form
 from presentation.common.widgets.common.cancel_btn import (
@@ -149,20 +150,6 @@ async def check_after_success_input_delivery_distance(
 
 
 @inject
-async def on_back_to_main_menu_from_location_input(
-    call: CallbackQuery,
-    _: Cancel,
-    manager: DialogManager,
-    action: FromDishka[AdminBotStart],
-):
-    bot: Bot = manager.middleware_data["bot"]
-
-    await manager.done()
-
-    await cmd_start(call, bot, action)
-
-
-@inject
 async def on_input_shop_location(
     msg: Message,
     _: MessageInput,
@@ -190,10 +177,11 @@ async def on_reject_input_location(
     _: Button,
     manager: DialogManager,
     action: FromDishka[AdminBotStart],
+    id_provider: FromDishka[IdentityProvider],
 ):
     bot: Bot = manager.middleware_data["bot"]
 
-    await cmd_start(call, bot, action)
+    await cmd_start(call, bot, action, id_provider)
 
 
 async def create_shop_form_getter(

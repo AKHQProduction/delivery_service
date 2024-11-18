@@ -4,7 +4,7 @@ from dataclasses import dataclass
 from typing import Iterable
 
 from application.common.identity_provider import IdentityProvider
-from application.common.input_data import Pagination
+from application.common.interfaces.filters import Pagination
 from application.employee.gateway import (
     EmployeeFilters,
     EmployeeReader,

@@ -9,9 +9,9 @@ from aiogram_dialog.widgets.text import Case, Const, Format, Multi
 from dishka import FromDishka
 from dishka.integrations.aiogram_dialog import inject
 
-from application.profile.queries.get_profile_card import (
-    GetProfileCard,
-    GetProfileCardInputData,
+from application.user.queries.get_user_profile import (
+    GetUserProfile,
+    GetUserProfileInputData,
 )
 from presentation.common.consts import PROFILE_BTN_TXT
 
@@ -30,7 +30,7 @@ async def shop_profile_btn_handler(_: Message, dialog_manager: DialogManager):
 profile_card = Multi(
     Const("👀 Картка користувача"),
     Multi(
-        Format("<b>🆔 Телеграм ID:</b> <code>{dialog_data[user_id]}</code>"),
+        Format("<b>🆔 Телеграм ID:</b> <code>{dialog_data[tg_id]}</code>"),
         Format("<b>💁🏼‍♂️ Ім'я: </b>{dialog_data[full_name]}"),
         Case(
             {
@@ -65,18 +65,19 @@ profile_card = Multi(
 @inject
 async def get_profile_card(
     dialog_manager: DialogManager,
-    action: FromDishka[GetProfileCard],
+    action: FromDishka[GetUserProfile],
     **_kwargs,
 ) -> dict[str, Any]:
-    user_id = dialog_manager.dialog_data.get(
-        "user_id", dialog_manager.event.from_user.id
+    tg_id = dialog_manager.dialog_data.get(
+        "tg_id", dialog_manager.event.from_user.id
     )
 
-    user_profile_card = await action(
-        GetProfileCardInputData(user_id=int(user_id))
-    )
+    user_profile = await action(GetUserProfileInputData(tg_id=int(tg_id)))
 
-    dialog_manager.dialog_data.update(asdict(user_profile_card))
+    profile_data = asdict(user_profile)
+    profile_data["address"] = user_profile.address.full_address
+
+    dialog_manager.dialog_data.update(profile_data)
 
     return dialog_manager.dialog_data
 

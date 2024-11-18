@@ -3,7 +3,7 @@ from aiogram.filters import CommandStart
 from aiogram.types import Message
 from dishka import FromDishka
 
-from application.user.interactors.shop_bot_start import (
+from application.user.commands.shop_bot_start import (
     ShopBotStart,
     ShopBotStartInputData,
 )
@@ -21,7 +21,7 @@ async def shop_cmd_start(
     await action(
         data=ShopBotStartInputData(
             shop_id=shop_id,
-            user_id=msg.from_user.id,
+            tg_id=msg.from_user.id,
             full_name=name,
             username=msg.from_user.username,
         )

@@ -2,7 +2,7 @@ from abc import abstractmethod
 from asyncio import Protocol
 from dataclasses import dataclass
 
-from application.common.input_data import Pagination
+from application.common.interfaces.filters import Pagination
 from entities.goods.models import Goods, GoodsId, GoodsType
 
 

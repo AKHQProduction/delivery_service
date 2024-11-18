@@ -3,7 +3,7 @@ import logging
 from dataclasses import dataclass
 
 from application.common.identity_provider import IdentityProvider
-from application.common.input_data import Pagination
+from application.common.interfaces.filters import Pagination
 from application.goods.gateway import GoodsFilters, GoodsReader
 from application.shop.errors import UserNotHaveShopError
 from application.shop.gateway import ShopGateway

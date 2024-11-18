@@ -2,8 +2,8 @@ import asyncio
 import logging
 from dataclasses import dataclass
 
-from application.common.input_data import Pagination
 from application.common.interactor import Interactor
+from application.common.interfaces.filters import Pagination
 from application.goods.gateway import GoodsFilters, GoodsReader
 from application.shop.errors import ShopIsNotActiveError, ShopNotFoundError
 from application.shop.gateway import ShopGateway

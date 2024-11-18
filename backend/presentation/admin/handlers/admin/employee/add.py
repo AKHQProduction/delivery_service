@@ -16,7 +16,10 @@ from application.employee.commands.add_employee import (
 )
 from application.employee.errors import EmployeeAlreadyExistError
 from application.user.errors import UserNotFoundError
-from application.user.interactors.get_user import GetUser, GetUserInputData
+from application.user.queries.get_user_profile import (
+    GetUserProfile,
+    GetUserProfileInputData,
+)
 from presentation.admin.handlers.admin.employee.common import (
     employee_card,
     get_actual_employee_roles,
@@ -40,10 +43,10 @@ async def on_success_input_user_id(
     __: ManagedTextInput,
     manager: DialogManager,
     value: int,
-    action: FromDishka[GetUser],
+    action: FromDishka[GetUserProfile],
 ):
     try:
-        await action(GetUserInputData(value))
+        await action(GetUserProfileInputData(value))
 
         manager.dialog_data["user_id"] = value
         await manager.next()

@@ -11,7 +11,7 @@ employees_table = sa.Table(
     sa.Column("employee_id", sa.Integer, primary_key=True, autoincrement=True),
     sa.Column(
         "user_id",
-        sa.BigInteger,
+        sa.Integer,
         sa.ForeignKey("users.user_id", ondelete="CASCADE"),
     ),
     sa.Column(

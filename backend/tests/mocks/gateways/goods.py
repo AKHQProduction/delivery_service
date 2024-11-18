@@ -1,7 +1,7 @@
 from decimal import Decimal
 from uuid import UUID
 
-from application.common.input_data import Pagination
+from application.common.interfaces.filters import Pagination
 from application.goods.errors import GoodsAlreadyExistError
 from application.goods.gateway import (
     GoodsFilters,

@@ -13,11 +13,12 @@ users_table = sa.Table(
     mapper_registry.metadata,
     sa.Column(
         "user_id",
-        sa.BigInteger,
+        sa.Integer,
         primary_key=True,
         unique=True,
     ),
     sa.Column("full_name", sa.String(128), nullable=False),
+    sa.Column("tg_id", sa.BigInteger, nullable=True),
     sa.Column(
         "username",
         sa.String(255),

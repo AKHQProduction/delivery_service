@@ -1,4 +1,4 @@
-from application.common.input_data import Pagination
+from application.common.interfaces.filters import Pagination
 from application.shop.errors import ShopAlreadyExistError
 from application.shop.gateway import ShopFilters, ShopGateway, ShopSaver
 from entities.shop.models import Shop, ShopId

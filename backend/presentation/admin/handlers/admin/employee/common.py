@@ -8,7 +8,7 @@ from aiogram_dialog.widgets.text import Format, Multi
 from dishka import FromDishka
 from dishka.integrations.aiogram_dialog import inject
 
-from application.common.input_data import Pagination
+from application.common.interfaces.filters import Pagination
 from application.employee.gateway import EmployeeFilters
 from application.employee.queries.get_employee_card import (
     GetEmployeeCard,

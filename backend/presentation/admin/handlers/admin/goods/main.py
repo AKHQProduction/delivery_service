@@ -9,7 +9,7 @@ from aiogram_dialog.widgets.text import Const, Format
 from dishka import FromDishka
 from dishka.integrations.aiogram_dialog import inject
 
-from application.common.input_data import Pagination
+from application.common.interfaces.filters import Pagination
 from application.goods.gateway import GoodsFilters
 from application.goods.interactors.get_many_goods_by_admin import (
     GetManyGoodsByAdmin,

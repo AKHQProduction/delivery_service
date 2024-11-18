@@ -3,7 +3,7 @@ from asyncio import Protocol
 from dataclasses import dataclass
 from datetime import datetime
 
-from application.common.input_data import Pagination
+from application.common.interfaces.filters import Pagination
 from entities.shop.models import Shop, ShopId
 from entities.user.models import UserId
 

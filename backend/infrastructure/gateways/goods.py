@@ -2,7 +2,7 @@ from sqlalchemy import delete, func, select
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from application.common.input_data import Pagination, SortOrder
+from application.common.interfaces.filters import Pagination, SortOrder
 from application.goods.errors import GoodsAlreadyExistError
 from application.goods.gateway import (
     GoodsFilters,

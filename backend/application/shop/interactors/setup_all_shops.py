@@ -2,7 +2,7 @@ import asyncio
 import logging
 from dataclasses import dataclass
 
-from application.common.input_data import Pagination
+from application.common.interfaces.filters import Pagination
 from application.common.webhook_manager import WebhookManager
 from application.shop.gateway import ShopFilters, ShopGateway
 

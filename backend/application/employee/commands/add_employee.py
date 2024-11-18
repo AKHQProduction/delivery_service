@@ -4,13 +4,12 @@ from dataclasses import dataclass
 from application.common.access_service import AccessService
 from application.common.commiter import Commiter
 from application.common.identity_provider import IdentityProvider
-from application.common.interactor import Interactor
+from application.common.interfaces.user.gateways import UserMapper
 from application.employee.errors import EmployeeAlreadyExistError
 from application.employee.gateway import EmployeeGateway
 from application.shop.errors import UserNotHaveShopError
 from application.shop.gateway import ShopGateway
 from application.user.errors import UserNotFoundError
-from application.user.gateway import UserReader
 from entities.employee.models import Employee, EmployeeRole
 from entities.user.models import UserId
 
@@ -21,20 +20,20 @@ class AddEmployeeInputData:
     role: EmployeeRole
 
 
-class AddEmployee(Interactor[AddEmployeeInputData, None]):
+class AddEmployee:
     def __init__(
         self,
         identity_provider: IdentityProvider,
         employee_saver: EmployeeGateway,
         shop_reader: ShopGateway,
-        user_reader: UserReader,
+        user_mapper: UserMapper,
         access_service: AccessService,
         commiter: Commiter,
     ):
         self._identity_provider = identity_provider
         self._employee_saver = employee_saver
         self._shop_reader = shop_reader
-        self._user_reader = user_reader
+        self._user_mapper = user_mapper
         self._access_service = access_service
         self._commiter = commiter
 
@@ -49,7 +48,7 @@ class AddEmployee(Interactor[AddEmployeeInputData, None]):
         if not shop:
             raise UserNotHaveShopError(employee.user_id)
 
-        user = await self._user_reader.by_id(user_id)
+        user = await self._user_mapper.get_with_id(user_id)
         if not user:
             raise UserNotFoundError(data.user_id)
 

@@ -2,7 +2,7 @@ from sqlalchemy import RowMapping, and_, delete, exists, func, select
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from application.common.input_data import Pagination, SortOrder
+from application.common.interfaces.filters import Pagination, SortOrder
 from application.employee.errors import EmployeeAlreadyExistError
 from application.employee.gateway import (
     EmployeeFilters,

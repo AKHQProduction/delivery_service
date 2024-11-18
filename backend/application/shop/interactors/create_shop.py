@@ -9,7 +9,6 @@ from application.common.webhook_manager import WebhookManager
 from application.employee.gateway import EmployeeGateway
 from application.shop.gateway import ShopSaver
 from application.user.errors import UserNotFoundError
-from application.user.gateway import UserSaver
 from entities.employee.models import Employee, EmployeeRole
 from entities.shop.models import ShopId
 from entities.shop.services import add_user_to_shop, create_shop
@@ -30,7 +29,6 @@ class CreateShop(Interactor[CreateShopInputData, ShopId]):
     def __init__(
         self,
         shop_saver: ShopSaver,
-        user_saver: UserSaver,
         employee_saver: EmployeeGateway,
         commiter: Commiter,
         identity_provider: IdentityProvider,
@@ -38,7 +36,6 @@ class CreateShop(Interactor[CreateShopInputData, ShopId]):
         access_service: AccessService,
     ) -> None:
         self._shop_saver = shop_saver
-        self._user_saver = user_saver
         self._employee_saver = employee_saver
         self._commiter = commiter
         self._identity_provider = identity_provider

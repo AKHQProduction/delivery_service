@@ -7,6 +7,7 @@ from dishka import (
     from_context,
     make_async_container,
     provide,
+    provide_all,
 )
 
 from application.common.access_service import AccessService
@@ -14,6 +15,7 @@ from application.common.commiter import Commiter
 from application.common.file_manager import FileManager
 from application.common.geo import GeoProcessor
 from application.common.identity_provider import IdentityProvider
+from application.common.interfaces.user.gateways import UserMapper, UserReader
 from application.common.webhook_manager import TokenVerifier, WebhookManager
 from application.employee.commands.add_employee import AddEmployee
 from application.employee.commands.edit_employee import (
@@ -69,11 +71,9 @@ from application.shop.interactors.resume_shop import ResumeShop
 from application.shop.interactors.setup_all_shops import SetupAllShop
 from application.shop.interactors.stop_shop import StopShop
 from application.shop.queries.get_shop_info import GetShopInfo
-from application.user.gateway import UserReader, UserSaver
-from application.user.interactors.admin_bot_start import AdminBotStart
-from application.user.interactors.get_user import GetUser
-from application.user.interactors.get_users import GetUsers
-from application.user.interactors.shop_bot_start import ShopBotStart
+from application.user.commands.admin_bot_start import AdminBotStart
+from application.user.commands.shop_bot_start import ShopBotStart
+from application.user.queries.get_user_profile import GetUserProfile
 from infrastructure.auth.tg_auth import TgIdentityProvider
 from infrastructure.bootstrap.configs import load_all_configs
 from infrastructure.gateways.employee import (
@@ -83,7 +83,10 @@ from infrastructure.gateways.employee import (
 from infrastructure.gateways.goods import GoodsGateway
 from infrastructure.gateways.order import OrderGateway, OrderItemGateway
 from infrastructure.gateways.shop import ShopMapper, SqlalchemyShopReader
-from infrastructure.gateways.user import UserGateway
+from infrastructure.gateways.user import (
+    SQLAlchemyUserMapper,
+    SQLAlchemyUserReader,
+)
 from infrastructure.geopy.config import GeoConfig
 from infrastructure.geopy.geopy_processor import PyGeoProcessor
 from infrastructure.geopy.provider import get_geolocator
@@ -104,9 +107,10 @@ def gateway_provider() -> Provider:
     provider = Provider()
 
     provider.provide(
-        UserGateway,
-        scope=Scope.REQUEST,
-        provides=AnyOf[UserReader, UserSaver],
+        SQLAlchemyUserMapper, scope=Scope.REQUEST, provides=UserMapper
+    )
+    provider.provide(
+        SQLAlchemyUserReader, scope=Scope.REQUEST, provides=UserReader
     )
 
     provider.provide(
@@ -181,9 +185,6 @@ def interactor_provider() -> Provider:
     provider.provide(AdminBotStart, scope=Scope.REQUEST)
     provider.provide(ChangeAddress, scope=Scope.REQUEST)
 
-    provider.provide(GetUser, scope=Scope.REQUEST)
-    provider.provide(GetUsers, scope=Scope.REQUEST)
-
     provider.provide(CreateShop, scope=Scope.REQUEST)
     provider.provide(StopShop, scope=Scope.REQUEST)
     provider.provide(ResumeShop, scope=Scope.REQUEST)
@@ -215,6 +216,12 @@ def interactor_provider() -> Provider:
     provider.provide(UpdatePhoneNumberByYourself, scope=Scope.REQUEST)
 
     return provider
+
+
+class QueriesProvider(Provider):
+    scope = Scope.REQUEST
+
+    queries = provide_all(GetUserProfile)
 
 
 def service_provider() -> Provider:
@@ -271,13 +278,13 @@ class TgProvider(Provider):
     @provide(scope=Scope.REQUEST)
     async def get_identity_provider(
         self,
-        user_id: int,
-        user_gateway: UserReader,
+        tg_id: int,
+        user_mapper: UserMapper,
         employee_gateway: EmployeeGateway,
     ) -> IdentityProvider:
         identity_provider = TgIdentityProvider(
-            user_id=user_id,
-            user_gateway=user_gateway,
+            tg_id=tg_id,
+            user_mapper=user_mapper,
             employee_gateway=employee_gateway,
         )
 
@@ -293,6 +300,7 @@ def setup_providers() -> list[Provider]:
         service_provider(),
         infrastructure_provider(),
         config_provider(),
+        QueriesProvider(),
     ]
 
     return providers
