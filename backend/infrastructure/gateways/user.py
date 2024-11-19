@@ -2,7 +2,7 @@ from sqlalchemy import RowMapping, select
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from application.common.interfaces.user.gateways import UserMapper, UserReader
+from application.common.interfaces.user.gateways import UserGateway, UserReader
 from application.common.interfaces.user.read_models import (
     UserAddress,
     UserProfile,
@@ -12,7 +12,7 @@ from entities.user.models import User, UserId
 from infrastructure.persistence.models.user import users_table
 
 
-class SQLAlchemyUserMapper(UserMapper):
+class UserMapper(UserGateway):
     def __init__(self, session: AsyncSession) -> None:
         self.session: AsyncSession = session
 
@@ -39,7 +39,7 @@ class SQLAlchemyUserMapper(UserMapper):
         return result.scalar_one_or_none()
 
 
-class SQLAlchemyUserReader(UserReader):
+class UserDAO(UserReader):
     def __init__(self, session: AsyncSession) -> None:
         self.session: AsyncSession = session
 

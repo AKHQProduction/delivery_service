@@ -15,7 +15,7 @@ from application.common.commiter import Commiter
 from application.common.file_manager import FileManager
 from application.common.geo import GeoProcessor
 from application.common.identity_provider import IdentityProvider
-from application.common.interfaces.user.gateways import UserMapper, UserReader
+from application.common.interfaces.user.gateways import UserGateway, UserReader
 from application.common.webhook_manager import TokenVerifier, WebhookManager
 from application.employee.commands.add_employee import AddEmployee
 from application.employee.commands.edit_employee import (
@@ -84,8 +84,8 @@ from infrastructure.gateways.goods import GoodsGateway
 from infrastructure.gateways.order import OrderGateway, OrderItemGateway
 from infrastructure.gateways.shop import ShopMapper, SqlalchemyShopReader
 from infrastructure.gateways.user import (
-    SQLAlchemyUserMapper,
-    SQLAlchemyUserReader,
+    UserDAO,
+    UserMapper,
 )
 from infrastructure.geopy.config import GeoConfig
 from infrastructure.geopy.geopy_processor import PyGeoProcessor
@@ -106,12 +106,8 @@ from infrastructure.tg.config import ProjectConfig, WebhookConfig
 def gateway_provider() -> Provider:
     provider = Provider()
 
-    provider.provide(
-        SQLAlchemyUserMapper, scope=Scope.REQUEST, provides=UserMapper
-    )
-    provider.provide(
-        SQLAlchemyUserReader, scope=Scope.REQUEST, provides=UserReader
-    )
+    provider.provide(UserMapper, scope=Scope.REQUEST, provides=UserGateway)
+    provider.provide(UserDAO, scope=Scope.REQUEST, provides=UserReader)
 
     provider.provide(
         ShopMapper,
@@ -279,7 +275,7 @@ class TgProvider(Provider):
     async def get_identity_provider(
         self,
         tg_id: int,
-        user_mapper: UserMapper,
+        user_mapper: UserGateway,
         employee_gateway: EmployeeGateway,
     ) -> IdentityProvider:
         identity_provider = TgIdentityProvider(

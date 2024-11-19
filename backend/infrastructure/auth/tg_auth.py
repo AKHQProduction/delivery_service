@@ -1,5 +1,5 @@
 from application.common.identity_provider import IdentityProvider
-from application.common.interfaces.user.gateways import UserMapper
+from application.common.interfaces.user.gateways import UserGateway
 from application.employee.gateway import EmployeeGateway
 from application.user.errors import UserNotFoundError
 from entities.employee.models import EmployeeRole
@@ -10,7 +10,7 @@ class TgIdentityProvider(IdentityProvider):
     def __init__(
         self,
         tg_id: int,
-        user_mapper: UserMapper,
+        user_mapper: UserGateway,
         employee_gateway: EmployeeGateway,
     ):
         self._tg_id = tg_id

@@ -1,11 +1,11 @@
 from application.common.interfaces.filters import Pagination
-from application.common.interfaces.user.gateways import UserMapper
+from application.common.interfaces.user.gateways import UserGateway
 from application.user.errors import UserAlreadyExistError
 from application.user.gateways import GetUsersFilters
 from entities.user.models import User, UserId
 
 
-class FakeUserMapper(UserMapper):
+class FakeUserGateway(UserGateway):
     def __init__(self):
         self.users: dict[int, User] = {
             1: User(user_id=UserId(1), full_name="First User"),

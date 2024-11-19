@@ -5,7 +5,7 @@ from application.common.interfaces.user.read_models import UserProfile
 from entities.user.models import User, UserId
 
 
-class UserMapper(Protocol):
+class UserGateway(Protocol):
     @abstractmethod
     async def add_one(self, new_user: User) -> None:
         raise NotImplementedError

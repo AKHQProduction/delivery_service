@@ -3,7 +3,7 @@ from dataclasses import dataclass
 
 from application.common.commiter import Commiter
 from application.common.identity_provider import IdentityProvider
-from application.common.interfaces.user.gateways import UserMapper
+from application.common.interfaces.user.gateways import UserGateway
 from application.shop.errors import ShopIsNotActiveError, ShopNotFoundError
 from application.shop.gateway import ShopGateway
 from entities.shop.models import ShopId
@@ -23,7 +23,7 @@ class ShopBotStartInputData:
 @dataclass
 class ShopBotStart:
     identity_provider: IdentityProvider
-    user_mapper: UserMapper
+    user_mapper: UserGateway
     shop_reader: ShopGateway
     commiter: Commiter
 

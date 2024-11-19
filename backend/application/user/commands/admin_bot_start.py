@@ -3,7 +3,7 @@ from dataclasses import dataclass
 
 from application.common.commiter import Commiter
 from application.common.identity_provider import IdentityProvider
-from application.common.interfaces.user.gateways import UserMapper
+from application.common.interfaces.user.gateways import UserGateway
 from entities.user.services import create_user
 
 
@@ -16,7 +16,7 @@ class AdminBotStartInputData:
 
 @dataclass
 class AdminBotStart:
-    user_mapper: UserMapper
+    user_mapper: UserGateway
     commiter: Commiter
     identity_provider: IdentityProvider
 

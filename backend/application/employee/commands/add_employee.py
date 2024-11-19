@@ -4,7 +4,7 @@ from dataclasses import dataclass
 from application.common.access_service import AccessService
 from application.common.commiter import Commiter
 from application.common.identity_provider import IdentityProvider
-from application.common.interfaces.user.gateways import UserMapper
+from application.common.interfaces.user.gateways import UserGateway
 from application.employee.errors import EmployeeAlreadyExistError
 from application.employee.gateway import EmployeeGateway
 from application.shop.errors import UserNotHaveShopError
@@ -26,7 +26,7 @@ class AddEmployee:
         identity_provider: IdentityProvider,
         employee_saver: EmployeeGateway,
         shop_reader: ShopGateway,
-        user_mapper: UserMapper,
+        user_mapper: UserGateway,
         access_service: AccessService,
         commiter: Commiter,
     ):
