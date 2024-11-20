@@ -2,13 +2,18 @@ from dataclasses import dataclass
 
 
 @dataclass(eq=False)
-class AddressNotFoundError(Exception):
+class AddressNotFoundInCityError(Exception):
     address: str
     city: str
 
     @property
     def message(self):
         return f"{self.address} is not exists in the city {self.city}"
+
+
+@dataclass(eq=False)
+class InvalidAddressInputError(Exception):
+    pass
 
 
 @dataclass(eq=False)

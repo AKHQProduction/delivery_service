@@ -116,11 +116,8 @@ class AccessService:
         )
 
     async def ensure_can_edit_employee(
-        self, user_id: UserId, shop_id: ShopId, employee: Employee
+        self, user_id: UserId, shop_id: ShopId
     ) -> None:
-        if user_id == employee.user_id:
-            raise AccessDeniedError()
-
         await self._ensure_has_permission(
             user_id, Permission.CAN_EDIT_EMPLOYEE, shop_id
         )

@@ -6,7 +6,7 @@ from application.common.commiter import Commiter
 from application.common.identity_provider import IdentityProvider
 from application.common.interactor import Interactor
 from application.shop.errors import UserNotHaveShopError
-from application.shop.gateway import ShopReader
+from application.shop.gateway import ShopGateway
 from application.user.errors import UserNotFoundError
 from entities.shop.value_objects import RegularDaysOff
 
@@ -20,7 +20,7 @@ class ChangeRegularDaysOff(Interactor[ChangeRegularDaysOffInputData, None]):
     def __init__(
         self,
         identity_provider: IdentityProvider,
-        shop_reader: ShopReader,
+        shop_reader: ShopGateway,
         commiter: Commiter,
         access_service: AccessService,
     ) -> None:

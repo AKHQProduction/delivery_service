@@ -1,19 +1,22 @@
-from sqlalchemy import func, select
+from sqlalchemy import RowMapping, select
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from application.common.input_data import Pagination, SortOrder
+from application.common.interfaces.user.gateways import UserGateway, UserReader
+from application.common.interfaces.user.read_models import (
+    UserAddress,
+    UserProfile,
+)
 from application.user.errors import UserAlreadyExistError
-from application.user.gateway import GetUsersFilters, UserReader, UserSaver
 from entities.user.models import User, UserId
 from infrastructure.persistence.models.user import users_table
 
 
-class UserGateway(UserReader, UserSaver):
+class UserMapper(UserGateway):
     def __init__(self, session: AsyncSession) -> None:
         self.session: AsyncSession = session
 
-    async def save(self, user: User) -> None:
+    async def add_one(self, user: User) -> None:
         self.session.add(user)
 
         try:
@@ -21,35 +24,54 @@ class UserGateway(UserReader, UserSaver):
         except IntegrityError as error:
             raise UserAlreadyExistError(user.user_id) from error
 
-    async def by_id(self, user_id: UserId) -> User | None:
+    async def get_with_id(self, user_id: UserId) -> User | None:
         query = select(User).where(users_table.c.user_id == user_id)
 
         result = await self.session.execute(query)
 
         return result.scalar_one_or_none()
 
-    async def all(
-        self, filters: GetUsersFilters, pagination: Pagination
-    ) -> list[User]:
-        query = select(User)
+    async def get_with_tg_id(self, tg_id: int) -> User | None:
+        query = select(User).where(users_table.c.tg_id == tg_id)
 
-        if pagination.order is SortOrder.ASC:
-            query = query.order_by(users_table.c.created_at.asc())
-        else:
-            query = query.order_by(users_table.c.created_at.desc())
+        result = await self.session.execute(query)
 
-        if pagination.offset is not None:
-            query = query.offset(pagination.offset)
-        if pagination.limit is not None:
-            query = query.offset(pagination.limit)
+        return result.scalar_one_or_none()
 
-        result = await self.session.scalars(query)
 
-        return list(result.all())
+class UserDAO(UserReader):
+    def __init__(self, session: AsyncSession) -> None:
+        self.session: AsyncSession = session
 
-    async def total(self, filters: GetUsersFilters) -> int:
-        query = select(func.count(users_table.c.user_id))
+    @staticmethod
+    def _load_user_profile(row: RowMapping) -> UserProfile:
+        return UserProfile(
+            user_id=row.user_id,
+            full_name=row.full_name,
+            username=row.username,
+            tg_id=row.tg_id,
+            phone_number=row.phone_number,
+            address=UserAddress(
+                city=row.address_city,
+                street=row.address_street,
+                house_number=row.address_house_number,
+            ),
+        )
 
-        total: int = await self.session.scalar(query)
+    async def get_profile_with_tg_id(self, tg_id: int) -> UserProfile | None:
+        query = select(
+            users_table.c.user_id,
+            users_table.c.full_name,
+            users_table.c.username,
+            users_table.c.tg_id,
+            users_table.c.phone_number,
+            users_table.c.address_city,
+            users_table.c.address_street,
+            users_table.c.address_house_number,
+        ).where(users_table.c.tg_id == tg_id)
 
-        return total
+        result = await self.session.execute(query)
+
+        row = result.mappings().one_or_none()
+
+        return None if not row else self._load_user_profile(row)

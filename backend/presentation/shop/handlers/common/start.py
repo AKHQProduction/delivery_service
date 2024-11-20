@@ -1,36 +1,30 @@
-from aiogram import Bot, Router
+from aiogram import Router
 from aiogram.filters import CommandStart
 from aiogram.types import Message
 from dishka import FromDishka
 
-from application.user.interactors.shop_bot_start import (
+from application.user.commands.shop_bot_start import (
     ShopBotStart,
     ShopBotStartInputData,
-    UserAddressData,
 )
+from presentation.shop.main_keyboard import main_menu_shop_bot
 
 router = Router()
 
 
 @router.message(CommandStart())
 async def shop_cmd_start(
-    msg: Message, bot: Bot, action: FromDishka[ShopBotStart]
+    msg: Message, shop_id: int, action: FromDishka[ShopBotStart]
 ):
-    shop_id = bot.id
+    name = msg.from_user.full_name
 
     await action(
         data=ShopBotStartInputData(
             shop_id=shop_id,
-            user_id=msg.from_user.id,
-            full_name=msg.from_user.full_name,
+            tg_id=msg.from_user.id,
+            full_name=name,
             username=msg.from_user.username,
-            address=UserAddressData(
-                city="Черкаси",
-                street="Дахнівська",
-                house_number=42,
-                apartment_number=None,
-                floor=None,
-                intercom_code=None,
-            ),
         )
     )
+
+    await msg.answer(f"Hello, {name}!", reply_markup=main_menu_shop_bot())

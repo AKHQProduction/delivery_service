@@ -27,6 +27,15 @@ class S3FileManager(FileManager):
         with BytesIO(payload) as file_obj:
             s3.upload_fileobj(file_obj, "goods", path)
 
+    def get_by_file_id(self, file_path: str) -> bytes | None:
+        s3 = self._client()
+
+        data = s3.get_object(Bucket="goods", Key=file_path)
+
+        if not data:
+            return None
+        return data["Body"].read()
+
     def delete_object(self, path: str) -> None:
         s3 = self._client()
 

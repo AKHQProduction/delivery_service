@@ -1,27 +1,27 @@
 import logging
 from dataclasses import dataclass
-from datetime import datetime
+from datetime import date
 
 from application.common.access_service import AccessService
 from application.common.commiter import Commiter
 from application.common.identity_provider import IdentityProvider
 from application.common.interactor import Interactor
 from application.shop.errors import UserNotHaveShopError
-from application.shop.gateway import ShopReader
+from application.shop.gateway import ShopGateway
 from application.user.errors import UserNotFoundError
 from entities.shop.value_objects import SpecialDaysOff
 
 
 @dataclass(frozen=True)
 class ChangeSpecialDaysOffInputData:
-    special_days_off: list[datetime]
+    special_days_off: list[date]
 
 
 class ChangeSpecialDaysOff(Interactor[ChangeSpecialDaysOffInputData, None]):
     def __init__(
         self,
         identity_provider: IdentityProvider,
-        shop_reader: ShopReader,
+        shop_reader: ShopGateway,
         commiter: Commiter,
         access_service: AccessService,
     ) -> None:

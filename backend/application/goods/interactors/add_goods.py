@@ -11,7 +11,7 @@ from application.common.interactor import Interactor
 from application.goods.gateway import GoodsSaver
 from application.goods.input_data import FileMetadata
 from application.shop.errors import UserNotHaveShopError
-from application.shop.gateway import ShopReader
+from application.shop.gateway import ShopGateway
 from application.user.errors import UserNotFoundError
 from entities.goods.models import Goods, GoodsId, GoodsType
 from entities.goods.value_objects import GoodsPrice, GoodsTitle
@@ -31,7 +31,7 @@ class AddGoods(Interactor[AddGoodsInputData, GoodsId]):
         self,
         identity_provider: IdentityProvider,
         access_service: AccessService,
-        shop_reader: ShopReader,
+        shop_reader: ShopGateway,
         goods_saver: GoodsSaver,
         file_manager: FileManager,
         commiter: Commiter,

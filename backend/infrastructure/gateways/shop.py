@@ -1,17 +1,23 @@
-from sqlalchemy import delete, func, select
+from sqlalchemy import RowMapping, delete, func, select
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from application.common.input_data import Pagination, SortOrder
+from application.common.interfaces.filters import Pagination, SortOrder
 from application.shop.errors import ShopAlreadyExistError
-from application.shop.gateway import ShopFilters, ShopReader, ShopSaver
+from application.shop.gateway import (
+    ShopFilters,
+    ShopGateway,
+    ShopInfo,
+    ShopReader,
+    ShopSaver,
+)
 from entities.shop.models import Shop, ShopId
 from entities.user.models import UserId
 from infrastructure.persistence.models.shop import shops_table
 from infrastructure.persistence.models.user import users_table
 
 
-class ShopGateway(ShopSaver, ShopReader):
+class ShopMapper(ShopSaver, ShopGateway):
     def __init__(self, session: AsyncSession) -> None:
         self.session: AsyncSession = session
 
@@ -45,8 +51,7 @@ class ShopGateway(ShopSaver, ShopReader):
         query = select(Shop)
 
         if filters and filters.is_active:
-            query = query.where(shops_table.c.is_active)
-
+            query = query.where(shops_table.c.is_active.is_(filters.is_active))
         if pagination.order is SortOrder.ASC:
             query = query.order_by(shops_table.c.created_at.asc())
         else:
@@ -55,7 +60,7 @@ class ShopGateway(ShopSaver, ShopReader):
         if pagination.offset is not None:
             query = query.offset(pagination.offset)
         if pagination.limit is not None:
-            query = query.offset(pagination.limit)
+            query = query.limit(pagination.limit)
 
         result = await self.session.scalars(query)
 
@@ -65,7 +70,7 @@ class ShopGateway(ShopSaver, ShopReader):
         query = select(func.count(shops_table.c.shop_id))
 
         if filters and filters.is_active:
-            query = query.where(shops_table.c.is_active)
+            query = query.where(shops_table.c.is_active.is_(filters.is_active))
 
         total: int = await self.session.scalar(query)
 
@@ -75,3 +80,29 @@ class ShopGateway(ShopSaver, ShopReader):
         query = delete(Shop).where(shops_table.c.shop_id == shop_id)
 
         await self.session.execute(query)
+
+
+class SqlalchemyShopReader(ShopReader):
+    def __init__(self, session: AsyncSession):
+        self.session = session
+
+    async def get_by_id(self, shop_id: ShopId) -> ShopInfo | None:
+        query = select(
+            shops_table.c.shop_title,
+            shops_table.c.shop_delivery_distance,
+            shops_table.c.shop_regular_days_off,
+            shops_table.c.shop_special_days_off,
+        ).where(shops_table.c.shop_id == shop_id)
+
+        result = await self.session.execute(query)
+
+        row: RowMapping | None = result.mappings().one_or_none()
+
+        if not row:
+            return None
+        return ShopInfo(
+            title=row.shop_title,
+            delivery_distance=row.shop_delivery_distance,
+            regular_days_off=row.shop_regular_days_off,
+            special_days_off=row.shop_special_days_off,
+        )

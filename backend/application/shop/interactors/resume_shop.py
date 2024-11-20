@@ -6,7 +6,7 @@ from application.common.identity_provider import IdentityProvider
 from application.common.interactor import Interactor
 from application.common.webhook_manager import WebhookManager
 from application.shop.errors import UserNotHaveShopError
-from application.shop.gateway import ShopReader
+from application.shop.gateway import ShopGateway
 from application.user.errors import UserNotFoundError
 
 
@@ -14,7 +14,7 @@ class ResumeShop(Interactor[None, None]):
     def __init__(
         self,
         identity_provider: IdentityProvider,
-        shop_reader: ShopReader,
+        shop_reader: ShopGateway,
         access_service: AccessService,
         commiter: Commiter,
         webhook_manager: WebhookManager,
@@ -27,12 +27,10 @@ class ResumeShop(Interactor[None, None]):
 
     async def __call__(self, data: None = None) -> None:
         actor = await self._identity_provider.get_user()
-
         if not actor:
             raise UserNotFoundError()
 
         shop = await self._shop_reader.by_identity(actor.user_id)
-
         if shop is None:
             raise UserNotHaveShopError(actor.user_id)
 

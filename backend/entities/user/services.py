@@ -1,5 +1,9 @@
-from entities.user.models import User, UserId
+from entities.user.models import User
 
 
-def create_user(user_id: UserId, full_name: str, username: str) -> User:
-    return User(user_id=user_id, full_name=full_name, username=username)
+def create_user(
+    full_name: str, username: str, tg_id: int | None = None
+) -> User:
+    return User(
+        user_id=None, full_name=full_name, username=username, tg_id=tg_id
+    )

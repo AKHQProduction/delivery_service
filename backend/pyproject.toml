@@ -17,6 +17,7 @@ aiogram-dialog = { git = "https://github.com/Tishka17/aiogram_dialog.git", rev =
 geopy = "^2.4.1"
 dishka = { git = "https://github.com/reagento/dishka", rev = "80fc5564b2688a76bfdce013bf0e96af9f9ca847" }
 boto3 = "^1.35.20"
+redis = "^5.1.1"
 
 [tool.poetry.group.dev.dependencies]
 pytest = "^8.3.2"

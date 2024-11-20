@@ -14,11 +14,11 @@ class ShopTokenUnauthorizedError(ApplicationError):
 
 @dataclass(eq=False)
 class ShopNotFoundError(ApplicationError):
-    shop_id: int
+    shop_id: int | None = None
 
     @property
     def message(self):
-        return f"Shop with id={self.shop_id} is not exists"
+        return "Shop not found"
 
 
 @dataclass(eq=False)
@@ -41,8 +41,8 @@ class ShopAlreadyExistError(ApplicationError):
 
 @dataclass(eq=False)
 class ShopIsNotActiveError(ApplicationError):
-    shop_id: int
+    shop_id: int | None = None
 
     @property
     def message(self):
-        return f"Shop={self.shop_id} is not active"
+        return "Shop is not active"

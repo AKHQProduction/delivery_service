@@ -1,5 +1,6 @@
 import logging
 from dataclasses import dataclass
+from datetime import date
 from decimal import Decimal
 
 from application.common.commiter import Commiter
@@ -8,7 +9,8 @@ from application.common.interactor import Interactor
 from application.goods.gateway import GoodsReader
 from application.order.gateway import OrderItemSaver, OrderSaver
 from application.shop.errors import ShopIsNotActiveError, ShopNotFoundError
-from application.shop.gateway import ShopReader
+from application.shop.gateway import ShopGateway
+from application.user.errors import UserNotFoundError
 from entities.order.models import (
     DeliveryPreference,
     Order,
@@ -37,6 +39,7 @@ class CreateOrderInputData:
     bottles_to_exchange: int
     delivery_preference: DeliveryPreference
     items: list[OrderItemData]
+    delivery_date: date
 
 
 @dataclass(frozen=True)
@@ -48,7 +51,7 @@ class CreateOrder(Interactor[CreateOrderInputData, CreateOrderOutputData]):
     def __init__(
         self,
         identity_provider: IdentityProvider,
-        shop_reader: ShopReader,
+        shop_reader: ShopGateway,
         order_saver: OrderSaver,
         order_items_saver: OrderItemSaver,
         goods_reader: GoodsReader,
@@ -67,14 +70,14 @@ class CreateOrder(Interactor[CreateOrderInputData, CreateOrderOutputData]):
         shop_id = ShopId(data.shop_id)
 
         shop = await self._shop_reader.by_id(shop_id)
-
         if not shop:
             raise ShopNotFoundError(shop_id)
-
         if not shop.is_active:
             raise ShopIsNotActiveError(shop_id)
 
         actor = await self._identity_provider.get_user()
+        if not actor:
+            raise UserNotFoundError()
 
         order = Order(
             order_id=None,
@@ -84,6 +87,7 @@ class CreateOrder(Interactor[CreateOrderInputData, CreateOrderOutputData]):
             total_price=OrderTotalPrice(Decimal(0)),
             bottles_to_exchange=BottlesToExchange(data.bottles_to_exchange),
             delivery_preference=data.delivery_preference,
+            delivery_date=data.delivery_date,
         )
 
         await self._order_saver.save(order)

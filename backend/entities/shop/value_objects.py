@@ -1,6 +1,6 @@
 import re
 from dataclasses import dataclass, field
-from datetime import datetime
+from datetime import date, datetime
 
 from zoneinfo import ZoneInfo
 
@@ -58,10 +58,10 @@ class RegularDaysOff:
 
 @dataclass(slots=True, frozen=True, eq=True, unsafe_hash=True)
 class SpecialDaysOff:
-    special_days: list[datetime] = field(default_factory=list)
+    special_days: list[date] = field(default_factory=list)
 
     def __post_init__(self) -> None:
-        now = datetime.now(tz=ZoneInfo("Europe/Kiev"))
+        now = datetime.now(tz=ZoneInfo("Europe/Kiev")).date()
 
         if any(now > day for day in self.special_days):
             raise InvalidSpecialDayOffError()

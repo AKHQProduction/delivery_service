@@ -4,8 +4,9 @@ from aiogram.types import KeyboardButton, ReplyKeyboardMarkup
 
 from entities.employee.models import EmployeeRole
 from presentation.common.consts import (
+    CLIENTS_BTN_TXT,
     CREATE_SHOP_BTN_TXT,
-    EMPLOYEE_BTN_TXT,
+    EMPLOYEES_BTN_TXT,
     FAQ_BTN_TXT,
     GOODS_BTN_TEXT,
     PROFILE_BTN_TXT,
@@ -27,9 +28,10 @@ class AdminKeyboard(KeyboardByRole):
             keyboard=[
                 [profile_btn],
                 [
-                    KeyboardButton(text=EMPLOYEE_BTN_TXT),
+                    KeyboardButton(text=EMPLOYEES_BTN_TXT),
                     KeyboardButton(text=GOODS_BTN_TEXT),
                 ],
+                [KeyboardButton(text=CLIENTS_BTN_TXT)],
                 [faq_btn],
             ],
             resize_keyboard=True,
@@ -48,6 +50,9 @@ class UserKeyboard(KeyboardByRole):
         )
 
 
+keyboards = {EmployeeRole.ADMIN: AdminKeyboard, "DEFAULT": UserKeyboard}
+
+
 class MainReplyKeyboard:
     def __init__(self, role: EmployeeRole | None):
         self.role = role
@@ -55,6 +60,4 @@ class MainReplyKeyboard:
     async def render_keyboard(self) -> ReplyKeyboardMarkup | None:
         if not self.role:
             return UserKeyboard().render_keyboard()
-        if self.role == EmployeeRole.ADMIN:
-            return AdminKeyboard().render_keyboard()
-        return None
+        return keyboards[self.role]().render_keyboard()

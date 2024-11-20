@@ -10,7 +10,7 @@ from application.common.interactor import Interactor
 from application.goods.errors import GoodsNotFoundError
 from application.goods.gateway import GoodsReader, GoodsSaver
 from application.shop.errors import UserNotHaveShopError
-from application.shop.gateway import ShopReader
+from application.shop.gateway import ShopGateway
 from application.user.errors import UserNotFoundError
 from entities.goods.models import GoodsId
 
@@ -25,7 +25,7 @@ class DeleteGoods(Interactor[DeleteGoodsInputData, None]):
         self,
         identity_provider: IdentityProvider,
         access_service: AccessService,
-        shop_reader: ShopReader,
+        shop_reader: ShopGateway,
         goods_saver: GoodsSaver,
         goods_reader: GoodsReader,
         file_manager: FileManager,

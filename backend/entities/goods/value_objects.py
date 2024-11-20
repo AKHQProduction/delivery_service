@@ -18,11 +18,14 @@ class GoodsTitle:
     def __post_init__(self) -> None:
         len_value = len(self.title)
 
-        if len_value <= self.MIN_TITLE_LEN:
+        if len_value < self.MIN_TITLE_LEN:
             raise GoodsTitleTooShortError(self.title)
 
         if len_value > self.MAX_TITLE_LEN:
             raise GoodsTitleTooLongError(self.title)
+
+    def __str__(self) -> str:
+        return self.title
 
 
 @dataclass(slots=True, frozen=True, eq=True, unsafe_hash=True)
@@ -40,3 +43,6 @@ class GoodsPrice:
 
         if self.value <= 0:
             raise InvalidPriceError()
+
+    def __str__(self) -> str:
+        return f"{self.value}"

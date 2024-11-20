@@ -7,7 +7,7 @@ from application.common.identity_provider import IdentityProvider
 from application.common.interactor import Interactor
 from application.order.gateway import OrderItemReader, OrderReader
 from application.shop.errors import ShopIsNotActiveError, ShopNotFoundError
-from application.shop.gateway import ShopReader
+from application.shop.gateway import ShopGateway
 from application.user.errors import UserNotFoundError
 from entities.order.models import OrderId, OrderItem, OrderStatus
 from entities.shop.models import ShopId
@@ -33,7 +33,7 @@ class GetOrder(Interactor[GetOrderInputData, GetOrderOutputData]):
         access_service: AccessService,
         order_reader: OrderReader,
         order_item_reader: OrderItemReader,
-        shop_reader: ShopReader,
+        shop_reader: ShopGateway,
     ):
         self._identity_provider = identity_provider
         self._access_service = access_service
@@ -44,15 +44,12 @@ class GetOrder(Interactor[GetOrderInputData, GetOrderOutputData]):
     async def __call__(self, data: GetOrderInputData) -> GetOrderOutputData:
         if data.shop_id:
             shop = await self._shop_reader.by_id(ShopId(data.shop_id))
-
             if not shop:
                 raise ShopNotFoundError(data.shop_id)
-
             if not shop.is_active:
                 raise ShopIsNotActiveError(data.shop_id)
 
         actor = await self._identity_provider.get_user()
-
         if not actor:
             raise UserNotFoundError()
 

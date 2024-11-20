@@ -7,31 +7,38 @@ from dishka import (
     from_context,
     make_async_container,
     provide,
+    provide_all,
 )
 
 from application.common.access_service import AccessService
 from application.common.commiter import Commiter
 from application.common.file_manager import FileManager
+from application.common.geo import GeoProcessor
 from application.common.identity_provider import IdentityProvider
+from application.common.interfaces.user.gateways import UserGateway, UserReader
 from application.common.webhook_manager import TokenVerifier, WebhookManager
 from application.employee.commands.add_employee import AddEmployee
-from application.employee.commands.change_employee_role import (
-    ChangeEmployeeRole,
+from application.employee.commands.edit_employee import (
+    ChangeEmployee,
 )
 from application.employee.commands.remove_employee import RemoveEmployee
 from application.employee.gateway import (
     EmployeeGateway,
+    EmployeeReader,
 )
-from application.employee.query.get_employee_card import GetEmployeeCard
-from application.employee.query.get_employees_cards import (
+from application.employee.queries.get_employee_card import GetEmployeeCard
+from application.employee.queries.get_employees_cards import (
     GetEmployeeCards,
 )
 from application.goods.gateway import GoodsReader, GoodsSaver
 from application.goods.interactors.add_goods import AddGoods
 from application.goods.interactors.delete_goods import DeleteGoods
-from application.goods.interactors.edit_goods_pic import EditGoodsPic
+from application.goods.interactors.edit_goods import EditGoods
 from application.goods.interactors.get_goods import GetGoods
 from application.goods.interactors.get_many_goods import GetManyGoods
+from application.goods.interactors.get_many_goods_by_admin import (
+    GetManyGoodsByAdmin,
+)
 from application.order.gateway import (
     OrderItemReader,
     OrderItemSaver,
@@ -45,9 +52,13 @@ from application.order.interactors.edit_order_item_quantity import (
     EditOrderItemQuantity,
 )
 from application.order.interactors.get_order import GetOrder
-from application.profile.gateway import ProfileReader, ProfileSaver
-from application.profile.query.get_profile_card import GetProfileCard
-from application.shop.gateway import ShopReader, ShopSaver
+from application.profile.commands.update_address_by_yourself import (
+    ChangeAddress,
+)
+from application.profile.commands.update_phone_number_by_yourself import (
+    UpdatePhoneNumberByYourself,
+)
+from application.shop.gateway import ShopGateway, ShopReader, ShopSaver
 from application.shop.interactors.change_regular_days_off import (
     ChangeRegularDaysOff,
 )
@@ -59,23 +70,25 @@ from application.shop.interactors.delete_shop import DeleteShop
 from application.shop.interactors.resume_shop import ResumeShop
 from application.shop.interactors.setup_all_shops import SetupAllShop
 from application.shop.interactors.stop_shop import StopShop
-from application.user.gateway import UserReader, UserSaver
-from application.user.interactors.admin_bot_start import AdminBotStart
-from application.user.interactors.get_user import GetUser
-from application.user.interactors.get_users import GetUsers
-from application.user.interactors.shop_bot_start import ShopBotStart
+from application.shop.queries.get_shop_info import GetShopInfo
+from application.user.commands.admin_bot_start import AdminBotStart
+from application.user.commands.shop_bot_start import ShopBotStart
+from application.user.queries.get_user_profile import GetUserProfile
 from infrastructure.auth.tg_auth import TgIdentityProvider
 from infrastructure.bootstrap.configs import load_all_configs
 from infrastructure.gateways.employee import (
     EmployeeMapper,
+    SqlalchemyEmployeeReader,
 )
 from infrastructure.gateways.goods import GoodsGateway
 from infrastructure.gateways.order import OrderGateway, OrderItemGateway
-from infrastructure.gateways.profile import ProfileGateway
-from infrastructure.gateways.shop import ShopGateway
-from infrastructure.gateways.user import UserGateway
+from infrastructure.gateways.shop import ShopMapper, SqlalchemyShopReader
+from infrastructure.gateways.user import (
+    UserDAO,
+    UserMapper,
+)
 from infrastructure.geopy.config import GeoConfig
-from infrastructure.geopy.geopy_processor import GeoProcessor, PyGeoProcessor
+from infrastructure.geopy.geopy_processor import PyGeoProcessor
 from infrastructure.geopy.provider import get_geolocator
 from infrastructure.persistence.commiter import SACommiter
 from infrastructure.persistence.config import DBConfig
@@ -93,20 +106,27 @@ from infrastructure.tg.config import ProjectConfig, WebhookConfig
 def gateway_provider() -> Provider:
     provider = Provider()
 
+    provider.provide(UserMapper, scope=Scope.REQUEST, provides=UserGateway)
+    provider.provide(UserDAO, scope=Scope.REQUEST, provides=UserReader)
+
     provider.provide(
-        UserGateway,
+        ShopMapper,
         scope=Scope.REQUEST,
-        provides=AnyOf[UserReader, UserSaver],
+        provides=AnyOf[ShopGateway, ShopSaver],
     )
 
     provider.provide(
-        ShopGateway,
-        scope=Scope.REQUEST,
-        provides=AnyOf[ShopReader, ShopSaver],
+        SqlalchemyShopReader, scope=Scope.REQUEST, provides=ShopReader
     )
 
     provider.provide(
-        EmployeeMapper, scope=Scope.REQUEST, provides=EmployeeGateway
+        EmployeeMapper,
+        scope=Scope.REQUEST,
+        provides=EmployeeGateway,
+    )
+
+    provider.provide(
+        SqlalchemyEmployeeReader, scope=Scope.REQUEST, provides=EmployeeReader
     )
 
     provider.provide(
@@ -125,12 +145,6 @@ def gateway_provider() -> Provider:
         OrderItemGateway,
         scope=Scope.REQUEST,
         provides=AnyOf[OrderItemSaver, OrderItemReader],
-    )
-
-    provider.provide(
-        ProfileGateway,
-        scope=Scope.REQUEST,
-        provides=AnyOf[ProfileSaver, ProfileReader],
     )
 
     provider.provide(
@@ -165,9 +179,7 @@ def interactor_provider() -> Provider:
 
     provider.provide(ShopBotStart, scope=Scope.REQUEST)
     provider.provide(AdminBotStart, scope=Scope.REQUEST)
-
-    provider.provide(GetUser, scope=Scope.REQUEST)
-    provider.provide(GetUsers, scope=Scope.REQUEST)
+    provider.provide(ChangeAddress, scope=Scope.REQUEST)
 
     provider.provide(CreateShop, scope=Scope.REQUEST)
     provider.provide(StopShop, scope=Scope.REQUEST)
@@ -176,18 +188,20 @@ def interactor_provider() -> Provider:
     provider.provide(ChangeRegularDaysOff, scope=Scope.REQUEST)
     provider.provide(ChangeSpecialDaysOff, scope=Scope.REQUEST)
     provider.provide(SetupAllShop, scope=Scope.REQUEST)
+    provider.provide(GetShopInfo, scope=Scope.REQUEST)
 
     provider.provide(AddGoods, scope=Scope.REQUEST)
     provider.provide(DeleteGoods, scope=Scope.REQUEST)
-    provider.provide(EditGoodsPic, scope=Scope.REQUEST)
+    provider.provide(EditGoods, scope=Scope.REQUEST)
     provider.provide(GetGoods, scope=Scope.REQUEST)
     provider.provide(GetManyGoods, scope=Scope.REQUEST)
+    provider.provide(GetManyGoodsByAdmin, scope=Scope.REQUEST)
 
     provider.provide(GetEmployeeCards, scope=Scope.REQUEST)
     provider.provide(GetEmployeeCard, scope=Scope.REQUEST)
     provider.provide(AddEmployee, scope=Scope.REQUEST)
     provider.provide(RemoveEmployee, scope=Scope.REQUEST)
-    provider.provide(ChangeEmployeeRole, scope=Scope.REQUEST)
+    provider.provide(ChangeEmployee, scope=Scope.REQUEST)
 
     provider.provide(CreateOrder, scope=Scope.REQUEST)
     provider.provide(GetOrder, scope=Scope.REQUEST)
@@ -195,9 +209,15 @@ def interactor_provider() -> Provider:
     provider.provide(DeleteOrderItem, scope=Scope.REQUEST)
     provider.provide(DeleteOrder, scope=Scope.REQUEST)
 
-    provider.provide(GetProfileCard, scope=Scope.REQUEST)
+    provider.provide(UpdatePhoneNumberByYourself, scope=Scope.REQUEST)
 
     return provider
+
+
+class QueriesProvider(Provider):
+    scope = Scope.REQUEST
+
+    queries = provide_all(GetUserProfile)
 
 
 def service_provider() -> Provider:
@@ -221,7 +241,7 @@ def infrastructure_provider() -> Provider:
         provides=AnyOf[WebhookManager, TokenVerifier],
     )
 
-    provider.provide(S3FileManager, scope=Scope.REQUEST, provides=FileManager)
+    provider.provide(S3FileManager, scope=Scope.APP, provides=FileManager)
 
     return provider
 
@@ -254,13 +274,13 @@ class TgProvider(Provider):
     @provide(scope=Scope.REQUEST)
     async def get_identity_provider(
         self,
-        user_id: int,
-        user_gateway: UserReader,
+        tg_id: int,
+        user_mapper: UserGateway,
         employee_gateway: EmployeeGateway,
     ) -> IdentityProvider:
         identity_provider = TgIdentityProvider(
-            user_id=user_id,
-            user_gateway=user_gateway,
+            tg_id=tg_id,
+            user_mapper=user_mapper,
             employee_gateway=employee_gateway,
         )
 
@@ -276,6 +296,7 @@ def setup_providers() -> list[Provider]:
         service_provider(),
         infrastructure_provider(),
         config_provider(),
+        QueriesProvider(),
     ]
 
     return providers
