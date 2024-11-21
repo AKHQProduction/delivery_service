@@ -8,7 +8,6 @@ from application.common.validators.shop import validate_shop
 from application.shop.gateway import ShopGateway
 from entities.shop.models import ShopId
 from entities.shop.services import add_user_to_shop
-from entities.user.models import UserId
 from entities.user.services import create_user
 
 
@@ -27,13 +26,12 @@ class ShopBotStart:
     shop_reader: ShopGateway
     commiter: Commiter
 
-    async def __call__(self, data: ShopBotStartInputData) -> UserId:
-        logging.info("Handle start command from shop bot")
-        if actor := await self.identity_provider.get_user():
-            return actor.user_id
-
+    async def __call__(self, data: ShopBotStartInputData) -> None:
         shop = await self.shop_reader.by_id(ShopId(data.shop_id))
         validate_shop(shop)
+
+        if actor := await self.identity_provider.get_user():
+            return add_user_to_shop(shop, actor)
 
         new_user = create_user(
             full_name=data.full_name, username=data.username, tg_id=data.tg_id
@@ -46,4 +44,4 @@ class ShopBotStart:
 
         logging.info("New user created, with_id=%s", new_user.user_id)
 
-        return new_user.user_id
+        return None

@@ -35,5 +35,6 @@ def create_shop(
     return shop
 
 
-def add_user_to_shop(shop: Shop, user: User) -> None:
-    shop.users.append(user)
+def add_user_to_shop(shop: Shop, new_user: User) -> None:
+    if new_user not in shop.users:
+        shop.users.append(new_user)
