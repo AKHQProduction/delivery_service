@@ -3,6 +3,7 @@ from asyncio import Protocol
 
 from application.common.interfaces.user.read_models import UserProfile
 from entities.user.models import User, UserId
+from entities.user.value_objects import PhoneNumber
 
 
 class UserGateway(Protocol):
@@ -16,6 +17,10 @@ class UserGateway(Protocol):
 
     @abstractmethod
     async def get_with_tg_id(self, tg_id: int) -> User | None:
+        raise NotImplementedError
+
+    @abstractmethod
+    async def is_exists(self, phone_number: PhoneNumber) -> bool:
         raise NotImplementedError
 
 

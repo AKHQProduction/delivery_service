@@ -1,4 +1,4 @@
-from sqlalchemy import RowMapping, select
+from sqlalchemy import RowMapping, exists, select
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -9,6 +9,7 @@ from application.common.interfaces.user.read_models import (
 )
 from application.user.errors import UserAlreadyExistError
 from entities.user.models import User, UserId
+from entities.user.value_objects import PhoneNumber
 from infrastructure.persistence.models.user import users_table
 
 
@@ -37,6 +38,15 @@ class UserMapper(UserGateway):
         result = await self.session.execute(query)
 
         return result.scalar_one_or_none()
+
+    async def is_exists(self, phone_number: PhoneNumber) -> bool:
+        query = select(exists()).where(
+            users_table.c.phone_number == phone_number
+        )
+
+        result = await self.session.execute(query)
+
+        return result.scalar()
 
 
 class UserDAO(UserReader):
