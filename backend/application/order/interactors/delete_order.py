@@ -2,13 +2,13 @@ import logging
 from dataclasses import dataclass
 
 from application.common.access_service import AccessService
-from application.common.commiter import Commiter
 from application.common.identity_provider import IdentityProvider
 from application.common.interactor import Interactor
+from application.common.transaction_manager import TransactionManager
 from application.order.errors import OrderNotFoundError
 from application.order.gateway import OrderReader, OrderSaver
 from application.shop.errors import ShopIsNotActiveError, ShopNotFoundError
-from application.shop.gateway import ShopGateway
+from application.shop.gateway import OldShopGateway
 from application.user.errors import UserNotFoundError
 from entities.order.models import OrderId
 from entities.shop.models import ShopId
@@ -23,12 +23,12 @@ class DeleteOrderInputData:
 class DeleteOrder(Interactor[DeleteOrderInputData, None]):
     def __init__(
         self,
-        shop_reader: ShopGateway,
+        shop_reader: OldShopGateway,
         identity_provider: IdentityProvider,
         access_service: AccessService,
         order_reader: OrderReader,
         order_saver: OrderSaver,
-        commiter: Commiter,
+        commiter: TransactionManager,
     ):
         self._shop_reader = shop_reader
         self._identity_provider = identity_provider

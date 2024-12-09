@@ -3,7 +3,6 @@ from aiogram.exceptions import TelegramUnauthorizedError
 
 from application.common.webhook_manager import TokenVerifier, WebhookManager
 from application.shop.errors import ShopTokenUnauthorizedError
-from entities.shop.value_objects import ShopToken
 from infrastructure.tg.config import WebhookConfig
 
 
@@ -18,18 +17,16 @@ class BotWebhookManager(WebhookManager, TokenVerifier):
             except TelegramUnauthorizedError as error:
                 raise ShopTokenUnauthorizedError(token) from error
 
-    async def setup_webhook(self, token: ShopToken) -> None:
-        await self.verify(token.value)
+    async def setup_webhook(self, token: str) -> None:
+        await self.verify(token)
 
-        async with Bot(token=token.value) as bot:
+        async with Bot(token=token) as bot:
             await bot.delete_webhook(drop_pending_updates=True)
 
-            bot_path = self._config.webhook_shop_path.format(
-                bot_token=token.value
-            )
+            bot_path = self._config.webhook_shop_path.format(bot_token=token)
 
             await bot.set_webhook(f"{self._config.webhook_url}{bot_path}")
 
-    async def drop_webhook(self, token: ShopToken) -> None:
-        async with Bot(token=token.value) as bot:
+    async def drop_webhook(self, token: str) -> None:
+        async with Bot(token=token) as bot:
             await bot.delete_webhook()

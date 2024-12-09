@@ -13,7 +13,7 @@ class ShopFilters:
     is_active: bool | None = None
 
 
-class ShopGateway(Protocol):
+class OldShopGateway(Protocol):
     @abstractmethod
     async def by_id(self, shop_id: ShopId) -> Shop | None:
         raise NotImplementedError

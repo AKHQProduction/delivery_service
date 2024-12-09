@@ -1,40 +1,46 @@
-from entities.shop.models import Shop, ShopId
+from entities.common.tracker import Tracker
+from entities.employee.services import EmployeeService
+from entities.shop.models import Shop
 from entities.shop.value_objects import (
-    DeliveryDistance,
-    RegularDaysOff,
     ShopLocation,
-    ShopTitle,
-    ShopToken,
 )
 from entities.user.models import User
 
 
-def create_shop(
-    title: str,
-    token: str,
-    regular_days_off: list[int],
-    delivery_distance: int,
-    location: tuple[float, float],
-) -> Shop:
-    shop_id = ShopId(int(token.split(":")[0]))
-    title = ShopTitle(title)
-    token = ShopToken(token)
-    delivery_distance = DeliveryDistance(delivery_distance)
-    location = ShopLocation(latitude=location[0], longitude=location[1])
-    regular_days_off = RegularDaysOff(regular_days=regular_days_off)
+class ShopService:
+    def __init__(self, tracker: Tracker, employee_service: EmployeeService):
+        self.tracker = tracker
+        self.employee_service = employee_service
 
-    shop = Shop(
-        shop_id=shop_id,
-        title=title,
-        token=token,
-        delivery_distance=delivery_distance,
-        location=location,
-        regular_days_off=regular_days_off,
-    )
+    def create_shop(
+        self,
+        title: str,
+        token: str,
+        regular_days_off: list[int],
+        delivery_distance: int,
+        location: ShopLocation,
+        user: User,
+    ) -> Shop:
+        shop_id = int(token.split(":")[0])
 
-    return shop
+        new_shop = Shop(
+            oid=shop_id,
+            title=title,
+            token=token,
+            delivery_distance=delivery_distance,
+            location=location,
+            regular_days_off=regular_days_off,
+        )
 
+        self.tracker.add_one(new_shop)
 
-def add_user_to_shop(shop: Shop, new_user: User) -> None:
-    if new_user not in shop.users:
-        shop.users.append(new_user)
+        self.add_user_to_shop(new_shop, user)
+
+        self.employee_service.add_employee(new_shop.oid, user.oid)
+
+        return new_shop
+
+    @staticmethod
+    def add_user_to_shop(shop: Shop, new_user: User) -> None:
+        if new_user not in shop.users:
+            shop.users.append(new_user)

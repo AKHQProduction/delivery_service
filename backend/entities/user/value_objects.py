@@ -26,6 +26,8 @@ class UserAddress:
 
     @property
     def full_address(self) -> str | None:
-        if self.city:
-            return f"{self.city}, {self.street} {self.house_number}"
-        return None
+        return (
+            f"{self.city}, {self.street} {self.house_number}"
+            if self.city
+            else None
+        )

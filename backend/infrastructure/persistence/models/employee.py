@@ -43,6 +43,7 @@ def map_employee_table() -> None:
         Employee,
         employees_table,
         properties={
+            "oid": employees_table.c.employee_id,
             "user": relationship("User", back_populates="employees"),
             "shop": relationship("Shop", back_populates="employees"),
         },

@@ -3,13 +3,13 @@ from dataclasses import dataclass
 from datetime import date
 from decimal import Decimal
 
-from application.common.commiter import Commiter
 from application.common.identity_provider import IdentityProvider
 from application.common.interactor import Interactor
+from application.common.transaction_manager import TransactionManager
 from application.goods.gateway import GoodsReader
 from application.order.gateway import OrderItemSaver, OrderSaver
 from application.shop.errors import ShopIsNotActiveError, ShopNotFoundError
-from application.shop.gateway import ShopGateway
+from application.shop.gateway import OldShopGateway
 from application.user.errors import UserNotFoundError
 from entities.order.models import (
     DeliveryPreference,
@@ -51,11 +51,11 @@ class CreateOrder(Interactor[CreateOrderInputData, CreateOrderOutputData]):
     def __init__(
         self,
         identity_provider: IdentityProvider,
-        shop_reader: ShopGateway,
+        shop_reader: OldShopGateway,
         order_saver: OrderSaver,
         order_items_saver: OrderItemSaver,
         goods_reader: GoodsReader,
-        commiter: Commiter,
+        commiter: TransactionManager,
     ):
         self._identity_provider = identity_provider
         self._shop_reader = shop_reader

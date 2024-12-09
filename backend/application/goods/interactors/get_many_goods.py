@@ -6,7 +6,7 @@ from application.common.interactor import Interactor
 from application.common.interfaces.filters import Pagination
 from application.goods.gateway import GoodsFilters, GoodsReader
 from application.shop.errors import ShopIsNotActiveError, ShopNotFoundError
-from application.shop.gateway import ShopGateway
+from application.shop.gateway import OldShopGateway
 from entities.goods.models import Goods
 from entities.shop.models import ShopId
 
@@ -27,7 +27,7 @@ class GetManyGoods(Interactor[GetManyGoodsInputData, GetManyGoodsOutputData]):
     def __init__(
         self,
         goods_reader: GoodsReader,
-        shop_reader: ShopGateway,
+        shop_reader: OldShopGateway,
     ):
         self._goods_reader = goods_reader
         self._shop_reader = shop_reader

@@ -2,6 +2,7 @@ from dataclasses import dataclass
 from enum import StrEnum, auto
 from typing import NewType
 
+from entities.common.entity import BaseEntity
 from entities.shop.models import ShopId
 from entities.user.models import UserId
 
@@ -14,9 +15,8 @@ class EmployeeRole(StrEnum):
     DRIVER = auto()
 
 
-@dataclass
-class Employee:
-    employee_id: EmployeeId | None
+@dataclass(eq=False)
+class Employee(BaseEntity[EmployeeId]):
     user_id: UserId
     shop_id: ShopId
     role: EmployeeRole

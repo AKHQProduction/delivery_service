@@ -16,6 +16,8 @@ users_table = sa.Table(
         sa.Integer,
         primary_key=True,
         unique=True,
+        autoincrement=True,
+        index=True,
     ),
     sa.Column("full_name", sa.String(128), nullable=False),
     sa.Column("tg_id", sa.BigInteger, nullable=True),
@@ -68,6 +70,7 @@ def map_users_table() -> None:
             "order": relationship(
                 "Order", back_populates="user", cascade="all, delete-orphan"
             ),
+            "oid": users_table.c.user_id,
             "user_address": composite(
                 UserAddress,
                 users_table.c.address_city,

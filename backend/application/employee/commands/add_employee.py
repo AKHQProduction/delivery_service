@@ -2,13 +2,13 @@ import logging
 from dataclasses import dataclass
 
 from application.common.access_service import AccessService
-from application.common.commiter import Commiter
 from application.common.identity_provider import IdentityProvider
 from application.common.interfaces.user.gateways import UserGateway
+from application.common.transaction_manager import TransactionManager
 from application.employee.errors import EmployeeAlreadyExistError
 from application.employee.gateway import EmployeeGateway
 from application.shop.errors import UserNotHaveShopError
-from application.shop.gateway import ShopGateway
+from application.shop.gateway import OldShopGateway
 from application.user.errors import UserNotFoundError
 from entities.employee.models import Employee, EmployeeRole
 from entities.user.models import UserId
@@ -25,10 +25,10 @@ class AddEmployee:
         self,
         identity_provider: IdentityProvider,
         employee_saver: EmployeeGateway,
-        shop_reader: ShopGateway,
+        shop_reader: OldShopGateway,
         user_mapper: UserGateway,
         access_service: AccessService,
-        commiter: Commiter,
+        commiter: TransactionManager,
     ):
         self._identity_provider = identity_provider
         self._employee_saver = employee_saver

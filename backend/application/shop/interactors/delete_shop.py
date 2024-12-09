@@ -1,13 +1,13 @@
 import logging
 
 from application.common.access_service import AccessService
-from application.common.commiter import Commiter
 from application.common.file_manager import FileManager
 from application.common.identity_provider import IdentityProvider
 from application.common.interactor import Interactor
+from application.common.transaction_manager import TransactionManager
 from application.common.webhook_manager import WebhookManager
 from application.shop.errors import UserNotHaveShopError
-from application.shop.gateway import ShopGateway, ShopSaver
+from application.shop.gateway import OldShopGateway, ShopSaver
 from application.user.errors import UserNotFoundError
 
 
@@ -15,10 +15,10 @@ class DeleteShop(Interactor[None, None]):
     def __init__(
         self,
         identity_provider: IdentityProvider,
-        shop_reader: ShopGateway,
+        shop_reader: OldShopGateway,
         shop_saver: ShopSaver,
         access_service: AccessService,
-        commiter: Commiter,
+        commiter: TransactionManager,
         webhook_manager: WebhookManager,
         file_manager: FileManager,
     ):

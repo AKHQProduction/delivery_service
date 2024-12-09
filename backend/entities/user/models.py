@@ -1,17 +1,17 @@
 from dataclasses import dataclass
 from typing import NewType
 
-from entities.user.value_objects import PhoneNumber, UserAddress
+from entities.common.entity import BaseEntity
+from entities.user.value_objects import UserAddress
 
 UserId = NewType("UserId", int)
 
 
-@dataclass
-class User:
-    user_id: UserId | None
+@dataclass(eq=False)
+class User(BaseEntity[UserId]):
     full_name: str
     tg_id: int | None = None
     username: str | None = None
     user_address: UserAddress | None = None
-    phone_number: PhoneNumber | None = None
+    phone_number: str | None = None
     is_active: bool = True

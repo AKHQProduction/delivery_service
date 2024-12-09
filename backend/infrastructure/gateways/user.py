@@ -1,5 +1,4 @@
 from sqlalchemy import RowMapping, exists, select
-from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from application.common.interfaces.user.gateways import UserGateway, UserReader
@@ -7,7 +6,6 @@ from application.common.interfaces.user.read_models import (
     UserAddress,
     UserProfile,
 )
-from application.user.errors import UserAlreadyExistError
 from entities.user.models import User, UserId
 from entities.user.value_objects import PhoneNumber
 from infrastructure.persistence.models.user import users_table
@@ -16,14 +14,6 @@ from infrastructure.persistence.models.user import users_table
 class UserMapper(UserGateway):
     def __init__(self, session: AsyncSession) -> None:
         self.session: AsyncSession = session
-
-    async def add_one(self, user: User) -> None:
-        self.session.add(user)
-
-        try:
-            await self.session.flush()
-        except IntegrityError as error:
-            raise UserAlreadyExistError(user.user_id) from error
 
     async def get_with_id(self, user_id: UserId) -> User | None:
         query = select(User).where(users_table.c.user_id == user_id)

@@ -2,15 +2,15 @@ import logging
 from dataclasses import dataclass
 
 from application.common.access_service import AccessService
-from application.common.commiter import Commiter
 from application.common.identity_provider import IdentityProvider
 from application.common.interactor import Interactor
+from application.common.transaction_manager import TransactionManager
 from application.order.errors import (
     OrderItemNotFoundError,
 )
 from application.order.gateway import OrderItemReader, OrderReader
 from application.shop.errors import ShopIsNotActiveError, ShopNotFoundError
-from application.shop.gateway import ShopGateway
+from application.shop.gateway import OldShopGateway
 from application.user.errors import UserNotFoundError
 from entities.order.models import OrderItemId
 from entities.order.service import total_price
@@ -30,10 +30,10 @@ class EditOrderItemQuantity(Interactor[EditOrderItemQuantityInputData, None]):
         self,
         identity_provider: IdentityProvider,
         access_service: AccessService,
-        shop_reader: ShopGateway,
+        shop_reader: OldShopGateway,
         order_item_reader: OrderItemReader,
         order_reader: OrderReader,
-        commiter: Commiter,
+        commiter: TransactionManager,
     ):
         self._identity_provider = identity_provider
         self._access_service = access_service

@@ -34,10 +34,12 @@ from application.shop.errors import (
     ShopTokenUnauthorizedError,
 )
 from application.shop.interactors.create_shop import (
-    CreateShop,
+    CreateShopCommandHandler,
     CreateShopInputData,
 )
-from application.user.commands.admin_bot_start import AdminBotStart
+from application.user.commands.admin_bot_start import (
+    AdminBotStartCommandHandler,
+)
 from presentation.common.consts import CANCEL_BTN_TXT, CREATE_SHOP_BTN_TXT
 from presentation.common.helpers import step_toggler_in_form
 from presentation.common.widgets.common.cancel_btn import (
@@ -176,7 +178,7 @@ async def on_reject_input_location(
     call: CallbackQuery,
     _: Button,
     manager: DialogManager,
-    action: FromDishka[AdminBotStart],
+    action: FromDishka[AdminBotStartCommandHandler],
     id_provider: FromDishka[IdentityProvider],
 ):
     bot: Bot = manager.middleware_data["bot"]
@@ -215,7 +217,7 @@ async def on_accept_shop_creation_form(
     call: CallbackQuery,
     __: Button,
     manager: DialogManager,
-    create_shop: FromDishka[CreateShop],
+    create_shop: FromDishka[CreateShopCommandHandler],
 ):
     await call.message.delete()
 

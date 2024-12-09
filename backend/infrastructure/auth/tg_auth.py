@@ -25,6 +25,6 @@ class TgIdentityProvider(IdentityProvider):
         if not user:
             raise UserNotFoundError()
 
-        employee = await self._employee_gateway.by_identity(user.user_id)
+        employee = await self._employee_gateway.by_identity(user.oid)
 
         return None if not employee else employee.role

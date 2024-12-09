@@ -1,15 +1,15 @@
 from dataclasses import dataclass
 
-from application.common.commiter import Commiter
 from application.common.interfaces.user.gateways import UserGateway
+from application.common.transaction_manager import TransactionManager
 from application.common.validators.shop import validate_shop
-from application.shop.gateway import ShopGateway
+from application.shop.gateway import OldShopGateway
 from application.user.errors import UserAlreadyExistError
 from entities.shop.models import ShopId
-from entities.shop.services import add_user_to_shop
+from entities.shop.services import ShopService
 from entities.user.models import UserId
-from entities.user.services import create_user
-from entities.user.value_objects import PhoneNumber, UserAddress
+from entities.user.services import UserService
+from entities.user.value_objects import UserAddress
 
 
 @dataclass(frozen=True)
@@ -27,14 +27,14 @@ class CreateUserCommand:
 
 @dataclass
 class CreateUserCommandHandler:
+    user_service: UserService
+    shop_service: ShopService
     user_gateway: UserGateway
-    shop_gateway: ShopGateway
-    commiter: Commiter
+    shop_gateway: OldShopGateway
+    commiter: TransactionManager
 
     async def __call__(self, command: CreateUserCommand) -> UserId:
-        phone_number = PhoneNumber(command.phone_number)
-
-        if await self.user_gateway.is_exists(phone_number):
+        if await self.user_gateway.is_exists(command.phone_number):
             raise UserAlreadyExistError
 
         shop = await self.shop_gateway.by_id(ShopId(command.shop_id))
@@ -48,13 +48,14 @@ class CreateUserCommandHandler:
             floor=command.floor,
             intercom_code=command.intercom_code,
         )
-        new_user = create_user(
-            command.full_name, address=address, phone_number=phone_number
+        new_user = self.user_service.create_new_user(
+            command.full_name,
+            address=address,
+            phone_number=command.phone_number,
         )
 
-        await self.user_gateway.add_one(new_user)
-        add_user_to_shop(shop, new_user)
+        self.shop_service.add_user_to_shop(shop, new_user)
 
         await self.commiter.commit()
 
-        return new_user.user_id
+        return new_user.oid

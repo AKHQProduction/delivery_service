@@ -2,12 +2,12 @@ import logging
 from dataclasses import dataclass
 
 from application.common.access_service import AccessService
-from application.common.commiter import Commiter
 from application.common.identity_provider import IdentityProvider
+from application.common.transaction_manager import TransactionManager
 from application.employee.errors import EmployeeNotFoundError
 from application.employee.gateway import EmployeeGateway
 from application.shop.errors import UserNotHaveShopError
-from application.shop.gateway import ShopGateway
+from application.shop.gateway import OldShopGateway
 from application.user.errors import UserNotFoundError
 from entities.employee.models import EmployeeId, EmployeeRole
 from entities.employee.services import change_employee_role
@@ -22,10 +22,10 @@ class ChangeEmployeeInputData:
 @dataclass
 class ChangeEmployee:
     identity_provider: IdentityProvider
-    shop_reader: ShopGateway
+    shop_reader: OldShopGateway
     access_service: AccessService
     employee_gateway: EmployeeGateway
-    commiter: Commiter
+    commiter: TransactionManager
 
     async def __call__(self, data: ChangeEmployeeInputData) -> None:
         actor = await self.identity_provider.get_user()

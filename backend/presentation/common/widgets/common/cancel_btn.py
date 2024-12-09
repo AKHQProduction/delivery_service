@@ -8,7 +8,9 @@ from dishka.integrations.aiogram_dialog import inject
 from magic_filter import MagicFilter
 
 from application.common.identity_provider import IdentityProvider
-from application.user.commands.admin_bot_start import AdminBotStart
+from application.user.commands.admin_bot_start import (
+    AdminBotStartCommandHandler,
+)
 from presentation.admin.handlers.common.start import cmd_start
 
 dialog_has_mistakes_in_input = F["dialog_data"]["input_has_mistake"]
@@ -23,7 +25,7 @@ async def handle_back_to_main_menu_btn(
     call: CallbackQuery,
     _: Button,
     manager: DialogManager,
-    action: FromDishka[AdminBotStart],
+    action: FromDishka[AdminBotStartCommandHandler],
     id_provider: FromDishka[IdentityProvider],
 ) -> None:
     bot: Bot = manager.middleware_data["bot"]

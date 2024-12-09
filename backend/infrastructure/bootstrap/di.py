@@ -11,11 +11,12 @@ from dishka import (
 )
 
 from application.common.access_service import AccessService
-from application.common.commiter import Commiter
 from application.common.file_manager import FileManager
 from application.common.geo import GeoProcessor
 from application.common.identity_provider import IdentityProvider
+from application.common.interfaces.shop.gateways import ShopGateway
 from application.common.interfaces.user.gateways import UserGateway, UserReader
+from application.common.transaction_manager import TransactionManager
 from application.common.webhook_manager import TokenVerifier, WebhookManager
 from application.employee.commands.add_employee import AddEmployee
 from application.employee.commands.edit_employee import (
@@ -58,22 +59,28 @@ from application.profile.commands.update_address_by_yourself import (
 from application.profile.commands.update_phone_number_by_yourself import (
     UpdatePhoneNumberByYourself,
 )
-from application.shop.gateway import ShopGateway, ShopReader, ShopSaver
+from application.shop.gateway import OldShopGateway, ShopReader, ShopSaver
 from application.shop.interactors.change_regular_days_off import (
     ChangeRegularDaysOff,
 )
 from application.shop.interactors.change_special_days_off import (
     ChangeSpecialDaysOff,
 )
-from application.shop.interactors.create_shop import CreateShop
+from application.shop.interactors.create_shop import CreateShopCommandHandler
 from application.shop.interactors.delete_shop import DeleteShop
 from application.shop.interactors.resume_shop import ResumeShop
 from application.shop.interactors.setup_all_shops import SetupAllShop
 from application.shop.interactors.stop_shop import StopShop
 from application.shop.queries.get_shop_info import GetShopInfo
-from application.user.commands.admin_bot_start import AdminBotStart
+from application.user.commands.admin_bot_start import (
+    AdminBotStartCommandHandler,
+)
 from application.user.commands.shop_bot_start import ShopBotStart
 from application.user.queries.get_user_profile import GetUserProfile
+from entities.common.tracker import Tracker
+from entities.employee.services import EmployeeService
+from entities.shop.services import ShopService
+from entities.user.services import UserService
 from infrastructure.auth.tg_auth import TgIdentityProvider
 from infrastructure.bootstrap.configs import load_all_configs
 from infrastructure.gateways.employee import (
@@ -90,13 +97,14 @@ from infrastructure.gateways.user import (
 from infrastructure.geopy.config import GeoConfig
 from infrastructure.geopy.geopy_processor import PyGeoProcessor
 from infrastructure.geopy.provider import get_geolocator
-from infrastructure.persistence.commiter import SACommiter
 from infrastructure.persistence.config import DBConfig
 from infrastructure.persistence.provider import (
     get_async_session,
     get_async_sessionmaker,
     get_engine,
 )
+from infrastructure.persistence.tracker import SATracker
+from infrastructure.persistence.transaction_manager import SATransactionManager
 from infrastructure.s3.config import S3Config
 from infrastructure.s3.file_manager import S3FileManager
 from infrastructure.tg.bot_webhook_manager import BotWebhookManager
@@ -112,8 +120,10 @@ def gateway_provider() -> Provider:
     provider.provide(
         ShopMapper,
         scope=Scope.REQUEST,
-        provides=AnyOf[ShopGateway, ShopSaver],
+        provides=AnyOf[OldShopGateway, ShopSaver],
     )
+
+    provider.provide(ShopMapper, scope=Scope.REQUEST, provides=ShopGateway)
 
     provider.provide(
         SqlalchemyShopReader, scope=Scope.REQUEST, provides=ShopReader
@@ -148,10 +158,11 @@ def gateway_provider() -> Provider:
     )
 
     provider.provide(
-        SACommiter,
+        SATransactionManager,
         scope=Scope.REQUEST,
-        provides=Commiter,
+        provides=TransactionManager,
     )
+    provider.provide(SATracker, scope=Scope.REQUEST, provides=Tracker)
 
     return provider
 
@@ -178,10 +189,10 @@ def interactor_provider() -> Provider:
     provider = Provider()
 
     provider.provide(ShopBotStart, scope=Scope.REQUEST)
-    provider.provide(AdminBotStart, scope=Scope.REQUEST)
+    provider.provide(AdminBotStartCommandHandler, scope=Scope.REQUEST)
     provider.provide(ChangeAddress, scope=Scope.REQUEST)
 
-    provider.provide(CreateShop, scope=Scope.REQUEST)
+    provider.provide(CreateShopCommandHandler, scope=Scope.REQUEST)
     provider.provide(StopShop, scope=Scope.REQUEST)
     provider.provide(ResumeShop, scope=Scope.REQUEST)
     provider.provide(DeleteShop, scope=Scope.REQUEST)
@@ -223,7 +234,13 @@ class QueriesProvider(Provider):
 def service_provider() -> Provider:
     provider = Provider()
 
-    provider.provide(AccessService, scope=Scope.REQUEST)
+    provider.provide_all(
+        AccessService,
+        UserService,
+        ShopService,
+        EmployeeService,
+        scope=Scope.REQUEST,
+    )
 
     return provider
 

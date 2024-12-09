@@ -1,8 +1,8 @@
 import logging
 from dataclasses import dataclass
 
-from application.common.commiter import Commiter
 from application.common.identity_provider import IdentityProvider
+from application.common.transaction_manager import TransactionManager
 from application.user.errors import UserNotFoundError
 from entities.user.value_objects import UserAddress
 
@@ -20,7 +20,7 @@ class ChangeAddressInputData:
 @dataclass
 class ChangeAddress:
     identity_provider: IdentityProvider
-    commiter: Commiter
+    commiter: TransactionManager
 
     async def __call__(self, data: ChangeAddressInputData):
         actor = await self.identity_provider.get_user()

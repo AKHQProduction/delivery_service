@@ -14,7 +14,7 @@ from application.shop.errors import (
     ShopIsNotActiveError,
     UserNotHaveShopError,
 )
-from application.shop.gateway import ShopGateway
+from application.shop.gateway import OldShopGateway
 from application.user.errors import UserNotFoundError
 
 
@@ -33,7 +33,7 @@ class GetEmployeeCardsOutputData:
 @dataclass(frozen=True)
 class GetEmployeeCards:
     identity_provider: IdentityProvider
-    shop_reader: ShopGateway
+    shop_reader: OldShopGateway
     employee_reader: EmployeeReader
 
     async def __call__(

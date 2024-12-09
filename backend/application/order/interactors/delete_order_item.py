@@ -2,9 +2,9 @@ import logging
 from dataclasses import dataclass
 
 from application.common.access_service import AccessService
-from application.common.commiter import Commiter
 from application.common.identity_provider import IdentityProvider
 from application.common.interactor import Interactor
+from application.common.transaction_manager import TransactionManager
 from application.order.errors import (
     OrderItemNotFoundError,
     OrderNotFoundError,
@@ -16,7 +16,7 @@ from application.order.gateway import (
     OrderSaver,
 )
 from application.shop.errors import ShopIsNotActiveError, ShopNotFoundError
-from application.shop.gateway import ShopGateway
+from application.shop.gateway import OldShopGateway
 from application.user.errors import UserNotFoundError
 from entities.order.models import OrderItemId
 from entities.shop.models import ShopId
@@ -33,12 +33,12 @@ class DeleteOrderItem(Interactor[DeleteOrderItemInputData, None]):
         self,
         identity_provider: IdentityProvider,
         access_service: AccessService,
-        shop_reader: ShopGateway,
+        shop_reader: OldShopGateway,
         order_item_reader: OrderItemReader,
         order_item_saver: OrderItemSaver,
         order_reader: OrderReader,
         order_saver: OrderSaver,
-        commiter: Commiter,
+        commiter: TransactionManager,
     ):
         self._identity_provider = identity_provider
         self._access_service = access_service

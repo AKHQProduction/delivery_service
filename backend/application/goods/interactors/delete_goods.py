@@ -3,14 +3,14 @@ from dataclasses import dataclass
 from uuid import UUID
 
 from application.common.access_service import AccessService
-from application.common.commiter import Commiter
 from application.common.file_manager import FileManager
 from application.common.identity_provider import IdentityProvider
 from application.common.interactor import Interactor
+from application.common.transaction_manager import TransactionManager
 from application.goods.errors import GoodsNotFoundError
 from application.goods.gateway import GoodsReader, GoodsSaver
 from application.shop.errors import UserNotHaveShopError
-from application.shop.gateway import ShopGateway
+from application.shop.gateway import OldShopGateway
 from application.user.errors import UserNotFoundError
 from entities.goods.models import GoodsId
 
@@ -25,11 +25,11 @@ class DeleteGoods(Interactor[DeleteGoodsInputData, None]):
         self,
         identity_provider: IdentityProvider,
         access_service: AccessService,
-        shop_reader: ShopGateway,
+        shop_reader: OldShopGateway,
         goods_saver: GoodsSaver,
         goods_reader: GoodsReader,
         file_manager: FileManager,
-        commiter: Commiter,
+        commiter: TransactionManager,
     ):
         self._identity_provider = identity_provider
         self._access_service = access_service

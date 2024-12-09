@@ -1,34 +1,36 @@
 import logging
 from dataclasses import dataclass
 
-from application.common.commiter import Commiter
 from application.common.identity_provider import IdentityProvider
 from application.common.interfaces.user.gateways import UserGateway
-from entities.user.services import create_user
+from application.common.transaction_manager import TransactionManager
+from entities.user.services import UserService
 
 
 @dataclass(frozen=True)
-class AdminBotStartInputData:
+class AdminBotStartCommand:
     tg_id: int
     full_name: str
     username: str | None
 
 
 @dataclass
-class AdminBotStart:
+class AdminBotStartCommandHandler:
+    user_service: UserService
     user_mapper: UserGateway
-    commiter: Commiter
+    transaction_manager: TransactionManager
     identity_provider: IdentityProvider
 
-    async def __call__(self, data: AdminBotStartInputData) -> None:
+    async def __call__(self, command: AdminBotStartCommand) -> None:
         logging.info("Handle start command from admin bot")
         actor = await self.identity_provider.get_user()
 
         if not actor:
             logging.info("User not found, try to create new")
-            new_user = create_user(data.full_name, data.username, data.tg_id)
+            new_user = self.user_service.create_new_user(
+                command.full_name, command.username, command.tg_id
+            )
 
-            await self.user_mapper.add_one(new_user)
-            await self.commiter.commit()
+            await self.transaction_manager.commit()
 
-            logging.info("New user created %s", new_user.user_id)
+            logging.info("New user created %s", new_user.oid)

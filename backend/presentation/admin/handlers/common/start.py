@@ -5,8 +5,8 @@ from dishka import FromDishka
 
 from application.common.identity_provider import IdentityProvider
 from application.user.commands.admin_bot_start import (
-    AdminBotStart,
-    AdminBotStartInputData,
+    AdminBotStartCommand,
+    AdminBotStartCommandHandler,
 )
 from presentation.admin.keyboards.main_menu_kb import MainReplyKeyboard
 
@@ -17,7 +17,7 @@ router = Router()
 async def cmd_start(
     msg: Message | CallbackQuery,
     bot: Bot,
-    action: FromDishka[AdminBotStart],
+    action: FromDishka[AdminBotStartCommandHandler],
     id_provider: FromDishka[IdentityProvider],
 ):
     tg_id: int = msg.from_user.id
@@ -25,7 +25,7 @@ async def cmd_start(
     username: str | None = msg.from_user.username
 
     await action(
-        AdminBotStartInputData(
+        AdminBotStartCommand(
             tg_id=tg_id, full_name=full_name, username=username
         ),
     )

@@ -5,6 +5,7 @@ from typing import Iterable
 
 from application.common.interfaces.filters import Pagination
 from application.employee.output_data import EmployeeCard
+from entities.common.entity import OIDType
 from entities.employee.models import Employee, EmployeeId
 from entities.user.models import UserId
 
@@ -28,7 +29,7 @@ class EmployeeGateway(Protocol):
         raise NotImplementedError
 
     @abstractmethod
-    async def by_identity(self, user_id: UserId) -> Employee | None:
+    async def by_identity(self, user_id: OIDType) -> Employee | None:
         raise NotImplementedError
 
     @abstractmethod
