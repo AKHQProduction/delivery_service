@@ -26,7 +26,8 @@ class OrderService:
         delivery_preference: DeliveryPreference,
         delivery_date: date,
     ) -> Order:
-        self._check_delivery_date_not_in_shop_days_off(shop, delivery_date)
+        if not shop.days_off.can_receive_orders(delivery_date):
+            raise ValueError()
 
         new_order = Order(
             oid=None,
@@ -87,13 +88,3 @@ class OrderService:
             (item for item in order.order_items if item.oid == order_item_id),
             None,
         )
-
-    @staticmethod
-    def _check_delivery_date_not_in_shop_days_off(
-        shop: Shop, delivery_date: date
-    ) -> None:
-        if (
-            delivery_date.day in shop.regular_days_off
-            or delivery_date in shop.special_days_off
-        ):
-            raise ValueError()

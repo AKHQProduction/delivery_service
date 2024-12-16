@@ -47,7 +47,9 @@ class SQLAlchemyGoodsReader(GoodsReader):
     @staticmethod
     def _select_goods_view() -> Select:
         return select(
-            goods_table.c.goods_id, goods_table.c.title, goods_table.c.price
+            goods_table.c.goods_id,
+            goods_table.c.goods_title,
+            goods_table.c.goods_price,
         )
 
     @staticmethod
