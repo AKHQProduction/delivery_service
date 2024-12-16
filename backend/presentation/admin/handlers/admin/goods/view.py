@@ -5,9 +5,9 @@ from aiogram_dialog.widgets.text import Const, Multi
 from dishka import FromDishka
 from dishka.integrations.aiogram_dialog import inject
 
-from application.goods.interactors.delete_goods import (
-    DeleteGoods,
-    DeleteGoodsInputData,
+from application.commands.goods.delete_goods import (
+    DeleteGoodsCommand,
+    DeleteGoodsCommandHandler,
 )
 from presentation.common.consts import BACK_BTN_TXT
 from presentation.common.getters.goods import (
@@ -26,9 +26,9 @@ async def on_confirmation_delete(
     _: CallbackQuery,
     __: Button,
     manager: DialogManager,
-    action: FromDishka[DeleteGoods],
+    action: FromDishka[DeleteGoodsCommandHandler],
 ) -> None:
-    await action(DeleteGoodsInputData(manager.dialog_data.get("goods_id")))
+    await action(DeleteGoodsCommand(manager.dialog_data.get("goods_id")))
 
 
 async def on_start_btn_edit_dialog(

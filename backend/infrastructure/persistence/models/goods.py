@@ -1,8 +1,9 @@
 import sqlalchemy as sa
 from sqlalchemy.orm import composite, relationship
 
+from entities.common.vo import Price
 from entities.goods.models import Goods, GoodsType
-from entities.goods.value_objects import GoodsPrice, GoodsTitle
+from entities.goods.value_objects import GoodsTitle
 from infrastructure.persistence.models import mapper_registry
 
 goods_table = sa.Table(
@@ -40,8 +41,9 @@ def map_goods_table() -> None:
         Goods,
         goods_table,
         properties={
+            "oid": goods_table.c.goods_id,
             "shop": relationship("Shop", back_populates="goods"),
             "title": composite(GoodsTitle, goods_table.c.goods_title),
-            "price": composite(GoodsPrice, goods_table.c.goods_price),
+            "price": composite(Price, goods_table.c.goods_price),
         },
     )

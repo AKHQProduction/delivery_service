@@ -17,7 +17,7 @@ from aiohttp import web
 from dishka import AsyncContainer
 from dishka.integrations.aiogram import setup_dishka
 
-from application.shop.interactors.setup_all_shops import SetupAllShop
+from application.commands.shop.setup_all_shops import SetupAllShopCommand
 from entrypoint.config import Config, load_config
 from infrastructure.bootstrap.di import setup_di
 from infrastructure.persistence.models import map_tables
@@ -83,7 +83,7 @@ async def on_startup(
     )
 
     async with container() as containers:
-        setup_all_bots = await containers.get(SetupAllShop)
+        setup_all_bots = await containers.get(SetupAllShopCommand)
 
         await setup_all_bots()
 

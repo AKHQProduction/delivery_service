@@ -3,7 +3,9 @@ from enum import StrEnum, auto
 from typing import NewType
 from uuid import UUID
 
-from entities.goods.value_objects import GoodsPrice, GoodsTitle
+from entities.common.entity import BaseEntity
+from entities.common.vo import Price
+from entities.goods.value_objects import GoodsTitle
 from entities.shop.models import ShopId
 
 GoodsId = NewType("GoodsId", UUID)
@@ -15,10 +17,9 @@ class GoodsType(StrEnum):
 
 
 @dataclass
-class Goods:
-    goods_id: GoodsId | None
+class Goods(BaseEntity[GoodsId]):
     shop_id: ShopId
     title: GoodsTitle
-    price: GoodsPrice
+    price: Price
     goods_type: GoodsType
     metadata_path: str | None = None

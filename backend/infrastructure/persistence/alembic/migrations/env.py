@@ -2,6 +2,7 @@ import asyncio
 from logging.config import fileConfig
 
 from alembic import context
+from alembic.script import ScriptDirectory
 from sqlalchemy import pool
 from sqlalchemy.engine import Connection
 from sqlalchemy.ext.asyncio import async_engine_from_config
@@ -30,6 +31,28 @@ def get_url() -> str:
     settings = load_alembic_config()
 
     return settings.get_connection_url()
+
+
+def process_revision_directives(context, revision, directives):
+    # extract Migration
+    migration_script = directives[0]
+    # extract current head revision
+    head_revision = ScriptDirectory.from_config(
+        context.config
+    ).get_current_head()
+
+    if head_revision is None:
+        # edge case with first migration
+        new_rev_id = 1
+    else:
+        # default branch with incrementation
+        last_rev_id = int(head_revision.lstrip("0"))
+        new_rev_id = last_rev_id + 1
+    # fill zeros up to 5 digits: 1 -> 00001
+    migration_script.rev_id = f"{new_rev_id:05}"
+    migration_script.filename = (
+        f"{migration_script.rev_id}_{migration_script.message}.py"
+    )
 
 
 # other values from the config, defined by the needs of env.py,
@@ -63,7 +86,11 @@ def run_migrations_offline() -> None:
 
 
 def do_run_migrations(connection: Connection) -> None:
-    context.configure(connection=connection, target_metadata=target_metadata)
+    context.configure(
+        connection=connection,
+        target_metadata=target_metadata,
+        process_revision_directives=process_revision_directives,
+    )
 
     with context.begin_transaction():
         context.run_migrations()

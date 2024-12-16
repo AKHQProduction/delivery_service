@@ -1,28 +1,24 @@
 from dataclasses import dataclass, field
+from datetime import date
 from typing import NewType
 
+from entities.common.entity import BaseEntity
 from entities.shop.value_objects import (
-    DeliveryDistance,
-    RegularDaysOff,
     ShopLocation,
-    ShopTitle,
-    ShopToken,
-    SpecialDaysOff,
 )
 from entities.user.models import User
 
 ShopId = NewType("ShopId", int)
 
 
-@dataclass
-class Shop:
-    shop_id: ShopId | None
-    title: ShopTitle
-    token: ShopToken
-    delivery_distance: DeliveryDistance
+@dataclass(eq=False)
+class Shop(BaseEntity[ShopId]):
+    title: str
+    token: str
+    delivery_distance: int
     location: ShopLocation
-    regular_days_off: RegularDaysOff = field(default_factory=RegularDaysOff)
-    special_days_off: SpecialDaysOff = field(default_factory=SpecialDaysOff)
+    regular_days_off: list[int] = field(default_factory=list)
+    special_days_off: list[date] = field(default_factory=list)
     is_active: bool = True
 
     users: list[User] = field(default_factory=list)

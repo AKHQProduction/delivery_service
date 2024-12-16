@@ -1,8 +1,8 @@
 from enum import Enum, auto
 from typing import ClassVar
 
-from application.employee.gateway import EmployeeGateway
-from application.errors.access import AccessDeniedError
+from application.common.errors.access import AccessDeniedError
+from application.common.persistence.employee import EmployeeGateway
 from entities.employee.models import Employee
 from entities.order.models import Order
 from entities.shop.models import ShopId
@@ -81,7 +81,7 @@ class AccessService:
         permission: Permission,
         shop_id: ShopId | None = None,
     ) -> None:
-        employee = await self._employee_reader.by_identity(user_id)
+        employee = await self._employee_reader.load_with_identity(user_id)
 
         if not self._has_permission(employee, permission, shop_id):
             raise AccessDeniedError()

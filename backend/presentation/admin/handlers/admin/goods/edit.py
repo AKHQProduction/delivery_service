@@ -24,13 +24,13 @@ from aiogram_dialog.widgets.text import Const, Format, Multi
 from dishka import FromDishka
 from dishka.integrations.aiogram_dialog import inject
 
-from application.common.specs.length import HasGreateLength, HasLessLength
-from application.goods.input_data import FileMetadata
-from application.goods.interactors.edit_goods import (
-    EditGoods,
+from application.commands.goods.edit_goods import (
+    EditGoodsCommandHandler,
     EditGoodsInputData,
 )
-from application.goods.interactors.get_goods import GetGoods, GetGoodsInputData
+from application.commands.goods.input_data import FileMetadata
+from application.common.persistence.goods import GoodsReader
+from application.common.specs.length import HasGreateLength, HasLessLength
 from entities.goods.models import GoodsType
 from presentation.common.consts import ACTUAL_GOODS_TYPES, BACK_BTN_TXT
 from presentation.common.getters.goods import (
@@ -48,7 +48,7 @@ async def on_edit_btn(
     _: CallbackQuery,
     __: Button,
     manager: DialogManager,
-    action: FromDishka[EditGoods],
+    action: FromDishka[EditGoodsCommandHandler],
 ) -> None:
     goods_id = manager.dialog_data["goods_id"]
 
@@ -198,11 +198,15 @@ async def on_without_photo_btn(
 
 @inject
 async def on_start_view_dialog(
-    data: dict[str, Any], manager: DialogManager, action: FromDishka[GetGoods]
+    data: dict[str, Any],
+    manager: DialogManager,
+    goods_reader: FromDishka[GoodsReader],
 ) -> None:
     goods_id = data["goods_id"]
 
-    goods = await action(GetGoodsInputData(goods_id))
+    goods = await goods_reader.read_with_id(goods_id)
+    if not goods:
+        pass
 
     title = str(goods.title)
     price = str(goods.price)

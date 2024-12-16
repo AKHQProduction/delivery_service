@@ -5,12 +5,6 @@ from entities.goods.models import GoodsId
 from entities.shop.models import ShopId
 
 
-def file_path_creator(
-    shop_id: ShopId, goods_id: GoodsId, extension: str = "jpg"
-) -> str:
-    return f"{shop_id}/{goods_id}.{extension}"
-
-
 class FileManager(Protocol):
     @abstractmethod
     def save(self, payload: bytes, path: str) -> None:
@@ -27,3 +21,9 @@ class FileManager(Protocol):
     @abstractmethod
     def delete_folder(self, folder: str) -> None:
         raise NotImplementedError
+
+
+def file_path_creator(
+    shop_id: ShopId, goods_id: GoodsId, extension: str = "jpg"
+) -> str:
+    return f"{shop_id}/{goods_id}.{extension}"

@@ -3,11 +3,11 @@ from aiogram.filters import CommandStart
 from aiogram.types import CallbackQuery, Message
 from dishka import FromDishka
 
-from application.common.identity_provider import IdentityProvider
-from application.user.commands.admin_bot_start import (
-    AdminBotStart,
-    AdminBotStartInputData,
+from application.commands.bot.admin_bot_start import (
+    AdminBotStartCommand,
+    AdminBotStartCommandHandler,
 )
+from application.common.identity_provider import IdentityProvider
 from presentation.admin.keyboards.main_menu_kb import MainReplyKeyboard
 
 router = Router()
@@ -17,7 +17,7 @@ router = Router()
 async def cmd_start(
     msg: Message | CallbackQuery,
     bot: Bot,
-    action: FromDishka[AdminBotStart],
+    action: FromDishka[AdminBotStartCommandHandler],
     id_provider: FromDishka[IdentityProvider],
 ):
     tg_id: int = msg.from_user.id
@@ -25,7 +25,7 @@ async def cmd_start(
     username: str | None = msg.from_user.username
 
     await action(
-        AdminBotStartInputData(
+        AdminBotStartCommand(
             tg_id=tg_id, full_name=full_name, username=username
         ),
     )

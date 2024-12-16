@@ -1,7 +1,5 @@
 from dataclasses import dataclass
-from decimal import Decimal, InvalidOperation
 
-from entities.common.errors import InvalidPriceError
 from entities.goods.errors import (
     GoodsTitleTooLongError,
     GoodsTitleTooShortError,
@@ -26,23 +24,3 @@ class GoodsTitle:
 
     def __str__(self) -> str:
         return self.title
-
-
-@dataclass(slots=True, frozen=True, eq=True, unsafe_hash=True)
-class GoodsPrice:
-    value: Decimal
-
-    def __post_init__(self) -> None:
-        if isinstance(self.value, str):
-            try:
-                object.__setattr__(self, "value", Decimal(self.value))
-            except InvalidOperation as error:
-                raise ValueError(
-                    f"Invalid value for Decimal: {self.value}"
-                ) from error
-
-        if self.value <= 0:
-            raise InvalidPriceError()
-
-    def __str__(self) -> str:
-        return f"{self.value}"

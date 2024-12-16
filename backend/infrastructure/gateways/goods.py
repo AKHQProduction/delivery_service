@@ -1,73 +1,81 @@
-from sqlalchemy import delete, func, select
-from sqlalchemy.exc import IntegrityError
+from typing import Sequence
+from uuid import UUID
+
+from sqlalchemy import RowMapping, Select, exists, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from application.common.interfaces.filters import Pagination, SortOrder
-from application.goods.errors import GoodsAlreadyExistError
-from application.goods.gateway import (
-    GoodsFilters,
+from application.common.persistence.goods import (
+    GoodsGateway,
     GoodsReader,
-    GoodsSaver,
+    GoodsReaderFilters,
+    GoodsView,
 )
 from entities.goods.models import Goods, GoodsId
+from entities.shop.models import ShopId
 from infrastructure.persistence.models.goods import goods_table
 
 
-class GoodsGateway(GoodsSaver, GoodsReader):
+class SQLAlchemyGoodsMapper(GoodsGateway):
     def __init__(self, session: AsyncSession) -> None:
         self.session: AsyncSession = session
 
-    async def save(self, goods: Goods) -> None:
-        self.session.add(goods)
-
-        try:
-            await self.session.flush()
-        except IntegrityError as error:
-            raise GoodsAlreadyExistError(goods_id=goods.goods_id) from error
-
-    async def by_id(self, goods_id: GoodsId) -> Goods | None:
-        query = select(Goods).where(goods_table.c.goods_id == goods_id)
+    async def is_exist(self, title: str, shop_id: ShopId) -> bool:
+        query = select(exists()).where(
+            goods_table.c.title == title, goods_table.c.shop_id == shop_id
+        )
 
         result = await self.session.execute(query)
 
-        return result.scalar_one_or_none()
+        return result.scalar()
 
-    async def all(
-        self, filters: GoodsFilters, pagination: Pagination
-    ) -> list[Goods]:
-        query = select(Goods).where(goods_table.c.shop_id == filters.shop_id)
+    async def load_with_id(self, goods_id: GoodsId) -> Goods | None:
+        return await self.session.get(Goods, goods_id)
 
-        if filters.goods_type:
-            query = query.where(goods_table.c.goods_type == filters.goods_type)
 
-        if pagination.order is SortOrder.ASC:
-            query = query.order_by(goods_table.c.created_at.asc())
-        else:
-            query = query.order_by(goods_table.c.created_at.desc())
+class SQLAlchemyGoodsReader(GoodsReader):
+    def __init__(self, session: AsyncSession) -> None:
+        self.session: AsyncSession = session
 
-        if pagination.offset is not None:
-            query = query.offset(pagination.offset)
-        if pagination.limit is not None:
-            query = query.limit(pagination.limit)
+    @staticmethod
+    def _load_view(row: RowMapping) -> GoodsView:
+        return GoodsView(
+            goods_id=row.goods_id,
+            title=row.title,
+            price=row.price,
+        )
 
-        result = await self.session.scalars(query)
+    @staticmethod
+    def _select_goods_view() -> Select:
+        return select(
+            goods_table.c.goods_id, goods_table.c.title, goods_table.c.price
+        )
 
-        return list(result.all())
-
-    async def total(self, filters: GoodsFilters) -> int:
-        query = select(func.count(goods_table.c.goods_id))
-
-        if filters.shop_id:
-            query = query.where(goods_table.c.shop_id == filters.shop_id)
+    @staticmethod
+    def _set_filters(query: Select, filters: GoodsReaderFilters) -> Select:
+        query = query.where(goods_table.c.shop_id == filters.shop_id)
 
         if filters.goods_type:
             query = query.where(goods_table.c.goods_type == filters.goods_type)
 
-        total: int = await self.session.scalar(query)
+        return query
 
-        return total
+    async def read_with_id(self, goods_id: UUID) -> Goods | None:
+        query = self._select_goods_view()
 
-    async def delete(self, goods: Goods) -> None:
-        query = delete(Goods).where(goods_table.c.goods_id == goods.goods_id)
+        query = query.where(goods_table.c.goods_id == goods_id)
 
-        await self.session.execute(query)
+        result = await self.session.execute(query)
+        row = result.mappings().one_or_none()
+
+        return None if not row else self._load_view(row)
+
+    async def read_many(
+        self, filters: GoodsReaderFilters
+    ) -> Sequence[GoodsView]:
+        query = self._select_goods_view()
+
+        query = self._set_filters(query, filters)
+
+        rows = await self.session.execute(query)
+
+        return [self._load_view(row) for row in rows.mappings()]

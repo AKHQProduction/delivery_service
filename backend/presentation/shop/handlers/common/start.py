@@ -3,7 +3,7 @@ from aiogram.filters import CommandStart
 from aiogram.types import Message
 from dishka import FromDishka
 
-from application.user.commands.shop_bot_start import (
+from application.commands.bot.shop_bot_start import (
     ShopBotStart,
     ShopBotStartInputData,
 )
