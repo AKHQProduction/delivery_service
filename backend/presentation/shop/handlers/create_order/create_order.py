@@ -23,16 +23,14 @@ from dishka import FromDishka
 from dishka.integrations.aiogram_dialog import inject
 from zoneinfo import ZoneInfo
 
-from application.order.interactors.create_order import (
-    CreateOrder,
-    CreateOrderInputData,
+from application.commands.order.create_order import (
+    CreateOrderCommand,
+    CreateOrderCommandHandler,
     OrderItemData,
 )
-from application.shop.queries.get_shop_info import (
-    GetShopInfo,
-    GetShopInfoInputData,
-)
+from application.common.persistence.shop import ShopReader
 from entities.order.models import DeliveryPreference
+from entities.shop.models import ShopId
 from presentation.common.consts import (
     ACTUAL_DELIVERY_TIME_PERIOD,
     BACK_BTN_TXT,
@@ -48,18 +46,21 @@ from .common import cart_getter, order_items_list
 
 @inject
 async def get_shop_info(
-    action: FromDishka[GetShopInfo], dialog_manager: DialogManager, **_kwargs
+    shop_reader: FromDishka[ShopReader],
+    dialog_manager: DialogManager,
+    **_kwargs,
 ) -> dict[str, Any]:
     shop_id: int = dialog_manager.middleware_data["shop_id"]
 
-    output_data = await action(GetShopInfoInputData(shop_id))
+    shop = await shop_reader.read_with_id(ShopId(shop_id))
+    if not shop:
+        # TODO: error handling  # noqa: FIX002
+        pass
 
     dialog_manager.dialog_data.update(
         {
-            "regular_days_off": output_data.regular_days_off,
-            "special_days_off": [
-                x.isoformat() for x in output_data.special_days_off
-            ],
+            "regular_days_off": shop.regular_days_off,
+            "special_days_off": [x.isoformat() for x in shop.special_days_off],
         }
     )
 
@@ -202,7 +203,7 @@ async def create_order(
     _call: CallbackQuery,
     _widget: Button,
     manager: DialogManager,
-    action: FromDishka[CreateOrder],
+    action: FromDishka[CreateOrderCommandHandler],
 ):
     shop_id: int = manager.middleware_data["shop_id"]
     selected_date = manager.dialog_data["order_date"]
@@ -220,7 +221,7 @@ async def create_order(
     ]
 
     await action(
-        CreateOrderInputData(
+        CreateOrderCommand(
             shop_id=shop_id,
             bottles_to_exchange=manager.dialog_data["bottles_quantity"],
             delivery_date=order_date,

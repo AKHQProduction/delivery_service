@@ -27,9 +27,12 @@ from aiogram_dialog.widgets.text import Const, Format, Multi
 from dishka import FromDishka
 from dishka.integrations.aiogram_dialog import inject
 
+from application.commands.goods.add_goods import (
+    AddGoodsCommand,
+    AddGoodsCommandHandler,
+)
+from application.commands.goods.input_data import FileMetadata
 from application.common.specs.length import HasGreateLength, HasLessLength
-from application.goods.input_data import FileMetadata
-from application.goods.interactors.add_goods import AddGoods, AddGoodsInputData
 from entities.goods.models import GoodsType
 from presentation.common.consts import (
     ACTUAL_GOODS_TYPES,
@@ -116,7 +119,7 @@ async def on_accept_add_new_goods(
     _: CallbackQuery,
     __: Button,
     manager: DialogManager,
-    action: FromDishka[AddGoods],
+    action: FromDishka[AddGoodsCommandHandler],
 ) -> None:
     metadata = (
         FileMetadata(base64.b64decode(manager.dialog_data["bytes"]))
@@ -125,7 +128,7 @@ async def on_accept_add_new_goods(
     )
 
     await action(
-        AddGoodsInputData(
+        AddGoodsCommand(
             title=manager.dialog_data["title"],
             price=Decimal(manager.dialog_data["price"]),
             goods_type=manager.dialog_data["type"],

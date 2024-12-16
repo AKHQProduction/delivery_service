@@ -1,32 +1,21 @@
-from sqlalchemy import RowMapping, and_, delete, exists, func, select
-from sqlalchemy.exc import IntegrityError
+from sqlalchemy import RowMapping, and_, exists, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from application.common.interfaces.filters import Pagination, SortOrder
-from application.employee.errors import EmployeeAlreadyExistError
-from application.employee.gateway import (
-    EmployeeFilters,
+from application.common.persistence.employee import (
     EmployeeGateway,
     EmployeeReader,
+    EmployeeReaderFilters,
 )
-from application.employee.output_data import EmployeeCard
+from application.common.persistence.view_models import EmployeeView
 from entities.employee.models import Employee, EmployeeId
 from entities.user.models import UserId
 from infrastructure.persistence.models.employee import employees_table
 from infrastructure.persistence.models.user import users_table
 
 
-class EmployeeMapper(EmployeeGateway):
+class SQLAlchemyEmployeeMapper(EmployeeGateway):
     def __init__(self, session: AsyncSession) -> None:
         self.session: AsyncSession = session
-
-    async def save(self, employee: Employee) -> None:
-        self.session.add(employee)
-
-        try:
-            await self.session.flush()
-        except IntegrityError as error:
-            raise EmployeeAlreadyExistError(employee.user_id) from error
 
     async def is_exist(self, user_id: UserId) -> bool:
         query = select(exists().where(employees_table.c.user_id == user_id))
@@ -35,55 +24,33 @@ class EmployeeMapper(EmployeeGateway):
 
         return result.scalar()
 
-    async def by_identity(self, user_id: UserId) -> Employee | None:
+    async def load_with_identity(self, user_id: UserId) -> Employee | None:
         query = select(Employee).where(employees_table.c.user_id == user_id)
 
         result = await self.session.execute(query)
 
         return result.scalar_one_or_none()
 
-    async def by_id(self, employee_id: EmployeeId) -> Employee | None:
-        query = select(Employee).where(
-            employees_table.c.employee_id == employee_id
-        )
-
-        result = await self.session.execute(query)
-
-        return result.scalar_one_or_none()
-
-    async def delete(self, employee_id: EmployeeId) -> None:
-        query = delete(Employee).where(
-            employees_table.c.employee_id == employee_id
-        )
-
-        await self.session.execute(query)
+    async def load_with_id(self, employee_id: EmployeeId) -> Employee | None:
+        return await self.session.get(Employee, employee_id)
 
 
-class SqlalchemyEmployeeReader(EmployeeReader):
+class SQLAlchemyEmployeeReader(EmployeeReader):
     def __init__(self, session: AsyncSession):
         self.session = session
 
-    def _load_employee_card(self, row: RowMapping) -> EmployeeCard:
-        return EmployeeCard(
+    @staticmethod
+    def _load_employee_card(row: RowMapping) -> EmployeeView:
+        return EmployeeView(
             employee_id=row.employee_id,
             user_id=row.user_id,
             full_name=row.full_name,
             role=row.role,
         )
 
-    async def total(self, filters: EmployeeFilters) -> int:
-        query = select(func.count(employees_table.c.employee_id))
-
-        if filters and filters.shop_id:
-            query = query.where(employees_table.c.shop_id == filters.shop_id)
-
-        total: int = await self.session.scalar(query)
-
-        return total
-
-    async def all_cards(
-        self, filters: EmployeeFilters, pagination: Pagination
-    ) -> list[EmployeeCard]:
+    async def read_many(
+        self, filters: EmployeeReaderFilters | None = None
+    ) -> list[EmployeeView]:
         query = select(
             employees_table.c.employee_id,
             employees_table.c.user_id,
@@ -97,21 +64,13 @@ class SqlalchemyEmployeeReader(EmployeeReader):
         if filters and filters.shop_id:
             query = query.where(employees_table.c.shop_id == filters.shop_id)
 
-        if pagination.order is SortOrder.ASC:
-            query = query.order_by(employees_table.c.created_at.asc())
-        else:
-            query = query.order_by(employees_table.c.created_at.desc())
-
-        if pagination.offset is not None:
-            query = query.offset(pagination.offset)
-        if pagination.limit is not None:
-            query = query.limit(pagination.limit)
-
         result = await self.session.execute(query)
 
         return [self._load_employee_card(row) for row in result.mappings()]
 
-    async def card_by_id(self, employee_id: EmployeeId) -> EmployeeCard | None:
+    async def read_with_id(
+        self, employee_id: EmployeeId
+    ) -> EmployeeView | None:
         query = (
             select(
                 employees_table.c.employee_id,

@@ -2,8 +2,8 @@ from aiogram import Bot
 from aiogram.exceptions import TelegramUnauthorizedError
 
 from application.common.webhook_manager import TokenVerifier, WebhookManager
-from application.shop.errors import ShopTokenUnauthorizedError
 from infrastructure.tg.config import WebhookConfig
+from infrastructure.tg.errors import ShopTokenUnauthorizedError
 
 
 class BotWebhookManager(WebhookManager, TokenVerifier):

@@ -44,6 +44,7 @@ def map_shops_table() -> None:
         Shop,
         shops_table,
         properties={
+            "oid": shops_table.c.shop_id,
             "users": relationship(
                 "User",
                 secondary=association_between_shops_and_users,
@@ -63,7 +64,6 @@ def map_shops_table() -> None:
                 back_populates="shop",
                 cascade="all, delete-orphan",
             ),
-            "oid": shops_table.c.shop_id,
             "location": composite(
                 ShopLocation,
                 shops_table.c.location_latitude,

@@ -23,23 +23,21 @@ from aiogram_dialog.widgets.text import Const, Format, Multi
 from dishka import FromDishka
 from dishka.integrations.aiogram_dialog import inject
 
+from application.commands.bot.admin_bot_start import (
+    AdminBotStartCommandHandler,
+)
+from application.commands.shop.create_shop import (
+    CreateShopCommand,
+    CreateShopCommandHandler,
+)
+from application.common.errors.shop import ShopAlreadyExistsError
 from application.common.geo import GeoProcessor
 from application.common.identity_provider import IdentityProvider
 from application.common.specs.length import HasGreateLength, HasLessLength
 from application.common.specs.pattern import MatchPattern
 from application.common.specs.value import Greate
 from application.common.webhook_manager import TokenVerifier
-from application.shop.errors import (
-    ShopAlreadyExistError,
-    ShopTokenUnauthorizedError,
-)
-from application.shop.interactors.create_shop import (
-    CreateShopCommandHandler,
-    CreateShopInputData,
-)
-from application.user.commands.admin_bot_start import (
-    AdminBotStartCommandHandler,
-)
+from infrastructure.tg.errors import ShopTokenUnauthorizedError
 from presentation.common.consts import CANCEL_BTN_TXT, CREATE_SHOP_BTN_TXT
 from presentation.common.helpers import step_toggler_in_form
 from presentation.common.widgets.common.cancel_btn import (
@@ -227,7 +225,7 @@ async def on_accept_shop_creation_form(
 
     try:
         await create_shop(
-            CreateShopInputData(
+            CreateShopCommand(
                 title=data["shop_title"],
                 token=data["shop_token"],
                 delivery_distance=data["shop_delivery_distance"],
@@ -235,7 +233,7 @@ async def on_accept_shop_creation_form(
                 regular_days_off=data["regular_days"],
             )
         )
-    except ShopAlreadyExistError:
+    except ShopAlreadyExistsError:
         await wait_emoji_msg.delete()
         await call.message.answer("Токен бота уже використовується")
     else:

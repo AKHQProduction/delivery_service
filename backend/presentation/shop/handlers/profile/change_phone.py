@@ -5,13 +5,8 @@ from aiogram_dialog import Dialog, DialogManager, Window
 from aiogram_dialog.widgets.input import ManagedTextInput, TextInput
 from aiogram_dialog.widgets.kbd import Button, Cancel, Row
 from aiogram_dialog.widgets.text import Const, Format
-from dishka import FromDishka
 from dishka.integrations.aiogram_dialog import inject
 
-from application.profile.commands.update_phone_number_by_yourself import (
-    UpdatePhoneNumberByYourself,
-    UpdatePhoneNumberByYourselfInputData,
-)
 from presentation.common.consts import BACK_BTN_TXT
 
 from . import states
@@ -54,11 +49,8 @@ async def on_accept_phone_number_change(
     _: CallbackQuery,
     __: Button,
     manager: DialogManager,
-    action: FromDishka[UpdatePhoneNumberByYourself],
 ):
-    phone_number = manager.dialog_data["phone_number"]
-
-    await action(UpdatePhoneNumberByYourselfInputData(phone_number))
+    return manager.dialog_data["phone_number"]
 
 
 change_phone_number_dialog = Dialog(

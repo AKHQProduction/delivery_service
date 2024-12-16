@@ -1,10 +1,8 @@
-from application.employee.errors import (
+from application.commands.employee import (
     EmployeeAlreadyExistError,
-    EmployeeNotFoundError,
 )
-from application.employee.gateway import (
-    EmployeeGateway,
-)
+from application.common.errors import EmployeeNotFoundError
+from application.common.persistence import EmployeeGateway
 from entities.employee.models import Employee, EmployeeId, EmployeeRole
 from entities.shop.models import ShopId
 from entities.user.models import UserId
@@ -33,7 +31,7 @@ class FakeEmployeeGateway(EmployeeGateway):
         self._next_id = 2
 
     async def save(self, employee: Employee) -> None:
-        employee = await self.by_identity(employee.user_id)
+        employee = await self.load_with_identity(employee.user_id)
 
         if employee:
             raise EmployeeAlreadyExistError(employee.user_id)
@@ -43,7 +41,7 @@ class FakeEmployeeGateway(EmployeeGateway):
         self.saved = True
         self._next_id += 1
 
-    async def by_identity(self, user_id: UserId) -> Employee | None:
+    async def load_with_identity(self, user_id: UserId) -> Employee | None:
         return next(
             (
                 employee

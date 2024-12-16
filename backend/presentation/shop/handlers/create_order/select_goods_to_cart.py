@@ -20,11 +20,10 @@ from aiogram_dialog.widgets.text import Const, Format, Multi
 from dishka import FromDishka
 from dishka.integrations.aiogram_dialog import inject
 
-from application.common.interfaces.filters import Pagination
-from application.goods.gateway import GoodsFilters
-from application.goods.interactors.get_many_goods import (
-    GetManyGoods,
-    GetManyGoodsInputData,
+from application.common.persistence.goods import GoodsReaderFilters
+from application.queries.goods.get_many_goods import (
+    GetManyGoodsQuery,
+    GetManyGoodsQueryHandler,
 )
 from entities.goods.models import GoodsId, GoodsType
 from presentation.common.consts import (
@@ -67,19 +66,20 @@ async def on_select_goods_type(
 
 @inject
 async def load_goods_by_select_type(
-    action: FromDishka[GetManyGoods], dialog_manager: DialogManager, **_kwargs
+    action: FromDishka[GetManyGoodsQueryHandler],
+    dialog_manager: DialogManager,
+    **_kwargs,
 ) -> dict[str, Any]:
     shop_id: int = dialog_manager.middleware_data["shop_id"]
     goods_type = dialog_manager.dialog_data["goods_type"]
 
     output_data = await action(
-        GetManyGoodsInputData(
-            pagination=Pagination(),
-            filters=GoodsFilters(shop_id=shop_id, goods_type=goods_type),
+        GetManyGoodsQuery(
+            filters=GoodsReaderFilters(shop_id=shop_id, goods_type=goods_type),
         )
     )
 
-    return {"goods": output_data.goods, "total": output_data.total}
+    return {"goods": output_data, "total": len(output_data)}
 
 
 async def on_select_goods(

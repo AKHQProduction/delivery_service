@@ -7,10 +7,10 @@ from dishka import FromDishka
 from dishka.integrations.aiogram_dialog import inject
 from magic_filter import MagicFilter
 
-from application.common.identity_provider import IdentityProvider
-from application.user.commands.admin_bot_start import (
+from application.commands.bot.admin_bot_start import (
     AdminBotStartCommandHandler,
 )
+from application.common.identity_provider import IdentityProvider
 from presentation.admin.handlers.common.start import cmd_start
 
 dialog_has_mistakes_in_input = F["dialog_data"]["input_has_mistake"]

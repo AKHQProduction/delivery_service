@@ -10,16 +10,12 @@ from aiogram_dialog.widgets.text import Const, Multi
 from dishka import FromDishka
 from dishka.integrations.aiogram_dialog import inject
 
-from application.employee.commands.add_employee import (
-    AddEmployee,
-    AddEmployeeInputData,
+from application.commands.employee.add_employee import (
+    AddEmployeeCommand,
+    AddEmployeeCommandHandler,
 )
-from application.employee.errors import EmployeeAlreadyExistError
-from application.user.errors import UserNotFoundError
-from application.user.queries.get_user_profile import (
-    GetUserProfile,
-    GetUserProfileInputData,
-)
+from application.common.errors.employee import EmployeeAlreadyExistsError
+from application.common.persistence.user import UserReader
 from presentation.admin.handlers.admin.employee.common import (
     employee_card,
     get_actual_employee_roles,
@@ -43,17 +39,16 @@ async def on_success_input_user_id(
     __: ManagedTextInput,
     manager: DialogManager,
     value: int,
-    action: FromDishka[GetUserProfile],
+    user_reader: FromDishka[UserReader],
 ):
-    try:
-        await action(GetUserProfileInputData(value))
+    user = await user_reader.read_profile_with_tg_id(value)
 
-        manager.dialog_data["user_id"] = value
-        await manager.next()
-
-    except UserNotFoundError:
+    if not user:
         await msg.answer("Користувач з таким ID не знайден")
         setup_input_error_flag(manager, flag=True)
+    else:
+        manager.dialog_data["user_id"] = value
+        await manager.next()
 
 
 @inject
@@ -61,11 +56,11 @@ async def on_role_confirmed(
     call: CallbackQuery,
     _: Cancel,
     manager: DialogManager,
-    action: FromDishka[AddEmployee],
+    action: FromDishka[AddEmployeeCommandHandler],
 ):
     try:
         await action(
-            AddEmployeeInputData(
+            AddEmployeeCommand(
                 user_id=manager.dialog_data["user_id"],
                 role=manager.dialog_data["role"],
             )
@@ -73,7 +68,7 @@ async def on_role_confirmed(
 
         await call.answer("✅ Ви успішно додали співробітника")
 
-    except EmployeeAlreadyExistError:
+    except EmployeeAlreadyExistsError:
         await call.message.answer("❌ Користувач вже в складі персоналу")
 
 

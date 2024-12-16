@@ -3,11 +3,11 @@ from aiogram.filters import CommandStart
 from aiogram.types import CallbackQuery, Message
 from dishka import FromDishka
 
-from application.common.identity_provider import IdentityProvider
-from application.user.commands.admin_bot_start import (
+from application.commands.bot.admin_bot_start import (
     AdminBotStartCommand,
     AdminBotStartCommandHandler,
 )
+from application.common.identity_provider import IdentityProvider
 from presentation.admin.keyboards.main_menu_kb import MainReplyKeyboard
 
 router = Router()

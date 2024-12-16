@@ -7,92 +7,93 @@ from dishka import (
     from_context,
     make_async_container,
     provide,
-    provide_all,
 )
 
+from application.commands.bot.admin_bot_start import (
+    AdminBotStartCommandHandler,
+)
+from application.commands.bot.shop_bot_start import ShopBotStart
+from application.commands.employee.add_employee import (
+    AddEmployeeCommandHandler,
+)
+from application.commands.employee.edit_employee import (
+    ChangeEmployeeCommandHandler,
+)
+from application.commands.employee.remove_employee import (
+    RemoveEmployeeCommandHandler,
+)
+from application.commands.goods.add_goods import AddGoodsCommandHandler
+from application.commands.goods.delete_goods import DeleteGoodsCommandHandler
+from application.commands.goods.edit_goods import EditGoodsCommandHandler
+from application.commands.order.create_order import (
+    CreateOrderCommandHandler,
+)
+from application.commands.order.delete_order import DeleteOrder
+from application.commands.order.edit_order_item_quantity import (
+    EditOrderItemQuantityCommandHandler,
+)
+from application.commands.order.remove_order_item import (
+    DeleteOrderItemCommandHandler,
+)
+from application.commands.shop.change_regular_days_off import (
+    ChangeRegularDaysOffCommandHandler,
+)
+from application.commands.shop.change_special_days_off import (
+    ChangeSpecialDaysOffCommandHandler,
+)
+from application.commands.shop.create_shop import CreateShopCommandHandler
+from application.commands.shop.delete_shop import DeleteShopCommandHandler
+from application.commands.shop.resume_shop import ResumeShopCommandHandler
+from application.commands.shop.setup_all_shops import SetupAllShopCommand
+from application.commands.shop.stop_shop import StopShopCommandHandler
 from application.common.access_service import AccessService
 from application.common.file_manager import FileManager
 from application.common.geo import GeoProcessor
 from application.common.identity_provider import IdentityProvider
-from application.common.interfaces.shop.gateways import ShopGateway
-from application.common.interfaces.user.gateways import UserGateway, UserReader
-from application.common.transaction_manager import TransactionManager
-from application.common.webhook_manager import TokenVerifier, WebhookManager
-from application.employee.commands.add_employee import AddEmployee
-from application.employee.commands.edit_employee import (
-    ChangeEmployee,
-)
-from application.employee.commands.remove_employee import RemoveEmployee
-from application.employee.gateway import (
+from application.common.persistence.employee import (
     EmployeeGateway,
     EmployeeReader,
 )
-from application.employee.queries.get_employee_card import GetEmployeeCard
-from application.employee.queries.get_employees_cards import (
-    GetEmployeeCards,
+from application.common.persistence.goods import GoodsGateway, GoodsReader
+from application.common.persistence.order import OrderGateway, OrderReader
+from application.common.persistence.shop import ShopGateway, ShopReader
+from application.common.persistence.user import UserGateway, UserReader
+from application.common.transaction_manager import TransactionManager
+from application.common.webhook_manager import TokenVerifier, WebhookManager
+from application.queries.goods.get_many_goods import (
+    GetManyGoodsQueryHandler,
 )
-from application.goods.gateway import GoodsReader, GoodsSaver
-from application.goods.interactors.add_goods import AddGoods
-from application.goods.interactors.delete_goods import DeleteGoods
-from application.goods.interactors.edit_goods import EditGoods
-from application.goods.interactors.get_goods import GetGoods
-from application.goods.interactors.get_many_goods import GetManyGoods
-from application.goods.interactors.get_many_goods_by_admin import (
-    GetManyGoodsByAdmin,
+from application.queries.goods.get_many_goods_by_admin import (
+    GetManyGoodsByAdminQueryHandler,
 )
-from application.order.gateway import (
-    OrderItemReader,
-    OrderItemSaver,
-    OrderReader,
-    OrderSaver,
-)
-from application.order.interactors.create_order import CreateOrder
-from application.order.interactors.delete_order import DeleteOrder
-from application.order.interactors.delete_order_item import DeleteOrderItem
-from application.order.interactors.edit_order_item_quantity import (
-    EditOrderItemQuantity,
-)
-from application.order.interactors.get_order import GetOrder
-from application.profile.commands.update_address_by_yourself import (
-    ChangeAddress,
-)
-from application.profile.commands.update_phone_number_by_yourself import (
-    UpdatePhoneNumberByYourself,
-)
-from application.shop.gateway import OldShopGateway, ShopReader, ShopSaver
-from application.shop.interactors.change_regular_days_off import (
-    ChangeRegularDaysOff,
-)
-from application.shop.interactors.change_special_days_off import (
-    ChangeSpecialDaysOff,
-)
-from application.shop.interactors.create_shop import CreateShopCommandHandler
-from application.shop.interactors.delete_shop import DeleteShop
-from application.shop.interactors.resume_shop import ResumeShop
-from application.shop.interactors.setup_all_shops import SetupAllShop
-from application.shop.interactors.stop_shop import StopShop
-from application.shop.queries.get_shop_info import GetShopInfo
-from application.user.commands.admin_bot_start import (
-    AdminBotStartCommandHandler,
-)
-from application.user.commands.shop_bot_start import ShopBotStart
-from application.user.queries.get_user_profile import GetUserProfile
+from application.queries.order.get_order import GetOrderQueryHandler
 from entities.common.tracker import Tracker
 from entities.employee.services import EmployeeService
+from entities.goods.service import GoodsService
+from entities.order.service import OrderService
 from entities.shop.services import ShopService
 from entities.user.services import UserService
 from infrastructure.auth.tg_auth import TgIdentityProvider
 from infrastructure.bootstrap.configs import load_all_configs
 from infrastructure.gateways.employee import (
-    EmployeeMapper,
-    SqlalchemyEmployeeReader,
+    SQLAlchemyEmployeeMapper,
+    SQLAlchemyEmployeeReader,
 )
-from infrastructure.gateways.goods import GoodsGateway
-from infrastructure.gateways.order import OrderGateway, OrderItemGateway
-from infrastructure.gateways.shop import ShopMapper, SqlalchemyShopReader
+from infrastructure.gateways.goods import (
+    SQLAlchemyGoodsMapper,
+    SQLAlchemyGoodsReader,
+)
+from infrastructure.gateways.order import (
+    SQLAlchemyOrderMapper,
+    SQLAlchemyOrderReader,
+)
+from infrastructure.gateways.shop import (
+    SQLAlchemyShopMapper,
+    SQLAlchemyShopReader,
+)
 from infrastructure.gateways.user import (
-    UserDAO,
-    UserMapper,
+    SQLAlchemyUserMapper,
+    SQLAlchemyUserReader,
 )
 from infrastructure.geopy.config import GeoConfig
 from infrastructure.geopy.geopy_processor import PyGeoProcessor
@@ -114,47 +115,46 @@ from infrastructure.tg.config import ProjectConfig, WebhookConfig
 def gateway_provider() -> Provider:
     provider = Provider()
 
-    provider.provide(UserMapper, scope=Scope.REQUEST, provides=UserGateway)
-    provider.provide(UserDAO, scope=Scope.REQUEST, provides=UserReader)
-
     provider.provide(
-        ShopMapper,
-        scope=Scope.REQUEST,
-        provides=AnyOf[OldShopGateway, ShopSaver],
+        SQLAlchemyUserMapper, scope=Scope.REQUEST, provides=UserGateway
     )
-
-    provider.provide(ShopMapper, scope=Scope.REQUEST, provides=ShopGateway)
-
     provider.provide(
-        SqlalchemyShopReader, scope=Scope.REQUEST, provides=ShopReader
+        SQLAlchemyUserReader, scope=Scope.REQUEST, provides=UserReader
     )
 
     provider.provide(
-        EmployeeMapper,
+        SQLAlchemyShopMapper, scope=Scope.REQUEST, provides=ShopGateway
+    )
+    provider.provide(
+        SQLAlchemyShopReader, scope=Scope.REQUEST, provides=ShopReader
+    )
+
+    provider.provide(
+        SQLAlchemyEmployeeMapper,
         scope=Scope.REQUEST,
         provides=EmployeeGateway,
     )
 
     provider.provide(
-        SqlalchemyEmployeeReader, scope=Scope.REQUEST, provides=EmployeeReader
+        SQLAlchemyEmployeeReader, scope=Scope.REQUEST, provides=EmployeeReader
     )
 
     provider.provide(
-        GoodsGateway,
+        SQLAlchemyGoodsMapper,
         scope=Scope.REQUEST,
-        provides=AnyOf[GoodsSaver, GoodsReader],
+        provides=GoodsGateway,
+    )
+    provider.provide(
+        SQLAlchemyGoodsReader, scope=Scope.REQUEST, provides=GoodsReader
     )
 
     provider.provide(
-        OrderGateway,
+        SQLAlchemyOrderMapper,
         scope=Scope.REQUEST,
-        provides=AnyOf[OrderSaver, OrderReader],
+        provides=OrderGateway,
     )
-
     provider.provide(
-        OrderItemGateway,
-        scope=Scope.REQUEST,
-        provides=AnyOf[OrderItemSaver, OrderItemReader],
+        SQLAlchemyOrderReader, scope=Scope.REQUEST, provides=OrderReader
     )
 
     provider.provide(
@@ -190,45 +190,36 @@ def interactor_provider() -> Provider:
 
     provider.provide(ShopBotStart, scope=Scope.REQUEST)
     provider.provide(AdminBotStartCommandHandler, scope=Scope.REQUEST)
-    provider.provide(ChangeAddress, scope=Scope.REQUEST)
 
     provider.provide(CreateShopCommandHandler, scope=Scope.REQUEST)
-    provider.provide(StopShop, scope=Scope.REQUEST)
-    provider.provide(ResumeShop, scope=Scope.REQUEST)
-    provider.provide(DeleteShop, scope=Scope.REQUEST)
-    provider.provide(ChangeRegularDaysOff, scope=Scope.REQUEST)
-    provider.provide(ChangeSpecialDaysOff, scope=Scope.REQUEST)
-    provider.provide(SetupAllShop, scope=Scope.REQUEST)
-    provider.provide(GetShopInfo, scope=Scope.REQUEST)
+    provider.provide(StopShopCommandHandler, scope=Scope.REQUEST)
+    provider.provide(ResumeShopCommandHandler, scope=Scope.REQUEST)
+    provider.provide(DeleteShopCommandHandler, scope=Scope.REQUEST)
+    provider.provide(ChangeRegularDaysOffCommandHandler, scope=Scope.REQUEST)
+    provider.provide(ChangeSpecialDaysOffCommandHandler, scope=Scope.REQUEST)
+    provider.provide(SetupAllShopCommand, scope=Scope.REQUEST)
 
-    provider.provide(AddGoods, scope=Scope.REQUEST)
-    provider.provide(DeleteGoods, scope=Scope.REQUEST)
-    provider.provide(EditGoods, scope=Scope.REQUEST)
-    provider.provide(GetGoods, scope=Scope.REQUEST)
-    provider.provide(GetManyGoods, scope=Scope.REQUEST)
-    provider.provide(GetManyGoodsByAdmin, scope=Scope.REQUEST)
+    provider.provide(AddGoodsCommandHandler, scope=Scope.REQUEST)
+    provider.provide(DeleteGoodsCommandHandler, scope=Scope.REQUEST)
+    provider.provide(EditGoodsCommandHandler, scope=Scope.REQUEST)
+    provider.provide(GetManyGoodsQueryHandler, scope=Scope.REQUEST)
+    provider.provide(GetManyGoodsByAdminQueryHandler, scope=Scope.REQUEST)
 
-    provider.provide(GetEmployeeCards, scope=Scope.REQUEST)
-    provider.provide(GetEmployeeCard, scope=Scope.REQUEST)
-    provider.provide(AddEmployee, scope=Scope.REQUEST)
-    provider.provide(RemoveEmployee, scope=Scope.REQUEST)
-    provider.provide(ChangeEmployee, scope=Scope.REQUEST)
+    provider.provide(AddEmployeeCommandHandler, scope=Scope.REQUEST)
+    provider.provide(RemoveEmployeeCommandHandler, scope=Scope.REQUEST)
+    provider.provide(ChangeEmployeeCommandHandler, scope=Scope.REQUEST)
 
-    provider.provide(CreateOrder, scope=Scope.REQUEST)
-    provider.provide(GetOrder, scope=Scope.REQUEST)
-    provider.provide(EditOrderItemQuantity, scope=Scope.REQUEST)
-    provider.provide(DeleteOrderItem, scope=Scope.REQUEST)
+    provider.provide(CreateOrderCommandHandler, scope=Scope.REQUEST)
+    provider.provide(GetOrderQueryHandler, scope=Scope.REQUEST)
+    provider.provide(EditOrderItemQuantityCommandHandler, scope=Scope.REQUEST)
+    provider.provide(DeleteOrderItemCommandHandler, scope=Scope.REQUEST)
     provider.provide(DeleteOrder, scope=Scope.REQUEST)
-
-    provider.provide(UpdatePhoneNumberByYourself, scope=Scope.REQUEST)
 
     return provider
 
 
 class QueriesProvider(Provider):
     scope = Scope.REQUEST
-
-    queries = provide_all(GetUserProfile)
 
 
 def service_provider() -> Provider:
@@ -239,6 +230,8 @@ def service_provider() -> Provider:
         UserService,
         ShopService,
         EmployeeService,
+        GoodsService,
+        OrderService,
         scope=Scope.REQUEST,
     )
 

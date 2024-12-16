@@ -44,3 +44,10 @@ class ShopService:
     def add_user_to_shop(shop: Shop, new_user: User) -> None:
         if new_user not in shop.users:
             shop.users.append(new_user)
+
+    @staticmethod
+    def change_shop_activity(shop: Shop, is_active: bool) -> None:
+        shop.is_active = is_active
+
+    async def delete_shop(self, shop: Shop) -> None:
+        await self.tracker.delete(shop)

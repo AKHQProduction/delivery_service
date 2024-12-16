@@ -5,9 +5,9 @@ from aiogram_dialog.widgets.text import Const, Multi
 from dishka import FromDishka
 from dishka.integrations.aiogram_dialog import inject
 
-from application.employee.commands.remove_employee import (
-    RemoveEmployee,
-    RemoveEmployeeInputData,
+from application.commands.employee.remove_employee import (
+    RemoveEmployeeCommand,
+    RemoveEmployeeCommandHandler,
 )
 from presentation.common.consts import BACK_BTN_TXT
 from presentation.common.helpers import default_on_start_handler
@@ -21,9 +21,9 @@ async def handle_accept_remove_from_employee(
     call: CallbackQuery,
     _: Cancel,
     manager: DialogManager,
-    action: FromDishka[RemoveEmployee],
+    action: FromDishka[RemoveEmployeeCommandHandler],
 ):
-    await action(RemoveEmployeeInputData(manager.dialog_data["employee_id"]))
+    await action(RemoveEmployeeCommand(manager.dialog_data["employee_id"]))
 
     await call.answer("✅ Ви успішно видалили співробітника")
 

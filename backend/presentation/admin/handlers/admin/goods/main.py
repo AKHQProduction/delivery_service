@@ -9,11 +9,10 @@ from aiogram_dialog.widgets.text import Const, Format
 from dishka import FromDishka
 from dishka.integrations.aiogram_dialog import inject
 
-from application.common.interfaces.filters import Pagination
-from application.goods.gateway import GoodsFilters
-from application.goods.interactors.get_many_goods_by_admin import (
-    GetManyGoodsByAdmin,
-    GetManyGoodsByAdminInputData,
+from application.common.persistence.goods import GoodsReaderFilters
+from application.queries.goods.get_many_goods_by_admin import (
+    GetManyGoodsByAdminQuery,
+    GetManyGoodsByAdminQueryHandler,
 )
 from entities.goods.models import GoodsId
 from presentation.admin.handlers.admin.goods import states
@@ -33,15 +32,13 @@ async def goods_workflow_btn(_: Message, dialog_manager: DialogManager):
 
 @inject
 async def get_all_goods_by_admin(
-    action: FromDishka[GetManyGoodsByAdmin], **_kwargs
+    action: FromDishka[GetManyGoodsByAdminQueryHandler], **_kwargs
 ) -> dict[str, Any]:
     output_data = await action(
-        GetManyGoodsByAdminInputData(
-            pagination=Pagination(), filters=GoodsFilters()
-        )
+        GetManyGoodsByAdminQuery(filters=GoodsReaderFilters(shop_id=None))
     )
 
-    return {"total": output_data.total, "goods": output_data.goods}
+    return {"total": len(output_data), "goods": output_data}
 
 
 async def on_goods_selected(

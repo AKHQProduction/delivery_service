@@ -1,5 +1,4 @@
-from application.common.interfaces.filters import Pagination
-from application.common.interfaces.user.gateways import UserGateway
+from application.common.persistence import Pagination, UserGateway
 from application.user.errors import UserAlreadyExistError
 from application.user.gateways import GetUsersFilters
 from entities.user.models import User, UserId

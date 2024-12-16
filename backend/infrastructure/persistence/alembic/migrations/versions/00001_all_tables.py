@@ -2,7 +2,7 @@
 
 Revision ID: 00001
 Revises:
-Create Date: 2024-12-09 22:22:12.492938
+Create Date: 2024-12-16 14:58:53.962295
 
 """
 
@@ -185,15 +185,23 @@ def upgrade() -> None:
         sa.Column(
             "order_id", sa.Integer(), autoincrement=True, nullable=False
         ),
-        sa.Column("status", sa.Enum("NEW", name="orderstatus"), nullable=True),
+        sa.Column(
+            "status",
+            sa.Enum(
+                "NEW",
+                "IN_PROGRESS",
+                "CANCELED",
+                "DELIVERED",
+                name="orderstatus",
+            ),
+            nullable=True,
+        ),
         sa.Column(
             "order_total_price",
             sa.DECIMAL(precision=10, scale=2),
             nullable=False,
         ),
-        sa.Column(
-            "bottles_quantity_to_exchange", sa.Integer(), nullable=False
-        ),
+        sa.Column("bottles_quantity", sa.Integer(), nullable=False),
         sa.Column(
             "delivery_preference",
             sa.Enum("MORNING", "AFTERNOON", name="deliverypreference"),
@@ -265,6 +273,11 @@ def upgrade() -> None:
 
 
 def downgrade() -> None:
+    op.execute("DROP TYPE IF EXISTS employeerole")
+    op.execute("DROP TYPE IF EXISTS orderstatus")
+    op.execute("DROP TYPE IF EXISTS goodstype")
+    op.execute("DROP TYPE IF EXISTS deliverypreference")
+
     op.drop_table("order_items")
     op.drop_table("orders")
     op.drop_table("goods")
@@ -273,9 +286,3 @@ def downgrade() -> None:
     op.drop_index(op.f("ix_users_user_id"), table_name="users")
     op.drop_table("users")
     op.drop_table("shops")
-
-    op.execute("DROP TYPE IF EXISTS graphextractionstatusenum")
-    op.execute("DROP TYPE IF EXISTS deliverypreference")
-    op.execute("DROP TYPE IF EXISTS goodstype")
-    op.execute("DROP TYPE IF EXISTS employeerole")
-    op.execute("DROP TYPE IF EXISTS orderstatus")

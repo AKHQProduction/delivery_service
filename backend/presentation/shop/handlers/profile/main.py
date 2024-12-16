@@ -9,10 +9,7 @@ from aiogram_dialog.widgets.text import Case, Const, Format, Multi
 from dishka import FromDishka
 from dishka.integrations.aiogram_dialog import inject
 
-from application.user.queries.get_user_profile import (
-    GetUserProfile,
-    GetUserProfileInputData,
-)
+from application.common.persistence.user import UserReader
 from presentation.common.consts import PROFILE_BTN_TXT
 
 from . import states
@@ -65,14 +62,14 @@ profile_card = Multi(
 @inject
 async def get_profile_card(
     dialog_manager: DialogManager,
-    action: FromDishka[GetUserProfile],
+    user_reader: FromDishka[UserReader],
     **_kwargs,
 ) -> dict[str, Any]:
     tg_id = dialog_manager.dialog_data.get(
         "tg_id", dialog_manager.event.from_user.id
     )
 
-    user_profile = await action(GetUserProfileInputData(tg_id=int(tg_id)))
+    user_profile = await user_reader.read_profile_with_tg_id(tg_id=int(tg_id))
 
     profile_data = asdict(user_profile)
     profile_data["address"] = user_profile.address.full_address
