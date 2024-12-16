@@ -3,6 +3,7 @@ from sqlalchemy.orm import composite, relationship
 
 from entities.shop.models import Shop
 from entities.shop.value_objects import (
+    DaysOff,
     ShopLocation,
 )
 from infrastructure.persistence.models import mapper_registry
@@ -68,6 +69,11 @@ def map_shops_table() -> None:
                 ShopLocation,
                 shops_table.c.location_latitude,
                 shops_table.c.location_longitude,
+            ),
+            "days_off": composite(
+                DaysOff,
+                shops_table.c.regular_days_off,
+                shops_table.c.special_days_off,
             ),
         },
     )
