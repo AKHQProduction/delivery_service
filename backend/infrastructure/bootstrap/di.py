@@ -60,6 +60,7 @@ from application.common.persistence.shop import ShopGateway, ShopReader
 from application.common.persistence.user import UserGateway, UserReader
 from application.common.transaction_manager import TransactionManager
 from application.common.webhook_manager import TokenVerifier, WebhookManager
+from application.queries.employee.get_employees import GetEmployeeQueryHandler
 from application.queries.goods.get_many_goods import (
     GetManyGoodsQueryHandler,
 )
@@ -208,6 +209,7 @@ def interactor_provider() -> Provider:
     provider.provide(AddEmployeeCommandHandler, scope=Scope.REQUEST)
     provider.provide(RemoveEmployeeCommandHandler, scope=Scope.REQUEST)
     provider.provide(ChangeEmployeeCommandHandler, scope=Scope.REQUEST)
+    provider.provide(GetEmployeeQueryHandler, scope=Scope.REQUEST)
 
     provider.provide(CreateOrderCommandHandler, scope=Scope.REQUEST)
     provider.provide(GetOrderQueryHandler, scope=Scope.REQUEST)
