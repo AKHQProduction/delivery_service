@@ -75,8 +75,8 @@ ignore = [
 "conftest.py" = ['PT023', 'PT001', 'PT006']
 
 [tool.pyright]
-venvPath = "."
-venv = ".venv"
+venvPath = "/Users/plztrustme/Library/Caches/pypoetry/virtualenvs"
+venv = "delivery-service-DrDL6_2h-py3.11"
 
 [build-system]
 requires = ["poetry-core"]
