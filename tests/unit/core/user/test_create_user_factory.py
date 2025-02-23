@@ -16,6 +16,7 @@ from delivery_service.core.users.factory import (
 from delivery_service.core.users.service_client import (
     ServiceClient,
     ServiceClientID,
+    UserRole,
 )
 
 
@@ -117,3 +118,14 @@ def test_successfully_edit_telegram_contacts() -> None:
         service_client.telegram_contacts.telegram_username
         == new_telegram_username
     )
+
+
+def test_edit_service_client_role() -> None:
+    service_client = ServiceClient(
+        object_id=ServiceClientID(uuid.uuid4()), full_name="Kevin Rudolf"
+    )
+    new_service_client_role = UserRole.SHOP_MANAGER
+
+    service_client.edit_role(new_service_client_role)
+
+    assert service_client.role == new_service_client_role
