@@ -16,14 +16,14 @@ class UserRole(StrEnum):
 class ServiceClient(Entity[ServiceClientID]):
     def __init__(
         self,
-        object_id: ServiceClientID,
+        entity_id: ServiceClientID,
         *,
         full_name: str,
         telegram_contacts: TelegramContacts | None = None,
         role: UserRole = UserRole.USER,
         is_active: bool = True,
     ) -> None:
-        super().__init__(oid=object_id)
+        super().__init__(entity_id=entity_id)
 
         self._full_name = full_name
         self._telegram_contacts = telegram_contacts

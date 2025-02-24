@@ -32,7 +32,7 @@ class ServiceClientFactory:
         service_client_id = ServiceClientID(uuid.uuid4())
 
         service_client = ServiceClient(
-            object_id=service_client_id,
+            entity_id=service_client_id,
             full_name=full_name,
             telegram_contacts=self._set_telegram_contacts(
                 data=telegram_contacts_data

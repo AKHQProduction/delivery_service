@@ -1,17 +1,21 @@
 from typing import Generic, Hashable, TypeVar
 
 # Object ID
-OID = TypeVar("OID", bound=Hashable)
+EntityID = TypeVar("EntityID", bound=Hashable)
 
 
-class Entity(Generic[OID]):
-    def __init__(self, oid: OID) -> None:
-        self.oid = oid
+class Entity(Generic[EntityID]):
+    def __init__(self, entity_id: EntityID) -> None:
+        self._entity_id = entity_id
+
+    @property
+    def entity_id(self) -> EntityID:
+        return self._entity_id
 
     def __eq__(self, other: object) -> bool:
         if isinstance(other, Entity):
-            return bool(other.oid == self.oid)
+            return bool(other._entity_id == self._entity_id)
         return NotImplemented
 
     def __hash__(self) -> int:
-        return hash(self.oid)
+        return hash(self._entity_id)

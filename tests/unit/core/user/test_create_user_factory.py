@@ -97,12 +97,12 @@ def test_create_several_users() -> None:
     )
 
     assert first_user != second_user
-    assert first_user.oid != second_user.oid
+    assert first_user._entity_id != second_user._entity_id
 
 
 def test_successfully_edit_telegram_contacts() -> None:
     service_client = ServiceClient(
-        object_id=ServiceClientID(uuid.uuid4()), full_name="Kevin Rudolf"
+        entity_id=ServiceClientID(uuid.uuid4()), full_name="Kevin Rudolf"
     )
     new_telegram_id = 1
     new_telegram_username = "@TestUsername"
