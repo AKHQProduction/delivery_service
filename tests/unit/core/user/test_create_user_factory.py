@@ -1,8 +1,10 @@
 import uuid
 from typing import Type
+from unittest.mock import create_autospec
 
 import pytest
 
+from delivery_service.application.ports.id_generator import IDGenerator
 from delivery_service.core.users.errors import (
     FullNameTooLongError,
     InvalidFullNameError,
@@ -17,6 +19,11 @@ from delivery_service.core.users.service_client import (
     ServiceClient,
     ServiceClientID,
 )
+from delivery_service.infrastructure.factories.service_client_factory import (
+    ServiceClientFactoryImpl,
+)
+
+FAKE_UUID = uuid.UUID("0195381b-8549-708d-b29b-a923d7870d78")
 
 
 @pytest.mark.parametrize(
@@ -57,7 +64,12 @@ def test_create_service_client(
     telegram_contacts_data: TelegramContactsData | None,
     exception: Type[Exception] | None,
 ) -> None:
-    service_client_factory = ServiceClientFactory()
+    mock_id_generator = create_autospec(IDGenerator, instance=True)
+    mock_id_generator.generate_service_client_id.return_value = FAKE_UUID
+
+    service_client_factory = ServiceClientFactoryImpl(
+        id_generator=mock_id_generator
+    )
 
     if exception:
         with pytest.raises(exception):
@@ -71,6 +83,7 @@ def test_create_service_client(
         )
         assert isinstance(new_user, ServiceClient)
         assert new_user.full_name == full_name
+        assert new_user.entity_id == FAKE_UUID
 
         if telegram_contacts_data is not None:
             assert new_user.telegram_contacts is not None
@@ -85,10 +98,12 @@ def test_create_service_client(
         else:
             assert new_user.telegram_contacts is None
 
+        mock_id_generator.generate_service_client_id.assert_called_once()
 
-def test_create_several_users() -> None:
-    service_client_factory = ServiceClientFactory()
 
+def test_create_several_users(
+    service_client_factory: ServiceClientFactory,
+) -> None:
     first_user = service_client_factory.create_service_user(
         full_name="First_user", telegram_contacts_data=None
     )

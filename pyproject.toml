@@ -8,6 +8,7 @@ packages = [{ include = "delivery_service", from = "src" }]
 
 [tool.poetry.dependencies]
 python = "^3.11"
+uuid7 = "^0.1.0"
 
 
 [tool.poetry.group.test.dependencies]
