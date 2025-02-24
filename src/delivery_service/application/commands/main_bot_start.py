@@ -1,5 +1,6 @@
 from dataclasses import dataclass
 
+from delivery_service.application.common.types import Command, RequestHandler
 from delivery_service.application.ports.transaction_manager import (
     TransactionManager,
 )
@@ -12,12 +13,12 @@ from delivery_service.core.users.repository import UserRepository
 
 
 @dataclass(frozen=True)
-class MainBotStart:
+class MainBotStart(Command[None]):
     full_name: str
     telegram_data: TelegramContactsData
 
 
-class MainBotStartHandler:
+class MainBotStartHandler(RequestHandler[MainBotStart, None]):
     def __init__(
         self,
         user_repository: UserRepository,
@@ -30,11 +31,11 @@ class MainBotStartHandler:
         self._view_manager = view_manager
         self._transaction_manager = transaction_manager
 
-    async def handle(self, command: MainBotStart) -> None:
-        if not await self._repository.is_exists(command.telegram_data):
+    async def handle(self, request: MainBotStart) -> None:
+        if not await self._repository.is_exists(request.telegram_data):
             new_service_user = self._factory.create_user(
-                full_name=command.full_name,
-                telegram_contacts_data=command.telegram_data,
+                full_name=request.full_name,
+                telegram_contacts_data=request.telegram_data,
             )
             self._repository.add(new_service_user)
             await self._transaction_manager.commit()
