@@ -7,26 +7,26 @@ from delivery_service.core.users.errors import (
     InvalidFullNameError,
 )
 from delivery_service.core.users.factory import (
-    ServiceClientFactory,
     TelegramContactsData,
+    UserFactory,
 )
-from delivery_service.core.users.service_client import ServiceClient
+from delivery_service.core.users.user import User
 
 
-class ServiceClientFactoryImpl(ServiceClientFactory):
+class UserFactoryImpl(UserFactory):
     _MIN_FULLNAME_LENGTH: Final[int] = 1
     _MAX_FULLNAME_LENGTH: Final[int] = 128
 
     def __init__(self, id_generator: IDGenerator) -> None:
         self._id_generator = id_generator
 
-    def create_service_user(
+    def create_user(
         self,
         full_name: str,
         telegram_contacts_data: TelegramContactsData | None,
-    ) -> ServiceClient:
+    ) -> User:
         self._validate(full_name)
-        return ServiceClient(
+        return User(
             entity_id=self._id_generator.generate_service_client_id(),
             full_name=full_name,
             telegram_contacts=self._set_telegram_contacts(

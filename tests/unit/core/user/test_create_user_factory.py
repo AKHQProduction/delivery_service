@@ -12,14 +12,14 @@ from delivery_service.core.users.errors import (
     TelegramIDMustBePositiveError,
 )
 from delivery_service.core.users.factory import (
-    ServiceClientFactory,
     TelegramContactsData,
+    UserFactory,
 )
-from delivery_service.core.users.service_client import (
-    ServiceClient,
+from delivery_service.core.users.user import (
+    User,
 )
-from delivery_service.infrastructure.factories.service_client_factory import (
-    ServiceClientFactoryImpl,
+from delivery_service.infrastructure.factories.user_factory import (
+    UserFactoryImpl,
 )
 
 FAKE_UUID = uuid.UUID("0195381b-8549-708d-b29b-a923d7870d78")
@@ -58,7 +58,7 @@ FAKE_UUID = uuid.UUID("0195381b-8549-708d-b29b-a923d7870d78")
         ),
     ],
 )
-def test_create_service_client(
+def test_create_service_user(
     full_name: str,
     telegram_contacts_data: TelegramContactsData | None,
     exception: Type[Exception] | None,
@@ -66,21 +66,19 @@ def test_create_service_client(
     mock_id_generator = create_autospec(IDGenerator, instance=True)
     mock_id_generator.generate_service_client_id.return_value = FAKE_UUID
 
-    service_client_factory = ServiceClientFactoryImpl(
-        id_generator=mock_id_generator
-    )
+    service_client_factory = UserFactoryImpl(id_generator=mock_id_generator)
 
     if exception:
         with pytest.raises(exception):
-            service_client_factory.create_service_user(
+            service_client_factory.create_user(
                 full_name=full_name,
                 telegram_contacts_data=telegram_contacts_data,
             )
     else:
-        new_user = service_client_factory.create_service_user(
+        new_user = service_client_factory.create_user(
             full_name=full_name, telegram_contacts_data=telegram_contacts_data
         )
-        assert isinstance(new_user, ServiceClient)
+        assert isinstance(new_user, User)
         assert new_user.full_name == full_name
         assert new_user.entity_id == FAKE_UUID
 
@@ -101,12 +99,12 @@ def test_create_service_client(
 
 
 def test_create_several_users(
-    service_client_factory: ServiceClientFactory,
+    service_user_factory: UserFactory,
 ) -> None:
-    first_user = service_client_factory.create_service_user(
+    first_user = service_user_factory.create_user(
         full_name="First_user", telegram_contacts_data=None
     )
-    second_user = service_client_factory.create_service_user(
+    second_user = service_user_factory.create_user(
         full_name="Second user", telegram_contacts_data=None
     )
 
@@ -115,9 +113,9 @@ def test_create_several_users(
 
 
 def test_successfully_edit_telegram_contacts(
-    service_client_factory: ServiceClientFactory,
+    service_user_factory: UserFactory,
 ) -> None:
-    service_client = service_client_factory.create_service_user(
+    service_client = service_user_factory.create_user(
         full_name="Kevin Rudolf", telegram_contacts_data=None
     )
     new_telegram_id = 1

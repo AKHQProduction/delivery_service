@@ -1,12 +1,12 @@
 import pytest
 
 from delivery_service.application.ports.id_generator import IDGenerator
-from delivery_service.core.users.factory import ServiceClientFactory
+from delivery_service.core.users.factory import UserFactory
 from delivery_service.infrastructure.adapters.id_generator import (
     IDGeneratorImpl,
 )
-from delivery_service.infrastructure.factories.service_client_factory import (
-    ServiceClientFactoryImpl,
+from delivery_service.infrastructure.factories.user_factory import (
+    UserFactoryImpl,
 )
 
 
@@ -16,5 +16,5 @@ def id_generator() -> IDGenerator:
 
 
 @pytest.fixture
-def service_client_factory(id_generator: IDGenerator) -> ServiceClientFactory:
-    return ServiceClientFactoryImpl(id_generator=id_generator)
+def service_user_factory(id_generator: IDGenerator) -> UserFactory:
+    return UserFactoryImpl(id_generator=id_generator)

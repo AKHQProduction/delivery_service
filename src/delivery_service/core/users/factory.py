@@ -2,8 +2,8 @@ from abc import abstractmethod
 from dataclasses import dataclass
 from typing import Protocol
 
-from delivery_service.core.users.service_client import (
-    ServiceClient,
+from delivery_service.core.users.user import (
+    User,
 )
 
 
@@ -13,10 +13,10 @@ class TelegramContactsData:
     telegram_username: str | None
 
 
-class ServiceClientFactory(Protocol):
+class UserFactory(Protocol):
     @abstractmethod
-    def create_service_user(
+    def create_user(
         self,
         full_name: str,
         telegram_contacts_data: TelegramContactsData | None,
-    ) -> ServiceClient: ...
+    ) -> User: ...

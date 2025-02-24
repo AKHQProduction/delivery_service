@@ -5,18 +5,21 @@ from uuid import UUID
 from delivery_service.core.shared.entity import Entity
 from delivery_service.core.shared.tg_contacts import TelegramContacts
 
-ServiceClientID = NewType("ServiceClientID", UUID)
+UserID = NewType("UserID", UUID)
 
 
 class UserRole(StrEnum):
     SUPERUSER = "superuser"
+    SHOP_OWNER = "shop_owner"
+    SHOP_MANAGER = "shop_manager"
+    COURIER = "courier"
     USER = "user"
 
 
-class ServiceClient(Entity[ServiceClientID]):
+class User(Entity[UserID]):
     def __init__(
         self,
-        entity_id: ServiceClientID,
+        entity_id: UserID,
         *,
         full_name: str,
         telegram_contacts: TelegramContacts | None = None,
