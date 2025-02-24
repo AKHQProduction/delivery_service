@@ -11,9 +11,6 @@ ServiceClientID = NewType("ServiceClientID", UUID)
 class UserRole(StrEnum):
     SUPERUSER = "superuser"
     USER = "user"
-    SHOP_OWNER = "shop_owner"
-    SHOP_MANAGER = "shop_manager"
-    COURIER = "courier"
 
 
 class ServiceClient(Entity[ServiceClientID]):
@@ -39,9 +36,6 @@ class ServiceClient(Entity[ServiceClientID]):
         self._telegram_contacts = TelegramContacts(
             telegram_id=telegram_id, telegram_username=telegram_username
         )
-
-    def edit_role(self, new_role: UserRole) -> None:
-        self._role = new_role
 
     @property
     def full_name(self) -> str:
