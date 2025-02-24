@@ -17,7 +17,6 @@ from delivery_service.core.users.factory import (
 )
 from delivery_service.core.users.service_client import (
     ServiceClient,
-    ServiceClientID,
 )
 from delivery_service.infrastructure.factories.service_client_factory import (
     ServiceClientFactoryImpl,
@@ -115,9 +114,11 @@ def test_create_several_users(
     assert first_user._entity_id != second_user._entity_id
 
 
-def test_successfully_edit_telegram_contacts() -> None:
-    service_client = ServiceClient(
-        entity_id=ServiceClientID(uuid.uuid4()), full_name="Kevin Rudolf"
+def test_successfully_edit_telegram_contacts(
+    service_client_factory: ServiceClientFactory,
+) -> None:
+    service_client = service_client_factory.create_service_user(
+        full_name="Kevin Rudolf", telegram_contacts_data=None
     )
     new_telegram_id = 1
     new_telegram_username = "@TestUsername"
