@@ -36,7 +36,7 @@ class UserFactoryImpl(UserFactory):
             telegram_data=telegram_contacts_data
         ):
             return User(
-                entity_id=self._id_generator.generate_service_client_id(),
+                entity_id=self._id_generator.generate_user_id(),
                 full_name=full_name,
                 telegram_contacts=TelegramContacts(
                     telegram_id=telegram_contacts_data.telegram_id,

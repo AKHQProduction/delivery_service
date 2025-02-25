@@ -7,5 +7,5 @@ from delivery_service.core.users.user import UserID
 
 
 class IDGeneratorImpl(IDGenerator):
-    def generate_service_client_id(self) -> UserID:
+    def generate_user_id(self) -> UserID:
         return UserID(UUID(str(uuid7())))
