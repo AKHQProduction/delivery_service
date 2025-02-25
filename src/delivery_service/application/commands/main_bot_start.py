@@ -32,7 +32,7 @@ class MainBotStartHandler(RequestHandler[MainBotStart, None]):
         self._transaction_manager = transaction_manager
 
     async def handle(self, request: MainBotStart) -> None:
-        if not await self._repository.is_exists(request.telegram_data):
+        if not await self._repository.exists(request.telegram_data):
             new_service_user = self._factory.create_user(
                 full_name=request.full_name,
                 telegram_contacts_data=request.telegram_data,

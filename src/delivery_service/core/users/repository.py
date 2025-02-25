@@ -11,5 +11,5 @@ class UserRepository(Protocol):
         raise NotImplementedError
 
     @abstractmethod
-    async def is_exists(self, telegram_data: TelegramContactsData) -> bool:
+    async def exists(self, telegram_data: TelegramContactsData) -> bool:
         raise NotImplementedError

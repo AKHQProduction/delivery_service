@@ -25,7 +25,7 @@ async def test_main_bot_start(
     service_user_factory: UserFactory, user_is_already_exists: bool
 ) -> None:
     mock_user_repository = create_autospec(UserRepository, instance=True)
-    mock_user_repository.is_exists.return_value = user_is_already_exists
+    mock_user_repository.exists.return_value = user_is_already_exists
     mock_user_factory = create_autospec(UserFactory, instance=True)
     mock_view_manager = create_autospec(ViewManager, instance=True)
     mock_transaction_manager = create_autospec(
@@ -47,7 +47,7 @@ async def test_main_bot_start(
     response_data = await handler.handle(request_data)
 
     assert response_data is None
-    mock_user_repository.is_exists.assert_called_once_with(
+    mock_user_repository.exists.assert_called_once_with(
         request_data.telegram_data
     )
     mock_view_manager.send_greeting_message.assert_called_once()
