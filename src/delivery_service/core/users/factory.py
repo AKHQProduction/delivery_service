@@ -15,8 +15,8 @@ class TelegramContactsData:
 
 class UserFactory(Protocol):
     @abstractmethod
-    def create_user(
+    async def create_user(
         self,
         full_name: str,
-        telegram_contacts_data: TelegramContactsData | None,
+        telegram_contacts_data: TelegramContactsData,
     ) -> User: ...

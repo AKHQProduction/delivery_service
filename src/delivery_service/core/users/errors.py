@@ -1,6 +1,9 @@
 from dataclasses import dataclass
 
-from delivery_service.core.shared.errors import ValidationError
+from delivery_service.core.shared.errors import (
+    EntityAlreadyExistsError,
+    ValidationError,
+)
 
 
 @dataclass(eq=False)
@@ -31,3 +34,12 @@ class InvalidTelegramUsernameError(ValidationError):
         return (
             "Telegram username length must be greate than 0 and less than 129"
         )
+
+
+@dataclass(eq=False)
+class UserAlreadyExistsError(EntityAlreadyExistsError):
+    telegram_id: int
+
+    @property
+    def message(self) -> str:
+        return f"User with telegram id={self.telegram_id} already exists"
