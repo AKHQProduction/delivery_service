@@ -1,6 +1,8 @@
 from dataclasses import dataclass
 
-from delivery_service.application.common.types import Command, RequestHandler
+from bazario import Request
+from bazario.asyncio import RequestHandler
+
 from delivery_service.application.ports.transaction_manager import (
     TransactionManager,
 )
@@ -14,7 +16,7 @@ from delivery_service.core.users.repository import UserRepository
 
 
 @dataclass(frozen=True)
-class MainBotStart(Command[None]):
+class MainBotStart(Request[None]):
     full_name: str
     telegram_data: TelegramContactsData
 

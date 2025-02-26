@@ -147,6 +147,23 @@ tests = ["cloudpickle", "hypothesis", "mypy (>=1.11.1)", "pympler", "pytest (>=4
 tests-mypy = ["mypy (>=1.11.1)", "pytest-mypy-plugins"]
 
 [[package]]
+name = "bazario"
+version = "0.4.2"
+description = "Lightweight handler routing library for modular apps."
+optional = false
+python-versions = ">=3.10"
+files = [
+    {file = "bazario-0.4.2-py3-none-any.whl", hash = "sha256:156805fb7fa5ecdf07b713d87413af48753ccbda8b363567e31beef2c43e9b9d"},
+    {file = "bazario-0.4.2.tar.gz", hash = "sha256:207dd745eba63f35bea8204f438f830538eaba59a0533ee3f8c42bbf698e11da"},
+]
+
+[package.extras]
+dishka = ["dishka"]
+lint = ["mypy", "ruff"]
+punq = ["punq"]
+test = ["pytest"]
+
+[[package]]
 name = "cfgv"
 version = "3.4.0"
 description = "Validate configuration and produce human readable error messages."
@@ -909,4 +926,4 @@ propcache = ">=0.2.0"
 [metadata]
 lock-version = "2.0"
 python-versions = "^3.11"
-content-hash = "26fbcc26eacee4ee4ad228267ceb427d9b2393ef440f33e198272cb28bbb4b3b"
+content-hash = "c828c77efa12a3bb71a1f84210fb0a9e6c8504b02e90ae1cc5a75a72e89a8f72"
