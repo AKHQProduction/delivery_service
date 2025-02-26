@@ -16,12 +16,12 @@ from delivery_service.core.users.repository import UserRepository
 
 
 @dataclass(frozen=True)
-class MainBotStart(Request[None]):
+class MainBotStartRequest(Request[None]):
     full_name: str
     telegram_data: TelegramContactsData
 
 
-class MainBotStartHandler(RequestHandler[MainBotStart, None]):
+class MainBotStartHandler(RequestHandler[MainBotStartRequest, None]):
     def __init__(
         self,
         user_repository: UserRepository,
@@ -34,7 +34,7 @@ class MainBotStartHandler(RequestHandler[MainBotStart, None]):
         self._view_manager = view_manager
         self._transaction_manager = transaction_manager
 
-    async def handle(self, request: MainBotStart) -> None:
+    async def handle(self, request: MainBotStartRequest) -> None:
         try:
             new_service_user = await self._factory.create_user(
                 full_name=request.full_name,

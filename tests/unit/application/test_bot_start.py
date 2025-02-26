@@ -1,8 +1,8 @@
 from unittest.mock import create_autospec
 
 from delivery_service.application.commands.main_bot_start import (
-    MainBotStart,
     MainBotStartHandler,
+    MainBotStartRequest,
 )
 from delivery_service.application.ports.transaction_manager import (
     TransactionManager,
@@ -30,7 +30,7 @@ async def test_main_bot_start() -> None:
         view_manager=mock_view_manager,
         transaction_manager=mock_transaction_manager,
     )
-    request_data = MainBotStart(
+    request_data = MainBotStartRequest(
         full_name="Kevin Rudolf",
         telegram_data=TelegramContactsData(
             telegram_id=1, telegram_username="@Kevin"
@@ -62,7 +62,7 @@ async def test_main_bot_start_when_user_already_exists() -> None:
         view_manager=mock_view_manager,
         transaction_manager=mock_transaction_manager,
     )
-    request_data = MainBotStart(
+    request_data = MainBotStartRequest(
         full_name="Kevin Rudolf",
         telegram_data=TelegramContactsData(
             telegram_id=1, telegram_username="@Kevin"
