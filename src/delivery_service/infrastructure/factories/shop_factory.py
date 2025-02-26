@@ -1,4 +1,5 @@
 from delivery_service.application.ports.id_generator import IDGenerator
+from delivery_service.core.shops.employee_collection import EmployeeCollection
 from delivery_service.core.shops.errors import ShopCreationNotAllowedError
 from delivery_service.core.shops.factory import DaysOffData, ShopFactory
 from delivery_service.core.shops.shop import Shop
@@ -34,4 +35,5 @@ class ShopFactoryImpl(ShopFactory):
                 regular_days_off=shop_days_off.regular_days,
                 irregular_days_off=shop_days_off.irregular_days,
             ),
+            employees=EmployeeCollection(),
         )

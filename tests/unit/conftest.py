@@ -5,6 +5,7 @@ import pytest
 from delivery_service.application.ports.id_generator import IDGenerator
 from delivery_service.core.shared.location import Location
 from delivery_service.core.shared.tg_contacts import TelegramContacts
+from delivery_service.core.shops.employee_collection import EmployeeCollection
 from delivery_service.core.shops.shop import Shop, ShopID
 from delivery_service.core.shops.value_objects import DaysOff
 from delivery_service.core.users.user import User, UserID
@@ -42,4 +43,5 @@ def random_shop() -> Shop:
             longitude=30,
         ),
         days_off=DaysOff(regular_days_off=[5, 6], irregular_days_off=[]),
+        employees=EmployeeCollection(),
     )
