@@ -9,6 +9,8 @@ packages = [{ include = "delivery_service", from = "src" }]
 [tool.poetry.dependencies]
 python = "^3.11"
 uuid7 = "^0.1.0"
+geopy = "^2.4.1"
+aiohttp = "^3.11.13"
 
 
 [tool.poetry.group.test.dependencies]

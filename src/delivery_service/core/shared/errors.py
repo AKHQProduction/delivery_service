@@ -20,3 +20,10 @@ class EntityAlreadyExistsError(DomainError):
     @property
     def message(self) -> str:
         return "Entity already exists"
+
+
+@dataclass(eq=False)
+class ConflictError(DomainError):
+    @property
+    def message(self) -> str:
+        return "Conflict error"

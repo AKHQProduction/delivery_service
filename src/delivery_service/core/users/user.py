@@ -40,6 +40,9 @@ class User(Entity[UserID]):
             telegram_id=telegram_id, telegram_username=telegram_username
         )
 
+    def edit_role(self, new_role: UserRole) -> None:
+        self._role = new_role
+
     @property
     def full_name(self) -> str:
         return self._full_name

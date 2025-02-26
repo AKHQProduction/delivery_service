@@ -17,6 +17,7 @@ from delivery_service.core.users.factory import (
 from delivery_service.core.users.repository import UserRepository
 from delivery_service.core.users.user import (
     User,
+    UserRole,
 )
 from delivery_service.infrastructure.factories.user_factory import (
     UserFactoryImpl,
@@ -105,17 +106,23 @@ async def test_create_user(
         )
 
 
-def test_successfully_edit_telegram_contacts(test_random_user: User) -> None:
+def test_successfully_edit_telegram_contacts(random_user: User) -> None:
     new_telegram_id = 2
     new_telegram_username = "@TestUsername"
 
-    test_random_user.edit_telegram_contacts(
-        new_telegram_id, new_telegram_username
-    )
+    random_user.edit_telegram_contacts(new_telegram_id, new_telegram_username)
 
-    assert test_random_user.telegram_contacts
-    assert test_random_user.telegram_contacts.telegram_id == new_telegram_id
+    assert random_user.telegram_contacts
+    assert random_user.telegram_contacts.telegram_id == new_telegram_id
     assert (
-        test_random_user.telegram_contacts.telegram_username
+        random_user.telegram_contacts.telegram_username
         == new_telegram_username
     )
+
+
+def test_successfully_edit_role(random_user: User) -> None:
+    new_role = UserRole.COURIER
+
+    random_user.edit_role(new_role)
+
+    assert random_user.role == new_role
