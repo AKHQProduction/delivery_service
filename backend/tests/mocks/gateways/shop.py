@@ -1,6 +1,10 @@
-from application.common.input_data import Pagination
-from application.shop.errors import ShopAlreadyExistError
-from application.shop.gateway import ShopFilters, ShopGateway, ShopSaver
+from application.commands.shop import ShopSaver
+from application.common.errors import ShopAlreadyExistsError
+from application.common.persistence import (
+    Pagination,
+    ShopGateway,
+    ShopGatewayFilters,
+)
 from entities.shop.models import Shop, ShopId
 from entities.shop.value_objects import (
     DeliveryDistance,
@@ -29,18 +33,18 @@ class FakeShopGateway(ShopGateway, ShopSaver):
         self.deleted = False
 
     async def save(self, shop: Shop) -> None:
-        shop_in_memory = await self.by_id(shop.shop_id)
+        shop_in_memory = await self.load_with_id(shop.shop_id)
 
         if shop_in_memory:
-            raise ShopAlreadyExistError(shop.shop_id)
+            raise ShopAlreadyExistsError(shop.shop_id)
 
         self.shops[shop.shop_id] = shop
         self.saved = True
 
-    async def by_id(self, shop_id: ShopId) -> Shop | None:
+    async def load_with_id(self, shop_id: ShopId) -> Shop | None:
         return self.shops.get(shop_id, None)
 
-    async def by_identity(self, user_id: UserId) -> Shop | None:
+    async def load_with_identity(self, user_id: UserId) -> Shop | None:
         if user_id in (1, 3):
             return self.shops.get(1234567898)
         return None
@@ -53,10 +57,10 @@ class FakeShopGateway(ShopGateway, ShopSaver):
 
         self.deleted = True
 
-    async def all(
-        self, filters: ShopFilters, pagination: Pagination
+    async def load_many(
+        self, filters: ShopGatewayFilters, pagination: Pagination
     ) -> list[Shop]:
         pass
 
-    async def total(self, filters: ShopFilters) -> int:
+    async def total(self, filters: ShopGatewayFilters) -> int:
         return len(self.shops)

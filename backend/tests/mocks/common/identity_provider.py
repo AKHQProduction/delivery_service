@@ -20,7 +20,7 @@ class FakeIdentityProvider(IdentityProvider):
         return await self.user_gateway.by_id(self.user_id)
 
     async def get_role(self) -> EmployeeRole | None:
-        employee = await self.employee_gateway.by_identity(self.user_id)
+        employee = await self.employee_gateway.load_with_identity(self.user_id)
 
         if not employee:
             return None

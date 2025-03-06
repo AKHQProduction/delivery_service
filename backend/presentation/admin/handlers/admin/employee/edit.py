@@ -15,14 +15,11 @@ from aiogram_dialog.widgets.text import Const, Format, Multi
 from dishka import FromDishka
 from dishka.integrations.aiogram_dialog import inject
 
-from application.employee.commands.edit_employee import (
-    ChangeEmployee,
-    ChangeEmployeeInputData,
+from application.commands.employee.edit_employee import (
+    ChangeEmployeeCommand,
+    ChangeEmployeeCommandHandler,
 )
-from application.employee.queries.get_employee_card import (
-    GetEmployeeCard,
-    GetEmployeeCardInputData,
-)
+from application.common.persistence.employee import EmployeeReader
 from entities.employee.models import EmployeeRole
 from presentation.common.consts import ACTUAL_ROLES, BACK_BTN_TXT
 
@@ -44,10 +41,10 @@ async def on_save_editing_employee(
     _: CallbackQuery,
     __: Button,
     manager: DialogManager,
-    action: FromDishka[ChangeEmployee],
+    action: FromDishka[ChangeEmployeeCommandHandler],
 ):
     await action(
-        ChangeEmployeeInputData(
+        ChangeEmployeeCommand(
             employee_id=manager.dialog_data["employee_id"],
             role=manager.dialog_data["role"],
         )
@@ -72,16 +69,20 @@ edit_employee_kb = Group(
 
 @inject
 async def on_start_edit_employee_dialog(
-    data: Data, manager: DialogManager, action: FromDishka[GetEmployeeCard]
+    data: Data,
+    manager: DialogManager,
+    employee_reader: FromDishka[EmployeeReader],
 ) -> None:
     employee_id = data.get("employee_id")
 
-    output_data = await action(GetEmployeeCardInputData(employee_id))
+    employee = await employee_reader.read_with_id(employee_id)
+    if not employee:
+        return
 
     manager.dialog_data["employee_id"] = employee_id
-    manager.dialog_data["full_name"] = output_data.full_name
-    manager.dialog_data["role"] = output_data.role
-    manager.dialog_data["role_txt"] = ACTUAL_ROLES[output_data.role]
+    manager.dialog_data["full_name"] = employee.full_name
+    manager.dialog_data["role"] = employee.role
+    manager.dialog_data["role_txt"] = ACTUAL_ROLES[employee.role]
 
 
 async def on_new_role_selected(

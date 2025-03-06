@@ -4,7 +4,6 @@ from infrastructure.persistence.models.order import (
     map_order_items_table,
     map_orders_table,
 )
-from infrastructure.persistence.models.profile import map_profile_table
 from infrastructure.persistence.models.shop import map_shops_table
 from infrastructure.persistence.models.user import map_users_table
 
@@ -16,4 +15,3 @@ def map_tables():
     map_goods_table()
     map_orders_table()
     map_order_items_table()
-    map_profile_table()

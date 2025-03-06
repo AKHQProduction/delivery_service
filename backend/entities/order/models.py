@@ -1,15 +1,12 @@
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from datetime import date
 from enum import StrEnum, auto
 from typing import NewType
 
-from entities.order.value_objects import (
-    BottlesToExchange,
-    OrderItemAmount,
-    OrderTotalPrice,
-)
-from entities.profile.models import ProfileId
+from entities.common.entity import BaseEntity
+from entities.common.vo import Price, Quantity
 from entities.shop.models import ShopId
+from entities.user.models import UserId
 
 OrderId = NewType("OrderId", int)
 OrderItemId = NewType("OrderItemId", int)
@@ -17,6 +14,9 @@ OrderItemId = NewType("OrderItemId", int)
 
 class OrderStatus(StrEnum):
     NEW = auto()
+    IN_PROGRESS = auto()
+    CANCELED = auto()
+    DELIVERED = auto()
 
 
 class DeliveryPreference(StrEnum):
@@ -25,20 +25,19 @@ class DeliveryPreference(StrEnum):
 
 
 @dataclass
-class Order:
-    order_id: OrderId | None
-    profile_id: ProfileId
-    shop_id: ShopId
-    status: OrderStatus
-    total_price: OrderTotalPrice
-    delivery_preference: DeliveryPreference
-    bottles_to_exchange: BottlesToExchange
-    delivery_date: date
+class OrderItem(BaseEntity[OrderItemId]):
+    order_id: OrderId
+    order_item_title: str
+    quantity: Quantity
+    price_per_item: Price
 
 
 @dataclass
-class OrderItem:
-    order_item_id: OrderItemId | None
-    order_id: OrderId
-    order_item_title: str
-    amount: OrderItemAmount
+class Order(BaseEntity[OrderId]):
+    user_id: UserId
+    shop_id: ShopId
+    status: OrderStatus
+    delivery_preference: DeliveryPreference
+    bottles_to_exchange: Quantity
+    delivery_date: date
+    order_items: list[OrderItem] = field(default_factory=list)

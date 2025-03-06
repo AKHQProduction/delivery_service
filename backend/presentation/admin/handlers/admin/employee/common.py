@@ -8,15 +8,9 @@ from aiogram_dialog.widgets.text import Format, Multi
 from dishka import FromDishka
 from dishka.integrations.aiogram_dialog import inject
 
-from application.common.input_data import Pagination
-from application.employee.gateway import EmployeeFilters
-from application.employee.queries.get_employee_card import (
-    GetEmployeeCard,
-    GetEmployeeCardInputData,
-)
-from application.employee.queries.get_employees_cards import (
-    GetEmployeeCards,
-    GetEmployeeCardsInputData,
+from application.common.persistence.employee import EmployeeReader
+from application.queries.employee.get_employees import (
+    GetEmployeeQueryHandler,
 )
 from entities.employee.models import EmployeeRole
 from presentation.common.consts import ACTUAL_ROLES
@@ -55,17 +49,13 @@ select_employee_role_widget = Group(
 
 @inject
 async def get_employee_cards(
-    action: FromDishka[GetEmployeeCards],
+    action: FromDishka[GetEmployeeQueryHandler],
     dialog_manager: DialogManager,
     **_kwargs,
 ) -> dict[str, Any]:
-    output_data = await action(
-        GetEmployeeCardsInputData(
-            filters=EmployeeFilters(), pagination=Pagination()
-        )
-    )
+    output_data = await action()
 
-    dialog_manager.dialog_data["total"] = output_data.total
+    dialog_manager.dialog_data["total"] = len(output_data)
     dialog_manager.dialog_data["employee_cards"] = [
         (
             card.employee_id,
@@ -73,7 +63,7 @@ async def get_employee_cards(
             card.full_name,
             ACTUAL_ROLES[card.role],
         )
-        for card in output_data.employees_card
+        for card in output_data
     ]
 
     return dialog_manager.dialog_data
@@ -87,17 +77,19 @@ employee_card = Multi(
 
 @inject
 async def get_employee_card(
-    action: FromDishka[GetEmployeeCard],
+    employee_reader: FromDishka[EmployeeReader],
     dialog_manager: DialogManager,
     **_kwargs,
 ) -> dict[str, Any]:
     employee_id = int(dialog_manager.dialog_data["employee_id"])
 
-    output_data = await action(GetEmployeeCardInputData(employee_id))
+    employee = await employee_reader.read_with_id(employee_id)
+    if not employee:
+        return None
 
     dialog_manager.dialog_data["employee_id"] = employee_id
-    dialog_manager.dialog_data["full_name"] = output_data.full_name
-    dialog_manager.dialog_data["role"] = output_data.role
-    dialog_manager.dialog_data["role_txt"] = ACTUAL_ROLES[output_data.role]
+    dialog_manager.dialog_data["full_name"] = employee.full_name
+    dialog_manager.dialog_data["role"] = employee.role
+    dialog_manager.dialog_data["role_txt"] = ACTUAL_ROLES[employee.role]
 
     return dialog_manager.dialog_data

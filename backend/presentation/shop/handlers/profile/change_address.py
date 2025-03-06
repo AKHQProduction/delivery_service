@@ -25,10 +25,6 @@ from dishka import FromDishka
 from dishka.integrations.aiogram_dialog import inject
 
 from application.common.geo import GeoProcessor
-from application.profile.commands.update_address_by_yourself import (
-    ChangeAddress,
-    ChangeAddressInputData,
-)
 from infrastructure.geopy.errors import (
     InvalidAddressInputError,
 )
@@ -91,20 +87,8 @@ async def accept_update_address_in_profile(
     _: CallbackQuery,
     __: Button,
     manager: DialogManager,
-    action: FromDishka[ChangeAddress],
 ) -> None:
-    address_data = parse_address(manager.dialog_data["address"])
-
-    await action(
-        ChangeAddressInputData(
-            city=address_data.get("city"),
-            street=address_data.get("street"),
-            house_number=address_data.get("house_number"),
-            apartment_number=manager.dialog_data.get("apartment_data"),
-            floor=manager.dialog_data.get("floor_data"),
-            intercom_code=manager.dialog_data.get("intercom_code_data"),
-        )
-    )
+    return parse_address(manager.dialog_data["address"])
 
 
 async def on_after_successfully_input_address(

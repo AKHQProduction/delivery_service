@@ -3,12 +3,8 @@ from sqlalchemy.orm import composite, relationship
 
 from entities.shop.models import Shop
 from entities.shop.value_objects import (
-    DeliveryDistance,
-    RegularDaysOff,
+    DaysOff,
     ShopLocation,
-    ShopTitle,
-    ShopToken,
-    SpecialDaysOff,
 )
 from infrastructure.persistence.models import mapper_registry
 from infrastructure.persistence.models.associations import (
@@ -19,13 +15,13 @@ shops_table = sa.Table(
     "shops",
     mapper_registry.metadata,
     sa.Column("shop_id", sa.BigInteger, primary_key=True, unique=True),
-    sa.Column("shop_title", sa.String(128), nullable=False),
-    sa.Column("shop_token", sa.String(128), nullable=False),
-    sa.Column("shop_delivery_distance", sa.Integer, nullable=False),
+    sa.Column("title", sa.String(128), nullable=False),
+    sa.Column("token", sa.String(128), nullable=False, unique=True),
+    sa.Column("delivery_distance", sa.Integer, nullable=False),
     sa.Column("location_latitude", sa.Float, nullable=False),
     sa.Column("location_longitude", sa.Float, nullable=False),
-    sa.Column("shop_regular_days_off", sa.ARRAY(sa.Integer), default=list),
-    sa.Column("shop_special_days_off", sa.ARRAY(sa.DATE), default=list),
+    sa.Column("regular_days_off", sa.ARRAY(sa.Integer), default=list),
+    sa.Column("special_days_off", sa.ARRAY(sa.DATE), default=list),
     sa.Column("is_active", sa.Boolean, nullable=False, default=True),
     sa.Column(
         "created_at",
@@ -49,6 +45,7 @@ def map_shops_table() -> None:
         Shop,
         shops_table,
         properties={
+            "oid": shops_table.c.shop_id,
             "users": relationship(
                 "User",
                 secondary=association_between_shops_and_users,
@@ -68,25 +65,15 @@ def map_shops_table() -> None:
                 back_populates="shop",
                 cascade="all, delete-orphan",
             ),
-            "profile": relationship(
-                "Profile", back_populates="shop", cascade="all"
-            ),
-            "title": composite(ShopTitle, shops_table.c.shop_title),
-            "token": composite(ShopToken, shops_table.c.shop_token),
-            "delivery_distance": composite(
-                DeliveryDistance, shops_table.c.shop_delivery_distance
-            ),
             "location": composite(
                 ShopLocation,
                 shops_table.c.location_latitude,
                 shops_table.c.location_longitude,
             ),
-            "regular_days_off": composite(
-                RegularDaysOff,
-                shops_table.c.shop_regular_days_off,
-            ),
-            "special_days_off": composite(
-                SpecialDaysOff, shops_table.c.shop_special_days_off
+            "days_off": composite(
+                DaysOff,
+                shops_table.c.regular_days_off,
+                shops_table.c.special_days_off,
             ),
         },
     )

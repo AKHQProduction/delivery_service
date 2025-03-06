@@ -11,7 +11,7 @@ employees_table = sa.Table(
     sa.Column("employee_id", sa.Integer, primary_key=True, autoincrement=True),
     sa.Column(
         "user_id",
-        sa.BigInteger,
+        sa.Integer,
         sa.ForeignKey("users.user_id", ondelete="CASCADE"),
     ),
     sa.Column(
@@ -43,6 +43,7 @@ def map_employee_table() -> None:
         Employee,
         employees_table,
         properties={
+            "oid": employees_table.c.employee_id,
             "user": relationship("User", back_populates="employees"),
             "shop": relationship("Shop", back_populates="employees"),
         },

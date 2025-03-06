@@ -1,7 +1,7 @@
-from application.common.commiter import Commiter
+from application.common.transaction_manager import TransactionManager
 
 
-class FakeCommiter(Commiter):
+class FakeCommiter(TransactionManager):
     def __init__(self):
         self.commited = False
 

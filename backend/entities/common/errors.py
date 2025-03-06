@@ -13,3 +13,10 @@ class InvalidPriceError(DomainError):
     @property
     def message(self):
         return "Price must be greater than 0"
+
+
+@dataclass(eq=False)
+class InvalidQuantityError(DomainError):
+    @property
+    def message(self):
+        return "Quantity must be greater than 0"

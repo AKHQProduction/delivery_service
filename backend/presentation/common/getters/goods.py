@@ -9,7 +9,7 @@ from aiogram_dialog.widgets.text import Format, Multi
 from dishka import FromDishka
 from dishka.integrations.aiogram_dialog import inject
 
-from application.goods.interactors.get_goods import GetGoods, GetGoodsInputData
+from application.common.persistence.goods import GoodsReader
 from presentation.common.consts import ACTUAL_GOODS_TYPES
 
 
@@ -19,11 +19,15 @@ async def get_goods_types(**_kwargs) -> dict[str, Any]:
 
 @inject
 async def goods_view_getter(
-    action: FromDishka[GetGoods], dialog_manager: DialogManager, **_kwargs
+    goods_reader: FromDishka[GoodsReader],
+    dialog_manager: DialogManager,
+    **_kwargs,
 ) -> dict[str, Any]:
     goods_id = dialog_manager.dialog_data["goods_id"]
 
-    goods = await action(GetGoodsInputData(goods_id))
+    goods = await goods_reader.read_with_id(goods_id)
+    if not goods:
+        pass
 
     title = str(goods.title)
     price = str(goods.price)
