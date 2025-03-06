@@ -4,22 +4,23 @@ from unittest.mock import create_autospec
 
 import pytest
 
-from delivery_service.application.ports.id_generator import IDGenerator
-from delivery_service.core.users.errors import (
+from delivery_service.identity.application.ports.id_generator import (
+    UserIDGenerator,
+)
+from delivery_service.identity.domain.errors import (
     FullNameTooLongError,
     InvalidFullNameError,
     InvalidTelegramUsernameError,
     TelegramIDMustBePositiveError,
 )
-from delivery_service.core.users.factory import (
+from delivery_service.identity.domain.factory import (
     TelegramContactsData,
 )
-from delivery_service.core.users.repository import UserRepository
-from delivery_service.core.users.user import (
+from delivery_service.identity.domain.repository import UserRepository
+from delivery_service.identity.domain.user import (
     User,
-    UserRole,
 )
-from delivery_service.infrastructure.factories.user_factory import (
+from delivery_service.identity.infrastructure.user_factory import (
     UserFactoryImpl,
 )
 
@@ -63,7 +64,7 @@ async def test_create_user(
     telegram_contacts_data: TelegramContactsData,
     exception: Type[Exception] | None,
 ) -> None:
-    mock_id_generator = create_autospec(IDGenerator, instance=True)
+    mock_id_generator = create_autospec(UserIDGenerator, instance=True)
     mock_id_generator.generate_user_id.return_value = FAKE_UUID
     mock_user_repository = create_autospec(UserRepository, instance=True)
     mock_user_repository.exists.return_value = False
@@ -118,11 +119,3 @@ def test_successfully_edit_telegram_contacts(random_user: User) -> None:
         random_user.telegram_contacts.telegram_username
         == new_telegram_username
     )
-
-
-def test_successfully_edit_role(random_user: User) -> None:
-    new_role = UserRole.COURIER
-
-    random_user.edit_role(new_role)
-
-    assert random_user.role == new_role

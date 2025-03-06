@@ -1,6 +1,6 @@
 from uuid import UUID
 
-from delivery_service.core.shared.entity import Entity
+from delivery_service.shared.domain.entity import Entity
 
 
 async def test_not_equals_different_entity() -> None:

@@ -1,19 +1,19 @@
 from unittest.mock import create_autospec
 
-from delivery_service.application.commands.main_bot_start import (
-    MainBotStartHandler,
-    MainBotStartRequest,
+from delivery_service.identity.application.commands.bot_start import (
+    BotStartHandler,
+    BotStartRequest,
 )
-from delivery_service.application.ports.transaction_manager import (
-    TransactionManager,
-)
-from delivery_service.application.ports.view_manager import ViewManager
-from delivery_service.core.users.errors import UserAlreadyExistsError
-from delivery_service.core.users.factory import (
+from delivery_service.identity.domain.errors import UserAlreadyExistsError
+from delivery_service.identity.domain.factory import (
     TelegramContactsData,
     UserFactory,
 )
-from delivery_service.core.users.repository import UserRepository
+from delivery_service.identity.domain.repository import UserRepository
+from delivery_service.shared.application.ports.transaction_manager import (
+    TransactionManager,
+)
+from delivery_service.shared.application.ports.view_manager import ViewManager
 
 
 async def test_main_bot_start() -> None:
@@ -24,13 +24,13 @@ async def test_main_bot_start() -> None:
         TransactionManager, instance=True
     )
 
-    handler = MainBotStartHandler(
+    handler = BotStartHandler(
         user_repository=mock_user_repository,
         user_factory=mock_user_factory,
         view_manager=mock_view_manager,
         transaction_manager=mock_transaction_manager,
     )
-    request_data = MainBotStartRequest(
+    request_data = BotStartRequest(
         full_name="Kevin Rudolf",
         telegram_data=TelegramContactsData(
             telegram_id=1, telegram_username="@Kevin"
@@ -56,13 +56,13 @@ async def test_main_bot_start_when_user_already_exists() -> None:
 
     mock_user_factory.create_user.side_effect = UserAlreadyExistsError(1)
 
-    handler = MainBotStartHandler(
+    handler = BotStartHandler(
         user_repository=mock_user_repository,
         user_factory=mock_user_factory,
         view_manager=mock_view_manager,
         transaction_manager=mock_transaction_manager,
     )
-    request_data = MainBotStartRequest(
+    request_data = BotStartRequest(
         full_name="Kevin Rudolf",
         telegram_data=TelegramContactsData(
             telegram_id=1, telegram_username="@Kevin"

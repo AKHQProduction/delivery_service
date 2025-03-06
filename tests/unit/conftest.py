@@ -2,21 +2,22 @@ from uuid import UUID
 
 import pytest
 
-from delivery_service.application.ports.id_generator import IDGenerator
-from delivery_service.core.shared.location import Location
-from delivery_service.core.shared.tg_contacts import TelegramContacts
-from delivery_service.core.shops.employee_collection import EmployeeCollection
-from delivery_service.core.shops.shop import Shop, ShopID
-from delivery_service.core.shops.value_objects import DaysOff
-from delivery_service.core.users.user import User, UserID
-from delivery_service.infrastructure.adapters.id_generator import (
-    IDGeneratorImpl,
+from delivery_service.identity.domain.user import User, UserID
+from delivery_service.shared.domain.vo.location import Location
+from delivery_service.shared.domain.vo.tg_contacts import TelegramContacts
+from delivery_service.shared.infrastructure.adapters.id_generator import (
+    IDGenerator,
 )
+from delivery_service.shop_managment.domain.employee_collection import (
+    EmployeeCollection,
+)
+from delivery_service.shop_managment.domain.shop import Shop, ShopID
+from delivery_service.shop_managment.domain.value_objects import DaysOff
 
 
 @pytest.fixture
 def id_generator() -> IDGenerator:
-    return IDGeneratorImpl()
+    return IDGenerator()
 
 
 @pytest.fixture
