@@ -13,3 +13,7 @@ class ShopRepository(Protocol):
     @abstractmethod
     async def exists(self, identity_id: UserID) -> bool:
         raise NotImplementedError
+
+    @abstractmethod
+    async def load_with_identity(self, identity_id: UserID) -> Shop | None:
+        raise NotImplementedError

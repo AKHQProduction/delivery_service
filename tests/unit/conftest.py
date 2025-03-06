@@ -1,4 +1,4 @@
-from unittest.mock import Mock
+from unittest.mock import create_autospec
 from uuid import UUID
 
 import pytest
@@ -25,7 +25,7 @@ def id_generator() -> IDGenerator:
 
 @pytest.fixture
 def tracker() -> Tracker:
-    return Mock()
+    return create_autospec(Tracker, instance=True)
 
 
 @pytest.fixture

@@ -15,6 +15,9 @@ class Entity(Generic[EntityID]):
     def add_one(self) -> None:
         self._tracker.add_new(self)
 
+    async def delete_one(self) -> None:
+        await self._tracker.delete(self)
+
     @property
     def entity_id(self) -> EntityID:
         return self._entity_id

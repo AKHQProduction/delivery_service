@@ -40,15 +40,21 @@ class Shop(Entity[ShopID]):
         self._employees = employees
 
     def add_employee(
-        self, employee_id: UserID, role: EmployeeRole, hirer: UserID
+        self, employee_id: UserID, role: EmployeeRole, hirer_id: UserID
     ) -> None:
-        self._ensure_is_owner(hirer)
+        self._ensure_is_owner(hirer_id)
 
         employee = Employee(
             employee_id=employee_id, tracker=self._tracker, role=role
         )
-        self._employees.add_employee(employee)
+        self._employees.add_to_employees(employee)
         self._tracker.add_new(employee)
+
+    async def discard_employee(
+        self, employee_id: UserID, firer_id: UserID
+    ) -> None:
+        self._ensure_is_owner(firer_id)
+        await self._employees.discard_from_employees(employee_id)
 
     def edit_regular_days_off(self, days: list[int]) -> None:
         self._days_off = self._days_off.change_regular_days_off(days)

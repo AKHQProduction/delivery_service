@@ -51,7 +51,7 @@ class CreateNewShopHandler(RequestHandler[CreateNewShopRequest, ShopID]):
         new_shop.add_employee(
             employee_id=current_user_id,
             role=EmployeeRole.SHOP_OWNER,
-            hirer=current_user_id,
+            hirer_id=current_user_id,
         )
 
         await self._transaction_manager.commit()

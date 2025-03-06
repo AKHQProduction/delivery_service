@@ -1,10 +1,12 @@
 from datetime import date
 from typing import Type
 from unittest.mock import create_autospec
+from uuid import UUID
 
 import pytest
 
 from delivery_service.identity.domain.user import User
+from delivery_service.shared.domain.identity_id import UserID
 from delivery_service.shared.domain.tracker import Tracker
 from delivery_service.shared.domain.vo.location import Location
 from delivery_service.shared.infrastructure.adapters.id_generator import (
@@ -12,6 +14,13 @@ from delivery_service.shared.infrastructure.adapters.id_generator import (
 )
 from delivery_service.shared.infrastructure.integration.geopy.geolocator import (  # noqa: E501
     Geolocator,
+)
+from delivery_service.shop_managment.domain.employee import (
+    Employee,
+    EmployeeRole,
+)
+from delivery_service.shop_managment.domain.employee_collection import (
+    EmployeeCollection,
 )
 from delivery_service.shop_managment.domain.errors import (
     InvalidDayOfWeekError,
@@ -21,7 +30,8 @@ from delivery_service.shop_managment.domain.factory import DaysOffData
 from delivery_service.shop_managment.domain.repository import (
     ShopRepository,
 )
-from delivery_service.shop_managment.domain.shop import Shop
+from delivery_service.shop_managment.domain.shop import Shop, ShopID
+from delivery_service.shop_managment.domain.value_objects import DaysOff
 from delivery_service.shop_managment.infrastructure.shop_factory import (
     ShopFactoryImpl,
 )
@@ -126,3 +136,92 @@ def test_can_deliver_in_this_day(random_shop: Shop, day: date) -> None:
 @pytest.mark.parametrize(["day"], [(date(2025, 2, 1),)])
 def test_cannot_deliver_in_this_day(random_shop: Shop, day: date) -> None:
     assert random_shop.can_deliver_in_this_day(day) is False
+
+
+async def test_discard_from_employee(tracker: Tracker) -> None:
+    # GIVEN
+    owner_id = UserID(UUID("01953cdd-6dc1-797c-8029-170692b243cf"))
+    employee_id = UserID(UUID("01953cdd-6dc1-797c-8029-170692b243cc"))
+    candidate_to_fire = Employee(
+        employee_id=employee_id,
+        tracker=tracker,
+        role=EmployeeRole.SHOP_MANAGER,
+    )
+
+    employees = EmployeeCollection(
+        {
+            Employee(
+                employee_id=owner_id,
+                tracker=tracker,
+                role=EmployeeRole.SHOP_OWNER,
+            ),
+            candidate_to_fire,
+        }
+    )
+    shop = Shop(
+        entity_id=ShopID(UUID("11953cdd-6dc1-797c-8029-170692b243cf")),
+        tracker=tracker,
+        owner_id=owner_id,
+        name="My test shop",
+        location=Location(
+            city="Черкаси",
+            street="бульвар Шевченка",
+            house_number="30",
+            latitude=30,
+            longitude=30,
+        ),
+        days_off=DaysOff(regular_days_off=[5, 6], irregular_days_off=[]),
+        employees=employees,
+    )
+
+    # WHEN
+    await shop.discard_employee(employee_id=employee_id, firer_id=owner_id)
+
+    # THEN
+    assert candidate_to_fire not in shop.employees
+
+
+def test_add_new_employee(tracker: Tracker) -> None:
+    # GIVEN
+    owner_id = UserID(UUID("01953cdd-6dc1-797c-8029-170692b243cf"))
+    employee_id = UserID(UUID("01953cdd-6dc1-797c-8029-170692b243cc"))
+
+    employees = EmployeeCollection(
+        {
+            Employee(
+                employee_id=owner_id,
+                tracker=tracker,
+                role=EmployeeRole.SHOP_OWNER,
+            )
+        }
+    )
+    shop = Shop(
+        entity_id=ShopID(UUID("11953cdd-6dc1-797c-8029-170692b243cf")),
+        tracker=tracker,
+        owner_id=owner_id,
+        name="My test shop",
+        location=Location(
+            city="Черкаси",
+            street="бульвар Шевченка",
+            house_number="30",
+            latitude=30,
+            longitude=30,
+        ),
+        days_off=DaysOff(regular_days_off=[5, 6], irregular_days_off=[]),
+        employees=employees,
+    )
+
+    # WHEN
+    shop.add_employee(
+        employee_id=employee_id,
+        role=EmployeeRole.SHOP_MANAGER,
+        hirer_id=owner_id,
+    )
+
+    # THEN
+    new_employee = Employee(
+        employee_id=employee_id,
+        tracker=tracker,
+        role=EmployeeRole.SHOP_MANAGER,
+    )
+    assert new_employee in shop.employees
