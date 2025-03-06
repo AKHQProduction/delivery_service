@@ -1,8 +1,11 @@
+from unittest.mock import Mock
 from uuid import UUID
 
 import pytest
 
-from delivery_service.identity.domain.user import User, UserID
+from delivery_service.identity.domain.user import User
+from delivery_service.shared.domain.identity_id import UserID
+from delivery_service.shared.domain.tracker import Tracker
 from delivery_service.shared.domain.vo.location import Location
 from delivery_service.shared.domain.vo.tg_contacts import TelegramContacts
 from delivery_service.shared.infrastructure.adapters.id_generator import (
@@ -21,9 +24,15 @@ def id_generator() -> IDGenerator:
 
 
 @pytest.fixture
-def random_user() -> User:
+def tracker() -> Tracker:
+    return Mock()
+
+
+@pytest.fixture
+def random_user(tracker: Tracker) -> User:
     return User(
         entity_id=UserID(UUID("01953cdd-6dc1-797c-8029-170692b243cf")),
+        tracker=tracker,
         full_name="Kevin Rudolf",
         telegram_contacts=TelegramContacts(
             telegram_id=1, telegram_username="@Kevin"
@@ -32,9 +41,11 @@ def random_user() -> User:
 
 
 @pytest.fixture
-def random_shop() -> Shop:
+def random_shop(tracker: Tracker) -> Shop:
     return Shop(
         entity_id=ShopID(UUID("11953cdd-6dc1-797c-8029-170692b243cf")),
+        tracker=tracker,
+        owner_id=UserID(UUID("01953cdd-6dc1-797c-8029-170692b243cf")),
         name="My test shop",
         location=Location(
             city="Черкаси",

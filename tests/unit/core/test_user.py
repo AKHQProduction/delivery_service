@@ -1,6 +1,6 @@
 import uuid
 from typing import Type
-from unittest.mock import create_autospec
+from unittest.mock import AsyncMock, create_autospec
 
 import pytest
 
@@ -68,9 +68,12 @@ async def test_create_user(
     mock_id_generator.generate_user_id.return_value = FAKE_UUID
     mock_user_repository = create_autospec(UserRepository, instance=True)
     mock_user_repository.exists.return_value = False
+    mock_tracker = AsyncMock()
 
     user_factory = UserFactoryImpl(
-        id_generator=mock_id_generator, user_repository=mock_user_repository
+        id_generator=mock_id_generator,
+        user_repository=mock_user_repository,
+        tracker=mock_tracker,
     )
 
     coro = user_factory.create_user(

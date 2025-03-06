@@ -1,10 +1,10 @@
 from dataclasses import dataclass
 
-from delivery_service.identity.domain.user import UserID
 from delivery_service.shared.domain.errors import (
     ConflictError,
     ValidationError,
 )
+from delivery_service.shared.domain.identity_id import UserID
 
 
 @dataclass(eq=False)
@@ -39,3 +39,10 @@ class UserNotFoundInEmployeesError(ConflictError):
     @property
     def message(self) -> str:
         return f"User {self.user_id} not found in employees"
+
+
+@dataclass(eq=False)
+class NotOwnerError(ConflictError):
+    @property
+    def message(self) -> str:
+        return "Only owner have access to it"

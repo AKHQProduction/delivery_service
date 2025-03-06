@@ -3,7 +3,7 @@ from dataclasses import dataclass, field
 from datetime import date
 from typing import Protocol
 
-from delivery_service.identity.domain.user import User
+from delivery_service.shared.domain.identity_id import UserID
 from delivery_service.shop_managment.domain.shop import Shop
 
 
@@ -20,6 +20,6 @@ class ShopFactory(Protocol):
         shop_name: str,
         shop_location: str,
         shop_days_off: DaysOffData,
-        user: User,
+        identity_id: UserID,
     ) -> Shop:
         raise NotImplementedError

@@ -15,13 +15,15 @@ from delivery_service.shop_managment.domain.factory import (
     DaysOffData,
     ShopFactory,
 )
-from delivery_service.shop_managment.domain.repository import ShopRepository
+from delivery_service.shop_managment.domain.repository import (
+    ShopRepository,
+)
 from delivery_service.shop_managment.domain.shop import Shop
 
 
 async def test_create_new_shop(random_user: User, random_shop: Shop) -> None:
     mocked_idp = create_autospec(IdentityProvider, instance=True)
-    mocked_idp.get_current_user.return_value = random_user
+    mocked_idp.get_current_user_id.return_value = random_user.entity_id
     mocked_shop_factory = create_autospec(ShopFactory, instance=True)
     mocked_shop_factory.create_shop.return_value = random_shop
     mocked_shop_repository = create_autospec(ShopRepository, instance=True)
@@ -45,12 +47,12 @@ async def test_create_new_shop(random_user: User, random_shop: Shop) -> None:
 
     response_data = await handler.handle(request_data)
 
-    mocked_idp.get_current_user.assert_called_once()
+    mocked_idp.get_current_user_id.assert_called_once()
     mocked_shop_factory.create_shop.assert_called_once_with(
-        shop_name, shop_location, days_off, random_user
+        shop_name, shop_location, days_off, random_user.entity_id
     )
     mocked_shop_repository.add.assert_called_once_with(random_shop)
     mocked_transaction_manager.commit.assert_called_once()
 
     assert response_data == random_shop.entity_id
-    # assert random_user in random_shop.employees
+    assert random_user in random_shop.employees

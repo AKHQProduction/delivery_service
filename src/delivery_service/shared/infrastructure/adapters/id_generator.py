@@ -5,7 +5,7 @@ from uuid_extensions import uuid7
 from delivery_service.identity.application.ports.id_generator import (
     UserIDGenerator,
 )
-from delivery_service.identity.domain.user import UserID
+from delivery_service.shared.domain.identity_id import UserID
 from delivery_service.shop_managment.application.ports.id_generator import (
     ShopIDGenerator,
 )

@@ -1,12 +1,19 @@
-from typing import Generic, Hashable, TypeVar
+from typing import TYPE_CHECKING, Generic, Hashable, TypeVar
+
+if TYPE_CHECKING:
+    from delivery_service.shared.domain.tracker import Tracker
 
 # Object ID
 EntityID = TypeVar("EntityID", bound=Hashable)
 
 
 class Entity(Generic[EntityID]):
-    def __init__(self, entity_id: EntityID) -> None:
+    def __init__(self, entity_id: EntityID, tracker: "Tracker") -> None:
         self._entity_id = entity_id
+        self._tracker = tracker
+
+    def add_one(self) -> None:
+        self._tracker.add_new(self)
 
     @property
     def entity_id(self) -> EntityID:

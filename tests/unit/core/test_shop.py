@@ -5,6 +5,7 @@ from unittest.mock import create_autospec
 import pytest
 
 from delivery_service.identity.domain.user import User
+from delivery_service.shared.domain.tracker import Tracker
 from delivery_service.shared.domain.vo.location import Location
 from delivery_service.shared.infrastructure.adapters.id_generator import (
     IDGenerator,
@@ -17,6 +18,9 @@ from delivery_service.shop_managment.domain.errors import (
     ShopCreationNotAllowedError,
 )
 from delivery_service.shop_managment.domain.factory import DaysOffData
+from delivery_service.shop_managment.domain.repository import (
+    ShopRepository,
+)
 from delivery_service.shop_managment.domain.shop import Shop
 from delivery_service.shop_managment.infrastructure.shop_factory import (
     ShopFactoryImpl,
@@ -24,7 +28,7 @@ from delivery_service.shop_managment.infrastructure.shop_factory import (
 
 
 async def test_successfully_create_shop(
-    id_generator: IDGenerator, random_user: User
+    id_generator: IDGenerator, random_user: User, tracker: Tracker
 ) -> None:
     shop_name = "New test shop"
     shop_location = "Черкассы, улица Шевченка 228"
@@ -39,15 +43,21 @@ async def test_successfully_create_shop(
         longitude=123.0,
     )
 
+    mock_shop_repository = create_autospec(ShopRepository, instance=True)
+    mock_shop_repository.exists.return_value = False
+
     shop_factory = ShopFactoryImpl(
-        id_generator=id_generator, geolocator=mock_geolocator
+        id_generator=id_generator,
+        geolocator=mock_geolocator,
+        shop_repository=mock_shop_repository,
+        tracker=tracker,
     )
 
     new_shop = await shop_factory.create_shop(
         shop_name=shop_name,
         shop_location=shop_location,
         shop_days_off=shop_days_off,
-        user=random_user,
+        identity_id=random_user.entity_id,
     )
 
     assert isinstance(new_shop, Shop)
@@ -59,9 +69,8 @@ async def test_successfully_create_shop(
     assert new_shop.irregular_days_off == []
 
 
-@pytest.mark.skip
 async def test_unsuccessfully_create_shop_when_user_already_employee(
-    random_user: User, id_generator: IDGenerator
+    random_user: User, id_generator: IDGenerator, tracker: Tracker
 ) -> None:
     shop_name = "New test shop"
     shop_location = "Черкассы, улица Шевченка 228"
@@ -71,8 +80,14 @@ async def test_unsuccessfully_create_shop_when_user_already_employee(
 
     mock_geolocator = create_autospec(Geolocator, instance=True)
 
+    mock_shop_repository = create_autospec(ShopRepository, instance=True)
+    mock_shop_repository.exists.return_value = True
+
     shop_factory = ShopFactoryImpl(
-        id_generator=id_generator, geolocator=mock_geolocator
+        id_generator=id_generator,
+        geolocator=mock_geolocator,
+        shop_repository=mock_shop_repository,
+        tracker=tracker,
     )
 
     with pytest.raises(ShopCreationNotAllowedError):
@@ -80,7 +95,7 @@ async def test_unsuccessfully_create_shop_when_user_already_employee(
             shop_name=shop_name,
             shop_location=shop_location,
             shop_days_off=shop_days_off,
-            user=mocked_user,
+            identity_id=mocked_user.entity_id,
         )
 
 
