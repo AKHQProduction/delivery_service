@@ -1,6 +1,6 @@
 import uuid
 from typing import Type
-from unittest.mock import AsyncMock, create_autospec
+from unittest.mock import create_autospec
 
 import pytest
 
@@ -10,8 +10,6 @@ from delivery_service.identity.application.ports.id_generator import (
 from delivery_service.identity.domain.errors import (
     FullNameTooLongError,
     InvalidFullNameError,
-    InvalidTelegramUsernameError,
-    TelegramIDMustBePositiveError,
 )
 from delivery_service.identity.domain.factory import (
     TelegramContactsData,
@@ -22,6 +20,10 @@ from delivery_service.identity.domain.user import (
 )
 from delivery_service.identity.infrastructure.user_factory import (
     UserFactoryImpl,
+)
+from delivery_service.shared.domain.errors import (
+    InvalidTelegramUsernameError,
+    TelegramIDMustBePositiveError,
 )
 
 FAKE_UUID = uuid.UUID("0195381b-8549-708d-b29b-a923d7870d78")
@@ -68,12 +70,10 @@ async def test_create_user(
     mock_id_generator.generate_user_id.return_value = FAKE_UUID
     mock_user_repository = create_autospec(UserRepository, instance=True)
     mock_user_repository.exists.return_value = False
-    mock_tracker = AsyncMock()
 
     user_factory = UserFactoryImpl(
         id_generator=mock_id_generator,
         user_repository=mock_user_repository,
-        tracker=mock_tracker,
     )
 
     coro = user_factory.create_user(

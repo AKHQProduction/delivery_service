@@ -7,12 +7,15 @@ from delivery_service.shared.application.ports.idp import IdentityProvider
 from delivery_service.shared.application.ports.transaction_manager import (
     TransactionManager,
 )
+from delivery_service.shared.domain.employee import EmployeeRole
 from delivery_service.shared.domain.identity_id import UserID
-from delivery_service.shop_managment.application.errors import (
+from delivery_service.shop_management.application.errors import (
     ShopNotFoundError,
 )
-from delivery_service.shop_managment.domain.employee import EmployeeRole
-from delivery_service.shop_managment.domain.repository import ShopRepository
+from delivery_service.shop_management.domain.repository import (
+    EmployeeRepository,
+    ShopRepository,
+)
 
 
 @dataclass(frozen=True)
@@ -26,10 +29,12 @@ class AddNewEmployeeHandler(RequestHandler[AddNewEmployeeRequest, None]):
         self,
         identity_provider: IdentityProvider,
         shop_repository: ShopRepository,
+        employee_repository: EmployeeRepository,
         transaction_manager: TransactionManager,
     ) -> None:
         self._identity_provider = identity_provider
         self._shop_repository = shop_repository
+        self._employee_repository = employee_repository
         self._transaction_manager = transaction_manager
 
     async def handle(self, request: AddNewEmployeeRequest) -> None:
@@ -39,10 +44,11 @@ class AddNewEmployeeHandler(RequestHandler[AddNewEmployeeRequest, None]):
         if not shop:
             raise ShopNotFoundError()
 
-        shop.add_employee(
+        new_employee = shop.add_employee(
             employee_id=request.candidate_id,
             role=request.role,
             hirer_id=current_user_id,
         )
 
+        self._employee_repository.add(new_employee)
         await self._transaction_manager.commit()

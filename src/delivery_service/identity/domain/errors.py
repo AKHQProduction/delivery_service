@@ -21,22 +21,6 @@ class FullNameTooLongError(ValidationError):
 
 
 @dataclass(eq=False)
-class TelegramIDMustBePositiveError(ValidationError):
-    @property
-    def message(self) -> str:
-        return "Telegram id must be positive"
-
-
-@dataclass(eq=False)
-class InvalidTelegramUsernameError(ValidationError):
-    @property
-    def message(self) -> str:
-        return (
-            "Telegram username length must be greate than 0 and less than 129"
-        )
-
-
-@dataclass(eq=False)
 class UserAlreadyExistsError(EntityAlreadyExistsError):
     telegram_id: int
 

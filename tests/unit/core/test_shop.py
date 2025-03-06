@@ -6,8 +6,15 @@ from uuid import UUID
 import pytest
 
 from delivery_service.identity.domain.user import User
+from delivery_service.shared.domain.employee import (
+    Employee,
+    EmployeeRole,
+)
+from delivery_service.shared.domain.employee_collection import (
+    EmployeeCollection,
+)
 from delivery_service.shared.domain.identity_id import UserID
-from delivery_service.shared.domain.tracker import Tracker
+from delivery_service.shared.domain.shop_id import ShopID
 from delivery_service.shared.domain.vo.location import Location
 from delivery_service.shared.infrastructure.adapters.id_generator import (
     IDGenerator,
@@ -15,30 +22,23 @@ from delivery_service.shared.infrastructure.adapters.id_generator import (
 from delivery_service.shared.infrastructure.integration.geopy.geolocator import (  # noqa: E501
     Geolocator,
 )
-from delivery_service.shop_managment.domain.employee import (
-    Employee,
-    EmployeeRole,
-)
-from delivery_service.shop_managment.domain.employee_collection import (
-    EmployeeCollection,
-)
-from delivery_service.shop_managment.domain.errors import (
+from delivery_service.shop_management.domain.errors import (
     InvalidDayOfWeekError,
     ShopCreationNotAllowedError,
 )
-from delivery_service.shop_managment.domain.factory import DaysOffData
-from delivery_service.shop_managment.domain.repository import (
+from delivery_service.shop_management.domain.factory import DaysOffData
+from delivery_service.shop_management.domain.repository import (
     ShopRepository,
 )
-from delivery_service.shop_managment.domain.shop import Shop, ShopID
-from delivery_service.shop_managment.domain.value_objects import DaysOff
-from delivery_service.shop_managment.infrastructure.shop_factory import (
+from delivery_service.shop_management.domain.shop import Shop
+from delivery_service.shop_management.domain.value_objects import DaysOff
+from delivery_service.shop_management.infrastructure.shop_factory import (
     ShopFactoryImpl,
 )
 
 
 async def test_successfully_create_shop(
-    id_generator: IDGenerator, random_user: User, tracker: Tracker
+    id_generator: IDGenerator, random_user: User
 ) -> None:
     shop_name = "New test shop"
     shop_location = "Черкассы, улица Шевченка 228"
@@ -60,7 +60,6 @@ async def test_successfully_create_shop(
         id_generator=id_generator,
         geolocator=mock_geolocator,
         shop_repository=mock_shop_repository,
-        tracker=tracker,
     )
 
     new_shop = await shop_factory.create_shop(
@@ -80,7 +79,7 @@ async def test_successfully_create_shop(
 
 
 async def test_unsuccessfully_create_shop_when_user_already_employee(
-    random_user: User, id_generator: IDGenerator, tracker: Tracker
+    random_user: User, id_generator: IDGenerator
 ) -> None:
     shop_name = "New test shop"
     shop_location = "Черкассы, улица Шевченка 228"
@@ -97,7 +96,6 @@ async def test_unsuccessfully_create_shop_when_user_already_employee(
         id_generator=id_generator,
         geolocator=mock_geolocator,
         shop_repository=mock_shop_repository,
-        tracker=tracker,
     )
 
     with pytest.raises(ShopCreationNotAllowedError):
@@ -138,13 +136,12 @@ def test_cannot_deliver_in_this_day(random_shop: Shop, day: date) -> None:
     assert random_shop.can_deliver_in_this_day(day) is False
 
 
-async def test_discard_from_employee(tracker: Tracker) -> None:
+async def test_discard_from_employee() -> None:
     # GIVEN
     owner_id = UserID(UUID("01953cdd-6dc1-797c-8029-170692b243cf"))
     employee_id = UserID(UUID("01953cdd-6dc1-797c-8029-170692b243cc"))
     candidate_to_fire = Employee(
         employee_id=employee_id,
-        tracker=tracker,
         role=EmployeeRole.SHOP_MANAGER,
     )
 
@@ -152,7 +149,6 @@ async def test_discard_from_employee(tracker: Tracker) -> None:
         {
             Employee(
                 employee_id=owner_id,
-                tracker=tracker,
                 role=EmployeeRole.SHOP_OWNER,
             ),
             candidate_to_fire,
@@ -160,7 +156,6 @@ async def test_discard_from_employee(tracker: Tracker) -> None:
     )
     shop = Shop(
         entity_id=ShopID(UUID("11953cdd-6dc1-797c-8029-170692b243cf")),
-        tracker=tracker,
         owner_id=owner_id,
         name="My test shop",
         location=Location(
@@ -175,13 +170,13 @@ async def test_discard_from_employee(tracker: Tracker) -> None:
     )
 
     # WHEN
-    await shop.discard_employee(employee_id=employee_id, firer_id=owner_id)
+    shop.discard_employee(employee=candidate_to_fire, firer_id=owner_id)
 
     # THEN
     assert candidate_to_fire not in shop.employees
 
 
-def test_add_new_employee(tracker: Tracker) -> None:
+def test_add_new_employee() -> None:
     # GIVEN
     owner_id = UserID(UUID("01953cdd-6dc1-797c-8029-170692b243cf"))
     employee_id = UserID(UUID("01953cdd-6dc1-797c-8029-170692b243cc"))
@@ -190,14 +185,12 @@ def test_add_new_employee(tracker: Tracker) -> None:
         {
             Employee(
                 employee_id=owner_id,
-                tracker=tracker,
                 role=EmployeeRole.SHOP_OWNER,
             )
         }
     )
     shop = Shop(
         entity_id=ShopID(UUID("11953cdd-6dc1-797c-8029-170692b243cf")),
-        tracker=tracker,
         owner_id=owner_id,
         name="My test shop",
         location=Location(
@@ -221,7 +214,6 @@ def test_add_new_employee(tracker: Tracker) -> None:
     # THEN
     new_employee = Employee(
         employee_id=employee_id,
-        tracker=tracker,
         role=EmployeeRole.SHOP_MANAGER,
     )
     assert new_employee in shop.employees

@@ -1,7 +1,9 @@
 from dataclasses import dataclass, field
 from datetime import date
 
-from delivery_service.shop_managment.domain.errors import InvalidDayOfWeekError
+from delivery_service.shop_management.domain.errors import (
+    InvalidDayOfWeekError,
+)
 
 MONDAY = 0
 SATURDAY = 6

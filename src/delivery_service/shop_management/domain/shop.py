@@ -1,29 +1,24 @@
 from datetime import date
-from typing import NewType
-from uuid import UUID
 
-from delivery_service.shared.domain.entity import Entity
-from delivery_service.shared.domain.identity_id import UserID
-from delivery_service.shared.domain.tracker import Tracker
-from delivery_service.shared.domain.vo.location import Location
-from delivery_service.shop_managment.domain.employee import (
+from delivery_service.shared.domain.employee import (
     Employee,
     EmployeeRole,
 )
-from delivery_service.shop_managment.domain.employee_collection import (
+from delivery_service.shared.domain.employee_collection import (
     EmployeeCollection,
 )
-from delivery_service.shop_managment.domain.errors import NotOwnerError
-from delivery_service.shop_managment.domain.value_objects import DaysOff
-
-ShopID = NewType("ShopID", UUID)
+from delivery_service.shared.domain.entity import Entity
+from delivery_service.shared.domain.identity_id import UserID
+from delivery_service.shared.domain.shop_id import ShopID
+from delivery_service.shared.domain.vo.location import Location
+from delivery_service.shop_management.domain.errors import NotOwnerError
+from delivery_service.shop_management.domain.value_objects import DaysOff
 
 
 class Shop(Entity[ShopID]):
     def __init__(
         self,
         entity_id: ShopID,
-        tracker: Tracker,
         *,
         owner_id: UserID,
         name: str,
@@ -31,7 +26,7 @@ class Shop(Entity[ShopID]):
         days_off: DaysOff,
         employees: EmployeeCollection,
     ) -> None:
-        super().__init__(entity_id=entity_id, tracker=tracker)
+        super().__init__(entity_id=entity_id)
 
         self._owner_id = owner_id
         self._name = name
@@ -41,20 +36,17 @@ class Shop(Entity[ShopID]):
 
     def add_employee(
         self, employee_id: UserID, role: EmployeeRole, hirer_id: UserID
-    ) -> None:
+    ) -> Employee:
         self._ensure_is_owner(hirer_id)
 
-        employee = Employee(
-            employee_id=employee_id, tracker=self._tracker, role=role
-        )
+        employee = Employee(employee_id=employee_id, role=role)
         self._employees.add_to_employees(employee)
-        self._tracker.add_new(employee)
 
-    async def discard_employee(
-        self, employee_id: UserID, firer_id: UserID
-    ) -> None:
+        return employee
+
+    def discard_employee(self, employee: Employee, firer_id: UserID) -> None:
         self._ensure_is_owner(firer_id)
-        await self._employees.discard_from_employees(employee_id)
+        self._employees.discard_from_employees(employee)
 
     def edit_regular_days_off(self, days: list[int]) -> None:
         self._days_off = self._days_off.change_regular_days_off(days)

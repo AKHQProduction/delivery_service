@@ -1,6 +1,6 @@
 from dataclasses import dataclass
 
-from delivery_service.identity.domain.errors import (
+from delivery_service.shared.domain.errors import (
     InvalidTelegramUsernameError,
     TelegramIDMustBePositiveError,
 )

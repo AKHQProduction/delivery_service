@@ -7,18 +7,18 @@ from delivery_service.shared.application.ports.transaction_manager import (
 )
 
 # ruff: noqa: E501
-from delivery_service.shop_managment.application.commands.create_new_shop import (
+from delivery_service.shop_management.application.commands.create_new_shop import (
     CreateNewShopHandler,
     CreateNewShopRequest,
 )
-from delivery_service.shop_managment.domain.factory import (
+from delivery_service.shop_management.domain.factory import (
     DaysOffData,
     ShopFactory,
 )
-from delivery_service.shop_managment.domain.repository import (
+from delivery_service.shop_management.domain.repository import (
     ShopRepository,
 )
-from delivery_service.shop_managment.domain.shop import Shop
+from delivery_service.shop_management.domain.shop import Shop
 
 
 async def test_create_new_shop(random_user: User, random_shop: Shop) -> None:

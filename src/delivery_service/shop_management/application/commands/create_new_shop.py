@@ -7,15 +7,15 @@ from delivery_service.shared.application.ports.idp import IdentityProvider
 from delivery_service.shared.application.ports.transaction_manager import (
     TransactionManager,
 )
-from delivery_service.shop_managment.domain.employee import EmployeeRole
-from delivery_service.shop_managment.domain.factory import (
+from delivery_service.shared.domain.employee import EmployeeRole
+from delivery_service.shared.domain.shop_id import ShopID
+from delivery_service.shop_management.domain.factory import (
     DaysOffData,
     ShopFactory,
 )
-from delivery_service.shop_managment.domain.repository import (
+from delivery_service.shop_management.domain.repository import (
     ShopRepository,
 )
-from delivery_service.shop_managment.domain.shop import ShopID
 
 
 @dataclass(frozen=True)

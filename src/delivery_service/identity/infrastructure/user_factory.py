@@ -14,7 +14,6 @@ from delivery_service.identity.domain.factory import (
 )
 from delivery_service.identity.domain.repository import UserRepository
 from delivery_service.identity.domain.user import User
-from delivery_service.shared.domain.tracker import Tracker
 from delivery_service.shared.domain.vo.tg_contacts import TelegramContacts
 
 
@@ -26,11 +25,9 @@ class UserFactoryImpl(UserFactory):
         self,
         id_generator: UserIDGenerator,
         user_repository: UserRepository,
-        tracker: Tracker,
     ) -> None:
         self._id_generator = id_generator
         self._user_repository = user_repository
-        self._tracker = tracker
 
     async def create_user(
         self,
@@ -44,7 +41,6 @@ class UserFactoryImpl(UserFactory):
         ):
             return User(
                 entity_id=self._id_generator.generate_user_id(),
-                tracker=self._tracker,
                 full_name=full_name,
                 telegram_contacts=TelegramContacts(
                     telegram_id=telegram_contacts_data.telegram_id,

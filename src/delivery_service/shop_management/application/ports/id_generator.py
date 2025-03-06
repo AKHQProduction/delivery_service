@@ -1,7 +1,7 @@
 from abc import abstractmethod
 from typing import Protocol
 
-from delivery_service.shop_managment.domain.shop import ShopID
+from delivery_service.shared.domain.shop_id import ShopID
 
 
 class ShopIDGenerator(Protocol):

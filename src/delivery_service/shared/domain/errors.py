@@ -27,3 +27,26 @@ class ConflictError(DomainError):
     @property
     def message(self) -> str:
         return "Conflict error"
+
+
+@dataclass(eq=False)
+class PriceMustBeGreateError(ConflictError):
+    @property
+    def message(self) -> str:
+        return "Price must be greate than 0"
+
+
+@dataclass(eq=False)
+class TelegramIDMustBePositiveError(ValidationError):
+    @property
+    def message(self) -> str:
+        return "Telegram id must be positive"
+
+
+@dataclass(eq=False)
+class InvalidTelegramUsernameError(ValidationError):
+    @property
+    def message(self) -> str:
+        return (
+            "Telegram username length must be greate than 0 and less than 129"
+        )
