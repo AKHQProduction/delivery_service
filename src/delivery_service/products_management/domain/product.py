@@ -3,6 +3,7 @@ from typing import NewType
 from uuid import UUID
 
 from delivery_service.shared.domain.entity import Entity
+from delivery_service.shared.domain.shop_id import ShopID
 from delivery_service.shared.domain.vo.price import Price
 
 ProductID = NewType("ProductID", UUID)
@@ -18,12 +19,15 @@ class Product(Entity[ProductID]):
         self,
         product_id: ProductID,
         *,
+        shop_id: ShopID,
         title: str,
         price: Price,
         product_type: ProductType,
         metadata_path: str | None = None,
     ) -> None:
         super().__init__(entity_id=product_id)
+
+        self._shop_id = shop_id
 
         self._title = title
         self._price = price

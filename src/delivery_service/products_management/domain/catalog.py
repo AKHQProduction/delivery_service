@@ -50,6 +50,7 @@ class ShopCatalog(Entity[ShopID]):
             title=title,
             price=price,
             product_type=product_type,
+            shop_id=self.entity_id,
         )
         self._products.add_product(new_product)
 
