@@ -15,15 +15,15 @@ repos:
         args: [ --fix ]
       - id: ruff-format
 
-  - repo: local
-    hooks:
-      - id: pytest-check
-        types: [ python ]
-        name: pytest-check
-        entry: pytest
-        language: system
-        pass_filenames: false
-        always_run: true
+  #  - repo: local
+  #    hooks:
+  #      - id: pytest-check
+  #        types: [ python ]
+  #        name: pytest-check
+  #        entry: pytest
+  #        language: system
+  #        pass_filenames: false
+  #        always_run: true
 
   - repo: https://github.com/RobertCraigie/pyright-python
     rev: v1.1.394

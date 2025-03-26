@@ -1,9 +1,9 @@
 from abc import abstractmethod
 from typing import Protocol
 
+from delivery_service.identity.public.identity_id import UserID
 from delivery_service.products_management.domain.catalog import ShopCatalog
 from delivery_service.products_management.domain.product import Product
-from delivery_service.shared.domain.identity_id import UserID
 
 
 class ShopCatalogRepository(Protocol):

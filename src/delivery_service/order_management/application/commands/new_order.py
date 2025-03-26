@@ -3,11 +3,11 @@ from dataclasses import dataclass
 from bazario import Request
 from bazario.asyncio import RequestHandler
 
+from delivery_service.identity.public.identity_id import UserID
 from delivery_service.order_management.domain.factory import OrderLineData
 from delivery_service.shared.application.ports.shop_provider import (
     ShopProvider,
 )
-from delivery_service.shared.domain.identity_id import UserID
 
 
 @dataclass(frozen=True)

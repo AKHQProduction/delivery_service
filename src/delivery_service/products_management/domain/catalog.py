@@ -1,5 +1,6 @@
 from decimal import Decimal
 
+from delivery_service.identity.public.identity_id import UserID
 from delivery_service.products_management.domain.errors import (
     AccessDeniedError,
 )
@@ -16,7 +17,6 @@ from delivery_service.shared.domain.employee_collection import (
     EmployeeCollection,
 )
 from delivery_service.shared.domain.entity import Entity
-from delivery_service.shared.domain.identity_id import UserID
 from delivery_service.shared.domain.shop_id import ShopID
 from delivery_service.shared.domain.vo.price import Price
 

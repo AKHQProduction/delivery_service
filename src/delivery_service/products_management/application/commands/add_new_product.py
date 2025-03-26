@@ -4,6 +4,8 @@ from decimal import Decimal
 from bazario import Request
 from bazario.asyncio import RequestHandler
 
+from delivery_service.identity.public.api import IdentityPublicAPI
+
 # ruff: noqa: E501
 from delivery_service.products_management.application.ports.id_generator import (
     ProductIDGenerator,
@@ -16,7 +18,6 @@ from delivery_service.products_management.domain.repository import (
     ProductRepository,
     ShopCatalogRepository,
 )
-from delivery_service.shared.application.ports.idp import IdentityProvider
 from delivery_service.shared.application.ports.transaction_manager import (
     TransactionManager,
 )
@@ -35,20 +36,20 @@ class AddNewProductRequest(Request[ProductID]):
 class AddNewProductHandler(RequestHandler[AddNewProductRequest, ProductID]):
     def __init__(
         self,
-        identity_provider: IdentityProvider,
+        identity_api: IdentityPublicAPI,
         catalog_repository: ShopCatalogRepository,
         id_generator: ProductIDGenerator,
         product_repository: ProductRepository,
         transaction_manager: TransactionManager,
     ) -> None:
-        self._idp = identity_provider
+        self._idp = identity_api
         self._catalog_repository = catalog_repository
         self._id_generator = id_generator
         self._product_repository = product_repository
         self._transaction_manager = transaction_manager
 
     async def handle(self, request: AddNewProductRequest) -> ProductID:
-        current_user_id = await self._idp.get_current_user_id()
+        current_user_id = await self._idp.get_current_identity()
 
         catalog = await self._catalog_repository.load_with_identity(
             current_user_id

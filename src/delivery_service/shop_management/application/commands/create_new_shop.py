@@ -3,7 +3,7 @@ from dataclasses import dataclass
 from bazario import Request
 from bazario.asyncio import RequestHandler
 
-from delivery_service.shared.application.ports.idp import IdentityProvider
+from delivery_service.identity.public.api import IdentityPublicAPI
 from delivery_service.shared.application.ports.transaction_manager import (
     TransactionManager,
 )
@@ -28,18 +28,18 @@ class CreateNewShopRequest(Request[ShopID]):
 class CreateNewShopHandler(RequestHandler[CreateNewShopRequest, ShopID]):
     def __init__(
         self,
-        identity_provider: IdentityProvider,
+        identity_api: IdentityPublicAPI,
         shop_factory: ShopFactory,
         shop_repository: ShopRepository,
         transaction_manager: TransactionManager,
     ) -> None:
-        self._idp = identity_provider
+        self._idp = identity_api
         self._factory = shop_factory
         self._repository = shop_repository
         self._transaction_manager = transaction_manager
 
     async def handle(self, request: CreateNewShopRequest) -> ShopID:
-        current_user_id = await self._idp.get_current_user_id()
+        current_user_id = await self._idp.get_current_identity()
 
         new_shop = await self._factory.create_shop(
             request.shop_name,

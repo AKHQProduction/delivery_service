@@ -3,7 +3,7 @@ from dataclasses import dataclass, field
 from datetime import date
 from typing import Protocol
 
-from delivery_service.shared.domain.identity_id import UserID
+from delivery_service.identity.public.identity_id import UserID
 from delivery_service.shop_management.domain.shop import Shop
 
 

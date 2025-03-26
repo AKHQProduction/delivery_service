@@ -1,12 +1,12 @@
 from typing import Final
 
+from delivery_service.identity.application.errors import UserAlreadyExistsError
 from delivery_service.identity.application.ports.id_generator import (
     UserIDGenerator,
 )
 from delivery_service.identity.domain.errors import (
     FullNameTooLongError,
     InvalidFullNameError,
-    UserAlreadyExistsError,
 )
 from delivery_service.identity.domain.factory import (
     TelegramContactsData,
@@ -47,9 +47,7 @@ class UserFactoryImpl(UserFactory):
                     telegram_username=telegram_contacts_data.telegram_username,
                 ),
             )
-        raise UserAlreadyExistsError(
-            telegram_id=telegram_contacts_data.telegram_id
-        )
+        raise UserAlreadyExistsError()
 
     def _validate(self, full_name: str) -> None:
         if len(full_name) < self._MIN_FULLNAME_LENGTH:

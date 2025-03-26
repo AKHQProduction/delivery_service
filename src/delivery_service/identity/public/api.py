@@ -4,7 +4,7 @@ from typing import Protocol
 from delivery_service.identity.public.identity_id import UserID
 
 
-class UserIDGenerator(Protocol):
+class IdentityPublicAPI(Protocol):
     @abstractmethod
-    def generate_user_id(self) -> UserID:
+    async def get_current_identity(self) -> UserID:
         raise NotImplementedError

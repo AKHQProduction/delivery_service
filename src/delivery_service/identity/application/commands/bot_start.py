@@ -3,7 +3,7 @@ from dataclasses import dataclass
 from bazario import Request
 from bazario.asyncio import RequestHandler
 
-from delivery_service.identity.domain.errors import UserAlreadyExistsError
+from delivery_service.identity.application.errors import UserAlreadyExistsError
 from delivery_service.identity.domain.factory import (
     TelegramContactsData,
     UserFactory,

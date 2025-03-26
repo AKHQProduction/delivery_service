@@ -1,7 +1,7 @@
+from delivery_service.identity.public.identity_id import UserID
 from delivery_service.shared.domain.employee_collection import (
     EmployeeCollection,
 )
-from delivery_service.shared.domain.identity_id import UserID
 
 # ruff: noqa: E501
 from delivery_service.shared.infrastructure.integration.geopy.geolocator import (

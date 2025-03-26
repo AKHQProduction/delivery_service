@@ -1,10 +1,10 @@
 from dataclasses import dataclass
 
+from delivery_service.identity.public.identity_id import UserID
 from delivery_service.shared.domain.errors import (
     ConflictError,
     ValidationError,
 )
-from delivery_service.shared.domain.identity_id import UserID
 
 
 @dataclass(eq=False)

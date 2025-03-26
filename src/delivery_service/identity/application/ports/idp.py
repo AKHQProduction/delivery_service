@@ -1,7 +1,7 @@
 from abc import abstractmethod
 from typing import Protocol
 
-from delivery_service.shared.domain.identity_id import UserID
+from delivery_service.identity.public.identity_id import UserID
 
 
 class IdentityProvider(Protocol):

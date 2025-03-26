@@ -3,11 +3,11 @@ from dataclasses import dataclass
 from bazario import Request
 from bazario.asyncio import RequestHandler
 
-from delivery_service.shared.application.ports.idp import IdentityProvider
+from delivery_service.identity.public.api import IdentityPublicAPI
+from delivery_service.identity.public.identity_id import UserID
 from delivery_service.shared.application.ports.transaction_manager import (
     TransactionManager,
 )
-from delivery_service.shared.domain.identity_id import UserID
 from delivery_service.shop_management.application.errors import (
     EmployeeNotFoundError,
     ShopNotFoundError,
@@ -26,18 +26,18 @@ class DiscardEmployeeRequest(Request[None]):
 class DiscardEmployeeHandler(RequestHandler[DiscardEmployeeRequest, None]):
     def __init__(
         self,
-        identity_provider: IdentityProvider,
+        identity_api: IdentityPublicAPI,
         shop_repository: ShopRepository,
         employee_repository: EmployeeRepository,
         transaction_manager: TransactionManager,
     ) -> None:
-        self._identity_provider = identity_provider
+        self._identity_api = identity_api
         self._shop_repository = shop_repository
         self._employee_repository = employee_repository
         self._transaction_manager = transaction_manager
 
     async def handle(self, request: DiscardEmployeeRequest) -> None:
-        current_user_id = await self._identity_provider.get_current_user_id()
+        current_user_id = await self._identity_api.get_current_identity()
 
         shop = await self._shop_repository.load_with_identity(current_user_id)
         if not shop:
