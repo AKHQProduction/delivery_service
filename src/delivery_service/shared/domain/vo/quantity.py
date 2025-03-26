@@ -1,13 +1,18 @@
 from dataclasses import dataclass
-from decimal import Decimal
 
 from delivery_service.shared.domain.errors import ValueMustBePositiveError
 
 
 @dataclass(slots=True, frozen=True, eq=True, unsafe_hash=True)
-class Price:
-    value: Decimal
+class Quantity:
+    value: int
 
     def __post_init__(self) -> None:
         if self.value < 0:
             raise ValueMustBePositiveError()
+
+    def __add__(self, other: "Quantity") -> "Quantity":
+        return Quantity(value=self.value + other.value)
+
+    def __sub__(self, other: "Quantity") -> "Quantity":
+        return Quantity(value=self.value - other.value)

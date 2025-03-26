@@ -30,7 +30,7 @@ class ConflictError(DomainError):
 
 
 @dataclass(eq=False)
-class PriceMustBeGreateError(ConflictError):
+class ValueMustBePositiveError(ConflictError):
     @property
     def message(self) -> str:
         return "Price must be greate than 0"
