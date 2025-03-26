@@ -3,12 +3,11 @@ from dataclasses import dataclass
 from bazario import Request
 from bazario.asyncio import RequestHandler
 
-from delivery_service.identity.public.api import IdentityPublicAPI
+from delivery_service.identity.public.api import IdentityAPI
 from delivery_service.shared.application.ports.transaction_manager import (
     TransactionManager,
 )
 from delivery_service.shared.domain.employee import EmployeeRole
-from delivery_service.shared.domain.shop_id import ShopID
 from delivery_service.shop_management.domain.factory import (
     DaysOffData,
     ShopFactory,
@@ -16,6 +15,7 @@ from delivery_service.shop_management.domain.factory import (
 from delivery_service.shop_management.domain.repository import (
     ShopRepository,
 )
+from delivery_service.shop_management.public.shop_id import ShopID
 
 
 @dataclass(frozen=True)
@@ -28,7 +28,7 @@ class CreateNewShopRequest(Request[ShopID]):
 class CreateNewShopHandler(RequestHandler[CreateNewShopRequest, ShopID]):
     def __init__(
         self,
-        identity_api: IdentityPublicAPI,
+        identity_api: IdentityAPI,
         shop_factory: ShopFactory,
         shop_repository: ShopRepository,
         transaction_manager: TransactionManager,

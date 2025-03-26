@@ -3,7 +3,7 @@ from dataclasses import dataclass
 from bazario import Request
 from bazario.asyncio import RequestHandler
 
-from delivery_service.identity.public.api import IdentityPublicAPI
+from delivery_service.identity.public.api import IdentityAPI
 from delivery_service.identity.public.identity_id import UserID
 from delivery_service.shared.application.ports.transaction_manager import (
     TransactionManager,
@@ -27,7 +27,7 @@ class AddNewEmployeeRequest(Request[None]):
 class AddNewEmployeeHandler(RequestHandler[AddNewEmployeeRequest, None]):
     def __init__(
         self,
-        identity_api: IdentityPublicAPI,
+        identity_api: IdentityAPI,
         shop_repository: ShopRepository,
         employee_repository: EmployeeRepository,
         transaction_manager: TransactionManager,

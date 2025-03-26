@@ -5,7 +5,7 @@ from delivery_service.order_management.domain.order_line_collection import (
     OrderLineCollection,
 )
 from delivery_service.shared.domain.entity import Entity
-from delivery_service.shared.domain.shop_id import ShopID
+from delivery_service.shop_management.public.shop_id import ShopID
 
 OrderID = NewType("OrderID", UUID)
 

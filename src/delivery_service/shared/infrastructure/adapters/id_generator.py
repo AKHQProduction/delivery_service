@@ -6,10 +6,10 @@ from delivery_service.identity.application.ports.id_generator import (
     UserIDGenerator,
 )
 from delivery_service.identity.public.identity_id import UserID
-from delivery_service.shared.domain.shop_id import ShopID
 from delivery_service.shop_management.application.ports.id_generator import (
     ShopIDGenerator,
 )
+from delivery_service.shop_management.public.shop_id import ShopID
 
 
 class IDGenerator(UserIDGenerator, ShopIDGenerator):

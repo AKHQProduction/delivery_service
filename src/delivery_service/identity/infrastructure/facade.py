@@ -1,9 +1,9 @@
 from delivery_service.identity.application.ports.idp import IdentityProvider
-from delivery_service.identity.public.api import IdentityPublicAPI
+from delivery_service.identity.public.api import IdentityAPI
 from delivery_service.identity.public.identity_id import UserID
 
 
-class IdentityFacade(IdentityPublicAPI):
+class IdentityFacade(IdentityAPI):
     def __init__(self, identity_provider: IdentityProvider) -> None:
         self._idp = identity_provider
 

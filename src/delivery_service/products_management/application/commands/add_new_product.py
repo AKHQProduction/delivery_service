@@ -4,7 +4,7 @@ from decimal import Decimal
 from bazario import Request
 from bazario.asyncio import RequestHandler
 
-from delivery_service.identity.public.api import IdentityPublicAPI
+from delivery_service.identity.public.api import IdentityAPI
 
 # ruff: noqa: E501
 from delivery_service.products_management.application.ports.id_generator import (
@@ -36,7 +36,7 @@ class AddNewProductRequest(Request[ProductID]):
 class AddNewProductHandler(RequestHandler[AddNewProductRequest, ProductID]):
     def __init__(
         self,
-        identity_api: IdentityPublicAPI,
+        identity_api: IdentityAPI,
         catalog_repository: ShopCatalogRepository,
         id_generator: ProductIDGenerator,
         product_repository: ProductRepository,

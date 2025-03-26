@@ -9,10 +9,10 @@ from delivery_service.shared.domain.employee_collection import (
     EmployeeCollection,
 )
 from delivery_service.shared.domain.entity import Entity
-from delivery_service.shared.domain.shop_id import ShopID
 from delivery_service.shared.domain.vo.location import Location
 from delivery_service.shop_management.domain.errors import NotOwnerError
 from delivery_service.shop_management.domain.value_objects import DaysOff
+from delivery_service.shop_management.public.shop_id import ShopID
 
 
 class Shop(Entity[ShopID]):

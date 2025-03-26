@@ -4,7 +4,7 @@ from typing import Protocol
 from delivery_service.shop_management.public.shop_id import ShopID
 
 
-class ShopIDGenerator(Protocol):
+class ShopProvider(Protocol):
     @abstractmethod
-    def generate_shop_id(self) -> ShopID:
+    async def get_current_shop_id(self) -> ShopID:
         raise NotImplementedError

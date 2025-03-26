@@ -3,8 +3,8 @@ from typing import NewType
 from uuid import UUID
 
 from delivery_service.shared.domain.entity import Entity
-from delivery_service.shared.domain.shop_id import ShopID
 from delivery_service.shared.domain.vo.price import Price
+from delivery_service.shop_management.public.shop_id import ShopID
 
 ProductID = NewType("ProductID", UUID)
 
