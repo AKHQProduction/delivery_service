@@ -4,8 +4,9 @@ from aiogram import Bot, Dispatcher
 from aiogram.client.default import DefaultBotProperties
 from aiogram.client.session.aiohttp import AiohttpSession
 from aiogram.enums import ParseMode
-from aiogram.fsm.storage.base import BaseStorage
+from aiogram.fsm.storage.base import BaseStorage, DefaultKeyBuilder
 from aiogram.fsm.storage.memory import MemoryStorage, SimpleEventIsolation
+from aiogram.fsm.storage.redis import RedisStorage
 from aiogram.webhook.aiohttp_server import (
     SimpleRequestHandler,
     TokenBasedRequestHandler,
@@ -14,9 +15,11 @@ from aiogram.webhook.aiohttp_server import (
 from aiohttp import web
 
 from delivery_service.bootstrap.configs import (
+    RedisConfig,
     TGConfig,
     WebhookConfig,
     load_bot_config,
+    load_redis_config,
     load_webhook_config,
 )
 from delivery_service.bootstrap.logging import setup_logging
@@ -24,9 +27,15 @@ from delivery_service.bootstrap.logging import setup_logging
 logger = logging.getLogger(__name__)
 
 
-def get_storage(bot_config: TGConfig) -> BaseStorage:
+def get_storage(
+    bot_config: TGConfig, redis_config: RedisConfig
+) -> BaseStorage:
     if bot_config.use_redis_storage:
-        pass
+        logger.debug("Setup redis storage")
+        return RedisStorage.from_url(
+            url=redis_config.fsm_uri,
+            key_builder=DefaultKeyBuilder(with_bot_id=True, with_destiny=True),
+        )
     logger.debug("Setup memory storage")
     return MemoryStorage()
 
@@ -57,6 +66,7 @@ def main() -> None:
 
     bot_config = load_bot_config()
     webhook_config = load_webhook_config()
+    redis_config = load_redis_config()
 
     session = AiohttpSession()
 
@@ -66,7 +76,7 @@ def main() -> None:
     }
 
     admin_bot = Bot(token=bot_config.admin_bot_token, **bot_settings)
-    storage = get_storage(bot_config=bot_config)
+    storage = get_storage(bot_config=bot_config, redis_config=redis_config)
 
     admin_dp = get_admin_dispatcher(storage=storage)
     shop_dp = get_shop_dispatcher(storage=storage)

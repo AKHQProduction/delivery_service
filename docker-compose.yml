@@ -7,6 +7,26 @@ services:
     command: [ "python", "-m", "delivery_service.bootstrap.entrypoints.bot" ]
     env_file:
       - ".env"
+    volumes:
+      - ./src:/usr/src/app/src
+    depends_on:
+      redis:
+        condition: service_healthy
+
+  redis:
+    image: redis:7-alpine
+    restart: unless-stopped
+    env_file:
+      - .env
+    command: [ "redis-server", "--port", "${REDIS_PORT}", "--requirepass", "${REDIS_PASSWORD}" ]
+    healthcheck:
+      test: [ "CMD-SHELL", "redis-cli", "-a", "$${REDIS_PASSWORD}", "ping" ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+    volumes:
+      - redis_data:/data
 
   ngrok:
     image: ngrok/ngrok:latest
@@ -15,3 +35,6 @@ services:
       - NGROK_CONFIG=/etc/ngrok.yml
     volumes:
       - ./ngrok.yml:/etc/ngrok.yml
+
+volumes:
+  redis_data:

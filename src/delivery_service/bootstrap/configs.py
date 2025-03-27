@@ -9,15 +9,6 @@ class TGConfig:
     use_redis_storage: bool
 
 
-@dataclass(frozen=True)
-class WebhookConfig:
-    webhook_url: str
-    webhook_admin_path: str
-    webhook_shop_path: str
-    webhook_host: str
-    webhook_port: int
-
-
 def load_bot_config() -> TGConfig:
     admin_bot_token = environ.get("ADMIN_BOT_TOKEN")
     shop_bot_token = environ.get("SHOP_BOT_TOKEN")
@@ -33,6 +24,15 @@ def load_bot_config() -> TGConfig:
         shop_bot_token=shop_bot_token,
         use_redis_storage=bool(use_redis_storage),
     )
+
+
+@dataclass(frozen=True)
+class WebhookConfig:
+    webhook_url: str
+    webhook_admin_path: str
+    webhook_shop_path: str
+    webhook_host: str
+    webhook_port: int
 
 
 def load_webhook_config() -> WebhookConfig:
@@ -58,3 +58,25 @@ def load_webhook_config() -> WebhookConfig:
         webhook_host,
         int(webhook_port),
     )
+
+
+@dataclass(frozen=True)
+class RedisConfig:
+    host: str
+    port: int
+    password: str
+
+    @property
+    def fsm_uri(self) -> str:
+        return f"redis://:{self.password}@{self.host}:{self.port}/0"
+
+
+def load_redis_config() -> RedisConfig:
+    host = environ.get("REDIS_HOST")
+    port = environ.get("REDIS_PORT")
+    password = environ.get("REDIS_PASSWORD")
+
+    if host is None or port is None or password is None:
+        raise ValueError("Required redis environment variables are missing")
+
+    return RedisConfig(host=host, port=int(port), password=password)
