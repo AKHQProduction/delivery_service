@@ -1,15 +1,15 @@
 from datetime import date
 
 from delivery_service.identity.public.identity_id import UserID
-from delivery_service.shared.domain.employee import (
+from delivery_service.shared.domain.entity import Entity
+from delivery_service.shared.domain.vo.location import Location
+from delivery_service.shop_management.domain.employee import (
     Employee,
     EmployeeRole,
 )
-from delivery_service.shared.domain.employee_collection import (
+from delivery_service.shop_management.domain.employee_collection import (
     EmployeeCollection,
 )
-from delivery_service.shared.domain.entity import Entity
-from delivery_service.shared.domain.vo.location import Location
 from delivery_service.shop_management.domain.errors import NotOwnerError
 from delivery_service.shop_management.domain.value_objects import DaysOff
 from delivery_service.shop_management.public.shop_id import ShopID

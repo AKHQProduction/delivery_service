@@ -1,5 +1,5 @@
 from delivery_service.identity.public.identity_id import UserID
-from delivery_service.shared.domain.employee import Employee
+from delivery_service.shop_management.domain.employee import Employee
 from delivery_service.shop_management.domain.errors import (
     UserAlreadyInEmployeesError,
     UserNotFoundInEmployeesError,

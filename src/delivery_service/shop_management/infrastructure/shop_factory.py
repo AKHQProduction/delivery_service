@@ -1,7 +1,4 @@
 from delivery_service.identity.public.identity_id import UserID
-from delivery_service.shared.domain.employee_collection import (
-    EmployeeCollection,
-)
 
 # ruff: noqa: E501
 from delivery_service.shared.infrastructure.integration.geopy.geolocator import (
@@ -9,6 +6,9 @@ from delivery_service.shared.infrastructure.integration.geopy.geolocator import 
 )
 from delivery_service.shop_management.application.ports.id_generator import (
     ShopIDGenerator,
+)
+from delivery_service.shop_management.domain.employee_collection import (
+    EmployeeCollection,
 )
 from delivery_service.shop_management.domain.errors import (
     ShopCreationNotAllowedError,

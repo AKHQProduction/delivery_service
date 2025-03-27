@@ -63,7 +63,6 @@ class AddNewProductHandler(RequestHandler[AddNewProductRequest, ProductID]):
             title=request.title,
             product_price=request.price,
             product_type=request.product_type,
-            creator_id=current_user_id,
         )
 
         self._product_repository.add(new_product)

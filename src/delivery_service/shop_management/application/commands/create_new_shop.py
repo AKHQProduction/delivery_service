@@ -7,7 +7,7 @@ from delivery_service.identity.public.api import IdentityAPI
 from delivery_service.shared.application.ports.transaction_manager import (
     TransactionManager,
 )
-from delivery_service.shared.domain.employee import EmployeeRole
+from delivery_service.shop_management.domain.employee import EmployeeRole
 from delivery_service.shop_management.domain.factory import (
     DaysOffData,
     ShopFactory,
