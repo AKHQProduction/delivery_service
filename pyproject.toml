@@ -12,6 +12,7 @@ uuid7 = "^0.1.0"
 geopy = "^2.4.1"
 aiohttp = "^3.11.13"
 bazario = "^0.4.2"
+aiogram = "^3.19.0"
 
 
 [tool.poetry.group.test.dependencies]
