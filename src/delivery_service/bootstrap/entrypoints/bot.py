@@ -23,6 +23,9 @@ from delivery_service.bootstrap.configs import (
     load_webhook_config,
 )
 from delivery_service.bootstrap.logging import setup_logging
+from delivery_service.presentation.bot.main.handlers import (
+    setup_all_main_bot_updates,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -42,6 +45,7 @@ def get_storage(
 
 def get_admin_dispatcher(storage: BaseStorage) -> Dispatcher:
     dp = Dispatcher(events_isolation=SimpleEventIsolation(), storage=storage)
+    setup_all_main_bot_updates(dp)
     logger.debug("Setup admin bot dispatcher")
 
     return dp
