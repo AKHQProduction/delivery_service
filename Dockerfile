@@ -21,4 +21,4 @@ ENV PYTHONPATH=/usr/src/app/src
 
 COPY --from=builder ${VIRTUAL_ENV} ${VIRTUAL_ENV}
 COPY src ./usr/src/app/src
-#COPY alembic.ini ./usr/src/app
+COPY alembic.ini ./usr/src/app

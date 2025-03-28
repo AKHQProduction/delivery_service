@@ -4,6 +4,7 @@ services:
     build:
       context: .
       dockerfile: Dockerfile
+    working_dir: /usr/src/app
     command: [ "python", "-m", "delivery_service.bootstrap.entrypoints.bot" ]
     env_file:
       - ".env"
@@ -11,6 +12,8 @@ services:
       - ./src:/usr/src/app/src
     depends_on:
       redis:
+        condition: service_healthy
+      delivery_db:
         condition: service_healthy
 
   redis:
@@ -28,6 +31,39 @@ services:
     volumes:
       - redis_data:/data
 
+  delivery_db:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    volumes:
+      - db_data:/var/lib/postgresql/data/
+    env_file:
+      - .env
+    ports:
+      - "${POSTGRES_INTERNAL_PORT}:${POSTGRES_PORT}"
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready -d $$POSTGRES_DB -U $$POSTGRES_USER" ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+
+  migration:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    restart: on-failure
+    working_dir: /usr/src/app
+    env_file:
+      - .env
+    depends_on:
+      bot:
+        condition: service_started
+      delivery_db:
+        condition: service_healthy
+    command: [ "alembic", "upgrade", "head" ]
+    volumes:
+      - ./src:/usr/src/app/src
+
   ngrok:
     image: ngrok/ngrok:latest
     restart: unless-stopped
@@ -38,3 +74,4 @@ services:
 
 volumes:
   redis_data:
+  db_data:
