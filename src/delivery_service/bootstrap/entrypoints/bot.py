@@ -13,15 +13,19 @@ from aiogram.webhook.aiohttp_server import (
     setup_application,
 )
 from aiohttp import web
+from dishka import AsyncContainer
+from dishka.integrations.aiogram import setup_dishka as add_container_to_bot
 
 from delivery_service.bootstrap.configs import (
     RedisConfig,
     TGConfig,
     WebhookConfig,
     load_bot_config,
+    load_database_config,
     load_redis_config,
     load_webhook_config,
 )
+from delivery_service.bootstrap.containers import bot_container
 from delivery_service.bootstrap.logging import setup_logging
 from delivery_service.presentation.bot.main.handlers import (
     setup_all_main_bot_updates,
@@ -43,16 +47,23 @@ def get_storage(
     return MemoryStorage()
 
 
-def get_admin_dispatcher(storage: BaseStorage) -> Dispatcher:
+def get_admin_dispatcher(
+    storage: BaseStorage, dishka_container: AsyncContainer
+) -> Dispatcher:
     dp = Dispatcher(events_isolation=SimpleEventIsolation(), storage=storage)
+
+    add_container_to_bot(dishka_container, router=dp, auto_inject=True)
     setup_all_main_bot_updates(dp)
     logger.debug("Setup admin bot dispatcher")
 
     return dp
 
 
-def get_shop_dispatcher(storage: BaseStorage) -> Dispatcher:
+def get_shop_dispatcher(
+    storage: BaseStorage, dishka_container: AsyncContainer
+) -> Dispatcher:
     dp = Dispatcher(events_isolation=SimpleEventIsolation(), storage=storage)
+    add_container_to_bot(dishka_container, router=dp, auto_inject=True)
     logger.debug("Setup shop bot dispatcher")
 
     return dp
@@ -66,11 +77,18 @@ async def on_startup(admin_bot: Bot, webhook_config: WebhookConfig) -> None:
 
 
 def main() -> None:
-    setup_logging(level="INFO")
+    setup_logging(level="DEBUG")
 
     bot_config = load_bot_config()
     webhook_config = load_webhook_config()
     redis_config = load_redis_config()
+    database_config = load_database_config()
+
+    dishka_container = bot_container(
+        tg_config=bot_config,
+        redis_config=redis_config,
+        database_config=database_config,
+    )
 
     session = AiohttpSession()
 
@@ -82,8 +100,12 @@ def main() -> None:
     admin_bot = Bot(token=bot_config.admin_bot_token, **bot_settings)
     storage = get_storage(bot_config=bot_config, redis_config=redis_config)
 
-    admin_dp = get_admin_dispatcher(storage=storage)
-    shop_dp = get_shop_dispatcher(storage=storage)
+    admin_dp = get_admin_dispatcher(
+        storage=storage, dishka_container=dishka_container
+    )
+    shop_dp = get_shop_dispatcher(
+        storage=storage, dishka_container=dishka_container
+    )
 
     admin_request_handler = SimpleRequestHandler(admin_dp, admin_bot)
 

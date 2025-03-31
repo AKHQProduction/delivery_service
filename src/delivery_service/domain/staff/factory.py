@@ -2,9 +2,7 @@ from abc import abstractmethod
 from dataclasses import dataclass
 from typing import Protocol
 
-from delivery_service.domain.users.user import (
-    User,
-)
+from delivery_service.domain.staff.staff_member import StaffMember
 
 
 @dataclass(frozen=True)
@@ -13,10 +11,10 @@ class TelegramContactsData:
     telegram_username: str | None
 
 
-class UserFactory(Protocol):
+class StaffMemberFactory(Protocol):
     @abstractmethod
-    async def create_user(
+    async def create_staff_member(
         self,
         full_name: str,
         telegram_contacts_data: TelegramContactsData,
-    ) -> User: ...
+    ) -> StaffMember: ...

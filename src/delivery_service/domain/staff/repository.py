@@ -1,13 +1,13 @@
 from abc import abstractmethod
 from typing import Protocol
 
-from delivery_service.domain.users.factory import TelegramContactsData
-from delivery_service.domain.users.user import User
+from delivery_service.domain.staff.factory import TelegramContactsData
+from delivery_service.domain.staff.staff_member import StaffMember
 
 
-class UserRepository(Protocol):
+class StaffMemberRepository(Protocol):
     @abstractmethod
-    def add(self, user: User) -> None:
+    def add(self, staff_member: StaffMember) -> None:
         raise NotImplementedError
 
     @abstractmethod

@@ -16,7 +16,7 @@ class EntityAlreadyExistsError(ApplicationError):
 
 
 @dataclass(eq=False)
-class UserAlreadyExistsError(EntityAlreadyExistsError):
+class StaffMemberAlreadyExistsError(EntityAlreadyExistsError):
     pass
 
 

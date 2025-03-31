@@ -3,18 +3,15 @@ from dataclasses import dataclass
 from bazario import Request
 from bazario.asyncio import RequestHandler
 
-from delivery_service.application.errors import UserAlreadyExistsError
-from delivery_service.application.ports.transaction_manager import (
-    TransactionManager,
-)
+from delivery_service.application.errors import StaffMemberAlreadyExistsError
 from delivery_service.application.ports.view_manager import (
     ViewManager,
 )
-from delivery_service.domain.users.factory import (
+from delivery_service.domain.staff.factory import (
+    StaffMemberFactory,
     TelegramContactsData,
-    UserFactory,
 )
-from delivery_service.domain.users.repository import UserRepository
+from delivery_service.domain.staff.repository import StaffMemberRepository
 
 
 @dataclass(frozen=True)
@@ -26,25 +23,21 @@ class BotStartRequest(Request[None]):
 class BotStartHandler(RequestHandler[BotStartRequest, None]):
     def __init__(
         self,
-        user_repository: UserRepository,
-        user_factory: UserFactory,
+        staff_member_repository: StaffMemberRepository,
+        staff_member_factory: StaffMemberFactory,
         view_manager: ViewManager,
-        transaction_manager: TransactionManager,
     ) -> None:
-        self._repository = user_repository
-        self._factory = user_factory
+        self._repository = staff_member_repository
+        self._factory = staff_member_factory
         self._view_manager = view_manager
-        self._transaction_manager = transaction_manager
 
     async def handle(self, request: BotStartRequest) -> None:
         try:
-            new_service_user = await self._factory.create_user(
+            new_service_user = await self._factory.create_staff_member(
                 full_name=request.full_name,
                 telegram_contacts_data=request.telegram_data,
             )
-        except UserAlreadyExistsError:
-            await self._view_manager.send_greeting_message()
+        except StaffMemberAlreadyExistsError:
+            return None
         else:
-            self._repository.add(new_service_user)
-            await self._transaction_manager.commit()
-            await self._view_manager.send_greeting_message()
+            return self._repository.add(new_service_user)

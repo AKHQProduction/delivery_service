@@ -1,9 +1,14 @@
 import sqlalchemy as sa
 from sqlalchemy import and_, join
-from sqlalchemy.orm import composite
+from sqlalchemy.orm import composite, relationship
 
 from delivery_service.domain.shared.vo.tg_contacts import TelegramContacts
-from delivery_service.domain.users.user import User
+from delivery_service.domain.staff.staff_member import StaffMember
+from delivery_service.domain.staff.staff_role import (
+    Role,
+    RoleCollection,
+    StaffRole,
+)
 from delivery_service.infrastructure.persistence.tables.base import (
     MAPPER_REGISTRY,
 )
@@ -46,8 +51,32 @@ SOCIAL_NETWORKS_TABLE = sa.Table(
     sa.Column("telegram_username", sa.String, nullable=True),
 )
 
+ROLES_TABLE = sa.Table(
+    "roles",
+    MAPPER_REGISTRY.metadata,
+    sa.Column("id", sa.Integer, primary_key=True, autoincrement=True),
+    sa.Column("name", sa.Enum(Role), nullable=False),
+)
+
+USERS_TO_ROLES_TABLE = sa.Table(
+    "user_roles",
+    MAPPER_REGISTRY.metadata,
+    sa.Column(
+        "user_id",
+        sa.UUID,
+        sa.ForeignKey("users.id", ondelete="CASCADE"),
+        primary_key=True,
+    ),
+    sa.Column(
+        "role_id",
+        sa.Integer,
+        sa.ForeignKey("roles.id", ondelete="CASCADE"),
+        primary_key=True,
+    ),
+)
+
 MAPPER_REGISTRY.map_imperatively(
-    User,
+    StaffMember,
     join(
         USERS_TABLE,
         SOCIAL_NETWORKS_TABLE,
@@ -58,10 +87,24 @@ MAPPER_REGISTRY.map_imperatively(
         "_full_name": USERS_TABLE.c.full_name,
         "_telegram_contacts": composite(
             TelegramContacts,
+            SOCIAL_NETWORKS_TABLE.c.user_id,
             SOCIAL_NETWORKS_TABLE.c.telegram_id,
             SOCIAL_NETWORKS_TABLE.c.telegram_username,
         ),
-        "is_superuser": USERS_TABLE.c.is_superuser,
-        "is_active": USERS_TABLE.c.is_active,
+        "_roles": relationship(
+            "StaffRole",
+            secondary=USERS_TO_ROLES_TABLE,
+            collection_class=RoleCollection,
+            backref="users",
+        ),
+        "_is_superuser": USERS_TABLE.c.is_superuser,
+        "_is_active": USERS_TABLE.c.is_active,
     },
+    primary_key=[USERS_TABLE.c.id],
+)
+
+MAPPER_REGISTRY.map_imperatively(
+    StaffRole,
+    ROLES_TABLE,
+    properties={"_entity_id": ROLES_TABLE.c.id, "_name": ROLES_TABLE.c.name},
 )
