@@ -1,0 +1,30 @@
+from sqlalchemy import and_, exists, select
+from sqlalchemy.ext.asyncio import AsyncSession
+
+from delivery_service.domain.staff.factory import TelegramContactsData
+from delivery_service.domain.staff.repository import StaffMemberRepository
+from delivery_service.domain.staff.staff_member import StaffMember
+from delivery_service.infrastructure.persistence.tables.users import (
+    SOCIAL_NETWORKS_TABLE,
+)
+
+
+class SQLAlchemyStaffMemberRepository(StaffMemberRepository):
+    def __init__(self, session: AsyncSession) -> None:
+        self._session = session
+
+    def add(self, staff_member: StaffMember) -> None:
+        self._session.add(staff_member)
+
+    async def exists(self, telegram_data: TelegramContactsData) -> bool:
+        query = select(
+            exists().where(
+                and_(
+                    SOCIAL_NETWORKS_TABLE.c.telegram_id
+                    == telegram_data.telegram_id
+                )
+            )
+        )
+
+        result = await self._session.execute(query)
+        return bool(result.scalar())
