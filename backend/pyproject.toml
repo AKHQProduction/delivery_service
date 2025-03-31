@@ -1,0 +1,106 @@
+[tool.poetry]
+name = "delivery-service"
+version = "0.1.0"
+description = "Backend for water delivery service"
+authors = ["Andrii <andryxakulishow@gmail.com>"]
+readme = "README.md"
+
+[tool.poetry.dependencies]
+python = "^3.11"
+environs = "^11.0.0"
+aiogram = "^3.10.0"
+sqlalchemy = "^2.0.32"
+asyncpg = "^0.29.0"
+alembic = "^1.13.2"
+greenlet = "^3.0.3"
+aiogram-dialog = { git = "https://github.com/Tishka17/aiogram_dialog.git", rev = "a37ae78738e921bb8a788e1ae6598ac6fa730052" }
+geopy = "^2.4.1"
+dishka = { git = "https://github.com/reagento/dishka", rev = "80fc5564b2688a76bfdce013bf0e96af9f9ca847" }
+boto3 = "^1.35.20"
+redis = "^5.1.1"
+
+[tool.poetry.group.dev.dependencies]
+pytest = "^8.3.2"
+pytest-asyncio = "^0.24.0"
+pre-commit = "^3.8.0"
+mypy = "^1.11.2"
+ruff = "^0.6.4"
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+asyncio_mode = "auto"
+
+markers = [
+    "user: test related to user context",
+    "shop: test related to shop context",
+    "employee: test related to employee context",
+    "goods: test related to goods context",
+    "entities: test related to entities layer",
+    "application: test related to application layer",
+    "value_objects: test related to value objects"
+]
+
+filterwarnings = "ignore::DeprecationWarning"
+
+[tool.mypy]
+strict = true
+warn_unreachable = true
+show_column_numbers = true
+show_error_context = true
+check_untyped_defs = true
+ignore_missing_imports = false
+
+[tool.ruff]
+line-length = 79
+
+[tool.ruff.lint]
+select = ['ALL']
+
+ignore = [
+    # Rules emitting false alerts
+    'N804',
+    'B008',
+    'BLE001',
+    'RUF009',
+    'RUF001',
+    # Rules that are not applicable in the project for now
+    'D',
+    'TID252',
+    'D104',
+    'ANN',
+    'SLF001',
+    'ARG',
+    'D100',
+    'PLR0913',
+    'TCH002',
+    'EXE002',
+    'FA102',
+    # Strange and obscure rules that will never be turned on
+    'ANN101',
+    'FA100',
+    'TRY003',
+    'TRY201',
+    'EM',
+    'PERF203',
+    'TCH001',
+    'TD002',
+    'PTH201',
+    'RSE102',
+    'RET504',
+    'FBT001',
+    'TD003',
+    'B024',
+    'ISC001',
+    'B027',
+    'COM812'
+]
+
+[tool.ruff.lint.per-file-ignores]
+"__init__.py" = ['F401']
+
+"test_*" = ['S101', 'PLR2004', 'PT023', 'PT001', 'PT006']
+"conftest.py" = ['PT023', 'PT001', 'PT006']
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"

@@ -1,7 +1,6 @@
-# Event storming
+# Delivery Service Monorepo
 
-[Miro](https://miro.com/welcomeonboard/RzdNZ0hFWFJGUDZpalMzblhLdXN3Z0xlazF5aTdXek9sb3c1dldvdldPQVNGaHc3VTcrWWMxOXQyUHkyczFqdzdCS3NTRlVXekpsbktVSnBGTHMxVHZQWjZDZHBLazEwKzRIYUJGeFM2ang3bHpEOU5sR2hZaDNxZ3ZIZnNZUkRyVmtkMG5hNDA3dVlncnBvRVB2ZXBnPT0hdjE=?share_link_id=665021019722)
-
-# Features diagram
-
-[Draw.io](https://drive.google.com/file/d/10OO5vSXz2iYXXDC6CVfOLdCnTHSLWYUr/view?usp=sharing)
+BACKEND TIPS:
+1. terminal: cd backend -> .env\Scripts\activate (python -m venv .env if .env is not there)
+2. build frontend: cd frontend -> npm i -> npm run build
+3. to run server(from backend folder) use: fastapi dev app/main.py or fastapi run app/main.py for production
