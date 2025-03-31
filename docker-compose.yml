@@ -1,68 +1,41 @@
 services:
   bot:
+    image: "delivery_bot"
+    container_name: delivery_bot
     restart: on-failure
     build:
-      context: .
+      context: ./backend
       dockerfile: Dockerfile
-    working_dir: /usr/src/app
-    command: [ "python", "-m", "delivery_service.bootstrap.entrypoints.bot" ]
-    env_file:
-      - ".env"
-    volumes:
-      - ./src:/usr/src/app/src
     depends_on:
-      redis:
-        condition: service_healthy
-      delivery_db:
-        condition: service_healthy
-
-  redis:
-    image: redis:7-alpine
-    restart: unless-stopped
+      - delivery_db
+      - minio
+      - ngrok
+    command: poetry run python -m entrypoint.bot
     env_file:
-      - .env
-    command: [ "redis-server", "--port", "${REDIS_PORT}", "--requirepass", "${REDIS_PASSWORD}" ]
-    healthcheck:
-      test: [ "CMD-SHELL", "redis-cli", "-a", "$${REDIS_PASSWORD}", "ping" ]
-      interval: 10s
-      timeout: 5s
-      retries: 5
-      start_period: 30s
+      - "./backend/.env"
     volumes:
-      - redis_data:/data
+      - ./backend/infrastructure/persistence/alembic/migrations/versions:/app/infrastructure/persistence/alembic/migrations/versions
 
   delivery_db:
+    container_name: "delivery_db"
     image: postgres:16-alpine
-    restart: unless-stopped
+    restart: always
     volumes:
-      - db_data:/var/lib/postgresql/data/
-    env_file:
-      - .env
+      - pg_data:/var/lib/postgresql/data/
     ports:
-      - "${POSTGRES_INTERNAL_PORT}:${POSTGRES_PORT}"
-    healthcheck:
-      test: [ "CMD-SHELL", "pg_isready -d $$POSTGRES_DB -U $$POSTGRES_USER" ]
-      interval: 10s
-      timeout: 5s
-      retries: 5
-      start_period: 30s
-
-  migration:
-    build:
-      context: .
-      dockerfile: Dockerfile
-    restart: on-failure
-    working_dir: /usr/src/app
+      - "5432:5432"
     env_file:
-      - .env
-    depends_on:
-      bot:
-        condition: service_started
-      delivery_db:
-        condition: service_healthy
-    command: [ "alembic", "upgrade", "head" ]
-    volumes:
-      - ./src:/usr/src/app/src
+      - "./backend/.env"
+    healthcheck:
+      test:
+        [
+          "CMD-SHELL",
+          "pg_isready -d delivery_database -U $${POSTGRES_USER}"
+        ]
+      interval: 2s
+      timeout: 60s
+      retries: 10
+      start_period: 3s
 
   ngrok:
     image: ngrok/ngrok:latest
@@ -72,6 +45,23 @@ services:
     volumes:
       - ./ngrok.yml:/etc/ngrok.yml
 
+  minio:
+    image: minio/minio
+    container_name: minio
+    command: server --console-address ":9001" /data
+    ports:
+      - "9000:9000"
+      - "9001:9001"
+    volumes:
+      - minio_data:/data
+    env_file:
+      - "./backend/.env"
+    healthcheck:
+      test: [ "CMD", "curl", "-f", "http://localhost:9000/minio/health/live" ]
+      interval: 30s
+      timeout: 20s
+      retries: 3
+
 volumes:
-  redis_data:
-  db_data:
+  pg_data:
+  minio_data:
