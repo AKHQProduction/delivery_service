@@ -1,3 +1,4 @@
+import logging
 from dataclasses import dataclass
 
 from bazario import Request
@@ -12,6 +13,8 @@ from delivery_service.domain.staff.factory import (
     TelegramContactsData,
 )
 from delivery_service.domain.staff.repository import StaffMemberRepository
+
+logger = logging.getLogger(__name__)
 
 
 @dataclass(frozen=True)
@@ -32,12 +35,15 @@ class BotStartHandler(RequestHandler[BotStartRequest, None]):
         self._view_manager = view_manager
 
     async def handle(self, request: BotStartRequest) -> None:
+        logger.info("Request from start bot")
         try:
             new_service_user = await self._factory.create_staff_member(
                 full_name=request.full_name,
                 telegram_contacts_data=request.telegram_data,
             )
         except StaffMemberAlreadyExistsError:
+            logger.info("User already created")
             return None
         else:
+            logger.info("New user %s created", new_service_user.entity_id)
             return self._repository.add(new_service_user)
