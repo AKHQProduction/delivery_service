@@ -1,21 +1,29 @@
-from typing import Any
+from typing import Any, Generic, TypeVar
 
-from bazario import Request
 from bazario.asyncio import HandleNext, PipelineBehavior
 
+from delivery_service.application.behaviors.base import BehaviorResult
+from delivery_service.application.markers.command import (
+    Command,
+)
 from delivery_service.application.ports.transaction_manager import (
     TransactionManager,
 )
 
+AllowableCommands = TypeVar("AllowableCommands", bound=Command)
 
-class CommitionBehavior(PipelineBehavior[Request, Any]):
+
+class CommitionBehavior(
+    PipelineBehavior[AllowableCommands, BehaviorResult],
+    Generic[AllowableCommands, BehaviorResult],
+):
     def __init__(self, transaction_manager: TransactionManager) -> None:
         self._transaction_manager = transaction_manager
 
     async def handle(
         self,
-        request: Request,
-        handle_next: HandleNext[Request, Any],
+        request: AllowableCommands,
+        handle_next: HandleNext[AllowableCommands, BehaviorResult],
     ) -> Any:
         handle_response = await handle_next(request)
         await self._transaction_manager.commit()

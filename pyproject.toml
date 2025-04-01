@@ -19,6 +19,8 @@ alembic = "^1.15.1"
 asyncpg = "^0.30.0"
 greenlet = "^3.1.1"
 dishka = "^1.5.1"
+taskiq-aio-pika = "^0.4.1"
+taskiq-redis = "^1.0.3"
 
 
 [tool.poetry.group.test.dependencies]
@@ -60,6 +62,7 @@ ignore = [
     'EXE002',
     'FA102',
     # Strange and obscure rules that will never be turned on
+    'TCH003',
     'ANN101',
     'FA100',
     'TRY003',
