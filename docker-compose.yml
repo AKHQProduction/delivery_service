@@ -47,6 +47,57 @@ services:
       retries: 5
       start_period: 30s
 
+  rabbit:
+    image: rabbitmq:4.0-management
+    ports:
+      - "${AMQP_PORT}:${AMQP_PORT}"
+      - "15672:15672"
+    env_file:
+      - .env
+    environment:
+      RABBITMQ_DEFAULT_USER: ${AMQP_USER}
+      RABBITMQ_DEFAULT_PASS: ${AMQP_PASSWORD}
+    volumes:
+      - rabbitmq_data:/var/lib/rabbitmq
+    healthcheck:
+      test: [ "CMD", "rabbitmq-diagnostics", "ping" ]
+      interval: 60s
+      timeout: 5s
+      retries: 3
+      start_period: 5s
+
+  taskiq_worker:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    working_dir: /usr/src/app
+    env_file:
+      - .env
+    command: taskiq worker --ack-type when_saved delivery_service.bootstrap.entrypoints.taskiq:setup_broker delivery_service.infrastructure.tasks
+    volumes:
+      - ./src:/usr/src/app/src
+    depends_on:
+      rabbit:
+        condition: service_healthy
+
+  taskiq_scheduler:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    working_dir: /usr/src/app
+    env_file:
+      - .env
+    command: taskiq scheduler delivery_service.bootstrap.entrypoints.taskiq:setup_scheduler delivery_service.infrastructure.tasks
+    volumes:
+      - ./src:/usr/src/app/src
+    depends_on:
+      rabbit:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      delivery_db:
+        condition: service_healthy
+
   migration:
     build:
       context: .
@@ -75,3 +126,4 @@ services:
 volumes:
   redis_data:
   db_data:
+  rabbitmq_data:

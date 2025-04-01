@@ -4,6 +4,7 @@ from dishka import AsyncContainer, make_async_container
 
 from delivery_service.bootstrap.configs import (
     DatabaseConfig,
+    RabbitConfig,
     RedisConfig,
     TGConfig,
 )
@@ -25,8 +26,10 @@ def bot_container(
     tg_config: TGConfig,
     database_config: DatabaseConfig,
     redis_config: RedisConfig,
+    rabbit_config: RabbitConfig,
 ) -> AsyncContainer:
-    logger.info("DI setup")
+    logger.info("Bot DI setup")
+
     return make_async_container(
         AppConfigProvider(),
         ApplicationProvider(),
@@ -40,5 +43,27 @@ def bot_container(
             TGConfig: tg_config,
             DatabaseConfig: database_config,
             RedisConfig: redis_config,
+            RabbitConfig: rabbit_config,
+        },
+    )
+
+
+def taskiq_container(
+    tg_config: TGConfig,
+    database_config: DatabaseConfig,
+    redis_config: RedisConfig,
+    rabbit_config: RabbitConfig,
+) -> AsyncContainer:
+    logger.info("Taskiq DI setup")
+
+    return make_async_container(
+        AppConfigProvider(),
+        PersistenceProvider(),
+        InfrastructureAdaptersProvider(),
+        context={
+            TGConfig: tg_config,
+            DatabaseConfig: database_config,
+            RedisConfig: redis_config,
+            RabbitConfig: rabbit_config,
         },
     )

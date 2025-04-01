@@ -32,6 +32,7 @@ from delivery_service.application.markers.command import (
 )
 from delivery_service.bootstrap.configs import (
     DatabaseConfig,
+    RabbitConfig,
     RedisConfig,
     TGConfig,
 )
@@ -41,11 +42,17 @@ from delivery_service.infrastructure.adapters.factories.staff_member_factory imp
 from delivery_service.infrastructure.adapters.id_generator import (
     IDGeneratorImpl,
 )
+from delivery_service.infrastructure.integration.telegram.check_telegram_users import (
+    CheckTelegramUsers,
+)
 from delivery_service.infrastructure.integration.telegram.view_manager import (
     TelegramViewManager,
 )
 from delivery_service.infrastructure.persistence.adapters.role_repository import (
     SQLAlchemyRoleRepository,
+)
+from delivery_service.infrastructure.persistence.adapters.social_network_gateway import (
+    SQlAlchemySocialNetworkGateway,
 )
 from delivery_service.infrastructure.persistence.adapters.staff_member_repository import (
     SQLAlchemyStaffMemberRepository,
@@ -63,6 +70,7 @@ class AppConfigProvider(Provider):
     tg_config = from_context(TGConfig)
     database_config = from_context(DatabaseConfig)
     redis_config = from_context(RedisConfig)
+    rabbit_config = from_context(RabbitConfig)
 
 
 class ApplicationProvider(Provider):
@@ -106,6 +114,8 @@ class InfrastructureAdaptersProvider(Provider):
     scope = Scope.REQUEST
 
     transaction = provide(WithParents[SQLAlchemyTransactionManager])
+    telegram_task = provide(CheckTelegramUsers)
+    dao = provide(SQlAlchemySocialNetworkGateway)
 
 
 class TelegramProvider(Provider):

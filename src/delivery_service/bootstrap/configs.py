@@ -67,8 +67,16 @@ class RedisConfig:
     password: str
 
     @property
+    def default_uri(self) -> str:
+        return f"redis://:{self.password}@{self.host}:{self.port}/"
+
+    @property
     def fsm_uri(self) -> str:
-        return f"redis://:{self.password}@{self.host}:{self.port}/0"
+        return self.default_uri + "0"
+
+    @property
+    def taskiq_result(self) -> str:
+        return self.default_uri + "1"
 
 
 def load_redis_config() -> RedisConfig:
@@ -120,4 +128,30 @@ def load_database_config() -> DatabaseConfig:
         db_name=db_name,
         user=user,
         password=password,
+    )
+
+
+@dataclass(frozen=True)
+class RabbitConfig:
+    host: str
+    port: int
+    user: str
+    password: str
+
+    @property
+    def uri(self) -> str:
+        return f"amqp://{self.user}:{self.password}@{self.host}:{self.port}/"
+
+
+def load_rabbit_config() -> RabbitConfig:
+    host = environ.get("AMQP_HOST")
+    port = environ.get("AMQP_PORT")
+    user = environ.get("AMQP_USER")
+    password = environ.get("AMQP_PASSWORD")
+
+    if host is None or port is None or user is None or password is None:
+        raise ValueError("Required rabbit environment variables are missing")
+
+    return RabbitConfig(
+        host=host, port=int(port), user=user, password=password
     )

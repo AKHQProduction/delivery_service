@@ -22,6 +22,7 @@ from delivery_service.bootstrap.configs import (
     WebhookConfig,
     load_bot_config,
     load_database_config,
+    load_rabbit_config,
     load_redis_config,
     load_webhook_config,
 )
@@ -83,11 +84,13 @@ def main() -> None:
     webhook_config = load_webhook_config()
     redis_config = load_redis_config()
     database_config = load_database_config()
+    rabbit_config = load_rabbit_config()
 
     dishka_container = bot_container(
         tg_config=bot_config,
         redis_config=redis_config,
         database_config=database_config,
+        rabbit_config=rabbit_config,
     )
 
     session = AiohttpSession()
