@@ -3,7 +3,6 @@ import logging
 from typing import AsyncIterable, AsyncIterator
 
 from aiogram.types import TelegramObject
-from bazario import Request
 from bazario.asyncio import Dispatcher, Registry
 from bazario.asyncio.resolvers.dishka import DishkaResolver
 from dishka import (
@@ -27,6 +26,9 @@ from delivery_service.application.behaviors.commition_behavior import (
 from delivery_service.application.commands.bot_start import (
     BotStartHandler,
     BotStartRequest,
+)
+from delivery_service.application.markers.command import (
+    Command,
 )
 from delivery_service.bootstrap.configs import (
     DatabaseConfig,
@@ -82,7 +84,7 @@ class BazarioProvider(Provider):
         registry = Registry()
 
         registry.add_request_handler(BotStartRequest, BotStartHandler)
-        registry.add_pipeline_behaviors(Request, CommitionBehavior)
+        registry.add_pipeline_behaviors(Command, CommitionBehavior)
 
         return registry
 

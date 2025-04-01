@@ -1,10 +1,12 @@
 import logging
 from dataclasses import dataclass
 
-from bazario import Request
 from bazario.asyncio import RequestHandler
 
 from delivery_service.application.errors import StaffMemberAlreadyExistsError
+from delivery_service.application.markers.command import (
+    Command,
+)
 from delivery_service.application.ports.view_manager import (
     ViewManager,
 )
@@ -18,7 +20,7 @@ logger = logging.getLogger(__name__)
 
 
 @dataclass(frozen=True)
-class BotStartRequest(Request[None]):
+class BotStartRequest(Command[None]):
     full_name: str
     telegram_data: TelegramContactsData
 
