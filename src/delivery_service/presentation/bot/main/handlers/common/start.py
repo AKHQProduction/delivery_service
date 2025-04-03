@@ -24,5 +24,3 @@ async def cmd_start_handler(msg: Message, sender: FromDishka[Sender]) -> None:
             ),
         )
     )
-
-    await msg.answer("Hello, user!")

@@ -10,7 +10,10 @@ from delivery_service.application.common.factories.staff_member_factory import (
 from delivery_service.application.common.markers.command import (
     Command,
 )
-from delivery_service.application.errors import StaffMemberAlreadyExistsError
+from delivery_service.application.errors import (
+    AuthenticationError,
+)
+from delivery_service.application.ports.idp import IdentityProvider
 from delivery_service.application.ports.view_manager import (
     ViewManager,
 )
@@ -34,7 +37,9 @@ class BotStartHandler(RequestHandler[BotStartRequest, None]):
         staff_member_repository: StaffMemberRepository,
         staff_member_factory: StaffMemberFactory,
         view_manager: ViewManager,
+        idp: IdentityProvider,
     ) -> None:
+        self._idp = idp
         self._repository = staff_member_repository
         self._factory = staff_member_factory
         self._view_manager = view_manager
@@ -42,13 +47,13 @@ class BotStartHandler(RequestHandler[BotStartRequest, None]):
     async def handle(self, request: BotStartRequest) -> None:
         logger.info("Request from start bot")
         try:
+            current_user_id = await self._idp.get_current_user_id()
+        except AuthenticationError:
             new_service_user = await self._factory.create_staff_member(
                 full_name=request.full_name,
                 telegram_contacts_data=request.telegram_data,
             )
-        except StaffMemberAlreadyExistsError:
-            logger.info("User already created")
-            return None
-        else:
-            logger.info("New user %s created", new_service_user.entity_id)
-            return self._repository.add(new_service_user)
+            self._repository.add(new_service_user)
+            current_user_id = new_service_user.entity_id
+
+        await self._view_manager.send_greeting_message(current_user_id)

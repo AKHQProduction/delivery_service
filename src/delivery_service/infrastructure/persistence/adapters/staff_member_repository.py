@@ -30,3 +30,13 @@ class SQLAlchemyStaffMemberRepository(StaffMemberRepository):
 
         result = await self._session.execute(query)
         return bool(result.scalar())
+
+    async def load_with_telegram_id(
+        self, telegram_id: int
+    ) -> StaffMember | None:
+        query = select(StaffMember).where(
+            and_(SOCIAL_NETWORKS_TABLE.c.telegram_id == telegram_id)
+        )
+
+        result = await self._session.execute(query)
+        return result.scalar_one_or_none()

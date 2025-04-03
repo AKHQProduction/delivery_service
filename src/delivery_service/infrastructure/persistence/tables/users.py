@@ -96,6 +96,7 @@ MAPPER_REGISTRY.map_imperatively(
             secondary=USERS_TO_ROLES_TABLE,
             collection_class=RoleCollection,
             backref="users",
+            lazy="selectin",
         ),
         "_is_superuser": USERS_TABLE.c.is_superuser,
         "_is_active": USERS_TABLE.c.is_active,

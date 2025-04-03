@@ -2,7 +2,6 @@
 import logging
 from typing import AsyncIterable, AsyncIterator
 
-from aiogram.types import TelegramObject
 from bazario.asyncio import Dispatcher, Registry
 from bazario.asyncio.resolvers.dishka import DishkaResolver
 from dishka import (
@@ -13,6 +12,7 @@ from dishka import (
     provide,
     provide_all,
 )
+from dishka.integrations.aiogram import AiogramMiddlewareData
 from sqlalchemy.ext.asyncio import (
     AsyncEngine,
     AsyncSession,
@@ -41,6 +41,9 @@ from delivery_service.bootstrap.configs import (
 )
 from delivery_service.infrastructure.adapters.id_generator import (
     IDGeneratorImpl,
+)
+from delivery_service.infrastructure.adapters.idp import (
+    TelegramIdentityProvider,
 )
 from delivery_service.infrastructure.integration.telegram.check_telegram_users import (
     CheckTelegramUsers,
@@ -120,11 +123,16 @@ class InfrastructureAdaptersProvider(Provider):
 
 class TelegramProvider(Provider):
     scope = Scope.REQUEST
-    telegram_obj = from_context(provides=TelegramObject, scope=Scope.REQUEST)
 
     @provide(scope=Scope.REQUEST)
-    def get_current_telegram_user_id(self, obj: TelegramObject) -> int | None:
-        logging.info(obj)
+    def get_current_telegram_user_id(
+        self, middleware_data: AiogramMiddlewareData
+    ) -> int | None:
+        if current_chat := middleware_data.get("event_chat"):
+            return current_chat.id
+        return None
+
+    idp = provide(WithParents[TelegramIdentityProvider])
 
     view_manager = provide(
         WithParents[TelegramViewManager],

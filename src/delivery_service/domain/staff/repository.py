@@ -19,3 +19,9 @@ class StaffMemberRepository(Protocol):
     @abstractmethod
     async def exists(self, telegram_data: TelegramContactsData) -> bool:
         raise NotImplementedError
+
+    @abstractmethod
+    async def load_with_telegram_id(
+        self, telegram_id: int
+    ) -> StaffMember | None:
+        raise NotImplementedError

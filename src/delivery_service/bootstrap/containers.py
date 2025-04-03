@@ -1,6 +1,7 @@
 import logging
 
 from dishka import AsyncContainer, make_async_container
+from dishka.integrations.aiogram import AiogramProvider
 
 from delivery_service.bootstrap.configs import (
     DatabaseConfig,
@@ -31,6 +32,7 @@ def bot_container(
     logger.info("Bot DI setup")
 
     return make_async_container(
+        AiogramProvider(),
         AppConfigProvider(),
         ApplicationProvider(),
         ApplicationHandlersProvider(),
