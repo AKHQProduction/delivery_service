@@ -3,16 +3,16 @@ from dataclasses import dataclass
 from bazario import Request
 from bazario.asyncio import RequestHandler
 
+from delivery_service.application.common.factories.shop_factory import (
+    DaysOffData,
+    ShopFactory,
+)
 from delivery_service.application.ports.idp import IdentityProvider
 from delivery_service.application.ports.transaction_manager import (
     TransactionManager,
 )
 from delivery_service.domain.shared.shop_id import ShopID
 from delivery_service.domain.shops.employee import EmployeeRole
-from delivery_service.domain.shops.factory import (
-    DaysOffData,
-    ShopFactory,
-)
 from delivery_service.domain.shops.repository import (
     ShopRepository,
 )

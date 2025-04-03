@@ -1,8 +1,14 @@
 from abc import abstractmethod
+from dataclasses import dataclass
 from typing import Protocol
 
-from delivery_service.domain.staff.factory import TelegramContactsData
 from delivery_service.domain.staff.staff_member import StaffMember
+
+
+@dataclass(frozen=True)
+class TelegramContactsData:
+    telegram_id: int
+    telegram_username: str | None
 
 
 class StaffMemberRepository(Protocol):

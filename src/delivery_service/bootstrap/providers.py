@@ -20,14 +20,17 @@ from sqlalchemy.ext.asyncio import (
     create_async_engine,
 )
 
-from delivery_service.application.behaviors.commition_behavior import (
-    CommitionBehavior,
-)
 from delivery_service.application.commands.bot_start import (
     BotStartHandler,
     BotStartRequest,
 )
-from delivery_service.application.markers.command import (
+from delivery_service.application.common.behaviors.commition_behavior import (
+    CommitionBehavior,
+)
+from delivery_service.application.common.factories.staff_member_factory import (
+    StaffMemberFactory,
+)
+from delivery_service.application.common.markers.command import (
     Command,
 )
 from delivery_service.bootstrap.configs import (
@@ -35,9 +38,6 @@ from delivery_service.bootstrap.configs import (
     RabbitConfig,
     RedisConfig,
     TGConfig,
-)
-from delivery_service.infrastructure.adapters.factories.staff_member_factory import (
-    StaffMemberFactoryImpl,
 )
 from delivery_service.infrastructure.adapters.id_generator import (
     IDGeneratorImpl,
@@ -82,6 +82,7 @@ class ApplicationHandlersProvider(Provider):
 
     handlers = provide_all(BotStartHandler)
     behaviors = provide_all(CommitionBehavior)
+    fabrics = provide_all(StaffMemberFactory)
 
 
 class BazarioProvider(Provider):
@@ -103,7 +104,6 @@ class BazarioProvider(Provider):
 class DomainProvider(Provider):
     scope = Scope.REQUEST
 
-    fabrics = provide_all(WithParents[StaffMemberFactoryImpl])
     repositories = provide_all(
         WithParents[SQLAlchemyStaffMemberRepository],
         WithParents[SQLAlchemyRoleRepository],

@@ -1,20 +1,23 @@
+# ruff: noqa: E501
 import logging
 from dataclasses import dataclass
 
 from bazario.asyncio import RequestHandler
 
-from delivery_service.application.errors import StaffMemberAlreadyExistsError
-from delivery_service.application.markers.command import (
+from delivery_service.application.common.factories.staff_member_factory import (
+    StaffMemberFactory,
+)
+from delivery_service.application.common.markers.command import (
     Command,
 )
+from delivery_service.application.errors import StaffMemberAlreadyExistsError
 from delivery_service.application.ports.view_manager import (
     ViewManager,
 )
-from delivery_service.domain.staff.factory import (
-    StaffMemberFactory,
+from delivery_service.domain.staff.repository import (
+    StaffMemberRepository,
     TelegramContactsData,
 )
-from delivery_service.domain.staff.repository import StaffMemberRepository
 
 logger = logging.getLogger(__name__)
 

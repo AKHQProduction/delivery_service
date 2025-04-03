@@ -1,19 +1,13 @@
-# ruff: noqa: E501
+from dataclasses import dataclass, field
+from datetime import date
+
 from delivery_service.application.ports.id_generator import IDGenerator
 from delivery_service.domain.shared.user_id import UserID
 from delivery_service.domain.shops.employee_collection import (
     EmployeeCollection,
 )
-from delivery_service.domain.shops.errors import (
-    ShopCreationNotAllowedError,
-)
-from delivery_service.domain.shops.factory import (
-    DaysOffData,
-    ShopFactory,
-)
-from delivery_service.domain.shops.repository import (
-    ShopRepository,
-)
+from delivery_service.domain.shops.errors import ShopCreationNotAllowedError
+from delivery_service.domain.shops.repository import ShopRepository
 from delivery_service.domain.shops.shop import Shop
 from delivery_service.domain.shops.value_objects import DaysOff
 from delivery_service.infrastructure.integration.geopy.geolocator import (
@@ -21,7 +15,13 @@ from delivery_service.infrastructure.integration.geopy.geolocator import (
 )
 
 
-class ShopFactoryImpl(ShopFactory):
+@dataclass(frozen=True)
+class DaysOffData:
+    regular_days: list[int] = field(default_factory=list)
+    irregular_days: list[date] = field(default_factory=list)
+
+
+class ShopFactory:
     def __init__(
         self,
         id_generator: IDGenerator,

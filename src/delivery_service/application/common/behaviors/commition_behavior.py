@@ -2,8 +2,8 @@ from typing import Any, Generic, TypeVar
 
 from bazario.asyncio import HandleNext, PipelineBehavior
 
-from delivery_service.application.behaviors.base import BehaviorResult
-from delivery_service.application.markers.command import (
+from delivery_service.application.common.behaviors.base import BehaviorResult
+from delivery_service.application.common.markers.command import (
     Command,
 )
 from delivery_service.application.ports.transaction_manager import (

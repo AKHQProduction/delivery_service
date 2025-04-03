@@ -1,21 +1,16 @@
 from typing import Final, cast
 
 from delivery_service.application.errors import StaffMemberAlreadyExistsError
-from delivery_service.application.ports.id_generator import (
-    IDGenerator,
-)
-from delivery_service.domain.shared.vo.tg_contacts import (
-    TelegramContacts,
-)
+from delivery_service.application.ports.id_generator import IDGenerator
+from delivery_service.domain.shared.vo.tg_contacts import TelegramContacts
 from delivery_service.domain.staff.errors import (
     FullNameTooLongError,
     InvalidFullNameError,
 )
-from delivery_service.domain.staff.factory import (
-    StaffMemberFactory,
+from delivery_service.domain.staff.repository import (
+    StaffMemberRepository,
     TelegramContactsData,
 )
-from delivery_service.domain.staff.repository import StaffMemberRepository
 from delivery_service.domain.staff.role_repository import RoleRepository
 from delivery_service.domain.staff.staff_member import StaffMember
 from delivery_service.domain.staff.staff_role import (
@@ -26,7 +21,7 @@ from delivery_service.domain.staff.staff_role import (
 )
 
 
-class StaffMemberFactoryImpl(StaffMemberFactory):
+class StaffMemberFactory:
     _MIN_FULLNAME_LENGTH: Final[int] = 1
     _MAX_FULLNAME_LENGTH: Final[int] = 128
 

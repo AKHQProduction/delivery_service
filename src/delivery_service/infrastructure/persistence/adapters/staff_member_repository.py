@@ -1,8 +1,10 @@
 from sqlalchemy import and_, exists, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from delivery_service.domain.staff.factory import TelegramContactsData
-from delivery_service.domain.staff.repository import StaffMemberRepository
+from delivery_service.domain.staff.repository import (
+    StaffMemberRepository,
+    TelegramContactsData,
+)
 from delivery_service.domain.staff.staff_member import StaffMember
 from delivery_service.infrastructure.persistence.tables.users import (
     SOCIAL_NETWORKS_TABLE,
