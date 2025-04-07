@@ -21,6 +21,7 @@ greenlet = "^3.1.1"
 dishka = "^1.5.1"
 taskiq-aio-pika = "^0.4.1"
 taskiq-redis = "^1.0.3"
+adaptix = "^3.0.0b9"
 
 
 [tool.poetry.group.test.dependencies]

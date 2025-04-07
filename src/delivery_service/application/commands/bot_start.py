@@ -2,31 +2,30 @@
 import logging
 from dataclasses import dataclass
 
+from bazario import Request
 from bazario.asyncio import RequestHandler
 
-from delivery_service.application.common.factories.staff_member_factory import (
-    StaffMemberFactory,
-)
-from delivery_service.application.common.markers.command import (
-    Command,
+from delivery_service.application.common.dto import TelegramContactsData
+from delivery_service.application.common.factories.service_user_factory import (
+    ServiceUserFactory,
 )
 from delivery_service.application.errors import (
-    AuthenticationError,
+    ServiceUserAlreadyExistsError,
 )
 from delivery_service.application.ports.idp import IdentityProvider
+from delivery_service.application.ports.transaction_manager import (
+    TransactionManager,
+)
 from delivery_service.application.ports.view_manager import (
     ViewManager,
 )
-from delivery_service.domain.staff.repository import (
-    StaffMemberRepository,
-    TelegramContactsData,
-)
+from delivery_service.domain.user.repository import ServiceUserRepository
 
 logger = logging.getLogger(__name__)
 
 
 @dataclass(frozen=True)
-class BotStartRequest(Command[None]):
+class BotStartRequest(Request[None]):
     full_name: str
     telegram_data: TelegramContactsData
 
@@ -34,26 +33,33 @@ class BotStartRequest(Command[None]):
 class BotStartHandler(RequestHandler[BotStartRequest, None]):
     def __init__(
         self,
-        staff_member_repository: StaffMemberRepository,
-        staff_member_factory: StaffMemberFactory,
+        service_user_repository: ServiceUserRepository,
+        service_user_factory: ServiceUserFactory,
         view_manager: ViewManager,
         idp: IdentityProvider,
+        transaction_manager: TransactionManager,
     ) -> None:
         self._idp = idp
-        self._repository = staff_member_repository
-        self._factory = staff_member_factory
+        self._repository = service_user_repository
+        self._factory = service_user_factory
         self._view_manager = view_manager
+        self._transaction_manager = transaction_manager
 
     async def handle(self, request: BotStartRequest) -> None:
         logger.info("Request from start bot")
-        try:
-            current_user_id = await self._idp.get_current_user_id()
-        except AuthenticationError:
-            new_service_user = await self._factory.create_staff_member(
-                full_name=request.full_name,
-                telegram_contacts_data=request.telegram_data,
-            )
-            self._repository.add(new_service_user)
-            current_user_id = new_service_user.entity_id
 
-        await self._view_manager.send_greeting_message(current_user_id)
+        try:
+            service_user = await self._factory.create_service_user(
+                full_name=request.full_name,
+                telegram_contacts=request.telegram_data,
+            )
+            self._repository.add(service_user)
+            await self._transaction_manager.commit()
+        except ServiceUserAlreadyExistsError:
+            service_user = await self._repository.load_with_social_network(
+                request.telegram_data.telegram_id
+            )
+
+        await self._view_manager.send_greeting_message(
+            user_id=service_user.entity_id  # pyright: ignore[reportOptionalMemberAccess]
+        )

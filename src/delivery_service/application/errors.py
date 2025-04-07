@@ -21,6 +21,11 @@ class StaffMemberAlreadyExistsError(EntityAlreadyExistsError):
 
 
 @dataclass(eq=False)
+class ServiceUserAlreadyExistsError(EntityAlreadyExistsError):
+    pass
+
+
+@dataclass(eq=False)
 class NotFoundError(ApplicationError):
     @property
     def message(self) -> str:

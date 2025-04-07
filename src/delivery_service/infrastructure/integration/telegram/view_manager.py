@@ -10,7 +10,6 @@ from delivery_service.application.ports.idp import IdentityProvider
 from delivery_service.application.ports.view_manager import ViewManager
 from delivery_service.bootstrap.configs import TGConfig
 from delivery_service.domain.shared.user_id import UserID
-from delivery_service.domain.staff.staff_role import Role
 from delivery_service.infrastructure.integration.telegram.const import (
     CREATE_SHOP_BTN,
 )
@@ -22,13 +21,13 @@ from delivery_service.infrastructure.persistence.adapters.social_network_gateway
 class TelegramViewManager(ViewManager):
     def __init__(
         self,
-        idp: IdentityProvider,
         tg_config: TGConfig,
         dao: SQlAlchemySocialNetworkGateway,
+        idp: IdentityProvider,
     ) -> None:
-        self._idp = idp
         self._config = tg_config
         self._dao = dao
+        self._idp = idp
 
     async def _send_message(
         self,
@@ -49,9 +48,9 @@ class TelegramViewManager(ViewManager):
         if not telegram_id:
             raise ValueError()
 
-        current_roles = await self._idp.get_current_staff_roles()
+        roles = await self._idp.get_current_staff_roles()
 
-        if any(role.name == Role.USER for role in current_roles):
+        if roles is None:
             reply_markup = ReplyKeyboardMarkup(
                 keyboard=[[KeyboardButton(text=CREATE_SHOP_BTN)]],
                 resize_keyboard=True,

@@ -1,25 +1,31 @@
+# ruff: noqa: E501
 from dataclasses import dataclass
 
-from bazario import Request
 from bazario.asyncio import RequestHandler
 
 from delivery_service.application.common.factories.shop_factory import (
     DaysOffData,
     ShopFactory,
 )
-from delivery_service.application.ports.idp import IdentityProvider
-from delivery_service.application.ports.transaction_manager import (
-    TransactionManager,
+from delivery_service.application.common.factories.staff_member_factory import (
+    StaffMemberFactory,
 )
+from delivery_service.application.common.markers.command import Command
+from delivery_service.application.ports.id_generator import IDGenerator
+from delivery_service.application.ports.idp import IdentityProvider
 from delivery_service.domain.shared.shop_id import ShopID
-from delivery_service.domain.shops.employee import EmployeeRole
+from delivery_service.domain.shops.errors import ShopCreationNotAllowedError
 from delivery_service.domain.shops.repository import (
     ShopRepository,
+)
+from delivery_service.domain.staff.role_repository import RoleRepository
+from delivery_service.domain.staff.staff_role import (
+    Role,
 )
 
 
 @dataclass(frozen=True)
-class CreateNewShopRequest(Request[ShopID]):
+class CreateNewShopRequest(Command[ShopID]):
     shop_name: str
     shop_location: str
     days_off: DaysOffData
@@ -28,32 +34,42 @@ class CreateNewShopRequest(Request[ShopID]):
 class CreateNewShopHandler(RequestHandler[CreateNewShopRequest, ShopID]):
     def __init__(
         self,
+        id_generator: IDGenerator,
         identity_provider: IdentityProvider,
         shop_factory: ShopFactory,
+        staff_member_factory: StaffMemberFactory,
         shop_repository: ShopRepository,
-        transaction_manager: TransactionManager,
+        role_repository: RoleRepository,
     ) -> None:
         self._idp = identity_provider
+        self._id_generator = id_generator
         self._factory = shop_factory
+        self._staff_member_factory = staff_member_factory
         self._repository = shop_repository
-        self._transaction_manager = transaction_manager
+        self._role_repository = role_repository
 
     async def handle(self, request: CreateNewShopRequest) -> ShopID:
         current_user_id = await self._idp.get_current_user_id()
+        if await self._repository.exists(current_user_id):
+            raise ShopCreationNotAllowedError(current_user_id)
 
+        shop_id = self._id_generator.generate_shop_id()
+        owner = await self._staff_member_factory.create_staff_member(
+            user_id=current_user_id,
+            shop_id=shop_id,
+            required_roles=[
+                Role.SHOP_OWNER,
+                Role.SHOP_MANAGER,
+                Role.COURIER,
+            ],
+        )
         new_shop = await self._factory.create_shop(
+            shop_id,
             request.shop_name,
             request.shop_location,
             request.days_off,
-            current_user_id,
+            owner,
         )
         self._repository.add(new_shop)
-        new_shop.add_employee(
-            employee_id=current_user_id,
-            role=EmployeeRole.SHOP_OWNER,
-            hirer_id=current_user_id,
-        )
-
-        await self._transaction_manager.commit()
 
         return new_shop.entity_id

@@ -23,9 +23,7 @@ def upgrade() -> None:
         sa.Column("id", sa.Integer(), autoincrement=True, nullable=False),
         sa.Column(
             "name",
-            sa.Enum(
-                "SHOP_OWNER", "SHOP_MANAGER", "COURIER", "USER", name="role"
-            ),
+            sa.Enum("SHOP_OWNER", "SHOP_MANAGER", "COURIER", name="role"),
             nullable=False,
             unique=True,
         ),
@@ -65,6 +63,18 @@ def upgrade() -> None:
             ["users.id"],
             name=op.f("fk_social_networks_user_id_users"),
             ondelete="CASCADE",
+        ),
+        sa.Column(
+            "created_at",
+            sa.DateTime(),
+            server_default=sa.text("now()"),
+            nullable=False,
+        ),
+        sa.Column(
+            "updated_at",
+            sa.DateTime(),
+            server_default=sa.text("now()"),
+            nullable=True,
         ),
         sa.PrimaryKeyConstraint("user_id", name=op.f("pk_social_networks")),
     )

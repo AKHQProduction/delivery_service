@@ -1,6 +1,4 @@
-from typing import Sequence
-
-from sqlalchemy import select
+from sqlalchemy import and_, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from delivery_service.domain.staff.role_repository import RoleRepository
@@ -14,8 +12,8 @@ class SQLAlchemyRoleRepository(RoleRepository):
     def __init__(self, session: AsyncSession) -> None:
         self._session = session
 
-    async def load_with_names(self, names: list[Role]) -> Sequence[StaffRole]:
-        query = select(StaffRole).where(ROLES_TABLE.c.name.in_(names))
+    async def load_with_name(self, name: Role) -> StaffRole | None:
+        query = select(StaffRole).where(and_(ROLES_TABLE.c.name == name))
 
         result = await self._session.execute(query)
-        return result.scalars().all()
+        return result.scalar_one_or_none()

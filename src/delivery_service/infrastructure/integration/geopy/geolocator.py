@@ -1,23 +1,16 @@
-from dataclasses import dataclass
-
 from geopy import Location, Nominatim
 
-from delivery_service.domain.shared.vo.location import (
-    Location as LocationVO,
+from delivery_service.application.ports.location_finder import (
+    LocationData,
+    LocationFinder,
 )
 
 
-@dataclass
-class Coordinates:
-    latitude: float
-    longitude: float
-
-
-class Geolocator:
+class Geolocator(LocationFinder):
     def __init__(self, geolocator: Nominatim) -> None:
         self._geolocator = geolocator
 
-    async def get_location_data(self, address: str) -> LocationVO:
+    async def find_location(self, address: str) -> LocationData:
         location: Location | None = await self._geolocator.geocode(
             address,
             addressdetails=True,
@@ -39,7 +32,7 @@ class Geolocator:
             # raise BL error
             if not all([city, street, house_number]):
                 raise ValueError()
-            return LocationVO(
+            return LocationData(
                 city=city,
                 street=street,
                 house_number=house_number,

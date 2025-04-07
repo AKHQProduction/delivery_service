@@ -11,5 +11,5 @@ class IdentityProvider(Protocol):
         raise NotImplementedError
 
     @abstractmethod
-    async def get_current_staff_roles(self) -> RoleCollection:
+    async def get_current_staff_roles(self) -> RoleCollection | None:
         raise NotImplementedError

@@ -1,12 +1,12 @@
 from abc import abstractmethod
 from typing import Protocol
 
-from delivery_service.domain.staff.staff_member import StaffMember
+from delivery_service.domain.user.service_user import ServiceUser
 
 
-class StaffMemberRepository(Protocol):
+class ServiceUserRepository(Protocol):
     @abstractmethod
-    def add(self, staff_member: StaffMember) -> None:
+    def add(self, service_user: ServiceUser) -> None:
         raise NotImplementedError
 
     @abstractmethod
@@ -14,7 +14,7 @@ class StaffMemberRepository(Protocol):
         raise NotImplementedError
 
     @abstractmethod
-    async def load_with_telegram_id(
+    async def load_with_social_network(
         self, telegram_id: int
-    ) -> StaffMember | None:
+    ) -> ServiceUser | None:
         raise NotImplementedError

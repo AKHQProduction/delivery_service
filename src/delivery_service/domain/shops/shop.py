@@ -1,18 +1,15 @@
 from datetime import date
 
+from delivery_service.domain.products.errors import AccessDeniedError
 from delivery_service.domain.shared.entity import Entity
 from delivery_service.domain.shared.shop_id import ShopID
 from delivery_service.domain.shared.user_id import UserID
 from delivery_service.domain.shared.vo.location import Location
-from delivery_service.domain.shops.employee import (
-    Employee,
-    EmployeeRole,
-)
-from delivery_service.domain.shops.employee_collection import (
-    EmployeeCollection,
-)
-from delivery_service.domain.shops.errors import NotOwnerError
 from delivery_service.domain.shops.value_objects import DaysOff
+from delivery_service.domain.staff.staff_member import StaffMember
+from delivery_service.domain.staff.staff_role import (
+    Role,
+)
 
 
 class Shop(Entity[ShopID]):
@@ -20,33 +17,44 @@ class Shop(Entity[ShopID]):
         self,
         entity_id: ShopID,
         *,
-        owner_id: UserID,
         name: str,
         location: Location,
         days_off: DaysOff,
-        employees: EmployeeCollection,
+        staff_members: list[StaffMember] | None = None,
     ) -> None:
         super().__init__(entity_id=entity_id)
 
-        self._owner_id = owner_id
         self._name = name
         self._location = location
         self._days_off = days_off
-        self._employees = employees
+        self._staff_members = staff_members or []
 
-    def add_employee(
-        self, employee_id: UserID, role: EmployeeRole, hirer_id: UserID
-    ) -> Employee:
+    def add_staff_member(
+        self, new_staff_member: StaffMember, hirer_id: UserID
+    ) -> None:
         self._ensure_is_owner(hirer_id)
+        if new_staff_member in self._staff_members:
+            raise ValueError()
 
-        employee = Employee(employee_id=employee_id, role=role)
-        self._employees.add_to_employees(employee)
+        self._staff_members.append(new_staff_member)
 
-        return employee
-
-    def discard_employee(self, employee: Employee, firer_id: UserID) -> None:
+    def discard_staff_member(
+        self, staff_member_id: UserID, firer_id: UserID
+    ) -> None:
         self._ensure_is_owner(firer_id)
-        self._employees.discard_from_employees(employee)
+
+        staff_member = next(
+            (
+                member
+                for member in self._staff_members
+                if member.entity_id == staff_member_id
+            ),
+            None,
+        )
+        if not staff_member:
+            raise ValueError()
+
+        self._staff_members.remove(staff_member)
 
     def edit_regular_days_off(self, days: list[int]) -> None:
         self._days_off = self._days_off.change_regular_days_off(days)
@@ -55,15 +63,19 @@ class Shop(Entity[ShopID]):
         return self._days_off.can_deliver_in_this_day(day)
 
     def _ensure_is_owner(self, candidate_id: UserID) -> None:
-        if candidate_id != self._owner_id:
-            raise NotOwnerError()
+        if not any(
+            member.entity_id == candidate_id
+            and any(role.name == Role.SHOP_OWNER for role in member.roles)
+            for member in self._staff_members
+        ):
+            raise AccessDeniedError()
 
     @property
     def name(self) -> str:
         return self._name
 
     @property
-    def location(self) -> str:
+    def shop_location(self) -> str:
         return self._location.full_address
 
     @property
@@ -79,5 +91,5 @@ class Shop(Entity[ShopID]):
         return self._days_off.irregular_days_off
 
     @property
-    def employees(self) -> set[Employee]:
-        return self._employees
+    def staff_members(self) -> list[StaffMember]:
+        return self._staff_members

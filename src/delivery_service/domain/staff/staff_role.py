@@ -10,7 +10,6 @@ class Role(Enum):
     SHOP_OWNER = "shop_owner"
     SHOP_MANAGER = "shop_manager"
     COURIER = "courier"
-    USER = "user"
 
 
 class StaffRole(Entity[StaffRoleID]):

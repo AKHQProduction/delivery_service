@@ -1,14 +1,13 @@
 import sqlalchemy as sa
 from sqlalchemy import and_, join
-from sqlalchemy.orm import composite, relationship
+from sqlalchemy.orm import composite
 
 from delivery_service.domain.shared.vo.tg_contacts import TelegramContacts
-from delivery_service.domain.staff.staff_member import StaffMember
 from delivery_service.domain.staff.staff_role import (
     Role,
-    RoleCollection,
     StaffRole,
 )
+from delivery_service.domain.user.service_user import ServiceUser
 from delivery_service.infrastructure.persistence.tables.base import (
     MAPPER_REGISTRY,
 )
@@ -49,6 +48,22 @@ SOCIAL_NETWORKS_TABLE = sa.Table(
     ),
     sa.Column("telegram_id", sa.BIGINT, nullable=False),
     sa.Column("telegram_username", sa.String, nullable=True),
+    sa.Column(
+        "created_at",
+        sa.DateTime,
+        default=sa.func.now(),
+        server_default=sa.func.now(),
+        nullable=False,
+    ),
+    sa.Column(
+        "updated_at",
+        sa.DateTime,
+        default=sa.func.now(),
+        server_default=sa.func.now(),
+        onupdate=sa.func.now(),
+        server_onupdate=sa.func.now(),
+        nullable=True,
+    ),
 )
 
 ROLES_TABLE = sa.Table(
@@ -76,7 +91,13 @@ USERS_TO_ROLES_TABLE = sa.Table(
 )
 
 MAPPER_REGISTRY.map_imperatively(
-    StaffMember,
+    StaffRole,
+    ROLES_TABLE,
+    properties={"_entity_id": ROLES_TABLE.c.id, "_name": ROLES_TABLE.c.name},
+)
+
+MAPPER_REGISTRY.map_imperatively(
+    ServiceUser,
     join(
         USERS_TABLE,
         SOCIAL_NETWORKS_TABLE,
@@ -91,21 +112,11 @@ MAPPER_REGISTRY.map_imperatively(
             SOCIAL_NETWORKS_TABLE.c.telegram_id,
             SOCIAL_NETWORKS_TABLE.c.telegram_username,
         ),
-        "_roles": relationship(
-            "StaffRole",
-            secondary=USERS_TO_ROLES_TABLE,
-            collection_class=RoleCollection,
-            backref="users",
-            lazy="selectin",
-        ),
         "_is_superuser": USERS_TABLE.c.is_superuser,
         "_is_active": USERS_TABLE.c.is_active,
     },
-    primary_key=[USERS_TABLE.c.id],
-)
-
-MAPPER_REGISTRY.map_imperatively(
-    StaffRole,
-    ROLES_TABLE,
-    properties={"_entity_id": ROLES_TABLE.c.id, "_name": ROLES_TABLE.c.name},
+    exclude_properties=[
+        SOCIAL_NETWORKS_TABLE.c.created_at,
+        SOCIAL_NETWORKS_TABLE.c.updated_at,
+    ],
 )

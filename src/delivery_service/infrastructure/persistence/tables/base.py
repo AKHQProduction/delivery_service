@@ -1,3 +1,5 @@
+from adaptix import Retort
+from adaptix.integrations.sqlalchemy import AdaptixJSON
 from sqlalchemy import MetaData
 from sqlalchemy.orm import registry
 
@@ -11,3 +13,7 @@ convention = {
 
 METADATA = MetaData(naming_convention=convention)
 MAPPER_REGISTRY = registry(metadata=METADATA)
+
+
+def value_object_to_json(target_cls: type) -> AdaptixJSON:
+    return AdaptixJSON(Retort(), target_cls)

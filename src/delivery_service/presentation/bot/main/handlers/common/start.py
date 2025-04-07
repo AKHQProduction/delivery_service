@@ -5,7 +5,7 @@ from bazario.asyncio import Sender
 from dishka import FromDishka
 
 from delivery_service.application.commands.bot_start import BotStartRequest
-from delivery_service.domain.staff.repository import TelegramContactsData
+from delivery_service.application.common.dto import TelegramContactsData
 
 START_ROUTER = Router()
 
