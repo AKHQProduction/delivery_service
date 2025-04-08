@@ -4,7 +4,7 @@ from delivery_service.domain.products.errors import AccessDeniedError
 from delivery_service.domain.shared.entity import Entity
 from delivery_service.domain.shared.shop_id import ShopID
 from delivery_service.domain.shared.user_id import UserID
-from delivery_service.domain.shared.vo.location import Location
+from delivery_service.domain.shared.vo.location import Coordinates
 from delivery_service.domain.shops.value_objects import DaysOff
 from delivery_service.domain.staff.staff_member import StaffMember
 from delivery_service.domain.staff.staff_role import (
@@ -18,14 +18,14 @@ class Shop(Entity[ShopID]):
         entity_id: ShopID,
         *,
         name: str,
-        location: Location,
+        coordinates: Coordinates,
         days_off: DaysOff,
         staff_members: list[StaffMember] | None = None,
     ) -> None:
         super().__init__(entity_id=entity_id)
 
         self._name = name
-        self._location = location
+        self._coordinates = coordinates
         self._days_off = days_off
         self._staff_members = staff_members or []
 
@@ -75,12 +75,8 @@ class Shop(Entity[ShopID]):
         return self._name
 
     @property
-    def shop_location(self) -> str:
-        return self._location.full_address
-
-    @property
-    def location_coordinates(self) -> tuple[float, float]:
-        return self._location.latitude, self._location.longitude
+    def shop_coordinates(self) -> tuple[float, float]:
+        return self._coordinates.coordinates
 
     @property
     def regular_days_off(self) -> list[int]:

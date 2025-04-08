@@ -12,6 +12,7 @@ from aiogram.webhook.aiohttp_server import (
     TokenBasedRequestHandler,
     setup_application,
 )
+from aiogram_dialog import setup_dialogs
 from aiohttp import web
 from dishka import AsyncContainer
 from dishka.integrations.aiogram import setup_dishka as add_container_to_bot
@@ -55,6 +56,8 @@ def get_admin_dispatcher(
 
     add_container_to_bot(dishka_container, router=dp, auto_inject=True)
     setup_all_main_bot_updates(dp)
+    setup_dialogs(dp)
+
     logger.debug("Setup admin bot dispatcher")
 
     return dp

@@ -2,7 +2,6 @@
 from aiogram import Bot
 from aiogram.types import (
     InlineKeyboardMarkup,
-    KeyboardButton,
     ReplyKeyboardMarkup,
 )
 
@@ -10,8 +9,8 @@ from delivery_service.application.ports.idp import IdentityProvider
 from delivery_service.application.ports.view_manager import ViewManager
 from delivery_service.bootstrap.configs import TGConfig
 from delivery_service.domain.shared.user_id import UserID
-from delivery_service.infrastructure.integration.telegram.const import (
-    CREATE_SHOP_BTN,
+from delivery_service.infrastructure.integration.telegram.kbd import (
+    get_shop_staff_main_kbd,
 )
 from delivery_service.infrastructure.persistence.adapters.social_network_gateway import (
     SQlAlchemySocialNetworkGateway,
@@ -48,16 +47,13 @@ class TelegramViewManager(ViewManager):
         if not telegram_id:
             raise ValueError()
 
-        roles = await self._idp.get_current_staff_roles()
+        if current_user_roles := await self._idp.get_current_staff_roles():
+            roles = [role.name for role in current_user_roles]
+        else:
+            roles = []
 
-        if roles is None:
-            reply_markup = ReplyKeyboardMarkup(
-                keyboard=[[KeyboardButton(text=CREATE_SHOP_BTN)]],
-                resize_keyboard=True,
-            )
-
-            await self._send_message(
-                telegram_id=telegram_id,
-                text="Hello, user",
-                reply_markup=reply_markup,
-            )
+        await self._send_message(
+            telegram_id=telegram_id,
+            text="Hello, user",
+            reply_markup=get_shop_staff_main_kbd(roles),
+        )

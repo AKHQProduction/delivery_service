@@ -77,6 +77,25 @@ redis = ["redis[hiredis] (>=5.0.1,<5.3.0)"]
 test = ["aresponses (>=2.1.6,<2.2.0)", "pycryptodomex (>=3.19.0,<3.20.0)", "pytest (>=7.4.2,<7.5.0)", "pytest-aiohttp (>=1.0.5,<1.1.0)", "pytest-asyncio (>=0.21.1,<0.22.0)", "pytest-cov (>=4.1.0,<4.2.0)", "pytest-html (>=4.0.2,<4.1.0)", "pytest-lazy-fixture (>=0.6.3,<0.7.0)", "pytest-mock (>=3.12.0,<3.13.0)", "pytest-mypy (>=0.10.3,<0.11.0)", "pytz (>=2023.3,<2024.0)"]
 
 [[package]]
+name = "aiogram-dialog"
+version = "2.3.1"
+description = "Telegram bot UI framework on top of aiogram"
+optional = false
+python-versions = ">=3.9"
+files = [
+    {file = "aiogram_dialog-2.3.1-py3-none-any.whl", hash = "sha256:9c780f1768ac12f6a2e559fe74c72b1de410bbf56aa0af1ee7cf2e6d70276cb5"},
+    {file = "aiogram_dialog-2.3.1.tar.gz", hash = "sha256:ec340c88c22a6e3c1777adf7f96f46c7429b5a4575c50fec79da53def6ae6770"},
+]
+
+[package.dependencies]
+aiogram = ">=3.14.0"
+cachetools = ">=4.0.0,<6.0.0"
+jinja2 = "*"
+
+[package.extras]
+tools = ["aiohttp", "diagrams"]
+
+[[package]]
 name = "aiohappyeyeballs"
 version = "2.4.6"
 description = "Happy Eyeballs for asyncio"
@@ -378,6 +397,17 @@ dishka = ["dishka"]
 lint = ["mypy", "ruff"]
 punq = ["punq"]
 test = ["pytest"]
+
+[[package]]
+name = "cachetools"
+version = "5.5.2"
+description = "Extensible memoizing collections and decorators"
+optional = false
+python-versions = ">=3.7"
+files = [
+    {file = "cachetools-5.5.2-py3-none-any.whl", hash = "sha256:d26a22bcc62eb95c3beabd9f1ee5e820d3d2704fe2967cbe350e20c8ffcd3f0a"},
+    {file = "cachetools-5.5.2.tar.gz", hash = "sha256:1a661caa9175d26759571b2e19580f9d6393969e5dfca11fdb1f947a23e640d4"},
+]
 
 [[package]]
 name = "certifi"
@@ -760,6 +790,23 @@ files = [
 
 [package.extras]
 compatibility = ["typing-extensions (>=4.5.0)"]
+
+[[package]]
+name = "jinja2"
+version = "3.1.6"
+description = "A very fast and expressive template engine."
+optional = false
+python-versions = ">=3.7"
+files = [
+    {file = "jinja2-3.1.6-py3-none-any.whl", hash = "sha256:85ece4451f492d0c13c5dd7c13a64681a86afae63a5f347908daf103ce6d2f67"},
+    {file = "jinja2-3.1.6.tar.gz", hash = "sha256:0137fb05990d35f1275a587e9aee6d56da821fc83491a0fb838183be43f66d6d"},
+]
+
+[package.dependencies]
+MarkupSafe = ">=2.0"
+
+[package.extras]
+i18n = ["Babel (>=2.7)"]
 
 [[package]]
 name = "magic-filter"
@@ -1788,4 +1835,4 @@ type = ["pytest-mypy"]
 [metadata]
 lock-version = "2.0"
 python-versions = "^3.11"
-content-hash = "8fd59ccdd2311a66cbbaa88f6e2e9c370d379b403812db3ee8284221a32d225a"
+content-hash = "18a9174c65ac52ea14618bddaee80a771c718efe757291a134e74cf0f7181279"

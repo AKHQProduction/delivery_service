@@ -4,6 +4,7 @@ from dataclasses import dataclass
 from bazario.asyncio import RequestHandler
 
 from delivery_service.application.common.factories.shop_factory import (
+    CoordinatesData,
     DaysOffData,
     ShopFactory,
 )
@@ -18,7 +19,6 @@ from delivery_service.domain.shops.errors import ShopCreationNotAllowedError
 from delivery_service.domain.shops.repository import (
     ShopRepository,
 )
-from delivery_service.domain.staff.role_repository import RoleRepository
 from delivery_service.domain.staff.staff_role import (
     Role,
 )
@@ -27,7 +27,7 @@ from delivery_service.domain.staff.staff_role import (
 @dataclass(frozen=True)
 class CreateNewShopRequest(Command[ShopID]):
     shop_name: str
-    shop_location: str
+    shop_coordinates: CoordinatesData
     days_off: DaysOffData
 
 
@@ -39,14 +39,12 @@ class CreateNewShopHandler(RequestHandler[CreateNewShopRequest, ShopID]):
         shop_factory: ShopFactory,
         staff_member_factory: StaffMemberFactory,
         shop_repository: ShopRepository,
-        role_repository: RoleRepository,
     ) -> None:
         self._idp = identity_provider
         self._id_generator = id_generator
         self._factory = shop_factory
         self._staff_member_factory = staff_member_factory
         self._repository = shop_repository
-        self._role_repository = role_repository
 
     async def handle(self, request: CreateNewShopRequest) -> ShopID:
         current_user_id = await self._idp.get_current_user_id()
@@ -63,10 +61,10 @@ class CreateNewShopHandler(RequestHandler[CreateNewShopRequest, ShopID]):
                 Role.COURIER,
             ],
         )
-        new_shop = await self._factory.create_shop(
+        new_shop = self._factory.create_shop(
             shop_id,
             request.shop_name,
-            request.shop_location,
+            request.shop_coordinates,
             request.days_off,
             owner,
         )
