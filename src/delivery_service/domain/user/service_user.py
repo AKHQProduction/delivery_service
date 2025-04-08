@@ -20,13 +20,6 @@ class ServiceUser(Entity[UserID]):
         self._is_superuser = is_superuser
         self._is_active = is_active
 
-    def edit_telegram_contacts(
-        self, telegram_id: int, telegram_username: str | None = None
-    ) -> None:
-        self._telegram_contacts.edit_contacts(
-            telegram_id=telegram_id, telegram_username=telegram_username
-        )
-
     @property
     def full_name(self) -> str:
         return self._full_name

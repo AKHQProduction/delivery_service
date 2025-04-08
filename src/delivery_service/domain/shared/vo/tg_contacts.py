@@ -30,30 +30,6 @@ class TelegramContacts:
             ):
                 raise InvalidTelegramUsernameError()
 
-    def edit_contacts(
-        self, telegram_id: int | None, telegram_username: str | None
-    ) -> "TelegramContacts":
-        if telegram_id:
-            return self._edit_telegram_id(telegram_id)
-        if telegram_username:
-            return self._edit_telegram_username(telegram_username)
-
-        return self
-
-    def _edit_telegram_id(self, telegram_id: int) -> "TelegramContacts":
-        return TelegramContacts(
-            _user_id=self._user_id,
-            telegram_id=telegram_id,
-            telegram_username=self.telegram_username,
-        )
-
-    def _edit_telegram_username(self, username: str) -> "TelegramContacts":
-        return TelegramContacts(
-            _user_id=self._user_id,
-            telegram_id=self.telegram_id,
-            telegram_username=username,
-        )
-
     def __str__(self) -> str:
         return (
             f"<TGContacts: telegram ID - {self.telegram_id}, "
