@@ -1,5 +1,6 @@
 from dataclasses import dataclass
 
+from delivery_service.domain.shared.dto import Empty
 from delivery_service.domain.shared.errors import (
     InvalidTelegramUsernameError,
     TelegramIDMustBePositiveError,
@@ -29,6 +30,45 @@ class TelegramContacts:
                 <= MAX_TELEGRAM_USERNAME_LENGTH
             ):
                 raise InvalidTelegramUsernameError()
+
+    def edit_contacts(
+        self,
+        telegram_id: int | None,
+        telegram_username: str | None | Empty = Empty.UNSET,
+    ) -> "TelegramContacts":
+        if telegram_id is None or telegram_username is None:
+            raise ValueError()
+
+        if telegram_id is not None:
+            self._edit_telegram_id(telegram_id)
+        if telegram_username is not None:
+            self._edit_telegram_username(telegram_username)
+
+        return TelegramContacts(
+            self._user_id,
+            telegram_id=self.telegram_id,
+            telegram_username=self.telegram_username,
+        )
+
+    def _edit_telegram_id(self, telegram_id: int) -> "TelegramContacts":
+        return TelegramContacts(
+            _user_id=self._user_id,
+            telegram_id=telegram_id,
+            telegram_username=self.telegram_username,
+        )
+
+    def _edit_telegram_username(
+        self, telegram_username: str | Empty
+    ) -> "TelegramContacts":
+        new_username = (
+            None if telegram_username is Empty.UNSET else telegram_username
+        )
+
+        return TelegramContacts(
+            _user_id=self._user_id,
+            telegram_id=self.telegram_id,
+            telegram_username=new_username,
+        )
 
     def __str__(self) -> str:
         return (

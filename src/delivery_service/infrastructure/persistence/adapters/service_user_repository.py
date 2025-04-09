@@ -1,6 +1,7 @@
 from sqlalchemy import and_, exists, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from delivery_service.domain.shared.user_id import UserID
 from delivery_service.domain.user.repository import ServiceUserRepository
 from delivery_service.domain.user.service_user import ServiceUser
 from delivery_service.infrastructure.persistence.tables.users import (
@@ -34,3 +35,6 @@ class SQLAlchemyServiceUserRepository(ServiceUserRepository):
 
         result = await self._session.execute(query)
         return result.scalar_one_or_none()
+
+    async def load_by_identity(self, user_id: UserID) -> ServiceUser | None:
+        return await self._session.get(ServiceUser, user_id)

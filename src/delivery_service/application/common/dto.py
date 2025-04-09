@@ -1,15 +1,14 @@
 from dataclasses import dataclass
 from enum import Enum
 
+from delivery_service.domain.shared.dto import Empty
+
 
 @dataclass(frozen=True)
 class TelegramContactsData:
     telegram_id: int
-    telegram_username: str | None
-
-
-class Empty(Enum):
-    UNSET = "UNSET"
+    full_name: str
+    telegram_username: str | Empty
 
 
 class SortOrder(Enum):

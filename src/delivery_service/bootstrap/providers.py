@@ -2,6 +2,8 @@
 import logging
 from typing import AsyncGenerator, AsyncIterable, AsyncIterator
 
+from aiogram import Bot
+from bazario import Request
 from bazario.asyncio import Dispatcher, Registry
 from bazario.asyncio.resolvers.dishka import DishkaResolver
 from dishka import (
@@ -38,8 +40,11 @@ from delivery_service.application.commands.discard_staff_member import (
     DiscardStaffMemberHandler,
     DiscardStaffMemberRequest,
 )
-from delivery_service.application.common.behaviors.commition_behavior import (
+from delivery_service.application.common.behaviors.commition import (
     CommitionBehavior,
+)
+from delivery_service.application.common.behaviors.telegram_checker import (
+    TelegramCheckerBehavior,
 )
 from delivery_service.application.common.factories.service_user_factory import (
     ServiceUserFactory,
@@ -51,7 +56,7 @@ from delivery_service.application.common.factories.staff_member_factory import (
     StaffMemberFactory,
 )
 from delivery_service.application.common.markers.command import (
-    Command,
+    TelegramCommand,
 )
 from delivery_service.bootstrap.configs import (
     DatabaseConfig,
@@ -65,11 +70,11 @@ from delivery_service.infrastructure.adapters.id_generator import (
 from delivery_service.infrastructure.adapters.idp import (
     TelegramIdentityProvider,
 )
+from delivery_service.infrastructure.adapters.social_network_checker import (
+    SocialNetworkCheckerImpl,
+)
 from delivery_service.infrastructure.integration.geopy.geolocator import (
     Geolocator,
-)
-from delivery_service.infrastructure.integration.telegram.check_telegram_users import (
-    CheckTelegramUsers,
 )
 from delivery_service.infrastructure.integration.telegram.view_manager import (
     TelegramViewManager,
@@ -118,7 +123,7 @@ class ApplicationHandlersProvider(Provider):
         AddNewStaffMemberHandler,
         DiscardStaffMemberHandler,
     )
-    behaviors = provide_all(CommitionBehavior)
+    behaviors = provide_all(CommitionBehavior, TelegramCheckerBehavior)
     fabrics = provide_all(StaffMemberFactory, ServiceUserFactory, ShopFactory)
 
 
@@ -139,8 +144,10 @@ class BazarioProvider(Provider):
         registry.add_request_handler(
             DiscardStaffMemberRequest, DiscardStaffMemberHandler
         )
-        registry.add_pipeline_behaviors(Command, CommitionBehavior)
-
+        registry.add_pipeline_behaviors(Request, CommitionBehavior)
+        registry.add_pipeline_behaviors(
+            TelegramCommand, TelegramCheckerBehavior
+        )
         return registry
 
     resolver = provide(WithParents[DishkaResolver])
@@ -162,8 +169,8 @@ class InfrastructureAdaptersProvider(Provider):
     scope = Scope.REQUEST
 
     transaction = provide(WithParents[SQLAlchemyTransactionManager])
-    telegram_task = provide(CheckTelegramUsers)
     dao = provide(SQlAlchemySocialNetworkGateway)
+    social_network_checker = provide(WithParents[SocialNetworkCheckerImpl])
 
 
 class TelegramProvider(Provider):
@@ -175,6 +182,14 @@ class TelegramProvider(Provider):
     ) -> int | None:
         if current_chat := middleware_data.get("event_chat"):
             return current_chat.id
+        return None
+
+    @provide(scope=scope.REQUEST)
+    def get_current_bot(
+        self, middleware_data: AiogramMiddlewareData
+    ) -> Bot | None:
+        if bot := middleware_data.get("bot"):
+            return bot
         return None
 
     idp = provide(WithParents[TelegramIdentityProvider])
