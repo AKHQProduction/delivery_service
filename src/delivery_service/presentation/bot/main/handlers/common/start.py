@@ -6,7 +6,7 @@ from dishka import FromDishka
 
 from delivery_service.application.commands.bot_start import BotStartRequest
 from delivery_service.application.common.dto import TelegramContactsData
-from delivery_service.domain.shared.dto import Empty
+from delivery_service.domain.shared.new_types import Empty
 
 START_ROUTER = Router()
 

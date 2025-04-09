@@ -17,7 +17,7 @@ class ProductType(Enum):
 class Product(Entity[ProductID]):
     def __init__(
         self,
-        product_id: ProductID,
+        entity_id: ProductID,
         *,
         shop_id: ShopID,
         title: str,
@@ -25,7 +25,7 @@ class Product(Entity[ProductID]):
         product_type: ProductType,
         metadata_path: str | None = None,
     ) -> None:
-        super().__init__(entity_id=product_id)
+        super().__init__(entity_id=entity_id)
 
         self._shop_id = shop_id
 
@@ -39,7 +39,7 @@ class Product(Entity[ProductID]):
         return self._title
 
     @property
-    def price(self) -> Price:
+    def cost(self) -> Price:
         return self._price
 
     @property

@@ -1,7 +1,7 @@
 from dataclasses import dataclass
 from enum import Enum
 
-from delivery_service.domain.shared.dto import Empty
+from delivery_service.domain.shared.new_types import Empty
 
 
 @dataclass(frozen=True)

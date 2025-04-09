@@ -1,5 +1,5 @@
-from delivery_service.domain.shared.dto import Empty
 from delivery_service.domain.shared.entity import Entity
+from delivery_service.domain.shared.new_types import Empty
 from delivery_service.domain.shared.user_id import UserID
 from delivery_service.domain.shared.vo.tg_contacts import TelegramContacts
 

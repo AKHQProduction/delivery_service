@@ -24,6 +24,10 @@ from sqlalchemy.ext.asyncio import (
     create_async_engine,
 )
 
+from delivery_service.application.commands.add_new_product import (
+    AddNewProductHandler,
+    AddNewProductRequest,
+)
 from delivery_service.application.commands.add_new_staff_member import (
     AddNewStaffMemberHandler,
     AddNewStaffMemberRequest,
@@ -79,16 +83,22 @@ from delivery_service.infrastructure.integration.geopy.geolocator import (
 from delivery_service.infrastructure.integration.telegram.view_manager import (
     TelegramViewManager,
 )
+from delivery_service.infrastructure.persistence.adapters.product_repository import (
+    SQLAlchemyProductRepository,
+)
 from delivery_service.infrastructure.persistence.adapters.role_repository import (
     SQLAlchemyRoleRepository,
 )
 from delivery_service.infrastructure.persistence.adapters.service_user_repository import (
     SQLAlchemyServiceUserRepository,
 )
+from delivery_service.infrastructure.persistence.adapters.shop_catalog_repository import (
+    SQLAlchemyShopCatalogRepository,
+)
 from delivery_service.infrastructure.persistence.adapters.shop_repository import (
     SQLAlchemyShopRepository,
 )
-from delivery_service.infrastructure.persistence.adapters.social_network_gateway import (
+from delivery_service.infrastructure.persistence.adapters.social_network_dao import (
     SQlAlchemySocialNetworkGateway,
 )
 from delivery_service.infrastructure.persistence.adapters.staff_member_repository import (
@@ -122,6 +132,7 @@ class ApplicationHandlersProvider(Provider):
         CreateNewShopHandler,
         AddNewStaffMemberHandler,
         DiscardStaffMemberHandler,
+        AddNewProductHandler,
     )
     behaviors = provide_all(CommitionBehavior, TelegramCheckerBehavior)
     fabrics = provide_all(StaffMemberFactory, ServiceUserFactory, ShopFactory)
@@ -144,6 +155,10 @@ class BazarioProvider(Provider):
         registry.add_request_handler(
             DiscardStaffMemberRequest, DiscardStaffMemberHandler
         )
+        registry.add_request_handler(
+            AddNewProductRequest, AddNewProductHandler
+        )
+
         registry.add_pipeline_behaviors(Request, CommitionBehavior)
         registry.add_pipeline_behaviors(
             TelegramCommand, TelegramCheckerBehavior
@@ -162,6 +177,8 @@ class DomainProvider(Provider):
         WithParents[SQLAlchemyRoleRepository],
         WithParents[SQLAlchemyServiceUserRepository],
         WithParents[SQLAlchemyShopRepository],
+        WithParents[SQLAlchemyShopCatalogRepository],
+        WithParents[SQLAlchemyProductRepository],
     )
 
 

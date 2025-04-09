@@ -4,7 +4,7 @@ from delivery_service.application.common.dto import TelegramContactsData
 from delivery_service.application.ports.social_network_checker import (
     SocialNetworkChecker,
 )
-from delivery_service.domain.shared.dto import Empty
+from delivery_service.domain.shared.new_types import Empty
 
 
 class SocialNetworkCheckerImpl(SocialNetworkChecker):

@@ -1,10 +1,10 @@
 from dataclasses import dataclass
 
-from delivery_service.domain.shared.dto import Empty
 from delivery_service.domain.shared.errors import (
     InvalidTelegramUsernameError,
     TelegramIDMustBePositiveError,
 )
+from delivery_service.domain.shared.new_types import Empty
 from delivery_service.domain.shared.user_id import UserID
 
 MIN_TELEGRAM_ID_VALUE = 1

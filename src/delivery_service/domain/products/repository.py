@@ -3,6 +3,7 @@ from typing import Protocol
 
 from delivery_service.domain.products.catalog import ShopCatalog
 from delivery_service.domain.products.product import Product
+from delivery_service.domain.shared.shop_id import ShopID
 from delivery_service.domain.shared.user_id import UserID
 
 
@@ -17,4 +18,8 @@ class ShopCatalogRepository(Protocol):
 class ProductRepository(Protocol):
     @abstractmethod
     def add(self, product: Product) -> None:
+        raise NotImplementedError
+
+    @abstractmethod
+    async def exists(self, title: str, shop_id: ShopID) -> bool:
         raise NotImplementedError

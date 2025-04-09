@@ -13,7 +13,7 @@ from delivery_service.domain.shared.user_id import UserID
 from delivery_service.infrastructure.integration.telegram.kbd import (
     get_shop_staff_main_kbd,
 )
-from delivery_service.infrastructure.persistence.adapters.social_network_gateway import (
+from delivery_service.infrastructure.persistence.adapters.social_network_dao import (
     SQlAlchemySocialNetworkGateway,
 )
 
