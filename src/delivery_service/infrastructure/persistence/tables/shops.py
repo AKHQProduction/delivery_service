@@ -2,7 +2,7 @@ import sqlalchemy as sa
 from sqlalchemy import and_
 from sqlalchemy.orm import relationship
 
-from delivery_service.domain.shared.vo.location import Location
+from delivery_service.domain.shared.vo.location import Coordinates
 from delivery_service.domain.shops.shop import Shop
 from delivery_service.domain.shops.value_objects import DaysOff
 from delivery_service.domain.staff.staff_member import StaffMember
@@ -21,7 +21,9 @@ SHOPS_TABLE = sa.Table(
     MAPPER_REGISTRY.metadata,
     sa.Column("id", sa.UUID, primary_key=True, unique=True),
     sa.Column("name", sa.String, nullable=False),
-    sa.Column("location", value_object_to_json(Location), nullable=False),
+    sa.Column(
+        "coordinates", value_object_to_json(Coordinates), nullable=False
+    ),
     sa.Column("days_off", value_object_to_json(DaysOff), nullable=False),
     sa.Column(
         "created_at",
@@ -77,7 +79,7 @@ MAPPER_REGISTRY.map_imperatively(
     properties={
         "_entity_id": SHOPS_TABLE.c.id,
         "_name": SHOPS_TABLE.c.name,
-        "_location": SHOPS_TABLE.c.location,
+        "_coordinates": SHOPS_TABLE.c.coordinates,
         "_days_off": SHOPS_TABLE.c.days_off,
         "_staff_members": relationship(
             StaffMember,

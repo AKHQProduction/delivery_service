@@ -23,7 +23,7 @@ def upgrade() -> None:
         "shops",
         sa.Column("id", sa.UUID(), nullable=False),
         sa.Column("name", sa.String(), nullable=False),
-        sa.Column("location", sa.JSON(), nullable=False),
+        sa.Column("coordinates", sa.JSON(), nullable=False),
         sa.Column("days_off", sa.JSON(), nullable=False),
         sa.Column(
             "created_at",

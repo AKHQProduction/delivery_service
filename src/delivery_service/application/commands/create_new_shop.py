@@ -1,4 +1,5 @@
 # ruff: noqa: E501
+import logging
 from dataclasses import dataclass
 
 from bazario.asyncio import RequestHandler
@@ -22,6 +23,8 @@ from delivery_service.domain.shops.repository import (
 from delivery_service.domain.staff.staff_role import (
     Role,
 )
+
+logger = logging.getLogger(__name__)
 
 
 @dataclass(frozen=True)
@@ -47,6 +50,8 @@ class CreateNewShopHandler(RequestHandler[CreateNewShopRequest, ShopID]):
         self._repository = shop_repository
 
     async def handle(self, request: CreateNewShopRequest) -> ShopID:
+        logger.info("Request to create new shop")
+
         current_user_id = await self._idp.get_current_user_id()
         if await self._repository.exists(current_user_id):
             raise ShopCreationNotAllowedError(current_user_id)

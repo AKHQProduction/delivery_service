@@ -1,4 +1,5 @@
 # ruff: noqa: E501
+
 from aiogram import Bot
 from aiogram.types import (
     InlineKeyboardMarkup,
