@@ -1,7 +1,7 @@
 from datetime import date
 
-from delivery_service.domain.products.errors import AccessDeniedError
 from delivery_service.domain.shared.entity import Entity
+from delivery_service.domain.shared.errors import AccessDeniedError
 from delivery_service.domain.shared.shop_id import ShopID
 from delivery_service.domain.shared.user_id import UserID
 from delivery_service.domain.shared.vo.location import Coordinates

@@ -25,5 +25,5 @@ class StaffMember(Entity[UserID]):
         return self._roles
 
     @property
-    def shop(self) -> ShopID:
+    def from_shop(self) -> ShopID:
         return self._shop_id

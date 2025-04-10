@@ -10,9 +10,6 @@ from delivery_service.application.common.factories.product_factory import (
 from delivery_service.application.common.markers.command import TelegramCommand
 from delivery_service.application.ports.id_generator import IDGenerator
 from delivery_service.application.ports.idp import IdentityProvider
-from delivery_service.domain.products.errors import (
-    AccessDeniedError,
-)
 from delivery_service.domain.products.product import (
     ProductID,
     ProductType,
@@ -20,6 +17,7 @@ from delivery_service.domain.products.product import (
 from delivery_service.domain.products.repository import (
     ProductRepository,
 )
+from delivery_service.domain.shared.errors import AccessDeniedError
 from delivery_service.domain.shared.new_types import FixedDecimal
 from delivery_service.domain.staff.repository import StaffMemberRepository
 

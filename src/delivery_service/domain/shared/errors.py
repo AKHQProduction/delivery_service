@@ -43,3 +43,10 @@ class InvalidTelegramUsernameError(ValidationError):
         return (
             "Telegram username length must be greate than 0 and less than 129"
         )
+
+
+@dataclass(eq=False)
+class AccessDeniedError(ConflictError):
+    @property
+    def message(self) -> str:
+        return "Access denied"

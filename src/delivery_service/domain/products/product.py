@@ -49,3 +49,7 @@ class Product(Entity[ProductID]):
     @property
     def metadata_path(self) -> str | None:
         return self._metadata_path
+
+    @property
+    def from_shop(self) -> ShopID:
+        return self._shop_id

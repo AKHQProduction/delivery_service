@@ -71,6 +71,9 @@ from delivery_service.bootstrap.configs import (
     RedisConfig,
     TGConfig,
 )
+from delivery_service.domain.products.access_service import (
+    ProductAccessService,
+)
 from delivery_service.infrastructure.adapters.id_generator import (
     IDGeneratorImpl,
 )
@@ -181,6 +184,7 @@ class DomainProvider(Provider):
         WithParents[SQLAlchemyShopRepository],
         WithParents[SQLAlchemyProductRepository],
     )
+    services = provide(ProductAccessService, scope=Scope.APP)
 
 
 class InfrastructureAdaptersProvider(Provider):

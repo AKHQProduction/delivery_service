@@ -1,6 +1,8 @@
 from delivery_service.application.ports.id_generator import IDGenerator
+from delivery_service.domain.products.access_service import (
+    ProductAccessService,
+)
 from delivery_service.domain.products.errors import (
-    AccessDeniedError,
     ProductAlreadyExistsError,
 )
 from delivery_service.domain.products.product import Product, ProductType
@@ -8,15 +10,18 @@ from delivery_service.domain.products.repository import ProductRepository
 from delivery_service.domain.shared.new_types import FixedDecimal
 from delivery_service.domain.shared.vo.price import Price
 from delivery_service.domain.staff.staff_member import StaffMember
-from delivery_service.domain.staff.staff_role import Role
 
 
 class ProductFactory:
     def __init__(
-        self, product_repository: ProductRepository, id_generator: IDGenerator
+        self,
+        product_repository: ProductRepository,
+        id_generator: IDGenerator,
+        access_service: ProductAccessService,
     ) -> None:
         self._product_repository = product_repository
         self._id_generator = id_generator
+        self._access_service = access_service
 
     async def create_new_product(
         self,
@@ -25,12 +30,9 @@ class ProductFactory:
         product_type: ProductType,
         creator: StaffMember,
     ) -> Product:
-        if not any(
-            role.name in [Role.SHOP_OWNER, Role.SHOP_MANAGER]
-            for role in creator.roles
-        ):
-            raise AccessDeniedError()
-        if await self._product_repository.exists(title, creator.shop):
+        self._access_service.can_create_product(creator)
+
+        if await self._product_repository.exists(title, creator.from_shop):
             raise ProductAlreadyExistsError()
 
         return Product(
@@ -38,5 +40,5 @@ class ProductFactory:
             title=title,
             price=Price(price),
             product_type=product_type,
-            shop_id=creator.shop,
+            shop_id=creator.from_shop,
         )
