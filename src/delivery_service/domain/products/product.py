@@ -3,6 +3,7 @@ from typing import NewType
 from uuid import UUID
 
 from delivery_service.domain.shared.entity import Entity
+from delivery_service.domain.shared.new_types import FixedDecimal
 from delivery_service.domain.shared.shop_id import ShopID
 from delivery_service.domain.shared.vo.price import Price
 
@@ -33,6 +34,12 @@ class Product(Entity[ProductID]):
         self._price = price
         self._product_type = product_type
         self._metadata_path = metadata_path
+
+    def edit_title(self, new_title: str) -> None:
+        self._title = new_title
+
+    def edit_price(self, new_price: FixedDecimal) -> None:
+        self._price = Price(value=new_price)
 
     @property
     def title(self) -> str:

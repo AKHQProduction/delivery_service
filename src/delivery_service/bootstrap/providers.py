@@ -40,9 +40,17 @@ from delivery_service.application.commands.create_new_shop import (
     CreateNewShopHandler,
     CreateNewShopRequest,
 )
+from delivery_service.application.commands.delete_product import (
+    DeleteProductHandler,
+    DeleteProductRequest,
+)
 from delivery_service.application.commands.discard_staff_member import (
     DiscardStaffMemberHandler,
     DiscardStaffMemberRequest,
+)
+from delivery_service.application.commands.edit_product import (
+    EditProductHandler,
+    EditProductRequest,
 )
 from delivery_service.application.common.behaviors.commition import (
     CommitionBehavior,
@@ -136,6 +144,8 @@ class ApplicationHandlersProvider(Provider):
         AddNewStaffMemberHandler,
         DiscardStaffMemberHandler,
         AddNewProductHandler,
+        EditProductHandler,
+        DeleteProductHandler,
     )
     behaviors = provide_all(CommitionBehavior, TelegramCheckerBehavior)
     fabrics = provide_all(
@@ -162,6 +172,10 @@ class BazarioProvider(Provider):
         )
         registry.add_request_handler(
             AddNewProductRequest, AddNewProductHandler
+        )
+        registry.add_request_handler(EditProductRequest, EditProductHandler)
+        registry.add_request_handler(
+            DeleteProductRequest, DeleteProductHandler
         )
 
         registry.add_pipeline_behaviors(Request, CommitionBehavior)

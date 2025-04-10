@@ -43,5 +43,10 @@ class EmployeeNotFoundError(NotFoundError):
 
 
 @dataclass(eq=False)
+class ProductNotFoundError(NotFoundError):
+    pass
+
+
+@dataclass(eq=False)
 class AuthenticationError(ApplicationError):
     pass
