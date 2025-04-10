@@ -6,6 +6,7 @@ from delivery_service.presentation.bot.main.handlers.common import (
     setup_common_handlers,
 )
 from delivery_service.presentation.bot.main.handlers.shop_staff import (
+    setup_shop_staff_dialogs,
     setup_shop_staff_handler,
 )
 from delivery_service.presentation.bot.main.handlers.user import (
@@ -24,6 +25,7 @@ def setup_all_handlers(dp: Dispatcher) -> None:
 
 def setup_all_dialogs(dp: Dispatcher) -> None:
     setup_user_dialogs(dp)
+    setup_shop_staff_dialogs(dp)
 
 
 def setup_all_main_bot_updates(dp: Dispatcher) -> None:

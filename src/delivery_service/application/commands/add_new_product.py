@@ -7,7 +7,9 @@ from bazario.asyncio import RequestHandler
 from delivery_service.application.common.factories.product_factory import (
     ProductFactory,
 )
-from delivery_service.application.common.markers.command import TelegramCommand
+from delivery_service.application.common.markers.requests import (
+    TelegramRequest,
+)
 from delivery_service.application.ports.id_generator import IDGenerator
 from delivery_service.application.ports.idp import IdentityProvider
 from delivery_service.domain.products.product import (
@@ -25,7 +27,7 @@ logger = logging.getLogger(__name__)
 
 
 @dataclass(frozen=True)
-class AddNewProductRequest(TelegramCommand[ProductID]):
+class AddNewProductRequest(TelegramRequest[ProductID]):
     title: str
     price: FixedDecimal
     product_type: ProductType

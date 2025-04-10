@@ -1,7 +1,9 @@
 from typing import Final
 
 from delivery_service.application.common.dto import TelegramContactsData
-from delivery_service.application.errors import ServiceUserAlreadyExistsError
+from delivery_service.application.common.errors import (
+    ServiceUserAlreadyExistsError,
+)
 from delivery_service.application.ports.id_generator import IDGenerator
 from delivery_service.domain.shared.new_types import Empty
 from delivery_service.domain.shared.vo.tg_contacts import TelegramContacts

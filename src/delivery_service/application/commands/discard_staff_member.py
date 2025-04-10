@@ -3,10 +3,10 @@ from dataclasses import dataclass
 
 from bazario.asyncio import RequestHandler
 
-from delivery_service.application.common.markers.command import Command
-from delivery_service.application.errors import (
+from delivery_service.application.common.errors import (
     ShopNotFoundError,
 )
+from delivery_service.application.common.markers.requests import BaseCommand
 from delivery_service.application.ports.idp import IdentityProvider
 from delivery_service.application.ports.transaction_manager import (
     TransactionManager,
@@ -20,7 +20,7 @@ logger = logging.getLogger(__name__)
 
 
 @dataclass(frozen=True)
-class DiscardStaffMemberRequest(Command[None]):
+class DiscardStaffMemberRequest(BaseCommand[None]):
     staff_member_id: UserID
 
 

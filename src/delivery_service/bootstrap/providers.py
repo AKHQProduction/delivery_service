@@ -49,8 +49,10 @@ from delivery_service.application.commands.discard_staff_member import (
     DiscardStaffMemberRequest,
 )
 from delivery_service.application.commands.edit_product import (
-    EditProductHandler,
-    EditProductRequest,
+    EditProductPriceHandler,
+    EditProductPriceRequest,
+    EditProductTitleHandler,
+    EditProductTitleRequest,
 )
 from delivery_service.application.common.behaviors.commition import (
     CommitionBehavior,
@@ -70,8 +72,12 @@ from delivery_service.application.common.factories.shop_factory import (
 from delivery_service.application.common.factories.staff_member_factory import (
     StaffMemberFactory,
 )
-from delivery_service.application.common.markers.command import (
-    TelegramCommand,
+from delivery_service.application.common.markers.requests import (
+    TelegramRequest,
+)
+from delivery_service.application.query.product import (
+    GetAllProductsHandler,
+    GetAllProductsRequest,
 )
 from delivery_service.bootstrap.configs import (
     DatabaseConfig,
@@ -96,6 +102,9 @@ from delivery_service.infrastructure.integration.geopy.geolocator import (
 )
 from delivery_service.infrastructure.integration.telegram.view_manager import (
     TelegramViewManager,
+)
+from delivery_service.infrastructure.persistence.adapters.product_gateway import (
+    SQLAlchemyProductGateway,
 )
 from delivery_service.infrastructure.persistence.adapters.product_repository import (
     SQLAlchemyProductRepository,
@@ -134,6 +143,18 @@ class AppConfigProvider(Provider):
 class ApplicationProvider(Provider):
     id_generator = provide(WithParents[IDGeneratorImpl], scope=Scope.APP)
 
+    fabrics = provide_all(
+        StaffMemberFactory,
+        ServiceUserFactory,
+        ShopFactory,
+        ProductFactory,
+        scope=Scope.REQUEST,
+    )
+
+    gateways = provide_all(
+        WithParents[SQLAlchemyProductGateway], scope=Scope.REQUEST
+    )
+
 
 class ApplicationHandlersProvider(Provider):
     scope = Scope.REQUEST
@@ -144,13 +165,12 @@ class ApplicationHandlersProvider(Provider):
         AddNewStaffMemberHandler,
         DiscardStaffMemberHandler,
         AddNewProductHandler,
-        EditProductHandler,
+        EditProductTitleHandler,
+        EditProductPriceHandler,
         DeleteProductHandler,
+        GetAllProductsHandler,
     )
     behaviors = provide_all(CommitionBehavior, TelegramCheckerBehavior)
-    fabrics = provide_all(
-        StaffMemberFactory, ServiceUserFactory, ShopFactory, ProductFactory
-    )
 
 
 class BazarioProvider(Provider):
@@ -173,14 +193,22 @@ class BazarioProvider(Provider):
         registry.add_request_handler(
             AddNewProductRequest, AddNewProductHandler
         )
-        registry.add_request_handler(EditProductRequest, EditProductHandler)
+        registry.add_request_handler(
+            EditProductTitleRequest, EditProductTitleHandler
+        )
+        registry.add_request_handler(
+            EditProductPriceRequest, EditProductPriceHandler
+        )
         registry.add_request_handler(
             DeleteProductRequest, DeleteProductHandler
+        )
+        registry.add_request_handler(
+            GetAllProductsRequest, GetAllProductsHandler
         )
 
         registry.add_pipeline_behaviors(Request, CommitionBehavior)
         registry.add_pipeline_behaviors(
-            TelegramCommand, TelegramCheckerBehavior
+            TelegramRequest, TelegramCheckerBehavior
         )
         return registry
 

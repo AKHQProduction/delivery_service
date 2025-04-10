@@ -3,8 +3,10 @@ from dataclasses import dataclass
 
 from bazario.asyncio import RequestHandler
 
-from delivery_service.application.common.markers.command import TelegramCommand
-from delivery_service.application.errors import ProductNotFoundError
+from delivery_service.application.common.errors import ProductNotFoundError
+from delivery_service.application.common.markers.requests import (
+    TelegramRequest,
+)
 from delivery_service.application.ports.idp import IdentityProvider
 from delivery_service.domain.products.access_service import (
     ProductAccessService,
@@ -18,7 +20,7 @@ logger = logging.getLogger(__name__)
 
 
 @dataclass(frozen=True)
-class DeleteProductRequest(TelegramCommand[None]):
+class DeleteProductRequest(TelegramRequest[None]):
     product_id: ProductID
 
 

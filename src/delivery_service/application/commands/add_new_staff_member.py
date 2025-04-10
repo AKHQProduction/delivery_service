@@ -4,11 +4,11 @@ from dataclasses import dataclass
 
 from bazario.asyncio import RequestHandler
 
+from delivery_service.application.common.errors import ShopNotFoundError
 from delivery_service.application.common.factories.staff_member_factory import (
     StaffMemberFactory,
 )
-from delivery_service.application.common.markers.command import Command
-from delivery_service.application.errors import ShopNotFoundError
+from delivery_service.application.common.markers.requests import BaseCommand
 from delivery_service.application.ports.idp import IdentityProvider
 from delivery_service.domain.shared.user_id import UserID
 from delivery_service.domain.shops.repository import (
@@ -20,7 +20,7 @@ logger = logging.getLogger(__name__)
 
 
 @dataclass(frozen=True)
-class AddNewStaffMemberRequest(Command[None]):
+class AddNewStaffMemberRequest(BaseCommand[None]):
     candidate_id: UserID
     role: Role
 

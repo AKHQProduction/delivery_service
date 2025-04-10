@@ -4,8 +4,10 @@ from bazario.asyncio import HandleNext, PipelineBehavior
 from typing_extensions import TypeVar
 
 from delivery_service.application.common.behaviors.base import BehaviorResult
-from delivery_service.application.common.markers.command import TelegramCommand
-from delivery_service.application.errors import AuthenticationError
+from delivery_service.application.common.errors import AuthenticationError
+from delivery_service.application.common.markers.requests import (
+    TelegramRequest,
+)
 from delivery_service.application.ports.idp import IdentityProvider
 from delivery_service.application.ports.social_network_checker import (
     SocialNetworkChecker,
@@ -15,14 +17,14 @@ from delivery_service.application.ports.transaction_manager import (
 )
 from delivery_service.domain.user.repository import ServiceUserRepository
 
-CheckerAllowableCommands = TypeVar(
-    "CheckerAllowableCommands", bound=TelegramCommand
+CheckerAllowableRequests = TypeVar(
+    "CheckerAllowableRequests", bound=TelegramRequest
 )
 
 
 class TelegramCheckerBehavior(
-    PipelineBehavior[CheckerAllowableCommands, BehaviorResult],
-    Generic[CheckerAllowableCommands, BehaviorResult],
+    PipelineBehavior[CheckerAllowableRequests, BehaviorResult],
+    Generic[CheckerAllowableRequests, BehaviorResult],
 ):
     def __init__(
         self,
@@ -38,8 +40,8 @@ class TelegramCheckerBehavior(
 
     async def handle(
         self,
-        request: CheckerAllowableCommands,
-        handle_next: HandleNext[CheckerAllowableCommands, BehaviorResult],
+        request: CheckerAllowableRequests,
+        handle_next: HandleNext[CheckerAllowableRequests, BehaviorResult],
     ) -> Any:
         try:
             current_user_id = await self._idp.get_current_user_id()

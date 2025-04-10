@@ -5,14 +5,14 @@ from dataclasses import dataclass
 from bazario.asyncio import RequestHandler
 
 from delivery_service.application.common.dto import TelegramContactsData
+from delivery_service.application.common.errors import (
+    ServiceUserAlreadyExistsError,
+)
 from delivery_service.application.common.factories.service_user_factory import (
     ServiceUserFactory,
 )
-from delivery_service.application.common.markers.command import (
-    TelegramCommand,
-)
-from delivery_service.application.errors import (
-    ServiceUserAlreadyExistsError,
+from delivery_service.application.common.markers.requests import (
+    TelegramRequest,
 )
 from delivery_service.application.ports.idp import IdentityProvider
 from delivery_service.application.ports.transaction_manager import (
@@ -27,7 +27,7 @@ logger = logging.getLogger(__name__)
 
 
 @dataclass(frozen=True)
-class BotStartRequest(TelegramCommand[None]):
+class BotStartRequest(TelegramRequest[None]):
     telegram_data: TelegramContactsData
 
 

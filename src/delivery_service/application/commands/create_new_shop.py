@@ -12,7 +12,9 @@ from delivery_service.application.common.factories.shop_factory import (
 from delivery_service.application.common.factories.staff_member_factory import (
     StaffMemberFactory,
 )
-from delivery_service.application.common.markers.command import Command
+from delivery_service.application.common.markers.requests import (
+    TelegramRequest,
+)
 from delivery_service.application.ports.id_generator import IDGenerator
 from delivery_service.application.ports.idp import IdentityProvider
 from delivery_service.domain.shared.shop_id import ShopID
@@ -28,7 +30,7 @@ logger = logging.getLogger(__name__)
 
 
 @dataclass(frozen=True)
-class CreateNewShopRequest(Command[ShopID]):
+class CreateNewShopRequest(TelegramRequest[ShopID]):
     shop_name: str
     shop_coordinates: CoordinatesData
     days_off: DaysOffData

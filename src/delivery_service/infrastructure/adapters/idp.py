@@ -1,4 +1,4 @@
-from delivery_service.application.errors import AuthenticationError
+from delivery_service.application.common.errors import AuthenticationError
 from delivery_service.application.ports.idp import IdentityProvider
 from delivery_service.domain.shared.user_id import UserID
 from delivery_service.domain.staff.repository import StaffMemberRepository
