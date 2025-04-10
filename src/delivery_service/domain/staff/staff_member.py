@@ -10,7 +10,7 @@ class StaffMember(Entity[UserID]):
         entity_id: UserID,
         *,
         roles: RoleCollection,
-        shop_id: ShopID | None,
+        shop_id: ShopID,
     ) -> None:
         super().__init__(entity_id=entity_id)
 
@@ -23,3 +23,7 @@ class StaffMember(Entity[UserID]):
     @property
     def roles(self) -> RoleCollection:
         return self._roles
+
+    @property
+    def shop(self) -> ShopID:
+        return self._shop_id

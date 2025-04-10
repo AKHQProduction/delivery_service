@@ -4,6 +4,7 @@ from aiogram import Bot
 from aiogram.types import (
     InlineKeyboardMarkup,
     ReplyKeyboardMarkup,
+    ReplyKeyboardRemove,
 )
 
 from delivery_service.application.ports.idp import IdentityProvider
@@ -33,7 +34,10 @@ class TelegramViewManager(ViewManager):
         self,
         telegram_id: int,
         text: str,
-        reply_markup: ReplyKeyboardMarkup | InlineKeyboardMarkup | None,
+        reply_markup: ReplyKeyboardMarkup
+        | InlineKeyboardMarkup
+        | None
+        | ReplyKeyboardRemove,
     ) -> None:
         async with Bot(token=self._config.admin_bot_token) as bot:
             await bot.send_message(

@@ -50,6 +50,9 @@ from delivery_service.application.common.behaviors.commition import (
 from delivery_service.application.common.behaviors.telegram_checker import (
     TelegramCheckerBehavior,
 )
+from delivery_service.application.common.factories.product_factory import (
+    ProductFactory,
+)
 from delivery_service.application.common.factories.service_user_factory import (
     ServiceUserFactory,
 )
@@ -92,9 +95,6 @@ from delivery_service.infrastructure.persistence.adapters.role_repository import
 from delivery_service.infrastructure.persistence.adapters.service_user_repository import (
     SQLAlchemyServiceUserRepository,
 )
-from delivery_service.infrastructure.persistence.adapters.shop_catalog_repository import (
-    SQLAlchemyShopCatalogRepository,
-)
 from delivery_service.infrastructure.persistence.adapters.shop_repository import (
     SQLAlchemyShopRepository,
 )
@@ -135,7 +135,9 @@ class ApplicationHandlersProvider(Provider):
         AddNewProductHandler,
     )
     behaviors = provide_all(CommitionBehavior, TelegramCheckerBehavior)
-    fabrics = provide_all(StaffMemberFactory, ServiceUserFactory, ShopFactory)
+    fabrics = provide_all(
+        StaffMemberFactory, ServiceUserFactory, ShopFactory, ProductFactory
+    )
 
 
 class BazarioProvider(Provider):
@@ -177,7 +179,6 @@ class DomainProvider(Provider):
         WithParents[SQLAlchemyRoleRepository],
         WithParents[SQLAlchemyServiceUserRepository],
         WithParents[SQLAlchemyShopRepository],
-        WithParents[SQLAlchemyShopCatalogRepository],
         WithParents[SQLAlchemyProductRepository],
     )
 

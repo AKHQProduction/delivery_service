@@ -52,16 +52,10 @@ def upgrade() -> None:
         sa.UniqueConstraint("id", name=op.f("uq_product_id")),
     )
     op.create_unique_constraint(op.f("uq_shops_id"), "shops", ["id"])
-    op.create_unique_constraint(
-        op.f("uq_staff_members_id"), "staff_members", ["id"]
-    )
 
 
 def downgrade() -> None:
-    op.drop_constraint(
-        op.f("uq_staff_members_id"), "staff_members", type_="unique"
-    )
     op.drop_constraint(op.f("uq_shops_id"), "shops", type_="unique")
-    op.drop_table("product")
+    op.drop_table("products")
 
     op.execute("DROP TYPE IF EXISTS producttype")

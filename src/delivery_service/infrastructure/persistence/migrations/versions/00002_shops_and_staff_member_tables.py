@@ -47,10 +47,10 @@ def upgrade() -> None:
         sa.PrimaryKeyConstraint("id", name=op.f("pk_shops")),
         sa.UniqueConstraint("id", name=op.f("uq_shops_id")),
     )
+
     op.create_table(
         "staff_members",
-        sa.Column("id", sa.Integer(), autoincrement=True, nullable=False),
-        sa.Column("user_id", sa.UUID(), nullable=True),
+        sa.Column("user_id", sa.UUID(), nullable=True, primary_key=True),
         sa.Column("shop_id", sa.UUID(), nullable=True),
         sa.Column(
             "created_at",
@@ -76,8 +76,9 @@ def upgrade() -> None:
             name=op.f("fk_staff_members_user_id_users"),
             ondelete="CASCADE",
         ),
-        sa.PrimaryKeyConstraint("id", name=op.f("pk_staff_members")),
-        sa.UniqueConstraint("id", name=op.f("uq_staff_members_id")),
+    )
+    sa.UniqueConstraint(
+        "user_id", "shop_id", name=op.f("uq_staff_members_user_id_shop_id")
     )
     op.drop_constraint("uq_roles_name", "roles", type_="unique")
     op.create_unique_constraint(op.f("uq_users_id"), "users", ["id"])

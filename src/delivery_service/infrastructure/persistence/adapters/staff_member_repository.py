@@ -1,6 +1,7 @@
 from sqlalchemy import and_, exists, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from delivery_service.domain.shared.user_id import UserID
 from delivery_service.domain.staff.repository import (
     StaffMemberRepository,
 )
@@ -49,3 +50,6 @@ class SQLAlchemyStaffMemberRepository(StaffMemberRepository):
 
         result = await self._session.execute(query)
         return result.scalar_one_or_none()
+
+    async def load_with_identity(self, user_id: UserID) -> StaffMember | None:
+        return await self._session.get(StaffMember, user_id)

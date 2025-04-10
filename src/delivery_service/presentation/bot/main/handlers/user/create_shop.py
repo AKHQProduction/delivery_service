@@ -205,7 +205,7 @@ SHOP_CREATION_DIALOG = Dialog(
         state=states.ShopCreation.SHOP_DAYS_OFF,
     ),
     Window(
-        Const("3️⃣ Вкажіть локацію магазину або поділіться нею\n"),
+        Const("3️⃣ Вкажіть адресу магазину або поділіться нею\n"),
         Const(
             "<i>Якщо виникли складноші - перевірте вашу адресу"
             " на карті: https://www.openstreetmap.org</i>"
