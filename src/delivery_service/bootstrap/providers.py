@@ -79,6 +79,10 @@ from delivery_service.application.query.product import (
     GetAllProductsHandler,
     GetAllProductsRequest,
 )
+from delivery_service.application.query.shop import (
+    GetShopIDHandler,
+    GetShopIDRequest,
+)
 from delivery_service.bootstrap.configs import (
     DatabaseConfig,
     RabbitConfig,
@@ -96,6 +100,9 @@ from delivery_service.infrastructure.adapters.idp import (
 )
 from delivery_service.infrastructure.adapters.social_network_checker import (
     SocialNetworkCheckerImpl,
+)
+from delivery_service.infrastructure.adapters.social_network_provider import (
+    SocialNetworkProviderImpl,
 )
 from delivery_service.infrastructure.integration.geopy.geolocator import (
     Geolocator,
@@ -169,6 +176,7 @@ class ApplicationHandlersProvider(Provider):
         EditProductPriceHandler,
         DeleteProductHandler,
         GetAllProductsHandler,
+        GetShopIDHandler,
     )
     behaviors = provide_all(CommitionBehavior, TelegramCheckerBehavior)
 
@@ -205,6 +213,7 @@ class BazarioProvider(Provider):
         registry.add_request_handler(
             GetAllProductsRequest, GetAllProductsHandler
         )
+        registry.add_request_handler(GetShopIDRequest, GetShopIDHandler)
 
         registry.add_pipeline_behaviors(Request, CommitionBehavior)
         registry.add_pipeline_behaviors(
@@ -261,6 +270,7 @@ class TelegramProvider(Provider):
     view_manager = provide(
         WithParents[TelegramViewManager],
     )
+    social_network_provider = provide(WithParents[SocialNetworkProviderImpl])
 
 
 class PersistenceProvider(Provider):

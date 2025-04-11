@@ -1,16 +1,21 @@
+# ruff: noqa: E501
 from typing import Any, Generic
 
 from bazario.asyncio import HandleNext, PipelineBehavior
 from typing_extensions import TypeVar
 
 from delivery_service.application.common.behaviors.base import BehaviorResult
-from delivery_service.application.common.errors import AuthenticationError
+from delivery_service.application.common.factories.service_user_factory import (
+    ServiceUserFactory,
+)
 from delivery_service.application.common.markers.requests import (
     TelegramRequest,
 )
-from delivery_service.application.ports.idp import IdentityProvider
 from delivery_service.application.ports.social_network_checker import (
     SocialNetworkChecker,
+)
+from delivery_service.application.ports.social_network_provider import (
+    SocialNetworkProvider,
 )
 from delivery_service.application.ports.transaction_manager import (
     TransactionManager,
@@ -29,12 +34,14 @@ class TelegramCheckerBehavior(
     def __init__(
         self,
         service_user_repository: ServiceUserRepository,
-        idp: IdentityProvider,
+        service_user_factory: ServiceUserFactory,
+        social_network_provider: SocialNetworkProvider,
         social_network_checker: SocialNetworkChecker,
         transaction_manager: TransactionManager,
     ) -> None:
-        self._idp = idp
         self._service_user_repository = service_user_repository
+        self._service_user_factory = service_user_factory
+        self._social_network_provider = social_network_provider
         self._social_network_checker = social_network_checker
         self._transaction_manager = transaction_manager
 
@@ -43,15 +50,29 @@ class TelegramCheckerBehavior(
         request: CheckerAllowableRequests,
         handle_next: HandleNext[CheckerAllowableRequests, BehaviorResult],
     ) -> Any:
-        try:
-            current_user_id = await self._idp.get_current_user_id()
-        except AuthenticationError:
+        telegram_id = await self._social_network_provider.get_telegram_id()
+        if not telegram_id:
             return await handle_next(request)
 
-        service_user = await self._service_user_repository.load_by_identity(
-            current_user_id
+        service_user = (
+            await self._service_user_repository.load_with_social_network(
+                telegram_id
+            )
         )
-        if not service_user:
+        if service_user is None:
+            telegram_data = (
+                await self._social_network_checker.check_telegram_data(
+                    telegram_id
+                )
+            )
+            if telegram_data:
+                service_user = (
+                    await self._service_user_factory.create_service_user(
+                        telegram_data
+                    )
+                )
+                self._service_user_repository.add(service_user)
+                await self._transaction_manager.commit()
             return await handle_next(request)
 
         telegram_contacts = service_user.telegram_contacts
@@ -60,6 +81,8 @@ class TelegramCheckerBehavior(
         )
 
         if telegram_data:
+            updated = False
+
             if (
                 telegram_data.telegram_username
                 != telegram_contacts.telegram_username
@@ -68,9 +91,13 @@ class TelegramCheckerBehavior(
                     telegram_id=None,
                     telegram_username=telegram_data.telegram_username,
                 )
-            if telegram_data.full_name != service_user.full_name:
-                service_user.edit_full_name(telegram_data.full_name)
+                updated = True
 
             if telegram_data.full_name != service_user.full_name:
                 service_user.edit_full_name(telegram_data.full_name)
+                updated = True
+
+            if updated:
+                await self._transaction_manager.commit()
+
         return await handle_next(request)
