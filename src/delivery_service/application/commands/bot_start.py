@@ -5,9 +5,6 @@ from dataclasses import dataclass
 from bazario.asyncio import RequestHandler
 
 from delivery_service.application.common.dto import TelegramContactsData
-from delivery_service.application.common.errors import (
-    ServiceUserAlreadyExistsError,
-)
 from delivery_service.application.common.factories.service_user_factory import (
     ServiceUserFactory,
 )
@@ -49,17 +46,16 @@ class BotStartHandler(RequestHandler[BotStartRequest, None]):
     async def handle(self, request: BotStartRequest) -> None:
         logger.info("Request from start bot")
 
-        try:
+        service_user = await self._repository.load_with_social_network(
+            request.telegram_data.telegram_id
+        )
+        if not service_user:
             service_user = await self._factory.create_service_user(
                 telegram_contacts=request.telegram_data,
             )
             self._repository.add(service_user)
             await self._transaction_manager.commit()
-        except ServiceUserAlreadyExistsError:
-            service_user = await self._repository.load_with_social_network(
-                request.telegram_data.telegram_id
-            )
 
         await self._view_manager.send_greeting_message(
-            user_id=service_user.entity_id  # pyright: ignore[reportOptionalMemberAccess]
+            user_id=service_user.entity_id
         )

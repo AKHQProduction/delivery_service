@@ -6,8 +6,10 @@ from aiogram.types import (
 
 from delivery_service.domain.staff.staff_role import Role
 from delivery_service.infrastructure.integration.telegram.const import (
+    CLIENTS_BTN,
     CREATE_SHOP_BTN,
     PRODUCTS_BTN,
+    STAFF_BTN,
 )
 
 
@@ -15,7 +17,13 @@ def get_shop_staff_main_kbd(
     roles: list[Role],
 ) -> ReplyKeyboardMarkup | ReplyKeyboardRemove:
     if Role.SHOP_OWNER in roles or Role.SHOP_MANAGER in roles:
-        keyboard = [[KeyboardButton(text=PRODUCTS_BTN)]]
+        keyboard = [
+            [KeyboardButton(text=PRODUCTS_BTN)],
+            [KeyboardButton(text=CLIENTS_BTN)],
+        ]
+
+        if Role.SHOP_OWNER in roles:
+            keyboard[1].insert(0, KeyboardButton(text=STAFF_BTN))
     elif Role.COURIER in roles:
         return ReplyKeyboardRemove()
     else:
