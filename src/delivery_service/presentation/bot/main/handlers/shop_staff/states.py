@@ -18,3 +18,9 @@ class ProductMenu(StatesGroup):
     EDIT_PRODUCT_PRICE = State()
 
     DELETE_CONFIRMATION = State()
+
+
+class StaffMenu(StatesGroup):
+    MAIN = State()
+    STAFF_CARD = State()
+    DELETE_CONFIRMATION = State()

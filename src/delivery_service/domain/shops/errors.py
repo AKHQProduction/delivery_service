@@ -24,7 +24,7 @@ class InvalidDayOfWeekError(ValidationError):
 
 
 @dataclass(eq=False)
-class UserAlreadyInEmployeesError(ConflictError):
+class UserAlreadyInStaffError(ConflictError):
     user_id: UserID
 
     @property
@@ -33,7 +33,7 @@ class UserAlreadyInEmployeesError(ConflictError):
 
 
 @dataclass(eq=False)
-class UserNotFoundInEmployeesError(ConflictError):
+class UserNotFoundInShopStaffError(ConflictError):
     user_id: UserID
 
     @property
@@ -42,7 +42,5 @@ class UserNotFoundInEmployeesError(ConflictError):
 
 
 @dataclass(eq=False)
-class NotOwnerError(ConflictError):
-    @property
-    def message(self) -> str:
-        return "Only owner have access to it"
+class CantDiscardYourselfError(ConflictError):
+    pass

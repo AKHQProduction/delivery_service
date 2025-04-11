@@ -1,6 +1,7 @@
 from sqlalchemy import and_, exists, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from delivery_service.domain.shared.shop_id import ShopID
 from delivery_service.domain.shared.user_id import UserID
 from delivery_service.domain.shops.repository import ShopRepository
 from delivery_service.domain.shops.shop import Shop
@@ -39,3 +40,6 @@ class SQLAlchemyShopRepository(ShopRepository):
 
         result = await self._session.execute(query)
         return result.scalar_one_or_none()
+
+    async def load_with_id(self, shop_id: ShopID) -> Shop | None:
+        return await self._session.get(Shop, shop_id)

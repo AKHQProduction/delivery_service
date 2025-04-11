@@ -31,6 +31,8 @@ from delivery_service.application.commands.add_new_product import (
 from delivery_service.application.commands.add_new_staff_member import (
     AddNewStaffMemberHandler,
     AddNewStaffMemberRequest,
+    JoinStaffMemberHandler,
+    JoinStaffMemberRequest,
 )
 from delivery_service.application.commands.bot_start import (
     BotStartHandler,
@@ -82,6 +84,8 @@ from delivery_service.application.query.product import (
 from delivery_service.application.query.shop import (
     GetShopIDHandler,
     GetShopIDRequest,
+    GetShopStaffMembersHandler,
+    GetShopStaffMembersRequest,
 )
 from delivery_service.bootstrap.configs import (
     DatabaseConfig,
@@ -92,6 +96,7 @@ from delivery_service.bootstrap.configs import (
 from delivery_service.domain.products.access_service import (
     ProductAccessService,
 )
+from delivery_service.domain.shops.access_service import ShopAccessService
 from delivery_service.infrastructure.adapters.id_generator import (
     IDGeneratorImpl,
 )
@@ -128,6 +133,9 @@ from delivery_service.infrastructure.persistence.adapters.shop_repository import
 from delivery_service.infrastructure.persistence.adapters.social_network_dao import (
     SQlAlchemySocialNetworkGateway,
 )
+from delivery_service.infrastructure.persistence.adapters.staff_gateway import (
+    SQLAlchemyStaffMemberGateway,
+)
 from delivery_service.infrastructure.persistence.adapters.staff_member_repository import (
     SQLAlchemyStaffMemberRepository,
 )
@@ -159,7 +167,9 @@ class ApplicationProvider(Provider):
     )
 
     gateways = provide_all(
-        WithParents[SQLAlchemyProductGateway], scope=Scope.REQUEST
+        WithParents[SQLAlchemyProductGateway],
+        WithParents[SQLAlchemyStaffMemberGateway],
+        scope=Scope.REQUEST,
     )
 
 
@@ -170,6 +180,7 @@ class ApplicationHandlersProvider(Provider):
         BotStartHandler,
         CreateNewShopHandler,
         AddNewStaffMemberHandler,
+        JoinStaffMemberHandler,
         DiscardStaffMemberHandler,
         AddNewProductHandler,
         EditProductTitleHandler,
@@ -177,6 +188,7 @@ class ApplicationHandlersProvider(Provider):
         DeleteProductHandler,
         GetAllProductsHandler,
         GetShopIDHandler,
+        GetShopStaffMembersHandler,
     )
     behaviors = provide_all(CommitionBehavior, TelegramCheckerBehavior)
 
@@ -194,6 +206,9 @@ class BazarioProvider(Provider):
         )
         registry.add_request_handler(
             AddNewStaffMemberRequest, AddNewStaffMemberHandler
+        )
+        registry.add_request_handler(
+            JoinStaffMemberRequest, JoinStaffMemberHandler
         )
         registry.add_request_handler(
             DiscardStaffMemberRequest, DiscardStaffMemberHandler
@@ -214,6 +229,9 @@ class BazarioProvider(Provider):
             GetAllProductsRequest, GetAllProductsHandler
         )
         registry.add_request_handler(GetShopIDRequest, GetShopIDHandler)
+        registry.add_request_handler(
+            GetShopStaffMembersRequest, GetShopStaffMembersHandler
+        )
 
         registry.add_pipeline_behaviors(Request, CommitionBehavior)
         registry.add_pipeline_behaviors(
@@ -235,7 +253,9 @@ class DomainProvider(Provider):
         WithParents[SQLAlchemyShopRepository],
         WithParents[SQLAlchemyProductRepository],
     )
-    services = provide(ProductAccessService, scope=Scope.APP)
+    services = provide_all(
+        ProductAccessService, ShopAccessService, scope=Scope.APP
+    )
 
 
 class InfrastructureAdaptersProvider(Provider):

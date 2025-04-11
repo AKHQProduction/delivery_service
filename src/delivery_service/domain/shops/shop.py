@@ -1,15 +1,16 @@
 from datetime import date
 
 from delivery_service.domain.shared.entity import Entity
-from delivery_service.domain.shared.errors import AccessDeniedError
 from delivery_service.domain.shared.shop_id import ShopID
 from delivery_service.domain.shared.user_id import UserID
 from delivery_service.domain.shared.vo.location import Coordinates
+from delivery_service.domain.shops.errors import (
+    CantDiscardYourselfError,
+    UserAlreadyInStaffError,
+    UserNotFoundInShopStaffError,
+)
 from delivery_service.domain.shops.value_objects import DaysOff
 from delivery_service.domain.staff.staff_member import StaffMember
-from delivery_service.domain.staff.staff_role import (
-    Role,
-)
 
 
 class Shop(Entity[ShopID]):
@@ -29,19 +30,17 @@ class Shop(Entity[ShopID]):
         self._days_off = days_off
         self._staff_members = staff_members or []
 
-    def add_staff_member(
-        self, new_staff_member: StaffMember, hirer_id: UserID
-    ) -> None:
-        self._ensure_is_owner(hirer_id)
+    def add_staff_member(self, new_staff_member: StaffMember) -> None:
         if new_staff_member in self._staff_members:
-            raise ValueError()
+            raise UserAlreadyInStaffError(new_staff_member.entity_id)
 
         self._staff_members.append(new_staff_member)
 
     def discard_staff_member(
         self, staff_member_id: UserID, firer_id: UserID
     ) -> None:
-        self._ensure_is_owner(firer_id)
+        if staff_member_id == firer_id:
+            raise CantDiscardYourselfError()
 
         staff_member = next(
             (
@@ -52,7 +51,7 @@ class Shop(Entity[ShopID]):
             None,
         )
         if not staff_member:
-            raise ValueError()
+            raise UserNotFoundInShopStaffError(staff_member_id)
 
         self._staff_members.remove(staff_member)
 
@@ -61,14 +60,6 @@ class Shop(Entity[ShopID]):
 
     def can_deliver_in_this_day(self, day: date) -> bool:
         return self._days_off.can_deliver_in_this_day(day)
-
-    def _ensure_is_owner(self, candidate_id: UserID) -> None:
-        if not any(
-            member.entity_id == candidate_id
-            and any(role.name == Role.SHOP_OWNER for role in member.roles)
-            for member in self._staff_members
-        ):
-            raise AccessDeniedError()
 
     @property
     def name(self) -> str:
