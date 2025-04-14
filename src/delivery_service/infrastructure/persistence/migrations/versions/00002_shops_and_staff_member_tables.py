@@ -11,7 +11,7 @@ from typing import Sequence, Union
 import sqlalchemy as sa
 from alembic import op
 
-from delivery_service.domain.shared.vo.location import Coordinates
+from delivery_service.domain.shared.vo.address import Coordinates
 from delivery_service.domain.shops.value_objects import DaysOff
 from delivery_service.infrastructure.persistence.tables.base import (
     value_object_to_json,
@@ -82,10 +82,13 @@ def upgrade() -> None:
     )
     op.drop_constraint("uq_roles_name", "roles", type_="unique")
     op.create_unique_constraint(op.f("uq_users_id"), "users", ["id"])
+    op.create_unique_constraint(op.f("uq_shops_id"), "shops", ["id"])
 
 
 def downgrade() -> None:
     op.drop_constraint(op.f("uq_users_id"), "users", type_="unique")
+    op.drop_constraint(op.f("uq_shops_id"), "shops", type_="unique")
     op.create_unique_constraint("uq_roles_name", "roles", ["name"])
+
     op.drop_table("staff_members")
     op.drop_table("shops")

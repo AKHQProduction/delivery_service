@@ -24,6 +24,10 @@ from sqlalchemy.ext.asyncio import (
     create_async_engine,
 )
 
+from delivery_service.application.commands.add_new_customer import (
+    AddNewCustomerHandler,
+    AddNewCustomerRequest,
+)
 from delivery_service.application.commands.add_new_product import (
     AddNewProductHandler,
     AddNewProductRequest,
@@ -61,6 +65,9 @@ from delivery_service.application.common.behaviors.commition import (
 )
 from delivery_service.application.common.behaviors.telegram_checker import (
     TelegramCheckerBehavior,
+)
+from delivery_service.application.common.factories.customer_factory import (
+    CustomerFactory,
 )
 from delivery_service.application.common.factories.product_factory import (
     ProductFactory,
@@ -115,6 +122,9 @@ from delivery_service.infrastructure.integration.geopy.geolocator import (
 from delivery_service.infrastructure.integration.telegram.view_manager import (
     TelegramViewManager,
 )
+from delivery_service.infrastructure.persistence.adapters.customer_repository import (
+    SQLAlchemyCustomerRepository,
+)
 from delivery_service.infrastructure.persistence.adapters.product_gateway import (
     SQLAlchemyProductGateway,
 )
@@ -163,6 +173,7 @@ class ApplicationProvider(Provider):
         ServiceUserFactory,
         ShopFactory,
         ProductFactory,
+        CustomerFactory,
         scope=Scope.REQUEST,
     )
 
@@ -186,6 +197,7 @@ class ApplicationHandlersProvider(Provider):
         EditProductTitleHandler,
         EditProductPriceHandler,
         DeleteProductHandler,
+        AddNewCustomerHandler,
         GetAllProductsHandler,
         GetShopIDHandler,
         GetShopStaffMembersHandler,
@@ -232,6 +244,9 @@ class BazarioProvider(Provider):
         registry.add_request_handler(
             GetShopStaffMembersRequest, GetShopStaffMembersHandler
         )
+        registry.add_request_handler(
+            AddNewCustomerRequest, AddNewCustomerHandler
+        )
 
         registry.add_pipeline_behaviors(Request, CommitionBehavior)
         registry.add_pipeline_behaviors(
@@ -252,6 +267,7 @@ class DomainProvider(Provider):
         WithParents[SQLAlchemyServiceUserRepository],
         WithParents[SQLAlchemyShopRepository],
         WithParents[SQLAlchemyProductRepository],
+        WithParents[SQLAlchemyCustomerRepository],
     )
     services = provide_all(
         ProductAccessService, ShopAccessService, scope=Scope.APP

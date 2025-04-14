@@ -3,7 +3,7 @@ from datetime import date
 from delivery_service.domain.shared.entity import Entity
 from delivery_service.domain.shared.shop_id import ShopID
 from delivery_service.domain.shared.user_id import UserID
-from delivery_service.domain.shared.vo.location import Coordinates
+from delivery_service.domain.shared.vo.address import Coordinates
 from delivery_service.domain.shops.errors import (
     CantDiscardYourselfError,
     UserAlreadyInStaffError,

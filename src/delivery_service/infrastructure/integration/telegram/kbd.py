@@ -6,8 +6,8 @@ from aiogram.types import (
 
 from delivery_service.domain.staff.staff_role import Role
 from delivery_service.infrastructure.integration.telegram.const import (
-    CLIENTS_BTN,
     CREATE_SHOP_BTN,
+    CUSTOMERS_BTN,
     PRODUCTS_BTN,
     STAFF_BTN,
 )
@@ -19,7 +19,7 @@ def get_shop_staff_main_kbd(
     if Role.SHOP_OWNER in roles or Role.SHOP_MANAGER in roles:
         keyboard = [
             [KeyboardButton(text=PRODUCTS_BTN)],
-            [KeyboardButton(text=CLIENTS_BTN)],
+            [KeyboardButton(text=CUSTOMERS_BTN)],
         ]
 
         if Role.SHOP_OWNER in roles:

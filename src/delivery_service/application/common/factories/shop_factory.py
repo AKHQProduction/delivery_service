@@ -3,7 +3,7 @@ from datetime import date
 
 from delivery_service.application.ports.location_finder import LocationFinder
 from delivery_service.domain.shared.shop_id import ShopID
-from delivery_service.domain.shared.vo.location import Coordinates
+from delivery_service.domain.shared.vo.address import Coordinates
 from delivery_service.domain.shops.shop import Shop
 from delivery_service.domain.shops.value_objects import DaysOff
 from delivery_service.domain.staff.staff_member import StaffMember
