@@ -11,8 +11,8 @@ from delivery_service.domain.staff.errors import (
     FullNameTooLongError,
     InvalidFullNameError,
 )
-from delivery_service.domain.user.repository import ServiceUserRepository
-from delivery_service.domain.user.service_user import ServiceUser
+from delivery_service.domain.users.repository import ServiceUserRepository
+from delivery_service.domain.users.service_user import ServiceUser
 
 
 class ServiceUserFactory:

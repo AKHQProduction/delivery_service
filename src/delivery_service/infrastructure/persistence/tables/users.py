@@ -7,7 +7,7 @@ from delivery_service.domain.staff.staff_role import (
     Role,
     StaffRole,
 )
-from delivery_service.domain.user.service_user import ServiceUser
+from delivery_service.domain.users.service_user import ServiceUser
 from delivery_service.infrastructure.persistence.tables.base import (
     MAPPER_REGISTRY,
 )

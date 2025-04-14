@@ -20,7 +20,7 @@ from delivery_service.application.ports.social_network_provider import (
 from delivery_service.application.ports.transaction_manager import (
     TransactionManager,
 )
-from delivery_service.domain.user.repository import ServiceUserRepository
+from delivery_service.domain.users.repository import ServiceUserRepository
 
 CheckerAllowableRequests = TypeVar(
     "CheckerAllowableRequests", bound=TelegramRequest

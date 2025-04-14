@@ -2,7 +2,7 @@ from abc import abstractmethod
 from typing import Protocol
 
 from delivery_service.domain.shared.user_id import UserID
-from delivery_service.domain.user.service_user import ServiceUser
+from delivery_service.domain.users.service_user import ServiceUser
 
 
 class ServiceUserRepository(Protocol):

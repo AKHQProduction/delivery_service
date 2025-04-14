@@ -3,7 +3,7 @@ from delivery_service.application.ports.idp import IdentityProvider
 from delivery_service.domain.shared.user_id import UserID
 from delivery_service.domain.staff.repository import StaffMemberRepository
 from delivery_service.domain.staff.staff_role import RoleCollection
-from delivery_service.domain.user.repository import ServiceUserRepository
+from delivery_service.domain.users.repository import ServiceUserRepository
 
 
 class TelegramIdentityProvider(IdentityProvider):

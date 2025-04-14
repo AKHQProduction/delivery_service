@@ -2,8 +2,8 @@ from sqlalchemy import and_, exists, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from delivery_service.domain.shared.user_id import UserID
-from delivery_service.domain.user.repository import ServiceUserRepository
-from delivery_service.domain.user.service_user import ServiceUser
+from delivery_service.domain.users.repository import ServiceUserRepository
+from delivery_service.domain.users.service_user import ServiceUser
 from delivery_service.infrastructure.persistence.tables.users import (
     SOCIAL_NETWORKS_TABLE,
 )
