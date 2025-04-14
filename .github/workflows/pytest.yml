@@ -1,0 +1,26 @@
+name: "pytest"
+on: [push, pull_request]
+
+jobs:
+  poetry:
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version: ["3.11"]
+        poetry-version: ["1.8.3"]
+        os: [ubuntu-22.04]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+      - name: Run image
+        uses: abatilo/actions-poetry@v3
+        with:
+          poetry-version: ${{ matrix.poetry-version }}
+      - name: Install Dependencies
+        run: poetry install --all-groups
+
+      - name: Run tests
+        run: poetry run pytest -v -s
