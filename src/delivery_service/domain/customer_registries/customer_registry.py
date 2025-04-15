@@ -108,3 +108,7 @@ class CustomerRegistry(Entity[ShopID]):
             required_roles=[Role.SHOP_OWNER, Role.SHOP_MANAGER],
             candidate_id=candidate_id,
         )
+
+    @property
+    def id(self) -> ShopID:
+        return self.entity_id

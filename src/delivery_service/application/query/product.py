@@ -14,7 +14,9 @@ from delivery_service.application.query.ports.product_gateway import (
     ProductReadModel,
 )
 from delivery_service.domain.shared.errors import AccessDeniedError
-from delivery_service.domain.staff.repository import StaffMemberRepository
+from delivery_service.domain.shop_catalogs.repository import (
+    ShopCatalogRepository,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -36,11 +38,11 @@ class GetAllProductsHandler(
     def __init__(
         self,
         idp: IdentityProvider,
-        staff_repository: StaffMemberRepository,
+        shop_catalog: ShopCatalogRepository,
         product_gateway: ProductGateway,
     ) -> None:
         self._idp = idp
-        self._staff_repository = staff_repository
+        self._shop_catalog = shop_catalog
         self._product_gateway = product_gateway
 
     async def handle(
@@ -49,13 +51,13 @@ class GetAllProductsHandler(
         logger.info("Request to get all products")
         current_user_id = await self._idp.get_current_user_id()
 
-        staff_member = await self._staff_repository.load_with_identity(
-            user_id=current_user_id
+        shop_catalog = await self._shop_catalog.load_with_identity(
+            identity_id=current_user_id
         )
-        if not staff_member:
+        if not shop_catalog:
             raise AccessDeniedError()
 
-        filters = ProductGatewayFilters(shop_id=staff_member.from_shop)
+        filters = ProductGatewayFilters(shop_id=shop_catalog.id)
         products = await self._product_gateway.read_all_products(
             filters=filters
         )

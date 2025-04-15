@@ -84,6 +84,10 @@ from delivery_service.application.common.factories.staff_member_factory import (
 from delivery_service.application.common.markers.requests import (
     TelegramRequest,
 )
+from delivery_service.application.query.customer import (
+    GetAllCustomersHandler,
+    GetAllCustomersRequest,
+)
 from delivery_service.application.query.product import (
     GetAllProductsHandler,
     GetAllProductsRequest,
@@ -117,6 +121,9 @@ from delivery_service.infrastructure.integration.geopy.geolocator import (
 )
 from delivery_service.infrastructure.integration.telegram.view_manager import (
     TelegramViewManager,
+)
+from delivery_service.infrastructure.persistence.adapters.customer_gateway import (
+    SQLAlchemyCustomerGateway,
 )
 from delivery_service.infrastructure.persistence.adapters.customer_registry_repository import (
     SQLAlchemyCustomerRegistryRepository,
@@ -182,6 +189,7 @@ class ApplicationProvider(Provider):
     gateways = provide_all(
         WithParents[SQLAlchemyProductGateway],
         WithParents[SQLAlchemyStaffMemberGateway],
+        WithParents[SQLAlchemyCustomerGateway],
         scope=Scope.REQUEST,
     )
 
@@ -203,6 +211,7 @@ class ApplicationHandlersProvider(Provider):
         GetAllProductsHandler,
         GetShopIDHandler,
         GetShopStaffMembersHandler,
+        GetAllCustomersHandler,
     )
     behaviors = provide_all(CommitionBehavior, TelegramCheckerBehavior)
 
@@ -248,6 +257,9 @@ class BazarioProvider(Provider):
         )
         registry.add_request_handler(
             AddNewCustomerRequest, AddNewCustomerHandler
+        )
+        registry.add_request_handler(
+            GetAllCustomersRequest, GetAllCustomersHandler
         )
 
         registry.add_pipeline_behaviors(Request, CommitionBehavior)

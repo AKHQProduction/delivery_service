@@ -30,3 +30,7 @@ class PhoneBook:
             primary=self.primary,
             secondary=PhoneNumber(phone_number) if phone_number else None,
         )
+
+    @property
+    def primary_phone(self) -> str:
+        return self.primary.value

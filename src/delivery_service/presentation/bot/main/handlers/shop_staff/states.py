@@ -24,3 +24,9 @@ class StaffMenu(StatesGroup):
     MAIN = State()
     STAFF_CARD = State()
     DELETE_CONFIRMATION = State()
+
+
+class CustomerMenu(StatesGroup):
+    MAIN = State()
+
+    CUSTOMER_CARD = State()
