@@ -1,6 +1,5 @@
 [![CodeQL Advanced Python scan](https://github.com/AKHQProduction/delivery_service/actions/workflows/codeql.yml/badge.svg)](https://github.com/AKHQProduction/delivery_service/actions/workflows/codeql.yml)
-[![Pyright Type Check](https://github.com/AKHQProduction/delivery_service/actions/workflows/pyright.yml/badge.svg)](https://github.com/AKHQProduction/delivery_service/actions/workflows/pyright.yml)
-[![Tests](https://github.com/AKHQProduction/delivery_service/actions/workflows/tests.yml/badge.svg)](https://github.com/AKHQProduction/delivery_service/actions/workflows/tests.yml)
+[![Pyright and Pytest](https://github.com/AKHQProduction/delivery_service/actions/workflows/pytest.yml/badge.svg)](https://github.com/AKHQProduction/delivery_service/actions/workflows/pytest.yml)
 
 
 # Event storming
