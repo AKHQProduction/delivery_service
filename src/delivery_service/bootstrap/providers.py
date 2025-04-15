@@ -69,8 +69,8 @@ from delivery_service.application.common.behaviors.telegram_checker import (
 from delivery_service.application.common.factories.customer_factory import (
     CustomerFactory,
 )
-from delivery_service.application.common.factories.product_factory import (
-    ProductFactory,
+from delivery_service.application.common.factories.role_factory import (
+    RoleFactory,
 )
 from delivery_service.application.common.factories.service_user_factory import (
     ServiceUserFactory,
@@ -100,10 +100,6 @@ from delivery_service.bootstrap.configs import (
     RedisConfig,
     TGConfig,
 )
-from delivery_service.domain.products.access_service import (
-    ProductAccessService,
-)
-from delivery_service.domain.shops.access_service import ShopAccessService
 from delivery_service.infrastructure.adapters.id_generator import (
     IDGeneratorImpl,
 )
@@ -136,6 +132,9 @@ from delivery_service.infrastructure.persistence.adapters.role_repository import
 )
 from delivery_service.infrastructure.persistence.adapters.service_user_repository import (
     SQLAlchemyServiceUserRepository,
+)
+from delivery_service.infrastructure.persistence.adapters.shop_catalog_repository import (
+    SQLAlchemyShopCatalogRepository,
 )
 from delivery_service.infrastructure.persistence.adapters.shop_repository import (
     SQLAlchemyShopRepository,
@@ -172,8 +171,8 @@ class ApplicationProvider(Provider):
         StaffMemberFactory,
         ServiceUserFactory,
         ShopFactory,
-        ProductFactory,
         CustomerFactory,
+        RoleFactory,
         scope=Scope.REQUEST,
     )
 
@@ -268,9 +267,7 @@ class DomainProvider(Provider):
         WithParents[SQLAlchemyShopRepository],
         WithParents[SQLAlchemyProductRepository],
         WithParents[SQLAlchemyCustomerRepository],
-    )
-    services = provide_all(
-        ProductAccessService, ShopAccessService, scope=Scope.APP
+        WithParents[SQLAlchemyShopCatalogRepository],
     )
 
 

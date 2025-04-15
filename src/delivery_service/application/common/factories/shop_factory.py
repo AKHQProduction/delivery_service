@@ -1,12 +1,16 @@
+# ruff: noqa: E501
 from dataclasses import dataclass, field
 from datetime import date
 
-from delivery_service.application.ports.location_finder import LocationFinder
-from delivery_service.domain.shared.shop_id import ShopID
+from delivery_service.application.common.factories.staff_member_factory import (
+    StaffMemberFactory,
+)
+from delivery_service.application.ports.id_generator import IDGenerator
+from delivery_service.domain.shared.user_id import UserID
 from delivery_service.domain.shared.vo.address import Coordinates
 from delivery_service.domain.shops.shop import Shop
 from delivery_service.domain.shops.value_objects import DaysOff
-from delivery_service.domain.staff.staff_member import StaffMember
+from delivery_service.domain.staff.staff_role import Role
 
 
 @dataclass(frozen=True)
@@ -22,17 +26,28 @@ class CoordinatesData:
 
 
 class ShopFactory:
-    def __init__(self, location_finder: LocationFinder) -> None:
-        self._location_finder = location_finder
-
-    def create_shop(
+    def __init__(
         self,
-        shop_id: ShopID,
+        id_generator: IDGenerator,
+        staff_member_factory: StaffMemberFactory,
+    ) -> None:
+        self._id_generator = id_generator
+        self._member_factory = staff_member_factory
+
+    async def create_shop(
+        self,
         shop_name: str,
         shop_coordinates: CoordinatesData,
         shop_days_off: DaysOffData,
-        owner: StaffMember,
+        current_user_id: UserID,
     ) -> Shop:
+        shop_id = self._id_generator.generate_shop_id()
+        owner = await self._member_factory.create_staff_member(
+            user_id=current_user_id,
+            shop_id=shop_id,
+            required_roles=[Role.SHOP_OWNER, Role.SHOP_MANAGER, Role.COURIER],
+        )
+
         return Shop(
             entity_id=shop_id,
             name=shop_name,

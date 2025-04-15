@@ -3,6 +3,7 @@ from sqlalchemy import and_
 from sqlalchemy.orm import relationship
 
 from delivery_service.domain.shared.vo.address import Coordinates
+from delivery_service.domain.shop_catalogs.shop_catalog import ShopCatalog
 from delivery_service.domain.shops.shop import Shop
 from delivery_service.domain.shops.value_objects import DaysOff
 from delivery_service.domain.staff.staff_member import StaffMember
@@ -94,6 +95,24 @@ MAPPER_REGISTRY.map_imperatively(
 )
 
 MAPPER_REGISTRY.map_imperatively(
+    ShopCatalog,
+    SHOPS_TABLE,
+    properties={
+        "_entity_id": SHOPS_TABLE.c.id,
+        "_staff_members": relationship(
+            StaffMember,
+            primaryjoin=and_(
+                SHOPS_TABLE.c.id == STAFF_MEMBERS_TABLE.c.shop_id
+            ),
+            back_populates="_shop_catalog",
+            cascade="all, delete-orphan",
+            lazy="selectin",
+            overlaps="_staff_members",
+        ),
+    },
+)
+
+MAPPER_REGISTRY.map_imperatively(
     StaffMember,
     STAFF_MEMBERS_TABLE,
     properties={
@@ -117,6 +136,15 @@ MAPPER_REGISTRY.map_imperatively(
                 STAFF_MEMBERS_TABLE.c.shop_id == SHOPS_TABLE.c.id
             ),
             back_populates="_staff_members",
+            overlaps="_staff_members",
+        ),
+        "_shop_catalog": relationship(
+            ShopCatalog,
+            primaryjoin=and_(
+                STAFF_MEMBERS_TABLE.c.shop_id == SHOPS_TABLE.c.id
+            ),
+            back_populates="_staff_members",
+            overlaps="_shop,_staff_members",
         ),
     },
 )

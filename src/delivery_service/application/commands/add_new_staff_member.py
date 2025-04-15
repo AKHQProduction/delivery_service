@@ -5,8 +5,8 @@ from dataclasses import dataclass
 from bazario.asyncio import RequestHandler
 
 from delivery_service.application.common.errors import ShopNotFoundError
-from delivery_service.application.common.factories.staff_member_factory import (
-    StaffMemberFactory,
+from delivery_service.application.common.factories.role_factory import (
+    RoleFactory,
 )
 from delivery_service.application.common.markers.requests import (
     BaseCommand,
@@ -14,10 +14,8 @@ from delivery_service.application.common.markers.requests import (
 )
 from delivery_service.application.ports.idp import IdentityProvider
 from delivery_service.application.ports.view_manager import ViewManager
-from delivery_service.domain.shared.errors import AccessDeniedError
 from delivery_service.domain.shared.shop_id import ShopID
 from delivery_service.domain.shared.user_id import UserID
-from delivery_service.domain.shops.access_service import ShopAccessService
 from delivery_service.domain.shops.repository import (
     ShopRepository,
 )
@@ -29,7 +27,7 @@ logger = logging.getLogger(__name__)
 @dataclass(frozen=True)
 class AddNewStaffMemberRequest(BaseCommand[None]):
     candidate_id: UserID
-    role: Role
+    roles: list[Role]
 
 
 class AddNewStaffMemberHandler(RequestHandler[AddNewStaffMemberRequest, None]):
@@ -37,13 +35,11 @@ class AddNewStaffMemberHandler(RequestHandler[AddNewStaffMemberRequest, None]):
         self,
         identity_provider: IdentityProvider,
         shop_repository: ShopRepository,
-        staff_member_factory: StaffMemberFactory,
-        shop_access_service: ShopAccessService,
+        role_factory: RoleFactory,
     ) -> None:
         self._idp = identity_provider
         self._shop_repository = shop_repository
-        self._staff_member_factory = staff_member_factory
-        self._shop_access_service = shop_access_service
+        self._role_factory = role_factory
 
     async def handle(self, request: AddNewStaffMemberRequest) -> None:
         logger.info("Request to add new staff member %s", request.candidate_id)
@@ -53,19 +49,14 @@ class AddNewStaffMemberHandler(RequestHandler[AddNewStaffMemberRequest, None]):
         if not shop:
             raise ShopNotFoundError()
 
-        current_user_roles = await self._idp.get_current_staff_roles()
-        if not current_user_roles:
-            raise AccessDeniedError()
-        self._shop_access_service.can_add_staff_member(current_user_roles)
-
-        new_staff_member = (
-            await self._staff_member_factory.create_staff_member(
-                user_id=request.candidate_id,
-                shop_id=shop.entity_id,
-                required_roles=[request.role],
-            )
+        roles = await self._role_factory.restore_roles(
+            required_roles=request.roles
         )
-        shop.add_staff_member(new_staff_member)
+        shop.add_staff_member(
+            new_staff_id=request.candidate_id,
+            required_roles=roles,
+            hirer_id=current_user_id,
+        )
 
 
 @dataclass(frozen=True)
@@ -78,12 +69,12 @@ class JoinStaffMemberHandler(RequestHandler[JoinStaffMemberRequest, None]):
         self,
         identity_provider: IdentityProvider,
         shop_repository: ShopRepository,
-        staff_member_factory: StaffMemberFactory,
+        role_factory: RoleFactory,
         view_manager: ViewManager,
     ) -> None:
         self._idp = identity_provider
         self._shop_repository = shop_repository
-        self._staff_member_factory = staff_member_factory
+        self._role_factory = role_factory
         self._view_manager = view_manager
 
     async def handle(self, request: JoinStaffMemberRequest) -> None:
@@ -94,12 +85,10 @@ class JoinStaffMemberHandler(RequestHandler[JoinStaffMemberRequest, None]):
         if not shop:
             raise ShopNotFoundError()
 
-        new_staff_member = (
-            await self._staff_member_factory.create_staff_member(
-                user_id=current_user_id,
-                shop_id=shop.entity_id,
-                required_roles=[Role.SHOP_MANAGER],
-            )
+        roles = await self._role_factory.restore_roles(
+            required_roles=[Role.SHOP_MANAGER]
         )
-        shop.add_staff_member(new_staff_member)
+        shop.join_to_staff_members(
+            candidate_id=current_user_id, required_roles=roles
+        )
         await self._view_manager.send_greeting_message(current_user_id)

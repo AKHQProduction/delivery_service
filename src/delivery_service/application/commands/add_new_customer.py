@@ -14,6 +14,8 @@ from delivery_service.application.ports.idp import IdentityProvider
 from delivery_service.domain.customers.repository import CustomerRepository
 from delivery_service.domain.shops.repository import ShopRepository
 
+logger = logging.getLogger(__name__)
+
 
 @dataclass(frozen=True)
 class AddNewCustomerRequest(TelegramRequest):
@@ -35,6 +37,7 @@ class AddNewCustomerHandler(RequestHandler[AddNewCustomerRequest, None]):
         self._repository = customer_repository
 
     async def handle(self, request: AddNewCustomerRequest) -> None:
+        logger.info("Request to add new customer")
         current_user_id = await self._idp.get_current_user_id()
 
         shop = await self._shop_repository.load_with_identity(current_user_id)
@@ -46,5 +49,4 @@ class AddNewCustomerHandler(RequestHandler[AddNewCustomerRequest, None]):
             full_name=request.full_name,
             phone_number=request.phone_number,
         )
-        logging.info(new_customer.entity_id)
         self._repository.add(new_customer)

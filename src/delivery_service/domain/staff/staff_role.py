@@ -44,11 +44,11 @@ class RoleCollection(list[StaffRole]):
             raise ValueError()
         super().append(element)
 
-    def get(self, role_id: StaffRoleID) -> StaffRole:
-        for role in self:
-            if role.entity_id == role_id:
-                return role
-        raise ValueError()
+    def get(self, role: Role) -> StaffRole | None:
+        for exist_role in self:
+            if exist_role.name == role:
+                return exist_role
+        return None
 
     def discard(self, element: StaffRole) -> None:
         if element in self:
