@@ -1,10 +1,5 @@
 from datetime import date
 
-from delivery_service.domain.customers.customer import Customer
-from delivery_service.domain.customers.phone_number import (
-    PhoneBook,
-    PhoneNumber,
-)
 from delivery_service.domain.shared.entity import Entity
 from delivery_service.domain.shared.errors import AccessDeniedError
 from delivery_service.domain.shared.shop_id import ShopID
@@ -75,20 +70,6 @@ class Shop(Entity[ShopID]):
             raise UserNotFoundInShopStaffError(staff_member_id)
 
         self._staff_members.remove(staff_member)
-
-    def add_new_customer(
-        self,
-        customer_id: UserID,
-        customer_full_name: str,
-        primary_phone_number: str,
-    ) -> Customer:
-        return Customer(
-            entity_id=customer_id,
-            shop_id=self.entity_id,
-            full_name=customer_full_name,
-            contacts=PhoneBook(primary=PhoneNumber(primary_phone_number)),
-            delivery_address=None,
-        )
 
     def edit_regular_days_off(self, days: list[int]) -> None:
         self._days_off = self._days_off.change_regular_days_off(days)

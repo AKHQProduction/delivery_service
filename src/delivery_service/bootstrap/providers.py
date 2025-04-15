@@ -118,6 +118,9 @@ from delivery_service.infrastructure.integration.geopy.geolocator import (
 from delivery_service.infrastructure.integration.telegram.view_manager import (
     TelegramViewManager,
 )
+from delivery_service.infrastructure.persistence.adapters.customer_registry_repository import (
+    SQLAlchemyCustomerRegistryRepository,
+)
 from delivery_service.infrastructure.persistence.adapters.customer_repository import (
     SQLAlchemyCustomerRepository,
 )
@@ -268,6 +271,7 @@ class DomainProvider(Provider):
         WithParents[SQLAlchemyProductRepository],
         WithParents[SQLAlchemyCustomerRepository],
         WithParents[SQLAlchemyShopCatalogRepository],
+        WithParents[SQLAlchemyCustomerRegistryRepository],
     )
 
 

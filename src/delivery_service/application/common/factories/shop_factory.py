@@ -6,6 +6,9 @@ from delivery_service.application.common.factories.staff_member_factory import (
     StaffMemberFactory,
 )
 from delivery_service.application.ports.id_generator import IDGenerator
+from delivery_service.domain.customer_registries.customer_registry import (
+    CoordinatesData,
+)
 from delivery_service.domain.shared.user_id import UserID
 from delivery_service.domain.shared.vo.address import Coordinates
 from delivery_service.domain.shops.shop import Shop
@@ -17,12 +20,6 @@ from delivery_service.domain.staff.staff_role import Role
 class DaysOffData:
     regular_days: list[int] = field(default_factory=list)
     irregular_days: list[date] = field(default_factory=list)
-
-
-@dataclass(frozen=True)
-class CoordinatesData:
-    latitude: float
-    longitude: float
 
 
 class ShopFactory:

@@ -5,7 +5,6 @@ from dataclasses import dataclass
 from bazario.asyncio import RequestHandler
 
 from delivery_service.application.common.factories.shop_factory import (
-    CoordinatesData,
     DaysOffData,
     ShopFactory,
 )
@@ -13,6 +12,9 @@ from delivery_service.application.common.markers.requests import (
     TelegramRequest,
 )
 from delivery_service.application.ports.idp import IdentityProvider
+from delivery_service.domain.customer_registries.customer_registry import (
+    CoordinatesData,
+)
 from delivery_service.domain.shared.shop_id import ShopID
 from delivery_service.domain.shops.errors import ShopCreationNotAllowedError
 from delivery_service.domain.shops.repository import (

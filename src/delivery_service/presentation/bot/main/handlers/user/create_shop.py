@@ -28,10 +28,12 @@ from delivery_service.application.commands.create_new_shop import (
     CreateNewShopRequest,
 )
 from delivery_service.application.common.factories.shop_factory import (
-    CoordinatesData,
     DaysOffData,
 )
 from delivery_service.application.ports.location_finder import LocationFinder
+from delivery_service.domain.customer_registries.customer_registry import (
+    CoordinatesData,
+)
 from delivery_service.domain.staff.staff_role import Role
 from delivery_service.infrastructure.integration.geopy.errors import (
     LocationNotFoundError,
