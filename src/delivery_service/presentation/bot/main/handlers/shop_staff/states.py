@@ -41,5 +41,11 @@ class CustomerMenu(StatesGroup):
     PREVIEW = State()
 
     EDIT_MENU = State()
+    EDIT_CUSTOMER_NAME = State()
+    EDIT_CUSTOMER_PHONE = State()
+    EDIT_CUSTOMER_ADDRESS = State()
+    EDIT_CUSTOMER_FLOOR = State()
+    EDIT_CUSTOMER_APARTMENT_NUMBER = State()
+    EDIT_CUSTOMER_INTERCOM_CODE = State()
 
     DELETE_CONFIRMATION = State()

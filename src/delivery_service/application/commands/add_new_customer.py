@@ -14,16 +14,16 @@ from delivery_service.application.common.markers.requests import (
 )
 from delivery_service.application.ports.id_generator import IDGenerator
 from delivery_service.application.ports.idp import IdentityProvider
-from delivery_service.domain.customer_registries.customer_registry import (
-    AddressData,
-    CoordinatesData,
-    DeliveryAddressData,
-)
 from delivery_service.domain.customer_registries.customer_registry_repository import (
     CustomerRegistryRepository,
 )
 from delivery_service.domain.customers.repository import CustomerRepository
 from delivery_service.domain.shared.user_id import UserID
+from delivery_service.domain.shared.vo.address import (
+    AddressData,
+    CoordinatesData,
+    DeliveryAddressData,
+)
 
 logger = logging.getLogger(__name__)
 

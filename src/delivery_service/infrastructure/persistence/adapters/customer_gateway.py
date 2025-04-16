@@ -8,12 +8,12 @@ from delivery_service.application.query.ports.customer_gateway import (
     CustomerGatewayFilters,
     CustomerReadModel,
 )
-from delivery_service.domain.customer_registries.customer_registry import (
-    AddressData,
-)
 from delivery_service.domain.customers.phone_number import PhoneBook
 from delivery_service.domain.shared.user_id import UserID
-from delivery_service.domain.shared.vo.address import DeliveryAddress
+from delivery_service.domain.shared.vo.address import (
+    AddressData,
+    DeliveryAddress,
+)
 from delivery_service.infrastructure.persistence.tables import (
     CUSTOMERS_TABLE,
     USERS_TABLE,

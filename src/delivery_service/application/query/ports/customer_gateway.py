@@ -3,11 +3,9 @@ from collections.abc import Sequence
 from dataclasses import dataclass
 from typing import Protocol
 
-from delivery_service.domain.customer_registries.customer_registry import (
-    AddressData,
-)
 from delivery_service.domain.shared.shop_id import ShopID
 from delivery_service.domain.shared.user_id import UserID
+from delivery_service.domain.shared.vo.address import AddressData
 
 
 @dataclass(frozen=True)

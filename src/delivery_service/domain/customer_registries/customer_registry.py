@@ -1,5 +1,3 @@
-from dataclasses import dataclass
-
 from delivery_service.domain.customers.customer import Customer
 from delivery_service.domain.customers.phone_number import (
     PhoneBook,
@@ -11,33 +9,14 @@ from delivery_service.domain.shared.shop_id import ShopID
 from delivery_service.domain.shared.user_id import UserID
 from delivery_service.domain.shared.vo.address import (
     Address,
+    AddressData,
     Coordinates,
+    CoordinatesData,
     DeliveryAddress,
+    DeliveryAddressData,
 )
 from delivery_service.domain.staff.staff_member import StaffMember
 from delivery_service.domain.staff.staff_role import Role
-
-
-@dataclass(frozen=True)
-class CoordinatesData:
-    latitude: float
-    longitude: float
-
-
-@dataclass(frozen=True)
-class AddressData:
-    city: str
-    street: str
-    house_number: str
-    apartment_number: str | None
-    floor: int | None
-    intercom_code: str | None
-
-
-@dataclass(frozen=True)
-class DeliveryAddressData:
-    coordinates: CoordinatesData
-    address: AddressData
 
 
 class CustomerRegistry(Entity[ShopID]):
@@ -90,6 +69,36 @@ class CustomerRegistry(Entity[ShopID]):
     ) -> None:
         self._is_current_shop_customer(customer.from_shop)
         self._member_with_admin_roles(deleter_id)
+
+    def edit_customer_full_name(
+        self, customer: Customer, editor_id: UserID, new_name: str
+    ) -> None:
+        self._is_current_shop_customer(customer.from_shop)
+        self._member_with_admin_roles(editor_id)
+
+        customer.edit_full_name(new_name)
+
+    def edit_customer_primary_phone(
+        self, customer: Customer, editor_id: UserID, new_phone: str
+    ) -> None:
+        self._is_current_shop_customer(customer.from_shop)
+        self._member_with_admin_roles(editor_id)
+
+        customer.edit_primary_phone_number(new_phone)
+
+    def edit_customer_address(
+        self,
+        customer: Customer,
+        editor_id: UserID,
+        address: AddressData,
+        coordinates: CoordinatesData,
+    ) -> None:
+        self._is_current_shop_customer(customer.from_shop)
+        self._member_with_admin_roles(editor_id)
+
+        customer.edit_delivery_address(
+            address_data=address, coordinates_data=coordinates
+        )
 
     def _check_roles(
         self, required_roles: list[Role], candidate_id: UserID

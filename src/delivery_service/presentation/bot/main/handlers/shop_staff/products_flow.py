@@ -283,7 +283,7 @@ PRODUCTS_DIALOG = Dialog(
         Row(
             SwitchTo(
                 id="edit_product",
-                text=Const("✏️ Редактировать"),
+                text=Const("✏️ Редагувати"),
                 state=states.ProductMenu.EDIT_MENU,
             ),
             SwitchTo(
@@ -359,7 +359,7 @@ PRODUCTS_DIALOG = Dialog(
             id="input_edited_product_title",
             on_success=on_input_edited_product_title,
         ),
-        get_back_btn(state=states.ProductMenu.PRODUCT_CARD),
+        get_back_btn(state=states.ProductMenu.EDIT_MENU),
         state=states.ProductMenu.EDIT_PRODUCT_TITLE,
     ),
     Window(
@@ -368,7 +368,7 @@ PRODUCTS_DIALOG = Dialog(
             id="input_edited_product_price",
             on_success=on_input_edited_product_price,
         ),
-        get_back_btn(state=states.ProductMenu.PRODUCT_CARD),
+        get_back_btn(state=states.ProductMenu.EDIT_MENU),
         state=states.ProductMenu.EDIT_PRODUCT_PRICE,
     ),
     Window(

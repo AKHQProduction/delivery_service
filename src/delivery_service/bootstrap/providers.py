@@ -58,6 +58,14 @@ from delivery_service.application.commands.discard_staff_member import (
     DiscardStaffMemberHandler,
     DiscardStaffMemberRequest,
 )
+from delivery_service.application.commands.edit_customer import (
+    EditCustomerAddressHandler,
+    EditCustomerAddressRequest,
+    EditCustomerNameHandler,
+    EditCustomerNameRequest,
+    EditCustomerPrimaryPhoneHandler,
+    EditCustomerPrimaryPhoneRequest,
+)
 from delivery_service.application.commands.edit_product import (
     EditProductPriceHandler,
     EditProductPriceRequest,
@@ -213,11 +221,15 @@ class ApplicationHandlersProvider(Provider):
         DeleteProductHandler,
         AddNewCustomerHandler,
         DeleteCustomerHandler,
+        EditCustomerNameHandler,
+        EditCustomerPrimaryPhoneHandler,
+        EditCustomerAddressHandler,
         GetAllProductsHandler,
         GetShopIDHandler,
         GetShopStaffMembersHandler,
         GetAllCustomersHandler,
     )
+
     behaviors = provide_all(CommitionBehavior, TelegramCheckerBehavior)
 
 
@@ -268,6 +280,15 @@ class BazarioProvider(Provider):
         )
         registry.add_request_handler(
             DeleteCustomerRequest, DeleteCustomerHandler
+        )
+        registry.add_request_handler(
+            EditCustomerNameRequest, EditCustomerNameHandler
+        )
+        registry.add_request_handler(
+            EditCustomerPrimaryPhoneRequest, EditCustomerPrimaryPhoneHandler
+        )
+        registry.add_request_handler(
+            EditCustomerAddressRequest, EditCustomerAddressHandler
         )
 
         registry.add_pipeline_behaviors(Request, CommitionBehavior)
