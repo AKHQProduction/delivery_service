@@ -1,7 +1,7 @@
 from geopy import Location, Nominatim
 
 from delivery_service.application.ports.location_finder import (
-    LocationCoordinates,
+    LocationData,
     LocationFinder,
 )
 from delivery_service.infrastructure.integration.geopy.errors import (
@@ -13,7 +13,7 @@ class Geolocator(LocationFinder):
     def __init__(self, geolocator: Nominatim) -> None:
         self._geolocator = geolocator
 
-    async def find_location(self, address: str) -> LocationCoordinates:
+    async def find_location(self, address: str) -> LocationData:
         location: Location | None = await self._geolocator.geocode(
             address,
             addressdetails=True,
@@ -34,8 +34,11 @@ class Geolocator(LocationFinder):
 
             if not all([city, street, house_number]):
                 raise LocationNotFoundError()
-            return LocationCoordinates(
+            return LocationData(
                 latitude=location.latitude,
                 longitude=location.longitude,
+                city=city,
+                street=street,
+                house_number=house_number,
             )
         raise LocationNotFoundError()

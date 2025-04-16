@@ -23,19 +23,20 @@ from delivery_service.domain.customer_registries.customer_registry_repository im
     CustomerRegistryRepository,
 )
 from delivery_service.domain.customers.repository import CustomerRepository
+from delivery_service.domain.shared.user_id import UserID
 
 logger = logging.getLogger(__name__)
 
 
 @dataclass(frozen=True)
-class AddNewCustomerRequest(TelegramRequest):
+class AddNewCustomerRequest(TelegramRequest[UserID]):
     full_name: str
     phone_number: str
     address_data: AddressData
     coordinates: CoordinatesData
 
 
-class AddNewCustomerHandler(RequestHandler[AddNewCustomerRequest, None]):
+class AddNewCustomerHandler(RequestHandler[AddNewCustomerRequest, UserID]):
     def __init__(
         self,
         idp: IdentityProvider,
@@ -48,12 +49,9 @@ class AddNewCustomerHandler(RequestHandler[AddNewCustomerRequest, None]):
         self._customer_registry_repository = customer_registry_repository
         self._repository = customer_repository
 
-    async def handle(self, request: AddNewCustomerRequest) -> None:
+    async def handle(self, request: AddNewCustomerRequest) -> UserID:
         logger.info("Request to add new customer")
         current_user_id = await self._idp.get_current_user_id()
-
-        if await self._repository.exists(request.phone_number):
-            raise EntityAlreadyExistsError()
 
         customer_registry = (
             await self._customer_registry_repository.load_with_identity(
@@ -62,6 +60,11 @@ class AddNewCustomerHandler(RequestHandler[AddNewCustomerRequest, None]):
         )
         if not customer_registry:
             raise ShopNotFoundError()
+
+        if await self._repository.exists(
+            request.phone_number, customer_registry.id
+        ):
+            raise EntityAlreadyExistsError()
 
         new_customer_id = self._id_generator.generate_user_id()
         new_customer = customer_registry.add_new_customer(
@@ -74,3 +77,5 @@ class AddNewCustomerHandler(RequestHandler[AddNewCustomerRequest, None]):
             creator_id=current_user_id,
         )
         self._repository.add(new_customer)
+
+        return new_customer_id

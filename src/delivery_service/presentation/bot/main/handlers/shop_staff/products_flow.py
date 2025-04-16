@@ -280,15 +280,17 @@ PRODUCTS_DIALOG = Dialog(
     ),
     Window(
         PRODUCT_CARD,
-        SwitchTo(
-            id="edit_product",
-            text=Const("✏️ Редактировать"),
-            state=states.ProductMenu.EDIT_MENU,
-        ),
-        SwitchTo(
-            id="delete_product",
-            text=Const("🗑 Видалить"),
-            state=states.ProductMenu.DELETE_CONFIRMATION,
+        Row(
+            SwitchTo(
+                id="edit_product",
+                text=Const("✏️ Редактировать"),
+                state=states.ProductMenu.EDIT_MENU,
+            ),
+            SwitchTo(
+                id="delete_product",
+                text=Const("🗑 Видалить"),
+                state=states.ProductMenu.DELETE_CONFIRMATION,
+            ),
         ),
         get_back_btn(state=states.ProductMenu.MAIN),
         getter=get_shop_product,

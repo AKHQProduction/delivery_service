@@ -30,3 +30,16 @@ class CustomerMenu(StatesGroup):
     MAIN = State()
 
     CUSTOMER_CARD = State()
+
+    # Customer creation
+    NEW_CUSTOMER_NAME = State()
+    NEW_CUSTOMER_PHONE = State()
+    NEW_CUSTOMER_ADDRESS = State()
+    NEW_CUSTOMER_FLOOR = State()
+    NEW_CUSTOMER_APARTMENT_NUMBER = State()
+    NEW_CUSTOMER_INTERCOM_CODE = State()
+    PREVIEW = State()
+
+    EDIT_MENU = State()
+
+    DELETE_CONFIRMATION = State()

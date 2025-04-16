@@ -21,3 +21,7 @@ class Customer(Entity[UserID]):
         self._full_name = full_name
         self._contacts = contacts
         self._delivery_address = delivery_address
+
+    @property
+    def from_shop(self) -> ShopID:
+        return self._shop_id

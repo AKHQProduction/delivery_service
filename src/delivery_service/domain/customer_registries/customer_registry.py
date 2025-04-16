@@ -85,6 +85,12 @@ class CustomerRegistry(Entity[ShopID]):
             delivery_address=delivery_address,
         )
 
+    def can_delete_customer(
+        self, customer: Customer, deleter_id: UserID
+    ) -> None:
+        self._is_current_shop_customer(customer.from_shop)
+        self._member_with_admin_roles(deleter_id)
+
     def _check_roles(
         self, required_roles: list[Role], candidate_id: UserID
     ) -> None:
@@ -108,6 +114,10 @@ class CustomerRegistry(Entity[ShopID]):
             required_roles=[Role.SHOP_OWNER, Role.SHOP_MANAGER],
             candidate_id=candidate_id,
         )
+
+    def _is_current_shop_customer(self, customer_shop_id: ShopID) -> None:
+        if not (customer_shop_id == self.id):
+            raise AccessDeniedError()
 
     @property
     def id(self) -> ShopID:
