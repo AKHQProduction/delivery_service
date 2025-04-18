@@ -105,8 +105,8 @@ from delivery_service.application.query.product import (
     GetAllProductsRequest,
 )
 from delivery_service.application.query.shop import (
-    GetShopIDHandler,
-    GetShopIDRequest,
+    GetShopHandler,
+    GetShopRequest,
     GetShopStaffMembersHandler,
     GetShopStaffMembersRequest,
 )
@@ -158,6 +158,9 @@ from delivery_service.infrastructure.persistence.adapters.service_user_repositor
 from delivery_service.infrastructure.persistence.adapters.shop_catalog_repository import (
     SQLAlchemyShopCatalogRepository,
 )
+from delivery_service.infrastructure.persistence.adapters.shop_gateway import (
+    SQLAlchemyShopGateway,
+)
 from delivery_service.infrastructure.persistence.adapters.shop_repository import (
     SQLAlchemyShopRepository,
 )
@@ -202,6 +205,7 @@ class ApplicationProvider(Provider):
         WithParents[SQLAlchemyProductGateway],
         WithParents[SQLAlchemyStaffMemberGateway],
         WithParents[SQLAlchemyCustomerGateway],
+        WithParents[SQLAlchemyShopGateway],
         scope=Scope.REQUEST,
     )
 
@@ -225,7 +229,7 @@ class ApplicationHandlersProvider(Provider):
         EditCustomerPrimaryPhoneHandler,
         EditCustomerAddressHandler,
         GetAllProductsHandler,
-        GetShopIDHandler,
+        GetShopHandler,
         GetShopStaffMembersHandler,
         GetAllCustomersHandler,
     )
@@ -268,7 +272,7 @@ class BazarioProvider(Provider):
         registry.add_request_handler(
             GetAllProductsRequest, GetAllProductsHandler
         )
-        registry.add_request_handler(GetShopIDRequest, GetShopIDHandler)
+        registry.add_request_handler(GetShopRequest, GetShopHandler)
         registry.add_request_handler(
             GetShopStaffMembersRequest, GetShopStaffMembersHandler
         )

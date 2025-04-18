@@ -19,7 +19,7 @@ from delivery_service.application.query.ports.staff_gateway import (
     StaffMemberGateway,
 )
 from delivery_service.application.query.shop import (
-    GetShopIDRequest,
+    GetShopRequest,
     GetShopStaffMembersRequest,
 )
 from delivery_service.domain.shared.errors import AccessDeniedError
@@ -53,8 +53,8 @@ async def get_invite_manager_link(
     if not bot:
         raise ValueError()
 
-    shop_id = await sender.send(GetShopIDRequest())
-    link = await create_start_link(bot, payload=f"add_staff_{shop_id}")
+    shop = await sender.send(GetShopRequest())
+    link = await create_start_link(bot, payload=f"add_staff_{shop.shop_id}")
 
     return {"link": link}
 

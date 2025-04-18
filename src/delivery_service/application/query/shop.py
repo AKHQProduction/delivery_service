@@ -4,37 +4,43 @@ from dataclasses import dataclass
 
 from bazario.asyncio import RequestHandler
 
+from delivery_service.application.common.errors import ShopNotFoundError
 from delivery_service.application.common.markers.requests import (
     TelegramRequest,
 )
 from delivery_service.application.ports.idp import IdentityProvider
+from delivery_service.application.query.ports.shop_gateway import (
+    ShopGateway,
+    ShopReadModel,
+)
 from delivery_service.application.query.ports.staff_gateway import (
     StaffGatewayFilters,
     StaffMemberGateway,
     StaffReadModel,
 )
 from delivery_service.domain.shared.errors import AccessDeniedError
-from delivery_service.domain.shared.shop_id import ShopID
 from delivery_service.domain.staff.repository import StaffMemberRepository
 
 logger = logging.getLogger(__name__)
 
 
 @dataclass(frozen=True)
-class GetShopIDRequest(TelegramRequest[ShopID]):
+class GetShopRequest(TelegramRequest[ShopReadModel]):
     pass
 
 
-class GetShopIDHandler(RequestHandler[GetShopIDRequest, ShopID]):
+class GetShopHandler(RequestHandler[GetShopRequest, ShopReadModel]):
     def __init__(
         self,
         idp: IdentityProvider,
         staff_repository: StaffMemberRepository,
+        shop_gateway: ShopGateway,
     ) -> None:
         self._idp = idp
         self._staff_repository = staff_repository
+        self._shop_gateway = shop_gateway
 
-    async def handle(self, request: GetShopIDRequest) -> ShopID:
+    async def handle(self, request: GetShopRequest) -> ShopReadModel:
         logger.info("Request to get current staff shop id")
         current_user_id = await self._idp.get_current_user_id()
 
@@ -44,7 +50,12 @@ class GetShopIDHandler(RequestHandler[GetShopIDRequest, ShopID]):
         if not staff_member:
             raise AccessDeniedError()
 
-        return staff_member.from_shop
+        shop_read_model = await self._shop_gateway.read_with_id(
+            shop_id=staff_member.from_shop
+        )
+        if not shop_read_model:
+            raise ShopNotFoundError()
+        return shop_read_model
 
 
 @dataclass(frozen=True)
