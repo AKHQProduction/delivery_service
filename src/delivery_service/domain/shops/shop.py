@@ -1,11 +1,21 @@
 from datetime import date
 
+from delivery_service.domain.orders.order import (
+    DeliveryPreference,
+    Order,
+)
+from delivery_service.domain.orders.order_id import OrderID
+from delivery_service.domain.orders.order_line import OrderLine
+from delivery_service.domain.shared.dto import OrderLineData
 from delivery_service.domain.shared.entity import Entity
 from delivery_service.domain.shared.errors import AccessDeniedError
 from delivery_service.domain.shared.shop_id import ShopID
 from delivery_service.domain.shared.user_id import UserID
 from delivery_service.domain.shared.vo.address import Coordinates
+from delivery_service.domain.shared.vo.price import Price
+from delivery_service.domain.shared.vo.quantity import Quantity
 from delivery_service.domain.shops.errors import (
+    CantDeliveryInDaysOffError,
     CantDiscardYourselfError,
     UserAlreadyInStaffError,
     UserNotFoundInShopStaffError,
@@ -31,6 +41,40 @@ class Shop(Entity[ShopID]):
         self._coordinates = coordinates
         self._days_off = days_off
         self._staff_members = staff_members or []
+
+    def add_new_order(
+        self,
+        new_order_id: OrderID,
+        order_line_data: list[OrderLineData],
+        customer_id: UserID,
+        delivery_preference: DeliveryPreference,
+        bottles_to_exchange: int,
+        delivery_date: date,
+        creator_id: UserID,
+    ) -> Order:
+        self._member_with_admin_roles(candidate_id=creator_id)
+        self._can_deliver_in_this_day(delivery_date)
+
+        order_lines = [
+            OrderLine(
+                entity_id=data.product_id,
+                order_id=new_order_id,
+                title=data.title,
+                price_per_item=Price(data.price_per_item),
+                quantity=Quantity(data.quantity),
+            )
+            for data in order_line_data
+        ]
+
+        return Order(
+            entity_id=new_order_id,
+            shop_id=self.id,
+            customer_id=customer_id,
+            order_lines=order_lines,
+            delivery_preference=delivery_preference,
+            bottles_to_exchange=Quantity(bottles_to_exchange),
+            delivery_date=delivery_date,
+        )
 
     def add_staff_member(
         self,
@@ -74,8 +118,15 @@ class Shop(Entity[ShopID]):
     def edit_regular_days_off(self, days: list[int]) -> None:
         self._days_off = self._days_off.change_regular_days_off(days)
 
-    def can_deliver_in_this_day(self, day: date) -> bool:
-        return self._days_off.can_deliver_in_this_day(day)
+    def _can_deliver_in_this_day(self, day: date) -> None:
+        if not self._days_off.can_deliver_in_this_day(day):
+            raise CantDeliveryInDaysOffError()
+
+    def _member_with_admin_roles(self, candidate_id: UserID) -> None:
+        self._check_roles(
+            required_roles=[Role.SHOP_OWNER, Role.SHOP_MANAGER],
+            candidate_id=candidate_id,
+        )
 
     def _check_roles(
         self, required_roles: list[Role], candidate_id: UserID
@@ -113,6 +164,10 @@ class Shop(Entity[ShopID]):
                 )
             )
         raise UserAlreadyInStaffError(candidate_id)
+
+    @property
+    def id(self) -> ShopID:
+        return self.entity_id
 
     @property
     def name(self) -> str:

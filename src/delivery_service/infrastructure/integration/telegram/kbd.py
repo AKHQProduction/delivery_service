@@ -8,6 +8,7 @@ from delivery_service.domain.staff.staff_role import Role
 from delivery_service.infrastructure.integration.telegram.const import (
     CREATE_SHOP_BTN,
     CUSTOMERS_BTN,
+    ORDERS_BTN,
     PRODUCTS_BTN,
     STAFF_BTN,
 )
@@ -20,6 +21,7 @@ def get_shop_staff_main_kbd(
         keyboard = [
             [KeyboardButton(text=PRODUCTS_BTN)],
             [KeyboardButton(text=CUSTOMERS_BTN)],
+            [KeyboardButton(text=ORDERS_BTN)],
         ]
 
         if Role.SHOP_OWNER in roles:

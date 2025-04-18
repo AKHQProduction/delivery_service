@@ -22,6 +22,10 @@ class SQLAlchemyProductGateway(ProductGateway):
             query = query.where(
                 and_(PRODUCTS_TABLE.c.shop_id == filters.shop_id)
             )
+        if filters.product_type is not None:
+            query = query.where(
+                and_(PRODUCTS_TABLE.c.product_type == filters.product_type)
+            )
 
         return query
 

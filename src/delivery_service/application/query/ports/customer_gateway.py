@@ -29,6 +29,10 @@ class CustomerGateway(Protocol):
         raise NotImplementedError
 
     @abstractmethod
+    async def read_with_phone(self, phone: str) -> CustomerReadModel | None:
+        raise NotImplementedError
+
+    @abstractmethod
     async def read_all_customers(
         self, filters: CustomerGatewayFilters | None = None
     ) -> Sequence[CustomerReadModel]:

@@ -18,6 +18,7 @@ class ProductReadModel:
 
 @dataclass(frozen=True)
 class ProductGatewayFilters:
+    product_type: ProductType | None = None
     shop_id: ShopID | None = None
 
 

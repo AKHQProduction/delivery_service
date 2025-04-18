@@ -1,6 +1,6 @@
 from typing import Sequence
 
-from sqlalchemy import RowMapping, Select, and_, func, select
+from sqlalchemy import RowMapping, Select, and_, func, or_, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from delivery_service.application.query.ports.customer_gateway import (
@@ -79,6 +79,26 @@ class SQLAlchemyCustomerGateway(CustomerGateway):
     ) -> CustomerReadModel | None:
         query = self._select_rows()
         query = query.where(and_(CUSTOMERS_TABLE.c.user_id == customer_id))
+
+        result = await self._session.execute(query)
+        row = result.mappings().one_or_none()
+
+        return self._map_row_to_read_model(row) if row else None
+
+    async def read_with_phone(self, phone: str) -> CustomerReadModel | None:
+        query = self._select_rows()
+        query = query.where(
+            or_(
+                func.jsonb_extract_path_text(
+                    CUSTOMERS_TABLE.c.contacts, "primary", "value"
+                )
+                == phone,
+                func.jsonb_extract_path_text(
+                    CUSTOMERS_TABLE.c.contacts, "secondary", "value"
+                )
+                == phone,
+            )
+        )
 
         result = await self._session.execute(query)
         row = result.mappings().one_or_none()

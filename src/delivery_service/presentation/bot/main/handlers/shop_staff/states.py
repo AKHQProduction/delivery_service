@@ -40,6 +40,7 @@ class CustomerMenu(StatesGroup):
     NEW_CUSTOMER_INTERCOM_CODE = State()
     PREVIEW = State()
 
+    # Customer editing
     EDIT_MENU = State()
     EDIT_CUSTOMER_NAME = State()
     EDIT_CUSTOMER_PHONE = State()
@@ -49,3 +50,22 @@ class CustomerMenu(StatesGroup):
     EDIT_CUSTOMER_INTERCOM_CODE = State()
 
     DELETE_CONFIRMATION = State()
+
+
+class OrderMenu(StatesGroup):
+    MAIN = State()
+
+    # Order creation
+    FIND_CUSTOMER = State()
+    CUSTOMER_CONFIRMATION = State()
+    CART = State()
+    PRODUCTS_CATEGORY = State()
+    PRODUCTS_CATALOG = State()
+    PRODUCT_COUNTER = State()
+
+    # Editing
+    EDITING_MENU = State()
+    ITEM_EDITING_MENU = State()
+    EDIT_QUANTITY = State()
+
+    SELECT_DATE = State()

@@ -1,4 +1,3 @@
-import operator
 from decimal import InvalidOperation
 from typing import Any
 
@@ -10,8 +9,6 @@ from aiogram_dialog.widgets.input import ManagedTextInput, TextInput
 from aiogram_dialog.widgets.kbd import (
     Button,
     Row,
-    ScrollingGroup,
-    Select,
     SwitchTo,
 )
 from aiogram_dialog.widgets.text import Case, Const, Format, Multi
@@ -29,12 +26,8 @@ from delivery_service.application.commands.edit_product import (
     EditProductPriceRequest,
     EditProductTitleRequest,
 )
-from delivery_service.application.query.ports.product_gateway import (
-    ProductGateway,
-)
-from delivery_service.application.query.product import GetAllProductsRequest
 from delivery_service.domain.products.errors import ProductAlreadyExistsError
-from delivery_service.domain.products.product import ProductID, ProductType
+from delivery_service.domain.products.product import ProductType
 from delivery_service.domain.shared.new_types import FixedDecimal
 from delivery_service.infrastructure.integration.telegram.const import (
     PRODUCTS_BTN,
@@ -42,6 +35,13 @@ from delivery_service.infrastructure.integration.telegram.const import (
 from delivery_service.presentation.bot.widgets.kbd import get_back_btn
 
 from . import states
+from .getters import (
+    get_all_shop_products,
+    get_product_categories,
+    get_product_id,
+    get_shop_product,
+)
+from .kbd import get_product_category_select, get_shop_products_scrolling_group
 
 PRODUCTS_ROUTER = Router()
 
@@ -55,48 +55,10 @@ async def launch_product_menu(
     )
 
 
-@inject
-async def get_all_shop_products(
-    sender: FromDishka[Sender], **_kwargs
-) -> dict[str, Any]:
-    response = await sender.send(GetAllProductsRequest())
-
-    return {"products": response.products, "total": response.total}
-
-
-@inject
-async def get_shop_product(
-    product_reader: FromDishka[ProductGateway],
-    dialog_manager: DialogManager,
-    **_kwargs,
-) -> dict[str, Any]:
-    product_id = get_product_id(dialog_manager)
-    product = await product_reader.read_with_id(product_id)
-    if not product:
-        raise ValueError()
-
-    dialog_manager.dialog_data["product_tile"] = product.title
-
-    return {
-        "title": product.title,
-        "price": product.price,
-        "product_type": product.product_type,
-    }
-
-
 async def get_edited_shop_product(
     dialog_manager: DialogManager, **_kwargs
 ) -> dict[str, Any]:
     return {"is_edited": dialog_manager.dialog_data.get("is_edited", False)}
-
-
-async def get_product_types(**_kwargs) -> dict[str, Any]:
-    return {
-        "product_types": [
-            ("Вода", ProductType.WATER.value),
-            ("Інше", ProductType.ACCESSORIES.value),
-        ]
-    }
 
 
 async def get_new_product_data(
@@ -261,20 +223,7 @@ PRODUCTS_DIALOG = Dialog(
             state=states.ProductMenu.PRODUCT_TITLE,
             id="add_new_product",
         ),
-        ScrollingGroup(
-            Select(
-                id="product_item",
-                items="products",
-                item_id_getter=lambda item: item.product_id,
-                text=Format("{pos}. {item.title}"),
-                on_click=on_select_product_item,
-            ),
-            id="all_shop_products",
-            width=2,
-            height=10,
-            hide_on_single_page=True,
-            when=F["total"] > 0,
-        ),
+        get_shop_products_scrolling_group(on_click=on_select_product_item),
         getter=get_all_shop_products,
         state=states.ProductMenu.MAIN,
     ),
@@ -310,15 +259,9 @@ PRODUCTS_DIALOG = Dialog(
     ),
     Window(
         Const("3️⃣ Вкажіть тип продукта"),
-        Select(
-            Format("{item[0]}"),
-            id="s_product_type",
-            item_id_getter=operator.itemgetter(1),
-            items="product_types",
-            on_click=on_select_product_type,
-        ),
+        get_product_category_select(on_select_product_type),
         get_back_btn(state=states.ProductMenu.PRODUCT_PRICE),
-        getter=get_product_types,
+        getter=get_product_categories,
         state=states.ProductMenu.PRODUCT_TYPE,
     ),
     Window(
@@ -384,11 +327,3 @@ PRODUCTS_DIALOG = Dialog(
         state=states.ProductMenu.DELETE_CONFIRMATION,
     ),
 )
-
-
-def get_product_id(manager: DialogManager) -> ProductID:
-    product_id_str = manager.dialog_data.get("product_id")
-    if not product_id_str:
-        raise ValueError()
-
-    return ProductID(product_id_str)

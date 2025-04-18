@@ -29,7 +29,7 @@ class GetAllProductsResponse:
 
 @dataclass(frozen=True)
 class GetAllProductsRequest(TelegramRequest[GetAllProductsResponse]):
-    pass
+    filters: ProductGatewayFilters
 
 
 class GetAllProductsHandler(
@@ -57,7 +57,9 @@ class GetAllProductsHandler(
         if not shop_catalog:
             raise AccessDeniedError()
 
-        filters = ProductGatewayFilters(shop_id=shop_catalog.id)
+        filters = ProductGatewayFilters(
+            shop_id=shop_catalog.id, product_type=request.filters.product_type
+        )
         products = await self._product_gateway.read_all_products(
             filters=filters
         )

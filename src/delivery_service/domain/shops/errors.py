@@ -44,3 +44,8 @@ class UserNotFoundInShopStaffError(ConflictError):
 @dataclass(eq=False)
 class CantDiscardYourselfError(ConflictError):
     pass
+
+
+@dataclass(eq=False)
+class CantDeliveryInDaysOffError(ConflictError):
+    pass
