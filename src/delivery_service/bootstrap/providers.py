@@ -72,6 +72,10 @@ from delivery_service.application.commands.edit_product import (
     EditProductTitleHandler,
     EditProductTitleRequest,
 )
+from delivery_service.application.commands.make_new_order import (
+    MakeNewOrderHandler,
+    MakeNewOrderRequest,
+)
 from delivery_service.application.common.behaviors.commition import (
     CommitionBehavior,
 )
@@ -142,6 +146,9 @@ from delivery_service.infrastructure.persistence.adapters.customer_registry_repo
 )
 from delivery_service.infrastructure.persistence.adapters.customer_repository import (
     SQLAlchemyCustomerRepository,
+)
+from delivery_service.infrastructure.persistence.adapters.order_repository import (
+    SQLAlchemyOrderRepository,
 )
 from delivery_service.infrastructure.persistence.adapters.product_gateway import (
     SQLAlchemyProductGateway,
@@ -228,6 +235,7 @@ class ApplicationHandlersProvider(Provider):
         EditCustomerNameHandler,
         EditCustomerPrimaryPhoneHandler,
         EditCustomerAddressHandler,
+        MakeNewOrderHandler,
         GetAllProductsHandler,
         GetShopHandler,
         GetShopStaffMembersHandler,
@@ -294,6 +302,7 @@ class BazarioProvider(Provider):
         registry.add_request_handler(
             EditCustomerAddressRequest, EditCustomerAddressHandler
         )
+        registry.add_request_handler(MakeNewOrderRequest, MakeNewOrderHandler)
 
         registry.add_pipeline_behaviors(Request, CommitionBehavior)
         registry.add_pipeline_behaviors(
@@ -317,6 +326,7 @@ class DomainProvider(Provider):
         WithParents[SQLAlchemyCustomerRepository],
         WithParents[SQLAlchemyShopCatalogRepository],
         WithParents[SQLAlchemyCustomerRegistryRepository],
+        WithParents[SQLAlchemyOrderRepository],
     )
 
 

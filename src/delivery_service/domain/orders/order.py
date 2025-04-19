@@ -46,7 +46,7 @@ class Order(Entity[OrderID]):
         quantity: int,
     ):
         for line in self._order_lines:
-            if line.id == product_id and line.price_per_item == Price(
+            if line.id == product_id and line.unit_price == Price(
                 price_per_item
             ):
                 return line.add_quantity(Quantity(quantity))

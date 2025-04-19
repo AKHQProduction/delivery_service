@@ -11,6 +11,7 @@ from delivery_service.application.ports.id_generator import IDGenerator
 from delivery_service.application.ports.idp import IdentityProvider
 from delivery_service.domain.orders.order import DeliveryPreference
 from delivery_service.domain.orders.order_id import OrderID
+from delivery_service.domain.orders.repository import OrderRepository
 from delivery_service.domain.shared.dto import OrderLineData
 from delivery_service.domain.shared.errors import AccessDeniedError
 from delivery_service.domain.shared.user_id import UserID
@@ -33,10 +34,12 @@ class MakeNewOrderHandler(RequestHandler[MakeNewOrderRequest, OrderID]):
         idp: IdentityProvider,
         shop_repository: ShopRepository,
         id_generator: IDGenerator,
+        order_repository: OrderRepository,
     ) -> None:
         self._idp = idp
         self._shop_repository = shop_repository
         self._id_generator = id_generator
+        self._order_repository = order_repository
 
     async def handle(self, request: MakeNewOrderRequest) -> OrderID:
         logger.info("Request to make new order")
@@ -55,6 +58,7 @@ class MakeNewOrderHandler(RequestHandler[MakeNewOrderRequest, OrderID]):
             delivery_preference=request.delivery_preference,
             creator_id=current_user_id,
         )
+        self._order_repository.add(new_order)
 
         logger.info("Successfully create new order %s", new_order.id)
         return new_order.id

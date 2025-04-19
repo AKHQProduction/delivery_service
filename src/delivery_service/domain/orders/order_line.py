@@ -38,11 +38,11 @@ class OrderLine(Entity[ProductID]):
         return self._title
 
     @property
-    def quantity(self) -> Quantity:
+    def total(self) -> Quantity:
         return self._quantity
 
     @property
-    def price_per_item(self) -> Price:
+    def unit_price(self) -> Price:
         return self._price_per_item
 
     def __repr__(self) -> str:
