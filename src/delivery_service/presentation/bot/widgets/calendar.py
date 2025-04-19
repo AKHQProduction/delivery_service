@@ -1,4 +1,4 @@
-from datetime import date
+from datetime import date, datetime
 
 from aiogram_dialog import DialogManager
 from aiogram_dialog.widgets.kbd import Calendar, CalendarScope
@@ -37,6 +37,21 @@ MONTH: dict[int, str] = {
 }
 
 
+def is_day_off(_date: date, manager: DialogManager) -> bool:
+    regular_days_off: list[int] = manager.dialog_data.get(
+        "regular_days_off", []
+    )
+    special_days_off_dates: list[date] = [
+        datetime.fromisoformat(day).date()
+        for day in manager.dialog_data.get("irregular_days_off", [])
+    ]
+
+    is_regular_day_off = _date.weekday() in regular_days_off
+    is_special_day_off = _date in special_days_off_dates
+
+    return bool(is_special_day_off or is_regular_day_off)
+
+
 class WeekDay(Text):
     async def _render_text(self, data: dict, manager: DialogManager) -> str:
         selected_date: date = data["date"]
@@ -53,6 +68,11 @@ class DaysOff(Text):
         self.other = other
 
     async def _render_text(self, data, manager: DialogManager) -> str:
+        current_date: date = data["date"]
+
+        if is_day_off(current_date, manager):
+            return self.mark
+
         return await self.other.render_text(data, manager)
 
 
@@ -65,7 +85,7 @@ class Month(Text):
         return MONTH[selected_month]
 
 
-class CustomCalendar(Calendar):
+class ShopAvailabilityCalendar(Calendar):
     def _init_views(self) -> dict[CalendarScope, CalendarScopeView]:
         return {
             CalendarScope.DAYS: CalendarDaysView(

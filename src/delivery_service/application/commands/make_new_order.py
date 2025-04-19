@@ -24,7 +24,6 @@ class MakeNewOrderRequest(TelegramRequest[OrderID]):
     customer_id: UserID
     order_lines: list[OrderLineData]
     delivery_preference: DeliveryPreference
-    bottles_to_exchange: int
     delivery_date: date
 
 
@@ -54,7 +53,6 @@ class MakeNewOrderHandler(RequestHandler[MakeNewOrderRequest, OrderID]):
             order_line_data=request.order_lines,
             delivery_date=request.delivery_date,
             delivery_preference=request.delivery_preference,
-            bottles_to_exchange=request.bottles_to_exchange,
             creator_id=current_user_id,
         )
 

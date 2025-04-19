@@ -48,7 +48,6 @@ class Shop(Entity[ShopID]):
         order_line_data: list[OrderLineData],
         customer_id: UserID,
         delivery_preference: DeliveryPreference,
-        bottles_to_exchange: int,
         delivery_date: date,
         creator_id: UserID,
     ) -> Order:
@@ -72,7 +71,6 @@ class Shop(Entity[ShopID]):
             customer_id=customer_id,
             order_lines=order_lines,
             delivery_preference=delivery_preference,
-            bottles_to_exchange=Quantity(bottles_to_exchange),
             delivery_date=delivery_date,
         )
 

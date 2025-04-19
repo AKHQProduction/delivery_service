@@ -1,30 +1,54 @@
+import operator
+from datetime import date, datetime
 from typing import Any
+from uuid import UUID
 
 from aiogram import F, Router
 from aiogram.types import CallbackQuery, Message
-from aiogram_dialog import Dialog, DialogManager, ShowMode, StartMode, Window
+from aiogram_dialog import (
+    ChatEvent,
+    Dialog,
+    DialogManager,
+    ShowMode,
+    StartMode,
+    Window,
+)
 from aiogram_dialog.api.internal import Widget
 from aiogram_dialog.widgets.input import ManagedTextInput, TextInput
 from aiogram_dialog.widgets.kbd import (
     Button,
+    ManagedCalendar,
     Row,
     ScrollingGroup,
     Select,
+    Start,
     SwitchTo,
 )
-from aiogram_dialog.widgets.text import Const, Format, Jinja
+from aiogram_dialog.widgets.text import Const, Format, Jinja, Multi
+from bazario.asyncio import Sender
 from dishka import FromDishka
 from dishka.integrations.aiogram_dialog import inject
+from zoneinfo import ZoneInfo
 
+from delivery_service.application.commands.make_new_order import (
+    MakeNewOrderRequest,
+)
 from delivery_service.application.query.ports.customer_gateway import (
     CustomerGateway,
 )
-from delivery_service.domain.products.product import ProductType
+from delivery_service.application.query.shop import GetShopRequest
+from delivery_service.domain.orders.order import DeliveryPreference
+from delivery_service.domain.products.product import ProductID, ProductType
+from delivery_service.domain.shared.dto import OrderLineData
 from delivery_service.domain.shared.new_types import FixedDecimal
+from delivery_service.domain.shared.user_id import UserID
 from delivery_service.infrastructure.integration.telegram.const import (
     ORDERS_BTN,
 )
-from delivery_service.presentation.bot.widgets.calendar import CustomCalendar
+from delivery_service.presentation.bot.widgets.calendar import (
+    ShopAvailabilityCalendar,
+    is_day_off,
+)
 from delivery_service.presentation.bot.widgets.kbd import get_back_btn
 
 from .getters import (
@@ -49,6 +73,11 @@ async def launch_orders_dialog(_: Message, dialog_manager: DialogManager):
 PRODUCT_TYPE_TO_TEXT = {
     ProductType.WATER: "💧 Вода",
     ProductType.ACCESSORIES: "💎 Аксесуари",
+}
+
+DELIVERY_PREFERENCE_TO_TEXT = {
+    DeliveryPreference.MORNING: "Перша половина дня",
+    DeliveryPreference.AFTERNOON: "Друга половина дня",
 }
 
 CURRENT_CART = "current_cart"
@@ -109,6 +138,20 @@ async def get_cart_item(
     return {"title": item["title"], "quantity": item["quantity"]}
 
 
+@inject
+async def get_shop_data(
+    dialog_manager: DialogManager, sender: FromDishka[Sender], **_kwargs
+) -> dict[str, Any]:
+    shop_data = await sender.send(GetShopRequest())
+
+    dialog_manager.dialog_data["regular_days_off"] = shop_data.regular_days_off
+    dialog_manager.dialog_data["irregular_days_off"] = (
+        shop_data.irregular_days_off
+    )
+
+    return {}
+
+
 async def get_selected_product_category(
     dialog_manager: DialogManager, **_kwargs
 ) -> dict[str, Any]:
@@ -117,6 +160,28 @@ async def get_selected_product_category(
         raise ValueError()
 
     return {"category_name": PRODUCT_TYPE_TO_TEXT[ProductType(product_type)]}
+
+
+async def get_delivery_preferences(**_kwargs) -> dict[str, Any]:
+    preferences = []
+    for key, value in DELIVERY_PREFERENCE_TO_TEXT.items():
+        preferences.append((value, key.value))
+
+    return {"delivery_preferences": preferences}
+
+
+async def get_all_order_data_to_preview(
+    dialog_manager: DialogManager, **_kwargs
+) -> dict[str, Any]:
+    data = dialog_manager.dialog_data
+
+    return {
+        "full_name": data.get("full_name"),
+        "delivery_date": data.get("delivery_date"),
+        "delivery_preference": DELIVERY_PREFERENCE_TO_TEXT[
+            DeliveryPreference(data.get("delivery_preference"))
+        ],
+    }
 
 
 async def on_select_product_item(
@@ -145,6 +210,31 @@ async def on_select_item_to_edit(
 ) -> None:
     manager.dialog_data["item_to_edit"] = vale
     await manager.switch_to(state=OrderMenu.ITEM_EDITING_MENU)
+
+
+async def on_select_delivery_date(
+    call: ChatEvent,
+    _widget: ManagedCalendar,
+    manager: DialogManager,
+    clicked_date: date,
+) -> bool | None:
+    error_text: str = "❌ Доставка в цей день неможлива"
+    if is_day_off(clicked_date, manager) and isinstance(call, CallbackQuery):
+        return await call.answer(text=error_text, show_alert=True)
+
+    current_date = datetime.now(tz=ZoneInfo("Europe/Kiev")).date()
+    if current_date > clicked_date and isinstance(call, CallbackQuery):
+        return await call.answer(text=error_text, show_alert=True)
+
+    manager.dialog_data["delivery_date"] = clicked_date.strftime("%d.%m.%Y")
+    return await manager.switch_to(state=OrderMenu.SELECT_DELIVERY_PREFERENCE)
+
+
+async def on_select_delivery_preference(
+    _: CallbackQuery, __: Widget, manager: DialogManager, value: str
+) -> None:
+    manager.dialog_data["delivery_preference"] = value
+    await manager.switch_to(state=OrderMenu.PREVIEW)
 
 
 @inject
@@ -257,6 +347,67 @@ async def on_delete_cart_item(
     await manager.switch_to(state=OrderMenu.CART)
 
 
+@inject
+async def on_confirm_order_creation(
+    call: CallbackQuery,
+    __: Button,
+    manager: DialogManager,
+    sender: FromDishka[Sender],
+) -> None:
+    data = manager.dialog_data
+
+    customer_id_str = data.get("customer_id")
+    customer_id = UserID(customer_id_str) if customer_id_str else None
+
+    delivery_date_str = data.get("delivery_date")
+    delivery_date = (
+        datetime.strptime(delivery_date_str, "%d.%m.%Y").date()  # noqa: DTZ007
+        if delivery_date_str
+        else None
+    )
+
+    delivery_preference = DeliveryPreference(data.get("delivery_preference"))
+
+    cart: dict[str, dict[str, Any]] | None = manager.dialog_data.get(
+        CURRENT_CART
+    )
+
+    if (
+        not customer_id
+        or not delivery_date
+        or not delivery_preference
+        or not cart
+    ):
+        raise ValueError()
+
+    order_lines = []
+    for key, value in cart.items():
+        order_lines.append(
+            OrderLineData(
+                product_id=ProductID(UUID(key)),
+                title=value["title"],
+                price_per_item=FixedDecimal(value["price"]),
+                quantity=value["quantity"],
+            )
+        )
+
+    await sender.send(
+        MakeNewOrderRequest(
+            customer_id=customer_id,
+            delivery_date=delivery_date,
+            delivery_preference=delivery_preference,
+            order_lines=order_lines,
+        )
+    )
+
+    await call.answer("✅ Замовлення створено")
+    await manager.start(
+        state=OrderMenu.MAIN,
+        mode=StartMode.RESET_STACK,
+        show_mode=ShowMode.SEND,
+    )
+
+
 ORDERS_DIALOG = Dialog(
     Window(
         Const("🚚 <b>Меню замовлень</b>"),
@@ -291,7 +442,7 @@ ORDERS_DIALOG = Dialog(
         Jinja(
             "<blockquote expandable>"
             "{% for item in cart_items %}"
-            "• <b>{{item.title}}</b>: {{item.quantity}} * {{item.price}} "
+            "• <b>{{item.title}}</b>: {{item.quantity}} одн. * {{item.price}} "
             "<b>UAH</b> ~ {{item.total_price}} <b>UAH</b>\n"
             "{% endfor %}"
             "</blockquote>"
@@ -397,8 +548,56 @@ ORDERS_DIALOG = Dialog(
     Window(
         Const("Оберіть дату доставки\n"),
         Const("<i>🟥 - вихідний день</i>"),
-        CustomCalendar(id="delivery_calendar"),
+        ShopAvailabilityCalendar(
+            id="delivery_calendar", on_click=on_select_delivery_date
+        ),
         get_back_btn(state=OrderMenu.CART),
+        getter=get_shop_data,
         state=OrderMenu.SELECT_DATE,
+    ),
+    Window(
+        Const("Оберіть зручний час доставки"),
+        Select(
+            Format("{item[0]}"),
+            id="s_delivery_preference",
+            item_id_getter=operator.itemgetter(1),
+            items="delivery_preferences",
+            on_click=on_select_delivery_preference,
+        ),
+        get_back_btn(state=OrderMenu.SELECT_DATE),
+        getter=get_delivery_preferences,
+        state=OrderMenu.SELECT_DELIVERY_PREFERENCE,
+    ),
+    Window(
+        Multi(
+            Const("<b>Перевірте замовлення 👇</b>"),
+            Format(
+                "<b>Замовлення для:</b> {full_name}\n"
+                "<b>Дата замовлення:</b> {delivery_date}\n"
+                "<b>Орієнтовний час доставки:</b> {delivery_preference}"
+            ),
+            Jinja(
+                "<b>Всього до сплати:</b> {{total_cart_price}} <b>UAH</b>"
+                "<blockquote expandable>"
+                "{% for item in cart_items %}"
+                "• <b>{{item.title}}</b>: {{item.quantity}} одн.\n"
+                "{% endfor %}"
+                "</blockquote>"
+            ),
+            sep="\n\n",
+        ),
+        Button(
+            text=Const("✅ Підтвердити"),
+            id="accept_order_creation",
+            on_click=on_confirm_order_creation,
+        ),
+        Start(
+            text=Const("❌ Відмінити"),
+            state=OrderMenu.MAIN,
+            id="restart_order_dialog",
+            mode=StartMode.RESET_STACK,
+        ),
+        getter=[get_all_order_data_to_preview, get_order_cart],
+        state=OrderMenu.PREVIEW,
     ),
 )

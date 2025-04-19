@@ -62,10 +62,11 @@ class OrderMenu(StatesGroup):
     PRODUCTS_CATEGORY = State()
     PRODUCTS_CATALOG = State()
     PRODUCT_COUNTER = State()
+    SELECT_DATE = State()
+    SELECT_DELIVERY_PREFERENCE = State()
+    PREVIEW = State()
 
     # Editing
     EDITING_MENU = State()
     ITEM_EDITING_MENU = State()
     EDIT_QUANTITY = State()
-
-    SELECT_DATE = State()
