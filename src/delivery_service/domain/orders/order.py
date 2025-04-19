@@ -25,7 +25,6 @@ class Order(Entity[OrderID]):
         shop_id: ShopID,
         customer_id: UserID,
         delivery_preference: DeliveryPreference,
-        bottles_to_exchange: Quantity,
         order_lines: list[OrderLine],
         delivery_date: date,
     ) -> None:
@@ -34,7 +33,6 @@ class Order(Entity[OrderID]):
         self._shop_id = shop_id
         self._customer_id = customer_id
 
-        self._bottles_to_exchange = bottles_to_exchange
         self._delivery_preference = delivery_preference
         self._order_lines = order_lines
 
