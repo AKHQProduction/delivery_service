@@ -381,7 +381,10 @@ class PersistenceProvider(Provider):
         self, engine: AsyncEngine
     ) -> async_sessionmaker[AsyncSession]:
         factory = async_sessionmaker(
-            engine, expire_on_commit=False, class_=AsyncSession
+            engine,
+            expire_on_commit=False,
+            class_=AsyncSession,
+            autoflush=False,
         )
         logger.debug("Session provider was initialized")
         return factory
