@@ -7,8 +7,10 @@ TypeResult = TypeVar("TypeResult")
 
 
 @dataclass(frozen=True)
-class BaseCommand(Generic[TypeResult], Request[TypeResult]): ...
+class BaseCommand(Generic[TypeResult], Request[TypeResult]):
+    pass
 
 
 @dataclass(frozen=True)
-class TelegramRequest(Generic[TypeResult], Request[TypeResult]): ...
+class TelegramRequest(Generic[TypeResult], Request[TypeResult]):
+    pass
