@@ -83,6 +83,10 @@ class Order(Entity[OrderID]):
         return self.entity_id
 
     @property
+    def shop_reference(self) -> ShopID:
+        return self._shop_id
+
+    @property
     def order_lines(self) -> list[OrderLine]:
         return self._order_lines
 

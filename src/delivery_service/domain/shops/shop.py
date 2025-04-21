@@ -76,6 +76,12 @@ class Shop(Entity[ShopID]):
             delivery_date=delivery_date,
         )
 
+    def can_delete_order(
+        self, order_shop_id: ShopID, deleter_id: UserID
+    ) -> None:
+        self._is_current_shop_order(order_shop_id)
+        self._member_with_admin_roles(deleter_id)
+
     def add_staff_member(
         self,
         new_staff_id: UserID,
@@ -164,6 +170,10 @@ class Shop(Entity[ShopID]):
                 )
             )
         raise UserAlreadyInStaffError(candidate_id)
+
+    def _is_current_shop_order(self, order_shop_id: ShopID) -> None:
+        if not (order_shop_id == self.id):
+            raise AccessDeniedError()
 
     @property
     def id(self) -> ShopID:

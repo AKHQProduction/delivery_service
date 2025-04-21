@@ -50,6 +50,10 @@ from delivery_service.application.commands.delete_customer import (
     DeleteCustomerHandler,
     DeleteCustomerRequest,
 )
+from delivery_service.application.commands.delete_order import (
+    DeleteOrderHandler,
+    DeleteOrderRequest,
+)
 from delivery_service.application.commands.delete_product import (
     DeleteProductHandler,
     DeleteProductRequest,
@@ -242,6 +246,7 @@ class ApplicationHandlersProvider(Provider):
         EditCustomerPrimaryPhoneHandler,
         EditCustomerAddressHandler,
         MakeNewOrderHandler,
+        DeleteOrderHandler,
         GetAllProductsHandler,
         GetShopHandler,
         GetShopStaffMembersHandler,
@@ -315,6 +320,7 @@ class BazarioProvider(Provider):
             GetAllShopOrdersRequest, GetAllShopOrdersHandler
         )
         registry.add_request_handler(GetShopOrderRequest, GetShopOrderHandler)
+        registry.add_request_handler(DeleteOrderRequest, DeleteOrderHandler)
 
         registry.add_pipeline_behaviors(Request, CommitionBehavior)
         registry.add_pipeline_behaviors(

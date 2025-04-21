@@ -56,6 +56,7 @@ class OrderMenu(StatesGroup):
     MAIN = State()
 
     ORDER_CARD = State()
+    ORDER_DELETE_CONFIRMATION = State()
 
     # Order creation
     FIND_CUSTOMER = State()

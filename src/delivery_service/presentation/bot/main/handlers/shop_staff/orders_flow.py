@@ -30,6 +30,9 @@ from dishka import FromDishka
 from dishka.integrations.aiogram_dialog import inject
 from zoneinfo import ZoneInfo
 
+from delivery_service.application.commands.delete_order import (
+    DeleteOrderRequest,
+)
 from delivery_service.application.commands.make_new_order import (
     MakeNewOrderRequest,
 )
@@ -386,6 +389,19 @@ async def on_delete_cart_item(
 
 
 @inject
+async def on_delete_order(
+    _: CallbackQuery,
+    __: Widget,
+    manager: DialogManager,
+    sender: FromDishka[Sender],
+) -> None:
+    order_id = get_order_id(manager)
+    await sender.send(DeleteOrderRequest(order_id))
+
+    await manager.switch_to(state=OrderMenu.MAIN)
+
+
+@inject
 async def on_confirm_order_creation(
     call: CallbackQuery,
     __: Button,
@@ -490,9 +506,26 @@ ORDERS_DIALOG = Dialog(
             ),
             sep="\n\n",
         ),
+        SwitchTo(
+            text=Const("🗑 Видалить"),
+            id="to_order_delete",
+            state=OrderMenu.ORDER_DELETE_CONFIRMATION,
+        ),
         get_back_btn(state=OrderMenu.MAIN),
         getter=get_order,
         state=OrderMenu.ORDER_CARD,
+    ),
+    Window(
+        Format("Видалить замовлення?"),
+        SwitchTo(
+            text=Const("✅ Підтвердити"),
+            id="accept_order_deleting",
+            state=OrderMenu.MAIN,
+            on_click=on_delete_order,
+        ),
+        get_back_btn(btn_text="❌ Відмінити", state=OrderMenu.ORDER_CARD),
+        getter=get_order,
+        state=OrderMenu.ORDER_DELETE_CONFIRMATION,
     ),
     Window(
         Const("Вкажіть контактний номер телефона клієнта"),

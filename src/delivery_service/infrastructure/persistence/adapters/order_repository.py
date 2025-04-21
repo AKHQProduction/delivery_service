@@ -27,3 +27,6 @@ class SQLAlchemyOrderRepository(OrderRepository):
 
     async def load_with_id(self, order_id: OrderID) -> Order | None:
         return await self._session.get(Order, order_id)
+
+    async def delete(self, order: Order) -> None:
+        await self._session.delete(order)

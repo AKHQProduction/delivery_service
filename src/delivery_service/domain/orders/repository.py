@@ -18,3 +18,7 @@ class OrderRepository(Protocol):
     @abstractmethod
     async def load_with_id(self, order_id: OrderID) -> Order | None:
         raise NotImplementedError
+
+    @abstractmethod
+    async def delete(self, order: Order) -> None:
+        raise NotImplementedError
