@@ -33,7 +33,10 @@ from zoneinfo import ZoneInfo
 from delivery_service.application.commands.make_new_order import (
     MakeNewOrderRequest,
 )
-from delivery_service.application.query.order import GetAllShopOrdersRequest
+from delivery_service.application.query.order import (
+    GetAllShopOrdersRequest,
+    GetShopOrderRequest,
+)
 from delivery_service.application.query.ports.customer_gateway import (
     CustomerGateway,
 )
@@ -54,6 +57,7 @@ from delivery_service.presentation.bot.widgets.kbd import get_back_btn
 
 from .getters import (
     get_all_shop_products,
+    get_order_id,
     get_product_categories,
     get_product_id,
     get_shop_product,
@@ -89,6 +93,25 @@ async def get_orders(sender: FromDishka[Sender], **_kwargs) -> dict[str, Any]:
     response = await sender.send(GetAllShopOrdersRequest())
 
     return {"total": response.total, "orders": response.orders}
+
+
+@inject
+async def get_order(
+    sender: FromDishka[Sender], dialog_manager: DialogManager, **_kwargs
+) -> dict[str, Any]:
+    order_id = get_order_id(dialog_manager)
+
+    order = await sender.send(GetShopOrderRequest(order_id=order_id))
+
+    return {
+        "order_lines": order.order_lines,
+        "full_name": order.customer_full_name,
+        "delivery_date": order.delivery_date,
+        "delivery_preference": DELIVERY_PREFERENCE_TO_TEXT[
+            order.delivery_preference
+        ],
+        "total_order_price": order.total_order_price,
+    }
 
 
 async def get_order_cart(
@@ -243,6 +266,13 @@ async def on_select_delivery_preference(
 ) -> None:
     manager.dialog_data["delivery_preference"] = value
     await manager.switch_to(state=OrderMenu.PREVIEW)
+
+
+async def on_select_order_item(
+    _: CallbackQuery, __: Widget, manager: DialogManager, value: str
+) -> None:
+    manager.dialog_data["order_id"] = value
+    await manager.switch_to(state=OrderMenu.ORDER_CARD)
 
 
 @inject
@@ -432,6 +462,7 @@ ORDERS_DIALOG = Dialog(
                 text=Format(
                     "{pos}. {item.customer_full_name} | {item.delivery_date}"
                 ),
+                on_click=on_select_order_item,
             ),
             id="all_shop_orders",
             width=1,
@@ -441,6 +472,27 @@ ORDERS_DIALOG = Dialog(
         ),
         getter=get_orders,
         state=OrderMenu.MAIN,
+    ),
+    Window(
+        Multi(
+            Format(
+                "<b>Замовлення для:</b> {full_name}\n"
+                "<b>Дата замовлення:</b> {delivery_date}\n"
+                "<b>Орієнтовний час доставки:</b> {delivery_preference}"
+            ),
+            Jinja(
+                "<b>Всього до сплати:</b> {{total_order_price}} <b>UAH</b>"
+                "<blockquote expandable>"
+                "{% for item in order_lines %}"
+                "• <b>{{item.title}}</b>: {{item.quantity}} одн.\n"
+                "{% endfor %}"
+                "</blockquote>"
+            ),
+            sep="\n\n",
+        ),
+        get_back_btn(state=OrderMenu.MAIN),
+        getter=get_order,
+        state=OrderMenu.ORDER_CARD,
     ),
     Window(
         Const("Вкажіть контактний номер телефона клієнта"),

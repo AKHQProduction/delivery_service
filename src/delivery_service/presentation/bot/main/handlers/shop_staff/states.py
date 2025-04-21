@@ -55,6 +55,8 @@ class CustomerMenu(StatesGroup):
 class OrderMenu(StatesGroup):
     MAIN = State()
 
+    ORDER_CARD = State()
+
     # Order creation
     FIND_CUSTOMER = State()
     CUSTOMER_CONFIRMATION = State()

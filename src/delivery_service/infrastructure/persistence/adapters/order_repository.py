@@ -4,6 +4,7 @@ from sqlalchemy import and_, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from delivery_service.domain.orders.order import Order
+from delivery_service.domain.orders.order_ids import OrderID
 from delivery_service.domain.orders.repository import (
     OrderRepository,
 )
@@ -23,3 +24,6 @@ class SQLAlchemyOrderRepository(OrderRepository):
 
         result = await self._session.execute(query)
         return result.scalars().all()
+
+    async def load_with_id(self, order_id: OrderID) -> Order | None:
+        return await self._session.get(Order, order_id)

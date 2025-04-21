@@ -3,6 +3,10 @@ from dataclasses import dataclass
 
 from bazario.asyncio import RequestHandler
 
+from delivery_service.application.common.errors import (
+    CustomerNotFoundError,
+    OrderNotFoundError,
+)
 from delivery_service.application.common.markers.requests import (
     TelegramRequest,
 )
@@ -14,6 +18,8 @@ from delivery_service.application.query.ports.order_gateway import (
     OrderLineReadModel,
     OrderReadModel,
 )
+from delivery_service.domain.orders.order import Order
+from delivery_service.domain.orders.order_ids import OrderID
 from delivery_service.domain.orders.repository import OrderRepository
 from delivery_service.domain.shared.errors import AccessDeniedError
 from delivery_service.domain.staff.repository import StaffMemberRepository
@@ -71,23 +77,52 @@ class GetAllShopOrdersHandler(
             if not customer:
                 continue
 
-            orders.append(
-                OrderReadModel(
-                    order_id=order.id,
-                    customer_full_name=customer.full_name,
-                    delivery_date=order.date,
-                    delivery_preference=order.delivery_time_preference,
-                    order_lines=[
-                        OrderLineReadModel(
-                            order_line_id=line.id,
-                            title=line.line_title,
-                            price_per_item=line.unit_price.value,
-                            quantity=line.total_quantity.value,
-                        )
-                        for line in order.order_lines
-                    ],
-                    total_order_price=order.total_order_price.value,
-                )
-            )
+            orders.append(map_order_to_read_model(order, customer.full_name))
 
         return GetAllShopOrdersResponse(total=total_order, orders=orders)
+
+
+@dataclass(frozen=True)
+class GetShopOrderRequest(TelegramRequest[OrderReadModel]):
+    order_id: OrderID
+
+
+class GetShopOrderHandler(RequestHandler[GetShopOrderRequest, OrderReadModel]):
+    def __init__(
+        self,
+        order_repository: OrderRepository,
+        customer_gateway: CustomerGateway,
+    ) -> None:
+        self._order_repository = order_repository
+        self._customer_gateway = customer_gateway
+
+    async def handle(self, request: GetShopOrderRequest) -> OrderReadModel:
+        order = await self._order_repository.load_with_id(request.order_id)
+        if not order:
+            raise OrderNotFoundError()
+        customer = await self._customer_gateway.read_with_id(order.client_id)
+        if not customer:
+            raise CustomerNotFoundError()
+
+        return map_order_to_read_model(order, customer.full_name)
+
+
+def map_order_to_read_model(
+    order: Order, customer_full_name: str
+) -> OrderReadModel:
+    return OrderReadModel(
+        order_id=order.id,
+        customer_full_name=customer_full_name,
+        delivery_date=order.date,
+        delivery_preference=order.delivery_time_preference,
+        order_lines=[
+            OrderLineReadModel(
+                order_line_id=line.id,
+                title=line.line_title,
+                price_per_item=line.unit_price.value,
+                quantity=line.total_quantity.value,
+            )
+            for line in order.order_lines
+        ],
+        total_order_price=order.total_order_price.value,
+    )

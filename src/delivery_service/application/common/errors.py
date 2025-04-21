@@ -53,5 +53,10 @@ class CustomerNotFoundError(NotFoundError):
 
 
 @dataclass(eq=False)
+class OrderNotFoundError(NotFoundError):
+    pass
+
+
+@dataclass(eq=False)
 class AuthenticationError(ApplicationError):
     pass

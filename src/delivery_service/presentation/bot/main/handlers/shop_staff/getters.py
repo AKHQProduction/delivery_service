@@ -10,6 +10,7 @@ from delivery_service.application.query.ports.product_gateway import (
     ProductGatewayFilters,
 )
 from delivery_service.application.query.product import GetAllProductsRequest
+from delivery_service.domain.orders.order_ids import OrderID
 from delivery_service.domain.products.product import ProductID, ProductType
 
 
@@ -46,6 +47,14 @@ def get_product_id(manager: DialogManager) -> ProductID:
         raise ValueError()
 
     return ProductID(product_id_str)
+
+
+def get_order_id(manager: DialogManager) -> OrderID:
+    order_id_str = manager.dialog_data.get("order_id")
+    if not order_id_str:
+        raise ValueError()
+
+    return OrderID(order_id_str)
 
 
 @inject
