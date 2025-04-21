@@ -1,3 +1,4 @@
+import logging
 from collections.abc import Sequence
 from dataclasses import dataclass
 
@@ -23,6 +24,8 @@ from delivery_service.domain.orders.order_ids import OrderID
 from delivery_service.domain.orders.repository import OrderRepository
 from delivery_service.domain.shared.errors import AccessDeniedError
 from delivery_service.domain.staff.repository import StaffMemberRepository
+
+logger = logging.getLogger(__name__)
 
 
 @dataclass(frozen=True)
@@ -54,6 +57,7 @@ class GetAllShopOrdersHandler(
     async def handle(
         self, request: GetAllShopOrdersRequest
     ) -> GetAllShopOrdersResponse:
+        logger.info("Request to get all staff shop orders")
         current_user_id = await self._idp.get_current_user_id()
 
         staff_member = await self._staff_repository.load_with_identity(
@@ -97,6 +101,8 @@ class GetShopOrderHandler(RequestHandler[GetShopOrderRequest, OrderReadModel]):
         self._customer_gateway = customer_gateway
 
     async def handle(self, request: GetShopOrderRequest) -> OrderReadModel:
+        logger.info("Request to concrete shop order")
+
         order = await self._order_repository.load_with_id(request.order_id)
         if not order:
             raise OrderNotFoundError()
