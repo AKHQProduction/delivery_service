@@ -20,8 +20,8 @@ class Price:
     def __sub__(self, other: "Price") -> "Price":
         return Price(self.value - other.value)
 
-    def __mul__(self, other: "Price") -> "Price":
-        return Price(self.value * other.value)
+    def __mul__(self, other: "FixedDecimal") -> "Price":
+        return Price(self.value * other)
 
-    def __truediv__(self, other: "Price") -> "Price":
-        return Price(self.value / other.value)
+    def __truediv__(self, other: "FixedDecimal") -> "Price":
+        return Price(self.value / other)

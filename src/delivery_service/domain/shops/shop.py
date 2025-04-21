@@ -1,10 +1,11 @@
 from datetime import date
+from typing import cast
 
 from delivery_service.domain.orders.order import (
     DeliveryPreference,
     Order,
 )
-from delivery_service.domain.orders.order_id import OrderID
+from delivery_service.domain.orders.order_ids import OrderID, OrderLineID
 from delivery_service.domain.orders.order_line import OrderLine
 from delivery_service.domain.shared.dto import OrderLineData
 from delivery_service.domain.shared.entity import Entity
@@ -56,7 +57,8 @@ class Shop(Entity[ShopID]):
 
         order_lines = [
             OrderLine(
-                entity_id=data.product_id,
+                entity_id=OrderLineID(cast(int, None)),
+                product_id=data.product_id,
                 order_id=new_order_id,
                 title=data.title,
                 price_per_item=Price(data.price_per_item),

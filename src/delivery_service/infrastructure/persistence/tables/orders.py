@@ -49,7 +49,8 @@ ORDERS_TABLE = sa.Table(
 ORDER_LINES_TABLE = sa.Table(
     "order_lines",
     MAPPER_REGISTRY.metadata,
-    sa.Column("product_id", sa.ForeignKey("products.id"), primary_key=True),
+    sa.Column("id", sa.Integer, primary_key=True, autoincrement=True),
+    sa.Column("product_id", sa.ForeignKey("products.id"), nullable=False),
     sa.Column(
         "order_id",
         sa.ForeignKey("orders.id", ondelete="CASCADE"),
@@ -103,7 +104,8 @@ MAPPER_REGISTRY.map_imperatively(
     OrderLine,
     ORDER_LINES_TABLE,
     properties={
-        "_entity_id": ORDER_LINES_TABLE.c.product_id,
+        "_entity_id": ORDER_LINES_TABLE.c.id,
+        "_product_id": ORDER_LINES_TABLE.c.product_id,
         "_order_id": ORDER_LINES_TABLE.c.order_id,
         "_title": ORDER_LINES_TABLE.c.title,
         "_price_per_item": composite(

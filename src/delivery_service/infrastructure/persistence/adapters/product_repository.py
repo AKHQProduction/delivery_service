@@ -18,7 +18,7 @@ class SQLAlchemyProductRepository(ProductRepository):
         query = select(
             exists().where(
                 and_(
-                    PRODUCTS_TABLE.c.title == title,
+                    PRODUCTS_TABLE.c.line_title == title,
                     PRODUCTS_TABLE.c.shop_id == shop_id,
                 )
             )

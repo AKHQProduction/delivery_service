@@ -33,6 +33,7 @@ from zoneinfo import ZoneInfo
 from delivery_service.application.commands.make_new_order import (
     MakeNewOrderRequest,
 )
+from delivery_service.application.query.order import GetAllShopOrdersRequest
 from delivery_service.application.query.ports.customer_gateway import (
     CustomerGateway,
 )
@@ -81,6 +82,13 @@ DELIVERY_PREFERENCE_TO_TEXT = {
 }
 
 CURRENT_CART = "current_cart"
+
+
+@inject
+async def get_orders(sender: FromDishka[Sender], **_kwargs) -> dict[str, Any]:
+    response = await sender.send(GetAllShopOrdersRequest())
+
+    return {"total": response.total, "orders": response.orders}
 
 
 async def get_order_cart(
@@ -416,6 +424,22 @@ ORDERS_DIALOG = Dialog(
             state=OrderMenu.FIND_CUSTOMER,
             id="add_new_product",
         ),
+        ScrollingGroup(
+            Select(
+                id="order_item",
+                items="orders",
+                item_id_getter=lambda item: item.order_id,
+                text=Format(
+                    "{pos}. {item.customer_full_name} | {item.delivery_date}"
+                ),
+            ),
+            id="all_shop_orders",
+            width=1,
+            height=10,
+            hide_on_single_page=True,
+            when=F["total"] > 0,
+        ),
+        getter=get_orders,
         state=OrderMenu.MAIN,
     ),
     Window(

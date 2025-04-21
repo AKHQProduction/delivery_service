@@ -1,7 +1,10 @@
+import operator
 from datetime import date
 from enum import Enum
+from functools import reduce
+from typing import cast
 
-from delivery_service.domain.orders.order_id import OrderID
+from delivery_service.domain.orders.order_ids import OrderID, OrderLineID
 from delivery_service.domain.orders.order_line import OrderLine
 from delivery_service.domain.products.product import ProductID
 from delivery_service.domain.shared.entity import Entity
@@ -44,16 +47,18 @@ class Order(Entity[OrderID]):
         title: str,
         price_per_item: FixedDecimal,
         quantity: int,
-    ):
+    ) -> None:
         for line in self._order_lines:
-            if line.id == product_id and line.unit_price == Price(
-                price_per_item
+            if (
+                line.product_reference == product_id
+                and line.unit_price == Price(price_per_item)
             ):
                 return line.add_quantity(Quantity(quantity))
 
         new_line = OrderLine(
-            entity_id=product_id,
+            entity_id=OrderLineID(cast(int, None)),
             order_id=self.id,
+            product_id=product_id,
             title=title,
             price_per_item=Price(price_per_item),
             quantity=Quantity(quantity),
@@ -61,13 +66,13 @@ class Order(Entity[OrderID]):
 
         return self._order_lines.append(new_line)
 
-    def remove_positon(self, line_id: ProductID) -> None:
+    def remove_positon(self, line_id: OrderLineID) -> None:
         for line in self._order_lines:
             if line.id == line_id:
                 self._order_lines.remove(line)
 
     def reduce_quantity(
-        self, quantity_to_reduce: Quantity, line_id: ProductID
+        self, quantity_to_reduce: Quantity, line_id: OrderLineID
     ) -> None:
         for line in self._order_lines:
             if line.id == line_id:
@@ -80,3 +85,25 @@ class Order(Entity[OrderID]):
     @property
     def order_lines(self) -> list[OrderLine]:
         return self._order_lines
+
+    @property
+    def total_order_price(self) -> Price:
+        zero = Price(FixedDecimal(0))
+
+        return reduce(
+            operator.add,
+            (line.total_position_price for line in self._order_lines),
+            zero,
+        )
+
+    @property
+    def client_id(self) -> UserID:
+        return self._customer_id
+
+    @property
+    def delivery_time_preference(self) -> DeliveryPreference:
+        return self._delivery_preference
+
+    @property
+    def date(self) -> str:
+        return self._delivery_date.strftime("%d.%m.%Y")

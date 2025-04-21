@@ -10,7 +10,7 @@ from delivery_service.application.common.markers.requests import (
 from delivery_service.application.ports.id_generator import IDGenerator
 from delivery_service.application.ports.idp import IdentityProvider
 from delivery_service.domain.orders.order import DeliveryPreference
-from delivery_service.domain.orders.order_id import OrderID
+from delivery_service.domain.orders.order_ids import OrderID
 from delivery_service.domain.orders.repository import OrderRepository
 from delivery_service.domain.shared.dto import OrderLineData
 from delivery_service.domain.shared.errors import AccessDeniedError

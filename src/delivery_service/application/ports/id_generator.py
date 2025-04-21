@@ -1,7 +1,7 @@
 from abc import abstractmethod
 from typing import Protocol
 
-from delivery_service.domain.orders.order_id import OrderID
+from delivery_service.domain.orders.order_ids import OrderID
 from delivery_service.domain.products.product import ProductID
 from delivery_service.domain.shared.shop_id import ShopID
 from delivery_service.domain.shared.user_id import UserID

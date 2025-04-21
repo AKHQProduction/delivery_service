@@ -2,7 +2,7 @@
 
 Revision ID: 00005
 Revises: 00004
-Create Date: 2025-04-19 17:51:14.814581
+Create Date: 2025-04-21 18:22:58.788232
 
 """
 
@@ -58,6 +58,7 @@ def upgrade() -> None:
 
     op.create_table(
         "order_lines",
+        sa.Column("id", sa.Integer(), autoincrement=True, nullable=False),
         sa.Column("product_id", sa.UUID(), nullable=False),
         sa.Column("order_id", sa.UUID(), nullable=False),
         sa.Column("title", sa.String(), nullable=False),
@@ -88,7 +89,7 @@ def upgrade() -> None:
             ["products.id"],
             name=op.f("fk_order_lines_product_id_products"),
         ),
-        sa.PrimaryKeyConstraint("product_id", name=op.f("pk_order_lines")),
+        sa.PrimaryKeyConstraint("id", name=op.f("pk_order_lines")),
     )
 
 

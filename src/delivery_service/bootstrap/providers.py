@@ -104,6 +104,10 @@ from delivery_service.application.query.customer import (
     GetAllCustomersHandler,
     GetAllCustomersRequest,
 )
+from delivery_service.application.query.order import (
+    GetAllShopOrdersHandler,
+    GetAllShopOrdersRequest,
+)
 from delivery_service.application.query.product import (
     GetAllProductsHandler,
     GetAllProductsRequest,
@@ -240,6 +244,7 @@ class ApplicationHandlersProvider(Provider):
         GetShopHandler,
         GetShopStaffMembersHandler,
         GetAllCustomersHandler,
+        GetAllShopOrdersHandler,
     )
 
     behaviors = provide_all(CommitionBehavior, TelegramCheckerBehavior)
@@ -303,6 +308,9 @@ class BazarioProvider(Provider):
             EditCustomerAddressRequest, EditCustomerAddressHandler
         )
         registry.add_request_handler(MakeNewOrderRequest, MakeNewOrderHandler)
+        registry.add_request_handler(
+            GetAllShopOrdersRequest, GetAllShopOrdersHandler
+        )
 
         registry.add_pipeline_behaviors(Request, CommitionBehavior)
         registry.add_pipeline_behaviors(
