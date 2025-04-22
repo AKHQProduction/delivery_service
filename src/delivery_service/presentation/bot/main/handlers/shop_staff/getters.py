@@ -12,6 +12,7 @@ from delivery_service.application.query.ports.product_gateway import (
 from delivery_service.application.query.product import GetAllProductsRequest
 from delivery_service.domain.orders.order_ids import OrderID
 from delivery_service.domain.products.product import ProductID, ProductType
+from delivery_service.domain.shared.user_id import UserID
 
 
 @inject
@@ -76,3 +77,11 @@ async def get_shop_product(
         "price": product.price,
         "product_type": product.product_type,
     }
+
+
+def get_customer_id(manager: DialogManager) -> UserID:
+    customer_id_str = manager.dialog_data.get("customer_id")
+    if not customer_id_str:
+        raise ValueError()
+
+    return UserID(customer_id_str)

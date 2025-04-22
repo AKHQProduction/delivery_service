@@ -18,12 +18,12 @@ from delivery_service.domain.customer_registries.customer_registry_repository im
     CustomerRegistryRepository,
 )
 from delivery_service.domain.customers.repository import CustomerRepository
-from delivery_service.domain.shared.user_id import UserID
-from delivery_service.domain.shared.vo.address import (
+from delivery_service.domain.shared.dto import (
     AddressData,
     CoordinatesData,
     DeliveryAddressData,
 )
+from delivery_service.domain.shared.user_id import UserID
 
 logger = logging.getLogger(__name__)
 
@@ -67,15 +67,20 @@ class AddNewCustomerHandler(RequestHandler[AddNewCustomerRequest, UserID]):
             raise EntityAlreadyExistsError()
 
         new_customer_id = self._id_generator.generate_user_id()
+        new_address_id = self._id_generator.generate_address_id()
         new_customer = customer_registry.add_new_customer(
             new_customer_id=new_customer_id,
             full_name=request.full_name,
             primary_phone_number=request.phone_number,
+            address_id=new_address_id,
             delivery_data=DeliveryAddressData(
                 coordinates=request.coordinates, address=request.address_data
             ),
             creator_id=current_user_id,
         )
+
+        logger.info(new_customer)
+
         self._repository.add(new_customer)
 
         return new_customer_id

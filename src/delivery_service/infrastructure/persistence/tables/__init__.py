@@ -10,5 +10,4 @@ __all__ = [
     "PRODUCTS_TABLE",
     "CUSTOMERS_TABLE",
     "ORDERS_TABLE",
-    "ORDER_LINES_TABLE",
 ]

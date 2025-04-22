@@ -6,10 +6,10 @@ from delivery_service.application.common.factories.staff_member_factory import (
     StaffMemberFactory,
 )
 from delivery_service.application.ports.id_generator import IDGenerator
+from delivery_service.domain.shared.dto import CoordinatesData
 from delivery_service.domain.shared.user_id import UserID
 from delivery_service.domain.shared.vo.address import (
     Coordinates,
-    CoordinatesData,
 )
 from delivery_service.domain.shops.shop import Shop
 from delivery_service.domain.shops.value_objects import DaysOff

@@ -1,4 +1,4 @@
-"""Customers table
+"""Customers and addresses table
 
 Revision ID: 00004
 Revises: 00003
@@ -12,7 +12,9 @@ import sqlalchemy as sa
 from alembic import op
 
 from delivery_service.domain.customers.phone_number import PhoneBook
-from delivery_service.domain.shared.vo.address import DeliveryAddress
+from delivery_service.domain.shared.vo.address import (
+    Coordinates,
+)
 from delivery_service.infrastructure.persistence.tables.base import (
     value_object_to_json,
 )
@@ -30,8 +32,8 @@ def upgrade() -> None:
         sa.Column("shop_id", sa.UUID(), nullable=False),
         sa.Column("contacts", value_object_to_json(PhoneBook), nullable=True),
         sa.Column(
-            "delivery_address",
-            value_object_to_json(DeliveryAddress),
+            "coordinates",
+            value_object_to_json(Coordinates),
             nullable=True,
         ),
         sa.Column(
@@ -64,6 +66,44 @@ def upgrade() -> None:
         ),
     )
 
+    op.create_table(
+        "addresses",
+        sa.Column("id", sa.UUID(), nullable=False),
+        sa.Column("user_id", sa.UUID(), nullable=False),
+        sa.Column("city", sa.String(), nullable=False),
+        sa.Column("street", sa.String(), nullable=False),
+        sa.Column("house_number", sa.String(), nullable=False),
+        sa.Column("apartment_number", sa.String(), nullable=True),
+        sa.Column("floor", sa.Integer(), nullable=True),
+        sa.Column("intercom_code", sa.String(), nullable=True),
+        sa.Column(
+            "coordinates", value_object_to_json(Coordinates), nullable=True
+        ),
+        sa.Column(
+            "created_at",
+            sa.DateTime(),
+            server_default=sa.text("now()"),
+            nullable=False,
+        ),
+        sa.Column(
+            "updated_at",
+            sa.DateTime(),
+            server_default=sa.text("now()"),
+            nullable=True,
+        ),
+        sa.ForeignKeyConstraint(
+            ["user_id"],
+            ["users.id"],
+            name=op.f("fk_addresses_user_id_users"),
+            ondelete="CASCADE",
+        ),
+        sa.PrimaryKeyConstraint("id", name=op.f("pk_addresses")),
+        sa.UniqueConstraint(
+            "user_id", "city", "street", "house_number", name="uq_user_address"
+        ),
+    )
+
 
 def downgrade() -> None:
     op.drop_table("customers")
+    op.drop_table("addresses")

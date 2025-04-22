@@ -86,9 +86,6 @@ from delivery_service.application.common.behaviors.commition import (
 from delivery_service.application.common.behaviors.telegram_checker import (
     TelegramCheckerBehavior,
 )
-from delivery_service.application.common.factories.customer_factory import (
-    CustomerFactory,
-)
 from delivery_service.application.common.factories.role_factory import (
     RoleFactory,
 )
@@ -147,6 +144,12 @@ from delivery_service.infrastructure.integration.geopy.geolocator import (
 )
 from delivery_service.infrastructure.integration.telegram.view_manager import (
     TelegramViewManager,
+)
+from delivery_service.infrastructure.persistence.adapters.address_gateway import (
+    SQLAlchemyAddressGateway,
+)
+from delivery_service.infrastructure.persistence.adapters.address_repository import (
+    SQLAlchemyAddressRepository,
 )
 from delivery_service.infrastructure.persistence.adapters.customer_gateway import (
     SQLAlchemyCustomerGateway,
@@ -213,7 +216,6 @@ class ApplicationProvider(Provider):
         StaffMemberFactory,
         ServiceUserFactory,
         ShopFactory,
-        CustomerFactory,
         RoleFactory,
         scope=Scope.REQUEST,
     )
@@ -223,6 +225,7 @@ class ApplicationProvider(Provider):
         WithParents[SQLAlchemyStaffMemberGateway],
         WithParents[SQLAlchemyCustomerGateway],
         WithParents[SQLAlchemyShopGateway],
+        WithParents[SQLAlchemyAddressGateway],
         scope=Scope.REQUEST,
     )
 
@@ -345,6 +348,7 @@ class DomainProvider(Provider):
         WithParents[SQLAlchemyShopCatalogRepository],
         WithParents[SQLAlchemyCustomerRegistryRepository],
         WithParents[SQLAlchemyOrderRepository],
+        WithParents[SQLAlchemyAddressRepository],
     )
 
 

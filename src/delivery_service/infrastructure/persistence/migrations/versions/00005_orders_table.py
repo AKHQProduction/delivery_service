@@ -11,6 +11,11 @@ from typing import Sequence, Union
 import sqlalchemy as sa
 from alembic import op
 
+from delivery_service.domain.shared.vo.address import Coordinates
+from delivery_service.infrastructure.persistence.tables.base import (
+    value_object_to_json,
+)
+
 revision: str = "00005"
 down_revision: Union[str, None] = "00004"
 branch_labels: Union[str, Sequence[str], None] = None
@@ -23,6 +28,9 @@ def upgrade() -> None:
         sa.Column("id", sa.UUID(), nullable=False),
         sa.Column("shop_id", sa.UUID(), nullable=False),
         sa.Column("customer_id", sa.UUID(), nullable=True),
+        sa.Column(
+            "coordinates", value_object_to_json(Coordinates), nullable=False
+        ),
         sa.Column(
             "delivery_preference",
             sa.Enum("MORNING", "AFTERNOON", name="deliverypreference"),

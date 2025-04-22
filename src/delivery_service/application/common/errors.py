@@ -58,5 +58,10 @@ class OrderNotFoundError(NotFoundError):
 
 
 @dataclass(eq=False)
+class AddressNotFoundError(NotFoundError):
+    pass
+
+
+@dataclass(eq=False)
 class AuthenticationError(ApplicationError):
     pass

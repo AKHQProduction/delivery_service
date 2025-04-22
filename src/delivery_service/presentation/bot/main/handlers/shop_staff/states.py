@@ -60,7 +60,7 @@ class OrderMenu(StatesGroup):
 
     # Order creation
     FIND_CUSTOMER = State()
-    CUSTOMER_CONFIRMATION = State()
+    SELECT_ADDRESS = State()
     CART = State()
     PRODUCTS_CATEGORY = State()
     PRODUCTS_CATALOG = State()

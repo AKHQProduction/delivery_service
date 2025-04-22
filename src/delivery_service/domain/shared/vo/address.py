@@ -1,26 +1,6 @@
 from dataclasses import dataclass
 
-
-@dataclass(frozen=True)
-class CoordinatesData:
-    latitude: float
-    longitude: float
-
-
-@dataclass(frozen=True)
-class AddressData:
-    city: str
-    street: str
-    house_number: str
-    apartment_number: str | None
-    floor: int | None
-    intercom_code: str | None
-
-
-@dataclass(frozen=True)
-class DeliveryAddressData:
-    coordinates: CoordinatesData
-    address: AddressData
+from delivery_service.domain.shared.dto import AddressData, CoordinatesData
 
 
 @dataclass(slots=True, frozen=True, eq=True, unsafe_hash=True)

@@ -11,6 +11,7 @@ from delivery_service.domain.shared.entity import Entity
 from delivery_service.domain.shared.new_types import FixedDecimal
 from delivery_service.domain.shared.shop_id import ShopID
 from delivery_service.domain.shared.user_id import UserID
+from delivery_service.domain.shared.vo.address import Coordinates
 from delivery_service.domain.shared.vo.price import Price
 from delivery_service.domain.shared.vo.quantity import Quantity
 
@@ -27,6 +28,7 @@ class Order(Entity[OrderID]):
         *,
         shop_id: ShopID,
         customer_id: UserID,
+        coordinates: Coordinates,
         delivery_preference: DeliveryPreference,
         order_lines: list[OrderLine],
         delivery_date: date,
@@ -35,6 +37,7 @@ class Order(Entity[OrderID]):
 
         self._shop_id = shop_id
         self._customer_id = customer_id
+        self._coordinates = coordinates
 
         self._delivery_preference = delivery_preference
         self._order_lines = order_lines

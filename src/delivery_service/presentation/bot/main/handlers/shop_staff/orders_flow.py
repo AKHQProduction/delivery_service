@@ -40,15 +40,19 @@ from delivery_service.application.query.order import (
     GetAllShopOrdersRequest,
     GetShopOrderRequest,
 )
+from delivery_service.application.query.ports.address_gateway import (
+    AddressGateway,
+    AddressGatewayFilters,
+)
 from delivery_service.application.query.ports.customer_gateway import (
     CustomerGateway,
 )
 from delivery_service.application.query.shop import GetShopRequest
+from delivery_service.domain.addresses.address_id import AddressID
 from delivery_service.domain.orders.order import DeliveryPreference
 from delivery_service.domain.products.product import ProductID, ProductType
 from delivery_service.domain.shared.dto import OrderLineData
 from delivery_service.domain.shared.new_types import FixedDecimal
-from delivery_service.domain.shared.user_id import UserID
 from delivery_service.infrastructure.integration.telegram.const import (
     ORDERS_BTN,
 )
@@ -60,6 +64,7 @@ from delivery_service.presentation.bot.widgets.kbd import get_back_btn
 
 from .getters import (
     get_all_shop_products,
+    get_customer_id,
     get_order_id,
     get_product_categories,
     get_product_id,
@@ -114,6 +119,19 @@ async def get_order(
             order.delivery_preference
         ],
         "total_order_price": order.total_order_price,
+    }
+
+
+@inject
+async def get_customer_addresses(
+    dialog_manager: DialogManager, reader: FromDishka[AddressGateway], **kwargs
+) -> dict[str, Any]:
+    customer_id = get_customer_id(dialog_manager)
+    filters = AddressGatewayFilters(user_id=customer_id)
+
+    return {
+        "addresses": await reader.read_many(filters),
+        "total": await reader.total(filters),
     }
 
 
@@ -278,6 +296,13 @@ async def on_select_order_item(
     await manager.switch_to(state=OrderMenu.ORDER_CARD)
 
 
+async def on_select_address_item(
+    _: CallbackQuery, __: Widget, manager: DialogManager, value: str
+) -> None:
+    manager.dialog_data["address_id"] = value
+    await manager.switch_to(state=OrderMenu.CART)
+
+
 @inject
 async def on_find_customer_by_phone(
     msg: Message,
@@ -410,8 +435,10 @@ async def on_confirm_order_creation(
 ) -> None:
     data = manager.dialog_data
 
-    customer_id_str = data.get("customer_id")
-    customer_id = UserID(customer_id_str) if customer_id_str else None
+    customer_id = get_customer_id(manager)
+
+    address_id_str = data.get("address_id")
+    address_id = AddressID(UUID(address_id_str)) if address_id_str else None
 
     delivery_date_str = data.get("delivery_date")
     delivery_date = (
@@ -427,7 +454,7 @@ async def on_confirm_order_creation(
     )
 
     if (
-        not customer_id
+        not address_id
         or not delivery_date
         or not delivery_preference
         or not cart
@@ -451,6 +478,7 @@ async def on_confirm_order_creation(
             delivery_date=delivery_date,
             delivery_preference=delivery_preference,
             order_lines=order_lines,
+            address_id=address_id,
         )
     )
 
@@ -537,14 +565,26 @@ ORDERS_DIALOG = Dialog(
         state=OrderMenu.FIND_CUSTOMER,
     ),
     Window(
-        Format("Створити замовлення для {dialog_data[full_name]}?"),
-        SwitchTo(
-            text=Const("✅ Підтвердити"),
-            id="accept_customer_for_order",
-            state=OrderMenu.CART,
+        Format("Оберіть адресу {dialog_data[full_name]} для замовлення"),
+        ScrollingGroup(
+            Select(
+                id="address",
+                items="addresses",
+                item_id_getter=lambda item: item.address_id,
+                text=Format(
+                    "{pos}. {item.city}, {item.street} {item.house_number}"
+                ),
+                on_click=on_select_address_item,
+            ),
+            id="all_customer_addresses",
+            width=1,
+            height=10,
+            hide_on_single_page=True,
+            when=F["total"] > 0,
         ),
-        get_back_btn(btn_text="❌ Відмінити", state=OrderMenu.MAIN),
-        state=OrderMenu.CUSTOMER_CONFIRMATION,
+        get_back_btn(state=OrderMenu.MAIN),
+        getter=get_customer_addresses,
+        state=OrderMenu.SELECT_ADDRESS,
     ),
     Window(
         Const("<b>🧺 Поточне замовлення</b>\n"),
