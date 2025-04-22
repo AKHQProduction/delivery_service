@@ -31,7 +31,7 @@ from delivery_service.application.common.factories.shop_factory import (
     DaysOffData,
 )
 from delivery_service.application.ports.location_finder import LocationFinder
-from delivery_service.domain.shared.vo.address import CoordinatesData
+from delivery_service.domain.shared.dto import CoordinatesData
 from delivery_service.domain.staff.staff_role import Role
 from delivery_service.infrastructure.integration.geopy.errors import (
     LocationNotFoundError,

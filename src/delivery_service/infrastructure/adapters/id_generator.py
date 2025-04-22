@@ -5,6 +5,7 @@ from uuid_extensions import uuid7
 from delivery_service.application.ports.id_generator import (
     IDGenerator,
 )
+from delivery_service.domain.addresses.address_id import AddressID
 from delivery_service.domain.orders.order_ids import OrderID
 from delivery_service.domain.products.product import ProductID
 from delivery_service.domain.shared.shop_id import ShopID
@@ -23,3 +24,6 @@ class IDGeneratorImpl(IDGenerator):
 
     def generate_order_id(self) -> OrderID:
         return OrderID(UUID(str(uuid7())))
+
+    def generate_address_id(self) -> AddressID:
+        return AddressID(UUID(str(uuid7())))

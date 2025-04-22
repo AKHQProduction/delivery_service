@@ -10,3 +10,25 @@ class OrderLineData:
     title: str
     price_per_item: FixedDecimal
     quantity: int
+
+
+@dataclass(frozen=True)
+class CoordinatesData:
+    latitude: float
+    longitude: float
+
+
+@dataclass(frozen=True)
+class AddressData:
+    city: str
+    street: str
+    house_number: str
+    apartment_number: str | None
+    floor: int | None
+    intercom_code: str | None
+
+
+@dataclass(frozen=True)
+class DeliveryAddressData:
+    coordinates: CoordinatesData
+    address: AddressData

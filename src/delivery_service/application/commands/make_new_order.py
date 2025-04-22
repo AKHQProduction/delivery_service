@@ -4,11 +4,14 @@ from datetime import date
 
 from bazario.asyncio import RequestHandler
 
+from delivery_service.application.common.errors import AddressNotFoundError
 from delivery_service.application.common.markers.requests import (
     TelegramRequest,
 )
 from delivery_service.application.ports.id_generator import IDGenerator
 from delivery_service.application.ports.idp import IdentityProvider
+from delivery_service.domain.addresses.address_id import AddressID
+from delivery_service.domain.addresses.repository import AddressRepository
 from delivery_service.domain.orders.order import DeliveryPreference
 from delivery_service.domain.orders.order_ids import OrderID
 from delivery_service.domain.orders.repository import OrderRepository
@@ -23,6 +26,7 @@ logger = logging.getLogger(__name__)
 @dataclass(frozen=True)
 class MakeNewOrderRequest(TelegramRequest[OrderID]):
     customer_id: UserID
+    address_id: AddressID
     order_lines: list[OrderLineData]
     delivery_preference: DeliveryPreference
     delivery_date: date
@@ -35,11 +39,13 @@ class MakeNewOrderHandler(RequestHandler[MakeNewOrderRequest, OrderID]):
         shop_repository: ShopRepository,
         id_generator: IDGenerator,
         order_repository: OrderRepository,
+        address_repository: AddressRepository,
     ) -> None:
         self._idp = idp
         self._shop_repository = shop_repository
         self._id_generator = id_generator
         self._order_repository = order_repository
+        self._address_repository = address_repository
 
     async def handle(self, request: MakeNewOrderRequest) -> OrderID:
         logger.info("Request to make new order")
@@ -48,11 +54,17 @@ class MakeNewOrderHandler(RequestHandler[MakeNewOrderRequest, OrderID]):
         shop = await self._shop_repository.load_with_identity(current_user_id)
         if not shop:
             raise AccessDeniedError()
+        address = await self._address_repository.load_with_id(
+            request.address_id
+        )
+        if not address:
+            raise AddressNotFoundError()
 
         new_order_id = self._id_generator.generate_order_id()
         new_order = shop.add_new_order(
             new_order_id=new_order_id,
             customer_id=request.customer_id,
+            coordinates=address.address_coordinates,
             order_line_data=request.order_lines,
             delivery_date=request.delivery_date,
             delivery_preference=request.delivery_preference,

@@ -17,11 +17,8 @@ from delivery_service.domain.customer_registries.customer_registry_repository im
     CustomerRegistryRepository,
 )
 from delivery_service.domain.customers.repository import CustomerRepository
+from delivery_service.domain.shared.dto import AddressData, CoordinatesData
 from delivery_service.domain.shared.user_id import UserID
-from delivery_service.domain.shared.vo.address import (
-    AddressData,
-    CoordinatesData,
-)
 
 logger = logging.getLogger(__name__)
 

@@ -17,7 +17,7 @@ from aiogram_dialog.widgets.kbd import (
     Select,
     SwitchTo,
 )
-from aiogram_dialog.widgets.text import Case, Const, Format, Multi
+from aiogram_dialog.widgets.text import Const, Format, Multi
 from bazario.asyncio import Sender
 from dishka import FromDishka
 from dishka.integrations.aiogram_dialog import inject
@@ -40,11 +40,7 @@ from delivery_service.application.query.ports.customer_gateway import (
     CustomerGateway,
 )
 from delivery_service.domain.customers.phone_number import PHONE_NUMBER_PATTERN
-from delivery_service.domain.shared.user_id import UserID
-from delivery_service.domain.shared.vo.address import (
-    AddressData,
-    CoordinatesData,
-)
+from delivery_service.domain.shared.dto import AddressData, CoordinatesData
 from delivery_service.infrastructure.integration.geopy.errors import (
     LocationNotFoundError,
 )
@@ -53,6 +49,7 @@ from delivery_service.infrastructure.integration.telegram.const import (
 )
 from delivery_service.presentation.bot.widgets.kbd import get_back_btn
 
+from .getters import get_customer_id
 from .states import CustomerMenu
 
 CUSTOMERS_ROUTER = Router()
@@ -63,14 +60,6 @@ async def launch_customer_dialog(_: Message, dialog_manager: DialogManager):
     await dialog_manager.start(
         state=CustomerMenu.MAIN, mode=StartMode.RESET_STACK
     )
-
-
-def get_customer_id(manager: DialogManager) -> UserID:
-    customer_id_str = manager.dialog_data.get("customer_id")
-    if not customer_id_str:
-        raise ValueError()
-
-    return UserID(customer_id_str)
 
 
 @inject
@@ -98,14 +87,7 @@ async def get_shop_customer(
     return {
         "full_name": customer.full_name,
         "phone": customer.primary_phone,
-        "address": f"{customer.delivery_address.city}, "
-        f"{customer.delivery_address.street} "
-        f"{customer.delivery_address.house_number}",
-        "is_private_home": bool(customer.delivery_address.floor is not None),
-        "has_intercom_code": bool(customer.delivery_address.intercom_code),
-        "apartment_number": customer.delivery_address.apartment_number,
-        "floor": customer.delivery_address.floor,
-        "intercom_code": customer.delivery_address.intercom_code,
+        "addresses": customer.delivery_addresses,
     }
 
 
@@ -405,28 +387,8 @@ def get_switch_to_preview(state: State) -> SwitchTo:
 
 CUSTOMER_CARD = Multi(
     Format(
-        "<b>Ім'я:</b> {full_name}\n"
-        "<b>Телефон:</b> <code>{phone}</code>\n\n"
-        "<b>Адреса:</b> {address}"
-    ),
-    Const("<b>Квартира:</b> ")
-    + Case(
-        texts={
-            True: Format("{apartment_number}"),
-            False: Const("частний будинок"),
-        },
-        selector=F["is_private_home"],
-    ),
-    Const("<b>Поверх:</b> ")
-    + Case(
-        texts={True: Format("{floor}"), False: Const("частний будинок")},
-        selector=F["is_private_home"],
-    ),
-    Const("\n<b>Код домофону:</b> ")
-    + Case(
-        texts={True: Format("{intercom_code}"), False: Const("без коду")},
-        selector=F["has_intercom_code"],
-    ),
+        "<b>Ім'я:</b> {full_name}\n" "<b>Телефон:</b> <code>{phone}</code>\n\n"
+    )
 )
 
 CUSTOMERS_DIALOG = Dialog(
