@@ -1,6 +1,10 @@
+import math
 from dataclasses import dataclass
+from typing import Final
 
 from delivery_service.domain.shared.dto import AddressData, CoordinatesData
+
+EARTH_RADIUS: Final[int] = 6371
 
 
 @dataclass(slots=True, frozen=True, eq=True, unsafe_hash=True)
@@ -11,6 +15,41 @@ class Coordinates:
     @property
     def coordinates(self) -> tuple[float, float]:
         return self.latitude, self.longitude
+
+    def distance_to(self, other: "Coordinates") -> float:
+        """
+        Calculate the distance between two points in km.
+        Using the haversine formula
+
+        :param Coordinates other: The second point
+
+        :return: Distance between two points in kilometers
+        :rtype: float
+        """
+        # Converting degrees to radians
+        self_latitude_radians = math.radians(self.latitude)
+        other_latitude_radians = math.radians(other.latitude)
+        self_longitude_radians = math.radians(self.longitude)
+        other_longitude_radians = math.radians(other.longitude)
+
+        latitude_delta = other_latitude_radians - self_latitude_radians
+        longitude_delta = other_longitude_radians - self_longitude_radians
+
+        haversine_latitude = math.sin(latitude_delta / 2) ** 2
+        haversine_longitude = math.sin(longitude_delta / 2) ** 2
+
+        haversine_formula = (
+            haversine_latitude
+            + math.cos(self_latitude_radians)
+            * math.cos(other_latitude_radians)
+            * haversine_longitude
+        )
+
+        central_angle = 2 * math.atan2(
+            math.sqrt(haversine_formula), math.sqrt(1 - haversine_formula)
+        )
+
+        return EARTH_RADIUS * central_angle
 
 
 @dataclass(slots=True, frozen=True, eq=True, unsafe_hash=True)
