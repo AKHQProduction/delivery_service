@@ -105,6 +105,10 @@ from delivery_service.application.query.customer import (
     GetAllCustomersHandler,
     GetAllCustomersRequest,
 )
+from delivery_service.application.query.get_order_list import (
+    GetOrderListHandler,
+    MakeOrderListRequest,
+)
 from delivery_service.application.query.order import (
     GetAllShopOrdersHandler,
     GetAllShopOrdersRequest,
@@ -126,6 +130,12 @@ from delivery_service.bootstrap.configs import (
     RabbitConfig,
     RedisConfig,
     TGConfig,
+)
+from delivery_service.domain.orders.order_list_collector import (
+    OrderListCollector,
+)
+from delivery_service.infrastructure.adapters.file_manager import (
+    PDFFileManager,
 )
 from delivery_service.infrastructure.adapters.id_generator import (
     IDGeneratorImpl,
@@ -211,6 +221,7 @@ class AppConfigProvider(Provider):
 
 class ApplicationProvider(Provider):
     id_generator = provide(WithParents[IDGeneratorImpl], scope=Scope.APP)
+    file_manager = provide(WithParents[PDFFileManager], scope=Scope.APP)
 
     fabrics = provide_all(
         StaffMemberFactory,
@@ -250,6 +261,7 @@ class ApplicationHandlersProvider(Provider):
         EditCustomerAddressHandler,
         MakeNewOrderHandler,
         DeleteOrderHandler,
+        GetOrderListHandler,
         GetAllProductsHandler,
         GetShopHandler,
         GetShopStaffMembersHandler,
@@ -324,6 +336,7 @@ class BazarioProvider(Provider):
         )
         registry.add_request_handler(GetShopOrderRequest, GetShopOrderHandler)
         registry.add_request_handler(DeleteOrderRequest, DeleteOrderHandler)
+        registry.add_request_handler(MakeOrderListRequest, GetOrderListHandler)
 
         registry.add_pipeline_behaviors(Request, CommitionBehavior)
         registry.add_pipeline_behaviors(
@@ -350,6 +363,8 @@ class DomainProvider(Provider):
         WithParents[SQLAlchemyOrderRepository],
         WithParents[SQLAlchemyAddressRepository],
     )
+
+    services = provide_all(OrderListCollector)
 
 
 class InfrastructureAdaptersProvider(Provider):

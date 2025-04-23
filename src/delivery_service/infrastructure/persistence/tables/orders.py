@@ -4,12 +4,10 @@ from sqlalchemy.orm import composite, relationship
 
 from delivery_service.domain.orders.order import DeliveryPreference, Order
 from delivery_service.domain.orders.order_line import OrderLine
-from delivery_service.domain.shared.vo.address import Coordinates
 from delivery_service.domain.shared.vo.price import Price
 from delivery_service.domain.shared.vo.quantity import Quantity
 from delivery_service.infrastructure.persistence.tables.base import (
     MAPPER_REGISTRY,
-    value_object_to_json,
 )
 
 ORDERS_TABLE = sa.Table(
@@ -27,7 +25,9 @@ ORDERS_TABLE = sa.Table(
         nullable=True,
     ),
     sa.Column(
-        "coordinates", value_object_to_json(Coordinates), nullable=False
+        "address_id",
+        sa.ForeignKey("addresses.id", ondelete="SET NULL"),
+        nullable=True,
     ),
     sa.Column(
         "delivery_preference", sa.Enum(DeliveryPreference), nullable=False
@@ -91,7 +91,7 @@ MAPPER_REGISTRY.map_imperatively(
         "_entity_id": ORDERS_TABLE.c.id,
         "_shop_id": ORDERS_TABLE.c.shop_id,
         "_customer_id": ORDERS_TABLE.c.customer_id,
-        "_coordinates": ORDERS_TABLE.c.coordinates,
+        "_address_id": ORDERS_TABLE.c.address_id,
         "_delivery_preference": ORDERS_TABLE.c.delivery_preference,
         "_delivery_date": ORDERS_TABLE.c.delivery_date,
         "_order_lines": relationship(

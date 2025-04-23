@@ -19,6 +19,12 @@ ENV VIRTUAL_ENV=/usr/src/app/.venv \
     PATH="/usr/src/app/.venv/bin:$PATH"
 ENV PYTHONPATH=/usr/src/app/src
 
+RUN apt-get update \
+    && apt-get install -y --no-install-recommends \
+         fonts-dejavu-core \
+         fonts-liberation \
+    && rm -rf /var/lib/apt/lists/*
+
 COPY --from=builder ${VIRTUAL_ENV} ${VIRTUAL_ENV}
 COPY src ./usr/src/app/src
 COPY alembic.ini ./usr/src/app

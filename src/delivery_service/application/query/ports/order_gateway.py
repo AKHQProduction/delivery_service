@@ -1,6 +1,12 @@
 from collections.abc import Sequence
 from dataclasses import dataclass
 
+from delivery_service.application.query.ports.address_gateway import (
+    AddressReadModel,
+)
+from delivery_service.application.query.ports.customer_gateway import (
+    CustomerReadModel,
+)
 from delivery_service.domain.orders.order import DeliveryPreference
 from delivery_service.domain.orders.order_ids import OrderID, OrderLineID
 from delivery_service.domain.shared.new_types import FixedDecimal
@@ -17,8 +23,9 @@ class OrderLineReadModel:
 @dataclass(frozen=True)
 class OrderReadModel:
     order_id: OrderID
-    customer_full_name: str
+    customer: CustomerReadModel
     delivery_preference: DeliveryPreference
     delivery_date: str
     order_lines: Sequence[OrderLineReadModel]
     total_order_price: FixedDecimal
+    address: AddressReadModel | None = None

@@ -113,7 +113,7 @@ async def get_order(
 
     return {
         "order_lines": order.order_lines,
-        "full_name": order.customer_full_name,
+        "full_name": order.customer.full_name,
         "delivery_date": order.delivery_date,
         "delivery_preference": DELIVERY_PREFERENCE_TO_TEXT[
             order.delivery_preference
@@ -124,7 +124,9 @@ async def get_order(
 
 @inject
 async def get_customer_addresses(
-    dialog_manager: DialogManager, reader: FromDishka[AddressGateway], **kwargs
+    dialog_manager: DialogManager,
+    reader: FromDishka[AddressGateway],
+    **_kwargs,
 ) -> dict[str, Any]:
     customer_id = get_customer_id(dialog_manager)
     filters = AddressGatewayFilters(user_id=customer_id)
@@ -504,7 +506,7 @@ ORDERS_DIALOG = Dialog(
                 items="orders",
                 item_id_getter=lambda item: item.order_id,
                 text=Format(
-                    "{pos}. {item.customer_full_name} | {item.delivery_date}"
+                    "{pos}. {item.customer.full_name} | {item.delivery_date}"
                 ),
                 on_click=on_select_order_item,
             ),

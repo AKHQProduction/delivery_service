@@ -9,3 +9,6 @@
 # Features diagram
 
 [Draw.io](https://drive.google.com/file/d/10OO5vSXz2iYXXDC6CVfOLdCnTHSLWYUr/view?usp=sharing)
+
+# For pdf files
+[WeasyPrint](https://doc.courtbouillon.org/weasyprint/stable/first_steps.html#installation)

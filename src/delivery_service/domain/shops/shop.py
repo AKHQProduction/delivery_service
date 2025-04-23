@@ -1,6 +1,7 @@
 from datetime import date
 from typing import cast
 
+from delivery_service.domain.addresses.address_id import AddressID
 from delivery_service.domain.orders.order import (
     DeliveryPreference,
     Order,
@@ -48,7 +49,7 @@ class Shop(Entity[ShopID]):
         new_order_id: OrderID,
         order_line_data: list[OrderLineData],
         customer_id: UserID,
-        coordinates: Coordinates,
+        address_id: AddressID,
         delivery_preference: DeliveryPreference,
         delivery_date: date,
         creator_id: UserID,
@@ -72,7 +73,7 @@ class Shop(Entity[ShopID]):
             entity_id=new_order_id,
             shop_id=self.id,
             customer_id=customer_id,
-            coordinates=coordinates,
+            address_id=address_id,
             order_lines=order_lines,
             delivery_preference=delivery_preference,
             delivery_date=delivery_date,
@@ -186,8 +187,8 @@ class Shop(Entity[ShopID]):
         return self._name
 
     @property
-    def shop_coordinates(self) -> tuple[float, float]:
-        return self._coordinates.coordinates
+    def shop_coordinates(self) -> Coordinates:
+        return self._coordinates
 
     @property
     def regular_days_off(self) -> list[int]:

@@ -7,8 +7,8 @@ from delivery_service.domain.orders.order import Order
 from delivery_service.domain.orders.order_ids import OrderID
 from delivery_service.domain.orders.repository import (
     OrderRepository,
+    OrderRepositoryFilters,
 )
-from delivery_service.domain.shared.shop_id import ShopID
 from delivery_service.infrastructure.persistence.tables import ORDERS_TABLE
 
 
@@ -19,8 +19,20 @@ class SQLAlchemyOrderRepository(OrderRepository):
     def add(self, new_order: Order) -> None:
         return self._session.add(new_order)
 
-    async def load_many_with_shop_id(self, shop_id: ShopID) -> Sequence[Order]:
-        query = select(Order).where(and_(ORDERS_TABLE.c.shop_id == shop_id))
+    async def load_many(
+        self, filters: OrderRepositoryFilters | None = None
+    ) -> Sequence[Order]:
+        query = select(Order)
+
+        if filters:
+            if filters.shop_id is not None:
+                query = query.where(
+                    and_(ORDERS_TABLE.c.shop_id == filters.shop_id)
+                )
+            if filters.delivery_date is not None:
+                query = query.where(
+                    and_(ORDERS_TABLE.c.delivery_date == filters.delivery_date)
+                )
 
         result = await self._session.execute(query)
         return result.scalars().all()

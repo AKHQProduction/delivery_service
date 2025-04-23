@@ -4,6 +4,7 @@ from enum import Enum
 from functools import reduce
 from typing import cast
 
+from delivery_service.domain.addresses.address_id import AddressID
 from delivery_service.domain.orders.order_ids import OrderID, OrderLineID
 from delivery_service.domain.orders.order_line import OrderLine
 from delivery_service.domain.products.product import ProductID
@@ -11,7 +12,6 @@ from delivery_service.domain.shared.entity import Entity
 from delivery_service.domain.shared.new_types import FixedDecimal
 from delivery_service.domain.shared.shop_id import ShopID
 from delivery_service.domain.shared.user_id import UserID
-from delivery_service.domain.shared.vo.address import Coordinates
 from delivery_service.domain.shared.vo.price import Price
 from delivery_service.domain.shared.vo.quantity import Quantity
 
@@ -28,7 +28,7 @@ class Order(Entity[OrderID]):
         *,
         shop_id: ShopID,
         customer_id: UserID,
-        coordinates: Coordinates,
+        address_id: AddressID,
         delivery_preference: DeliveryPreference,
         order_lines: list[OrderLine],
         delivery_date: date,
@@ -37,7 +37,7 @@ class Order(Entity[OrderID]):
 
         self._shop_id = shop_id
         self._customer_id = customer_id
-        self._coordinates = coordinates
+        self._address_id = address_id
 
         self._delivery_preference = delivery_preference
         self._order_lines = order_lines
@@ -88,6 +88,10 @@ class Order(Entity[OrderID]):
     @property
     def shop_reference(self) -> ShopID:
         return self._shop_id
+
+    @property
+    def address_reference(self) -> AddressID:
+        return self._address_id
 
     @property
     def order_lines(self) -> list[OrderLine]:

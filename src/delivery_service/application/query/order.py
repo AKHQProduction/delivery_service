@@ -12,16 +12,20 @@ from delivery_service.application.common.markers.requests import (
     TelegramRequest,
 )
 from delivery_service.application.ports.idp import IdentityProvider
+from delivery_service.application.query.common.order_mapper import (
+    map_order_to_read_model,
+)
 from delivery_service.application.query.ports.customer_gateway import (
     CustomerGateway,
 )
 from delivery_service.application.query.ports.order_gateway import (
-    OrderLineReadModel,
     OrderReadModel,
 )
-from delivery_service.domain.orders.order import Order
 from delivery_service.domain.orders.order_ids import OrderID
-from delivery_service.domain.orders.repository import OrderRepository
+from delivery_service.domain.orders.repository import (
+    OrderRepository,
+    OrderRepositoryFilters,
+)
 from delivery_service.domain.shared.errors import AccessDeniedError
 from delivery_service.domain.staff.repository import StaffMemberRepository
 
@@ -66,8 +70,8 @@ class GetAllShopOrdersHandler(
         if not staff_member:
             raise AccessDeniedError()
 
-        shop_orders = await self._order_repository.load_many_with_shop_id(
-            shop_id=staff_member.from_shop
+        shop_orders = await self._order_repository.load_many(
+            OrderRepositoryFilters(shop_id=staff_member.from_shop)
         )
         total_order = len(shop_orders)
         if total_order == 0:
@@ -81,7 +85,7 @@ class GetAllShopOrdersHandler(
             if not customer:
                 continue
 
-            orders.append(map_order_to_read_model(order, customer.full_name))
+            orders.append(map_order_to_read_model(order, customer))
 
         return GetAllShopOrdersResponse(total=total_order, orders=orders)
 
@@ -110,25 +114,4 @@ class GetShopOrderHandler(RequestHandler[GetShopOrderRequest, OrderReadModel]):
         if not customer:
             raise CustomerNotFoundError()
 
-        return map_order_to_read_model(order, customer.full_name)
-
-
-def map_order_to_read_model(
-    order: Order, customer_full_name: str
-) -> OrderReadModel:
-    return OrderReadModel(
-        order_id=order.id,
-        customer_full_name=customer_full_name,
-        delivery_date=order.date,
-        delivery_preference=order.delivery_time_preference,
-        order_lines=[
-            OrderLineReadModel(
-                order_line_id=line.id,
-                title=line.line_title,
-                price_per_item=line.unit_price.value,
-                quantity=line.total_quantity.value,
-            )
-            for line in order.order_lines
-        ],
-        total_order_price=order.total_order_price.value,
-    )
+        return map_order_to_read_model(order, customer)

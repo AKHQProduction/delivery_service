@@ -4,7 +4,6 @@ from datetime import date
 
 from bazario.asyncio import RequestHandler
 
-from delivery_service.application.common.errors import AddressNotFoundError
 from delivery_service.application.common.markers.requests import (
     TelegramRequest,
 )
@@ -54,17 +53,12 @@ class MakeNewOrderHandler(RequestHandler[MakeNewOrderRequest, OrderID]):
         shop = await self._shop_repository.load_with_identity(current_user_id)
         if not shop:
             raise AccessDeniedError()
-        address = await self._address_repository.load_with_id(
-            request.address_id
-        )
-        if not address:
-            raise AddressNotFoundError()
 
         new_order_id = self._id_generator.generate_order_id()
         new_order = shop.add_new_order(
             new_order_id=new_order_id,
             customer_id=request.customer_id,
-            coordinates=address.address_coordinates,
+            address_id=request.address_id,
             order_line_data=request.order_lines,
             delivery_date=request.delivery_date,
             delivery_preference=request.delivery_preference,
