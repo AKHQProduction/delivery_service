@@ -73,3 +73,6 @@ class OrderMenu(StatesGroup):
     EDITING_MENU = State()
     ITEM_EDITING_MENU = State()
     EDIT_QUANTITY = State()
+
+    # Order reports
+    SELECT_DATE_FOR_REPORT = State()

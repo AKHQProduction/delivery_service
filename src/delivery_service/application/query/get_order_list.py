@@ -22,7 +22,7 @@ from delivery_service.application.query.ports.customer_gateway import (
 from delivery_service.application.query.ports.order_gateway import (
     OrderReadModel,
 )
-from delivery_service.domain.orders.order import Order
+from delivery_service.domain.orders.order import DeliveryPreference, Order
 from delivery_service.domain.orders.order_list_collector import (
     OrderListCollector,
 )
@@ -37,7 +37,11 @@ class MakeOrderListRequest(TelegramRequest):
     selected_day: date
 
 
-class GetOrderListHandler(RequestHandler[MakeOrderListRequest, bytes]):
+class GetOrderListHandler(
+    RequestHandler[
+        MakeOrderListRequest, dict[DeliveryPreference, bytes] | None
+    ]
+):
     def __init__(
         self,
         idp: IdentityProvider,
@@ -54,7 +58,9 @@ class GetOrderListHandler(RequestHandler[MakeOrderListRequest, bytes]):
         self._address_gateway = address_gateway
         self._file_manager = file_manager
 
-    async def handle(self, request: MakeOrderListRequest) -> bytes:
+    async def handle(
+        self, request: MakeOrderListRequest
+    ) -> dict[DeliveryPreference, bytes] | None:
         logger.info("Request to get order list")
         current_user_id = await self._idp.get_current_user_id()
 
@@ -67,13 +73,23 @@ class GetOrderListHandler(RequestHandler[MakeOrderListRequest, bytes]):
                 shop, request.selected_day
             )
         )
+        if not collected_orders:
+            return None
 
-        tasks = [self._map_order(order) for order in collected_orders]
-        mapped = await asyncio.gather(*tasks)
+        result: dict[DeliveryPreference, list[OrderReadModel]] = {}
 
-        orders_to_delivery = [item for item in mapped if item is not None]
+        for preference, orders in collected_orders.items():
+            tasks = [self._map_order(order) for order in orders]
+            mapped = await asyncio.gather(*tasks)
+            mapped_orders = [item for item in mapped if item is not None]
 
-        return self._file_manager.create_orders_file(orders_to_delivery)
+            if mapped_orders:
+                result[preference] = mapped_orders
+
+        if not result:
+            return None
+
+        return self._file_manager.create_order_files(result)
 
     async def _map_order(self, order: Order) -> OrderReadModel | None:
         customer_task = asyncio.create_task(

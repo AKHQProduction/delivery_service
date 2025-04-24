@@ -3,8 +3,8 @@ from datetime import date, datetime
 from typing import Any
 from uuid import UUID
 
-from aiogram import F, Router
-from aiogram.types import CallbackQuery, Message
+from aiogram import Bot, F, Router
+from aiogram.types import BufferedInputFile, CallbackQuery, Message, User
 from aiogram_dialog import (
     ChatEvent,
     Dialog,
@@ -35,6 +35,9 @@ from delivery_service.application.commands.delete_order import (
 )
 from delivery_service.application.commands.make_new_order import (
     MakeNewOrderRequest,
+)
+from delivery_service.application.query.get_order_list import (
+    MakeOrderListRequest,
 )
 from delivery_service.application.query.order import (
     GetAllShopOrdersRequest,
@@ -284,6 +287,47 @@ async def on_select_delivery_date(
     return await manager.switch_to(state=OrderMenu.SELECT_DELIVERY_PREFERENCE)
 
 
+@inject
+async def on_select_date_for_order(
+    call: ChatEvent,
+    _: ManagedCalendar,
+    manager: DialogManager,
+    clicked_date: date,
+    sender: FromDishka[Sender],
+) -> bool | None:
+    bot: Bot = manager.middleware_data["bot"]
+    user: User = manager.middleware_data["event_from_user"]
+    error_text: str = "❌ Доставка в цей день неможлива"
+
+    if is_day_off(clicked_date, manager) and isinstance(call, CallbackQuery):
+        return await call.answer(text=error_text, show_alert=True)
+
+    current_date = datetime.now(tz=ZoneInfo("Europe/Kiev")).date()
+    if current_date > clicked_date and isinstance(call, CallbackQuery):
+        return await call.answer(text=error_text, show_alert=True)
+
+    response = await sender.send(
+        MakeOrderListRequest(selected_day=clicked_date)
+    )
+    if response is None and isinstance(call, CallbackQuery):
+        await call.answer(
+            text="❌ В цей день немає замовлень", show_alert=True
+        )
+        return None
+
+    for preference, pdf in response.items():
+        filename = (
+            "morning_orders.pdf"
+            if preference == DeliveryPreference.MORNING
+            else "afternoon_orders.pdf"
+        )
+        await bot.send_document(
+            chat_id=user.id, document=BufferedInputFile(pdf, filename=filename)
+        )
+
+    return None
+
+
 async def on_select_delivery_preference(
     _: CallbackQuery, __: Widget, manager: DialogManager, value: str
 ) -> None:
@@ -495,6 +539,11 @@ async def on_confirm_order_creation(
 ORDERS_DIALOG = Dialog(
     Window(
         Const("🚚 <b>Меню замовлень</b>"),
+        SwitchTo(
+            text=Const("📋 Отримати звіт"),
+            id="date_for_report",
+            state=OrderMenu.SELECT_DATE_FOR_REPORT,
+        ),
         SwitchTo(
             text=Const("➕ Створити замовлення"),
             state=OrderMenu.FIND_CUSTOMER,
@@ -750,5 +799,15 @@ ORDERS_DIALOG = Dialog(
         ),
         getter=[get_all_order_data_to_preview, get_order_cart],
         state=OrderMenu.PREVIEW,
+    ),
+    Window(
+        Const("Оберіть дату для отримання звіту"),
+        Const("<i>🟥 - вихідний день</i>"),
+        ShopAvailabilityCalendar(
+            id="delivery_calendar", on_click=on_select_date_for_order
+        ),
+        get_back_btn(state=OrderMenu.MAIN),
+        getter=get_shop_data,
+        state=OrderMenu.SELECT_DATE_FOR_REPORT,
     ),
 )
