@@ -88,7 +88,7 @@ class PDFFileManager(FileManager):
         base = f"{address.city}, {address.street} {address.house_number}"
         if address.apartment_number is None:
             return base + " (частный будинок)"
-        fl = f", этаж {address.floor}" if address.floor is not None else ""
+        fl = f", поверх {address.floor}" if address.floor is not None else ""
         ic = address.intercom_code or "без кода"
         return (
             f"{base}, кв. {address.apartment_number}{fl}, код домофону: {ic}"

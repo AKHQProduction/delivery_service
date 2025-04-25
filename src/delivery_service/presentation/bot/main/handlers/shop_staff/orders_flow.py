@@ -43,10 +43,6 @@ from delivery_service.application.query.order import (
     GetAllShopOrdersRequest,
     GetShopOrderRequest,
 )
-from delivery_service.application.query.ports.address_gateway import (
-    AddressGateway,
-    AddressGatewayFilters,
-)
 from delivery_service.application.query.ports.customer_gateway import (
     CustomerGateway,
 )
@@ -67,6 +63,7 @@ from delivery_service.presentation.bot.widgets.kbd import get_back_btn
 
 from .getters import (
     get_all_shop_products,
+    get_customer_addresses,
     get_customer_id,
     get_order_id,
     get_product_categories,
@@ -122,21 +119,6 @@ async def get_order(
             order.delivery_preference
         ],
         "total_order_price": order.total_order_price,
-    }
-
-
-@inject
-async def get_customer_addresses(
-    dialog_manager: DialogManager,
-    reader: FromDishka[AddressGateway],
-    **_kwargs,
-) -> dict[str, Any]:
-    customer_id = get_customer_id(dialog_manager)
-    filters = AddressGatewayFilters(user_id=customer_id)
-
-    return {
-        "addresses": await reader.read_many(filters),
-        "total": await reader.total(filters),
     }
 
 

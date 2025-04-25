@@ -33,3 +33,21 @@ class Address(Entity[AddressID]):
     @property
     def address_coordinates(self) -> Coordinates:
         return self._coordinates
+
+    def update_address_data(
+        self,
+        city: str,
+        street: str,
+        house_number: str,
+        apartment_number: str | None,
+        floor: int | None,
+        intercom_code: str | None,
+        coordinates: Coordinates,
+    ) -> None:
+        self._city = city
+        self._street = street
+        self._house_number = house_number
+        self._apartment_number = apartment_number
+        self._floor = floor
+        self._intercom_code = intercom_code
+        self._coordinates = coordinates

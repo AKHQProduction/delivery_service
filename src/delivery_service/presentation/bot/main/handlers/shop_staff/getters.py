@@ -5,6 +5,10 @@ from bazario.asyncio import Sender
 from dishka import FromDishka
 from dishka.integrations.aiogram_dialog import inject
 
+from delivery_service.application.query.ports.address_gateway import (
+    AddressGateway,
+    AddressGatewayFilters,
+)
 from delivery_service.application.query.ports.product_gateway import (
     ProductGateway,
     ProductGatewayFilters,
@@ -85,3 +89,18 @@ def get_customer_id(manager: DialogManager) -> UserID:
         raise ValueError()
 
     return UserID(customer_id_str)
+
+
+@inject
+async def get_customer_addresses(
+    dialog_manager: DialogManager,
+    reader: FromDishka[AddressGateway],
+    **_kwargs,
+) -> dict[str, Any]:
+    customer_id = get_customer_id(dialog_manager)
+    filters = AddressGatewayFilters(user_id=customer_id)
+
+    return {
+        "addresses": await reader.read_many(filters),
+        "total": await reader.total(filters),
+    }

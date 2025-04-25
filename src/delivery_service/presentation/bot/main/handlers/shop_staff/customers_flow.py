@@ -49,7 +49,7 @@ from delivery_service.infrastructure.integration.telegram.const import (
 )
 from delivery_service.presentation.bot.widgets.kbd import get_back_btn
 
-from .getters import get_customer_id
+from .getters import get_customer_addresses, get_customer_id
 from .states import CustomerMenu
 
 CUSTOMERS_ROUTER = Router()
@@ -387,7 +387,10 @@ def get_switch_to_preview(state: State) -> SwitchTo:
 
 CUSTOMER_CARD = Multi(
     Format(
-        "<b>Ім'я:</b> {full_name}\n" "<b>Телефон:</b> <code>{phone}</code>\n\n"
+        "<b>Ім'я:</b> {full_name}\n"
+        "<b>Телефон:</b> <code>{phone}</code>\n\n"
+        "<b>Адреса:</b> {addresses[0].city}, {addresses[0].street} "
+        "{addresses[0].house_number}"
     )
 )
 
@@ -431,7 +434,7 @@ CUSTOMERS_DIALOG = Dialog(
             ),
         ),
         get_back_btn(),
-        getter=get_shop_customer,
+        getter=[get_shop_customer, get_customer_addresses],
         state=CustomerMenu.CUSTOMER_CARD,
     ),
     Window(
@@ -547,7 +550,7 @@ CUSTOMERS_DIALOG = Dialog(
             state=CustomerMenu.EDIT_CUSTOMER_ADDRESS,
         ),
         get_back_btn(state=CustomerMenu.CUSTOMER_CARD),
-        getter=get_shop_customer,
+        getter=[get_shop_customer, get_customer_addresses],
         state=CustomerMenu.EDIT_MENU,
     ),
     Window(

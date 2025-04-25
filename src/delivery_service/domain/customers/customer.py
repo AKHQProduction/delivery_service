@@ -7,6 +7,7 @@ from delivery_service.domain.shared.dto import AddressData, CoordinatesData
 from delivery_service.domain.shared.entity import Entity
 from delivery_service.domain.shared.shop_id import ShopID
 from delivery_service.domain.shared.user_id import UserID
+from delivery_service.domain.shared.vo.address import Coordinates
 
 
 class Customer(Entity[UserID]):
@@ -37,7 +38,18 @@ class Customer(Entity[UserID]):
     def edit_delivery_address(
         self, address_data: AddressData, coordinates_data: CoordinatesData
     ) -> None:
-        pass
+        self._delivery_addresses[0].update_address_data(
+            city=address_data.city,
+            street=address_data.street,
+            house_number=address_data.house_number,
+            apartment_number=address_data.apartment_number,
+            floor=address_data.floor,
+            intercom_code=address_data.intercom_code,
+            coordinates=Coordinates(
+                latitude=coordinates_data.latitude,
+                longitude=coordinates_data.longitude,
+            ),
+        )
 
     @property
     def shop_reference(self) -> ShopID:
