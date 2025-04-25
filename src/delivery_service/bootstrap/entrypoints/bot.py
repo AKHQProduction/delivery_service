@@ -81,7 +81,7 @@ async def on_startup(admin_bot: Bot, webhook_config: WebhookConfig) -> None:
 
 
 def main() -> None:
-    setup_logging(level="DEBUG")
+    setup_logging(level="INFO")
 
     bot_config = load_bot_config()
     webhook_config = load_webhook_config()

@@ -1,5 +1,3 @@
-import logging
-
 from delivery_service.domain.addresses.address import Address
 from delivery_service.domain.addresses.address_id import AddressID
 from delivery_service.domain.customers.customer import Customer
@@ -41,7 +39,6 @@ class CustomerRegistry(Entity[ShopID]):
         creator_id: UserID,
     ) -> Customer:
         self._member_with_admin_roles(candidate_id=creator_id)
-        logging.info(delivery_data)
         address = (
             [
                 Address(

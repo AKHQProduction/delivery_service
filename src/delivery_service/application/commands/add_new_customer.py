@@ -78,9 +78,6 @@ class AddNewCustomerHandler(RequestHandler[AddNewCustomerRequest, UserID]):
             ),
             creator_id=current_user_id,
         )
-
-        logger.info(new_customer)
-
         self._repository.add(new_customer)
 
         return new_customer_id

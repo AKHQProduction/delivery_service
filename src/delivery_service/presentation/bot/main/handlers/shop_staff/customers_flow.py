@@ -1,3 +1,4 @@
+import logging
 from typing import Any
 
 from aiogram import F, Router
@@ -310,6 +311,11 @@ async def on_accept_customer_creation(
             )
         )
         manager.dialog_data["customer_id"] = str(response)
+        manager.dialog_data["new_customer_apartment_number"] = None
+        manager.dialog_data["new_customer_floor"] = None
+        manager.dialog_data["new_customer_intercom_code"] = None
+
+        logging.info(manager.dialog_data)
         if call.message:
             await call.message.answer("✅️ Клієнта додано")
         await manager.switch_to(
