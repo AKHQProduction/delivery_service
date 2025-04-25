@@ -22,10 +22,10 @@ from delivery_service.application.query.ports.customer_gateway import (
 from delivery_service.application.query.ports.order_gateway import (
     OrderReadModel,
 )
-from delivery_service.domain.orders.order import DeliveryPreference, Order
-from delivery_service.domain.orders.order_list_collector import (
+from delivery_service.application.query.ports.order_list_collector import (
     OrderListCollector,
 )
+from delivery_service.domain.orders.order import DeliveryPreference, Order
 from delivery_service.domain.shared.errors import AccessDeniedError
 from delivery_service.domain.shops.repository import ShopRepository
 
@@ -70,7 +70,7 @@ class GetOrderListHandler(
 
         collected_orders = (
             await self._order_service.collect_orders_by_proximity(
-                shop, request.selected_day
+                shop.id, shop.shop_coordinates, request.selected_day
             )
         )
         if not collected_orders:

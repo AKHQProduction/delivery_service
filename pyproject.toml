@@ -24,6 +24,7 @@ taskiq-redis = "^1.0.3"
 adaptix = "^3.0.0b9"
 aiogram-dialog = "^2.3.1"
 reportlab = "^4.4.0"
+geoalchemy2 = "^0.17.1"
 
 
 [tool.poetry.group.test.dependencies]

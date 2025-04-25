@@ -131,9 +131,6 @@ from delivery_service.bootstrap.configs import (
     RedisConfig,
     TGConfig,
 )
-from delivery_service.domain.orders.order_list_collector import (
-    OrderListCollector,
-)
 from delivery_service.infrastructure.adapters.file_manager import (
     PDFFileManager,
 )
@@ -169,6 +166,9 @@ from delivery_service.infrastructure.persistence.adapters.customer_registry_repo
 )
 from delivery_service.infrastructure.persistence.adapters.customer_repository import (
     SQLAlchemyCustomerRepository,
+)
+from delivery_service.infrastructure.persistence.adapters.order_list_collector import (
+    SQLAlchemyOrdrLictCollector,
 )
 from delivery_service.infrastructure.persistence.adapters.order_repository import (
     SQLAlchemyOrderRepository,
@@ -238,6 +238,10 @@ class ApplicationProvider(Provider):
         WithParents[SQLAlchemyShopGateway],
         WithParents[SQLAlchemyAddressGateway],
         scope=Scope.REQUEST,
+    )
+
+    service = provide_all(
+        WithParents[SQLAlchemyOrdrLictCollector], scope=Scope.REQUEST
     )
 
 
@@ -363,8 +367,6 @@ class DomainProvider(Provider):
         WithParents[SQLAlchemyOrderRepository],
         WithParents[SQLAlchemyAddressRepository],
     )
-
-    services = provide_all(OrderListCollector)
 
 
 class InfrastructureAdaptersProvider(Provider):
