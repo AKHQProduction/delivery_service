@@ -1,4 +1,3 @@
-import logging
 from typing import Any
 
 from aiogram import F, Router
@@ -102,9 +101,9 @@ async def get_customer_creation_data(
     city = data.get("city")
     street = data.get("street")
     house_number = data.get("house_number")
-    floor = data.get("new_customer_floor", "частний будинок")
+    floor = data.get("new_customer_floor", "приватний будинок")
     apartment_number = data.get(
-        "new_customer_apartment_number", "частний будинок"
+        "new_customer_apartment_number", "приватний будинок"
     )
     intercom_code = data.get("new_customer_intercom_code", "без домофону")
 
@@ -315,7 +314,6 @@ async def on_accept_customer_creation(
         manager.dialog_data["new_customer_floor"] = None
         manager.dialog_data["new_customer_intercom_code"] = None
 
-        logging.info(manager.dialog_data)
         if call.message:
             await call.message.answer("✅️ Клієнта додано")
         await manager.switch_to(
@@ -386,7 +384,7 @@ async def edit_customer_address(
 def get_switch_to_preview(state: State) -> SwitchTo:
     return SwitchTo(
         id="to_customer_preview",
-        text=Const("Це частний будинок"),
+        text=Const("Це приватний будинок"),
         state=state,
     )
 

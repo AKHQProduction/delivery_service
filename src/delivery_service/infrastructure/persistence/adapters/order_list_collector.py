@@ -33,7 +33,7 @@ class SQLAlchemyOrdrLictCollector(OrderListCollector):
 
         start_point = func.ST_SetSRID(
             func.ST_MakePoint(
-                shop_coordinates.latitude, shop_coordinates.longitude
+                shop_coordinates.longitude, shop_coordinates.latitude
             ),
             SRID,
         ).cast(Geography)
@@ -59,7 +59,7 @@ class SQLAlchemyOrdrLictCollector(OrderListCollector):
                     order.delivery_date == delivery_date,
                 )
             )
-            .order_by(distance_query)
+            .order_by(distance_query.asc())
         )
 
         result = await self._session.execute(query)
