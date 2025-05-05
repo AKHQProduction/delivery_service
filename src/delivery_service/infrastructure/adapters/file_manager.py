@@ -48,8 +48,7 @@ class PDFFileManager(FileManager):
             pdf.drawString(
                 20 * mm,
                 y,
-                f"#{idx} {order.customer.full_name} "
-                f"{order.customer.primary_phone}",
+                f"#{idx} {order.customer.name} " f"{order.customer}",
             )
             y -= 6 * mm
 

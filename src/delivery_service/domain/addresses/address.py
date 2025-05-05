@@ -1,6 +1,7 @@
 from delivery_service.domain.addresses.address_id import AddressID
+from delivery_service.domain.customers.customer_id import CustomerID
 from delivery_service.domain.shared.entity import Entity
-from delivery_service.domain.shared.user_id import UserID
+from delivery_service.domain.shared.shop_id import ShopID
 from delivery_service.domain.shared.vo.address import Coordinates
 
 
@@ -9,7 +10,8 @@ class Address(Entity[AddressID]):
         self,
         entity_id: AddressID,
         *,
-        client_id: UserID,
+        customer_id: CustomerID,
+        shop_id: ShopID,
         city: str,
         street: str,
         house_number: str,
@@ -20,7 +22,8 @@ class Address(Entity[AddressID]):
     ) -> None:
         super().__init__(entity_id=entity_id)
 
-        self._client_id = client_id
+        self._customer_id = customer_id
+        self._shop_id = shop_id
 
         self._city = city
         self._street = street

@@ -1,8 +1,9 @@
 from delivery_service.domain.addresses.address import Address
+from delivery_service.domain.customers.customer_id import CustomerID
 from delivery_service.domain.customers.phone_number import (
-    PhoneBook,
     PhoneNumber,
 )
+from delivery_service.domain.customers.phone_number_id import PhoneNumberID
 from delivery_service.domain.shared.dto import AddressData, CoordinatesData
 from delivery_service.domain.shared.entity import Entity
 from delivery_service.domain.shared.shop_id import ShopID
@@ -10,30 +11,37 @@ from delivery_service.domain.shared.user_id import UserID
 from delivery_service.domain.shared.vo.address import Coordinates
 
 
-class Customer(Entity[UserID]):
+class Customer(Entity[CustomerID]):
     def __init__(
         self,
-        entity_id: UserID,
+        entity_id: CustomerID,
         *,
         shop_id: ShopID,
-        full_name: str,
-        contacts: PhoneBook | None,
+        name: str,
+        contacts: list[PhoneNumber],
         delivery_addresses: list[Address],
+        user_id: UserID | None = None,
     ) -> None:
         super().__init__(entity_id=entity_id)
 
         self._shop_id = shop_id
-        self._full_name = full_name
+        self._user_id = user_id
+        self._name = name
         self._contacts = contacts
         self._delivery_addresses = delivery_addresses
 
-    def edit_full_name(self, new_name: str) -> None:
-        self._full_name = new_name
+    def edit_name(self, new_name: str) -> None:
+        self._name = new_name
 
-    def edit_primary_phone_number(self, new_phone: str) -> None:
+    def edit_primary_phone_number(self, new_phone: PhoneNumberID) -> None:
         if self._contacts:
-            self._contacts = self._contacts.change_primary_number(new_phone)
-        self._contacts = PhoneBook(primary=PhoneNumber(new_phone))
+            old_primary_number = self._get_primary_phone_number()
+            old_primary_number.toggle_status()
+
+            for number in self._contacts:
+                if number.entity_id == new_phone:
+                    number.toggle_status()
+        raise ValueError()
 
     def edit_delivery_address(
         self, address_data: AddressData, coordinates_data: CoordinatesData
@@ -50,6 +58,12 @@ class Customer(Entity[UserID]):
                 longitude=coordinates_data.longitude,
             ),
         )
+
+    def _get_primary_phone_number(self) -> PhoneNumber:
+        for number in self._contacts:
+            if number.is_primary:
+                return number
+        raise ValueError()
 
     @property
     def shop_reference(self) -> ShopID:

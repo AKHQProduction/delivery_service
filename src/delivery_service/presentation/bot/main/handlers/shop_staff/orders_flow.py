@@ -113,7 +113,7 @@ async def get_order(
 
     return {
         "order_lines": order.order_lines,
-        "full_name": order.customer.full_name,
+        "full_name": order.customer.name,
         "delivery_date": order.delivery_date,
         "delivery_preference": DELIVERY_PREFERENCE_TO_TEXT[
             order.delivery_preference
@@ -344,7 +344,7 @@ async def on_find_customer_by_phone(
         return await msg.answer("❌ Не вдалось знайти користувача")
 
     manager.dialog_data["customer_id"] = str(customer.customer_id)
-    manager.dialog_data["full_name"] = customer.full_name
+    manager.dialog_data["full_name"] = customer.name
 
     return await manager.next()
 
@@ -542,7 +542,7 @@ ORDERS_DIALOG = Dialog(
                 on_click=on_select_order_item,
             ),
             id="all_shop_orders",
-            width=1,
+            width=2,
             height=10,
             hide_on_single_page=True,
             when=F["total"] > 0,

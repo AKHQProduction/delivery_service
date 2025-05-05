@@ -16,6 +16,7 @@ from delivery_service.application.ports.idp import IdentityProvider
 from delivery_service.domain.customer_registries.customer_registry_repository import (
     CustomerRegistryRepository,
 )
+from delivery_service.domain.customers.phone_number_id import PhoneNumberID
 from delivery_service.domain.customers.repository import CustomerRepository
 from delivery_service.domain.shared.dto import AddressData, CoordinatesData
 from delivery_service.domain.shared.user_id import UserID
@@ -67,7 +68,7 @@ class EditCustomerNameHandler(RequestHandler[EditCustomerNameRequest, None]):
 @dataclass(frozen=True)
 class EditCustomerPrimaryPhoneRequest(TelegramRequest[None]):
     customer_id: UserID
-    new_phone: str
+    new_primary_phone: PhoneNumberID
 
 
 class EditCustomerPrimaryPhoneHandler(
@@ -100,7 +101,7 @@ class EditCustomerPrimaryPhoneHandler(
             raise CustomerNotFoundError()
 
         customer_registry.edit_customer_primary_phone(
-            customer, current_user_id, request.new_phone
+            customer, current_user_id, request.new_primary_phone
         )
         logger.info(
             "Successfully edited customer phone %s", request.customer_id

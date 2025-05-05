@@ -1,71 +1,55 @@
 from delivery_service.domain.addresses.address import Address
-from delivery_service.domain.addresses.address_id import AddressID
 from delivery_service.domain.customers.customer import Customer
+from delivery_service.domain.customers.customer_id import CustomerID
 from delivery_service.domain.customers.phone_number import (
-    PhoneBook,
     PhoneNumber,
 )
+from delivery_service.domain.customers.phone_number_id import PhoneNumberID
 from delivery_service.domain.shared.dto import (
     AddressData,
     CoordinatesData,
-    DeliveryAddressData,
 )
 from delivery_service.domain.shared.entity import Entity
 from delivery_service.domain.shared.errors import AccessDeniedError
 from delivery_service.domain.shared.shop_id import ShopID
 from delivery_service.domain.shared.user_id import UserID
-from delivery_service.domain.shared.vo.address import (
-    Coordinates,
-)
 from delivery_service.domain.staff.staff_member import StaffMember
 from delivery_service.domain.staff.staff_role import Role
 
 
 class CustomerRegistry(Entity[ShopID]):
     def __init__(
-        self, entity_id: ShopID, *, staff_members: list[StaffMember]
+        self,
+        entity_id: ShopID,
+        *,
+        staff_members: list[StaffMember],
+        customers: list[Customer],
     ) -> None:
         super().__init__(entity_id=entity_id)
 
         self._staff_members = staff_members
+        self._customers = customers
 
     def add_new_customer(
         self,
-        new_customer_id: UserID,
+        new_customer_id: CustomerID,
         full_name: str,
-        primary_phone_number: str,
-        address_id: AddressID | None,
-        delivery_data: DeliveryAddressData | None,
+        primary_phone_number: PhoneNumber | None,
+        address: Address | None,
         creator_id: UserID,
-    ) -> Customer:
+    ) -> None:
         self._member_with_admin_roles(candidate_id=creator_id)
-        address = (
-            [
-                Address(
-                    entity_id=address_id,
-                    client_id=new_customer_id,
-                    city=delivery_data.address.city,
-                    street=delivery_data.address.street,
-                    house_number=delivery_data.address.house_number,
-                    apartment_number=delivery_data.address.apartment_number,
-                    floor=delivery_data.address.floor,
-                    intercom_code=delivery_data.address.intercom_code,
-                    coordinates=Coordinates(
-                        latitude=delivery_data.coordinates.latitude,
-                        longitude=delivery_data.coordinates.longitude,
-                    ),
-                )
-            ]
-            if delivery_data and address_id
-            else []
-        )
 
-        return Customer(
-            entity_id=new_customer_id,
-            shop_id=self.entity_id,
-            full_name=full_name,
-            contacts=PhoneBook(primary=PhoneNumber(primary_phone_number)),
-            delivery_addresses=address,
+        self._customers.append(
+            Customer(
+                entity_id=new_customer_id,
+                shop_id=self.entity_id,
+                name=full_name,
+                contacts=[primary_phone_number]
+                if primary_phone_number
+                else [],
+                delivery_addresses=[address] if address else [],
+            )
         )
 
     def can_delete_customer(
@@ -80,15 +64,18 @@ class CustomerRegistry(Entity[ShopID]):
         self._is_current_shop_customer(customer.shop_reference)
         self._member_with_admin_roles(editor_id)
 
-        customer.edit_full_name(new_name)
+        customer.edit_name(new_name)
 
     def edit_customer_primary_phone(
-        self, customer: Customer, editor_id: UserID, new_phone: str
+        self,
+        customer: Customer,
+        editor_id: UserID,
+        new_primary_phone: PhoneNumberID,
     ) -> None:
         self._is_current_shop_customer(customer.shop_reference)
         self._member_with_admin_roles(editor_id)
 
-        customer.edit_primary_phone_number(new_phone)
+        customer.edit_primary_phone_number(new_primary_phone)
 
     def edit_customer_address(
         self,

@@ -5,6 +5,7 @@ from sqlalchemy.orm import relationship
 from delivery_service.domain.customer_registries.customer_registry import (
     CustomerRegistry,
 )
+from delivery_service.domain.customers.customer import Customer
 from delivery_service.domain.shared.vo.address import Coordinates
 from delivery_service.domain.shop_catalogs.shop_catalog import ShopCatalog
 from delivery_service.domain.shops.shop import Shop
@@ -14,6 +15,10 @@ from delivery_service.domain.staff.staff_role import RoleCollection
 from delivery_service.infrastructure.persistence.tables.base import (
     MAPPER_REGISTRY,
     value_object_to_json,
+)
+from delivery_service.infrastructure.persistence.tables.customers import (
+    CUSTOMERS_TABLE,
+    CUSTOMERS_TO_SHOPS_TABLE,
 )
 from delivery_service.infrastructure.persistence.tables.users import (
     ROLES_TABLE,
@@ -129,6 +134,19 @@ MAPPER_REGISTRY.map_imperatively(
             cascade="all, delete-orphan",
             lazy="selectin",
             overlaps="_staff_members",
+        ),
+        "_customers": relationship(
+            Customer,
+            secondary=CUSTOMERS_TO_SHOPS_TABLE,
+            primaryjoin=and_(
+                SHOPS_TABLE.c.id == CUSTOMERS_TO_SHOPS_TABLE.c.shop_id
+            ),
+            secondaryjoin=and_(
+                CUSTOMERS_TABLE.c.id == CUSTOMERS_TO_SHOPS_TABLE.c.customer_id
+            ),
+            cascade="all, delete",
+            overlaps="_customers",
+            lazy="selectin",
         ),
     },
 )

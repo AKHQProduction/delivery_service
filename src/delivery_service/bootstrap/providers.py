@@ -86,6 +86,12 @@ from delivery_service.application.common.behaviors.commition import (
 from delivery_service.application.common.behaviors.telegram_checker import (
     TelegramCheckerBehavior,
 )
+from delivery_service.application.common.factories.address_factory import (
+    AddressFactory,
+)
+from delivery_service.application.common.factories.phone_factory import (
+    PhoneNumberFactory,
+)
 from delivery_service.application.common.factories.role_factory import (
     RoleFactory,
 )
@@ -228,6 +234,8 @@ class ApplicationProvider(Provider):
         ServiceUserFactory,
         ShopFactory,
         RoleFactory,
+        AddressFactory,
+        PhoneNumberFactory,
         scope=Scope.REQUEST,
     )
 

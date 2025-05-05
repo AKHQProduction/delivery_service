@@ -1,10 +1,12 @@
 import sqlalchemy as sa
-from sqlalchemy import and_, join
-from sqlalchemy.orm import column_property, foreign, relationship
+from sqlalchemy import and_
+from sqlalchemy.orm import foreign, relationship
 
 from delivery_service.domain.addresses.address import Address
 from delivery_service.domain.customers.customer import Customer
-from delivery_service.domain.customers.phone_number import PhoneBook
+from delivery_service.domain.customers.phone_number import (
+    PhoneNumber,
+)
 from delivery_service.domain.shared.vo.address import Coordinates
 from delivery_service.infrastructure.persistence.tables.base import (
     MAPPER_REGISTRY,
@@ -17,20 +19,14 @@ from delivery_service.infrastructure.persistence.tables.users import (
 CUSTOMERS_TABLE = sa.Table(
     "customers",
     MAPPER_REGISTRY.metadata,
+    sa.Column("id", sa.UUID, primary_key=True),
+    sa.Column("name", sa.String, nullable=False),
     sa.Column(
         "user_id",
         sa.UUID,
-        sa.ForeignKey("users.id", ondelete="CASCADE"),
-        primary_key=True,
-        nullable=False,
+        sa.ForeignKey("users.id", ondelete="SET NULL"),
+        nullable=True,
     ),
-    sa.Column(
-        "shop_id",
-        sa.UUID,
-        sa.ForeignKey("shops.id", ondelete="CASCADE"),
-        nullable=False,
-    ),
-    sa.Column("contacts", value_object_to_json(PhoneBook), nullable=True),
     sa.Column(
         "created_at",
         sa.DateTime,
@@ -47,8 +43,22 @@ CUSTOMERS_TABLE = sa.Table(
         server_onupdate=sa.func.now(),
         nullable=True,
     ),
-    sa.UniqueConstraint(
-        "user_id", "shop_id", name="uq_customers_user_id_shop_id"
+)
+
+CUSTOMERS_TO_SHOPS_TABLE = sa.Table(
+    "customers_shops",
+    MAPPER_REGISTRY.metadata,
+    sa.Column(
+        "customer_id",
+        sa.UUID,
+        sa.ForeignKey("customers.id", ondelete="CASCADE"),
+        primary_key=True,
+    ),
+    sa.Column(
+        "shop_id",
+        sa.UUID,
+        sa.ForeignKey("shops.id", ondelete="CASCADE"),
+        primary_key=True,
     ),
 )
 
@@ -57,10 +67,11 @@ ADDRESSES_TABLE = sa.Table(
     MAPPER_REGISTRY.metadata,
     sa.Column("id", sa.UUID, primary_key=True),
     sa.Column(
-        "user_id",
-        sa.ForeignKey("users.id", ondelete="CASCADE"),
+        "customer_id",
+        sa.ForeignKey("customers.id", ondelete="CASCADE"),
         nullable=False,
     ),
+    sa.Column("shop_id", sa.ForeignKey("shops.id"), onupdate="CASCADE"),
     sa.Column("city", sa.String, nullable=False),
     sa.Column("street", sa.String, nullable=False),
     sa.Column("house_number", sa.String, nullable=False),
@@ -85,30 +96,61 @@ ADDRESSES_TABLE = sa.Table(
         nullable=True,
     ),
     sa.UniqueConstraint(
-        "user_id", "city", "street", "house_number", name="uq_user_address"
+        "shop_id", "city", "street", "house_number", name="uq_user_address"
+    ),
+)
+
+PHONE_NUMBER_TABLE = sa.Table(
+    "phone_numbers",
+    MAPPER_REGISTRY.metadata,
+    sa.Column("id", sa.UUID, primary_key=True),
+    sa.Column(
+        "customer_id",
+        sa.ForeignKey("customers.id", ondelete="CASCADE"),
+        nullable=False,
+    ),
+    sa.Column("number", sa.String, nullable=False),
+    sa.Column("is_primary", sa.Boolean, nullable=False, default=False),
+    sa.Column(
+        "created_at",
+        sa.DateTime,
+        default=sa.func.now(),
+        server_default=sa.func.now(),
+        nullable=False,
+    ),
+    sa.Column(
+        "updated_at",
+        sa.DateTime,
+        default=sa.func.now(),
+        server_default=sa.func.now(),
+        onupdate=sa.func.now(),
+        server_onupdate=sa.func.now(),
+        nullable=True,
     ),
 )
 
 MAPPER_REGISTRY.map_imperatively(
     Customer,
-    join(
-        USERS_TABLE,
-        CUSTOMERS_TABLE,
-        and_(USERS_TABLE.c.id == CUSTOMERS_TABLE.c.user_id),
-    ),
+    CUSTOMERS_TABLE,
     properties={
-        "_entity_id": column_property(
-            USERS_TABLE.c.id, CUSTOMERS_TABLE.c.user_id
+        "_entity_id": CUSTOMERS_TABLE.c.id,
+        "_name": CUSTOMERS_TABLE.c.name,
+        "_user_id": CUSTOMERS_TABLE.c.user_id,
+        "_contacts": relationship(
+            PhoneNumber,
+            primaryjoin=and_(
+                CUSTOMERS_TABLE.c.id
+                == foreign(PHONE_NUMBER_TABLE.c.customer_id)
+            ),
+            back_populates="_customer",
+            cascade="all, delete-orphan",
+            lazy="selectin",
         ),
-        "_full_name": USERS_TABLE.c.full_name,
-        "_shop_id": CUSTOMERS_TABLE.c.shop_id,
-        "_contacts": CUSTOMERS_TABLE.c.contacts,
         "_delivery_addresses": relationship(
             Address,
             primaryjoin=and_(
-                CUSTOMERS_TABLE.c.user_id == foreign(ADDRESSES_TABLE.c.user_id)
+                CUSTOMERS_TABLE.c.id == foreign(ADDRESSES_TABLE.c.customer_id)
             ),
-            foreign_keys=[ADDRESSES_TABLE.c.user_id],
             back_populates="_customer",
             cascade="all, delete-orphan",
             lazy="selectin",
@@ -125,7 +167,8 @@ MAPPER_REGISTRY.map_imperatively(
     ADDRESSES_TABLE,
     properties={
         "_entity_id": ADDRESSES_TABLE.c.id,
-        "_client_id": ADDRESSES_TABLE.c.user_id,
+        "_customer_id": ADDRESSES_TABLE.c.customer_id,
+        "_shop_id": ADDRESSES_TABLE.c.shop_id,
         "_city": ADDRESSES_TABLE.c.city,
         "_street": ADDRESSES_TABLE.c.street,
         "_house_number": ADDRESSES_TABLE.c.house_number,
@@ -136,10 +179,28 @@ MAPPER_REGISTRY.map_imperatively(
         "_customer": relationship(
             Customer,
             primaryjoin=and_(
-                foreign(ADDRESSES_TABLE.c.user_id) == CUSTOMERS_TABLE.c.user_id
+                foreign(ADDRESSES_TABLE.c.customer_id) == CUSTOMERS_TABLE.c.id
             ),
-            foreign_keys=[ADDRESSES_TABLE.c.user_id],
             back_populates="_delivery_addresses",
+        ),
+    },
+)
+
+MAPPER_REGISTRY.map_imperatively(
+    PhoneNumber,
+    PHONE_NUMBER_TABLE,
+    properties={
+        "_entity_id": PHONE_NUMBER_TABLE.c.id,
+        "_customer_id": PHONE_NUMBER_TABLE.c.customer_id,
+        "_number": PHONE_NUMBER_TABLE.c.number,
+        "_is_primary": PHONE_NUMBER_TABLE.c.is_primary,
+        "_customer": relationship(
+            Customer,
+            primaryjoin=and_(
+                foreign(PHONE_NUMBER_TABLE.c.customer_id)
+                == CUSTOMERS_TABLE.c.id
+            ),
+            back_populates="_contacts",
         ),
     },
 )

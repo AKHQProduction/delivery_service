@@ -3,9 +3,6 @@ from collections.abc import Sequence
 from dataclasses import dataclass
 from typing import Protocol
 
-from delivery_service.application.query.ports.address_gateway import (
-    AddressReadModel,
-)
 from delivery_service.domain.shared.shop_id import ShopID
 from delivery_service.domain.shared.user_id import UserID
 
@@ -13,9 +10,7 @@ from delivery_service.domain.shared.user_id import UserID
 @dataclass(frozen=True)
 class CustomerReadModel:
     customer_id: UserID
-    full_name: str
-    primary_phone: str
-    delivery_addresses: list[AddressReadModel]
+    name: str
 
 
 @dataclass(frozen=True)

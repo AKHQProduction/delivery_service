@@ -1,4 +1,5 @@
 from typing import Any
+from uuid import UUID
 
 from aiogram import F, Router
 from aiogram.fsm.state import State
@@ -40,6 +41,7 @@ from delivery_service.application.query.ports.customer_gateway import (
     CustomerGateway,
 )
 from delivery_service.domain.customers.phone_number import PHONE_NUMBER_PATTERN
+from delivery_service.domain.customers.phone_number_id import PhoneNumberID
 from delivery_service.domain.shared.dto import AddressData, CoordinatesData
 from delivery_service.infrastructure.integration.geopy.errors import (
     LocationNotFoundError,
@@ -82,12 +84,10 @@ async def get_shop_customer(
     if not customer:
         raise ValueError()
 
-    dialog_manager.dialog_data["full_name"] = customer.full_name
+    dialog_manager.dialog_data["full_name"] = customer.name
 
     return {
-        "full_name": customer.full_name,
-        "phone": customer.primary_phone,
-        "addresses": customer.delivery_addresses,
+        "full_name": customer.name,
     }
 
 
@@ -166,7 +166,8 @@ async def on_input_new_customer_phone(
     customer_id = get_customer_id(manager)
     await sender.send(
         EditCustomerPrimaryPhoneRequest(
-            customer_id=customer_id, new_phone=value
+            customer_id=customer_id,
+            new_primary_phone=PhoneNumberID(UUID(value)),
         )
     )
     await manager.switch_to(state=CustomerMenu.EDIT_MENU)
@@ -390,12 +391,7 @@ def get_switch_to_preview(state: State) -> SwitchTo:
 
 
 CUSTOMER_CARD = Multi(
-    Format(
-        "<b>Ім'я:</b> {full_name}\n"
-        "<b>Телефон:</b> <code>{phone}</code>\n\n"
-        "<b>Адреса:</b> {addresses[0].city}, {addresses[0].street} "
-        "{addresses[0].house_number}"
-    )
+    Format("<b>Ім'я:</b> {full_name}"),
 )
 
 CUSTOMERS_DIALOG = Dialog(
