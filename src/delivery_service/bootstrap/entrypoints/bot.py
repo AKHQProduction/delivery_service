@@ -1,19 +1,13 @@
+import asyncio
 import logging
 
 from aiogram import Bot, Dispatcher
 from aiogram.client.default import DefaultBotProperties
-from aiogram.client.session.aiohttp import AiohttpSession
 from aiogram.enums import ParseMode
 from aiogram.fsm.storage.base import BaseStorage, DefaultKeyBuilder
 from aiogram.fsm.storage.memory import MemoryStorage, SimpleEventIsolation
 from aiogram.fsm.storage.redis import RedisStorage
-from aiogram.webhook.aiohttp_server import (
-    SimpleRequestHandler,
-    TokenBasedRequestHandler,
-    setup_application,
-)
 from aiogram_dialog import setup_dialogs
-from aiohttp import web
 from dishka import AsyncContainer
 from dishka.integrations.aiogram import setup_dishka as add_container_to_bot
 
@@ -25,7 +19,6 @@ from delivery_service.bootstrap.configs import (
     load_database_config,
     load_rabbit_config,
     load_redis_config,
-    load_webhook_config,
 )
 from delivery_service.bootstrap.containers import bot_container
 from delivery_service.bootstrap.logging import setup_logging
@@ -80,11 +73,10 @@ async def on_startup(admin_bot: Bot, webhook_config: WebhookConfig) -> None:
     )
 
 
-def main() -> None:
+async def main() -> None:
     setup_logging(level="INFO")
 
     bot_config = load_bot_config()
-    webhook_config = load_webhook_config()
     redis_config = load_redis_config()
     database_config = load_database_config()
     rabbit_config = load_rabbit_config()
@@ -96,46 +88,22 @@ def main() -> None:
         rabbit_config=rabbit_config,
     )
 
-    session = AiohttpSession()
-
-    bot_settings = {
-        "session": session,
-        "default": DefaultBotProperties(parse_mode=ParseMode.HTML),
-    }
-
-    admin_bot = Bot(token=bot_config.admin_bot_token, **bot_settings)
-    storage = get_storage(bot_config=bot_config, redis_config=redis_config)
-
-    admin_dp = get_admin_dispatcher(
-        storage=storage, dishka_container=dishka_container
-    )
-    shop_dp = get_shop_dispatcher(
-        storage=storage, dishka_container=dishka_container
+    bot = Bot(
+        token=bot_config.admin_bot_token,
+        default=DefaultBotProperties(parse_mode=ParseMode.HTML),
     )
 
-    admin_request_handler = SimpleRequestHandler(admin_dp, admin_bot)
-
-    app = web.Application()
-    admin_request_handler.register(app, path=webhook_config.webhook_admin_path)
-
-    TokenBasedRequestHandler(shop_dp, bot_settings=bot_settings).register(
-        app, path=webhook_config.webhook_shop_path
+    dp = get_admin_dispatcher(
+        storage=get_storage(bot_config=bot_config, redis_config=redis_config),
+        dishka_container=dishka_container,
     )
-    admin_dp.startup.register(on_startup)
 
-    setup_application(
-        app, admin_dp, admin_bot=admin_bot, webhook_config=webhook_config
-    )
-    setup_application(app, shop_dp)
-
-    logger.info("Setup app")
-    web.run_app(
-        app, host=webhook_config.webhook_host, port=webhook_config.webhook_port
-    )
+    await bot.delete_webhook(drop_pending_updates=True)
+    await dp.start_polling(bot)
 
 
 if __name__ == "__main__":
     try:
-        main()
+        asyncio.run(main())
     except (KeyboardInterrupt, SystemExit):
         logger.info("The bot was turned off")
