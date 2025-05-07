@@ -131,6 +131,7 @@ MAPPER_REGISTRY.map_imperatively(
         "_entity_id": CUSTOMERS_TABLE.c.id,
         "_name": CUSTOMERS_TABLE.c.name,
         "_user_id": CUSTOMERS_TABLE.c.user_id,
+        "_shop_id": CUSTOMERS_TABLE.c.shop_id,
         "_contacts": relationship(
             PhoneNumber,
             primaryjoin=and_(

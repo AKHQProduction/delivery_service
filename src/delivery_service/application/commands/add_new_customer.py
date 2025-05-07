@@ -6,6 +6,7 @@ from dataclasses import dataclass
 from bazario.asyncio import RequestHandler
 
 from delivery_service.application.common.errors import (
+    EntityAlreadyExistsError,
     ShopNotFoundError,
 )
 from delivery_service.application.common.factories.address_factory import (
@@ -68,6 +69,11 @@ class AddNewCustomerHandler(RequestHandler[AddNewCustomerRequest, CustomerID]):
         )
         if not customer_registry:
             raise ShopNotFoundError()
+
+        if await self._repository.exists(
+            shop_id=customer_registry.id, phone_number=request.phone_number
+        ):
+            raise EntityAlreadyExistsError()
 
         new_customer_id = self._id_generator.generate_customer_id()
 

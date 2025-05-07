@@ -2,6 +2,7 @@ from abc import abstractmethod
 from typing import Protocol
 
 from delivery_service.domain.customers.customer import Customer
+from delivery_service.domain.shared.shop_id import ShopID
 from delivery_service.domain.shared.user_id import UserID
 
 
@@ -16,4 +17,8 @@ class CustomerRepository(Protocol):
 
     @abstractmethod
     async def delete(self, customer: Customer) -> None:
+        raise NotImplementedError
+
+    @abstractmethod
+    async def exists(self, shop_id: ShopID, phone_number: str) -> bool:
         raise NotImplementedError
