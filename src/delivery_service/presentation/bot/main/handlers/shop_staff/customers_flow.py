@@ -84,10 +84,10 @@ async def get_shop_customer(
     if not customer:
         raise ValueError()
 
-    dialog_manager.dialog_data["full_name"] = customer.name
+    dialog_manager.dialog_data["name"] = customer.name
 
     return {
-        "full_name": customer.name,
+        "name": customer.name,
     }
 
 
@@ -96,7 +96,7 @@ async def get_customer_creation_data(
 ) -> dict[str, Any]:
     data = dialog_manager.dialog_data
 
-    full_name = data.get("new_customer_name")
+    name = data.get("new_customer_name")
     phone = data.get("new_customer_phone")
     city = data.get("city")
     street = data.get("street")
@@ -108,7 +108,7 @@ async def get_customer_creation_data(
     intercom_code = data.get("new_customer_intercom_code", "без домофону")
 
     return {
-        "full_name": full_name,
+        "name": name,
         "phone": phone,
         "address": f"{city}, {street} {house_number}",
         "floor": floor,
@@ -270,7 +270,7 @@ async def on_accept_customer_creation(
 ) -> None:
     data = manager.dialog_data
 
-    full_name = data.get("new_customer_name")
+    name = data.get("new_customer_name")
     phone = data.get("new_customer_phone")
     city = data.get("city")
     street = data.get("street")
@@ -282,7 +282,7 @@ async def on_accept_customer_creation(
     longitude = data.get("longitude")
 
     if (
-        not full_name
+        not name
         or not phone
         or not house_number
         or not city
@@ -295,7 +295,7 @@ async def on_accept_customer_creation(
     try:
         response = await sender.send(
             AddNewCustomerRequest(
-                full_name=full_name,
+                name=name,
                 phone_number=phone,
                 address_data=AddressData(
                     city=city,
@@ -391,7 +391,7 @@ def get_switch_to_preview(state: State) -> SwitchTo:
 
 
 CUSTOMER_CARD = Multi(
-    Format("<b>Ім'я:</b> {full_name}"),
+    Format("<b>Ім'я:</b> {name}"),
 )
 
 CUSTOMERS_DIALOG = Dialog(
@@ -407,7 +407,7 @@ CUSTOMERS_DIALOG = Dialog(
                 id="customer_item",
                 items="customers",
                 item_id_getter=lambda item: item.customer_id,
-                text=Format("{pos}. {item.full_name}"),
+                text=Format("{pos}. {item.name}"),
                 on_click=on_select_shop_customer,
             ),
             id="all_shop_customers",
@@ -438,9 +438,7 @@ CUSTOMERS_DIALOG = Dialog(
         state=CustomerMenu.CUSTOMER_CARD,
     ),
     Window(
-        Format(
-            "Підтвердіть видалення {dialog_data[full_name]} з бази клієнтів"
-        ),
+        Format("Підтвердіть видалення {dialog_data[name]} з бази клієнтів"),
         Button(
             text=Const("✅ Підтвердити"),
             id="accept_customer_delete",
@@ -512,7 +510,7 @@ CUSTOMERS_DIALOG = Dialog(
     Window(
         Const("<b>Перевірте данні нового клієнта</b>\n"),
         Format(
-            "<b>Ім'я:</b> {full_name}\n"
+            "<b>Ім'я:</b> {name}\n"
             "<b>Телефон:</b> <code>{phone}</code>\n\n"
             "<b>Адреса:</b> {address}\n"
             "<b>Квартира:</b> {apartment_number}\n"

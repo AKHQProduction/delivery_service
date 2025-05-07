@@ -3,6 +3,7 @@ from collections.abc import Sequence
 from dataclasses import dataclass
 from typing import Protocol
 
+from delivery_service.domain.customers.customer_id import CustomerID
 from delivery_service.domain.shared.shop_id import ShopID
 from delivery_service.domain.shared.user_id import UserID
 
@@ -21,7 +22,7 @@ class CustomerGatewayFilters:
 class CustomerGateway(Protocol):
     @abstractmethod
     async def read_with_id(
-        self, customer_id: UserID
+        self, customer_id: CustomerID
     ) -> CustomerReadModel | None:
         raise NotImplementedError
 

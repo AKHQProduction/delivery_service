@@ -11,12 +11,12 @@ from delivery_service.application.ports.id_generator import IDGenerator
 from delivery_service.application.ports.idp import IdentityProvider
 from delivery_service.domain.addresses.address_id import AddressID
 from delivery_service.domain.addresses.repository import AddressRepository
+from delivery_service.domain.customers.customer_id import CustomerID
 from delivery_service.domain.orders.order import DeliveryPreference
 from delivery_service.domain.orders.order_ids import OrderID
 from delivery_service.domain.orders.repository import OrderRepository
 from delivery_service.domain.shared.dto import OrderLineData
 from delivery_service.domain.shared.errors import AccessDeniedError
-from delivery_service.domain.shared.user_id import UserID
 from delivery_service.domain.shops.repository import ShopRepository
 
 logger = logging.getLogger(__name__)
@@ -24,7 +24,7 @@ logger = logging.getLogger(__name__)
 
 @dataclass(frozen=True)
 class MakeNewOrderRequest(TelegramRequest[OrderID]):
-    customer_id: UserID
+    customer_id: CustomerID
     address_id: AddressID
     order_lines: list[OrderLineData]
     delivery_preference: DeliveryPreference

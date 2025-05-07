@@ -8,7 +8,7 @@ from delivery_service.application.query.ports.customer_gateway import (
     CustomerGatewayFilters,
     CustomerReadModel,
 )
-from delivery_service.domain.shared.user_id import UserID
+from delivery_service.domain.customers.customer_id import CustomerID
 from delivery_service.infrastructure.persistence.tables import (
     CUSTOMERS_TABLE,
 )
@@ -53,10 +53,10 @@ class SQLAlchemyCustomerGateway(CustomerGateway):
         return [self._map_row_to_read_model(row) for row in result.mappings()]
 
     async def read_with_id(
-        self, customer_id: UserID
+        self, customer_id: CustomerID
     ) -> CustomerReadModel | None:
         query = self._select_rows()
-        query = query.where(and_(CUSTOMERS_TABLE.c.user_id == customer_id))
+        query = query.where(and_(CUSTOMERS_TABLE.c.id == customer_id))
 
         result = await self._session.execute(query)
         row = result.mappings().one_or_none()
@@ -86,7 +86,7 @@ class SQLAlchemyCustomerGateway(CustomerGateway):
     async def total(
         self, filters: CustomerGatewayFilters | None = None
     ) -> int:
-        query = select(func.count(CUSTOMERS_TABLE.c.user_id))
+        query = select(func.count(CUSTOMERS_TABLE.c.id))
 
         if filters:
             query = self._set_filters(query=query, filters=filters)

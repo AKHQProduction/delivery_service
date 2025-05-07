@@ -31,7 +31,7 @@ class CustomerRegistry(Entity[ShopID]):
     def add_new_customer(
         self,
         new_customer_id: CustomerID,
-        full_name: str,
+        name: str,
         primary_phone_number: PhoneNumber | None,
         address: Address | None,
         creator_id: UserID,
@@ -41,7 +41,7 @@ class CustomerRegistry(Entity[ShopID]):
         return Customer(
             entity_id=new_customer_id,
             shop_id=self.entity_id,
-            name=full_name,
+            name=name,
             contacts=[primary_phone_number] if primary_phone_number else [],
             delivery_addresses=[address] if address else [],
         )

@@ -2,6 +2,7 @@ from datetime import date
 from typing import cast
 
 from delivery_service.domain.addresses.address_id import AddressID
+from delivery_service.domain.customers.customer_id import CustomerID
 from delivery_service.domain.orders.order import (
     DeliveryPreference,
     Order,
@@ -48,7 +49,7 @@ class Shop(Entity[ShopID]):
         self,
         new_order_id: OrderID,
         order_line_data: list[OrderLineData],
-        customer_id: UserID,
+        customer_id: CustomerID,
         address_id: AddressID,
         delivery_preference: DeliveryPreference,
         delivery_date: date,

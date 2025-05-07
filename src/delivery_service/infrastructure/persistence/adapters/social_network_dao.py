@@ -25,7 +25,7 @@ class SQlAlchemySocialNetworkGateway:
         self, user_id: UserID
     ) -> int | None:
         query = select(SOCIAL_NETWORKS_TABLE.c.telegram_id).where(
-            and_(SOCIAL_NETWORKS_TABLE.c.user_id == user_id)
+            and_(SOCIAL_NETWORKS_TABLE.c.customer_id == user_id)
         )
 
         result = await self._session.execute(query)

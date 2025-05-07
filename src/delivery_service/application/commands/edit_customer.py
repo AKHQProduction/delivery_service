@@ -16,17 +16,17 @@ from delivery_service.application.ports.idp import IdentityProvider
 from delivery_service.domain.customer_registries.customer_registry_repository import (
     CustomerRegistryRepository,
 )
+from delivery_service.domain.customers.customer_id import CustomerID
 from delivery_service.domain.customers.phone_number_id import PhoneNumberID
 from delivery_service.domain.customers.repository import CustomerRepository
 from delivery_service.domain.shared.dto import AddressData, CoordinatesData
-from delivery_service.domain.shared.user_id import UserID
 
 logger = logging.getLogger(__name__)
 
 
 @dataclass(frozen=True)
 class EditCustomerNameRequest(TelegramRequest[None]):
-    customer_id: UserID
+    customer_id: CustomerID
     new_name: str
 
 
@@ -67,7 +67,7 @@ class EditCustomerNameHandler(RequestHandler[EditCustomerNameRequest, None]):
 
 @dataclass(frozen=True)
 class EditCustomerPrimaryPhoneRequest(TelegramRequest[None]):
-    customer_id: UserID
+    customer_id: CustomerID
     new_primary_phone: PhoneNumberID
 
 
@@ -110,7 +110,7 @@ class EditCustomerPrimaryPhoneHandler(
 
 @dataclass(frozen=True)
 class EditCustomerAddressRequest(TelegramRequest[None]):
-    customer_id: UserID
+    customer_id: CustomerID
     address_data: AddressData
     coordinates: CoordinatesData
 

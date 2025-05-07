@@ -3,7 +3,7 @@ from dataclasses import dataclass
 from typing import Protocol, Sequence
 
 from delivery_service.domain.addresses.address_id import AddressID
-from delivery_service.domain.shared.user_id import UserID
+from delivery_service.domain.customers.customer_id import CustomerID
 
 
 @dataclass(frozen=True)
@@ -19,7 +19,7 @@ class AddressReadModel:
 
 @dataclass(frozen=True)
 class AddressGatewayFilters:
-    user_id: UserID | None = None
+    customer_id: CustomerID | None = None
 
 
 class AddressGateway(Protocol):

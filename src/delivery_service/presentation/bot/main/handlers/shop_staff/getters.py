@@ -14,9 +14,9 @@ from delivery_service.application.query.ports.product_gateway import (
     ProductGatewayFilters,
 )
 from delivery_service.application.query.product import GetAllProductsRequest
+from delivery_service.domain.customers.customer_id import CustomerID
 from delivery_service.domain.orders.order_ids import OrderID
 from delivery_service.domain.products.product import ProductID, ProductType
-from delivery_service.domain.shared.user_id import UserID
 
 
 @inject
@@ -83,12 +83,12 @@ async def get_shop_product(
     }
 
 
-def get_customer_id(manager: DialogManager) -> UserID:
+def get_customer_id(manager: DialogManager) -> CustomerID:
     customer_id_str = manager.dialog_data.get("customer_id")
     if not customer_id_str:
         raise ValueError()
 
-    return UserID(customer_id_str)
+    return CustomerID(customer_id_str)
 
 
 @inject
@@ -98,7 +98,7 @@ async def get_customer_addresses(
     **_kwargs,
 ) -> dict[str, Any]:
     customer_id = get_customer_id(dialog_manager)
-    filters = AddressGatewayFilters(user_id=customer_id)
+    filters = AddressGatewayFilters(customer_id=customer_id)
 
     return {
         "addresses": await reader.read_many(filters),

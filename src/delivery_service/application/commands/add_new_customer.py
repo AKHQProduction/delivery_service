@@ -35,7 +35,7 @@ logger = logging.getLogger(__name__)
 
 @dataclass(frozen=True)
 class AddNewCustomerRequest(TelegramRequest[CustomerID]):
-    full_name: str
+    name: str
     phone_number: str
     address_data: AddressData
     coordinates: CoordinatesData
@@ -91,7 +91,7 @@ class AddNewCustomerHandler(RequestHandler[AddNewCustomerRequest, CustomerID]):
         )
         new_customer = customer_registry.add_new_customer(
             new_customer_id=new_customer_id,
-            full_name=request.full_name,
+            name=request.name,
             primary_phone_number=phone_number,
             address=address,
             creator_id=current_user_id,

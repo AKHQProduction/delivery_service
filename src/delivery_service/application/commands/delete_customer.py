@@ -16,15 +16,15 @@ from delivery_service.application.ports.idp import IdentityProvider
 from delivery_service.domain.customer_registries.customer_registry_repository import (
     CustomerRegistryRepository,
 )
+from delivery_service.domain.customers.customer_id import CustomerID
 from delivery_service.domain.customers.repository import CustomerRepository
-from delivery_service.domain.shared.user_id import UserID
 
 logger = logging.getLogger(__name__)
 
 
 @dataclass(frozen=True)
 class DeleteCustomerRequest(TelegramRequest[None]):
-    customer_id: UserID
+    customer_id: CustomerID
 
 
 class DeleteCustomerHandler(RequestHandler[DeleteCustomerRequest, None]):

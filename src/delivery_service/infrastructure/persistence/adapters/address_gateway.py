@@ -20,9 +20,9 @@ class SQLAlchemyAddressGateway(AddressGateway):
 
     @staticmethod
     def _set_filters(query: Select, filters: AddressGatewayFilters) -> Select:
-        if filters.user_id is not None:
+        if filters.customer_id is not None:
             query = query.where(
-                and_(ADDRESSES_TABLE.c.user_id == filters.user_id)
+                and_(ADDRESSES_TABLE.c.customer_id == filters.customer_id)
             )
 
         return query
