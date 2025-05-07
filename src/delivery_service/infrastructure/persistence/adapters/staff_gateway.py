@@ -44,7 +44,7 @@ class SQLAlchemyStaffMemberGateway(StaffMemberGateway):
         return (
             select(
                 USERS_TABLE.c.id.label("staff_id"),
-                USERS_TABLE.c.name,
+                USERS_TABLE.c.full_name,
                 func.array_agg(ROLES_TABLE.c.name).label("roles"),
             )
             .select_from(
@@ -61,7 +61,7 @@ class SQLAlchemyStaffMemberGateway(StaffMemberGateway):
                     USERS_TO_ROLES_TABLE.c.role_id == ROLES_TABLE.c.id,
                 )
             )
-            .group_by(USERS_TABLE.c.id, USERS_TABLE.c.name)
+            .group_by(USERS_TABLE.c.id, USERS_TABLE.c.full_name)
         )
 
     async def read_staff_member(

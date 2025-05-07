@@ -23,12 +23,10 @@ class CustomerRegistry(Entity[ShopID]):
         entity_id: ShopID,
         *,
         staff_members: list[StaffMember],
-        customers: list[Customer],
     ) -> None:
         super().__init__(entity_id=entity_id)
 
         self._staff_members = staff_members
-        self._customers = customers
 
     def add_new_customer(
         self,
@@ -37,19 +35,15 @@ class CustomerRegistry(Entity[ShopID]):
         primary_phone_number: PhoneNumber | None,
         address: Address | None,
         creator_id: UserID,
-    ) -> None:
+    ) -> Customer:
         self._member_with_admin_roles(candidate_id=creator_id)
 
-        self._customers.append(
-            Customer(
-                entity_id=new_customer_id,
-                shop_id=self.entity_id,
-                name=full_name,
-                contacts=[primary_phone_number]
-                if primary_phone_number
-                else [],
-                delivery_addresses=[address] if address else [],
-            )
+        return Customer(
+            entity_id=new_customer_id,
+            shop_id=self.entity_id,
+            name=full_name,
+            contacts=[primary_phone_number] if primary_phone_number else [],
+            delivery_addresses=[address] if address else [],
         )
 
     def can_delete_customer(

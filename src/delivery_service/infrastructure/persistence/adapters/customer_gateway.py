@@ -12,9 +12,6 @@ from delivery_service.domain.shared.user_id import UserID
 from delivery_service.infrastructure.persistence.tables import (
     CUSTOMERS_TABLE,
 )
-from delivery_service.infrastructure.persistence.tables.customers import (
-    CUSTOMERS_TO_SHOPS_TABLE,
-)
 
 
 class SQLAlchemyCustomerGateway(CustomerGateway):
@@ -25,7 +22,7 @@ class SQLAlchemyCustomerGateway(CustomerGateway):
     def _set_filters(query: Select, filters: CustomerGatewayFilters) -> Select:
         if filters.shop_id is not None:
             query = query.where(
-                and_(CUSTOMERS_TO_SHOPS_TABLE.c.shop_id == filters.shop_id)
+                and_(CUSTOMERS_TABLE.c.shop_id == filters.shop_id)
             )
 
         return query
@@ -42,11 +39,6 @@ class SQLAlchemyCustomerGateway(CustomerGateway):
         return select(
             CUSTOMERS_TABLE.c.id,
             CUSTOMERS_TABLE.c.name,
-        ).select_from(
-            CUSTOMERS_TABLE.join(
-                CUSTOMERS_TO_SHOPS_TABLE,
-                CUSTOMERS_TABLE.c.id == CUSTOMERS_TO_SHOPS_TABLE.c.customer_id,
-            )
         )
 
     async def read_all_customers(

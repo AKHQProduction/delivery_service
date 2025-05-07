@@ -80,14 +80,16 @@ class AddNewCustomerHandler(RequestHandler[AddNewCustomerRequest, CustomerID]):
         phone_number = self._phone_number_factory.create_phone_number(
             number=request.phone_number,
             customer_id=new_customer_id,
+            shop_id=customer_registry.id,
             is_primary=True,
         )
-        customer_registry.add_new_customer(
+        new_customer = customer_registry.add_new_customer(
             new_customer_id=new_customer_id,
             full_name=request.full_name,
             primary_phone_number=phone_number,
             address=address,
             creator_id=current_user_id,
         )
+        self._repository.add(new_customer)
 
         return new_customer_id

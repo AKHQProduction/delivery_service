@@ -30,6 +30,7 @@ def upgrade() -> None:
         sa.Column("id", sa.UUID(), nullable=False),
         sa.Column("name", sa.String, nullable=False),
         sa.Column("user_id", sa.UUID(), nullable=True),
+        sa.Column("shop_id", sa.UUID(), nullable=False),
         sa.Column(
             "created_at",
             sa.DateTime(),
@@ -46,6 +47,12 @@ def upgrade() -> None:
             ["user_id"],
             ["users.id"],
             name=op.f("fk_customers_user_id_users"),
+            ondelete="CASCADE",
+        ),
+        sa.ForeignKeyConstraint(
+            ["shop_id"],
+            ["shops.id"],
+            name=op.f("fk_customers_shop_id_shops"),
             ondelete="CASCADE",
         ),
         sa.PrimaryKeyConstraint("id", name=op.f("pk_customers")),
@@ -99,6 +106,7 @@ def upgrade() -> None:
         "phone_numbers",
         sa.Column("id", sa.UUID(), nullable=False),
         sa.Column("customer_id", sa.UUID(), nullable=False),
+        sa.Column("shop_id", sa.UUID(), nullable=False),
         sa.Column("number", sa.String(), nullable=False),
         sa.Column("is_primary", sa.Boolean(), nullable=False),
         sa.Column(
@@ -119,33 +127,18 @@ def upgrade() -> None:
             name=op.f("fk_phone_numbers_customer_id_customers"),
             ondelete="CASCADE",
         ),
-        sa.PrimaryKeyConstraint("id", name=op.f("pk_phone_numbers")),
-    )
-
-    op.create_table(
-        "customers_shops",
-        sa.Column("customer_id", sa.UUID(), nullable=False),
-        sa.Column("shop_id", sa.UUID(), nullable=False),
-        sa.ForeignKeyConstraint(
-            ["customer_id"],
-            ["customers.id"],
-            name=op.f("fk_customers_shops_customer_id_customers"),
-            ondelete="CASCADE",
-        ),
         sa.ForeignKeyConstraint(
             ["shop_id"],
             ["shops.id"],
-            name=op.f("fk_customers_shops_shop_id_shops"),
+            name=op.f("fk_phone_numbers_shop_id_shops"),
             ondelete="CASCADE",
         ),
-        sa.PrimaryKeyConstraint(
-            "customer_id", "shop_id", name=op.f("pk_customers_shops")
-        ),
+        sa.PrimaryKeyConstraint("id", name=op.f("pk_phone_numbers")),
+        sa.UniqueConstraint("shop_id", "number", name="uq_user_phone"),
     )
 
 
 def downgrade() -> None:
-    op.drop_table("customers_shops")
     op.drop_table("addresses")
     op.drop_table("phone_numbers")
     op.drop_table("customers")

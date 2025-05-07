@@ -28,6 +28,12 @@ CUSTOMERS_TABLE = sa.Table(
         nullable=True,
     ),
     sa.Column(
+        "shop_id",
+        sa.UUID,
+        sa.ForeignKey("shops.id", ondelete="CASCADE"),
+        nullable=False,
+    ),
+    sa.Column(
         "created_at",
         sa.DateTime,
         default=sa.func.now(),
@@ -42,23 +48,6 @@ CUSTOMERS_TABLE = sa.Table(
         onupdate=sa.func.now(),
         server_onupdate=sa.func.now(),
         nullable=True,
-    ),
-)
-
-CUSTOMERS_TO_SHOPS_TABLE = sa.Table(
-    "customers_shops",
-    MAPPER_REGISTRY.metadata,
-    sa.Column(
-        "customer_id",
-        sa.UUID,
-        sa.ForeignKey("customers.id", ondelete="CASCADE"),
-        primary_key=True,
-    ),
-    sa.Column(
-        "shop_id",
-        sa.UUID,
-        sa.ForeignKey("shops.id", ondelete="CASCADE"),
-        primary_key=True,
     ),
 )
 
@@ -107,6 +96,12 @@ PHONE_NUMBER_TABLE = sa.Table(
     sa.Column(
         "customer_id",
         sa.ForeignKey("customers.id", ondelete="CASCADE"),
+        nullable=False,
+    ),
+    sa.Column(
+        "shop_id",
+        sa.UUID,
+        sa.ForeignKey("shops.id", ondelete="CASCADE"),
         nullable=False,
     ),
     sa.Column("number", sa.String, nullable=False),
@@ -192,6 +187,7 @@ MAPPER_REGISTRY.map_imperatively(
     properties={
         "_entity_id": PHONE_NUMBER_TABLE.c.id,
         "_customer_id": PHONE_NUMBER_TABLE.c.customer_id,
+        "_shop_id": PHONE_NUMBER_TABLE.c.shop_id,
         "_number": PHONE_NUMBER_TABLE.c.number,
         "_is_primary": PHONE_NUMBER_TABLE.c.is_primary,
         "_customer": relationship(
