@@ -3,15 +3,22 @@ from collections.abc import Sequence
 from dataclasses import dataclass
 from typing import Protocol
 
+from delivery_service.application.query.ports.address_gateway import (
+    AddressReadModel,
+)
+from delivery_service.application.query.ports.phone_number_gateway import (
+    PhoneNumberReadModel,
+)
 from delivery_service.domain.customers.customer_id import CustomerID
 from delivery_service.domain.shared.shop_id import ShopID
-from delivery_service.domain.shared.user_id import UserID
 
 
 @dataclass(frozen=True)
 class CustomerReadModel:
-    customer_id: UserID
+    customer_id: CustomerID
     name: str
+    addresses: list[AddressReadModel]
+    phone_numbers: list[PhoneNumberReadModel]
 
 
 @dataclass(frozen=True)

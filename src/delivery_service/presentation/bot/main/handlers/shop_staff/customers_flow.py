@@ -2,9 +2,15 @@ from typing import Any
 from uuid import UUID
 
 from aiogram import F, Router
-from aiogram.fsm.state import State
 from aiogram.types import CallbackQuery, Message
-from aiogram_dialog import Dialog, DialogManager, ShowMode, StartMode, Window
+from aiogram_dialog import (
+    Data,
+    Dialog,
+    DialogManager,
+    ShowMode,
+    StartMode,
+    Window,
+)
 from aiogram_dialog.api.internal import Widget
 from aiogram_dialog.widgets.input import (
     ManagedTextInput,
@@ -18,7 +24,7 @@ from aiogram_dialog.widgets.kbd import (
     Select,
     SwitchTo,
 )
-from aiogram_dialog.widgets.text import Const, Format, Multi
+from aiogram_dialog.widgets.text import Const, Format, Jinja, Multi
 from bazario.asyncio import Sender
 from dishka import FromDishka
 from dishka.integrations.aiogram_dialog import inject
@@ -30,7 +36,6 @@ from delivery_service.application.commands.delete_customer import (
     DeleteCustomerRequest,
 )
 from delivery_service.application.commands.edit_customer import (
-    EditCustomerAddressRequest,
     EditCustomerNameRequest,
     EditCustomerPrimaryPhoneRequest,
 )
@@ -52,7 +57,7 @@ from delivery_service.infrastructure.integration.telegram.const import (
 from delivery_service.presentation.bot.widgets.kbd import get_back_btn
 
 from .getters import get_customer_addresses, get_customer_id
-from .states import CustomerMenu
+from .states import AddressSG, CustomerMenu
 
 CUSTOMERS_ROUTER = Router()
 
@@ -88,6 +93,8 @@ async def get_shop_customer(
 
     return {
         "name": customer.name,
+        "addresses": customer.addresses,
+        "phone_numbers": customer.phone_numbers,
     }
 
 
@@ -101,11 +108,9 @@ async def get_customer_creation_data(
     city = data.get("city")
     street = data.get("street")
     house_number = data.get("house_number")
-    floor = data.get("new_customer_floor", "приватний будинок")
-    apartment_number = data.get(
-        "new_customer_apartment_number", "приватний будинок"
-    )
-    intercom_code = data.get("new_customer_intercom_code", "без домофону")
+    floor = data.get("floor", "приватний будинок")
+    apartment_number = data.get("apartment_number", "приватний будинок")
+    intercom_code = data.get("intercom_code", "без домофону")
 
     return {
         "name": name,
@@ -148,7 +153,7 @@ async def on_input_customer_phone(
         return
 
     manager.dialog_data["new_customer_phone"] = value
-    await manager.next()
+    await manager.start(state=AddressSG.FULL_ADDRESS)
 
 
 @inject
@@ -171,71 +176,6 @@ async def on_input_new_customer_phone(
         )
     )
     await manager.switch_to(state=CustomerMenu.EDIT_MENU)
-
-
-@inject
-async def on_input_customer_location(
-    msg: Message,
-    __: MessageInput,
-    manager: DialogManager,
-    location_finder: FromDishka[LocationFinder],
-) -> Message | None:
-    wait_msg = await msg.answer("⏳ Перевіряємо адресу...")
-
-    if msg.text:
-        try:
-            location = await location_finder.find_location(msg.text)
-        except LocationNotFoundError:
-            return await msg.answer(
-                "Адресу не найдено.\n"
-                "Введіть повторно або поділіться локацією 👇"
-            )
-
-        manager.dialog_data.update(
-            {
-                "latitude": location.latitude,
-                "longitude": location.longitude,
-                "city": location.city,
-                "street": location.street,
-                "house_number": location.house_number,
-            }
-        )
-        await wait_msg.delete()
-        return await manager.next()
-    raise ValueError()
-
-
-async def on_input_customer_floor(
-    _: Message, __: ManagedTextInput, manager: DialogManager, value: str
-) -> None:
-    manager.dialog_data["new_customer_floor"] = value
-    await manager.next()
-
-
-async def on_input_customer_apartment_number(
-    _: Message, __: ManagedTextInput, manager: DialogManager, value: str
-) -> None:
-    manager.dialog_data["new_customer_apartment_number"] = value
-    await manager.next()
-
-
-async def on_input_customer_intercom_code(
-    _: Message, __: ManagedTextInput, manager: DialogManager, value: str
-) -> None:
-    manager.dialog_data["new_customer_intercom_code"] = value
-    await manager.next()
-
-
-@inject
-async def on_input_new_customer_address(
-    _: Message,
-    __: ManagedTextInput,
-    manager: DialogManager,
-    value: str,
-    sender: FromDishka[Sender],
-) -> None:
-    manager.dialog_data["new_customer_intercom_code"] = value
-    await edit_customer_address(manager, sender)
 
 
 async def on_select_shop_customer(
@@ -275,9 +215,9 @@ async def on_accept_customer_creation(
     city = data.get("city")
     street = data.get("street")
     house_number = data.get("house_number")
-    floor = data.get("new_customer_floor")
-    apartment_number = data.get("new_customer_apartment_number")
-    intercom_code = data.get("new_customer_intercom_code")
+    floor = data.get("floor")
+    apartment_number = data.get("apartment_number")
+    intercom_code = data.get("intercom_code")
     latitude = data.get("latitude")
     longitude = data.get("longitude")
 
@@ -310,10 +250,8 @@ async def on_accept_customer_creation(
                 ),
             )
         )
+        manager.dialog_data.clear()
         manager.dialog_data["customer_id"] = str(response)
-        manager.dialog_data["new_customer_apartment_number"] = None
-        manager.dialog_data["new_customer_floor"] = None
-        manager.dialog_data["new_customer_intercom_code"] = None
 
         if call.message:
             await call.message.answer("✅️ Клієнта додано")
@@ -322,76 +260,44 @@ async def on_accept_customer_creation(
         )
     except EntityAlreadyExistsError:
         if call.message:
-            await call.message.answer("❌ Клієнт з таким номером уже створено")
+            await call.message.answer(
+                "❌ Клієнт з таким номером або адресою уже створено"
+            )
         await manager.switch_to(
             state=CustomerMenu.MAIN, show_mode=ShowMode.SEND
         )
 
 
-@inject
-async def on_edit_customer_address(
-    _: CallbackQuery,
-    __: Button,
+async def on_result_input_new_customer_address(
+    _: Data,
+    result: dict[str, Any],
     manager: DialogManager,
-    sender: FromDishka[Sender],
-) -> None:
-    await edit_customer_address(manager, sender)
+):
+    if result:
+        manager.dialog_data.update(result)
 
-
-async def edit_customer_address(
-    manager: DialogManager, sender: Sender
-) -> None:
-    data = manager.dialog_data
-    customer_id = get_customer_id(manager)
-
-    city = data.get("city")
-    street = data.get("street")
-    house_number = data.get("house_number")
-    floor = data.get("new_customer_floor")
-    apartment_number = data.get("new_customer_apartment_number")
-    intercom_code = data.get("new_customer_intercom_code")
-    latitude = data.get("latitude")
-    longitude = data.get("longitude")
-
-    if (
-        not house_number
-        or not city
-        or not street
-        or not latitude
-        or not longitude
-    ):
-        raise ValueError()
-
-    await sender.send(
-        EditCustomerAddressRequest(
-            customer_id=customer_id,
-            address_data=AddressData(
-                city=city,
-                street=street,
-                house_number=house_number,
-                apartment_number=apartment_number,
-                floor=int(floor) if floor else None,
-                intercom_code=intercom_code,
-            ),
-            coordinates=CoordinatesData(
-                latitude=latitude, longitude=longitude
-            ),
-        )
-    )
-
-    await manager.switch_to(state=CustomerMenu.EDIT_MENU)
-
-
-def get_switch_to_preview(state: State) -> SwitchTo:
-    return SwitchTo(
-        id="to_customer_preview",
-        text=Const("Це приватний будинок"),
-        state=state,
-    )
+    await manager.switch_to(state=CustomerMenu.PREVIEW)
 
 
 CUSTOMER_CARD = Multi(
-    Format("<b>Ім'я:</b> {name}"),
+    Format("<b>Ім'я:</b> {name}\n"),
+    Jinja(
+        "<b>Адреси клієнта:</b>"
+        "<blockquote expandable>"
+        "{% for address in addresses %}"
+        "- <i>{{address.city}}, {{address.street}} "
+        "{{address.house_number}}</i>\n"
+        "{% endfor %}"
+        "</blockquote>"
+    ),
+    Jinja(
+        "<b>Телефонні номера клієнта:</b>"
+        "<blockquote expandable>"
+        "{% for phone in phone_numbers %}"
+        "- <i>{{phone.number}}</i>\n"
+        "{% endfor %}"
+        "</blockquote>"
+    ),
 )
 
 CUSTOMERS_DIALOG = Dialog(
@@ -434,7 +340,7 @@ CUSTOMERS_DIALOG = Dialog(
             ),
         ),
         get_back_btn(),
-        getter=[get_shop_customer, get_customer_addresses],
+        getter=get_shop_customer,
         state=CustomerMenu.CUSTOMER_CARD,
     ),
     Window(
@@ -450,62 +356,20 @@ CUSTOMERS_DIALOG = Dialog(
         state=CustomerMenu.DELETE_CONFIRMATION,
     ),
     Window(
-        Const("1️⃣ Вкажіть ім'я клієнта"),
+        Const("Вкажіть ім'я клієнта"),
         TextInput(id="input_customer_name", on_success=on_input_customer_name),
         get_back_btn(state=CustomerMenu.MAIN),
         state=CustomerMenu.NEW_CUSTOMER_NAME,
     ),
     Window(
-        Const("2️⃣ Вкажіть телефон клієнта"),
+        Const("Вкажіть телефон клієнта"),
         Const("<i>В форматі +380</i>"),
         TextInput(
             id="input_customer_phone", on_success=on_input_customer_phone
         ),
         get_back_btn(state=CustomerMenu.NEW_CUSTOMER_NAME),
         state=CustomerMenu.NEW_CUSTOMER_PHONE,
-    ),
-    Window(
-        Const("3️⃣ Вкажіть адресу клієнта"),
-        Const(
-            "<i>Якщо виникли складноші - перевірте вашу адресу"
-            " на карті: https://www.openstreetmap.org</i>"
-        ),
-        MessageInput(filter=F.text, func=on_input_customer_location),
-        get_back_btn(state=CustomerMenu.NEW_CUSTOMER_PHONE),
-        state=CustomerMenu.NEW_CUSTOMER_ADDRESS,
-    ),
-    Window(
-        Const("4️⃣ Вкажіть поверх для доставки"),
-        TextInput(
-            id="input_customer_floor", on_success=on_input_customer_floor
-        ),
-        get_switch_to_preview(CustomerMenu.PREVIEW),
-        get_back_btn(state=CustomerMenu.NEW_CUSTOMER_ADDRESS),
-        state=CustomerMenu.NEW_CUSTOMER_FLOOR,
-    ),
-    Window(
-        Const("5️⃣ Вкажіть номер квартири"),
-        TextInput(
-            id="input_customer_apartment_number",
-            on_success=on_input_customer_apartment_number,
-        ),
-        get_switch_to_preview(CustomerMenu.PREVIEW),
-        get_back_btn(state=CustomerMenu.NEW_CUSTOMER_FLOOR),
-        state=CustomerMenu.NEW_CUSTOMER_APARTMENT_NUMBER,
-    ),
-    Window(
-        Const("6️⃣ Вкажіть код домофону"),
-        TextInput(
-            id="input_customer_apartment_number",
-            on_success=on_input_customer_intercom_code,
-        ),
-        SwitchTo(
-            id="to_customer_preview",
-            text=Const("Відсутній"),
-            state=CustomerMenu.PREVIEW,
-        ),
-        get_back_btn(state=CustomerMenu.NEW_CUSTOMER_FLOOR),
-        state=CustomerMenu.NEW_CUSTOMER_INTERCOM_CODE,
+        on_process_result=on_result_input_new_customer_address,
     ),
     Window(
         Const("<b>Перевірте данні нового клієнта</b>\n"),
@@ -530,22 +394,10 @@ CUSTOMERS_DIALOG = Dialog(
     Window(
         Const("<b>Меню редагування клієнта</b>\n"),
         CUSTOMER_CARD,
-        Row(
-            SwitchTo(
-                id="edit_customer_name",
-                text=Const("Редагувати ім'я"),
-                state=CustomerMenu.EDIT_CUSTOMER_NAME,
-            ),
-            SwitchTo(
-                id="edit_customer_primary_phone",
-                text=Const("Редагувати контактний телефон"),
-                state=CustomerMenu.EDIT_CUSTOMER_PHONE,
-            ),
-        ),
         SwitchTo(
-            id="edit_customer_delivery_address",
-            text=Const("Редагувати адресу доставки"),
-            state=CustomerMenu.EDIT_CUSTOMER_ADDRESS,
+            id="edit_customer_name",
+            text=Const("Редагувати ім'я"),
+            state=CustomerMenu.EDIT_CUSTOMER_NAME,
         ),
         get_back_btn(state=CustomerMenu.CUSTOMER_CARD),
         getter=[get_shop_customer, get_customer_addresses],
@@ -569,24 +421,80 @@ CUSTOMERS_DIALOG = Dialog(
         get_back_btn(state=CustomerMenu.EDIT_MENU),
         state=CustomerMenu.EDIT_CUSTOMER_PHONE,
     ),
+)
+
+
+async def on_finish_address_dialog(
+    _: CallbackQuery,
+    __: Button,
+    manager: DialogManager,
+) -> None:
+    await manager.done(manager.dialog_data)
+
+
+@inject
+async def on_input_customer_location(
+    msg: Message,
+    __: MessageInput,
+    manager: DialogManager,
+    location_finder: FromDishka[LocationFinder],
+) -> Message | None:
+    wait_msg = await msg.answer("⏳ Перевіряємо адресу...")
+
+    if msg.text:
+        try:
+            location = await location_finder.find_location(msg.text)
+        except LocationNotFoundError:
+            return await msg.answer(
+                "Адресу не найдено.\n"
+                "Введіть повторно або поділіться локацією 👇"
+            )
+
+        manager.dialog_data.update(
+            {
+                "latitude": location.latitude,
+                "longitude": location.longitude,
+                "city": location.city,
+                "street": location.street,
+                "house_number": location.house_number,
+            }
+        )
+        await wait_msg.delete()
+        return await manager.next()
+    raise ValueError()
+
+
+async def on_input_customer_apartment_number(
+    _: Message, __: ManagedTextInput, manager: DialogManager, value: str
+) -> None:
+    manager.dialog_data["apartment_number"] = value
+    await manager.next()
+
+
+async def on_input_customer_floor(
+    _: Message, __: ManagedTextInput, manager: DialogManager, value: str
+) -> None:
+    manager.dialog_data["floor"] = value
+    await manager.next()
+
+
+async def on_input_customer_intercom_code(
+    _: Message, __: ManagedTextInput, manager: DialogManager, value: str
+) -> None:
+    manager.dialog_data["intercom_code"] = value
+    await manager.done(result=manager.dialog_data)
+
+
+ADDRESS_DATA_ENTRY_DIALOG = Dialog(
     Window(
-        Const("Вкажіть нову адресу доставки клієнта"),
+        Const("Вкажіть адресу клієнта"),
         Const(
             "<i>Якщо виникли складноші - перевірте вашу адресу"
             " на карті: https://www.openstreetmap.org</i>"
         ),
         MessageInput(filter=F.text, func=on_input_customer_location),
-        get_back_btn(state=CustomerMenu.EDIT_MENU),
-        state=CustomerMenu.EDIT_CUSTOMER_ADDRESS,
-    ),
-    Window(
-        Const("Вкажіть поверх для доставки"),
-        TextInput(
-            id="input_customer_floor", on_success=on_input_customer_floor
-        ),
-        get_switch_to_preview(CustomerMenu.EDIT_CUSTOMER_INTERCOM_CODE),
-        get_back_btn(state=CustomerMenu.NEW_CUSTOMER_ADDRESS),
-        state=CustomerMenu.EDIT_CUSTOMER_FLOOR,
+        get_back_btn(state=CustomerMenu.MAIN, back_to_prev_dialog=True),
+        state=AddressSG.FULL_ADDRESS,
     ),
     Window(
         Const("Вкажіть номер квартири"),
@@ -594,22 +502,34 @@ CUSTOMERS_DIALOG = Dialog(
             id="input_customer_apartment_number",
             on_success=on_input_customer_apartment_number,
         ),
-        get_switch_to_preview(CustomerMenu.EDIT_CUSTOMER_INTERCOM_CODE),
-        get_back_btn(state=CustomerMenu.NEW_CUSTOMER_FLOOR),
-        state=CustomerMenu.EDIT_CUSTOMER_APARTMENT_NUMBER,
+        Button(
+            text=Const("Це приватний будинок"),
+            id="private_house",
+            on_click=on_finish_address_dialog,
+        ),
+        get_back_btn(state=AddressSG.FULL_ADDRESS),
+        state=AddressSG.APARTMENT_NUMBER,
+    ),
+    Window(
+        Const("Вкажіть поверх для доставки"),
+        TextInput(
+            id="input_customer_floor", on_success=on_input_customer_floor
+        ),
+        get_back_btn(state=AddressSG.APARTMENT_NUMBER),
+        state=AddressSG.FLOOR,
     ),
     Window(
         Const("Вкажіть код домофону"),
         TextInput(
             id="input_customer_apartment_number",
-            on_success=on_input_new_customer_address,
+            on_success=on_input_customer_intercom_code,
         ),
         Button(
             id="to_customer_preview",
             text=Const("Відсутній"),
-            on_click=on_edit_customer_address,
+            on_click=on_finish_address_dialog,
         ),
-        get_back_btn(state=CustomerMenu.NEW_CUSTOMER_FLOOR),
-        state=CustomerMenu.EDIT_CUSTOMER_INTERCOM_CODE,
+        get_back_btn(state=AddressSG.FLOOR),
+        state=AddressSG.INTERCOM_CODE,
     ),
 )

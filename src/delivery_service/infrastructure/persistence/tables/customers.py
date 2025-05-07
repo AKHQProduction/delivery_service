@@ -85,7 +85,11 @@ ADDRESSES_TABLE = sa.Table(
         nullable=True,
     ),
     sa.UniqueConstraint(
-        "shop_id", "city", "street", "house_number", name="uq_user_address"
+        "customer_id",
+        "city",
+        "street",
+        "house_number",
+        name="uq_customer_address",
     ),
 )
 

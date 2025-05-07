@@ -1,16 +1,36 @@
 from typing import Sequence
 
-from sqlalchemy import RowMapping, Select, and_, func, or_, select
+from sqlalchemy import (
+    JSON,
+    RowMapping,
+    Select,
+    and_,
+    cast,
+    func,
+    label,
+    or_,
+    select,
+)
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from delivery_service.application.query.ports.address_gateway import (
+    AddressReadModel,
+)
 from delivery_service.application.query.ports.customer_gateway import (
     CustomerGateway,
     CustomerGatewayFilters,
     CustomerReadModel,
 )
+from delivery_service.application.query.ports.phone_number_gateway import (
+    PhoneNumberReadModel,
+)
 from delivery_service.domain.customers.customer_id import CustomerID
 from delivery_service.infrastructure.persistence.tables import (
     CUSTOMERS_TABLE,
+)
+from delivery_service.infrastructure.persistence.tables.customers import (
+    ADDRESSES_TABLE,
+    PHONE_NUMBER_TABLE,
 )
 
 
@@ -29,16 +49,91 @@ class SQLAlchemyCustomerGateway(CustomerGateway):
 
     @staticmethod
     def _map_row_to_read_model(row: RowMapping) -> CustomerReadModel:
+        addresses = [
+            AddressReadModel(
+                address_id=addr["address_id"],
+                city=addr["city"],
+                street=addr["street"],
+                house_number=addr["house_number"],
+                apartment_number=addr.get("apartment_number"),
+                floor=addr.get("floor"),
+                intercom_code=addr.get("intercom_code"),
+            )
+            for addr in row["addresses"]
+        ]
+        phone_numbers = [
+            PhoneNumberReadModel(
+                phone_number_id=ph["phone_number_id"],
+                number=ph["number"],
+                is_primary=ph["is_primary"],
+            )
+            for ph in row["phone_numbers"]
+        ]
+
         return CustomerReadModel(
             customer_id=row["id"],
             name=row["name"],
+            addresses=addresses,
+            phone_numbers=phone_numbers,
         )
 
     @staticmethod
     def _select_rows() -> Select:
-        return select(
-            CUSTOMERS_TABLE.c.id,
-            CUSTOMERS_TABLE.c.name,
+        return (
+            select(
+                CUSTOMERS_TABLE.c.id,
+                CUSTOMERS_TABLE.c.name,
+                label(
+                    "addresses",
+                    func.coalesce(
+                        func.json_agg(
+                            func.json_build_object(
+                                "address_id",
+                                ADDRESSES_TABLE.c.id,
+                                "city",
+                                ADDRESSES_TABLE.c.city,
+                                "street",
+                                ADDRESSES_TABLE.c.street,
+                                "house_number",
+                                ADDRESSES_TABLE.c.house_number,
+                                "apartment_number",
+                                ADDRESSES_TABLE.c.apartment_number,
+                                "floor",
+                                ADDRESSES_TABLE.c.floor,
+                                "intercom_code",
+                                ADDRESSES_TABLE.c.intercom_code,
+                            )
+                        ).filter(ADDRESSES_TABLE.c.id.is_not(None)),
+                        cast("[]", JSON),
+                    ),
+                ),
+                label(
+                    "phone_numbers",
+                    func.coalesce(
+                        func.json_agg(
+                            func.json_build_object(
+                                "phone_number_id",
+                                PHONE_NUMBER_TABLE.c.id,
+                                "number",
+                                PHONE_NUMBER_TABLE.c.number,
+                                "is_primary",
+                                PHONE_NUMBER_TABLE.c.is_primary,
+                            )
+                        ).filter(PHONE_NUMBER_TABLE.c.id.is_not(None)),
+                        cast("[]", JSON),
+                    ),
+                ),
+            )
+            .select_from(CUSTOMERS_TABLE)
+            .outerjoin(
+                ADDRESSES_TABLE,
+                and_(ADDRESSES_TABLE.c.customer_id == CUSTOMERS_TABLE.c.id),
+            )
+            .outerjoin(
+                PHONE_NUMBER_TABLE,
+                and_(PHONE_NUMBER_TABLE.c.customer_id == CUSTOMERS_TABLE.c.id),
+            )
+            .group_by(CUSTOMERS_TABLE.c.id, CUSTOMERS_TABLE.c.name)
         )
 
     async def read_all_customers(

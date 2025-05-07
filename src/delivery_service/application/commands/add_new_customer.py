@@ -70,7 +70,7 @@ class AddNewCustomerHandler(RequestHandler[AddNewCustomerRequest, CustomerID]):
         if not customer_registry:
             raise ShopNotFoundError()
 
-        if await self._repository.exists(
+        if await self._repository.exists_with_number(
             shop_id=customer_registry.id, phone_number=request.phone_number
         ):
             raise EntityAlreadyExistsError()

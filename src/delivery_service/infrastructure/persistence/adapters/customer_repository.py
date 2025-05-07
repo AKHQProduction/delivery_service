@@ -23,7 +23,9 @@ class SQLAlchemyCustomerRepository(CustomerRepository):
     async def delete(self, customer: Customer) -> None:
         return await self._session.delete(customer)
 
-    async def exists(self, shop_id: ShopID, phone_number: str) -> bool:
+    async def exists_with_number(
+        self, shop_id: ShopID, phone_number: str
+    ) -> bool:
         query = select(
             exists().where(
                 and_(

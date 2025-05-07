@@ -44,10 +44,6 @@ class CustomerMenu(StatesGroup):
     EDIT_MENU = State()
     EDIT_CUSTOMER_NAME = State()
     EDIT_CUSTOMER_PHONE = State()
-    EDIT_CUSTOMER_ADDRESS = State()
-    EDIT_CUSTOMER_FLOOR = State()
-    EDIT_CUSTOMER_APARTMENT_NUMBER = State()
-    EDIT_CUSTOMER_INTERCOM_CODE = State()
 
     DELETE_CONFIRMATION = State()
 
@@ -76,3 +72,10 @@ class OrderMenu(StatesGroup):
 
     # Order reports
     SELECT_DATE_FOR_REPORT = State()
+
+
+class AddressSG(StatesGroup):
+    FULL_ADDRESS = State()
+    FLOOR = State()
+    APARTMENT_NUMBER = State()
+    INTERCOM_CODE = State()

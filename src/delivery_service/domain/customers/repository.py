@@ -20,5 +20,7 @@ class CustomerRepository(Protocol):
         raise NotImplementedError
 
     @abstractmethod
-    async def exists(self, shop_id: ShopID, phone_number: str) -> bool:
+    async def exists_with_number(
+        self, shop_id: ShopID, phone_number: str
+    ) -> bool:
         raise NotImplementedError

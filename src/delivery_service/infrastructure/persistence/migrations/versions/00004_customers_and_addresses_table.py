@@ -98,7 +98,11 @@ def upgrade() -> None:
         ),
         sa.PrimaryKeyConstraint("id", name=op.f("pk_addresses")),
         sa.UniqueConstraint(
-            "shop_id", "city", "street", "house_number", name="uq_user_address"
+            "customer_id",
+            "city",
+            "street",
+            "house_number",
+            name="uq_customer_address",
         ),
     )
 
