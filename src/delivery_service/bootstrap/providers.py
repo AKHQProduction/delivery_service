@@ -24,6 +24,10 @@ from sqlalchemy.ext.asyncio import (
     create_async_engine,
 )
 
+from delivery_service.application.commands.add_customer_address import (
+    AddAddressToCustomerHandler,
+    AddAddressToCustomerRequest,
+)
 from delivery_service.application.commands.add_new_customer import (
     AddNewCustomerHandler,
     AddNewCustomerRequest,
@@ -49,6 +53,10 @@ from delivery_service.application.commands.create_new_shop import (
 from delivery_service.application.commands.delete_customer import (
     DeleteCustomerHandler,
     DeleteCustomerRequest,
+)
+from delivery_service.application.commands.delete_customer_address import (
+    DeleteCustomerAddressHandler,
+    DeleteCustomerAddressRequest,
 )
 from delivery_service.application.commands.delete_order import (
     DeleteOrderHandler,
@@ -268,6 +276,8 @@ class ApplicationHandlersProvider(Provider):
         DeleteProductHandler,
         AddNewCustomerHandler,
         DeleteCustomerHandler,
+        DeleteCustomerAddressHandler,
+        AddAddressToCustomerHandler,
         EditCustomerNameHandler,
         EditCustomerPrimaryPhoneHandler,
         EditCustomerAddressHandler,
@@ -349,6 +359,12 @@ class BazarioProvider(Provider):
         registry.add_request_handler(GetShopOrderRequest, GetShopOrderHandler)
         registry.add_request_handler(DeleteOrderRequest, DeleteOrderHandler)
         registry.add_request_handler(MakeOrderListRequest, GetOrderListHandler)
+        registry.add_request_handler(
+            DeleteCustomerAddressRequest, DeleteCustomerAddressHandler
+        )
+        registry.add_request_handler(
+            AddAddressToCustomerRequest, AddAddressToCustomerHandler
+        )
 
         registry.add_pipeline_behaviors(Request, CommitionBehavior)
         registry.add_pipeline_behaviors(

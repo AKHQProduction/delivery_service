@@ -1,4 +1,5 @@
 from delivery_service.domain.addresses.address import Address
+from delivery_service.domain.addresses.address_id import AddressID
 from delivery_service.domain.customers.customer_id import CustomerID
 from delivery_service.domain.customers.phone_number import (
     PhoneNumber,
@@ -32,6 +33,14 @@ class Customer(Entity[CustomerID]):
 
     def edit_name(self, new_name: str) -> None:
         self._name = new_name
+
+    def add_address(self, address: Address) -> None:
+        self._delivery_addresses.append(address)
+
+    def delete_address(self, address_id: AddressID) -> None:
+        for address in self._delivery_addresses:
+            if address.entity_id == address_id:
+                self._delivery_addresses.remove(address)
 
     def edit_primary_phone_number(self, new_phone: PhoneNumberID) -> None:
         if self._contacts:

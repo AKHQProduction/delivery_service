@@ -1,4 +1,5 @@
 from typing import Any
+from uuid import UUID
 
 from aiogram_dialog import DialogManager
 from bazario.asyncio import Sender
@@ -14,6 +15,7 @@ from delivery_service.application.query.ports.product_gateway import (
     ProductGatewayFilters,
 )
 from delivery_service.application.query.product import GetAllProductsRequest
+from delivery_service.domain.addresses.address_id import AddressID
 from delivery_service.domain.customers.customer_id import CustomerID
 from delivery_service.domain.orders.order_ids import OrderID
 from delivery_service.domain.products.product import ProductID, ProductType
@@ -51,7 +53,7 @@ def get_product_id(manager: DialogManager) -> ProductID:
     if not product_id_str:
         raise ValueError()
 
-    return ProductID(product_id_str)
+    return ProductID(UUID(product_id_str))
 
 
 def get_order_id(manager: DialogManager) -> OrderID:
@@ -59,7 +61,7 @@ def get_order_id(manager: DialogManager) -> OrderID:
     if not order_id_str:
         raise ValueError()
 
-    return OrderID(order_id_str)
+    return OrderID(UUID(order_id_str))
 
 
 @inject
@@ -88,7 +90,15 @@ def get_customer_id(manager: DialogManager) -> CustomerID:
     if not customer_id_str:
         raise ValueError()
 
-    return CustomerID(customer_id_str)
+    return CustomerID(UUID(customer_id_str))
+
+
+def get_address_id(manager: DialogManager) -> AddressID:
+    address_id_str = manager.dialog_data.get("address_id")
+    if not address_id_str:
+        raise ValueError()
+
+    return AddressID(UUID(address_id_str))
 
 
 @inject

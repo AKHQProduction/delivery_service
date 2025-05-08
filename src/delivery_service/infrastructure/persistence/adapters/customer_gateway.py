@@ -1,3 +1,4 @@
+import json
 from typing import Sequence
 
 from sqlalchemy import (
@@ -49,25 +50,42 @@ class SQLAlchemyCustomerGateway(CustomerGateway):
 
     @staticmethod
     def _map_row_to_read_model(row: RowMapping) -> CustomerReadModel:
+        raw_addresses = row["addresses"]
+        if isinstance(raw_addresses, str):
+            try:
+                addr_list = json.loads(raw_addresses)
+            except json.JSONDecodeError:
+                addr_list = []
+        else:
+            addr_list = raw_addresses or []
         addresses = [
             AddressReadModel(
-                address_id=addr["address_id"],
-                city=addr["city"],
-                street=addr["street"],
-                house_number=addr["house_number"],
+                address_id=addr.get("address_id"),
+                city=addr.get("city"),
+                street=addr.get("street"),
+                house_number=addr.get("house_number"),
                 apartment_number=addr.get("apartment_number"),
                 floor=addr.get("floor"),
                 intercom_code=addr.get("intercom_code"),
             )
-            for addr in row["addresses"]
+            for addr in addr_list
         ]
+
+        raw_phones = row["phone_numbers"]
+        if isinstance(raw_phones, str):
+            try:
+                phone_list = json.loads(raw_phones)
+            except json.JSONDecodeError:
+                phone_list = []
+        else:
+            phone_list = raw_phones or []
         phone_numbers = [
             PhoneNumberReadModel(
-                phone_number_id=ph["phone_number_id"],
-                number=ph["number"],
-                is_primary=ph["is_primary"],
+                phone_number_id=ph.get("phone_number_id"),
+                number=ph.get("number"),
+                is_primary=ph.get("is_primary"),
             )
-            for ph in row["phone_numbers"]
+            for ph in phone_list
         ]
 
         return CustomerReadModel(

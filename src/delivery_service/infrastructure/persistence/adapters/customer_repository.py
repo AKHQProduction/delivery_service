@@ -6,6 +6,7 @@ from delivery_service.domain.customers.customer_id import CustomerID
 from delivery_service.domain.customers.repository import CustomerRepository
 from delivery_service.domain.shared.shop_id import ShopID
 from delivery_service.infrastructure.persistence.tables.customers import (
+    ADDRESSES_TABLE,
     PHONE_NUMBER_TABLE,
 )
 
@@ -31,6 +32,27 @@ class SQLAlchemyCustomerRepository(CustomerRepository):
                 and_(
                     PHONE_NUMBER_TABLE.c.number == phone_number,
                     PHONE_NUMBER_TABLE.c.shop_id == shop_id,
+                )
+            )
+        )
+
+        result = await self._session.execute(query)
+        return bool(result.scalar())
+
+    async def exists_with_address(
+        self,
+        customer_id: CustomerID,
+        city: str,
+        street: str,
+        house_number: str,
+    ) -> bool:
+        query = select(
+            exists().where(
+                and_(
+                    ADDRESSES_TABLE.c.customer_id == customer_id,
+                    ADDRESSES_TABLE.c.city == city,
+                    ADDRESSES_TABLE.c.street == street,
+                    ADDRESSES_TABLE.c.house_number == house_number,
                 )
             )
         )

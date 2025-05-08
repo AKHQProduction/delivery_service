@@ -1,4 +1,5 @@
 from delivery_service.domain.addresses.address import Address
+from delivery_service.domain.addresses.address_id import AddressID
 from delivery_service.domain.customers.customer import Customer
 from delivery_service.domain.customers.customer_id import CustomerID
 from delivery_service.domain.customers.phone_number import (
@@ -27,6 +28,22 @@ class CustomerRegistry(Entity[ShopID]):
         super().__init__(entity_id=entity_id)
 
         self._staff_members = staff_members
+
+    def add_address_to_customer(
+        self, customer: Customer, address: Address, adder_id: UserID
+    ) -> None:
+        self._is_current_shop_customer(customer.shop_reference)
+        self._member_with_admin_roles(adder_id)
+
+        customer.add_address(address)
+
+    def delete_customer_address(
+        self, customer: Customer, address_id: AddressID, deleter_id: UserID
+    ) -> None:
+        self._is_current_shop_customer(customer.shop_reference)
+        self._member_with_admin_roles(deleter_id)
+
+        customer.delete_address(address_id)
 
     def add_new_customer(
         self,

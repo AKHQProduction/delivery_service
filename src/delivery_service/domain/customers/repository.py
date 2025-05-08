@@ -24,3 +24,13 @@ class CustomerRepository(Protocol):
         self, shop_id: ShopID, phone_number: str
     ) -> bool:
         raise NotImplementedError
+
+    @abstractmethod
+    async def exists_with_address(
+        self,
+        customer_id: CustomerID,
+        city: str,
+        street: str,
+        house_number: str,
+    ) -> bool:
+        raise NotImplementedError

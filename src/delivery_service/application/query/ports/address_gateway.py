@@ -16,6 +16,10 @@ class AddressReadModel:
     floor: int | None
     intercom_code: str | None
 
+    @property
+    def full_address(self) -> str:
+        return f"{self.city}, {self.street} {self.house_number}"
+
 
 @dataclass(frozen=True)
 class AddressGatewayFilters:

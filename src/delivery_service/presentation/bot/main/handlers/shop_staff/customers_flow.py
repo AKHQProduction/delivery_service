@@ -22,18 +22,26 @@ from aiogram_dialog.widgets.kbd import (
     Row,
     ScrollingGroup,
     Select,
+    Start,
     SwitchTo,
 )
 from aiogram_dialog.widgets.text import Const, Format, Jinja, Multi
 from bazario.asyncio import Sender
 from dishka import FromDishka
 from dishka.integrations.aiogram_dialog import inject
+from magic_filter import MagicFilter
 
+from delivery_service.application.commands.add_customer_address import (
+    AddAddressToCustomerRequest,
+)
 from delivery_service.application.commands.add_new_customer import (
     AddNewCustomerRequest,
 )
 from delivery_service.application.commands.delete_customer import (
     DeleteCustomerRequest,
+)
+from delivery_service.application.commands.delete_customer_address import (
+    DeleteCustomerAddressRequest,
 )
 from delivery_service.application.commands.edit_customer import (
     EditCustomerNameRequest,
@@ -42,6 +50,9 @@ from delivery_service.application.commands.edit_customer import (
 from delivery_service.application.common.errors import EntityAlreadyExistsError
 from delivery_service.application.ports.location_finder import LocationFinder
 from delivery_service.application.query.customer import GetAllCustomersRequest
+from delivery_service.application.query.ports.address_gateway import (
+    AddressGateway,
+)
 from delivery_service.application.query.ports.customer_gateway import (
     CustomerGateway,
 )
@@ -56,7 +67,7 @@ from delivery_service.infrastructure.integration.telegram.const import (
 )
 from delivery_service.presentation.bot.widgets.kbd import get_back_btn
 
-from .getters import get_customer_addresses, get_customer_id
+from .getters import get_address_id, get_customer_id
 from .states import AddressSG, CustomerMenu
 
 CUSTOMERS_ROUTER = Router()
@@ -119,6 +130,30 @@ async def get_customer_creation_data(
         "floor": floor,
         "apartment_number": apartment_number,
         "intercom_code": intercom_code,
+    }
+
+
+@inject
+async def get_address(
+    dialog_manager: DialogManager,
+    reader: FromDishka[AddressGateway],
+    **_kwargs,
+) -> dict[str, Any]:
+    address_id = get_address_id(dialog_manager)
+
+    address = await reader.read_with_id(address_id)
+    if not address:
+        raise ValueError()
+
+    return {
+        "full_address": address.full_address,
+        "apartment_number": address.apartment_number
+        if address.apartment_number
+        else "приватний будинок",
+        "floor": address.floor if address.floor else "приватний будинок",
+        "intercom_code": address.intercom_code
+        if address.intercom_code
+        else "без коду",
     }
 
 
@@ -185,6 +220,13 @@ async def on_select_shop_customer(
     await manager.switch_to(state=CustomerMenu.CUSTOMER_CARD)
 
 
+async def on_select_address(
+    _: CallbackQuery, __: Widget, manager: DialogManager, value: str
+) -> None:
+    manager.dialog_data["address_id"] = value
+    await manager.switch_to(state=CustomerMenu.ADDRESS_CARD)
+
+
 @inject
 async def on_accept_customer_delete(
     call: CallbackQuery,
@@ -199,6 +241,29 @@ async def on_accept_customer_delete(
     if call.message:
         await call.message.answer("✅️ Клієнта успішно видалено")
     await manager.switch_to(state=CustomerMenu.MAIN, show_mode=ShowMode.SEND)
+
+
+@inject
+async def on_accept_address_delete(
+    call: CallbackQuery,
+    __: Button,
+    manager: DialogManager,
+    sender: FromDishka[Sender],
+) -> None:
+    address_id = get_address_id(manager)
+    customer_id = get_customer_id(manager)
+
+    await sender.send(
+        DeleteCustomerAddressRequest(
+            customer_id=customer_id, address_id=address_id
+        )
+    )
+
+    if call.message:
+        await call.message.answer("✅️ Адресу клієнта успішно видалено")
+    await manager.switch_to(
+        state=CustomerMenu.CUSTOMER_CARD, show_mode=ShowMode.SEND
+    )
 
 
 @inject
@@ -279,23 +344,58 @@ async def on_result_input_new_customer_address(
     await manager.switch_to(state=CustomerMenu.PREVIEW)
 
 
+@inject
+async def on_result_add_new_customer_address(
+    _: Data,
+    result: dict[str, Any],
+    manager: DialogManager,
+    sender: FromDishka[Sender],
+):
+    customer_id = get_customer_id(manager)
+    if result:
+        await sender.send(
+            AddAddressToCustomerRequest(
+                customer_id=customer_id,
+                address_data=AddressData(
+                    city=result["city"],
+                    street=result["street"],
+                    house_number=result["house_number"],
+                    apartment_number=result.get("apartment_number"),
+                    floor=result.get("floor"),
+                    intercom_code=result.get("intercom_code"),
+                ),
+                coordinates=CoordinatesData(
+                    latitude=result["latitude"], longitude=result["longitude"]
+                ),
+            )
+        )
+
+
 CUSTOMER_CARD = Multi(
     Format("<b>Ім'я:</b> {name}\n"),
     Jinja(
         "<b>Адреси клієнта:</b>"
         "<blockquote expandable>"
+        "{% if addresses %}"
         "{% for address in addresses %}"
         "- <i>{{address.city}}, {{address.street}} "
         "{{address.house_number}}</i>\n"
         "{% endfor %}"
+        "{% else %}"
+        "Адреси відсутні"
+        "{% endif %}"
         "</blockquote>"
     ),
     Jinja(
         "<b>Телефонні номера клієнта:</b>"
         "<blockquote expandable>"
+        "{% if phone_numbers %}"
         "{% for phone in phone_numbers %}"
         "- <i>{{phone.number}}</i>\n"
         "{% endfor %}"
+        "{% else %}"
+        "Телефони відсутні"
+        "{% endif %}"
         "</blockquote>"
     ),
 )
@@ -399,8 +499,20 @@ CUSTOMERS_DIALOG = Dialog(
             text=Const("Редагувати ім'я"),
             state=CustomerMenu.EDIT_CUSTOMER_NAME,
         ),
+        Row(
+            SwitchTo(
+                id="edit_customer_primary_phone",
+                text=Const("Редагувати номери клієнта"),
+                state=CustomerMenu.EDIT_CUSTOMER_PHONE,
+            ),
+            SwitchTo(
+                id="edit_customer_delivery_address",
+                text=Const("Редагувати адреси клієнта"),
+                state=CustomerMenu.ADDRESSES_MENU,
+            ),
+        ),
         get_back_btn(state=CustomerMenu.CUSTOMER_CARD),
-        getter=[get_shop_customer, get_customer_addresses],
+        getter=get_shop_customer,
         state=CustomerMenu.EDIT_MENU,
     ),
     Window(
@@ -420,6 +532,63 @@ CUSTOMERS_DIALOG = Dialog(
         ),
         get_back_btn(state=CustomerMenu.EDIT_MENU),
         state=CustomerMenu.EDIT_CUSTOMER_PHONE,
+    ),
+    Window(
+        Format("Адреси {dialog_data[name]}"),
+        Start(
+            text=Const("➕ Додать адресу"),
+            state=AddressSG.FULL_ADDRESS,
+            id="add_new_address",
+        ),
+        ScrollingGroup(
+            Select(
+                id="address_item",
+                items="addresses",
+                item_id_getter=lambda item: item.address_id,
+                text=Format(
+                    "{pos}. {item.city}, {item.street} {item.house_number}"
+                ),
+                on_click=on_select_address,
+            ),
+            id="all_customer_addresses",
+            width=2,
+            height=10,
+            hide_on_single_page=True,
+            when=MagicFilter.len(F["addresses"]) > 0,
+        ),
+        get_back_btn(state=CustomerMenu.EDIT_MENU),
+        getter=get_shop_customer,
+        state=CustomerMenu.ADDRESSES_MENU,
+        on_process_result=on_result_add_new_customer_address,
+    ),
+    Window(
+        Format(
+            "<b>Адреса:</b> {full_address}\n"
+            "<b>Квартира:</b> {apartment_number}\n"
+            "<b>Поверх:</b> {floor}\n"
+            "<b>Код домофону:</b> {intercom_code}"
+        ),
+        SwitchTo(
+            id="delete_address",
+            text=Const("🗑 Видалить"),
+            state=CustomerMenu.DELETE_ADDRESS,
+        ),
+        get_back_btn(state=CustomerMenu.ADDRESSES_MENU),
+        getter=get_address,
+        state=CustomerMenu.ADDRESS_CARD,
+    ),
+    Window(
+        Format(
+            "Видалить адресу {full_address} у користувача {dialog_data[name]}?"
+        ),
+        Button(
+            text=Const("✅ Підтвердити"),
+            id="accept_address_delete",
+            on_click=on_accept_address_delete,
+        ),
+        get_back_btn(btn_text="❌ Відмінити", state=CustomerMenu.ADDRESS_CARD),
+        getter=get_address,
+        state=CustomerMenu.DELETE_ADDRESS,
     ),
 )
 
