@@ -42,6 +42,14 @@ class Customer(Entity[CustomerID]):
             if address.entity_id == address_id:
                 self._delivery_addresses.remove(address)
 
+    def add_phone_number(self, phone_number: PhoneNumber) -> None:
+        self._contacts.append(phone_number)
+
+    def delete_phone_number(self, phone_number_id: PhoneNumberID) -> None:
+        for number in self._contacts:
+            if number.entity_id == phone_number_id:
+                self._contacts.remove(number)
+
     def edit_primary_phone_number(self, new_phone: PhoneNumberID) -> None:
         if self._contacts:
             old_primary_number = self._get_primary_phone_number()

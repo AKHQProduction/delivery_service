@@ -1,5 +1,4 @@
 # ruff: noqa: E501
-
 import logging
 from dataclasses import dataclass
 
@@ -10,8 +9,8 @@ from delivery_service.application.common.errors import (
     EntityAlreadyExistsError,
     ShopNotFoundError,
 )
-from delivery_service.application.common.factories.address_factory import (
-    AddressFactory,
+from delivery_service.application.common.factories.phone_factory import (
+    PhoneNumberFactory,
 )
 from delivery_service.application.common.markers.requests import (
     TelegramRequest,
@@ -22,35 +21,33 @@ from delivery_service.domain.customer_registries.customer_registry_repository im
 )
 from delivery_service.domain.customers.customer_id import CustomerID
 from delivery_service.domain.customers.repository import CustomerRepository
-from delivery_service.domain.shared.dto import AddressData, CoordinatesData
 
 logger = logging.getLogger(__name__)
 
 
 @dataclass(frozen=True)
-class AddAddressToCustomerRequest(TelegramRequest[None]):
+class AddCustomerPhoneNumberRequest(TelegramRequest):
     customer_id: CustomerID
-    address_data: AddressData
-    coordinates: CoordinatesData
+    new_phone_number: str
 
 
-class AddAddressToCustomerHandler(
-    RequestHandler[AddAddressToCustomerRequest, None]
+class AddCustomerPhoneNumberHandler(
+    RequestHandler[AddCustomerPhoneNumberRequest, None]
 ):
     def __init__(
         self,
         idp: IdentityProvider,
         customer_registry_repository: CustomerRegistryRepository,
         customer_repository: CustomerRepository,
-        address_factory: AddressFactory,
+        phone_number_factory: PhoneNumberFactory,
     ) -> None:
         self._idp = idp
         self._customer_registry_repository = customer_registry_repository
         self._repository = customer_repository
-        self._address_factory = address_factory
+        self._phone_number_factory = phone_number_factory
 
-    async def handle(self, request: AddAddressToCustomerRequest) -> None:
-        logger.info("Request to add new address to customer")
+    async def handle(self, request: AddCustomerPhoneNumberRequest) -> None:
+        logger.info("Request to add new phone number to customer")
         current_user_id = await self._idp.get_current_user_id()
 
         customer_registry = (
@@ -67,21 +64,17 @@ class AddAddressToCustomerHandler(
         if not customer:
             raise CustomerNotFoundError()
 
-        if await self._repository.exists_with_address(
-            customer_id=request.customer_id,
-            city=request.address_data.city,
-            street=request.address_data.street,
-            house_number=request.address_data.house_number,
+        if await self._repository.exists_with_number(
+            customer_registry.id, request.new_phone_number
         ):
             raise EntityAlreadyExistsError()
 
-        new_address = self._address_factory.create_address(
-            address_data=request.address_data,
-            coordinates_data=request.coordinates,
-            customer_id=request.customer_id,
+        new_phone_number = self._phone_number_factory.create_phone_number(
+            number=request.new_phone_number,
+            customer_id=customer.entity_id,
             shop_id=customer_registry.id,
         )
 
-        customer_registry.add_address_to_customer(
-            customer, new_address, current_user_id
+        customer_registry.add_phone_number_to_customer(
+            customer, new_phone_number, current_user_id
         )

@@ -35,6 +35,11 @@ class CustomerMenu(StatesGroup):
     ADDRESS_CARD = State()
     DELETE_ADDRESS = State()
 
+    PHONE_NUMBERS_MENU = State()
+    PHONE_NUMBER_CARD = State()
+    DELETE_PHONE_NUMBER = State()
+    ADD_PHONE_NUMBER = State()
+
     # Customer creation
     NEW_CUSTOMER_NAME = State()
     NEW_CUSTOMER_PHONE = State()
@@ -47,7 +52,6 @@ class CustomerMenu(StatesGroup):
     # Customer editing
     EDIT_MENU = State()
     EDIT_CUSTOMER_NAME = State()
-    EDIT_CUSTOMER_PHONE = State()
 
     DELETE_CONFIRMATION = State()
 

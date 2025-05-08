@@ -45,6 +45,25 @@ class CustomerRegistry(Entity[ShopID]):
 
         customer.delete_address(address_id)
 
+    def add_phone_number_to_customer(
+        self, customer: Customer, phone_number: PhoneNumber, adder_id: UserID
+    ) -> None:
+        self._is_current_shop_customer(customer.shop_reference)
+        self._member_with_admin_roles(adder_id)
+
+        customer.add_phone_number(phone_number)
+
+    def delete_customer_phone_number(
+        self,
+        customer: Customer,
+        phone_number_id: PhoneNumberID,
+        deleter_id: UserID,
+    ) -> None:
+        self._is_current_shop_customer(customer.shop_reference)
+        self._member_with_admin_roles(deleter_id)
+
+        customer.delete_phone_number(phone_number_id)
+
     def add_new_customer(
         self,
         new_customer_id: CustomerID,

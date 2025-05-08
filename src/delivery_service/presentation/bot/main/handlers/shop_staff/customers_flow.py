@@ -1,7 +1,6 @@
 from typing import Any
-from uuid import UUID
 
-from aiogram import F, Router
+from aiogram import Bot, F, Router
 from aiogram.types import CallbackQuery, Message
 from aiogram_dialog import (
     Data,
@@ -34,6 +33,9 @@ from magic_filter import MagicFilter
 from delivery_service.application.commands.add_customer_address import (
     AddAddressToCustomerRequest,
 )
+from delivery_service.application.commands.add_customer_phone_number import (
+    AddCustomerPhoneNumberRequest,
+)
 from delivery_service.application.commands.add_new_customer import (
     AddNewCustomerRequest,
 )
@@ -43,9 +45,11 @@ from delivery_service.application.commands.delete_customer import (
 from delivery_service.application.commands.delete_customer_address import (
     DeleteCustomerAddressRequest,
 )
+from delivery_service.application.commands.delete_phone_number import (
+    DeletePhoneNumberRequest,
+)
 from delivery_service.application.commands.edit_customer import (
     EditCustomerNameRequest,
-    EditCustomerPrimaryPhoneRequest,
 )
 from delivery_service.application.common.errors import EntityAlreadyExistsError
 from delivery_service.application.ports.location_finder import LocationFinder
@@ -56,8 +60,10 @@ from delivery_service.application.query.ports.address_gateway import (
 from delivery_service.application.query.ports.customer_gateway import (
     CustomerGateway,
 )
+from delivery_service.application.query.ports.phone_number_gateway import (
+    PhoneNumberGateway,
+)
 from delivery_service.domain.customers.phone_number import PHONE_NUMBER_PATTERN
-from delivery_service.domain.customers.phone_number_id import PhoneNumberID
 from delivery_service.domain.shared.dto import AddressData, CoordinatesData
 from delivery_service.infrastructure.integration.geopy.errors import (
     LocationNotFoundError,
@@ -67,7 +73,7 @@ from delivery_service.infrastructure.integration.telegram.const import (
 )
 from delivery_service.presentation.bot.widgets.kbd import get_back_btn
 
-from .getters import get_address_id, get_customer_id
+from .getters import get_address_id, get_customer_id, get_phone_number_id
 from .states import AddressSG, CustomerMenu
 
 CUSTOMERS_ROUTER = Router()
@@ -157,6 +163,21 @@ async def get_address(
     }
 
 
+@inject
+async def get_phone_number(
+    dialog_manager: DialogManager,
+    reader: FromDishka[PhoneNumberGateway],
+    **_kwargs,
+) -> dict[str, Any]:
+    phone_number_id = get_phone_number_id(dialog_manager)
+
+    phone_number = await reader.read_with_id(phone_number_id)
+    if not phone_number:
+        raise ValueError()
+
+    return {"number": phone_number.number}
+
+
 async def on_input_customer_name(
     _: Message, __: ManagedTextInput, manager: DialogManager, value: str
 ) -> None:
@@ -204,13 +225,18 @@ async def on_input_new_customer_phone(
         return
 
     customer_id = get_customer_id(manager)
-    await sender.send(
-        EditCustomerPrimaryPhoneRequest(
-            customer_id=customer_id,
-            new_primary_phone=PhoneNumberID(UUID(value)),
+    try:
+        await sender.send(
+            AddCustomerPhoneNumberRequest(
+                customer_id=customer_id, new_phone_number=value
+            )
         )
-    )
-    await manager.switch_to(state=CustomerMenu.EDIT_MENU)
+    except EntityAlreadyExistsError:
+        await msg.answer("❌ Номер телефона уже зареєстровано")
+        return
+
+    await msg.answer("✅ Номер телефона було додано")
+    await manager.switch_to(state=CustomerMenu.PHONE_NUMBERS_MENU)
 
 
 async def on_select_shop_customer(
@@ -225,6 +251,13 @@ async def on_select_address(
 ) -> None:
     manager.dialog_data["address_id"] = value
     await manager.switch_to(state=CustomerMenu.ADDRESS_CARD)
+
+
+async def on_select_phone(
+    _: CallbackQuery, __: Widget, manager: DialogManager, value: str
+) -> None:
+    manager.dialog_data["phone_number_id"] = value
+    await manager.switch_to(state=CustomerMenu.PHONE_NUMBER_CARD)
 
 
 @inject
@@ -262,7 +295,30 @@ async def on_accept_address_delete(
     if call.message:
         await call.message.answer("✅️ Адресу клієнта успішно видалено")
     await manager.switch_to(
-        state=CustomerMenu.CUSTOMER_CARD, show_mode=ShowMode.SEND
+        state=CustomerMenu.ADDRESSES_MENU, show_mode=ShowMode.SEND
+    )
+
+
+@inject
+async def on_accept_phone_number_delete(
+    call: CallbackQuery,
+    __: Button,
+    manager: DialogManager,
+    sender: FromDishka[Sender],
+) -> None:
+    phone_number_id = get_phone_number_id(manager)
+    customer_id = get_customer_id(manager)
+
+    await sender.send(
+        DeletePhoneNumberRequest(
+            customer_id=customer_id, phone_number_id=phone_number_id
+        )
+    )
+
+    if call.message:
+        await call.message.answer("✅️ Номер телефона клієнта успішно видалено")
+    await manager.switch_to(
+        state=CustomerMenu.PHONE_NUMBERS_MENU, show_mode=ShowMode.SEND
     )
 
 
@@ -353,22 +409,32 @@ async def on_result_add_new_customer_address(
 ):
     customer_id = get_customer_id(manager)
     if result:
-        await sender.send(
-            AddAddressToCustomerRequest(
-                customer_id=customer_id,
-                address_data=AddressData(
-                    city=result["city"],
-                    street=result["street"],
-                    house_number=result["house_number"],
-                    apartment_number=result.get("apartment_number"),
-                    floor=result.get("floor"),
-                    intercom_code=result.get("intercom_code"),
-                ),
-                coordinates=CoordinatesData(
-                    latitude=result["latitude"], longitude=result["longitude"]
-                ),
+        try:
+            await sender.send(
+                AddAddressToCustomerRequest(
+                    customer_id=customer_id,
+                    address_data=AddressData(
+                        city=result["city"],
+                        street=result["street"],
+                        house_number=result["house_number"],
+                        apartment_number=result.get("apartment_number"),
+                        floor=result.get("floor"),
+                        intercom_code=result.get("intercom_code"),
+                    ),
+                    coordinates=CoordinatesData(
+                        latitude=result["latitude"],
+                        longitude=result["longitude"],
+                    ),
+                )
             )
-        )
+        except EntityAlreadyExistsError:
+            bot: Bot = manager.dialog_data["bot"]
+
+            if manager.event.from_user:
+                await bot.send_message(
+                    chat_id=manager.event.from_user.id,
+                    text="❌ Адреса уже закріплена за користувачем",
+                )
 
 
 CUSTOMER_CARD = Multi(
@@ -503,7 +569,7 @@ CUSTOMERS_DIALOG = Dialog(
             SwitchTo(
                 id="edit_customer_primary_phone",
                 text=Const("Редагувати номери клієнта"),
-                state=CustomerMenu.EDIT_CUSTOMER_PHONE,
+                state=CustomerMenu.PHONE_NUMBERS_MENU,
             ),
             SwitchTo(
                 id="edit_customer_delivery_address",
@@ -522,16 +588,6 @@ CUSTOMERS_DIALOG = Dialog(
         ),
         get_back_btn(state=CustomerMenu.EDIT_MENU),
         state=CustomerMenu.EDIT_CUSTOMER_NAME,
-    ),
-    Window(
-        Const("Вкажіть новий контактний номер телефона клієнта"),
-        Const("<i>В форматі +380</i>"),
-        TextInput(
-            id="input_new_customer_phone",
-            on_success=on_input_new_customer_phone,
-        ),
-        get_back_btn(state=CustomerMenu.EDIT_MENU),
-        state=CustomerMenu.EDIT_CUSTOMER_PHONE,
     ),
     Window(
         Format("Адреси {dialog_data[name]}"),
@@ -589,6 +645,68 @@ CUSTOMERS_DIALOG = Dialog(
         get_back_btn(btn_text="❌ Відмінити", state=CustomerMenu.ADDRESS_CARD),
         getter=get_address,
         state=CustomerMenu.DELETE_ADDRESS,
+    ),
+    Window(
+        Format("Телефонні номери {dialog_data[name]}"),
+        SwitchTo(
+            text=Const("➕ Додать телефон"),
+            state=CustomerMenu.ADD_PHONE_NUMBER,
+            id="add_new_phone_number",
+        ),
+        ScrollingGroup(
+            Select(
+                id="phone_item",
+                items="phone_numbers",
+                item_id_getter=lambda item: item.phone_number_id,
+                text=Format("{pos}. {item.number}"),
+                on_click=on_select_phone,
+            ),
+            id="all_customer_phones",
+            width=2,
+            height=10,
+            hide_on_single_page=True,
+            when=MagicFilter.len(F["phone_numbers"]) > 0,
+        ),
+        get_back_btn(state=CustomerMenu.EDIT_MENU),
+        getter=get_shop_customer,
+        state=CustomerMenu.PHONE_NUMBERS_MENU,
+    ),
+    Window(
+        Format("<b>Номер телефону:</b> {number}\n"),
+        SwitchTo(
+            id="delete_phone",
+            text=Const("🗑 Видалить"),
+            state=CustomerMenu.DELETE_PHONE_NUMBER,
+        ),
+        get_back_btn(state=CustomerMenu.PHONE_NUMBERS_MENU),
+        getter=get_phone_number,
+        state=CustomerMenu.PHONE_NUMBER_CARD,
+    ),
+    Window(
+        Format(
+            "Видалить номер телефона {number} у"
+            " користувача {dialog_data[name]}?"
+        ),
+        Button(
+            text=Const("✅ Підтвердити"),
+            id="accept_phone_delete",
+            on_click=on_accept_phone_number_delete,
+        ),
+        get_back_btn(
+            btn_text="❌ Відмінити", state=CustomerMenu.PHONE_NUMBER_CARD
+        ),
+        getter=get_phone_number,
+        state=CustomerMenu.DELETE_PHONE_NUMBER,
+    ),
+    Window(
+        Const("Вкажіть телефон клієнта"),
+        Const("<i>В форматі +380</i>"),
+        TextInput(
+            id="input_new_customer_phone",
+            on_success=on_input_new_customer_phone,
+        ),
+        get_back_btn(state=CustomerMenu.PHONE_NUMBERS_MENU),
+        state=CustomerMenu.ADD_PHONE_NUMBER,
     ),
 )
 

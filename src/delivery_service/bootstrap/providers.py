@@ -28,6 +28,10 @@ from delivery_service.application.commands.add_customer_address import (
     AddAddressToCustomerHandler,
     AddAddressToCustomerRequest,
 )
+from delivery_service.application.commands.add_customer_phone_number import (
+    AddCustomerPhoneNumberHandler,
+    AddCustomerPhoneNumberRequest,
+)
 from delivery_service.application.commands.add_new_customer import (
     AddNewCustomerHandler,
     AddNewCustomerRequest,
@@ -61,6 +65,10 @@ from delivery_service.application.commands.delete_customer_address import (
 from delivery_service.application.commands.delete_order import (
     DeleteOrderHandler,
     DeleteOrderRequest,
+)
+from delivery_service.application.commands.delete_phone_number import (
+    DeletePhoneNumberHandler,
+    DeletePhoneNumberRequest,
 )
 from delivery_service.application.commands.delete_product import (
     DeleteProductHandler,
@@ -187,6 +195,9 @@ from delivery_service.infrastructure.persistence.adapters.order_list_collector i
 from delivery_service.infrastructure.persistence.adapters.order_repository import (
     SQLAlchemyOrderRepository,
 )
+from delivery_service.infrastructure.persistence.adapters.phone_number_gateway import (
+    SQLAlchemyPhoneNumberGateway,
+)
 from delivery_service.infrastructure.persistence.adapters.product_gateway import (
     SQLAlchemyProductGateway,
 )
@@ -253,6 +264,7 @@ class ApplicationProvider(Provider):
         WithParents[SQLAlchemyCustomerGateway],
         WithParents[SQLAlchemyShopGateway],
         WithParents[SQLAlchemyAddressGateway],
+        WithParents[SQLAlchemyPhoneNumberGateway],
         scope=Scope.REQUEST,
     )
 
@@ -277,6 +289,8 @@ class ApplicationHandlersProvider(Provider):
         AddNewCustomerHandler,
         DeleteCustomerHandler,
         DeleteCustomerAddressHandler,
+        DeletePhoneNumberHandler,
+        AddCustomerPhoneNumberHandler,
         AddAddressToCustomerHandler,
         EditCustomerNameHandler,
         EditCustomerPrimaryPhoneHandler,
@@ -364,6 +378,12 @@ class BazarioProvider(Provider):
         )
         registry.add_request_handler(
             AddAddressToCustomerRequest, AddAddressToCustomerHandler
+        )
+        registry.add_request_handler(
+            DeletePhoneNumberRequest, DeletePhoneNumberHandler
+        )
+        registry.add_request_handler(
+            AddCustomerPhoneNumberRequest, AddCustomerPhoneNumberHandler
         )
 
         registry.add_pipeline_behaviors(Request, CommitionBehavior)

@@ -17,6 +17,7 @@ from delivery_service.application.query.ports.product_gateway import (
 from delivery_service.application.query.product import GetAllProductsRequest
 from delivery_service.domain.addresses.address_id import AddressID
 from delivery_service.domain.customers.customer_id import CustomerID
+from delivery_service.domain.customers.phone_number_id import PhoneNumberID
 from delivery_service.domain.orders.order_ids import OrderID
 from delivery_service.domain.products.product import ProductID, ProductType
 
@@ -99,6 +100,14 @@ def get_address_id(manager: DialogManager) -> AddressID:
         raise ValueError()
 
     return AddressID(UUID(address_id_str))
+
+
+def get_phone_number_id(manager: DialogManager) -> PhoneNumberID:
+    phone_number_id_str = manager.dialog_data.get("phone_number_id")
+    if not phone_number_id_str:
+        raise ValueError()
+
+    return PhoneNumberID(UUID(phone_number_id_str))
 
 
 @inject
