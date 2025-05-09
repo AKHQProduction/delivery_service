@@ -9,6 +9,7 @@ from delivery_service.application.query.ports.order_gateway import (
     OrderReadModel,
 )
 from delivery_service.domain.orders.order import Order
+from delivery_service.domain.orders.value_object import AvailableTimeSlot
 
 
 def map_order_to_read_model(
@@ -20,7 +21,7 @@ def map_order_to_read_model(
         order_id=order.id,
         customer=customer,
         delivery_date=order.date,
-        delivery_preference=order.delivery_time_preference,
+        time_slot=AvailableTimeSlot.MORNING,
         order_lines=[
             OrderLineReadModel(
                 order_line_id=line.id,

@@ -71,6 +71,7 @@ class OrderMenu(StatesGroup):
     PRODUCT_COUNTER = State()
     SELECT_DATE = State()
     SELECT_DELIVERY_PREFERENCE = State()
+    NOTE = State()
     PREVIEW = State()
 
     # Editing

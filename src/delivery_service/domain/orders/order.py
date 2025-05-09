@@ -1,6 +1,5 @@
 import operator
 from datetime import date
-from enum import Enum
 from functools import reduce
 from typing import cast
 
@@ -8,17 +7,13 @@ from delivery_service.domain.addresses.address_id import AddressID
 from delivery_service.domain.customers.customer_id import CustomerID
 from delivery_service.domain.orders.order_ids import OrderID, OrderLineID
 from delivery_service.domain.orders.order_line import OrderLine
+from delivery_service.domain.orders.value_object import TimeSlot
 from delivery_service.domain.products.product import ProductID
 from delivery_service.domain.shared.entity import Entity
 from delivery_service.domain.shared.new_types import FixedDecimal
 from delivery_service.domain.shared.shop_id import ShopID
 from delivery_service.domain.shared.vo.price import Price
 from delivery_service.domain.shared.vo.quantity import Quantity
-
-
-class DeliveryPreference(Enum):
-    MORNING = "morning"
-    AFTERNOON = "afternoon"
 
 
 class Order(Entity[OrderID]):
@@ -29,9 +24,10 @@ class Order(Entity[OrderID]):
         shop_id: ShopID,
         customer_id: CustomerID,
         address_id: AddressID,
-        delivery_preference: DeliveryPreference,
+        time_slot: TimeSlot,
         order_lines: list[OrderLine],
         delivery_date: date,
+        note: str | None = None,
     ) -> None:
         super().__init__(entity_id=entity_id)
 
@@ -39,10 +35,11 @@ class Order(Entity[OrderID]):
         self._customer_id = customer_id
         self._address_id = address_id
 
-        self._delivery_preference = delivery_preference
-        self._order_lines = order_lines
-
+        self._time_slot = time_slot
         self._delivery_date = delivery_date
+
+        self._order_lines = order_lines
+        self._note = note
 
     def add_line(
         self,
@@ -112,8 +109,8 @@ class Order(Entity[OrderID]):
         return self._customer_id
 
     @property
-    def delivery_time_preference(self) -> DeliveryPreference:
-        return self._delivery_preference
+    def delivery_time_preference(self) -> TimeSlot:
+        return self._time_slot
 
     @property
     def date(self) -> str:

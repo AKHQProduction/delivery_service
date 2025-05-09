@@ -11,6 +11,11 @@ from typing import Sequence, Union
 import sqlalchemy as sa
 from alembic import op
 
+from delivery_service.domain.orders.value_object import TimeSlot
+from delivery_service.infrastructure.persistence.tables.base import (
+    value_object_to_json,
+)
+
 revision: str = "00005"
 down_revision: Union[str, None] = "00004"
 branch_labels: Union[str, Sequence[str], None] = None
@@ -25,10 +30,11 @@ def upgrade() -> None:
         sa.Column("customer_id", sa.UUID(), nullable=True),
         sa.Column("address_id", sa.UUID(), nullable=True),
         sa.Column(
-            "delivery_preference",
-            sa.Enum("MORNING", "AFTERNOON", name="deliverypreference"),
+            "time_slot",
+            value_object_to_json(TimeSlot),
             nullable=False,
         ),
+        sa.Column("note", sa.String, nullable=True),
         sa.Column("delivery_date", sa.Date(), nullable=False),
         sa.Column(
             "created_at",
@@ -44,8 +50,8 @@ def upgrade() -> None:
         ),
         sa.ForeignKeyConstraint(
             ["customer_id"],
-            ["users.id"],
-            name=op.f("fk_orders_customer_id_users"),
+            ["customers.id"],
+            name=op.f("fk_orders_customer_id_customers"),
             ondelete="SET NULL",
         ),
         sa.ForeignKeyConstraint(

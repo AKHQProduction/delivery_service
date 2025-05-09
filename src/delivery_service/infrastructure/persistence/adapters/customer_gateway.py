@@ -9,7 +9,6 @@ from sqlalchemy import (
     cast,
     func,
     label,
-    or_,
     select,
 )
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -178,18 +177,7 @@ class SQLAlchemyCustomerGateway(CustomerGateway):
 
     async def read_with_phone(self, phone: str) -> CustomerReadModel | None:
         query = self._select_rows()
-        query = query.where(
-            or_(
-                func.jsonb_extract_path_text(
-                    CUSTOMERS_TABLE.c.contacts, "primary", "value"
-                )
-                == phone,
-                func.jsonb_extract_path_text(
-                    CUSTOMERS_TABLE.c.contacts, "secondary", "value"
-                )
-                == phone,
-            )
-        )
+        query = query.where(and_(PHONE_NUMBER_TABLE.c.number == phone))
 
         result = await self._session.execute(query)
         row = result.mappings().one_or_none()

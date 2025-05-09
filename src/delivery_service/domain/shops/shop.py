@@ -4,11 +4,14 @@ from typing import cast
 from delivery_service.domain.addresses.address_id import AddressID
 from delivery_service.domain.customers.customer_id import CustomerID
 from delivery_service.domain.orders.order import (
-    DeliveryPreference,
     Order,
 )
 from delivery_service.domain.orders.order_ids import OrderID, OrderLineID
 from delivery_service.domain.orders.order_line import OrderLine
+from delivery_service.domain.orders.value_object import (
+    AvailableTimeSlot,
+    TimeSlot,
+)
 from delivery_service.domain.shared.dto import OrderLineData
 from delivery_service.domain.shared.entity import Entity
 from delivery_service.domain.shared.errors import AccessDeniedError
@@ -51,9 +54,10 @@ class Shop(Entity[ShopID]):
         order_line_data: list[OrderLineData],
         customer_id: CustomerID,
         address_id: AddressID,
-        delivery_preference: DeliveryPreference,
+        selected_time_slot: AvailableTimeSlot,
         delivery_date: date,
         creator_id: UserID,
+        note: str | None = None,
     ) -> Order:
         self._member_with_admin_roles(candidate_id=creator_id)
         self._can_deliver_in_this_day(delivery_date)
@@ -76,8 +80,9 @@ class Shop(Entity[ShopID]):
             customer_id=customer_id,
             address_id=address_id,
             order_lines=order_lines,
-            delivery_preference=delivery_preference,
+            time_slot=TimeSlot.set_slot(selected_time_slot),
             delivery_date=delivery_date,
+            note=note,
         )
 
     def can_delete_order(

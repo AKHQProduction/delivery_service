@@ -7,7 +7,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from delivery_service.application.query.ports.order_list_collector import (
     OrderListCollector,
 )
-from delivery_service.domain.orders.order import DeliveryPreference, Order
+from delivery_service.domain.orders.order import Order
 from delivery_service.domain.shared.shop_id import ShopID
 from delivery_service.domain.shared.vo.address import Coordinates
 from delivery_service.infrastructure.persistence.tables import ORDERS_TABLE
@@ -27,7 +27,7 @@ class SQLAlchemyOrdrLictCollector(OrderListCollector):
         shop_id: ShopID,
         shop_coordinates: Coordinates,
         delivery_date: date,
-    ) -> dict[DeliveryPreference, list[Order]]:
+    ) -> list[Order]:
         address = ADDRESSES_TABLE.c
         order = ORDERS_TABLE.c
 
@@ -65,11 +65,4 @@ class SQLAlchemyOrdrLictCollector(OrderListCollector):
         result = await self._session.execute(query)
         orders_sorted: list[Order] = list(result.scalars().all())
 
-        grouped: dict[DeliveryPreference, list[Order]] = {
-            DeliveryPreference.MORNING: [],
-            DeliveryPreference.AFTERNOON: [],
-        }
-        for order in orders_sorted:
-            grouped[order.delivery_time_preference].append(order)
-
-        return grouped
+        return orders_sorted

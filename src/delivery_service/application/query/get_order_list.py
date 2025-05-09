@@ -25,7 +25,7 @@ from delivery_service.application.query.ports.order_gateway import (
 from delivery_service.application.query.ports.order_list_collector import (
     OrderListCollector,
 )
-from delivery_service.domain.orders.order import DeliveryPreference, Order
+from delivery_service.domain.orders.order import Order
 from delivery_service.domain.shared.errors import AccessDeniedError
 from delivery_service.domain.shops.repository import ShopRepository
 
@@ -37,11 +37,7 @@ class MakeOrderListRequest(TelegramRequest):
     selected_day: date
 
 
-class GetOrderListHandler(
-    RequestHandler[
-        MakeOrderListRequest, dict[DeliveryPreference, bytes] | None
-    ]
-):
+class GetOrderListHandler(RequestHandler[MakeOrderListRequest, bytes | None]):
     def __init__(
         self,
         idp: IdentityProvider,
@@ -58,9 +54,7 @@ class GetOrderListHandler(
         self._address_gateway = address_gateway
         self._file_manager = file_manager
 
-    async def handle(
-        self, request: MakeOrderListRequest
-    ) -> dict[DeliveryPreference, bytes] | None:
+    async def handle(self, request: MakeOrderListRequest) -> bytes | None:
         logger.info("Request to get order list")
         current_user_id = await self._idp.get_current_user_id()
 
@@ -76,15 +70,7 @@ class GetOrderListHandler(
         if not collected_orders:
             return None
 
-        result: dict[DeliveryPreference, list[OrderReadModel]] = {}
-
-        for preference, orders in collected_orders.items():
-            tasks = [self._map_order(order) for order in orders]
-            mapped = await asyncio.gather(*tasks)
-            mapped_orders = [item for item in mapped if item is not None]
-
-            if mapped_orders:
-                result[preference] = mapped_orders
+        result: list[OrderReadModel] = []
 
         if not result:
             return None

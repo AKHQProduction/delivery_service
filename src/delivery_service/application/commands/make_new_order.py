@@ -12,9 +12,9 @@ from delivery_service.application.ports.idp import IdentityProvider
 from delivery_service.domain.addresses.address_id import AddressID
 from delivery_service.domain.addresses.repository import AddressRepository
 from delivery_service.domain.customers.customer_id import CustomerID
-from delivery_service.domain.orders.order import DeliveryPreference
 from delivery_service.domain.orders.order_ids import OrderID
 from delivery_service.domain.orders.repository import OrderRepository
+from delivery_service.domain.orders.value_object import AvailableTimeSlot
 from delivery_service.domain.shared.dto import OrderLineData
 from delivery_service.domain.shared.errors import AccessDeniedError
 from delivery_service.domain.shops.repository import ShopRepository
@@ -27,8 +27,9 @@ class MakeNewOrderRequest(TelegramRequest[OrderID]):
     customer_id: CustomerID
     address_id: AddressID
     order_lines: list[OrderLineData]
-    delivery_preference: DeliveryPreference
+    time_slot: AvailableTimeSlot
     delivery_date: date
+    note: str | None
 
 
 class MakeNewOrderHandler(RequestHandler[MakeNewOrderRequest, OrderID]):
@@ -61,8 +62,9 @@ class MakeNewOrderHandler(RequestHandler[MakeNewOrderRequest, OrderID]):
             address_id=request.address_id,
             order_line_data=request.order_lines,
             delivery_date=request.delivery_date,
-            delivery_preference=request.delivery_preference,
+            selected_time_slot=request.time_slot,
             creator_id=current_user_id,
+            note=request.note,
         )
         self._order_repository.add(new_order)
 

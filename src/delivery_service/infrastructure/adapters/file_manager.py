@@ -14,7 +14,6 @@ from delivery_service.application.query.ports.address_gateway import (
 from delivery_service.application.query.ports.order_gateway import (
     OrderReadModel,
 )
-from delivery_service.domain.orders.order import DeliveryPreference
 
 CANDIDATE_FONT_PATHS = [
     Path("/usr/share/fonts/truetype/dejavu/DejaVuSerif.ttf"),
@@ -23,14 +22,8 @@ CANDIDATE_FONT_PATHS = [
 
 
 class PDFFileManager(FileManager):
-    def create_order_files(
-        self, orders: dict[DeliveryPreference, list[OrderReadModel]]
-    ) -> dict[DeliveryPreference, bytes]:
-        return {
-            preference: self._create_pdf(orders_list)
-            for preference, orders_list in orders.items()
-            if orders_list
-        }
+    def create_order_files(self, orders: list[OrderReadModel]) -> bytes:
+        return self._create_pdf(orders)
 
     def _create_pdf(self, orders: list[OrderReadModel]) -> bytes:
         buffer = BytesIO()

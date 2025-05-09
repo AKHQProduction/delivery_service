@@ -48,7 +48,7 @@ from delivery_service.application.query.ports.customer_gateway import (
 )
 from delivery_service.application.query.shop import GetShopRequest
 from delivery_service.domain.addresses.address_id import AddressID
-from delivery_service.domain.orders.order import DeliveryPreference
+from delivery_service.domain.orders.value_object import AvailableTimeSlot
 from delivery_service.domain.products.product import ProductID, ProductType
 from delivery_service.domain.shared.dto import OrderLineData
 from delivery_service.domain.shared.new_types import FixedDecimal
@@ -88,9 +88,11 @@ PRODUCT_TYPE_TO_TEXT = {
     ProductType.ACCESSORIES: "💎 Аксесуари",
 }
 
-DELIVERY_PREFERENCE_TO_TEXT = {
-    DeliveryPreference.MORNING: "Перша половина дня",
-    DeliveryPreference.AFTERNOON: "Друга половина дня",
+TIME_SLOTS_TO_TEXT = {
+    AvailableTimeSlot.MORNING: "З 9 до 12",
+    AvailableTimeSlot.MIDDAY: "З 12 до 15",
+    AvailableTimeSlot.AFTERNOON: "З 15 до 18",
+    AvailableTimeSlot.EVENING: "З 18 до 21",
 }
 
 CURRENT_CART = "current_cart"
@@ -115,9 +117,7 @@ async def get_order(
         "order_lines": order.order_lines,
         "full_name": order.customer.name,
         "delivery_date": order.delivery_date,
-        "delivery_preference": DELIVERY_PREFERENCE_TO_TEXT[
-            order.delivery_preference
-        ],
+        "time_slot": TIME_SLOTS_TO_TEXT[order.time_slot],
         "total_order_price": order.total_order_price,
     }
 
@@ -201,12 +201,12 @@ async def get_selected_product_category(
     return {"category_name": PRODUCT_TYPE_TO_TEXT[ProductType(product_type)]}
 
 
-async def get_delivery_preferences(**_kwargs) -> dict[str, Any]:
+async def get_available_time_slots(**_kwargs) -> dict[str, Any]:
     preferences = []
-    for key, value in DELIVERY_PREFERENCE_TO_TEXT.items():
+    for key, value in TIME_SLOTS_TO_TEXT.items():
         preferences.append((value, key.value))
 
-    return {"delivery_preferences": preferences}
+    return {"time_slots": preferences}
 
 
 async def get_all_order_data_to_preview(
@@ -217,9 +217,10 @@ async def get_all_order_data_to_preview(
     return {
         "full_name": data.get("full_name"),
         "delivery_date": data.get("delivery_date"),
-        "delivery_preference": DELIVERY_PREFERENCE_TO_TEXT[
-            DeliveryPreference(data.get("delivery_preference"))
+        "time_slot": TIME_SLOTS_TO_TEXT[
+            AvailableTimeSlot(data.get("time_slot"))
         ],
+        "note": data.get("note", "Відсутня"),
     }
 
 
@@ -297,15 +298,11 @@ async def on_select_date_for_order(
         )
         return None
 
-    for preference, pdf in response.items():
-        filename = (
-            "morning_orders.pdf"
-            if preference == DeliveryPreference.MORNING
-            else "afternoon_orders.pdf"
-        )
-        await bot.send_document(
-            chat_id=user.id, document=BufferedInputFile(pdf, filename=filename)
-        )
+    filename = "orders.pdf"
+    await bot.send_document(
+        chat_id=user.id,
+        document=BufferedInputFile(response, filename=filename),
+    )
 
     return None
 
@@ -313,8 +310,8 @@ async def on_select_date_for_order(
 async def on_select_delivery_preference(
     _: CallbackQuery, __: Widget, manager: DialogManager, value: str
 ) -> None:
-    manager.dialog_data["delivery_preference"] = value
-    await manager.switch_to(state=OrderMenu.PREVIEW)
+    manager.dialog_data["time_slot"] = value
+    await manager.switch_to(state=OrderMenu.NOTE)
 
 
 async def on_select_order_item(
@@ -390,6 +387,13 @@ async def on_input_product_quantity(
     if msg:
         await msg.answer("✅ Товар додано до корзини")
     return await manager.switch_to(OrderMenu.CART, show_mode=ShowMode.SEND)
+
+
+async def on_input_order_note(
+    _: Message, __: ManagedTextInput, manager: DialogManager, value: str
+) -> None:
+    manager.dialog_data["note"] = value
+    await manager.switch_to(state=OrderMenu.PREVIEW)
 
 
 async def on_input_edit_product_quantity(
@@ -475,18 +479,14 @@ async def on_confirm_order_creation(
         else None
     )
 
-    delivery_preference = DeliveryPreference(data.get("delivery_preference"))
+    time_slot = AvailableTimeSlot(data.get("time_slot"))
+    note = data.get("note")
 
     cart: dict[str, dict[str, Any]] | None = manager.dialog_data.get(
         CURRENT_CART
     )
 
-    if (
-        not address_id
-        or not delivery_date
-        or not delivery_preference
-        or not cart
-    ):
+    if not address_id or not delivery_date or not time_slot or not cart:
         raise ValueError()
 
     order_lines = []
@@ -504,9 +504,10 @@ async def on_confirm_order_creation(
         MakeNewOrderRequest(
             customer_id=customer_id,
             delivery_date=delivery_date,
-            delivery_preference=delivery_preference,
+            time_slot=time_slot,
             order_lines=order_lines,
             address_id=address_id,
+            note=note,
         )
     )
 
@@ -555,7 +556,7 @@ ORDERS_DIALOG = Dialog(
             Format(
                 "<b>Замовлення для:</b> {full_name}\n"
                 "<b>Дата замовлення:</b> {delivery_date}\n"
-                "<b>Орієнтовний час доставки:</b> {delivery_preference}"
+                "<b>Орієнтовний час доставки:</b> {time_slot}"
             ),
             Jinja(
                 "<b>Всього до сплати:</b> {{total_order_price}} <b>UAH</b>"
@@ -741,14 +742,26 @@ ORDERS_DIALOG = Dialog(
         Const("Оберіть зручний час доставки"),
         Select(
             Format("{item[0]}"),
-            id="s_delivery_preference",
+            id="s_time_slot",
             item_id_getter=operator.itemgetter(1),
-            items="delivery_preferences",
+            items="time_slots",
             on_click=on_select_delivery_preference,
         ),
         get_back_btn(state=OrderMenu.SELECT_DATE),
-        getter=get_delivery_preferences,
+        getter=get_available_time_slots,
         state=OrderMenu.SELECT_DELIVERY_PREFERENCE,
+    ),
+    Window(
+        Const("Вкажіть замітку до замовленя"),
+        TextInput(
+            id="note_input",
+            on_success=on_input_order_note,
+        ),
+        SwitchTo(
+            id="skip_note", text=Const("Пропустити"), state=OrderMenu.PREVIEW
+        ),
+        get_back_btn(state=OrderMenu.SELECT_DELIVERY_PREFERENCE),
+        state=OrderMenu.NOTE,
     ),
     Window(
         Multi(
@@ -756,7 +769,13 @@ ORDERS_DIALOG = Dialog(
             Format(
                 "<b>Замовлення для:</b> {full_name}\n"
                 "<b>Дата замовлення:</b> {delivery_date}\n"
-                "<b>Орієнтовний час доставки:</b> {delivery_preference}"
+                "<b>Орієнтовний час доставки:</b> {time_slot}"
+            ),
+            Jinja(
+                "<b>Замітка:</b>"
+                "{% if note %}"
+                "<blockquote expandable>{{note}}</blockquote>"
+                "{% endif %}"
             ),
             Jinja(
                 "<b>Всього до сплати:</b> {{total_cart_price}} <b>UAH</b>"
