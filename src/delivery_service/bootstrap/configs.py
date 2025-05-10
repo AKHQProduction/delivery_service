@@ -5,7 +5,7 @@ from os import environ
 @dataclass(frozen=True)
 class TGConfig:
     admin_bot_token: str
-    shop_bot_token: str
+    shop_bot_token: str | None
     use_redis_storage: bool
 
 
@@ -14,7 +14,7 @@ def load_bot_config() -> TGConfig:
     shop_bot_token = environ.get("SHOP_BOT_TOKEN")
     use_redis_storage = environ.get("USE_REDIS_STORAGE", False)
 
-    if admin_bot_token is None or shop_bot_token is None:
+    if admin_bot_token is None:
         raise ValueError(
             "Required bot tokens environment variables are missing"
         )
