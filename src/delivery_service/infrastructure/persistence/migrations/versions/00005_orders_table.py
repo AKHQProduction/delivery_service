@@ -29,6 +29,7 @@ def upgrade() -> None:
         sa.Column("shop_id", sa.UUID(), nullable=False),
         sa.Column("customer_id", sa.UUID(), nullable=True),
         sa.Column("address_id", sa.UUID(), nullable=True),
+        sa.Column("phone_number", sa.String(), nullable=False),
         sa.Column(
             "time_slot",
             value_object_to_json(TimeSlot),
@@ -63,7 +64,7 @@ def upgrade() -> None:
         sa.ForeignKeyConstraint(
             ["address_id"],
             ["addresses.id"],
-            name=op.f("fk_orders_address_id_users"),
+            name=op.f("fk_orders_address_id_addresses"),
             ondelete="SET NULL",
         ),
         sa.PrimaryKeyConstraint("id", name=op.f("pk_orders")),
@@ -109,5 +110,3 @@ def upgrade() -> None:
 def downgrade() -> None:
     op.drop_table("order_lines")
     op.drop_table("orders")
-
-    op.execute("DROP TYPE IF EXISTS deliverypreference")

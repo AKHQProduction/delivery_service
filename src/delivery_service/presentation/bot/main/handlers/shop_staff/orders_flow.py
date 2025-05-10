@@ -117,8 +117,9 @@ async def get_order(
         "order_lines": order.order_lines,
         "name": order.customer.name,
         "delivery_date": order.delivery_date,
-        "time_slot": TIME_SLOTS_TO_TEXT[order.time_slot],
+        "time_slot": order.time_slot,
         "total_order_price": order.total_order_price,
+        "note": order.note,
     }
 
 
@@ -298,7 +299,7 @@ async def on_select_date_for_order(
         )
         return None
 
-    filename = "orders.pdf"
+    filename = f"orders_{clicked_date.strftime('%d_%m_%Y')}.pdf"
     await bot.send_document(
         chat_id=user.id,
         document=BufferedInputFile(response, filename=filename),
@@ -342,6 +343,7 @@ async def on_find_customer_by_phone(
 
     manager.dialog_data["customer_id"] = str(customer.customer_id)
     manager.dialog_data["name"] = customer.name
+    manager.dialog_data["phone_number"] = value
 
     return await manager.next()
 
@@ -478,6 +480,7 @@ async def on_confirm_order_creation(
         if delivery_date_str
         else None
     )
+    phone_number: str = data["phone_number"]
 
     time_slot = AvailableTimeSlot(data.get("time_slot"))
     note = data.get("note")
@@ -508,6 +511,7 @@ async def on_confirm_order_creation(
             order_lines=order_lines,
             address_id=address_id,
             note=note,
+            phone_number=phone_number,
         )
     )
 
@@ -557,6 +561,10 @@ ORDERS_DIALOG = Dialog(
                 "<b>Замовлення для:</b> {name}\n"
                 "<b>Дата замовлення:</b> {delivery_date}\n"
                 "<b>Орієнтовний час доставки:</b> {time_slot}"
+            ),
+            Format(
+                "<b>Замітка до замовлення</b>"
+                "<blockquote expandable>{note}</blockquote>"
             ),
             Jinja(
                 "<b>Всього до сплати:</b> {{total_order_price}} <b>UAH</b>"

@@ -41,11 +41,19 @@ class PDFFileManager(FileManager):
             pdf.drawString(
                 20 * mm,
                 y,
-                f"#{idx} {order.customer.name} " f"{order.customer}",
+                f"#{idx} {order.customer.name} {order.phone_number}",
             )
             y -= 6 * mm
 
             pdf.setFont(font_name, 11)
+            pdf.drawString(25 * mm, y, f"Примітка: {order.note}")
+            y -= 6 * mm
+
+            pdf.drawString(
+                25 * mm, y, f"Орієнтовний час доставки: {order.time_slot}"
+            )
+            y -= 8 * mm
+
             pdf.drawString(25 * mm, y, address_str)
             y -= 6 * mm
 
@@ -57,7 +65,6 @@ class PDFFileManager(FileManager):
                 pdf.drawString(30 * mm, y, line_text)
                 y -= 5 * mm
 
-            pdf.setFont(font_name, 11)
             pdf.drawString(
                 25 * mm,
                 y,

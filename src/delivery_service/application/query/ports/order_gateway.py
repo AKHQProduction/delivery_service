@@ -8,7 +8,6 @@ from delivery_service.application.query.ports.customer_gateway import (
     CustomerReadModel,
 )
 from delivery_service.domain.orders.order_ids import OrderID, OrderLineID
-from delivery_service.domain.orders.value_object import AvailableTimeSlot
 from delivery_service.domain.shared.new_types import FixedDecimal
 
 
@@ -24,8 +23,10 @@ class OrderLineReadModel:
 class OrderReadModel:
     order_id: OrderID
     customer: CustomerReadModel
-    time_slot: AvailableTimeSlot
+    time_slot: str
     delivery_date: str
     order_lines: Sequence[OrderLineReadModel]
     total_order_price: FixedDecimal
+    phone_number: str
+    note: str
     address: AddressReadModel | None = None

@@ -30,6 +30,7 @@ class MakeNewOrderRequest(TelegramRequest[OrderID]):
     time_slot: AvailableTimeSlot
     delivery_date: date
     note: str | None
+    phone_number: str
 
 
 class MakeNewOrderHandler(RequestHandler[MakeNewOrderRequest, OrderID]):
@@ -65,6 +66,7 @@ class MakeNewOrderHandler(RequestHandler[MakeNewOrderRequest, OrderID]):
             selected_time_slot=request.time_slot,
             creator_id=current_user_id,
             note=request.note,
+            phone_number=request.phone_number,
         )
         self._order_repository.add(new_order)
 

@@ -57,6 +57,7 @@ class Shop(Entity[ShopID]):
         selected_time_slot: AvailableTimeSlot,
         delivery_date: date,
         creator_id: UserID,
+        phone_number: str,
         note: str | None = None,
     ) -> Order:
         self._member_with_admin_roles(candidate_id=creator_id)
@@ -83,6 +84,7 @@ class Shop(Entity[ShopID]):
             time_slot=TimeSlot.set_slot(selected_time_slot),
             delivery_date=delivery_date,
             note=note,
+            phone_number=phone_number,
         )
 
     def can_delete_order(

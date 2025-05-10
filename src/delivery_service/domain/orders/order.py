@@ -24,6 +24,7 @@ class Order(Entity[OrderID]):
         shop_id: ShopID,
         customer_id: CustomerID,
         address_id: AddressID,
+        phone_number: str,
         time_slot: TimeSlot,
         order_lines: list[OrderLine],
         delivery_date: date,
@@ -34,6 +35,7 @@ class Order(Entity[OrderID]):
         self._shop_id = shop_id
         self._customer_id = customer_id
         self._address_id = address_id
+        self._phone_number = phone_number
 
         self._time_slot = time_slot
         self._delivery_date = delivery_date
@@ -115,3 +117,11 @@ class Order(Entity[OrderID]):
     @property
     def date(self) -> str:
         return self._delivery_date.strftime("%d.%m.%Y")
+
+    @property
+    def phone_number(self) -> str:
+        return self._phone_number
+
+    @property
+    def note(self) -> str | None:
+        return self._note

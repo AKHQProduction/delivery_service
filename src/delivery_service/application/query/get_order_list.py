@@ -25,6 +25,9 @@ from delivery_service.application.query.ports.order_gateway import (
 from delivery_service.application.query.ports.order_list_collector import (
     OrderListCollector,
 )
+from delivery_service.application.query.ports.phone_number_gateway import (
+    PhoneNumberGateway,
+)
 from delivery_service.domain.orders.order import Order
 from delivery_service.domain.shared.errors import AccessDeniedError
 from delivery_service.domain.shops.repository import ShopRepository
@@ -45,6 +48,7 @@ class GetOrderListHandler(RequestHandler[MakeOrderListRequest, bytes | None]):
         service: OrderListCollector,
         customer_gateway: CustomerGateway,
         address_gateway: AddressGateway,
+        phone_gateway: PhoneNumberGateway,
         file_manager: FileManager,
     ) -> None:
         self._idp = idp
@@ -52,6 +56,7 @@ class GetOrderListHandler(RequestHandler[MakeOrderListRequest, bytes | None]):
         self._order_service = service
         self._customer_gateway = customer_gateway
         self._address_gateway = address_gateway
+        self._phone_gateway = phone_gateway
         self._file_manager = file_manager
 
     async def handle(self, request: MakeOrderListRequest) -> bytes | None:
@@ -70,7 +75,15 @@ class GetOrderListHandler(RequestHandler[MakeOrderListRequest, bytes | None]):
         if not collected_orders:
             return None
 
-        result: list[OrderReadModel] = []
+        mapped_tasks = [
+            asyncio.create_task(self._map_order(order))
+            for order in collected_orders
+        ]
+        mapped_results = await asyncio.gather(*mapped_tasks)
+
+        result: list[OrderReadModel] = [
+            model for model in mapped_results if model is not None
+        ]
 
         if not result:
             return None

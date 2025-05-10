@@ -1,7 +1,8 @@
 from datetime import date
 
 from geoalchemy2 import Geography
-from sqlalchemy import Float, and_, cast, func, select
+from sqlalchemy import Float, Time, and_, cast, func, select
+from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from delivery_service.application.query.ports.order_list_collector import (
@@ -50,6 +51,13 @@ class SQLAlchemyOrdrLictCollector(OrderListCollector):
             "distance"
         )
 
+        start_time = cast(
+            func.jsonb_extract_path_text(
+                order.time_slot.cast(JSONB), "start_time"
+            ),
+            Time,
+        ).label("start_time")
+
         query = (
             select(Order)
             .join(ADDRESSES_TABLE, and_(order.address_id == address.id))
@@ -59,7 +67,7 @@ class SQLAlchemyOrdrLictCollector(OrderListCollector):
                     order.delivery_date == delivery_date,
                 )
             )
-            .order_by(distance_query.asc())
+            .order_by(distance_query.asc(), start_time.asc())
         )
 
         result = await self._session.execute(query)
