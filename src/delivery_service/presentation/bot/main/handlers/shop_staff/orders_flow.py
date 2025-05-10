@@ -115,7 +115,7 @@ async def get_order(
 
     return {
         "order_lines": order.order_lines,
-        "full_name": order.customer.name,
+        "name": order.customer.name,
         "delivery_date": order.delivery_date,
         "time_slot": TIME_SLOTS_TO_TEXT[order.time_slot],
         "total_order_price": order.total_order_price,
@@ -215,7 +215,7 @@ async def get_all_order_data_to_preview(
     data = dialog_manager.dialog_data
 
     return {
-        "full_name": data.get("full_name"),
+        "name": data.get("name"),
         "delivery_date": data.get("delivery_date"),
         "time_slot": TIME_SLOTS_TO_TEXT[
             AvailableTimeSlot(data.get("time_slot"))
@@ -341,7 +341,7 @@ async def on_find_customer_by_phone(
         return await msg.answer("❌ Не вдалось знайти користувача")
 
     manager.dialog_data["customer_id"] = str(customer.customer_id)
-    manager.dialog_data["full_name"] = customer.name
+    manager.dialog_data["name"] = customer.name
 
     return await manager.next()
 
@@ -538,7 +538,7 @@ ORDERS_DIALOG = Dialog(
                 items="orders",
                 item_id_getter=lambda item: item.order_id,
                 text=Format(
-                    "{pos}. {item.customer.full_name} | {item.delivery_date}"
+                    "{pos}. {item.customer.name} | {item.delivery_date}"
                 ),
                 on_click=on_select_order_item,
             ),
@@ -554,7 +554,7 @@ ORDERS_DIALOG = Dialog(
     Window(
         Multi(
             Format(
-                "<b>Замовлення для:</b> {full_name}\n"
+                "<b>Замовлення для:</b> {name}\n"
                 "<b>Дата замовлення:</b> {delivery_date}\n"
                 "<b>Орієнтовний час доставки:</b> {time_slot}"
             ),
@@ -599,7 +599,7 @@ ORDERS_DIALOG = Dialog(
         state=OrderMenu.FIND_CUSTOMER,
     ),
     Window(
-        Format("Оберіть адресу {dialog_data[full_name]} для замовлення"),
+        Format("Оберіть адресу {dialog_data[name]} для замовлення"),
         ScrollingGroup(
             Select(
                 id="address",
@@ -767,7 +767,7 @@ ORDERS_DIALOG = Dialog(
         Multi(
             Const("<b>Перевірте замовлення 👇</b>"),
             Format(
-                "<b>Замовлення для:</b> {full_name}\n"
+                "<b>Замовлення для:</b> {name}\n"
                 "<b>Дата замовлення:</b> {delivery_date}\n"
                 "<b>Орієнтовний час доставки:</b> {time_slot}"
             ),
