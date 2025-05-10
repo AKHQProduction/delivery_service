@@ -1,0 +1,71 @@
+services:
+  bot:
+    restart: on-failure
+    build:
+      context: .
+      dockerfile: Dockerfile
+    working_dir: /usr/src/app
+    command: [ "python", "-m", "delivery_service.bootstrap.entrypoints.bot" ]
+    env_file:
+      - ".env"
+    volumes:
+      - ./src:/usr/src/app/src
+    depends_on:
+      redis:
+        condition: service_healthy
+      delivery_db:
+        condition: service_healthy
+
+  redis:
+    image: redis:7-alpine
+    restart: unless-stopped
+    env_file:
+      - .env
+    command: [ "redis-server", "--port", "${REDIS_PORT}", "--requirepass", "${REDIS_PASSWORD}" ]
+    healthcheck:
+      test: [ "CMD-SHELL", "redis-cli", "-a", "$${REDIS_PASSWORD}", "ping" ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+    volumes:
+      - redis_data:/data
+
+  delivery_db:
+    image: postgis/postgis:16-3.4
+    restart: unless-stopped
+    volumes:
+      - db_data:/var/lib/postgresql/data/
+      - ./scripts/init.sql:/docker-entrypoint-initdb.d/init.sql
+    env_file:
+      - .env
+    ports:
+      - "${POSTGRES_INTERNAL_PORT}:${POSTGRES_PORT}"
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready -d $$POSTGRES_DB -U $$POSTGRES_USER" ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+
+  migration:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    restart: on-failure
+    working_dir: /usr/src/app
+    env_file:
+      - .env
+    depends_on:
+      bot:
+        condition: service_started
+      delivery_db:
+        condition: service_healthy
+    command: [ "alembic", "upgrade", "head" ]
+    volumes:
+      - ./src:/usr/src/app/src
+
+volumes:
+  redis_data:
+  db_data:
+  rabbitmq_data:
