@@ -36,7 +36,7 @@ class TelegramContacts:
         telegram_id: int | None,
         telegram_username: str | None | Empty = Empty.UNSET,
     ) -> "TelegramContacts":
-        if telegram_id is None or telegram_username is None:
+        if telegram_id is None and telegram_username is None:
             raise ValueError()
 
         if telegram_id is not None:
