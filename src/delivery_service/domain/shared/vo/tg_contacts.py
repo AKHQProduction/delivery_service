@@ -40,15 +40,11 @@ class TelegramContacts:
             raise ValueError()
 
         if telegram_id is not None:
-            self._edit_telegram_id(telegram_id)
+            return self._edit_telegram_id(telegram_id)
         if telegram_username is not None:
-            self._edit_telegram_username(telegram_username)
+            return self._edit_telegram_username(telegram_username)
 
-        return TelegramContacts(
-            self._user_id,
-            telegram_id=self.telegram_id,
-            telegram_username=self.telegram_username,
-        )
+        raise ValueError()
 
     def _edit_telegram_id(self, telegram_id: int) -> "TelegramContacts":
         return TelegramContacts(

@@ -20,6 +20,7 @@ from delivery_service.application.ports.social_network_provider import (
 from delivery_service.application.ports.transaction_manager import (
     TransactionManager,
 )
+from delivery_service.domain.shared.new_types import Empty
 from delivery_service.domain.users.repository import ServiceUserRepository
 
 CheckerAllowableRequests = TypeVar(
@@ -84,8 +85,11 @@ class TelegramCheckerBehavior(
             updated = False
 
             if (
-                telegram_data.telegram_username
-                != telegram_contacts.telegram_username
+                telegram_data.telegram_username == Empty.UNSET
+                and telegram_contacts.telegram_username is not None
+            ) or (
+                telegram_data.telegram_username != Empty.UNSET
+                and telegram_contacts.telegram_username is None
             ):
                 service_user.edit_telegram_contacts(
                     telegram_id=None,
