@@ -736,6 +736,8 @@ async def on_input_customer_location(
                 "Адресу не найдено.\n"
                 "Введіть повторно або поділіться локацією 👇"
             )
+        finally:
+            await wait_msg.delete()
 
         manager.dialog_data.update(
             {
@@ -746,7 +748,6 @@ async def on_input_customer_location(
                 "house_number": location.house_number,
             }
         )
-        await wait_msg.delete()
         return await manager.next()
     raise ValueError()
 
