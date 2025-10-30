@@ -40,7 +40,7 @@ services:
     env_file:
       - .env
     ports:
-      - "${POSTGRES_INTERNAL_PORT}:${POSTGRES_PORT}"
+      - "${POSTGRES_PORT}:${POSTGRES_INTERNAL_PORT}"
     healthcheck:
       test: [ "CMD-SHELL", "pg_isready -d $$POSTGRES_DB -U $$POSTGRES_USER" ]
       interval: 10s
