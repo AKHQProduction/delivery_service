@@ -101,7 +101,7 @@ class DatabaseConfig:
 
 def load_database_config() -> DatabaseConfig:
     host = environ.get("DB_HOST")
-    port = environ.get("POSTGRES_PORT")
+    port = environ.get("POSTGRES_INTERNAL_PORT")
     db_name = environ.get("POSTGRES_DB")
     user = environ.get("POSTGRES_USER")
     password = environ.get("POSTGRES_PASSWORD")
