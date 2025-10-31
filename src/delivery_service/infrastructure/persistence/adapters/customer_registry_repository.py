@@ -22,9 +22,13 @@ class SQLAlchemyCustomerRegistryRepository(CustomerRegistryRepository):
     async def load_with_identity(
         self, identity_id: UserID
     ) -> CustomerRegistry | None:
-        query = select(CustomerRegistry).join(
-            STAFF_MEMBERS_TABLE,
-            and_(STAFF_MEMBERS_TABLE.c.user_id == identity_id),
+        query = (
+            select(CustomerRegistry)
+            .join(
+                STAFF_MEMBERS_TABLE,
+                and_(STAFF_MEMBERS_TABLE.c.user_id == identity_id),
+            )
+            .limit(1)
         )
 
         result = await self._session.execute(query)

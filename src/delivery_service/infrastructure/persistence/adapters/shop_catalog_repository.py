@@ -22,9 +22,13 @@ class SQLAlchemyShopCatalogRepository(ShopCatalogRepository):
     async def load_with_identity(
         self, identity_id: UserID
     ) -> ShopCatalog | None:
-        query = select(ShopCatalog).join(
-            STAFF_MEMBERS_TABLE,
-            and_(STAFF_MEMBERS_TABLE.c.user_id == identity_id),
+        query = (
+            select(ShopCatalog)
+            .join(
+                STAFF_MEMBERS_TABLE,
+                and_(STAFF_MEMBERS_TABLE.c.user_id == identity_id),
+            )
+            .limit(1)
         )
 
         result = await self._session.execute(query)
