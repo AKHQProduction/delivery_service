@@ -1,0 +1,49 @@
+ repos:
+  - repo: 'https://github.com/pre-commit/pre-commit-hooks'
+    rev: v6.0.0
+    hooks:
+      - id: mixed-line-ending
+      - id: check-merge-conflict
+      - id: detect-private-key
+      - id: trailing-whitespace
+      - id: check-added-large-files
+        args: [ '--maxkb=2048' ]
+      - id: check-case-conflict
+      - id: check-ast
+      - id: check-toml
+      - id: check-yaml
+      - id: end-of-file-fixer
+
+  - repo: https://github.com/crate-ci/typos
+    rev: v1.30.3
+    hooks:
+      - id: typos
+
+  - repo: https://github.com/Yelp/detect-secrets
+    rev: v1.5.0
+    hooks:
+      - id: detect-secrets
+        exclude: '\.env\.dist$'
+
+  - repo: local
+    hooks:
+      - id: ruff-format
+        name: Ruff Format
+        entry: bash -c 'cd "$(git rev-parse --show-toplevel)/backend" && uv run --frozen ruff format'
+        language: system
+        types: [ python ]
+        pass_filenames: false
+
+      - id: ruff-check
+        name: Ruff Check
+        entry: bash -c 'cd "$(git rev-parse --show-toplevel)/backend" && uv run --frozen ruff check --exit-non-zero-on-fix'
+        language: system
+        types: [ python ]
+        pass_filenames: false
+
+      - id: mypy
+        name: Mypy
+        entry: bash -c 'cd "$(git rev-parse --show-toplevel)/backend" && uv run --frozen mypy src/'
+        language: system
+        types: [ python ]
+        pass_filenames: false

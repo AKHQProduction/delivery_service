@@ -1,0 +1,30 @@
+[project]
+name = "backend"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+authors = [
+    { name = "PlzTrustMe", email = "andryxakulishow@gmail.com" }
+]
+requires-python = ">=3.12"
+dependencies = [
+    "aiogram>=3.22.0",
+    "fastapi>=0.121.0",
+]
+
+[project.scripts]
+backend = "backend:main"
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[dependency-groups]
+dev = [
+    "pre-commit>=4.3.0",
+]
+lint = [
+    "codespell>=2.4.1",
+    "mypy>=1.18.2",
+    "ruff>=0.14.3",
+]
