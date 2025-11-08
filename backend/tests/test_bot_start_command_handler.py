@@ -8,6 +8,7 @@ from backend.application.commands import (
 )
 from backend.application.vars import UserId
 from backend.infrastructure.in_memory import (
+    FakeTransactionManager,
     InMemoryIdentityProvider,
     InMemoryShopGateway,
     InMemoryUserGateway,
@@ -20,14 +21,22 @@ def make_handler():
         identity_provider = InMemoryIdentityProvider(user_id=user_id)
         user_gateway = InMemoryUserGateway()
         shop_gateway = InMemoryShopGateway()
+        tr_manager = FakeTransactionManager()
 
         handler = BotStartCommandHandler(
             identity_provider=identity_provider,
             user_gateway=user_gateway,
             shop_gateway=shop_gateway,
+            tr_manager=tr_manager,
         )
 
-        return handler, identity_provider, user_gateway, shop_gateway
+        return (
+            handler,
+            identity_provider,
+            user_gateway,
+            shop_gateway,
+            tr_manager,
+        )
 
     return _make_handler
 
@@ -39,12 +48,13 @@ def command() -> BotStartCommand:
 
 @pytest.mark.asyncio()
 async def test_creates_new_user_when_not_exists(make_handler, command) -> None:
-    handler, _, user_gateway, _ = make_handler()
+    handler, _, user_gateway, _, tr_manager = make_handler()
 
     result = await handler.handle(command)
 
     assert result is False
     assert len(user_gateway.users) == 1
+    assert tr_manager.committed
 
 
 @pytest.mark.asyncio()
@@ -52,7 +62,7 @@ async def test_returns_false_when_user_has_no_shop(
     make_handler, command
 ) -> None:
     user_id = UserId(uuid.uuid4())
-    handler, _, user_gateway, _ = make_handler(user_id=user_id)
+    handler, _, user_gateway, _, tr_manager = make_handler(user_id=user_id)
     user_gateway.users[user_id] = {
         "tg_id": command.tg_id,
         "full_name": command.full_name,
@@ -61,12 +71,15 @@ async def test_returns_false_when_user_has_no_shop(
     result = await handler.handle(command)
 
     assert result is False
+    assert not tr_manager.committed
 
 
 @pytest.mark.asyncio()
 async def test_returns_true_when_user_has_shop(make_handler, command) -> None:
     user_id = UserId(uuid.uuid4())
-    handler, _, user_gateway, shop_gateway = make_handler(user_id=user_id)
+    handler, _, user_gateway, shop_gateway, tr_manager = make_handler(
+        user_id=user_id
+    )
     user_gateway.users[user_id] = {
         "tg_id": command.tg_id,
         "full_name": command.full_name,
@@ -76,11 +89,12 @@ async def test_returns_true_when_user_has_shop(make_handler, command) -> None:
     result = await handler.handle(command)
 
     assert result is True
+    assert not tr_manager.committed
 
 
 @pytest.mark.asyncio()
 async def test_full_flow_creates_and_links_user(make_handler, command) -> None:
-    handler, idp, user_gateway, shop_gateway = make_handler()
+    handler, idp, user_gateway, shop_gateway, _ = make_handler()
     user_id = UserId(uuid.uuid4())
 
     # 1. User not exists

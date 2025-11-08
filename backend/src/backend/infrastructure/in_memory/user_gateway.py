@@ -9,10 +9,10 @@ class InMemoryUserGateway(UserGateway):
     def __init__(self) -> None:
         self.users: dict[UserId, Any] = {}
 
-    async def create_user_via_tg(self, data: CreateUserViaTgDTO) -> None:
-        self.users[data.user_id] = {
-            "tg_id": data.tg_id,
-            "full_name": data.full_name,
+    async def create_user_via_tg(self, dto: CreateUserViaTgDTO) -> None:
+        self.users[dto.user_id] = {
+            "tg_id": dto.tg_id,
+            "full_name": dto.full_name,
         }
 
     def next_id(self) -> UserId:
