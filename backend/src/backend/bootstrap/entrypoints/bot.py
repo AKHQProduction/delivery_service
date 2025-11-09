@@ -19,7 +19,7 @@ logger = logging.getLogger(__name__)
 def get_storage(config: Config) -> BaseStorage:
     if config.telegram_config.use_redis:
         logger.debug("Setup redis storage for bot fsm")
-        return RedisStorage.from_url(url="sss")
+        return RedisStorage.from_url(url=config.redis_config.fsm_uri)
     logger.debug("Setup in-memory storage for bot fsm")
     return MemoryStorage()
 

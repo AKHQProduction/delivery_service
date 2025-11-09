@@ -10,9 +10,13 @@ requires-python = ">=3.12"
 dependencies = [
     "aiogram>=3.22.0",
     "aiogram-dialog>=2.4.0",
+    "alembic>=1.17.1",
+    "dishka>=1.7.2",
     "fastapi>=0.121.0",
+    "psycopg[binary]>=3.2.12",
     "python-dotenv>=1.2.1",
     "redis>=7.0.1",
+    "sqlalchemy[asyncio]>=2.0.44",
     "uuid-utils>=0.11.1",
 ]
 

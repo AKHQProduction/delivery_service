@@ -1,0 +1,71 @@
+services:
+  admin_bot:
+    container_name: "water_delivery-admin_bot"
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    env_file:
+      - .env
+    command: [ "python", "-m", "backend.bootstrap.entrypoints.bot" ]
+    restart: on-failure
+    volumes:
+      - ./backend/src:/usr/src/app/src
+    depends_on:
+      redis:
+        condition: service_healthy
+      postgres:
+        condition: service_healthy
+
+  redis:
+    container_name: "water_delivery-redis"
+    image: redis:8-alpine
+    restart: unless-stopped
+    env_file:
+      - .env
+    command: [ "redis-server", "--port", "${REDIS_PORT}", "--requirepass", "${REDIS_PASSWORD}" ]
+    healthcheck:
+      test: [ "CMD-SHELL", "redis-cli", "-a", "$${REDIS_PASSWORD}", "ping" ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+    volumes:
+      - redis_data:/data
+
+  postgres:
+    container_name: "water_delivery-postgres"
+    image: postgres:18-alpine
+    restart: unless-stopped
+    volumes:
+      - postgres_data:/var/lib/postgresql/data/
+    env_file:
+      - .env
+    ports:
+      - "${POSTGRES_INTERNAL_PORT}:${POSTGRES_PORT}"
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready -d $$POSTGRES_DB -U $$POSTGRES_USER" ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+
+  migration:
+    container_name: "water_delivery-migration"
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    restart: on-failure
+    env_file:
+      - .env
+    depends_on:
+      admin_bot:
+        condition: service_started
+      postgres:
+        condition: service_healthy
+    command: [ "alembic", "upgrade", "head" ]
+    volumes:
+      - ./backend/src:/usr/src/app/src
+
+volumes:
+  redis_data:
+  postgres_data:
