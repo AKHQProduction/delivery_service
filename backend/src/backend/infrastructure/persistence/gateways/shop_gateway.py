@@ -9,7 +9,11 @@ from backend.application.interfaces.gateways.shop_gateway import (
     CreateNewShopDTO,
 )
 from backend.application.vars import ShopId, ShopRole, UserId
-from backend.infrastructure.persistence.tables import Shop, ShopMembership
+from backend.infrastructure.persistence.tables import (
+    Role,
+    Shop,
+    ShopMembership,
+)
 
 
 class SQLAlchemyShopGateway(ShopGateway):
@@ -23,12 +27,14 @@ class SQLAlchemyShopGateway(ShopGateway):
         return bool(result.scalar())
 
     async def create_shop(self, dto: CreateNewShopDTO) -> None:
+        role_query = select(Role.id).where(Role.name == ShopRole.OWNER)
+        role_result = await self._session.execute(role_query)
+        role_id = role_result.scalar_one()
+
         new_shop = Shop(
             id=dto.shop_id,
             name=dto.name,
-            memberships=[
-                ShopMembership(user_id=dto.user_id, role=ShopRole.OWNER)
-            ],
+            memberships=[ShopMembership(user_id=dto.user_id, role_id=role_id)],
         )
 
         self._session.add(new_shop)

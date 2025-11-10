@@ -1,9 +1,13 @@
 import uuid
+from typing import TYPE_CHECKING
 
 import sqlalchemy as sa
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from .base import Base, CreatedAt, UpdatedAt
+
+if TYPE_CHECKING:
+    from .shops import ShopMembership
 
 
 class User(Base, CreatedAt, UpdatedAt):
@@ -12,6 +16,9 @@ class User(Base, CreatedAt, UpdatedAt):
     id: Mapped[uuid.UUID] = mapped_column(sa.UUID, primary_key=True)
 
     telegram_account: Mapped["TelegramAccount"] = relationship(
+        back_populates="user", uselist=False
+    )
+    membership: Mapped["ShopMembership | None"] = relationship(
         back_populates="user", uselist=False
     )
 
