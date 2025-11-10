@@ -1,0 +1,11 @@
+services:
+  postgres_test:
+    container_name: "water_delivery-postgres_test"
+    image: postgres:18-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${TEST_POSTGRES_USER}
+      POSTGRES_PASSWORD: ${TEST_POSTGRES_PASSWORD}
+      POSTGRES_DB: ${TEST_POSTGRES_DB}
+    ports:
+      - "${TEST_POSTGRES_PORT}:5432"
