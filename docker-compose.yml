@@ -38,6 +38,7 @@ services:
     restart: unless-stopped
     volumes:
       - postgres_data:/var/lib/postgresql/data/
+      - ./scripts:/scripts
     env_file:
       - .env
     ports:
