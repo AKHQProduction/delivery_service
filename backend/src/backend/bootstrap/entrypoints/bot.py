@@ -4,12 +4,14 @@ import logging
 from aiogram import Bot, Dispatcher
 from aiogram.client.default import DefaultBotProperties
 from aiogram.enums import ParseMode
-from aiogram.fsm.storage.base import BaseStorage
+from aiogram.fsm.storage.base import BaseStorage, DefaultKeyBuilder
 from aiogram.fsm.storage.memory import MemoryStorage, SimpleEventIsolation
 from aiogram.fsm.storage.redis import RedisStorage
 from aiogram_dialog import setup_dialogs
+from dishka.integrations.aiogram import setup_dishka
 
 from backend.bootstrap.config import Config
+from backend.bootstrap.entrypoints.di.containers import bot_container
 from backend.bootstrap.logger import setup_logging
 from backend.presentation.admin_bot import setup_all_admin_bot_handlers
 
@@ -19,7 +21,10 @@ logger = logging.getLogger(__name__)
 def get_storage(config: Config) -> BaseStorage:
     if config.telegram_config.use_redis:
         logger.debug("Setup redis storage for bot fsm")
-        return RedisStorage.from_url(url=config.redis_config.fsm_uri)
+        return RedisStorage.from_url(
+            url=config.redis_config.fsm_uri,
+            key_builder=DefaultKeyBuilder(with_bot_id=True, with_destiny=True),
+        )
     logger.debug("Setup in-memory storage for bot fsm")
     return MemoryStorage()
 
@@ -36,6 +41,7 @@ async def main() -> None:
         events_isolation=SimpleEventIsolation(), storage=get_storage(config)
     )
 
+    setup_dishka(bot_container(config), dp, auto_inject=True)
     setup_all_admin_bot_handlers(dp)
     setup_dialogs(dp)
     logger.debug("Setup admin bot")
