@@ -1,6 +1,6 @@
 from typing import TYPE_CHECKING, Any, cast
 
-from aiogram.types import Message, User
+from aiogram.types import Message
 from aiogram_dialog import Dialog, DialogManager, Window
 from aiogram_dialog.widgets.input import TextInput
 from aiogram_dialog.widgets.text import Const
