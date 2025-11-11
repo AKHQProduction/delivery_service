@@ -1,7 +1,6 @@
 import uuid
 
 import pytest
-import pytest_asyncio
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -9,11 +8,6 @@ from backend.application.interfaces import CreateUserViaTgDTO
 from backend.application.vars import UserId
 from backend.infrastructure.persistence.gateways import SQLAlchemyUserGateway
 from backend.infrastructure.persistence.tables import TelegramAccount, User
-
-
-@pytest_asyncio.fixture()
-async def user_gateway(session: AsyncSession) -> SQLAlchemyUserGateway:
-    return SQLAlchemyUserGateway(session=session)
 
 
 def test_return_user_id(user_gateway: SQLAlchemyUserGateway) -> None:

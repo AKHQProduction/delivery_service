@@ -1,5 +1,6 @@
 from uuid import UUID
 
+from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 from uuid_utils import uuid7
 
@@ -21,6 +22,17 @@ class SQLAlchemyUserGateway(UserGateway):
                 ),
             )
         )
+
+    async def user_id_by_telegram_id(self, telegram_id: int) -> UserId | None:
+        query = (
+            select(User.id)
+            .join(TelegramAccount)
+            .where(TelegramAccount.telegram_id == telegram_id)
+        )
+
+        result = await self._session.execute(query)
+        user_id = result.scalar()
+        return UserId(user_id) if user_id else None
 
     def next_id(self) -> UserId:
         return UserId(UUID(str(uuid7())))

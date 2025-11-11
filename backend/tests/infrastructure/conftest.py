@@ -13,6 +13,7 @@ from sqlalchemy.ext.asyncio import (
 )
 
 from backend.bootstrap.config import PostgresConfig
+from backend.infrastructure.persistence.gateways import SQLAlchemyUserGateway
 from backend.infrastructure.persistence.tables import Base
 
 
@@ -60,3 +61,8 @@ async def session(
         session.commit = AsyncMock()  # type: ignore[method-assign]
         yield session
         await session.rollback()
+
+
+@pytest_asyncio.fixture()
+async def user_gateway(session: AsyncSession) -> SQLAlchemyUserGateway:
+    return SQLAlchemyUserGateway(session=session)
