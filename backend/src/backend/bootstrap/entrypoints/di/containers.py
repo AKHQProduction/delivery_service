@@ -6,10 +6,12 @@ from dishka.integrations.aiogram import AiogramProvider
 from backend.bootstrap.config import Config
 from backend.bootstrap.entrypoints.di.bot_providers import (
     BotInteractorsProvider,
+    TelegramProvider,
+)
+from backend.bootstrap.entrypoints.di.common import (
     ConfigProvider,
     PersistenceProvider,
     RedisProvider,
-    TelegramProvider,
 )
 
 logger = logging.getLogger(__name__)
