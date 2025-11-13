@@ -2,8 +2,10 @@ import logging
 
 from dishka import AsyncContainer, make_async_container
 from dishka.integrations.aiogram import AiogramProvider
+from dishka.integrations.fastapi import FastapiProvider
 
 from backend.bootstrap.config import Config
+from backend.bootstrap.entrypoints.di.api_providers import WebAppProvider
 from backend.bootstrap.entrypoints.di.bot_providers import (
     BotInteractorsProvider,
     TelegramProvider,
@@ -27,5 +29,17 @@ def bot_container(config: Config) -> AsyncContainer:
         TelegramProvider(),
         PersistenceProvider(),
         RedisProvider(),
+        context={Config: config},
+    )
+
+
+def api_container(config: Config) -> AsyncContainer:
+    logger.info("Setup api container")
+
+    return make_async_container(
+        ConfigProvider(),
+        FastapiProvider(),
+        PersistenceProvider(),
+        WebAppProvider(),
         context={Config: config},
     )

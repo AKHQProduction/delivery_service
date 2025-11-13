@@ -13,11 +13,13 @@ dependencies = [
     "alembic>=1.17.1",
     "dishka>=1.7.2",
     "fastapi>=0.121.0",
+    "orjson>=3.11.4",
     "psycopg[binary]>=3.2.12",
     "python-dotenv>=1.2.1",
     "redis>=7.0.1",
     "sqlalchemy[asyncio]>=2.0.44",
     "uuid-utils>=0.11.1",
+    "uvicorn>=0.38.0",
 ]
 
 [project.scripts]
@@ -29,6 +31,8 @@ build-backend = "hatchling.build"
 
 [dependency-groups]
 dev = [
+    "faker>=38.0.0",
+    "httpx>=0.28.1",
     "pre-commit>=4.3.0",
     "pytest>=8.4.2",
     "pytest-asyncio>=1.2.0",

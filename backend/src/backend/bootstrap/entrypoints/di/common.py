@@ -2,6 +2,7 @@ import logging
 from collections.abc import AsyncIterable, AsyncIterator
 
 from dishka import (
+    AnyOf,
     Provider,
     Scope,
     WithParents,
@@ -17,6 +18,7 @@ from sqlalchemy.ext.asyncio import (
     create_async_engine,
 )
 
+from backend.application.interfaces import TransactionManager
 from backend.bootstrap.config import (
     AppConfig,
     Config,
@@ -27,9 +29,6 @@ from backend.bootstrap.config import (
 from backend.infrastructure.persistence.gateways import (
     SQLAlchemyShopGateway,
     SQLAlchemyUserGateway,
-)
-from backend.infrastructure.persistence.tr_manager import (
-    SQLAlchemyTransactionManager,
 )
 
 logger = logging.getLogger(__name__)
@@ -83,15 +82,13 @@ class PersistenceProvider(Provider):
     @provide
     async def get_session(
         self, factory: async_sessionmaker[AsyncSession]
-    ) -> AsyncIterable[AsyncSession]:
+    ) -> AsyncIterable[AnyOf[AsyncSession, TransactionManager]]:
         async with factory() as session:
             yield session
 
     gateways = provide_all(
         WithParents[SQLAlchemyUserGateway], WithParents[SQLAlchemyShopGateway]
     )
-
-    tr_manager = provide(WithParents[SQLAlchemyTransactionManager])
 
 
 class RedisProvider(Provider):

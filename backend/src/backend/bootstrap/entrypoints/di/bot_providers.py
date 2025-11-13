@@ -16,6 +16,7 @@ from backend.application.commands import (
 from backend.application.interfaces import IdentityProvider
 from backend.infrastructure.idp import TelegramIdentityProvider
 from backend.infrastructure.persistence.gateways import (
+    SQLAlchemyShopGateway,
     SQLAlchemyUserGateway,
 )
 
@@ -35,8 +36,13 @@ class TelegramProvider(Provider):
 
     @provide
     def idp(
-        self, user: "User", user_gateway: SQLAlchemyUserGateway
+        self,
+        user: "User",
+        user_gateway: SQLAlchemyUserGateway,
+        shop_gateway: SQLAlchemyShopGateway,
     ) -> IdentityProvider:
         return TelegramIdentityProvider(
-            telegram_id=user.id, user_gateway=user_gateway
+            telegram_id=user.id,
+            user_gateway=user_gateway,
+            shop_gateway=shop_gateway,
         )

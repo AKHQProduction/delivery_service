@@ -16,6 +16,24 @@ services:
       postgres:
         condition: service_healthy
 
+  api:
+    container_name: "water-delivery-api"
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    env_file:
+      - .env
+    stop_signal: SIGINT
+    restart: always
+    volumes:
+      - ./backend/src:/usr/src/app/src
+    command: [ "uvicorn", "backend.bootstrap.entrypoints.api:create_app", "--host", "${SERVER_HOST}", "--port", "${SERVER_PORT}", "--factory" ]
+    ports:
+      - "${SERVER_PORT}:${SERVER_PORT}"
+    depends_on:
+      postgres:
+        condition: service_healthy
+
   redis:
     container_name: "water_delivery-redis"
     image: redis:8-alpine
