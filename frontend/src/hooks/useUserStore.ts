@@ -7,7 +7,7 @@ interface UserStore {
   user: User | null;
 
   setUser: (u: User | null) => void;
-  logout: () => void;
+  removeUserRole: () => void;
 
   hasRole: (role: UserRole) => boolean;
   hasAnyRole: (roles: UserRole[]) => boolean;
@@ -19,7 +19,7 @@ export const useUserStore = create(
       user: null,
 
       setUser: (u) => set({ user: u }),
-      logout: () => set({ user: null }),
+      removeUserRole: () => set({ user: null }),
 
       hasRole: (role) => get().user?.role === role,
 

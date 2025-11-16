@@ -1,42 +1,50 @@
 import { useUserStore } from "../hooks/useUserStore";
-import { UserRole } from "../types/roles";
+import { useNavigate, useLocation } from "react-router-dom";
+import { roleButtons } from "../config/roleButtons";
 
 export const BottomNavPannel = () => {
   const user = useUserStore((s) => s.user);
-  const hasRole = useUserStore((s) => s.hasRole);
-  //const hasAnyRole = useUserStore((s) => s.hasAnyRole);
+  const navigate = useNavigate();
+  const location = useLocation();
 
   if (!user) return null;
+  const userRole = user.role;
 
   return (
     <div className="flex items-center justify-center fixed bottom-0 w-full">
       <div className="w-full max-w-md">
-        <nav className="bg-white shadow-lg px-4 py-6 border border-gray-200 rounded-lg">
-          <div className="flex items-center justify-around">
+        <nav className="bg-white shadow-lg px-4 py-4 border border-gray-200 rounded-lg">
+          <div className="flex items-center justify-around w-full">
+            {roleButtons[userRole]?.map((btn) => {
+              const isActive = location.pathname === btn.path;
 
-            {hasRole(UserRole.COURIER) && (
-              <>
-                <button>Home</button>
-                <button>Profile</button>
-              </>
-            )}
-
-            {hasRole(UserRole.MANAGER) && (
-              <>
-                <button>Home</button>
-                <button>Manage users</button>
-                <button>Analytics</button>
-              </>
-            )}
-
-            {hasRole(UserRole.OWNER) && (
-              <>
-                <button>Dashboard</button>
-                <button>Admin Tools</button>
-                <button>Settings</button>
-              </>
-            )}
-            
+              return (
+                <button
+                  key={btn.label}
+                  onClick={() => navigate(btn.path)}
+                  className="
+                    flex flex-col items-center justify-center
+                    gap-1 py-1 px-2
+                    transition
+                  "
+                >
+                  <img
+                    src={btn.icon}
+                    alt={btn.label}
+                    className={`w-6 h-6 object-contain ${
+                      isActive ? "opacity-100" : "opacity-70"
+                    }`}
+                  />
+                  <span
+                    className={`text-xs ${
+                      isActive ? "text-blue-600 font-medium" : "text-gray-600"
+                    }`}
+                  >
+                    {btn.label}
+                  </span>
+                </button>
+              );
+            })}
           </div>
         </nav>
       </div>
