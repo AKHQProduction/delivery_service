@@ -1,6 +1,6 @@
 import { useState } from "react";
-import { useUserStore } from "../hooks/useUserStore";
-import { getUser } from "../api/user";
+import { useUserStore } from "../context/useUserStore";
+import { getUser } from "../services/userService";
 
 export const DevPage = () => {
   const [userID, setUserID] = useState<string>("");

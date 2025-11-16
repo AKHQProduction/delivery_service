@@ -1,10 +1,11 @@
 import React, { useState, useEffect } from "react";
+import { createPortal } from "react-dom";
+
 interface BottomModalProps {
   isOpen: boolean;
   onClose: () => void;
   title: string;
   children: React.ReactNode;
-  height?: "sm" | "md" | "lg" | "full";
 }
 
 export const BottomModal: React.FC<BottomModalProps> = ({
@@ -12,14 +13,19 @@ export const BottomModal: React.FC<BottomModalProps> = ({
   onClose,
   title,
   children,
-  height = "md",
 }) => {
   const [isVisible, setIsVisible] = useState(false);
 
   useEffect(() => {
     if (isOpen) {
       setIsVisible(true);
+      document.body.style.overflow = "hidden";
+    } else {
+      document.body.style.overflow = "unset";
     }
+    return () => {
+      document.body.style.overflow = "unset";
+    };
   }, [isOpen]);
 
   const handleClose = () => {
@@ -27,27 +33,19 @@ export const BottomModal: React.FC<BottomModalProps> = ({
     setTimeout(() => onClose(), 300);
   };
 
-  const heightClasses = {
-    sm: "h-1/3",
-    md: "h-1/2",
-    lg: "h-2/3",
-    full: "h-5/6",
-  };
-
   if (!isOpen) return null;
 
-  return (
+  const modalContent = (
     <>
       <div
-        className={`fixed inset-0 bg-black transition-opacity duration-300 ${
+        className={`fixed inset-0 bg-black transition-opacity duration-300 z-9998 ${
           isVisible ? "opacity-50" : "opacity-0"
         }`}
         onClick={handleClose}
       />
 
       <div
-        className={`fixed bottom-0 left-0 right-0 bg-white rounded-t-3xl shadow-2xl transition-transform duration-300 w-full z-10000 ${
-          heightClasses[height]
+        className={`fixed bottom-0 left-0 right-0 bg-white rounded-t-3xl shadow-2xl transition-transform duration-300 z-9999
         } ${isVisible ? "translate-y-0" : "translate-y-full"}`}
       >
         <div className="flex justify-center pt-3 pb-2">
@@ -81,4 +79,6 @@ export const BottomModal: React.FC<BottomModalProps> = ({
       </div>
     </>
   );
+
+  return createPortal(modalContent, document.body);
 };

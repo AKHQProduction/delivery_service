@@ -1,7 +1,7 @@
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
 import type { User } from "../types/user";
-import { UserRole } from "../types/roles";
+import { UserRole } from "../constants/roles";
 
 interface UserStore {
   user: User | null;

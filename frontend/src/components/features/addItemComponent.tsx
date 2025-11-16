@@ -1,10 +1,10 @@
 import { useState } from "react";
-import { BottomModal } from "./ui/modals/bottomModal";
-import { MODAL_CONFIG } from "../config/modalContent";
-import { AddProductForm } from "./ui/forms/addProductForm";
-import { AddClientForm } from "./ui/forms/addClientForm";
-import { AddOrderForm } from "./ui/forms/addOrderForm";
-import { AddStaffForm } from "./ui/forms/addStaffForm";
+import { BottomModal } from "../ui/bottomModal";
+import { MODAL_CONFIG } from "../../constants/modalContent";
+import { AddProductForm } from "../forms/addProductForm";
+import { AddClientForm } from "../forms/addClientForm";
+import { AddOrderForm } from "../forms/addOrderForm";
+import { AddStaffForm } from "../forms/addStaffForm";
 
 export const AddItemComponent = () => {
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -14,7 +14,8 @@ export const AddItemComponent = () => {
   };
 
   const currentConfig =
-    MODAL_CONFIG[location.pathname as keyof typeof MODAL_CONFIG] || MODAL_CONFIG["/products"];
+    MODAL_CONFIG[location.pathname as keyof typeof MODAL_CONFIG] ||
+    MODAL_CONFIG["/products"];
 
   const renderModalContent = () => {
     switch (currentConfig.component) {
@@ -58,7 +59,6 @@ export const AddItemComponent = () => {
         isOpen={isModalOpen}
         onClose={() => setIsModalOpen(false)}
         title={currentConfig.title}
-        height={currentConfig.height}
       >
         {renderModalContent()}
       </BottomModal>

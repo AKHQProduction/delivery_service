@@ -1,4 +1,4 @@
-import api from "./setup";
+import api from "../config/api.config";
 
 export const getUser = async () => {
   try {

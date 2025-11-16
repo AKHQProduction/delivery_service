@@ -1,7 +1,7 @@
 import React, { useState } from "react";
-import { FormWrapper } from "./formWrapper";
-import { FormInput } from "./formInput";
-import { FormSelect } from "./formSelect";
+import { FormWrapper } from "../ui/formWrapper";
+import { FormInput } from "../ui/formInput";
+import { FormSelect } from "../ui/formSelect";
 
 interface AddOrderFormProps {
   onClose: () => void;
@@ -25,7 +25,7 @@ export const AddOrderForm: React.FC<AddOrderFormProps> = ({ onClose }) => {
     console.log("Order submitted:", formData);
     onClose();
   };
-
+  //Temporary hardcoded values
   const productOptions = [
     { value: "water_karpatska", label: 'Вода "Карпатська"' },
     { value: "water_morshynska", label: 'Вода "Моршинська"' },

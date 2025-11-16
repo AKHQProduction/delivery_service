@@ -1,7 +1,7 @@
 import React, { useState } from "react";
-import { FormWrapper } from "./formWrapper";
-import { FormInput } from "./formInput";
-import { FormSelect } from "./formSelect";
+import { FormWrapper } from "../ui/formWrapper";
+import { FormInput } from "../ui/formInput";
+import { FormSelect } from "../ui/formSelect";
 
 interface AddProductFormProps {
   onClose: () => void;

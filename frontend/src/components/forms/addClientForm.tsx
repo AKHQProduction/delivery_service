@@ -1,40 +1,33 @@
 import React, { useState } from "react";
-import { FormWrapper } from "./formWrapper";
-import { FormInput } from "./formInput";
-import { FormSelect } from "./formSelect";
+import { FormWrapper } from "../ui/formWrapper";
+import { FormInput } from "../ui/formInput";
 
-interface AddStaffFormProps {
+interface AddClientFormProps {
   onClose: () => void;
 }
 
-export const AddStaffForm: React.FC<AddStaffFormProps> = ({ onClose }) => {
+export const AddClientForm: React.FC<AddClientFormProps> = ({ onClose }) => {
   const [formData, setFormData] = useState({
     name: "",
     phone: "",
-    role: "",
     email: "",
+    address: "",
   });
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
   };
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    console.log("Staff submitted:", formData);
+    console.log("Client submitted:", formData);
     onClose();
   };
 
-  const roleOptions = [
-    { value: "driver", label: "Водій" },
-    { value: "manager", label: "Менеджер" },
-    { value: "admin", label: "Адміністратор" },
-  ];
-
   return (
-    <FormWrapper onSubmit={handleSubmit} onClose={onClose} submitLabel="Додати співробітника">
+    <FormWrapper onSubmit={handleSubmit} onClose={onClose} submitLabel="Додати клієнта">
       <FormInput
-        label="Ім'я співробітника"
+        label="Ім'я клієнта"
         name="name"
         value={formData.name}
         onChange={handleChange}
@@ -57,15 +50,13 @@ export const AddStaffForm: React.FC<AddStaffFormProps> = ({ onClose }) => {
         value={formData.email}
         onChange={handleChange}
         placeholder="email@example.com"
-        required
       />
-      <FormSelect
-        label="Посада"
-        name="role"
-        value={formData.role}
+      <FormInput
+        label="Адреса"
+        name="address"
+        value={formData.address}
         onChange={handleChange}
-        options={roleOptions}
-        required
+        placeholder="Введіть адресу..."
       />
     </FormWrapper>
   );

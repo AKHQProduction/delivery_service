@@ -1,6 +1,6 @@
-import { useUserStore } from "../hooks/useUserStore";
+import { useUserStore } from "../../context/useUserStore";
 import { useNavigate, useLocation } from "react-router-dom";
-import { roleButtons } from "../config/roleButtons";
+import { roleButtons } from "../../constants/roleButtons";
 
 export const BottomNavPannel = () => {
   const user = useUserStore((s) => s.user);
@@ -11,7 +11,7 @@ export const BottomNavPannel = () => {
   const userRole = user.role;
 
   return (
-    <div className="flex items-center justify-center fixed bottom-0 w-full z-50">
+    <div className="flex items-center justify-center fixed bottom-0 w-full">
       <div className="w-full max-w-md">
         <nav className="bg-white shadow-lg px-4 py-4 border border-gray-200 rounded-lg">
           <div className="flex items-center justify-around w-full">

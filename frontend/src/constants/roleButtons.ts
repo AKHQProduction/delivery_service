@@ -1,4 +1,4 @@
-import { UserRole } from "../types/roles";
+import { UserRole } from "./roles";
 import goodsIcon from "../assets/icons/goods.svg";
 import clientsIcon from "../assets/icons/client.svg";
 import ordersIcon from "../assets/icons/order.svg";
