@@ -8,7 +8,7 @@ from fastapi import (
 )
 from fastapi.responses import ORJSONResponse
 
-from backend.application.errors import AuthorizationError
+from backend.application.errors import AccessDeniedError, AuthorizationError
 
 if TYPE_CHECKING:
 
@@ -34,5 +34,8 @@ def setup_exc_handlers(app: FastAPI) -> None:
     app.add_exception_handler(
         AuthorizationError,
         partial(validate, status=code.HTTP_401_UNAUTHORIZED),
+    )
+    app.add_exception_handler(
+        AccessDeniedError, partial(validate, status=code.HTTP_403_FORBIDDEN)
     )
     app.exception_handler(Exception)(internal_trouble)

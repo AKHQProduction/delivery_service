@@ -1,6 +1,9 @@
-from dishka import Provider, Scope, from_context, provide
+from dishka import Provider, Scope, from_context, provide, provide_all
 from fastapi import Request
 
+from backend.application.commands.create_product import (
+    CreateProductCommandHandler,
+)
 from backend.application.interfaces import IdentityProvider
 from backend.infrastructure.idp import TelegramIdentityProvider
 from backend.infrastructure.persistence.gateways import (
@@ -8,6 +11,12 @@ from backend.infrastructure.persistence.gateways import (
     SQLAlchemyUserGateway,
 )
 from backend.infrastructure.telegram.auth import Headers, InitData, WebAppAuth
+
+
+class APIInteractorsProvider(Provider):
+    scope = Scope.REQUEST
+
+    handlers = provide_all(CreateProductCommandHandler)
 
 
 class WebAppProvider(Provider):

@@ -100,7 +100,7 @@ def test_return_unique_shop_ids(shop_gateway: SQLAlchemyShopGateway) -> None:
 
 
 @pytest.mark.parametrize(
-    "role", ((ShopRole.OWNER,), (ShopRole.MANAGER,), (ShopRole.COURIER,))
+    "role", (ShopRole.OWNER, ShopRole.MANAGER, ShopRole.COURIER)
 )
 @pytest.mark.asyncio()
 async def test_return_role_by_user_id(
@@ -134,5 +134,38 @@ async def test_return_none_role_when_user_not_exists(
     user_id = UserId(uuid.uuid4())
 
     result = await shop_gateway.role_by_user_id(user_id=user_id)
+
+    assert result is None
+
+
+@pytest.mark.asyncio()
+async def test_return_relate_shop_id_by_user(
+    shop_gateway: SQLAlchemyShopGateway,
+    session: AsyncSession,
+    create_role,
+    create_user,
+    create_shop,
+    create_shop_membership,
+) -> None:
+    user_id = UserId(uuid.uuid4())
+
+    role_id = await create_role(name=ShopRole.OWNER)
+    await create_user(user_id=user_id)
+    shop_id = await create_shop()
+    await create_shop_membership(
+        user_id=user_id, shop_id=shop_id, role_id=role_id
+    )
+    await session.flush()
+
+    result = await shop_gateway.shop_by_user_id(user_id)
+
+    assert result == shop_id
+
+
+@pytest.mark.asyncio()
+async def test_return_none_shop_when_user_not_relates(
+    shop_gateway: SQLAlchemyShopGateway,
+) -> None:
+    result = await shop_gateway.shop_by_user_id(UserId(uuid.uuid4()))
 
     assert result is None

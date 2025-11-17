@@ -5,7 +5,10 @@ from dishka.integrations.aiogram import AiogramProvider
 from dishka.integrations.fastapi import FastapiProvider
 
 from backend.bootstrap.config import Config
-from backend.bootstrap.entrypoints.di.api_providers import WebAppProvider
+from backend.bootstrap.entrypoints.di.api_providers import (
+    APIInteractorsProvider,
+    WebAppProvider,
+)
 from backend.bootstrap.entrypoints.di.bot_providers import (
     BotInteractorsProvider,
     TelegramProvider,
@@ -41,5 +44,6 @@ def api_container(config: Config) -> AsyncContainer:
         FastapiProvider(),
         PersistenceProvider(),
         WebAppProvider(),
+        APIInteractorsProvider(),
         context={Config: config},
     )

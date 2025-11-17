@@ -27,6 +27,7 @@ from backend.application.vars import ShopId, ShopRole, UserId
 from backend.bootstrap.config import Config, PostgresConfig
 from backend.bootstrap.entrypoints.di.common import PersistenceProvider
 from backend.bootstrap.entrypoints.di.tests_providers import (
+    MockAPIInteractorsProvider,
     MockConfigProvider,
     MockWebAppProvider,
 )
@@ -111,6 +112,7 @@ def make_container(
             mock_session_provider,
             MockConfigProvider(),
             MockWebAppProvider(),
+            MockAPIInteractorsProvider(),
             context={Config: config},
         )
 
@@ -199,7 +201,7 @@ def setup_full_test_user_with_shop(
         full_name: str = "Test User",
         user_id: UserId | None = None,
         role: ShopRole = ShopRole.OWNER,
-    ) -> UserId:
+    ) -> tuple[UserId, ShopId]:
         user_id = await create_user(user_id=user_id)
         await create_telegram_account(
             user_id=user_id, telegram_id=telegram_id, full_name=full_name
@@ -209,6 +211,6 @@ def setup_full_test_user_with_shop(
         await create_shop_membership(
             user_id=user_id, shop_id=shop_id, role_id=role_id
         )
-        return user_id
+        return user_id, shop_id
 
     return _setup_user

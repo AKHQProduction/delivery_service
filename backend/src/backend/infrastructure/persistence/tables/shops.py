@@ -5,10 +5,15 @@ import sqlalchemy as sa
 from sqlalchemy import UniqueConstraint
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
-from .base import Base, CreatedAt, UpdatedAt
+from backend.infrastructure.persistence.tables.base import (
+    Base,
+    CreatedAt,
+    UpdatedAt,
+)
 
 if TYPE_CHECKING:
-    from .users import User
+    from backend.infrastructure.persistence.tables.product import Product
+    from backend.infrastructure.persistence.tables.users import User
 
 
 class Shop(Base, CreatedAt, UpdatedAt):
@@ -20,6 +25,7 @@ class Shop(Base, CreatedAt, UpdatedAt):
     memberships: Mapped[list["ShopMembership"]] = relationship(
         back_populates="shop"
     )
+    products: Mapped[list["Product"]] = relationship(back_populates="shop")
 
     def __repr__(self) -> str:
         return f"<Shop id={self.id} name={self.name}>"

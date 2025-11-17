@@ -77,7 +77,7 @@ async def test_return_correct_user_data(
         ShopRole.MANAGER,
         ShopRole.COURIER,
     ])
-    user_id = await setup_full_test_user_with_shop(
+    user_id, _ = await setup_full_test_user_with_shop(
         telegram_id=telegram_id, role=role
     )
 

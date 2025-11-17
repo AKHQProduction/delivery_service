@@ -28,7 +28,7 @@ async def test_me_return_correct_id_and_role(
     customer_headers: Callable[[int], dict[str, Any]],
     setup_full_test_user_with_shop,
 ) -> None:
-    user_id = await setup_full_test_user_with_shop(
+    user_id, shop_id = await setup_full_test_user_with_shop(
         telegram_id=telegram_id, role=role
     )
     await session.commit()
@@ -39,4 +39,8 @@ async def test_me_return_correct_id_and_role(
     response = await http_client.get(url=url, headers=headers)
 
     assert response.status_code == status.HTTP_200_OK
-    assert response.json() == {"user_id": str(user_id), "role": role.value}
+    assert response.json() == {
+        "user_id": str(user_id),
+        "role": role.value,
+        "shop_id": str(shop_id),
+    }

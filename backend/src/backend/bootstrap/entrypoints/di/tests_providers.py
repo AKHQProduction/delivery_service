@@ -1,10 +1,17 @@
 from dishka import provide
 
 from backend.bootstrap.config import AppConfig, Config
-from backend.bootstrap.entrypoints.di.api_providers import WebAppProvider
+from backend.bootstrap.entrypoints.di.api_providers import (
+    APIInteractorsProvider,
+    WebAppProvider,
+)
 from backend.bootstrap.entrypoints.di.common import (
     ConfigProvider,
 )
+
+
+class MockAPIInteractorsProvider(APIInteractorsProvider):
+    pass
 
 
 class MockConfigProvider(ConfigProvider):

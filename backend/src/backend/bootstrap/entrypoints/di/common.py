@@ -30,6 +30,9 @@ from backend.infrastructure.persistence.gateways import (
     SQLAlchemyShopGateway,
     SQLAlchemyUserGateway,
 )
+from backend.infrastructure.persistence.gateways.product_gateway import (
+    SQLAlchemyProductGateway,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -87,7 +90,9 @@ class PersistenceProvider(Provider):
             yield session
 
     gateways = provide_all(
-        WithParents[SQLAlchemyUserGateway], WithParents[SQLAlchemyShopGateway]
+        WithParents[SQLAlchemyUserGateway],
+        WithParents[SQLAlchemyShopGateway],
+        WithParents[SQLAlchemyProductGateway],
     )
 
 

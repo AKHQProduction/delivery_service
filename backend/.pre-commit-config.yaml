@@ -3,26 +3,38 @@
     rev: v6.0.0
     hooks:
       - id: mixed-line-ending
+        files: ^backend/
       - id: check-merge-conflict
+        files: ^backend/
       - id: detect-private-key
+        files: ^backend/
       - id: trailing-whitespace
+        files: ^backend/
       - id: check-added-large-files
         args: [ '--maxkb=2048' ]
+        files: ^backend/
       - id: check-case-conflict
+        files: ^backend/
       - id: check-ast
+        files: ^backend/
       - id: check-toml
+        files: ^backend/
       - id: check-yaml
+        files: ^backend/
       - id: end-of-file-fixer
+        files: ^backend/
 
   - repo: https://github.com/crate-ci/typos
     rev: v1.30.3
     hooks:
       - id: typos
+        files: ^backend/
 
   - repo: https://github.com/Yelp/detect-secrets
     rev: v1.5.0
     hooks:
       - id: detect-secrets
+        files: ^backend/
         exclude: '\.env\.dist$'
 
   - repo: local
@@ -32,6 +44,7 @@
         entry: bash -c 'cd "$(git rev-parse --show-toplevel)/backend" && uv run --frozen ruff format'
         language: system
         types: [ python ]
+        files: ^backend/
         pass_filenames: false
 
       - id: ruff-check
@@ -39,6 +52,7 @@
         entry: bash -c 'cd "$(git rev-parse --show-toplevel)/backend" && uv run --frozen ruff check --exit-non-zero-on-fix'
         language: system
         types: [ python ]
+        files: ^backend/
         pass_filenames: false
 
       - id: mypy
@@ -46,4 +60,5 @@
         entry: bash -c 'cd "$(git rev-parse --show-toplevel)/backend" && uv run --frozen mypy src/'
         language: system
         types: [ python ]
+        files: ^backend/
         pass_filenames: false

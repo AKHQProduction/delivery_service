@@ -12,3 +12,9 @@ class UserAlreadyRelatedToShopError(Exception):
     @property
     def message(self) -> str:
         return "User already related to another shop"
+
+
+class AccessDeniedError(Exception):
+    @property
+    def message(self) -> str:
+        return "Access denied to this resource"
