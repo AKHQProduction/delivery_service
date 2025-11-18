@@ -1,11 +1,14 @@
 from typing import cast
 from uuid import UUID
 
+from sqlalchemy import asc, desc, select
 from sqlalchemy.ext.asyncio import AsyncSession
 from uuid_utils import uuid7
 
+from backend.application.interfaces.gateways import Pagination, SortOrder
 from backend.application.interfaces.gateways.product_gateway import (
     CreateProductDTO,
+    GetProductsFilters,
     Product,
     ProductGateway,
     ProductReadModel,
@@ -60,7 +63,9 @@ class SQLAlchemyProductGateway(ProductGateway):
         if product_db:
             await self._session.delete(product_db)
 
-    async def read(self, product_id: ProductId) -> ProductReadModel | None:
+    async def read(
+        self, product_id: ProductId, shop_id: ShopId
+    ) -> ProductReadModel | None:
         row = await self._session.get(ProductDB, product_id)
         if row:
             return ProductReadModel(
@@ -72,3 +77,35 @@ class SQLAlchemyProductGateway(ProductGateway):
                 price=int(cast("int", cast("object", row.price))),
             )
         return None
+
+    async def read_all(
+        self, filters: GetProductsFilters, pagination: Pagination
+    ) -> list[ProductReadModel]:
+        query = select(ProductDB)
+
+        if filters.shop_id:
+            query = query.where(ProductDB.shop_id == filters.shop_id)
+        if filters.name:
+            query = query.where(ProductDB.name.ilike(f"%{filters.name}%"))
+
+        if pagination.order == SortOrder.ASC:
+            query = query.order_by(asc(ProductDB.name))
+        else:
+            query = query.order_by(desc(ProductDB.name))
+
+        query = query.offset(pagination.offset).limit(pagination.limit)
+
+        result = await self._session.execute(query)
+        rows = result.scalars().all()
+
+        return [
+            ProductReadModel(
+                product_id=ProductId(cast("UUID", cast("object", row.id))),
+                name=cast("str", cast("object", row.name)),
+                category=ProductCategory(
+                    cast("str", cast("object", row.category))
+                ),
+                price=int(cast("int", cast("object", row.price))),
+            )
+            for row in rows
+        ]

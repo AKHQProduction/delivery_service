@@ -6,7 +6,7 @@ from backend.application.errors import EntityNotFoundError
 from backend.application.interfaces.gateways.product_gateway import (
     CreateProductDTO,
 )
-from backend.application.queries.get_product import GetProduct
+from backend.application.queries.get_product import GetProductQueryHandler
 from backend.application.vars import (
     ProductCategory,
     ProductId,
@@ -36,7 +36,9 @@ def make_query():
         )
         product_gateway = InMemoryProductGateway()
 
-        query = GetProduct(idp=idp, product_gateway=product_gateway)
+        query = GetProductQueryHandler(
+            idp=idp, product_gateway=product_gateway
+        )
 
         return query, idp, product_gateway
 

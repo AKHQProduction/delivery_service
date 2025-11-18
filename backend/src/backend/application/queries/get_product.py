@@ -7,7 +7,7 @@ from backend.application.interfaces.gateways.product_gateway import (
 from backend.application.vars import ProductId
 
 
-class GetProduct:
+class GetProductQueryHandler:
     def __init__(
         self, idp: IdentityProvider, product_gateway: ProductGateway
     ) -> None:
@@ -15,8 +15,10 @@ class GetProduct:
         self._product_gateway = product_gateway
 
     async def handle(self, product_id: ProductId) -> ProductReadModel:
-        await self._idp.current_user()
+        current_user = await self._idp.current_user()
 
-        if product := await self._product_gateway.read(product_id):
+        if product := await self._product_gateway.read(
+            product_id, current_user.shop_id
+        ):
             return product
         raise EntityNotFoundError(entity="Product")

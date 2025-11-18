@@ -1,13 +1,14 @@
+import uuid
 from collections.abc import Callable
 from typing import Any
 
 import pytest
 from fastapi import status
 from httpx import AsyncClient
-from sqlalchemy import select
+from sqlalchemy import insert, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from backend.application.vars import ProductCategory
+from backend.application.vars import ProductCategory, ProductId
 from backend.infrastructure.persistence.tables import Product
 
 BASE_URL = "/api/v1/products"
@@ -176,3 +177,235 @@ async def test_get_product(
     assert response.json()["name"] == name
     assert response.json()["price"] == price
     assert response.json()["category"] == category
+
+
+@pytest.mark.asyncio()
+async def test_get_all_products(
+    http_client: AsyncClient,
+    session: AsyncSession,
+    customer_headers: Callable[[int], dict[str, Any]],
+    setup_full_test_user_with_shop,
+) -> None:
+    telegram_id = 1000
+    _, shop_id = await setup_full_test_user_with_shop(telegram_id=telegram_id)
+
+    products_data = [
+        ("Water Bottle", 100, ProductCategory.WATER),
+        ("Water Gallon", 200, ProductCategory.WATER),
+        ("Soda Can", 50, ProductCategory.OTHER),
+    ]
+
+    for name, price, category in products_data:
+        await session.execute(
+            insert(Product).values(
+                id=ProductId(uuid.uuid4()),
+                shop_id=shop_id,
+                name=name,
+                price=price,
+                category=category.value,
+            )
+        )
+    await session.flush()
+    await session.commit()
+
+    headers = customer_headers(telegram_id)
+    url = BASE_URL + "/all"
+    response = await http_client.get(url=url, headers=headers)
+
+    assert response.status_code == status.HTTP_200_OK
+    result = response.json()
+
+    assert len(result) == 3
+    assert result[0]["name"] == "Soda Can"
+    assert result[1]["name"] == "Water Bottle"
+    assert result[2]["name"] == "Water Gallon"
+
+
+@pytest.mark.asyncio()
+async def test_get_all_products_with_name_filter(
+    http_client: AsyncClient,
+    session: AsyncSession,
+    customer_headers: Callable[[int], dict[str, Any]],
+    setup_full_test_user_with_shop,
+) -> None:
+    telegram_id = 1000
+    _, shop_id = await setup_full_test_user_with_shop(telegram_id=telegram_id)
+
+    products_data = [
+        ("Water Bottle", 100, ProductCategory.WATER),
+        ("Water Gallon", 200, ProductCategory.WATER),
+        ("Soda Can", 50, ProductCategory.OTHER),
+    ]
+
+    for name, price, category in products_data:
+        await session.execute(
+            insert(Product).values(
+                id=ProductId(uuid.uuid4()),
+                shop_id=shop_id,
+                name=name,
+                price=price,
+                category=category.value,
+            )
+        )
+    await session.flush()
+    await session.commit()
+
+    headers = customer_headers(telegram_id)
+    url = BASE_URL + "/all"
+    response = await http_client.get(
+        url=url, headers=headers, params={"name": "Water"}
+    )
+
+    assert response.status_code == status.HTTP_200_OK
+    result = response.json()
+
+    assert len(result) == 2
+    assert all("Water" in p["name"] for p in result)
+    assert result[0]["name"] == "Water Bottle"
+    assert result[1]["name"] == "Water Gallon"
+
+
+@pytest.mark.asyncio()
+async def test_get_all_products_with_pagination(
+    http_client: AsyncClient,
+    session: AsyncSession,
+    customer_headers: Callable[[int], dict[str, Any]],
+    setup_full_test_user_with_shop,
+) -> None:
+    telegram_id = 1000
+    _, shop_id = await setup_full_test_user_with_shop(telegram_id=telegram_id)
+
+    for i in range(5):
+        await session.execute(
+            insert(Product).values(
+                id=ProductId(uuid.uuid4()),
+                shop_id=shop_id,
+                name=f"Product {i}",
+                price=100,
+                category=ProductCategory.WATER.value,
+            )
+        )
+    await session.flush()
+    await session.commit()
+
+    headers = customer_headers(telegram_id)
+    url = BASE_URL + "/all"
+
+    # Get first page
+    response = await http_client.get(
+        url=url, headers=headers, params={"limit": 2, "offset": 0}
+    )
+    assert response.status_code == status.HTTP_200_OK
+    result_page1 = response.json()
+    assert len(result_page1) == 2
+
+    # Get second page
+    response = await http_client.get(
+        url=url, headers=headers, params={"limit": 2, "offset": 2}
+    )
+    assert response.status_code == status.HTTP_200_OK
+    result_page2 = response.json()
+    assert len(result_page2) == 2
+
+    # Get third page
+    response = await http_client.get(
+        url=url, headers=headers, params={"limit": 2, "offset": 4}
+    )
+    assert response.status_code == status.HTTP_200_OK
+    result_page3 = response.json()
+    assert len(result_page3) == 1
+
+    # Verify no duplicates
+    all_ids = [
+        p["product_id"] for p in result_page1 + result_page2 + result_page3
+    ]
+    assert len(all_ids) == len(set(all_ids))
+
+
+@pytest.mark.asyncio()
+async def test_get_all_products_sorted_desc(
+    http_client: AsyncClient,
+    session: AsyncSession,
+    customer_headers: Callable[[int], dict[str, Any]],
+    setup_full_test_user_with_shop,
+) -> None:
+    telegram_id = 1000
+    _, shop_id = await setup_full_test_user_with_shop(telegram_id=telegram_id)
+
+    for name in ["Apple", "Banana", "Cherry"]:
+        await session.execute(
+            insert(Product).values(
+                id=ProductId(uuid.uuid4()),
+                shop_id=shop_id,
+                name=name,
+                price=100,
+                category=ProductCategory.OTHER.value,
+            )
+        )
+    await session.flush()
+    await session.commit()
+
+    headers = customer_headers(telegram_id)
+    url = BASE_URL + "/all"
+    response = await http_client.get(
+        url=url, headers=headers, params={"order": "DESC"}
+    )
+
+    assert response.status_code == status.HTTP_200_OK
+    result = response.json()
+
+    assert len(result) == 3
+    assert result[0]["name"] == "Cherry"
+    assert result[1]["name"] == "Banana"
+    assert result[2]["name"] == "Apple"
+
+
+@pytest.mark.asyncio()
+async def test_get_all_products_filters_by_shop_id(
+    http_client: AsyncClient,
+    session: AsyncSession,
+    customer_headers: Callable[[int], dict[str, Any]],
+    setup_full_test_user_with_shop,
+    create_shop,
+) -> None:
+    telegram_id = 1000
+    _, shop_id_1 = await setup_full_test_user_with_shop(
+        telegram_id=telegram_id
+    )
+    shop_id_2 = await create_shop()
+
+    for i in range(3):
+        await session.execute(
+            insert(Product).values(
+                id=ProductId(uuid.uuid4()),
+                shop_id=shop_id_1,
+                name=f"Shop1 Product {i}",
+                price=100,
+                category=ProductCategory.WATER.value,
+            )
+        )
+
+    # Create products for shop 2 (should not be returned)
+    for i in range(2):
+        await session.execute(
+            insert(Product).values(
+                id=ProductId(uuid.uuid4()),
+                shop_id=shop_id_2,
+                name=f"Shop2 Product {i}",
+                price=100,
+                category=ProductCategory.OTHER.value,
+            )
+        )
+    await session.flush()
+    await session.commit()
+
+    headers = customer_headers(telegram_id)
+    url = BASE_URL + "/all"
+    response = await http_client.get(url=url, headers=headers)
+
+    assert response.status_code == status.HTTP_200_OK
+    result = response.json()
+
+    # Should only return products from shop 1
+    assert len(result) == 3
+    assert all("Shop1" in p["name"] for p in result)

@@ -2,6 +2,7 @@ from abc import abstractmethod
 from dataclasses import dataclass
 from typing import Protocol
 
+from backend.application.interfaces.gateways import Pagination
 from backend.application.vars import ProductCategory, ProductId, ShopId
 
 
@@ -31,6 +32,12 @@ class ProductReadModel:
     category: ProductCategory
 
 
+@dataclass(frozen=True)
+class GetProductsFilters:
+    shop_id: ShopId | None = None
+    name: str | None = None
+
+
 class ProductGateway(Protocol):
     @abstractmethod
     async def create_product(self, dto: CreateProductDTO) -> None:
@@ -49,7 +56,15 @@ class ProductGateway(Protocol):
         raise NotImplementedError
 
     @abstractmethod
-    async def read(self, product_id: ProductId) -> ProductReadModel | None:
+    async def read(
+        self, product_id: ProductId, shop_id: ShopId
+    ) -> ProductReadModel | None:
+        raise NotImplementedError
+
+    @abstractmethod
+    async def read_all(
+        self, filters: GetProductsFilters, pagination: Pagination
+    ) -> list[ProductReadModel]:
         raise NotImplementedError
 
     @abstractmethod

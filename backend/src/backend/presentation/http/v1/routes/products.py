@@ -18,10 +18,15 @@ from backend.application.commands.edit_product import (
     EditProductCommand,
     EditProductCommandHandler,
 )
+from backend.application.interfaces.gateways import Pagination, SortOrder
 from backend.application.interfaces.gateways.product_gateway import (
     ProductReadModel,
 )
-from backend.application.queries.get_product import GetProduct
+from backend.application.queries.get_product import GetProductQueryHandler
+from backend.application.queries.get_products import (
+    GetProductQuery,
+    GetProductsQueryHandler,
+)
 from backend.application.vars import ProductCategory, ProductId
 from backend.presentation.http.v1.schemas.error import ErrorSchema
 from backend.presentation.http.v1.schemas.product import EditProductSchema
@@ -106,6 +111,25 @@ async def delete_product(
 
 
 @router.get(
+    "/all",
+    status_code=status.HTTP_200_OK,
+)
+async def get_all_products(
+    handler: FromDishka[GetProductsQueryHandler],
+    name: str | None = None,
+    limit: int = 100,
+    offset: int = 0,
+    order: SortOrder = SortOrder.ASC,
+) -> list[ProductReadModel]:
+    return await handler.handle(
+        GetProductQuery(
+            name=name,
+            pagination=Pagination(limit=limit, offset=offset, order=order),
+        )
+    )
+
+
+@router.get(
     "/{product_id}",
     status_code=status.HTTP_200_OK,
     responses={
@@ -114,6 +138,6 @@ async def delete_product(
     dependencies=[Depends(HTTPBearer())],
 )
 async def get_product(
-    product_id: ProductId, handler: FromDishka[GetProduct]
+    product_id: ProductId, handler: FromDishka[GetProductQueryHandler]
 ) -> ProductReadModel:
     return await handler.handle(product_id=product_id)
