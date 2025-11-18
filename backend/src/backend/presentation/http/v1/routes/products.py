@@ -113,6 +113,10 @@ async def delete_product(
 @router.get(
     "/all",
     status_code=status.HTTP_200_OK,
+    responses={
+        status.HTTP_401_UNAUTHORIZED: {"model": ErrorSchema},
+    },
+    dependencies=[Depends(HTTPBearer())],
 )
 async def get_all_products(
     handler: FromDishka[GetProductsQueryHandler],
