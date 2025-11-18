@@ -10,6 +10,10 @@ from backend.application.commands.create_product import (
     CreateProductCommand,
     CreateProductCommandHandler,
 )
+from backend.application.commands.delete_product import (
+    DeleteProductCommand,
+    DeleteProductCommandHandler,
+)
 from backend.application.commands.edit_product import (
     EditProductCommand,
     EditProductCommandHandler,
@@ -61,7 +65,10 @@ async def create_new_product(
 @router.patch(
     "/{product_id}",
     status_code=status.HTTP_200_OK,
-    responses={status.HTTP_401_UNAUTHORIZED: {"model": ErrorSchema}},
+    responses={
+        status.HTTP_401_UNAUTHORIZED: {"model": ErrorSchema},
+        status.HTTP_403_FORBIDDEN: {"model": ErrorSchema},
+    },
     dependencies=[Depends(HTTPBearer())],
 )
 async def update_product(
@@ -77,3 +84,18 @@ async def update_product(
             new_category=body.category,
         )
     )
+
+
+@router.delete(
+    "/{product_id}",
+    status_code=status.HTTP_200_OK,
+    responses={
+        status.HTTP_401_UNAUTHORIZED: {"model": ErrorSchema},
+        status.HTTP_403_FORBIDDEN: {"model": ErrorSchema},
+    },
+    dependencies=[Depends(HTTPBearer())],
+)
+async def delete_product(
+    product_id: ProductId, handler: FromDishka[DeleteProductCommandHandler]
+) -> None:
+    await handler.handle(DeleteProductCommand(product_id=product_id))

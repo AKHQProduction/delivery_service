@@ -53,3 +53,8 @@ class SQLAlchemyProductGateway(ProductGateway):
             product_db.name = updated_product.name
             product_db.price = updated_product.price
             product_db.category = str(updated_product.category)
+
+    async def delete(self, product_id: ProductId) -> None:
+        product_db = await self._session.get(ProductDB, product_id)
+        if product_db:
+            await self._session.delete(product_db)

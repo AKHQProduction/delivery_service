@@ -37,5 +37,9 @@ class ProductGateway(Protocol):
         raise NotImplementedError
 
     @abstractmethod
+    async def delete(self, product_id: ProductId) -> None:
+        raise NotImplementedError
+
+    @abstractmethod
     def next_id(self) -> ProductId:
         raise NotImplementedError

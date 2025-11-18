@@ -4,6 +4,9 @@ from fastapi import Request
 from backend.application.commands.create_product import (
     CreateProductCommandHandler,
 )
+from backend.application.commands.delete_product import (
+    DeleteProductCommandHandler,
+)
 from backend.application.commands.edit_product import EditProductCommandHandler
 from backend.application.interfaces import IdentityProvider
 from backend.infrastructure.idp import TelegramIdentityProvider
@@ -18,7 +21,9 @@ class APIInteractorsProvider(Provider):
     scope = Scope.REQUEST
 
     handlers = provide_all(
-        CreateProductCommandHandler, EditProductCommandHandler
+        CreateProductCommandHandler,
+        EditProductCommandHandler,
+        DeleteProductCommandHandler,
     )
 
 

@@ -120,3 +120,30 @@ async def test_edit_one_product_fields(
 
     product = rows[0][0]
     assert product.name == new_name
+
+
+@pytest.mark.asyncio()
+async def test_delete_product(
+    http_client: AsyncClient,
+    session: AsyncSession,
+    customer_headers: Callable[[int], dict[str, Any]],
+    setup_full_test_user_with_shop,
+    setup_test_product,
+) -> None:
+    telegram_id = 1000
+    _, shop_id = await setup_full_test_user_with_shop(telegram_id=telegram_id)
+    product_id = await setup_test_product(shop_id=shop_id)
+    await session.commit()
+
+    headers = customer_headers(telegram_id)
+
+    url = BASE_URL + f"/{product_id}"
+    response = await http_client.delete(url=url, headers=headers)
+
+    assert response.status_code == status.HTTP_200_OK
+    await session.flush()
+
+    deleted_entity = await session.execute(
+        select(Product).where(Product.id == product_id)
+    )
+    assert deleted_entity.scalar_one_or_none() is None

@@ -130,3 +130,39 @@ async def test_update_product(
     assert updated_product_db.name == "Updated Product"
     assert updated_product_db.price == 200
     assert updated_product_db.category == ProductCategory.OTHER.value
+
+
+@pytest.mark.asyncio()
+async def test_delete_product(
+    product_gateway: SQLAlchemyProductGateway,
+    session: AsyncSession,
+    setup_test_product,
+    create_shop,
+) -> None:
+    shop_id = await create_shop()
+    product_id = await setup_test_product(shop_id)
+    await session.flush()
+
+    product_before = await session.execute(
+        select(Product).where(Product.id == product_id)
+    )
+    assert product_before.scalar_one() is not None
+
+    await product_gateway.delete(product_id)
+    await session.flush()
+
+    product_after = await session.execute(
+        select(Product).where(Product.id == product_id)
+    )
+    assert product_after.scalar_one_or_none() is None
+
+
+@pytest.mark.asyncio()
+async def test_delete_product_not_exists(
+    product_gateway: SQLAlchemyProductGateway,
+    session: AsyncSession,
+) -> None:
+    non_existent_product_id = ProductId(uuid.uuid4())
+
+    await product_gateway.delete(non_existent_product_id)
+    await session.flush()

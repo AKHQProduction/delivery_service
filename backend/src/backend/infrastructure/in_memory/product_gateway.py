@@ -33,5 +33,9 @@ class InMemoryProductGateway(ProductGateway):
             self.products[updated_product.product_id] = updated_product
             self.updated = True
 
+    async def delete(self, product_id: ProductId) -> None:
+        if product_id in self.products:
+            del self.products[product_id]
+
     def next_id(self) -> ProductId:
         return ProductId(UUID(str(uuid7())))
