@@ -1,6 +1,6 @@
 from backend.application.interfaces.idp import CurrentUserDTO
 from backend.application.policies import Specification
-from backend.application.vars import ShopRole
+from backend.application.vars import ShopId, ShopRole
 
 
 class IsOwner(Specification):
@@ -14,3 +14,11 @@ class IsManager(Specification):
 
 
 can_shop_manage_policy = IsOwner() | IsManager()
+
+
+class IsRelatedToShop(Specification):
+    def __init__(self, shop_id: ShopId) -> None:
+        self._shop_id = shop_id
+
+    def is_satisfied_by(self, candidate: CurrentUserDTO) -> bool:
+        return self._shop_id == candidate.shop_id

@@ -36,17 +36,87 @@ async def test_new_product_endpoint(
     assert response.status_code == status.HTTP_201_CREATED
     await session.flush()
 
-    result = await session.execute(
+    new_entity = await session.execute(
         select(Product).where(
             Product.name == name,
             Product.category == category,
             Product.price == price,
         )
     )
-    rows = result.fetchall()
+    rows = new_entity.fetchall()
     assert len(rows) == 1
 
     product = rows[0][0]
     assert product.name == name
     assert product.price == price
     assert product.category == category
+
+
+@pytest.mark.asyncio()
+async def test_edit_all_product_fields(
+    http_client: AsyncClient,
+    session: AsyncSession,
+    customer_headers: Callable[[int], dict[str, Any]],
+    setup_full_test_user_with_shop,
+    setup_test_product,
+) -> None:
+    telegram_id = 1000
+    _, shop_id = await setup_full_test_user_with_shop(telegram_id=telegram_id)
+    product_id = await setup_test_product(shop_id=shop_id)
+    await session.commit()
+
+    headers = customer_headers(telegram_id)
+    new_name = "NewName"
+    new_price = 150
+    new_category = ProductCategory.OTHER
+
+    json = {"name": new_name, "price": new_price, "category": new_category}
+    url = BASE_URL + f"/{product_id}"
+    response = await http_client.patch(url=url, headers=headers, json=json)
+
+    assert response.status_code == status.HTTP_200_OK
+    await session.flush()
+
+    updated_entity = await session.execute(
+        select(Product).where(Product.id == product_id)
+    )
+    rows = updated_entity.fetchall()
+    assert len(rows) == 1
+
+    product = rows[0][0]
+    assert product.name == new_name
+    assert product.price == new_price
+    assert product.category == new_category
+
+
+@pytest.mark.asyncio()
+async def test_edit_one_product_fields(
+    http_client: AsyncClient,
+    session: AsyncSession,
+    customer_headers: Callable[[int], dict[str, Any]],
+    setup_full_test_user_with_shop,
+    setup_test_product,
+) -> None:
+    telegram_id = 1000
+    _, shop_id = await setup_full_test_user_with_shop(telegram_id=telegram_id)
+    product_id = await setup_test_product(shop_id=shop_id)
+    await session.commit()
+
+    headers = customer_headers(telegram_id)
+    new_name = "NewName"
+
+    json = {"name": new_name}
+    url = BASE_URL + f"/{product_id}"
+    response = await http_client.patch(url=url, headers=headers, json=json)
+
+    assert response.status_code == status.HTTP_200_OK
+    await session.flush()
+
+    updated_entity = await session.execute(
+        select(Product).where(Product.id == product_id)
+    )
+    rows = updated_entity.fetchall()
+    assert len(rows) == 1
+
+    product = rows[0][0]
+    assert product.name == new_name

@@ -6,6 +6,7 @@ from backend.application.interfaces.idp import CurrentUserDTO
 from backend.application.policies.access import (
     IsManager,
     IsOwner,
+    IsRelatedToShop,
     can_shop_manage_policy,
 )
 from backend.application.vars import ShopId, ShopRole, UserId
@@ -76,3 +77,26 @@ def test_can_shop_manage_policy_return_false_if_user_not_admin() -> None:
     )
 
     assert not can_shop_manage_policy.is_satisfied_by(dto)
+
+
+def test_is_relate_to_shop_policy_return_true_if_user_from_this_shop() -> None:
+    shop_id = ShopId(uuid.uuid4())
+    dto = CurrentUserDTO(
+        user_id=UserId(uuid.uuid4()),
+        role=ShopRole.COURIER,
+        shop_id=shop_id,
+    )
+
+    assert IsRelatedToShop(shop_id).is_satisfied_by(dto)
+
+
+def test_is_relate_to_shop_return_false_if_user_from_another_shop() -> None:
+    shop_id = ShopId(uuid.uuid4())
+
+    dto = CurrentUserDTO(
+        user_id=UserId(uuid.uuid4()),
+        role=ShopRole.COURIER,
+        shop_id=ShopId(uuid.uuid4()),
+    )
+
+    assert not IsRelatedToShop(shop_id).is_satisfied_by(dto)

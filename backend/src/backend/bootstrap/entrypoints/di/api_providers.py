@@ -4,6 +4,7 @@ from fastapi import Request
 from backend.application.commands.create_product import (
     CreateProductCommandHandler,
 )
+from backend.application.commands.edit_product import EditProductCommandHandler
 from backend.application.interfaces import IdentityProvider
 from backend.infrastructure.idp import TelegramIdentityProvider
 from backend.infrastructure.persistence.gateways import (
@@ -16,7 +17,9 @@ from backend.infrastructure.telegram.auth import Headers, InitData, WebAppAuth
 class APIInteractorsProvider(Provider):
     scope = Scope.REQUEST
 
-    handlers = provide_all(CreateProductCommandHandler)
+    handlers = provide_all(
+        CreateProductCommandHandler, EditProductCommandHandler
+    )
 
 
 class WebAppProvider(Provider):

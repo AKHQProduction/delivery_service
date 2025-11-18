@@ -23,7 +23,13 @@ from sqlalchemy.ext.asyncio import (
 )
 
 from backend.application.interfaces import TransactionManager
-from backend.application.vars import ShopId, ShopRole, UserId
+from backend.application.vars import (
+    ProductCategory,
+    ProductId,
+    ShopId,
+    ShopRole,
+    UserId,
+)
 from backend.bootstrap.config import Config, PostgresConfig
 from backend.bootstrap.entrypoints.di.common import PersistenceProvider
 from backend.bootstrap.entrypoints.di.tests_providers import (
@@ -33,6 +39,7 @@ from backend.bootstrap.entrypoints.di.tests_providers import (
 )
 from backend.infrastructure.persistence.tables import (
     Base,
+    Product,
     Role,
     Shop,
     ShopMembership,
@@ -214,3 +221,22 @@ def setup_full_test_user_with_shop(
         return user_id, shop_id
 
     return _setup_user
+
+
+@pytest.fixture()
+def setup_test_product(session: AsyncSession):
+    async def _setup_test_product(shop_id: ShopId) -> ProductId:
+        product_id = ProductId(uuid.uuid4())
+        await session.execute(
+            insert(Product).values(
+                id=product_id,
+                name="Test Product",
+                price=100,
+                category=ProductCategory.WATER,
+                shop_id=shop_id,
+            )
+        )
+
+        return product_id
+
+    return _setup_test_product

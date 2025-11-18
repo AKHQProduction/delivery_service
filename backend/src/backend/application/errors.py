@@ -18,3 +18,12 @@ class AccessDeniedError(Exception):
     @property
     def message(self) -> str:
         return "Access denied to this resource"
+
+
+class EntityNotFoundError(Exception):
+    def __init__(self, entity: str) -> None:
+        self._entity = entity
+
+    @property
+    def message(self) -> str:
+        return f"{self._entity} not found"

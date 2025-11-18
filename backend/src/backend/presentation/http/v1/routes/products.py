@@ -10,8 +10,13 @@ from backend.application.commands.create_product import (
     CreateProductCommand,
     CreateProductCommandHandler,
 )
+from backend.application.commands.edit_product import (
+    EditProductCommand,
+    EditProductCommandHandler,
+)
 from backend.application.vars import ProductCategory, ProductId
 from backend.presentation.http.v1.schemas.error import ErrorSchema
+from backend.presentation.http.v1.schemas.product import EditProductSchema
 
 router = APIRouter(
     prefix="/products", tags=["Products"], route_class=DishkaRoute
@@ -51,3 +56,24 @@ async def create_new_product(
     handler: FromDishka[CreateProductCommandHandler],
 ) -> ProductId:
     return await handler.handle(body)
+
+
+@router.patch(
+    "/{product_id}",
+    status_code=status.HTTP_200_OK,
+    responses={status.HTTP_401_UNAUTHORIZED: {"model": ErrorSchema}},
+    dependencies=[Depends(HTTPBearer())],
+)
+async def update_product(
+    product_id: ProductId,
+    body: EditProductSchema,
+    handler: FromDishka[EditProductCommandHandler],
+) -> None:
+    await handler.handle(
+        EditProductCommand(
+            product_id=product_id,
+            new_name=body.name,
+            new_price=body.price,
+            new_category=body.category,
+        )
+    )
