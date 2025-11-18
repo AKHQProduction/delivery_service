@@ -225,18 +225,24 @@ def setup_full_test_user_with_shop(
 
 @pytest.fixture()
 def setup_test_product(session: AsyncSession):
-    async def _setup_test_product(shop_id: ShopId) -> ProductId:
+    async def _setup_test_product(
+        shop_id: ShopId,
+    ) -> tuple[ProductId, str, int, ProductCategory]:
         product_id = ProductId(uuid.uuid4())
+        name = "Test Product"
+        price = 100
+        category = ProductCategory.WATER
+
         await session.execute(
             insert(Product).values(
                 id=product_id,
-                name="Test Product",
-                price=100,
-                category=ProductCategory.WATER,
+                name=name,
+                price=price,
+                category=category,
                 shop_id=shop_id,
             )
         )
 
-        return product_id
+        return product_id, name, price, category
 
     return _setup_test_product

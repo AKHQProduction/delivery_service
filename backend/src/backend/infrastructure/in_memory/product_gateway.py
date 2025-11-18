@@ -6,6 +6,7 @@ from backend.application.interfaces.gateways.product_gateway import (
     CreateProductDTO,
     Product,
     ProductGateway,
+    ProductReadModel,
 )
 from backend.application.vars import ProductId
 
@@ -27,6 +28,17 @@ class InMemoryProductGateway(ProductGateway):
 
     async def load(self, product_id: ProductId) -> Product | None:
         return self.products.get(product_id)
+
+    async def read(self, product_id: ProductId) -> ProductReadModel | None:
+        product = self.products.get(product_id)
+        if product:
+            return ProductReadModel(
+                product_id=product_id,
+                name=product.name,
+                price=product.price,
+                category=product.category,
+            )
+        return None
 
     async def update(self, updated_product: Product) -> None:
         if updated_product.product_id in self.products:

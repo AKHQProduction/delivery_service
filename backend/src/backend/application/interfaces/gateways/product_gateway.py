@@ -23,6 +23,14 @@ class CreateProductDTO:
     category: ProductCategory
 
 
+@dataclass(frozen=True)
+class ProductReadModel:
+    product_id: ProductId
+    name: str
+    price: int
+    category: ProductCategory
+
+
 class ProductGateway(Protocol):
     @abstractmethod
     async def create_product(self, dto: CreateProductDTO) -> None:
@@ -38,6 +46,10 @@ class ProductGateway(Protocol):
 
     @abstractmethod
     async def delete(self, product_id: ProductId) -> None:
+        raise NotImplementedError
+
+    @abstractmethod
+    async def read(self, product_id: ProductId) -> ProductReadModel | None:
         raise NotImplementedError
 
     @abstractmethod

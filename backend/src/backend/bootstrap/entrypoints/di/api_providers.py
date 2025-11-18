@@ -9,6 +9,7 @@ from backend.application.commands.delete_product import (
 )
 from backend.application.commands.edit_product import EditProductCommandHandler
 from backend.application.interfaces import IdentityProvider
+from backend.application.queries.get_product import GetProduct
 from backend.infrastructure.idp import TelegramIdentityProvider
 from backend.infrastructure.persistence.gateways import (
     SQLAlchemyShopGateway,
@@ -24,6 +25,7 @@ class APIInteractorsProvider(Provider):
         CreateProductCommandHandler,
         EditProductCommandHandler,
         DeleteProductCommandHandler,
+        GetProduct,
     )
 
 

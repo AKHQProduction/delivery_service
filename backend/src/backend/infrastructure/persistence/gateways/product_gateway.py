@@ -8,6 +8,7 @@ from backend.application.interfaces.gateways.product_gateway import (
     CreateProductDTO,
     Product,
     ProductGateway,
+    ProductReadModel,
 )
 from backend.application.vars import ProductCategory, ProductId, ShopId
 from backend.infrastructure.persistence.tables import Product as ProductDB
@@ -58,3 +59,16 @@ class SQLAlchemyProductGateway(ProductGateway):
         product_db = await self._session.get(ProductDB, product_id)
         if product_db:
             await self._session.delete(product_db)
+
+    async def read(self, product_id: ProductId) -> ProductReadModel | None:
+        row = await self._session.get(ProductDB, product_id)
+        if row:
+            return ProductReadModel(
+                product_id=ProductId(cast("UUID", cast("object", row.id))),
+                name=cast("str", cast("object", row.name)),
+                category=ProductCategory(
+                    cast("str", cast("object", row.category))
+                ),
+                price=int(cast("int", cast("object", row.price))),
+            )
+        return None

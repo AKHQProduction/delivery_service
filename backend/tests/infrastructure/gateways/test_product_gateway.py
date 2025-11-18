@@ -77,7 +77,7 @@ async def test_load_product(
     create_shop,
 ) -> None:
     shop_id = await create_shop()
-    product_id = await setup_test_product(shop_id)
+    product_id, _, _, _ = await setup_test_product(shop_id)
     await session.flush()
 
     product = await product_gateway.load(product_id)
@@ -109,7 +109,7 @@ async def test_update_product(
     create_shop,
 ) -> None:
     shop_id = await create_shop()
-    product_id = await setup_test_product(shop_id)
+    product_id, _, _, _ = await setup_test_product(shop_id)
     await session.flush()
 
     product = await product_gateway.load(product_id)
@@ -140,7 +140,7 @@ async def test_delete_product(
     create_shop,
 ) -> None:
     shop_id = await create_shop()
-    product_id = await setup_test_product(shop_id)
+    product_id, _, _, _ = await setup_test_product(shop_id)
     await session.flush()
 
     product_before = await session.execute(
@@ -166,3 +166,34 @@ async def test_delete_product_not_exists(
 
     await product_gateway.delete(non_existent_product_id)
     await session.flush()
+
+
+@pytest.mark.asyncio()
+async def test_read_product(
+    product_gateway: SQLAlchemyProductGateway,
+    session: AsyncSession,
+    setup_test_product,
+    create_shop,
+) -> None:
+    shop_id = await create_shop()
+    product_id, _, _, _ = await setup_test_product(shop_id)
+    await session.flush()
+
+    product = await product_gateway.read(product_id)
+
+    assert product is not None
+    assert product.product_id == product_id
+    assert product.name == "Test Product"
+    assert product.price == 100
+    assert product.category == ProductCategory.WATER
+
+
+@pytest.mark.asyncio()
+async def test_read_product_returns_none_when_not_exists(
+    product_gateway: SQLAlchemyProductGateway,
+) -> None:
+    product_id = ProductId(uuid.uuid4())
+
+    product = await product_gateway.read(product_id)
+
+    assert product is None

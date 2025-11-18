@@ -62,7 +62,7 @@ async def test_edit_all_product_fields(
 ) -> None:
     telegram_id = 1000
     _, shop_id = await setup_full_test_user_with_shop(telegram_id=telegram_id)
-    product_id = await setup_test_product(shop_id=shop_id)
+    product_id, _, _, _ = await setup_test_product(shop_id=shop_id)
     await session.commit()
 
     headers = customer_headers(telegram_id)
@@ -99,7 +99,7 @@ async def test_edit_one_product_fields(
 ) -> None:
     telegram_id = 1000
     _, shop_id = await setup_full_test_user_with_shop(telegram_id=telegram_id)
-    product_id = await setup_test_product(shop_id=shop_id)
+    product_id, _, _, _ = await setup_test_product(shop_id=shop_id)
     await session.commit()
 
     headers = customer_headers(telegram_id)
@@ -132,7 +132,7 @@ async def test_delete_product(
 ) -> None:
     telegram_id = 1000
     _, shop_id = await setup_full_test_user_with_shop(telegram_id=telegram_id)
-    product_id = await setup_test_product(shop_id=shop_id)
+    product_id, _, _, _ = await setup_test_product(shop_id=shop_id)
     await session.commit()
 
     headers = customer_headers(telegram_id)
@@ -147,3 +147,32 @@ async def test_delete_product(
         select(Product).where(Product.id == product_id)
     )
     assert deleted_entity.scalar_one_or_none() is None
+
+
+@pytest.mark.asyncio()
+async def test_get_product(
+    http_client: AsyncClient,
+    session: AsyncSession,
+    customer_headers: Callable[[int], dict[str, Any]],
+    setup_full_test_user_with_shop,
+    setup_test_product,
+) -> None:
+    telegram_id = 1000
+    _, shop_id = await setup_full_test_user_with_shop(telegram_id=telegram_id)
+    product_id, name, price, category = await setup_test_product(
+        shop_id=shop_id
+    )
+    await session.commit()
+
+    headers = customer_headers(telegram_id)
+
+    url = BASE_URL + f"/{product_id}"
+    response = await http_client.get(url=url, headers=headers)
+
+    assert response.status_code == status.HTTP_200_OK
+    await session.flush()
+
+    assert response.json()["product_id"] == str(product_id)
+    assert response.json()["name"] == name
+    assert response.json()["price"] == price
+    assert response.json()["category"] == category

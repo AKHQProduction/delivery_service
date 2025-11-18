@@ -18,6 +18,10 @@ from backend.application.commands.edit_product import (
     EditProductCommand,
     EditProductCommandHandler,
 )
+from backend.application.interfaces.gateways.product_gateway import (
+    ProductReadModel,
+)
+from backend.application.queries.get_product import GetProduct
 from backend.application.vars import ProductCategory, ProductId
 from backend.presentation.http.v1.schemas.error import ErrorSchema
 from backend.presentation.http.v1.schemas.product import EditProductSchema
@@ -99,3 +103,17 @@ async def delete_product(
     product_id: ProductId, handler: FromDishka[DeleteProductCommandHandler]
 ) -> None:
     await handler.handle(DeleteProductCommand(product_id=product_id))
+
+
+@router.get(
+    "/{product_id}",
+    status_code=status.HTTP_200_OK,
+    responses={
+        status.HTTP_401_UNAUTHORIZED: {"model": ErrorSchema},
+    },
+    dependencies=[Depends(HTTPBearer())],
+)
+async def get_product(
+    product_id: ProductId, handler: FromDishka[GetProduct]
+) -> ProductReadModel:
+    return await handler.handle(product_id=product_id)
