@@ -7,6 +7,7 @@ from uuid_utils import uuid7
 from backend.application.interfaces import ShopGateway
 from backend.application.interfaces.gateways.shop_gateway import (
     CreateNewShopDTO,
+    ShopEmployee,
 )
 from backend.application.vars import ShopId, ShopRole, UserId
 from backend.infrastructure.persistence.tables import (
@@ -33,31 +34,36 @@ class SQLAlchemyShopGateway(ShopGateway):
 
         new_shop = Shop(
             id=dto.shop_id,
-            name=dto.name,
-            memberships=[ShopMembership(user_id=dto.user_id, role_id=role_id)],
+            name=dto.shop_name,
+            memberships=[
+                ShopMembership(
+                    user_id=dto.user_id, role_id=role_id, name=dto.owner_name
+                )
+            ],
         )
 
         self._session.add(new_shop)
 
-    async def role_by_user_id(self, user_id: UserId) -> ShopRole | None:
+    async def get_shop_employee(self, user_id: UserId) -> ShopEmployee | None:
         query = (
-            select(Role.name)
-            .join(ShopMembership, ShopMembership.role_id == Role.id)
+            select(Shop.id, Role.name, ShopMembership.name)
+            .join(ShopMembership, ShopMembership.shop_id == Shop.id)
+            .join(Role, Role.id == ShopMembership.role_id)
             .where(ShopMembership.user_id == user_id)
         )
-        result = await self._session.execute(query)
-        role_name = result.scalars().first()
-        return ShopRole(role_name) if role_name else None
 
-    async def shop_by_user_id(self, user_id: UserId) -> ShopId | None:
-        query = (
-            select(Shop.id)
-            .join(ShopMembership, ShopMembership.user_id == user_id)
-            .where(Shop.id == ShopMembership.shop_id)
-        )
         result = await self._session.execute(query)
-        shop_id = result.scalars().first()
-        return ShopId(shop_id) if shop_id else None
+        row = result.first()
+
+        if row:
+            shop_id, role_name, full_name = row
+            return ShopEmployee(
+                user_id=user_id,
+                shop_id=ShopId(shop_id),
+                role=ShopRole(role_name),
+                full_name=full_name,
+            )
+        return None
 
     def next_id(self) -> ShopId:
         return ShopId(UUID(str(uuid7())))

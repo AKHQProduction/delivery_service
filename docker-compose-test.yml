@@ -9,3 +9,14 @@ services:
       POSTGRES_DB: ${TEST_POSTGRES_DB}
     ports:
       - "${TEST_POSTGRES_PORT}:5432"
+
+  redis_test:
+    container_name: "water_delivery-redis_test"
+    image: redis:8-alpine
+    restart: unless-stopped
+    environment:
+      REDIS_PORT: ${TEST_REDIS_PORT}
+      REDIS_PASSWORD: ${TEST_REDIS_PASSWORD}
+    command: [ "redis-server", "--port", "${TEST_REDIS_PORT}", "--requirepass", "${TEST_REDIS_PASSWORD}" ]
+    ports:
+      - "${TEST_REDIS_PORT}:${TEST_REDIS_PORT}"

@@ -2,14 +2,23 @@ from abc import abstractmethod
 from dataclasses import dataclass
 from typing import Protocol
 
-from backend.application.vars import ShopId, UserId
+from backend.application.vars import ShopId, ShopRole, UserId
 
 
 @dataclass(frozen=True)
 class CreateNewShopDTO:
     shop_id: ShopId
-    name: str
+    shop_name: str
+    owner_name: str
     user_id: UserId
+
+
+@dataclass(frozen=True)
+class ShopEmployee:
+    user_id: UserId
+    shop_id: ShopId
+    full_name: str
+    role: ShopRole
 
 
 class ShopGateway(Protocol):
@@ -19,6 +28,10 @@ class ShopGateway(Protocol):
 
     @abstractmethod
     async def create_shop(self, dto: CreateNewShopDTO) -> None:
+        raise NotImplementedError
+
+    @abstractmethod
+    async def get_shop_employee(self, user_id: UserId) -> ShopEmployee | None:
         raise NotImplementedError
 
     @abstractmethod

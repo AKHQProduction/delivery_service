@@ -43,6 +43,7 @@ def api_container(config: Config) -> AsyncContainer:
         ConfigProvider(),
         FastapiProvider(),
         PersistenceProvider(),
+        RedisProvider(),
         WebAppProvider(),
         APIInteractorsProvider(),
         context={Config: config},

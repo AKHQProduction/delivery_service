@@ -17,6 +17,7 @@ logger = logging.getLogger(__name__)
 @dataclass(frozen=True)
 class CreateNewShopCommand:
     name: str
+    owner_full_name: str
 
 
 class CreateNewShopCommandHandler:
@@ -62,7 +63,10 @@ class CreateNewShopCommandHandler:
         )
         await self._shop_gateway.create_shop(
             CreateNewShopDTO(
-                shop_id=shop_id, name=command.name, user_id=user_id
+                shop_id=shop_id,
+                shop_name=command.name,
+                user_id=user_id,
+                owner_name=command.owner_full_name,
             )
         )
 

@@ -20,6 +20,9 @@ class InMemoryIdentityProvider(IdentityProvider):
     async def current_user(self) -> CurrentUserDTO:
         if self.user_id and self.shop_id:
             return CurrentUserDTO(
-                user_id=self.user_id, role=self.role, shop_id=self.shop_id
+                user_id=self.user_id,
+                role=self.role,
+                shop_id=self.shop_id,
+                full_name="Test Name",
             )
         raise AuthorizationError

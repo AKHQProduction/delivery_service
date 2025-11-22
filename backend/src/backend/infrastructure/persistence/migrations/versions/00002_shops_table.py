@@ -27,12 +27,14 @@ def upgrade() -> None:
     )
 
     # Insert default roles
-    op.execute("""
-        INSERT INTO roles (name) VALUES
-        ('OWNER'),
-        ('MANAGER'),
-        ('COURIER')
-    """)
+    op.execute(
+        """
+                INSERT INTO roles (name) VALUES
+                ('OWNER'),
+                ('MANAGER'),
+                ('COURIER')
+            """
+    )
 
     op.create_table(
         "shops",
@@ -55,6 +57,7 @@ def upgrade() -> None:
     op.create_table(
         "shop_memberships",
         sa.Column("id", sa.Integer(), autoincrement=True, nullable=False),
+        sa.Column("name", sa.String(), nullable=False),
         sa.Column("user_id", sa.UUID(), nullable=False),
         sa.Column("shop_id", sa.UUID(), nullable=False),
         sa.Column("role_id", sa.Integer(), nullable=False),

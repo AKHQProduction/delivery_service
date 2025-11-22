@@ -15,6 +15,7 @@ from dishka import (
     provide,
 )
 from dotenv import load_dotenv
+from redis.asyncio import Redis
 from sqlalchemy import insert
 from sqlalchemy.ext.asyncio import (
     AsyncSession,
@@ -30,10 +31,14 @@ from backend.application.vars import (
     ShopRole,
     UserId,
 )
-from backend.bootstrap.config import Config, PostgresConfig
-from backend.bootstrap.entrypoints.di.common import PersistenceProvider
+from backend.bootstrap.config import Config, PostgresConfig, RedisConfig
+from backend.bootstrap.entrypoints.di.common import (
+    PersistenceProvider,
+    RedisProvider,
+)
 from backend.bootstrap.entrypoints.di.tests_providers import (
     MockAPIInteractorsProvider,
+    MockAdaptersProvider,
     MockConfigProvider,
     MockWebAppProvider,
 )
@@ -46,6 +51,28 @@ from backend.infrastructure.persistence.tables import (
     TelegramAccount,
     User,
 )
+
+
+@pytest.fixture(scope="session")
+def redis_config() -> RedisConfig:
+    load_dotenv()
+
+    return RedisConfig(
+        REDIS_HOST=cast("str", os.getenv("TEST_REDIS_HOST")),
+        REDIS_PORT=int(cast("str", os.getenv("TEST_REDIS_PORT"))),
+        REDIS_PASSWORD=cast("str", os.getenv("TEST_REDIS_PASSWORD")),
+    )
+
+
+@pytest_asyncio.fixture()
+async def redis_client(
+    redis_config: RedisConfig,
+) -> AsyncGenerator[Redis, None]:
+    async with Redis.from_url(redis_config.persistence_uri) as redis:
+        yield redis
+
+        # Cleanup
+        await redis.flushdb()
 
 
 @pytest.fixture(scope="session")
@@ -110,16 +137,20 @@ def mock_session_provider(session: AsyncSession) -> Provider:
 @pytest.fixture()
 def make_container(
     postgres_config: PostgresConfig,
+    redis_config: RedisConfig,
     mock_session_provider: Provider,
 ) -> Callable[[Config], AsyncContainer]:
     def _container(config: Config) -> AsyncContainer:
         config.postgres_config = postgres_config
+        config.redis_config = redis_config
 
         return make_async_container(
             mock_session_provider,
             MockConfigProvider(),
             MockWebAppProvider(),
             MockAPIInteractorsProvider(),
+            MockAdaptersProvider(),
+            RedisProvider(),
             context={Config: config},
         )
 
@@ -185,10 +216,11 @@ def create_shop_membership(session: AsyncSession):
         user_id: UserId,
         shop_id: ShopId,
         role_id: int = 1,
+        name: str = "Test User",
     ) -> None:
         await session.execute(
             insert(ShopMembership).values(
-                user_id=user_id, shop_id=shop_id, role_id=role_id
+                user_id=user_id, shop_id=shop_id, role_id=role_id, name=name
             )
         )
 

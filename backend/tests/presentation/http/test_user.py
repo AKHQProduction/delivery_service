@@ -41,6 +41,7 @@ async def test_me_return_correct_id_and_role(
     assert response.status_code == status.HTTP_200_OK
     assert response.json() == {
         "user_id": str(user_id),
+        "full_name": "Test User",
         "role": role.value,
         "shop_id": str(shop_id),
     }
