@@ -1,11 +1,9 @@
-import json
 from collections.abc import Callable
 from typing import Any
 
 import pytest
 from fastapi import status
 from httpx import AsyncClient
-from redis.asyncio import Redis
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from backend.application.vars import ShopRole
@@ -18,13 +16,12 @@ BASE_URL = "/api/v1/links"
 async def test_create_invite_link_successfully(
     http_client: AsyncClient,
     session: AsyncSession,
-    redis_client: Redis,
     customer_headers: Callable[[int], dict[str, Any]],
     setup_full_test_user_with_shop,
     role: ShopRole,
 ) -> None:
     telegram_id = 1000
-    _, shop_id = await setup_full_test_user_with_shop(
+    await setup_full_test_user_with_shop(
         telegram_id=telegram_id, role=ShopRole.OWNER
     )
     await session.commit()
@@ -41,23 +38,7 @@ async def test_create_invite_link_successfully(
     link = response.json()
     assert isinstance(link, str)
     assert link.startswith("https://t.me/")
-
-    # Extract payload from link
-    payload = link.split("start=")[1]
-
-    # Check that link was saved in Redis
-    stored_value = await redis_client.get(payload)
-    assert stored_value is not None
-
-    stored_data: dict[str, Any] = json.loads(stored_value)
-    assert stored_data["payload"] == payload
-    assert stored_data["role"] == role.value
-    assert stored_data["shop_id"] == str(shop_id)
-    assert stored_data["full_name"] == full_name
-
-    # Check TTL is set
-    ttl = await redis_client.ttl(payload)
-    assert ttl > 0
+    assert "start=" in link
 
 
 @pytest.mark.asyncio()

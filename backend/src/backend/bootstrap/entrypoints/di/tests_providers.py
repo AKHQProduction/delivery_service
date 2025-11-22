@@ -25,9 +25,7 @@ class FakeInviteLinkGenerator(InviteLinkGenerator):
 
 
 class MockAdaptersProvider(AdaptersProvider):
-    @provide
-    def link_generator(self) -> InviteLinkGenerator:
-        return FakeInviteLinkGenerator()
+    pass
 
 
 class MockAPIInteractorsProvider(APIInteractorsProvider):

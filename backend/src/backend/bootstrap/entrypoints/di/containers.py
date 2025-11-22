@@ -7,6 +7,7 @@ from dishka.integrations.fastapi import FastapiProvider
 from backend.bootstrap.config import Config
 from backend.bootstrap.entrypoints.di.api_providers import (
     APIInteractorsProvider,
+    AdaptersProvider,
     WebAppProvider,
 )
 from backend.bootstrap.entrypoints.di.bot_providers import (
@@ -46,5 +47,6 @@ def api_container(config: Config) -> AsyncContainer:
         RedisProvider(),
         WebAppProvider(),
         APIInteractorsProvider(),
+        AdaptersProvider(),
         context={Config: config},
     )

@@ -56,8 +56,8 @@ BEGIN
     INSERT INTO users (id) VALUES (owner_user_id);
     INSERT INTO telegram_accounts (user_id, telegram_id, full_name)
     VALUES (owner_user_id, 1000, 'Owner User');
-    INSERT INTO shop_memberships (user_id, shop_id, role_id)
-    VALUES (owner_user_id, shop_id, owner_role_id);
+    INSERT INTO shop_memberships (user_id, shop_id, role_id, name)
+    VALUES (owner_user_id, shop_id, owner_role_id, 'Owner User');
     RAISE NOTICE 'Создан Owner User (telegram_id: 1000)';
   ELSE
     RAISE NOTICE 'Owner User (telegram_id: 1000) уже существует';
@@ -69,8 +69,8 @@ BEGIN
     INSERT INTO users (id) VALUES (manager_user_id);
     INSERT INTO telegram_accounts (user_id, telegram_id, full_name)
     VALUES (manager_user_id, 2000, 'Manager User');
-    INSERT INTO shop_memberships (user_id, shop_id, role_id)
-    VALUES (manager_user_id, shop_id, manager_role_id);
+    INSERT INTO shop_memberships (user_id, shop_id, role_id, name)
+    VALUES (manager_user_id, shop_id, manager_role_id, 'Manager User');
     RAISE NOTICE 'Создан Manager User (telegram_id: 2000)';
   ELSE
     RAISE NOTICE 'Manager User (telegram_id: 2000) уже существует';
@@ -82,8 +82,8 @@ BEGIN
     INSERT INTO users (id) VALUES (courier_user_id);
     INSERT INTO telegram_accounts (user_id, telegram_id, full_name)
     VALUES (courier_user_id, 3000, 'Courier User');
-    INSERT INTO shop_memberships (user_id, shop_id, role_id)
-    VALUES (courier_user_id, shop_id, courier_role_id);
+    INSERT INTO shop_memberships (user_id, shop_id, role_id, name)
+    VALUES (courier_user_id, shop_id, courier_role_id, 'Courier User');
     RAISE NOTICE 'Создан Courier User (telegram_id: 3000)';
   ELSE
     RAISE NOTICE 'Courier User (telegram_id: 3000) уже существует';
