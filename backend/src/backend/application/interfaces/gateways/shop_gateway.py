@@ -13,7 +13,7 @@ class CreateNewShopDTO:
     user_id: UserId
 
 
-@dataclass(frozen=True)
+@dataclass  # Like entity
 class ShopEmployee:
     user_id: UserId
     shop_id: ShopId
@@ -36,6 +36,10 @@ class ShopGateway(Protocol):
 
     @abstractmethod
     async def add_employee(self, employee: ShopEmployee) -> None:
+        raise NotImplementedError
+
+    @abstractmethod
+    async def update_employee(self, updated_employee: ShopEmployee) -> None:
         raise NotImplementedError
 
     @abstractmethod

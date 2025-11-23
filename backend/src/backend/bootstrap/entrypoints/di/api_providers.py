@@ -8,6 +8,7 @@ from dishka import (
 )
 from fastapi import Request
 
+from backend.application.commands import EditEmployeeCommandHandler
 from backend.application.commands.create_product import (
     CreateProductCommandHandler,
 )
@@ -47,6 +48,7 @@ class APIInteractorsProvider(Provider):
         DeleteProductCommandHandler,
         GetProductQueryHandler,
         GetProductsQueryHandler,
+        EditEmployeeCommandHandler,
     )
 
     add_employee = provide_all(GenerateInviteLinkCommandHandler)

@@ -187,3 +187,211 @@ async def test_save_new_employee(
     assert employee.user_id == user_id
     assert employee.name == employee_name
     assert employee.shop_id == shop_id
+
+
+@pytest.mark.parametrize(
+    ("initial_role", "updated_role"),
+    (
+        (ShopRole.MANAGER, ShopRole.COURIER),
+        (ShopRole.COURIER, ShopRole.MANAGER),
+        (ShopRole.OWNER, ShopRole.MANAGER),
+    ),
+)
+@pytest.mark.asyncio()
+async def test_update_employee_role_and_name(
+    session: AsyncSession,
+    create_role,
+    create_user,
+    create_shop,
+    create_shop_membership,
+    shop_gateway: SQLAlchemyShopGateway,
+    initial_role: ShopRole,
+    updated_role: ShopRole,
+) -> None:
+    user_id = UserId(uuid.uuid4())
+    initial_name = "John Doe"
+    updated_name = "Jane Smith"
+
+    await create_user(user_id=user_id)
+    shop_id = await create_shop()
+    initial_role_id = await create_role(name=initial_role)
+    updated_role_id = await create_role(
+        role_id=initial_role_id + 1, name=updated_role
+    )
+    await create_shop_membership(
+        user_id=user_id,
+        shop_id=shop_id,
+        role_id=initial_role_id,
+        name=initial_name,
+    )
+    await session.flush()
+
+    await shop_gateway.update_employee(
+        ShopEmployee(
+            user_id=user_id,
+            shop_id=shop_id,
+            full_name=updated_name,
+            role=updated_role,
+        )
+    )
+    await session.flush()
+
+    result = await session.execute(
+        select(ShopMembership).where(ShopMembership.user_id == user_id)
+    )
+    rows = result.fetchall()
+    assert len(rows) == 1
+    employee: ShopMembership = rows[0][0]
+    assert employee.user_id == user_id
+    assert employee.name == updated_name
+    assert employee.role_id == updated_role_id
+    assert employee.shop_id == shop_id
+
+
+@pytest.mark.asyncio()
+async def test_update_employee_name_only(
+    session: AsyncSession,
+    create_role,
+    create_user,
+    create_shop,
+    create_shop_membership,
+    shop_gateway: SQLAlchemyShopGateway,
+) -> None:
+    user_id = UserId(uuid.uuid4())
+    initial_name = "John Doe"
+    updated_name = "John Smith"
+    role = ShopRole.MANAGER
+
+    await create_user(user_id=user_id)
+    shop_id = await create_shop()
+    role_id = await create_role(name=role)
+    await create_shop_membership(
+        user_id=user_id, shop_id=shop_id, role_id=role_id, name=initial_name
+    )
+    await session.flush()
+
+    await shop_gateway.update_employee(
+        ShopEmployee(
+            user_id=user_id,
+            shop_id=shop_id,
+            full_name=updated_name,
+            role=role,
+        )
+    )
+    await session.flush()
+
+    result = await session.execute(
+        select(ShopMembership).where(ShopMembership.user_id == user_id)
+    )
+    rows = result.fetchall()
+    assert len(rows) == 1
+    employee: ShopMembership = rows[0][0]
+    assert employee.name == updated_name
+    assert employee.role_id == role_id
+
+
+@pytest.mark.asyncio()
+async def test_update_employee_role_only(
+    session: AsyncSession,
+    create_role,
+    create_user,
+    create_shop,
+    create_shop_membership,
+    shop_gateway: SQLAlchemyShopGateway,
+) -> None:
+    user_id = UserId(uuid.uuid4())
+    employee_name = "John Doe"
+    initial_role = ShopRole.COURIER
+    updated_role = ShopRole.MANAGER
+
+    await create_user(user_id=user_id)
+    shop_id = await create_shop()
+    initial_role_id = await create_role(name=initial_role)
+    updated_role_id = await create_role(
+        role_id=initial_role_id + 1, name=updated_role
+    )
+    await create_shop_membership(
+        user_id=user_id,
+        shop_id=shop_id,
+        role_id=initial_role_id,
+        name=employee_name,
+    )
+    await session.flush()
+
+    await shop_gateway.update_employee(
+        ShopEmployee(
+            user_id=user_id,
+            shop_id=shop_id,
+            full_name=employee_name,
+            role=updated_role,
+        )
+    )
+    await session.flush()
+
+    result = await session.execute(
+        select(ShopMembership).where(ShopMembership.user_id == user_id)
+    )
+    rows = result.fetchall()
+    assert len(rows) == 1
+    employee: ShopMembership = rows[0][0]
+    assert employee.name == employee_name
+    assert employee.role_id == updated_role_id
+
+
+@pytest.mark.asyncio()
+async def test_update_employee_updates_only_specific_user(
+    session: AsyncSession,
+    create_role,
+    create_user,
+    create_shop,
+    create_shop_membership,
+    shop_gateway: SQLAlchemyShopGateway,
+) -> None:
+    user_id_1 = UserId(uuid.uuid4())
+    user_id_2 = UserId(uuid.uuid4())
+    initial_name_1 = "John Doe"
+    initial_name_2 = "Jane Smith"
+    updated_name = "John Updated"
+    role = ShopRole.MANAGER
+
+    await create_user(user_id=user_id_1)
+    await create_user(user_id=user_id_2)
+    shop_id = await create_shop()
+    role_id = await create_role(name=role)
+    await create_shop_membership(
+        user_id=user_id_1,
+        shop_id=shop_id,
+        role_id=role_id,
+        name=initial_name_1,
+    )
+    await create_shop_membership(
+        user_id=user_id_2,
+        shop_id=shop_id,
+        role_id=role_id,
+        name=initial_name_2,
+    )
+    await session.flush()
+
+    await shop_gateway.update_employee(
+        ShopEmployee(
+            user_id=user_id_1,
+            shop_id=shop_id,
+            full_name=updated_name,
+            role=role,
+        )
+    )
+    await session.flush()
+
+    # Check first user was updated
+    result_1 = await session.execute(
+        select(ShopMembership).where(ShopMembership.user_id == user_id_1)
+    )
+    employee_1: ShopMembership = result_1.scalar_one()
+    assert employee_1.name == updated_name
+
+    # Check second user was not affected
+    result_2 = await session.execute(
+        select(ShopMembership).where(ShopMembership.user_id == user_id_2)
+    )
+    employee_2: ShopMembership = result_2.scalar_one()
+    assert employee_2.name == initial_name_2

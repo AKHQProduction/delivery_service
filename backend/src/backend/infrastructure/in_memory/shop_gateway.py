@@ -19,6 +19,7 @@ class InMemoryShopGateway(ShopGateway):
         self.shops: dict[ShopId, Any] = {}
         self.shop_id = shop_id
         self.employees: dict[UserId, ShopEmployee] = {}
+        self.employee_updated = False
 
     async def relate_to_shop(self, user_id: UserId) -> bool:
         return user_id in self.linked_users
@@ -38,6 +39,9 @@ class InMemoryShopGateway(ShopGateway):
 
     async def add_employee(self, employee: ShopEmployee) -> None:
         self.employees[employee.user_id] = employee
+
+    async def update_employee(self, updated_employee: ShopEmployee) -> None:
+        self.employee_updated = True
 
     def next_id(self) -> ShopId:
         return self.shop_id or ShopId(uuid.uuid4())

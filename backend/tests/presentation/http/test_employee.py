@@ -1,0 +1,371 @@
+import uuid
+from collections.abc import Callable
+from typing import Any
+
+import pytest
+from fastapi import status
+from httpx import AsyncClient
+from sqlalchemy import select
+from sqlalchemy.ext.asyncio import AsyncSession
+
+from backend.application.vars import ShopRole, UserId
+from backend.infrastructure.persistence.tables import ShopMembership
+
+BASE_URL = "/api/v1/employee"
+
+
+@pytest.mark.asyncio()
+async def test_update_employee_role_successfully(
+    http_client: AsyncClient,
+    session: AsyncSession,
+    customer_headers: Callable[[int], dict[str, Any]],
+    setup_full_test_user_with_shop,
+    create_user,
+    create_shop_membership,
+    create_role,
+) -> None:
+    owner_telegram_id = 1000
+    _, shop_id = await setup_full_test_user_with_shop(
+        telegram_id=owner_telegram_id, role=ShopRole.OWNER
+    )
+
+    # Create an employee
+    employee_user_id = UserId(uuid.uuid4())
+    await create_user(user_id=employee_user_id)
+    courier_role_id = await create_role(role_id=10, name=ShopRole.COURIER)
+    manager_role_id = await create_role(role_id=11, name=ShopRole.MANAGER)
+    await create_shop_membership(
+        user_id=employee_user_id,
+        shop_id=shop_id,
+        role_id=courier_role_id,
+        name="John Doe",
+    )
+    await session.commit()
+
+    headers = customer_headers(owner_telegram_id)
+    json_data = {"role": ShopRole.MANAGER.value}
+
+    response = await http_client.patch(
+        url=f"{BASE_URL}/{employee_user_id}", headers=headers, json=json_data
+    )
+
+    assert response.status_code == status.HTTP_200_OK
+
+    # Verify the update in database
+    await session.flush()
+    result = await session.execute(
+        select(ShopMembership).where(
+            ShopMembership.user_id == employee_user_id
+        )
+    )
+    membership = result.scalar_one()
+    assert membership.role_id == manager_role_id
+
+
+@pytest.mark.asyncio()
+async def test_update_employee_name_successfully(
+    http_client: AsyncClient,
+    session: AsyncSession,
+    customer_headers: Callable[[int], dict[str, Any]],
+    setup_full_test_user_with_shop,
+    create_user,
+    create_shop_membership,
+    create_role,
+) -> None:
+    owner_telegram_id = 2000
+    _, shop_id = await setup_full_test_user_with_shop(
+        telegram_id=owner_telegram_id, role=ShopRole.OWNER
+    )
+
+    # Create an employee
+    employee_user_id = UserId(uuid.uuid4())
+    await create_user(user_id=employee_user_id)
+    manager_role_id = await create_role(role_id=20, name=ShopRole.MANAGER)
+    await create_shop_membership(
+        user_id=employee_user_id,
+        shop_id=shop_id,
+        role_id=manager_role_id,
+        name="John Doe",
+    )
+    await session.commit()
+
+    headers = customer_headers(owner_telegram_id)
+    new_name = "Jane Smith"
+    json_data = {"name": new_name}
+
+    response = await http_client.patch(
+        url=f"{BASE_URL}/{employee_user_id}", headers=headers, json=json_data
+    )
+
+    assert response.status_code == status.HTTP_200_OK
+
+    # Verify the update in database
+    await session.flush()
+    result = await session.execute(
+        select(ShopMembership).where(
+            ShopMembership.user_id == employee_user_id
+        )
+    )
+    membership = result.scalar_one()
+    assert membership.name == new_name
+
+
+@pytest.mark.asyncio()
+async def test_update_employee_both_role_and_name(
+    http_client: AsyncClient,
+    session: AsyncSession,
+    customer_headers: Callable[[int], dict[str, Any]],
+    setup_full_test_user_with_shop,
+    create_user,
+    create_shop_membership,
+    create_role,
+) -> None:
+    owner_telegram_id = 3000
+    _, shop_id = await setup_full_test_user_with_shop(
+        telegram_id=owner_telegram_id, role=ShopRole.OWNER
+    )
+
+    # Create an employee
+    employee_user_id = UserId(uuid.uuid4())
+    await create_user(user_id=employee_user_id)
+    courier_role_id = await create_role(role_id=30, name=ShopRole.COURIER)
+    manager_role_id = await create_role(role_id=31, name=ShopRole.MANAGER)
+    await create_shop_membership(
+        user_id=employee_user_id,
+        shop_id=shop_id,
+        role_id=courier_role_id,
+        name="John Doe",
+    )
+    await session.commit()
+
+    headers = customer_headers(owner_telegram_id)
+    new_name = "Jane Smith"
+    json_data = {"role": ShopRole.MANAGER.value, "name": new_name}
+
+    response = await http_client.patch(
+        url=f"{BASE_URL}/{employee_user_id}", headers=headers, json=json_data
+    )
+
+    assert response.status_code == status.HTTP_200_OK
+
+    # Verify the update in database
+    await session.flush()
+    result = await session.execute(
+        select(ShopMembership).where(
+            ShopMembership.user_id == employee_user_id
+        )
+    )
+    membership = result.scalar_one()
+    assert membership.role_id == manager_role_id
+    assert membership.name == new_name
+
+
+@pytest.mark.asyncio()
+async def test_update_employee_denied_for_manager(
+    http_client: AsyncClient,
+    session: AsyncSession,
+    customer_headers: Callable[[int], dict[str, Any]],
+    setup_full_test_user_with_shop,
+    create_user,
+    create_shop_membership,
+    create_role,
+) -> None:
+    manager_telegram_id = 4000
+    _, shop_id = await setup_full_test_user_with_shop(
+        telegram_id=manager_telegram_id, role=ShopRole.MANAGER
+    )
+
+    # Create an employee
+    employee_user_id = UserId(uuid.uuid4())
+    await create_user(user_id=employee_user_id)
+    courier_role_id = await create_role(role_id=40, name=ShopRole.COURIER)
+    await create_shop_membership(
+        user_id=employee_user_id,
+        shop_id=shop_id,
+        role_id=courier_role_id,
+        name="John Doe",
+    )
+    await session.commit()
+
+    headers = customer_headers(manager_telegram_id)
+    json_data = {"role": ShopRole.MANAGER.value}
+
+    response = await http_client.patch(
+        url=f"{BASE_URL}/{employee_user_id}", headers=headers, json=json_data
+    )
+
+    assert response.status_code == status.HTTP_403_FORBIDDEN
+
+
+@pytest.mark.asyncio()
+async def test_update_employee_denied_for_courier(
+    http_client: AsyncClient,
+    session: AsyncSession,
+    customer_headers: Callable[[int], dict[str, Any]],
+    setup_full_test_user_with_shop,
+    create_user,
+    create_shop_membership,
+    create_role,
+) -> None:
+    courier_telegram_id = 5000
+    _, shop_id = await setup_full_test_user_with_shop(
+        telegram_id=courier_telegram_id, role=ShopRole.COURIER
+    )
+
+    # Create an employee
+    employee_user_id = UserId(uuid.uuid4())
+    await create_user(user_id=employee_user_id)
+    manager_role_id = await create_role(role_id=50, name=ShopRole.MANAGER)
+    await create_shop_membership(
+        user_id=employee_user_id,
+        shop_id=shop_id,
+        role_id=manager_role_id,
+        name="John Doe",
+    )
+    await session.commit()
+
+    headers = customer_headers(courier_telegram_id)
+    json_data = {"name": "Jane Smith"}
+
+    response = await http_client.patch(
+        url=f"{BASE_URL}/{employee_user_id}", headers=headers, json=json_data
+    )
+
+    assert response.status_code == status.HTTP_403_FORBIDDEN
+
+
+@pytest.mark.asyncio()
+async def test_update_employee_validation_error_for_owner_role(
+    http_client: AsyncClient,
+    session: AsyncSession,
+    customer_headers: Callable[[int], dict[str, Any]],
+    setup_full_test_user_with_shop,
+    create_user,
+    create_shop_membership,
+    create_role,
+) -> None:
+    owner_telegram_id = 6000
+    _, shop_id = await setup_full_test_user_with_shop(
+        telegram_id=owner_telegram_id, role=ShopRole.OWNER
+    )
+
+    # Create an employee
+    employee_user_id = UserId(uuid.uuid4())
+    await create_user(user_id=employee_user_id)
+    manager_role_id = await create_role(role_id=60, name=ShopRole.MANAGER)
+    await create_shop_membership(
+        user_id=employee_user_id,
+        shop_id=shop_id,
+        role_id=manager_role_id,
+        name="John Doe",
+    )
+    await session.commit()
+
+    headers = customer_headers(owner_telegram_id)
+    json_data = {"role": ShopRole.OWNER.value}
+
+    response = await http_client.patch(
+        url=f"{BASE_URL}/{employee_user_id}", headers=headers, json=json_data
+    )
+
+    assert response.status_code == status.HTTP_422_UNPROCESSABLE_CONTENT
+
+
+@pytest.mark.asyncio()
+async def test_update_employee_not_found(
+    http_client: AsyncClient,
+    session: AsyncSession,
+    customer_headers: Callable[[int], dict[str, Any]],
+    setup_full_test_user_with_shop,
+) -> None:
+    owner_telegram_id = 7000
+    await setup_full_test_user_with_shop(
+        telegram_id=owner_telegram_id, role=ShopRole.OWNER
+    )
+    await session.commit()
+
+    headers = customer_headers(owner_telegram_id)
+    non_existent_user_id = UserId(uuid.uuid4())
+    json_data = {"role": ShopRole.MANAGER.value}
+
+    response = await http_client.patch(
+        url=f"{BASE_URL}/{non_existent_user_id}",
+        headers=headers,
+        json=json_data,
+    )
+
+    assert response.status_code == status.HTTP_404_NOT_FOUND
+
+
+@pytest.mark.asyncio()
+async def test_update_employee_from_different_shop_denied(
+    http_client: AsyncClient,
+    session: AsyncSession,
+    customer_headers: Callable[[int], dict[str, Any]],
+    setup_full_test_user_with_shop,
+    create_user,
+    create_shop,
+    create_shop_membership,
+    create_role,
+) -> None:
+    owner_telegram_id = 8000
+    _, _ = await setup_full_test_user_with_shop(
+        telegram_id=owner_telegram_id, role=ShopRole.OWNER
+    )
+
+    # Create employee in a different shop
+    shop_id_2 = await create_shop(name="Another Shop")
+    employee_user_id = UserId(uuid.uuid4())
+    await create_user(user_id=employee_user_id)
+    manager_role_id = await create_role(role_id=80, name=ShopRole.MANAGER)
+    await create_shop_membership(
+        user_id=employee_user_id,
+        shop_id=shop_id_2,
+        role_id=manager_role_id,
+        name="John Doe",
+    )
+    await session.commit()
+
+    headers = customer_headers(owner_telegram_id)
+    json_data = {"name": "Jane Smith"}
+
+    response = await http_client.patch(
+        url=f"{BASE_URL}/{employee_user_id}", headers=headers, json=json_data
+    )
+
+    assert response.status_code == status.HTTP_403_FORBIDDEN
+
+
+@pytest.mark.asyncio()
+async def test_update_employee_unauthorized_without_token(
+    http_client: AsyncClient,
+    session: AsyncSession,
+    setup_full_test_user_with_shop,
+    create_user,
+    create_shop_membership,
+    create_role,
+) -> None:
+    owner_telegram_id = 9000
+    _, shop_id = await setup_full_test_user_with_shop(
+        telegram_id=owner_telegram_id, role=ShopRole.OWNER
+    )
+
+    # Create an employee
+    employee_user_id = UserId(uuid.uuid4())
+    await create_user(user_id=employee_user_id)
+    courier_role_id = await create_role(role_id=90, name=ShopRole.COURIER)
+    await create_shop_membership(
+        user_id=employee_user_id,
+        shop_id=shop_id,
+        role_id=courier_role_id,
+        name="John Doe",
+    )
+    await session.commit()
+
+    json_data = {"role": ShopRole.MANAGER.value}
+
+    response = await http_client.patch(
+        url=f"{BASE_URL}/{employee_user_id}", json=json_data
+    )
+
+    assert response.status_code == status.HTTP_403_FORBIDDEN

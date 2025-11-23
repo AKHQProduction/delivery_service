@@ -1,6 +1,6 @@
 from uuid import UUID
 
-from sqlalchemy import exists, select
+from sqlalchemy import exists, select, update
 from sqlalchemy.ext.asyncio import AsyncSession
 from uuid_utils import uuid7
 
@@ -78,6 +78,19 @@ class SQLAlchemyShopGateway(ShopGateway):
                 role_id=role_id,
             )
         )
+
+    async def update_employee(self, updated_employee: ShopEmployee) -> None:
+        role_query = select(Role.id).where(Role.name == updated_employee.role)
+        role_result = await self._session.execute(role_query)
+        role_id = role_result.scalar_one()
+
+        query = (
+            update(ShopMembership)
+            .where(ShopMembership.user_id == updated_employee.user_id)
+            .values(name=updated_employee.full_name, role_id=role_id)
+        )
+
+        await self._session.execute(query)
 
     def next_id(self) -> ShopId:
         return ShopId(UUID(str(uuid7())))

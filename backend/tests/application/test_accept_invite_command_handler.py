@@ -153,7 +153,7 @@ async def test_accept_invite_raises_error_when_link_not_found(
     with pytest.raises(EntityNotFoundError) as exc_info:
         await handler.handle(command)
 
-    assert "Invite link" in str(exc_info.value)
+    assert "Invite link" in exc_info.value.message
 
 
 @pytest.mark.asyncio()
