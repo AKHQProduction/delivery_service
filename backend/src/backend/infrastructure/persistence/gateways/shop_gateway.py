@@ -1,12 +1,16 @@
+from typing import cast
 from uuid import UUID
 
-from sqlalchemy import delete, exists, select, update
+from sqlalchemy import asc, delete, desc, exists, select, update
 from sqlalchemy.ext.asyncio import AsyncSession
 from uuid_utils import uuid7
 
 from backend.application.interfaces import ShopGateway
+from backend.application.interfaces.gateways import Pagination, SortOrder
 from backend.application.interfaces.gateways.shop_gateway import (
     CreateNewShopDTO,
+    EmployeeFilters,
+    EmployeeReadModel,
     ShopEmployee,
 )
 from backend.application.vars import ShopId, ShopRole, UserId
@@ -95,6 +99,56 @@ class SQLAlchemyShopGateway(ShopGateway):
     async def delete_employee(self, user_id: UserId) -> None:
         query = delete(ShopMembership).where(ShopMembership.user_id == user_id)
         await self._session.execute(query)
+
+    async def read_employee(self, user_id: UserId) -> EmployeeReadModel | None:
+        query = (
+            select(ShopMembership.name, Role.name)
+            .join(Role, Role.id == ShopMembership.role_id)
+            .where(ShopMembership.user_id == user_id)
+        )
+
+        result = await self._session.execute(query)
+        row = result.first()
+
+        if row:
+            full_name, role_name = row
+            return EmployeeReadModel(
+                user_id=user_id,
+                full_name=cast("str", full_name),
+                role=ShopRole(cast("str", role_name)),
+            )
+        return None
+
+    async def read_all_employees(
+        self, filters: EmployeeFilters, pagination: Pagination
+    ) -> list[EmployeeReadModel]:
+        query = select(
+            ShopMembership.user_id, ShopMembership.name, Role.name
+        ).join(Role, Role.id == ShopMembership.role_id)
+
+        if filters.shop_id:
+            query = query.where(ShopMembership.shop_id == filters.shop_id)
+        if filters.name:
+            query = query.where(ShopMembership.name.ilike(f"%{filters.name}%"))
+
+        if pagination.order == SortOrder.ASC:
+            query = query.order_by(asc(ShopMembership.name))
+        else:
+            query = query.order_by(desc(ShopMembership.name))
+
+        query = query.offset(pagination.offset).limit(pagination.limit)
+
+        result = await self._session.execute(query)
+        rows = result.all()
+
+        return [
+            EmployeeReadModel(
+                user_id=UserId(cast("UUID", row[0])),
+                full_name=cast("str", row[1]),
+                role=ShopRole(cast("str", row[2])),
+            )
+            for row in rows
+        ]
 
     def next_id(self) -> ShopId:
         return ShopId(UUID(str(uuid7())))

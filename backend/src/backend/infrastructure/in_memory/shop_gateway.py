@@ -2,8 +2,11 @@ import uuid
 from typing import Any
 
 from backend.application.interfaces import ShopGateway
+from backend.application.interfaces.gateways import Pagination, SortOrder
 from backend.application.interfaces.gateways.shop_gateway import (
     CreateNewShopDTO,
+    EmployeeFilters,
+    EmployeeReadModel,
     ShopEmployee,
 )
 from backend.application.vars import ShopId, ShopRole, UserId
@@ -48,6 +51,52 @@ class InMemoryShopGateway(ShopGateway):
             del self.employees[user_id]
         if user_id in self.linked_users:
             self.linked_users.remove(user_id)
+
+    async def read_employee(self, user_id: UserId) -> EmployeeReadModel | None:
+        employee = self.employees.get(user_id)
+        if employee:
+            return EmployeeReadModel(
+                user_id=employee.user_id,
+                full_name=employee.full_name,
+                role=employee.role,
+            )
+        return None
+
+    async def read_all_employees(
+        self, filters: EmployeeFilters, pagination: Pagination
+    ) -> list[EmployeeReadModel]:
+        employees = list(self.employees.values())
+
+        # Apply filters
+        if filters.shop_id:
+            employees = [e for e in employees if e.shop_id == filters.shop_id]
+        if filters.name:
+            employees = [
+                e
+                for e in employees
+                if filters.name.lower() in e.full_name.lower()
+            ]
+
+        # Sort
+        employees = sorted(
+            employees,
+            key=lambda e: e.full_name,
+            reverse=(pagination.order == SortOrder.DESC),
+        )
+
+        # Pagination
+        start = pagination.offset
+        end = start + pagination.limit
+        employees = employees[start:end]
+
+        return [
+            EmployeeReadModel(
+                user_id=e.user_id,
+                full_name=e.full_name,
+                role=e.role,
+            )
+            for e in employees
+        ]
 
     def next_id(self) -> ShopId:
         return self.shop_id or ShopId(uuid.uuid4())

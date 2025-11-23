@@ -77,6 +77,7 @@ async def create_new_product(
     responses={
         status.HTTP_401_UNAUTHORIZED: {"model": ErrorSchema},
         status.HTTP_403_FORBIDDEN: {"model": ErrorSchema},
+        status.HTTP_404_NOT_FOUND: {"model": ErrorSchema},
     },
     dependencies=[Depends(HTTPBearer())],
 )
@@ -101,6 +102,7 @@ async def update_product(
     responses={
         status.HTTP_401_UNAUTHORIZED: {"model": ErrorSchema},
         status.HTTP_403_FORBIDDEN: {"model": ErrorSchema},
+        status.HTTP_404_NOT_FOUND: {"model": ErrorSchema},
     },
     dependencies=[Depends(HTTPBearer())],
 )
@@ -138,6 +140,7 @@ async def get_all_products(
     status_code=status.HTTP_200_OK,
     responses={
         status.HTTP_401_UNAUTHORIZED: {"model": ErrorSchema},
+        status.HTTP_404_NOT_FOUND: {"model": ErrorSchema},
     },
     dependencies=[Depends(HTTPBearer())],
 )

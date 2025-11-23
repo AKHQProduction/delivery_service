@@ -2,6 +2,7 @@ from abc import abstractmethod
 from dataclasses import dataclass
 from typing import Protocol
 
+from backend.application.interfaces.gateways import Pagination
 from backend.application.vars import ShopId, ShopRole, UserId
 
 
@@ -19,6 +20,19 @@ class ShopEmployee:
     shop_id: ShopId
     full_name: str
     role: ShopRole
+
+
+@dataclass(frozen=True)
+class EmployeeReadModel:
+    user_id: UserId
+    full_name: str
+    role: ShopRole
+
+
+@dataclass(frozen=True)
+class EmployeeFilters:
+    shop_id: ShopId | None = None
+    name: str | None = None
 
 
 class ShopGateway(Protocol):
@@ -48,4 +62,14 @@ class ShopGateway(Protocol):
 
     @abstractmethod
     def next_id(self) -> ShopId:
+        raise NotImplementedError
+
+    @abstractmethod
+    async def read_employee(self, user_id: UserId) -> EmployeeReadModel | None:
+        raise NotImplementedError
+
+    @abstractmethod
+    async def read_all_employees(
+        self, filters: EmployeeFilters, pagination: Pagination
+    ) -> list[EmployeeReadModel]:
         raise NotImplementedError
