@@ -26,11 +26,16 @@ class TelegramIdentityProvider(IdentityProvider):
 
     async def current_user(self) -> CurrentUserDTO:
         user_id = await self.current_user_id()
-        if user_id:
-            role = await self._shop_gateway.role_by_user_id(user_id)
-            shop_id = await self._shop_gateway.shop_by_user_id(user_id)
-            if role and shop_id:
-                return CurrentUserDTO(
-                    user_id=user_id, role=role, shop_id=shop_id
-                )
+        if user_id and (
+            shop_employee := await self._shop_gateway.get_shop_employee(
+                user_id
+            )
+        ):
+            return CurrentUserDTO(
+                user_id=user_id,
+                shop_id=shop_employee.shop_id,
+                role=shop_employee.role,
+                full_name=shop_employee.full_name,
+            )
+
         raise AuthorizationError

@@ -14,6 +14,9 @@ from backend.application.commands import (
     CreateNewShopCommandHandler,
 )
 from backend.application.interfaces import IdentityProvider
+from backend.application.usecases.invite_employee import (
+    AcceptInviteCommandHandler,
+)
 from backend.infrastructure.idp import TelegramIdentityProvider
 from backend.infrastructure.persistence.gateways import (
     SQLAlchemyShopGateway,
@@ -24,7 +27,11 @@ from backend.infrastructure.persistence.gateways import (
 class BotInteractorsProvider(Provider):
     scope = Scope.REQUEST
 
-    handlers = provide_all(BotStartCommandHandler, CreateNewShopCommandHandler)
+    handlers = provide_all(
+        BotStartCommandHandler,
+        CreateNewShopCommandHandler,
+        AcceptInviteCommandHandler,
+    )
 
 
 class TelegramProvider(Provider):

@@ -9,6 +9,7 @@ from httpx import ASGITransport, AsyncClient
 
 from backend.bootstrap.config import Config
 from backend.presentation.http.v1 import setup_v1_router
+from backend.presentation.http.v1.routes import setup_exc_handlers
 
 
 @pytest_asyncio.fixture
@@ -16,6 +17,7 @@ async def http_app(make_container) -> FastAPI:
     config = Config()
     app = FastAPI(root_path="/api")
     setup_v1_router(app)
+    setup_exc_handlers(app)
 
     container = make_container(config)
     setup_dishka(container, app)

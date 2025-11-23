@@ -27,6 +27,7 @@ from backend.bootstrap.config import (
     TelegramConfig,
 )
 from backend.infrastructure.persistence.gateways import (
+    RedisLinkGateway,
     SQLAlchemyShopGateway,
     SQLAlchemyUserGateway,
 )
@@ -97,9 +98,13 @@ class PersistenceProvider(Provider):
 
 
 class RedisProvider(Provider):
+    scope = Scope.REQUEST
+
     @provide(scope=Scope.APP)
     async def redis_session(self, config: RedisConfig) -> AsyncIterable[Redis]:
         async with Redis.from_url(
             config.persistence_uri, decode_responses=True
         ) as redis:
             yield redis
+
+    gateway = provide(WithParents[RedisLinkGateway])

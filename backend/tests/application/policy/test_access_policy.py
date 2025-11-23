@@ -15,6 +15,7 @@ from backend.application.vars import ShopId, ShopRole, UserId
 def test_owner_policy_return_true_if_user_is_owner() -> None:
     user_dto = CurrentUserDTO(
         user_id=UserId(uuid.uuid4()),
+        full_name="Test User",
         role=ShopRole.OWNER,
         shop_id=ShopId(uuid.uuid4()),
     )
@@ -26,6 +27,7 @@ def test_owner_policy_return_true_if_user_is_owner() -> None:
 def test_owner_policy_return_false_if_user_in_not_owner() -> None:
     user_dto = CurrentUserDTO(
         user_id=UserId(uuid.uuid4()),
+        full_name="Test User",
         role=ShopRole.MANAGER,
         shop_id=ShopId(uuid.uuid4()),
     )
@@ -37,6 +39,7 @@ def test_owner_policy_return_false_if_user_in_not_owner() -> None:
 def test_manager_policy_return_true_if_user_is_manager() -> None:
     user_dto = CurrentUserDTO(
         user_id=UserId(uuid.uuid4()),
+        full_name="Test User",
         role=ShopRole.MANAGER,
         shop_id=ShopId(uuid.uuid4()),
     )
@@ -47,8 +50,9 @@ def test_manager_policy_return_true_if_user_is_manager() -> None:
 
 def test_manager_policy_return_false_if_user_in_not_manager() -> None:
     user_dto = CurrentUserDTO(
-        shop_id=ShopId(uuid.uuid4()),
         user_id=UserId(uuid.uuid4()),
+        full_name="Test User",
+        shop_id=ShopId(uuid.uuid4()),
         role=ShopRole.OWNER,
     )
     policy = IsManager()
@@ -62,6 +66,7 @@ def test_can_shop_manage_policy_return_true_if_user_role_in_manage_scope(
 ) -> None:
     dto = CurrentUserDTO(
         user_id=UserId(uuid.uuid4()),
+        full_name="Test User",
         role=ShopRole.OWNER,
         shop_id=ShopId(uuid.uuid4()),
     )
@@ -72,6 +77,7 @@ def test_can_shop_manage_policy_return_true_if_user_role_in_manage_scope(
 def test_can_shop_manage_policy_return_false_if_user_not_admin() -> None:
     dto = CurrentUserDTO(
         user_id=UserId(uuid.uuid4()),
+        full_name="Test User",
         role=ShopRole.COURIER,
         shop_id=ShopId(uuid.uuid4()),
     )
@@ -83,6 +89,7 @@ def test_is_relate_to_shop_policy_return_true_if_user_from_this_shop() -> None:
     shop_id = ShopId(uuid.uuid4())
     dto = CurrentUserDTO(
         user_id=UserId(uuid.uuid4()),
+        full_name="Test User",
         role=ShopRole.COURIER,
         shop_id=shop_id,
     )
@@ -95,6 +102,7 @@ def test_is_relate_to_shop_return_false_if_user_from_another_shop() -> None:
 
     dto = CurrentUserDTO(
         user_id=UserId(uuid.uuid4()),
+        full_name="Test User",
         role=ShopRole.COURIER,
         shop_id=ShopId(uuid.uuid4()),
     )

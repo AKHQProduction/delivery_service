@@ -1,6 +1,17 @@
-from dishka import Provider, Scope, from_context, provide, provide_all
+from dishka import (
+    Provider,
+    Scope,
+    WithParents,
+    from_context,
+    provide,
+    provide_all,
+)
 from fastapi import Request
 
+from backend.application.commands import (
+    DeleteEmployeeCommandHandler,
+    EditEmployeeCommandHandler,
+)
 from backend.application.commands.create_product import (
     CreateProductCommandHandler,
 )
@@ -9,14 +20,28 @@ from backend.application.commands.delete_product import (
 )
 from backend.application.commands.edit_product import EditProductCommandHandler
 from backend.application.interfaces import IdentityProvider
+from backend.application.queries.get_employee import GetEmployeeQueryHandler
+from backend.application.queries.get_employees import GetEmployeesQueryHandler
 from backend.application.queries.get_product import GetProductQueryHandler
 from backend.application.queries.get_products import GetProductsQueryHandler
+from backend.application.usecases.invite_employee import (
+    GenerateInviteLinkCommandHandler,
+)
 from backend.infrastructure.idp import TelegramIdentityProvider
 from backend.infrastructure.persistence.gateways import (
     SQLAlchemyShopGateway,
     SQLAlchemyUserGateway,
 )
 from backend.infrastructure.telegram.auth import Headers, InitData, WebAppAuth
+from backend.infrastructure.telegram.invite_link_generator import (
+    TelegramInviteLinkGenerator,
+)
+
+
+class AdaptersProvider(Provider):
+    scope = Scope.APP
+
+    link_generator = provide(WithParents[TelegramInviteLinkGenerator])
 
 
 class APIInteractorsProvider(Provider):
@@ -28,7 +53,13 @@ class APIInteractorsProvider(Provider):
         DeleteProductCommandHandler,
         GetProductQueryHandler,
         GetProductsQueryHandler,
+        DeleteEmployeeCommandHandler,
+        EditEmployeeCommandHandler,
+        GetEmployeeQueryHandler,
+        GetEmployeesQueryHandler,
     )
+
+    add_employee = provide_all(GenerateInviteLinkCommandHandler)
 
 
 class WebAppProvider(Provider):

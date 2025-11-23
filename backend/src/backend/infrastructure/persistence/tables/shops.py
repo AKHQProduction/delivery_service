@@ -49,6 +49,8 @@ class ShopMembership(Base, CreatedAt, UpdatedAt):
     __tablename__ = "shop_memberships"
 
     id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True)
+    name: Mapped[str] = mapped_column(sa.String, nullable=False)
+
     user_id: Mapped[UUID] = mapped_column(
         sa.ForeignKey("users.id", ondelete="CASCADE")
     )

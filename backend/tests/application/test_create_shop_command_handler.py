@@ -40,7 +40,7 @@ def make_handler():
 
 @pytest.fixture()
 def command() -> CreateNewShopCommand:
-    return CreateNewShopCommand(name="NewShop")
+    return CreateNewShopCommand(name="NewShop", owner_full_name="Test User")
 
 
 @pytest.mark.asyncio()
