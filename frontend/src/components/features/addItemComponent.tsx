@@ -1,21 +1,32 @@
 import { useState } from "react";
+import { useLocation } from "react-router-dom";
 import { BottomModal } from "../ui/bottomModal";
 import { MODAL_CONFIG } from "../../constants/modalContent";
 import { AddProductForm } from "../forms/addProductForm";
 import { AddClientForm } from "../forms/addClientForm";
 import { AddOrderForm } from "../forms/addOrderForm";
 import { AddStaffForm } from "../forms/addStaffForm";
+import { useUserStore } from "../../context/useUserStore";
 
 export const AddItemComponent = () => {
   const [isModalOpen, setIsModalOpen] = useState(false);
-
+  const location = useLocation()
+  const user = useUserStore((s) => s.user);
+  
   const handleAddClick = () => {
     setIsModalOpen(true);
   };
 
   const currentConfig =
-    MODAL_CONFIG[location.pathname as keyof typeof MODAL_CONFIG] ||
-    MODAL_CONFIG["/products"];
+    MODAL_CONFIG[location.pathname as keyof typeof MODAL_CONFIG];
+
+  const hasAccess = currentConfig && user 
+    ? currentConfig.allowedRoles.includes(user.role)
+    : false;
+
+  if (!hasAccess || !currentConfig) {
+    return null;
+  }
 
   const renderModalContent = () => {
     switch (currentConfig.component) {
