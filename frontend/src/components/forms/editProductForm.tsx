@@ -2,19 +2,29 @@ import React, { useState } from "react";
 import { FormWrapper } from "../ui/formWrapper";
 import { FormInput } from "../ui/formInput";
 import { FormSelect } from "../ui/formSelect";
-import { useProducts } from "../../hooks/useProducts";
 
-interface AddProductFormProps {
-  onClose: () => void;
+interface Product {
+  product_id: string;
+  name: string;
+  category: string;
+  price: number;
 }
 
-export const AddProductForm: React.FC<AddProductFormProps> = ({ onClose }) => {
-  const { addProduct } = useProducts();
+interface EditProductFormProps {
+  product: Product;
+  onClose: () => void;
+  onSave: (updatedProduct: Product) => void;
+}
 
+export const EditProductForm: React.FC<EditProductFormProps> = ({
+  product,
+  onClose,
+  onSave,
+}) => {
   const [formData, setFormData] = useState({
-    name: "",
-    category: "",
-    price: "",
+    name: product.name,
+    category: product.category,
+    price: product.price.toString(),
   });
 
   const handleChange = (
@@ -23,28 +33,30 @@ export const AddProductForm: React.FC<AddProductFormProps> = ({ onClose }) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
 
-    await addProduct(
-      formData.name,
-      parseFloat(formData.price),
-      formData.category
-    );
-    window.location.reload();
+    const updatedProduct: Product = {
+      product_id: product.product_id,
+      name: formData.name,
+      category: formData.category,
+      price: parseFloat(formData.price),
+    };
+
+    onSave(updatedProduct);
     onClose();
   };
 
   const categoryOptions = [
-    { value: "WATER", label: "Вода" },
-    { value: "OTHER", label: "Інше" },
+    { value: "Вода", label: "Вода" },
+    { value: "Інше", label: "Інше" },
   ];
 
   return (
     <FormWrapper
       onSubmit={handleSubmit}
       onClose={onClose}
-      submitLabel="Додати товар"
+      submitLabel="Зберегти зміни"
     >
       <FormInput
         label="Назва товару"

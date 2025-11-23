@@ -1,5 +1,5 @@
 import { UserRole } from "../constants/roles";
-import { GoodsPage } from "../pages/GoodsPage";
+import { ProductPage } from "../pages/ProductPage";
 import { ClientsPage } from "../pages/ClientsPage";
 import { OrdersPage } from "../pages/OrdersPage";
 import { StaffPage } from "../pages/StaffPage";
@@ -18,10 +18,10 @@ export interface RouteConfig {
 
 export const routeConfig: RouteConfig[] = [
   {
-    path: "/goods",
+    path: "/products",
     label: "Товари",
     icon: goodsIcon,
-    component: GoodsPage,
+    component: ProductPage,
     allowedRoles: [UserRole.MANAGER, UserRole.OWNER],
   },
   {

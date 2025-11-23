@@ -17,9 +17,18 @@ export const createNewProduct = async (
   }
 };
 
-export const updateExistingProductById = async (productId: string) => {
+export const updateExistingProductById = async (
+  productId: string,
+  name: string,
+  price: number,
+  category: string
+) => {
   try {
-    const response = await api.patch(`v1/products/${productId}`);
+    const response = await api.patch(`v1/products/${productId}`, {
+      name,
+      price,
+      category,
+    });
     return response.data;
   } catch (error) {
     throw error;
@@ -51,7 +60,7 @@ export const getAllProducts = async (
   order: string
 ) => {
   try {
-    const response = await api.get(`v1/products`, {
+    const response = await api.get(`v1/products/all`, {
       params: {
         name: productName,
         limit: productLimit,
