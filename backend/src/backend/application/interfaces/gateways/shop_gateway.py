@@ -35,5 +35,9 @@ class ShopGateway(Protocol):
         raise NotImplementedError
 
     @abstractmethod
+    async def add_employee(self, employee: ShopEmployee) -> None:
+        raise NotImplementedError
+
+    @abstractmethod
     def next_id(self) -> ShopId:
         raise NotImplementedError

@@ -65,5 +65,19 @@ class SQLAlchemyShopGateway(ShopGateway):
             )
         return None
 
+    async def add_employee(self, employee: ShopEmployee) -> None:
+        role_query = select(Role.id).where(Role.name == employee.role)
+        role_result = await self._session.execute(role_query)
+        role_id = role_result.scalar_one()
+
+        self._session.add(
+            ShopMembership(
+                name=employee.full_name,
+                user_id=employee.user_id,
+                shop_id=employee.shop_id,
+                role_id=role_id,
+            )
+        )
+
     def next_id(self) -> ShopId:
         return ShopId(UUID(str(uuid7())))

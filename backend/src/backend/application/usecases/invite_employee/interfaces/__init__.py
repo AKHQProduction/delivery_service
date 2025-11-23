@@ -29,3 +29,11 @@ class LinkGateway(Protocol):
     @abstractmethod
     async def add(self, link: Link) -> None:
         raise NotImplementedError
+
+    @abstractmethod
+    async def load_by_payload(self, payload: str) -> Link | None:
+        raise NotImplementedError
+
+    @abstractmethod
+    async def delete(self, payload: str) -> None:
+        raise NotImplementedError

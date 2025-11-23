@@ -10,11 +10,12 @@ from backend.application.usecases.invite_employee import (
 from backend.application.usecases.invite_employee.interfaces import (
     GeneratedLink,
     InviteLinkGenerator,
-    Link,
-    LinkGateway,
 )
 from backend.application.vars import ShopId, ShopRole, UserId
-from backend.infrastructure.in_memory import InMemoryIdentityProvider
+from backend.infrastructure.in_memory import (
+    InMemoryIdentityProvider,
+    InMemoryLinkGateway,
+)
 
 
 class FakeInviteLinkGenerator(InviteLinkGenerator):
@@ -28,14 +29,6 @@ class FakeInviteLinkGenerator(InviteLinkGenerator):
 
     async def generate(self) -> GeneratedLink:
         return GeneratedLink(link=self.link, payload=self.payload)
-
-
-class FakeLinkGateway(LinkGateway):
-    def __init__(self):
-        self.links: list[Link] = []
-
-    async def add(self, link: Link) -> None:
-        self.links.append(link)
 
 
 @pytest.fixture()
@@ -54,7 +47,7 @@ def make_handler():
             user_id=user_id, role=role, shop_id=shop_id
         )
         link_generator = FakeInviteLinkGenerator()
-        link_gateway = FakeLinkGateway()
+        link_gateway = InMemoryLinkGateway()
 
         handler = GenerateInviteLinkCommandHandler(
             idp=idp,
@@ -117,7 +110,8 @@ async def test_save_link_in_gateway(make_handler) -> None:
     await handler.handle(command)
 
     assert len(link_gateway.links) == 1
-    saved_link = link_gateway.links[0]
+    saved_link_dict = next(iter(link_gateway.links.items()))
+    saved_link = saved_link_dict[1]
     assert saved_link.payload == link_generator.payload
     assert saved_link.role == ShopRole.MANAGER
     assert saved_link.shop_id == shop_id

@@ -6,12 +6,13 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from backend.application.interfaces.gateways.shop_gateway import (
     CreateNewShopDTO,
+    ShopEmployee,
 )
 from backend.application.vars import ShopId, ShopRole, UserId
 from backend.infrastructure.persistence.gateways import (
     SQLAlchemyShopGateway,
 )
-from backend.infrastructure.persistence.tables import Shop
+from backend.infrastructure.persistence.tables import Shop, ShopMembership
 
 
 @pytest.mark.asyncio()
@@ -144,3 +145,45 @@ async def test_get_shop_employee_returns_none_when_user_not_exists(
     result = await shop_gateway.get_shop_employee(user_id=user_id)
 
     assert result is None
+
+
+@pytest.mark.parametrize(
+    "role", (ShopRole.OWNER, ShopRole.MANAGER, ShopRole.COURIER)
+)
+@pytest.mark.asyncio()
+async def test_save_new_employee(
+    session: AsyncSession,
+    create_role,
+    create_user,
+    create_shop,
+    shop_gateway: SQLAlchemyShopGateway,
+    role: ShopRole,
+) -> None:
+    user_id = UserId(uuid.uuid4())
+    employee_name = "John Doe"
+    await create_user(user_id=user_id)
+    shop_id = await create_shop()
+    role_id = 1
+
+    await create_role(role_id=role_id, name=role)
+    await session.flush()
+
+    await shop_gateway.add_employee(
+        ShopEmployee(
+            user_id=user_id,
+            shop_id=shop_id,
+            full_name=employee_name,
+            role=role,
+        )
+    )
+    await session.flush()
+
+    result = await session.execute(
+        select(ShopMembership).where(ShopMembership.user_id == user_id)
+    )
+    rows = result.fetchall()
+    assert len(rows) == 1
+    employee: ShopMembership = rows[0][0]
+    assert employee.user_id == user_id
+    assert employee.name == employee_name
+    assert employee.shop_id == shop_id

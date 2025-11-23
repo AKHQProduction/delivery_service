@@ -36,5 +36,8 @@ class InMemoryShopGateway(ShopGateway):
     async def get_shop_employee(self, user_id: UserId) -> ShopEmployee | None:
         return self.employees.get(user_id)
 
+    async def add_employee(self, employee: ShopEmployee) -> None:
+        self.employees[employee.user_id] = employee
+
     def next_id(self) -> ShopId:
         return self.shop_id or ShopId(uuid.uuid4())

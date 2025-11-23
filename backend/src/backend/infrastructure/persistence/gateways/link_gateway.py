@@ -1,5 +1,6 @@
 import json
 from datetime import UTC, datetime, timedelta
+from uuid import UUID
 
 from redis.asyncio import Redis
 
@@ -7,6 +8,7 @@ from backend.application.usecases.invite_employee.interfaces import (
     Link,
     LinkGateway,
 )
+from backend.application.vars import ShopId, ShopRole
 
 
 class RedisLinkGateway(LinkGateway):
@@ -30,3 +32,17 @@ class RedisLinkGateway(LinkGateway):
             }),
             ex=ttl,
         )
+
+    async def load_by_payload(self, payload: str) -> Link | None:
+        if data := await self._redis.get(payload):
+            json_data = json.loads(data)
+            return Link(
+                payload=payload,
+                full_name=json_data["full_name"],
+                role=ShopRole(json_data["role"]),
+                shop_id=ShopId(UUID(json_data["shop_id"])),
+            )
+        return None
+
+    async def delete(self, payload: str) -> None:
+        await self._redis.delete(payload)

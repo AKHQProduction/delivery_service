@@ -40,11 +40,29 @@ class GenerateInviteLinkCommandHandler:
         self._link_gateway = link_gateway
 
     async def handle(self, command: GenerateInviteLinkCommand) -> str:
+        logger.info(
+            "Generating invite link",
+            extra={"role": command.role, "full_name": command.full_name},
+        )
+
         current_user = await self._idp.current_user()
+        logger.debug(
+            "Current user retrieved", extra={"user_id": current_user.user_id}
+        )
+
         if not IsOwner().is_satisfied_by(current_user):
+            logger.warning(
+                "Access denied: user is not owner",
+                extra={
+                    "user_id": current_user.user_id,
+                    "user_role": current_user.role,
+                },
+            )
             raise AccessDeniedError
 
         link = await self._link_generator.generate()
+        logger.debug("Invite link generated", extra={"payload": link.payload})
+
         await self._link_gateway.add(
             Link(
                 payload=link.payload,
@@ -52,6 +70,14 @@ class GenerateInviteLinkCommandHandler:
                 shop_id=current_user.shop_id,
                 full_name=command.full_name,
             )
+        )
+        logger.info(
+            "Invite link saved to gateway",
+            extra={
+                "shop_id": current_user.shop_id,
+                "role": command.role,
+                "full_name": command.full_name,
+            },
         )
 
         return link.link
