@@ -1,9 +1,9 @@
 import { PageHeader } from "../components/ui/pageHeader";
 
-export const GoodsPage = () => {
+export const StaffPage = () => {
   return (
     <div>
-      <PageHeader title="Товари" />
+      <PageHeader title="Персонал" />
     </div>
   );
 };

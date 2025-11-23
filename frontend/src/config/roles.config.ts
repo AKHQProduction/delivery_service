@@ -1,9 +1,8 @@
 import { UserRole } from "../constants/roles";
 import { GoodsPage } from "../pages/GoodsPage";
-// import { ClientsPage } from "../pages/ClientsPage";
-// import { OrdersPage } from "../pages/OrdersPage";
-// import { StaffPage } from "../pages/StaffPage";
-
+import { ClientsPage } from "../pages/ClientsPage";
+import { OrdersPage } from "../pages/OrdersPage";
+import { StaffPage } from "../pages/StaffPage";
 import goodsIcon from "../assets/icons/goods.svg";
 import clientsIcon from "../assets/icons/client.svg";
 import ordersIcon from "../assets/icons/order.svg";
@@ -29,21 +28,21 @@ export const routeConfig: RouteConfig[] = [
     path: "/clients",
     label: "Клієнти",
     icon: clientsIcon,
-    component: GoodsPage, 
+    component: ClientsPage,
     allowedRoles: [UserRole.COURIER, UserRole.MANAGER, UserRole.OWNER],
   },
   {
     path: "/orders",
     label: "Замовлення",
     icon: ordersIcon,
-    component: GoodsPage,
+    component: OrdersPage,
     allowedRoles: [UserRole.COURIER, UserRole.MANAGER, UserRole.OWNER],
   },
   {
     path: "/staff",
     label: "Персонал",
     icon: usersIcon,
-    component: GoodsPage,
+    component: StaffPage,
     allowedRoles: [UserRole.OWNER],
   },
 ];
