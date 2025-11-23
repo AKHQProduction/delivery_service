@@ -369,3 +369,212 @@ async def test_update_employee_unauthorized_without_token(
     )
 
     assert response.status_code == status.HTTP_403_FORBIDDEN
+
+
+@pytest.mark.asyncio()
+async def test_delete_employee_successfully(
+    http_client: AsyncClient,
+    session: AsyncSession,
+    customer_headers: Callable[[int], dict[str, Any]],
+    setup_full_test_user_with_shop,
+    create_user,
+    create_shop_membership,
+    create_role,
+) -> None:
+    owner_telegram_id = 10000
+    _, shop_id = await setup_full_test_user_with_shop(
+        telegram_id=owner_telegram_id, role=ShopRole.OWNER
+    )
+
+    # Create an employee
+    employee_user_id = UserId(uuid.uuid4())
+    await create_user(user_id=employee_user_id)
+    manager_role_id = await create_role(role_id=100, name=ShopRole.MANAGER)
+    await create_shop_membership(
+        user_id=employee_user_id,
+        shop_id=shop_id,
+        role_id=manager_role_id,
+        name="John Doe",
+    )
+    await session.commit()
+
+    headers = customer_headers(owner_telegram_id)
+
+    response = await http_client.delete(
+        url=f"{BASE_URL}/{employee_user_id}", headers=headers
+    )
+
+    assert response.status_code == status.HTTP_204_NO_CONTENT
+
+    # Verify the employee was deleted from database
+    await session.flush()
+    result = await session.execute(
+        select(ShopMembership).where(
+            ShopMembership.user_id == employee_user_id
+        )
+    )
+    assert result.first() is None
+
+
+@pytest.mark.asyncio()
+async def test_delete_employee_denied_for_manager(
+    http_client: AsyncClient,
+    session: AsyncSession,
+    customer_headers: Callable[[int], dict[str, Any]],
+    setup_full_test_user_with_shop,
+    create_user,
+    create_shop_membership,
+    create_role,
+) -> None:
+    manager_telegram_id = 11000
+    _, shop_id = await setup_full_test_user_with_shop(
+        telegram_id=manager_telegram_id, role=ShopRole.MANAGER
+    )
+
+    # Create an employee
+    employee_user_id = UserId(uuid.uuid4())
+    await create_user(user_id=employee_user_id)
+    courier_role_id = await create_role(role_id=110, name=ShopRole.COURIER)
+    await create_shop_membership(
+        user_id=employee_user_id,
+        shop_id=shop_id,
+        role_id=courier_role_id,
+        name="John Doe",
+    )
+    await session.commit()
+
+    headers = customer_headers(manager_telegram_id)
+
+    response = await http_client.delete(
+        url=f"{BASE_URL}/{employee_user_id}", headers=headers
+    )
+
+    assert response.status_code == status.HTTP_403_FORBIDDEN
+
+
+@pytest.mark.asyncio()
+async def test_delete_employee_denied_for_courier(
+    http_client: AsyncClient,
+    session: AsyncSession,
+    customer_headers: Callable[[int], dict[str, Any]],
+    setup_full_test_user_with_shop,
+    create_user,
+    create_shop_membership,
+    create_role,
+) -> None:
+    courier_telegram_id = 12000
+    _, shop_id = await setup_full_test_user_with_shop(
+        telegram_id=courier_telegram_id, role=ShopRole.COURIER
+    )
+
+    # Create an employee
+    employee_user_id = UserId(uuid.uuid4())
+    await create_user(user_id=employee_user_id)
+    manager_role_id = await create_role(role_id=120, name=ShopRole.MANAGER)
+    await create_shop_membership(
+        user_id=employee_user_id,
+        shop_id=shop_id,
+        role_id=manager_role_id,
+        name="John Doe",
+    )
+    await session.commit()
+
+    headers = customer_headers(courier_telegram_id)
+
+    response = await http_client.delete(
+        url=f"{BASE_URL}/{employee_user_id}", headers=headers
+    )
+
+    assert response.status_code == status.HTTP_403_FORBIDDEN
+
+
+@pytest.mark.asyncio()
+async def test_delete_employee_not_found(
+    http_client: AsyncClient,
+    session: AsyncSession,
+    customer_headers: Callable[[int], dict[str, Any]],
+    setup_full_test_user_with_shop,
+) -> None:
+    owner_telegram_id = 13000
+    await setup_full_test_user_with_shop(
+        telegram_id=owner_telegram_id, role=ShopRole.OWNER
+    )
+    await session.commit()
+
+    headers = customer_headers(owner_telegram_id)
+    non_existent_user_id = UserId(uuid.uuid4())
+
+    response = await http_client.delete(
+        url=f"{BASE_URL}/{non_existent_user_id}", headers=headers
+    )
+
+    assert response.status_code == status.HTTP_404_NOT_FOUND
+
+
+@pytest.mark.asyncio()
+async def test_delete_employee_from_different_shop_denied(
+    http_client: AsyncClient,
+    session: AsyncSession,
+    customer_headers: Callable[[int], dict[str, Any]],
+    setup_full_test_user_with_shop,
+    create_user,
+    create_shop,
+    create_shop_membership,
+    create_role,
+) -> None:
+    owner_telegram_id = 14000
+    _, _ = await setup_full_test_user_with_shop(
+        telegram_id=owner_telegram_id, role=ShopRole.OWNER
+    )
+
+    # Create employee in a different shop
+    shop_id_2 = await create_shop(name="Another Shop")
+    employee_user_id = UserId(uuid.uuid4())
+    await create_user(user_id=employee_user_id)
+    manager_role_id = await create_role(role_id=140, name=ShopRole.MANAGER)
+    await create_shop_membership(
+        user_id=employee_user_id,
+        shop_id=shop_id_2,
+        role_id=manager_role_id,
+        name="John Doe",
+    )
+    await session.commit()
+
+    headers = customer_headers(owner_telegram_id)
+
+    response = await http_client.delete(
+        url=f"{BASE_URL}/{employee_user_id}", headers=headers
+    )
+
+    assert response.status_code == status.HTTP_403_FORBIDDEN
+
+
+@pytest.mark.asyncio()
+async def test_delete_employee_unauthorized_without_token(
+    http_client: AsyncClient,
+    session: AsyncSession,
+    setup_full_test_user_with_shop,
+    create_user,
+    create_shop_membership,
+    create_role,
+) -> None:
+    owner_telegram_id = 15000
+    _, shop_id = await setup_full_test_user_with_shop(
+        telegram_id=owner_telegram_id, role=ShopRole.OWNER
+    )
+
+    # Create an employee
+    employee_user_id = UserId(uuid.uuid4())
+    await create_user(user_id=employee_user_id)
+    courier_role_id = await create_role(role_id=150, name=ShopRole.COURIER)
+    await create_shop_membership(
+        user_id=employee_user_id,
+        shop_id=shop_id,
+        role_id=courier_role_id,
+        name="John Doe",
+    )
+    await session.commit()
+
+    response = await http_client.delete(url=f"{BASE_URL}/{employee_user_id}")
+
+    assert response.status_code == status.HTTP_403_FORBIDDEN

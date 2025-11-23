@@ -43,5 +43,11 @@ class InMemoryShopGateway(ShopGateway):
     async def update_employee(self, updated_employee: ShopEmployee) -> None:
         self.employee_updated = True
 
+    async def delete_employee(self, user_id: UserId) -> None:
+        if user_id in self.employees:
+            del self.employees[user_id]
+        if user_id in self.linked_users:
+            self.linked_users.remove(user_id)
+
     def next_id(self) -> ShopId:
         return self.shop_id or ShopId(uuid.uuid4())

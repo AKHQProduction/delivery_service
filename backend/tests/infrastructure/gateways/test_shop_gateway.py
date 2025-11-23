@@ -395,3 +395,77 @@ async def test_update_employee_updates_only_specific_user(
     )
     employee_2: ShopMembership = result_2.scalar_one()
     assert employee_2.name == initial_name_2
+
+
+@pytest.mark.asyncio()
+async def test_delete_employee_successfully(
+    session: AsyncSession,
+    create_role,
+    create_user,
+    create_shop,
+    create_shop_membership,
+    shop_gateway: SQLAlchemyShopGateway,
+) -> None:
+    user_id = UserId(uuid.uuid4())
+    await create_user(user_id=user_id)
+    shop_id = await create_shop()
+    role_id = await create_role(name=ShopRole.MANAGER)
+    await create_shop_membership(
+        user_id=user_id, shop_id=shop_id, role_id=role_id, name="John Doe"
+    )
+    await session.flush()
+
+    # Verify employee exists
+    result = await session.execute(
+        select(ShopMembership).where(ShopMembership.user_id == user_id)
+    )
+    assert result.scalar_one() is not None
+
+    await shop_gateway.delete_employee(user_id)
+    await session.flush()
+
+    # Verify employee was deleted
+    result = await session.execute(
+        select(ShopMembership).where(ShopMembership.user_id == user_id)
+    )
+    assert result.first() is None
+
+
+@pytest.mark.asyncio()
+async def test_delete_employee_does_not_affect_other_employees(
+    session: AsyncSession,
+    create_role,
+    create_user,
+    create_shop,
+    create_shop_membership,
+    shop_gateway: SQLAlchemyShopGateway,
+) -> None:
+    user_id_1 = UserId(uuid.uuid4())
+    user_id_2 = UserId(uuid.uuid4())
+    await create_user(user_id=user_id_1)
+    await create_user(user_id=user_id_2)
+    shop_id = await create_shop()
+    role_id = await create_role(name=ShopRole.MANAGER)
+    await create_shop_membership(
+        user_id=user_id_1, shop_id=shop_id, role_id=role_id, name="John Doe"
+    )
+    await create_shop_membership(
+        user_id=user_id_2, shop_id=shop_id, role_id=role_id, name="Jane Smith"
+    )
+    await session.flush()
+
+    await shop_gateway.delete_employee(user_id_1)
+    await session.flush()
+
+    # Verify first employee was deleted
+    result_1 = await session.execute(
+        select(ShopMembership).where(ShopMembership.user_id == user_id_1)
+    )
+    assert result_1.first() is None
+
+    # Verify second employee still exists
+    result_2 = await session.execute(
+        select(ShopMembership).where(ShopMembership.user_id == user_id_2)
+    )
+    employee_2: ShopMembership = result_2.scalar_one()
+    assert employee_2.name == "Jane Smith"

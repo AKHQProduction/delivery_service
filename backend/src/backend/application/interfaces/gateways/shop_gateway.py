@@ -43,5 +43,9 @@ class ShopGateway(Protocol):
         raise NotImplementedError
 
     @abstractmethod
+    async def delete_employee(self, user_id: UserId) -> None:
+        raise NotImplementedError
+
+    @abstractmethod
     def next_id(self) -> ShopId:
         raise NotImplementedError

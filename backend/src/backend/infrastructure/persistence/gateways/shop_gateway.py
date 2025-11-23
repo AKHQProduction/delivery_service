@@ -1,6 +1,6 @@
 from uuid import UUID
 
-from sqlalchemy import exists, select, update
+from sqlalchemy import delete, exists, select, update
 from sqlalchemy.ext.asyncio import AsyncSession
 from uuid_utils import uuid7
 
@@ -90,6 +90,10 @@ class SQLAlchemyShopGateway(ShopGateway):
             .values(name=updated_employee.full_name, role_id=role_id)
         )
 
+        await self._session.execute(query)
+
+    async def delete_employee(self, user_id: UserId) -> None:
+        query = delete(ShopMembership).where(ShopMembership.user_id == user_id)
         await self._session.execute(query)
 
     def next_id(self) -> ShopId:
