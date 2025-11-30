@@ -4,6 +4,7 @@ import {
   deleteEmployeeById,
   getAllEmployees,
 } from "../services/employeeService";
+import { createInviteUserLink } from "../services/userService";
 
 export const useEmployees = () => {
   const [employees, setEmployees] = useState<Array<any>>([]);
@@ -53,11 +54,25 @@ export const useEmployees = () => {
     }
   };
 
+  const createInviteLink = async (role: string, full_name: string) => {
+    setLoading(true);
+    setError(null);
+    try {
+      const link = await createInviteUserLink(role, full_name);
+      setLoading(false);
+      return link;
+    } catch (err) {
+      setError("Не вдалося створити запрошення для працівника.");
+      setLoading(false);
+    }
+  };
+
   return {
     employees,
     getEmployees,
     deleteEmployees,
     updateEmployee,
+    createInviteLink,
     error,
     loading,
   };

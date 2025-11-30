@@ -8,3 +8,15 @@ export const getUser = async () => {
     throw error;
   }
 };
+
+export const createInviteUserLink = async (role: string, full_name: string) => {
+  try {
+    const response = await api.post(`v1/links`, {
+      role,
+      full_name,
+    });
+    return response.data;
+  } catch (error) {
+    throw error;
+  }
+};

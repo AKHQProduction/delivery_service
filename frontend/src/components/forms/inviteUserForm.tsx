@@ -2,18 +2,18 @@ import React, { useState } from "react";
 import { FormWrapper } from "../ui/formWrapper";
 import { FormInput } from "../ui/formInput";
 import { FormSelect } from "../ui/formSelect";
+import { useEmployees } from "../../hooks/useEmployees";
 
-interface AddStaffFormProps {
+export const InviteUserForm: React.FC<{
   onClose: () => void;
-}
-
-export const AddStaffForm: React.FC<AddStaffFormProps> = ({ onClose }) => {
+  onInviteCreated: (link: string) => void;
+}> = ({ onClose, onInviteCreated }) => {
   const [formData, setFormData] = useState({
     name: "",
-    phone: "",
     role: "",
-    email: "",
   });
+
+  const { createInviteLink } = useEmployees();
 
   const handleChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>
@@ -21,23 +21,25 @@ export const AddStaffForm: React.FC<AddStaffFormProps> = ({ onClose }) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    console.log("Staff submitted:", formData);
-    onClose();
+
+    const link = await createInviteLink(formData.role, formData.name);
+
+    onInviteCreated(link); // передаем наверх
+    onClose(); // закрываем модалку
   };
 
   const roleOptions = [
-    { value: "driver", label: "Водій" },
-    { value: "manager", label: "Менеджер" },
-    { value: "admin", label: "Адміністратор" },
+    { value: "MANAGER", label: "Менеджер" },
+    { value: "COURIER", label: "Кур'єр" },
   ];
 
   return (
     <FormWrapper
       onSubmit={handleSubmit}
       onClose={onClose}
-      submitLabel="Додати співробітника"
+      submitLabel="Запросити співробітника"
     >
       <FormInput
         label="Ім'я співробітника"
@@ -47,24 +49,7 @@ export const AddStaffForm: React.FC<AddStaffFormProps> = ({ onClose }) => {
         placeholder="Введіть ім'я..."
         required
       />
-      <FormInput
-        label="Телефон"
-        name="phone"
-        type="tel"
-        value={formData.phone}
-        onChange={handleChange}
-        placeholder="+380..."
-        required
-      />
-      <FormInput
-        label="Email"
-        name="email"
-        type="email"
-        value={formData.email}
-        onChange={handleChange}
-        placeholder="email@example.com"
-        required
-      />
+
       <FormSelect
         label="Посада"
         name="role"
@@ -76,3 +61,4 @@ export const AddStaffForm: React.FC<AddStaffFormProps> = ({ onClose }) => {
     </FormWrapper>
   );
 };
+
