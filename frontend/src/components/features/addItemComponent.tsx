@@ -36,8 +36,8 @@ export const AddItemComponent = () => {
         return <AddClientForm onClose={() => setIsModalOpen(false)} />;
       case "AddOrderForm":
         return <AddOrderForm onClose={() => setIsModalOpen(false)} />;
-      case "AddStaffForm":
-        return <AddStaffForm onClose={() => setIsModalOpen(false)} />;
+      // case "AddStaffForm":
+      //   return <AddStaffForm onClose={() => setIsModalOpen(false)} />;
       default:
         return <div>Виберіть дію</div>;
     }

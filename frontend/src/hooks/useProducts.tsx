@@ -67,7 +67,6 @@ export const useProducts = () => {
           product.id === productId ? updatedProduct : product
         )
       );
-      
     } catch (err) {
       setError("Не вдалося оновити товар.");
     }

@@ -19,10 +19,10 @@ export const MODAL_CONFIG = {
     allowedRoles:
       routeConfig.find((r) => r.path === "/orders")?.allowedRoles || [],
   },
-  "/staff": {
-    title: "Додати співробітника",
-    component: "AddStaffForm",
-    allowedRoles:
-      routeConfig.find((r) => r.path === "/staff")?.allowedRoles || [],
-  },
+  // "/staff": {
+  //  title: "Додати співробітника",
+  //  component: "AddStaffForm",
+  //   allowedRoles:
+  //     routeConfig.find((r) => r.path === "/staff")?.allowedRoles || [],
+  // },
 };
