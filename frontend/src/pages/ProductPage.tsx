@@ -5,7 +5,7 @@ import { ProductCard } from "../components/ui/productCard";
 import { ProductDetailModal } from "../components/features/productDetailModal";
 import { RightModal } from "../components/ui/rightModal";
 import { useProducts } from "../hooks/useProducts";
-import { reverseCategoryMap } from "../utils/categoryMap";
+import { reverseCategoryMap } from "../utils/dataMap";
 
 type Product = {
   product_id: string;

@@ -2,7 +2,7 @@ import { UserRole } from "../constants/roles";
 import { ProductPage } from "../pages/ProductPage";
 import { ClientsPage } from "../pages/ClientsPage";
 import { OrdersPage } from "../pages/OrdersPage";
-import { StaffPage } from "../pages/StaffPage";
+import { EmployeePage } from "../pages/EmployeePage";
 import goodsIcon from "../assets/icons/goods.svg";
 import clientsIcon from "../assets/icons/client.svg";
 import ordersIcon from "../assets/icons/order.svg";
@@ -42,7 +42,7 @@ export const routeConfig: RouteConfig[] = [
     path: "/staff",
     label: "Персонал",
     icon: usersIcon,
-    component: StaffPage,
+    component: EmployeePage,
     allowedRoles: [UserRole.OWNER],
   },
 ];

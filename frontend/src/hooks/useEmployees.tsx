@@ -5,7 +5,7 @@ import {
   getAllEmployees,
 } from "../services/employeeService";
 
-export const useProducts = () => {
+export const useEmployees = () => {
   const [employees, setEmployees] = useState<Array<any>>([]);
   const [loading, setLoading] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);

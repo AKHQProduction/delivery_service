@@ -1,5 +1,5 @@
 import React from "react";
-import { categoryMap } from "../../utils/categoryMap";
+import { categoryMap } from "../../utils/dataMap";
 
 interface Product {
   id: number | string;
