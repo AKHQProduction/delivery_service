@@ -6,13 +6,7 @@ import { ProductDetailModal } from "../components/features/productDetailModal";
 import { RightModal } from "../components/ui/rightModal";
 import { useProducts } from "../hooks/useProducts";
 import { reverseCategoryMap } from "../utils/dataMap";
-
-type Product = {
-  product_id: string;
-  name: string;
-  category: string;
-  price: number;
-};
+import { type Product } from "../types/entities/Product";
 
 export const ProductPage = () => {
   const [searchTerm, setSearchTerm] = useState("");

@@ -1,15 +1,10 @@
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { PageHeader } from "../components/ui/pageHeader";
 import { SearchBar } from "../components/ui/searchBar";
 import { ClientCard } from "../components/ui/clientsCard";
 import { ClientDetailModal } from "../components/features/clientDetailModal";
 import { RightModal } from "../components/ui/rightModal";
-interface Client {
-  client_id: string;
-  full_name: string;
-  number: string[];
-  adress: string[];
-}
+import { type Client } from "../types/entities/Client";
 
 const clientsData = {
   clients: [

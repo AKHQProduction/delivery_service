@@ -4,7 +4,7 @@ import {
   getAllProducts,
   deleteProductById,
   updateExistingProductById,
-} from "../services/productService";
+} from "../services/api/productApi";
 
 export const useProducts = () => {
   const [products, setProducts] = useState<Array<any>>([]);

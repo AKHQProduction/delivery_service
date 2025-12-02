@@ -2,13 +2,7 @@ import React, { useState } from "react";
 import { FormWrapper } from "../ui/formWrapper";
 import { FormInput } from "../ui/formInput";
 import { DynamicInputList } from "../ui/dynamicInputList";
-
-interface Client {
-  client_id: string;
-  full_name: string;
-  number: string[];
-  adress: string[];
-}
+import { type Client } from "../../types/entities/Client";
 
 interface EditClientFormProps {
   client: Client;

@@ -3,13 +3,7 @@ import { ItemElement } from "../ui/itemElement";
 import { ModalButtons } from "../ui/modalButtons";
 import leftArrowIcon from "../../assets/icons/left_arrow.svg";
 import { EditClientForm } from "../forms/editClientForm";
-
-interface Client {
-  client_id: string;
-  full_name: string;
-  number: string[];
-  adress: string[];
-}
+import { type Client } from "../../types/entities/Client";
 
 interface ClientDetailModalProps {
   client: Client;

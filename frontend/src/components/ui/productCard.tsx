@@ -1,12 +1,6 @@
 import React from "react";
 import { categoryMap } from "../../utils/dataMap";
-
-interface Product {
-  id: number | string;
-  name: string;
-  category: string;
-  price: number;
-}
+import { type Product } from "../../types/entities/Product";
 
 interface ProductCardProps {
   product: Product;
@@ -17,7 +11,6 @@ export const ProductCard: React.FC<ProductCardProps> = ({
   product,
   onClick,
 }) => {
-
   return (
     <div
       onClick={() => onClick(product)}

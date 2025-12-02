@@ -3,8 +3,8 @@ import {
   updateEmployeeById,
   deleteEmployeeById,
   getAllEmployees,
-} from "../services/employeeService";
-import { createInviteUserLink } from "../services/userService";
+} from "../services/api/employeeApi";
+import { createInviteUserLink } from "../services/api/userApi";
 
 export const useEmployees = () => {
   const [employees, setEmployees] = useState<Array<any>>([]);

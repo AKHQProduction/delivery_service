@@ -2,12 +2,7 @@ import React, { useState } from "react";
 import { FormWrapper } from "../ui/formWrapper";
 import { FormInput } from "../ui/formInput";
 import { FormSelect } from "../ui/formSelect";
-
-interface Employee {
-  full_name: string;
-  role: string;
-  user_id: string;
-}
+import { type Employee } from "../../types/entities/Employee";
 
 interface EditEmployeeFormProps {
   employee: Employee;

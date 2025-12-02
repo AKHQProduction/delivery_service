@@ -1,11 +1,6 @@
 import React from "react";
 import { roleMap } from "../../utils/dataMap";
-
-interface Employee {
-  user_id: string;
-  full_name: string;
-  role: string;
-}
+import { type Employee } from "../../types/entities/Employee";
 
 interface EmployeeCardProps {
   employee: Employee;

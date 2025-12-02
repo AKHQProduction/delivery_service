@@ -1,11 +1,5 @@
 import React from "react";
-
-interface Client {
-  client_id: string;
-  full_name: string;
-  number: string[];
-  adress: string[];
-}
+import { type Client } from "../../types/entities/Client";
 
 interface ClientCardProps {
   client: Client;

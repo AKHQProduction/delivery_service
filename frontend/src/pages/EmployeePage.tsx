@@ -6,12 +6,7 @@ import { EmployeeDetailModal } from "../components/features/employeeDetailModal"
 import { RightModal } from "../components/ui/rightModal";
 import { useEmployees } from "../hooks/useEmployees";
 import { reverseRoleMap } from "../utils/dataMap";
-
-type Employee = {
-  user_id: string;
-  full_name: string;
-  role: string;
-};
+import { type Employee } from "../types/entities/Employee";
 
 export const EmployeePage = () => {
   const [searchTerm, setSearchTerm] = useState("");

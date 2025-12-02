@@ -4,12 +4,7 @@ import { ItemElement } from "../ui/itemElement";
 import { ModalButtons } from "../ui/modalButtons";
 import leftArrowIcon from "../../assets/icons/left_arrow.svg";
 import { roleMap } from "../../utils/dataMap";
-
-interface Employee {
-  user_id: string;
-  full_name: string;
-  role: string;
-}
+import { type Employee } from "../../types/entities/Employee";
 
 interface EmployeeDetailModalProps {
   employee: Employee;
@@ -79,10 +74,10 @@ export const EmployeeDetailModal: React.FC<EmployeeDetailModalProps> = ({
           <img src={leftArrowIcon} alt="Back" className="w-8 h-8" />
         </button>
 
-        <h1 className="text-3xl font-bold text-white mb-2">{employee.full_name}</h1>
-        <p className="text-indigo-100">
-          {roleMap[employee.role]}
-        </p>
+        <h1 className="text-3xl font-bold text-white mb-2">
+          {employee.full_name}
+        </h1>
+        <p className="text-indigo-100">{roleMap[employee.role]}</p>
       </div>
 
       <div className="flex-1 overflow-y-auto px-6 py-6 space-y-6 pb-24">

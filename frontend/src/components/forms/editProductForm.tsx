@@ -2,13 +2,7 @@ import React, { useState } from "react";
 import { FormWrapper } from "../ui/formWrapper";
 import { FormInput } from "../ui/formInput";
 import { FormSelect } from "../ui/formSelect";
-
-interface Product {
-  product_id: string;
-  name: string;
-  category: string;
-  price: number;
-}
+import { type Product } from "../../types/entities/Product";
 
 interface EditProductFormProps {
   product: Product;
