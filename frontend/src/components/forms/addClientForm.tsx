@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import { FormWrapper } from "../ui/formWrapper";
 import { FormInput } from "../ui/formInput";
+import { DynamicInputList } from "../ui/dynamicInputList";
 
 interface AddClientFormProps {
   onClose: () => void;
@@ -8,10 +9,10 @@ interface AddClientFormProps {
 
 export const AddClientForm: React.FC<AddClientFormProps> = ({ onClose }) => {
   const [formData, setFormData] = useState({
+    client_id: "",
     name: "",
-    phone: "",
-    email: "",
-    address: "",
+    phones: [""],
+    addresses: [""],
   });
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -20,12 +21,29 @@ export const AddClientForm: React.FC<AddClientFormProps> = ({ onClose }) => {
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    console.log("Client submitted:", formData);
+    const cleanedData = {
+      ...formData,
+      phones: formData.phones.filter((p) => p.trim() !== ""),
+      addresses: formData.addresses.filter((a) => a.trim() !== ""),
+    };
+    console.log("Client submitted:", cleanedData);
     onClose();
   };
 
   return (
-    <FormWrapper onSubmit={handleSubmit} onClose={onClose} submitLabel="Додати клієнта">
+    <FormWrapper
+      onSubmit={handleSubmit}
+      onClose={onClose}
+      submitLabel="Додати клієнта"
+    >
+      <FormInput
+        label="ID клієнта"
+        name="client_id"
+        value={formData.client_id}
+        onChange={handleChange}
+        placeholder="Наприклад: БИДЛ001"
+        required
+      />
       <FormInput
         label="Ім'я клієнта"
         name="name"
@@ -34,29 +52,23 @@ export const AddClientForm: React.FC<AddClientFormProps> = ({ onClose }) => {
         placeholder="Введіть ім'я..."
         required
       />
-      <FormInput
-        label="Телефон"
-        name="phone"
-        type="tel"
-        value={formData.phone}
-        onChange={handleChange}
+
+      <DynamicInputList
+        label="Телефони"
+        values={formData.phones}
+        onChange={(phones) => setFormData({ ...formData, phones })}
         placeholder="+380..."
+        type="tel"
         required
+        addButtonLabel="+ Додати телефон"
       />
-      <FormInput
-        label="Email"
-        name="email"
-        type="email"
-        value={formData.email}
-        onChange={handleChange}
-        placeholder="email@example.com"
-      />
-      <FormInput
-        label="Адреса"
-        name="address"
-        value={formData.address}
-        onChange={handleChange}
+
+      <DynamicInputList
+        label="Адреси"
+        values={formData.addresses}
+        onChange={(addresses) => setFormData({ ...formData, addresses })}
         placeholder="Введіть адресу..."
+        addButtonLabel="+ Додати адресу"
       />
     </FormWrapper>
   );
