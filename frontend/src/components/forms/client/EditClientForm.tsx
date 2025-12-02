@@ -1,8 +1,8 @@
 import React, { useState } from "react";
-import { FormWrapper } from "../ui/formWrapper";
-import { FormInput } from "../ui/formInput";
-import { DynamicInputList } from "../ui/dynamicInputList";
-import { type Client } from "../../types/entities/Client";
+import { FormWrapper } from "../shared/FormWrapper";
+import { FormInput } from "../shared/FormInput";
+import { DynamicInputList } from "../shared/DynamicInputList";
+import { type Client } from "../../../types/entities/Client";
 
 interface EditClientFormProps {
   client: Client;

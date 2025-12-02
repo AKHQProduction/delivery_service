@@ -1,20 +1,20 @@
 import React, { useState } from "react";
-import { EditProductForm } from "../forms/editProductForm";
-import { ItemElement } from "../ui/itemElement";
-import { ModalButtons } from "../ui/modalButtons";
-import leftArrowIcon from "../../assets/icons/left_arrow.svg";
-import { categoryMap } from "../../utils/dataMap";
-import { type Product } from "../../types/entities/Product";
+import { EditEmployeeForm } from "../../forms/employees/EditEmployeeForm";
+import { ItemElement } from "../../ui/itemElement";
+import { ModalButtons } from "../../ui/modalButtons";
+import leftArrowIcon from "../../../assets/icons/left_arrow.svg";
+import { roleMap } from "../../../utils/dataMap";
+import { type Employee } from "../../../types/entities/Employee";
 
-interface ProductDetailModalProps {
-  product: Product;
+interface EmployeeDetailModalProps {
+  employee: Employee;
   onClose: () => void;
   onDelete: () => void;
-  onSave: (updatedProduct: Product) => void;
+  onSave: (updatedProduct: Employee) => void;
 }
 
-export const ProductDetailModal: React.FC<ProductDetailModalProps> = ({
-  product,
+export const EmployeeDetailModal: React.FC<EmployeeDetailModalProps> = ({
+  employee,
   onClose,
   onDelete,
   onSave,
@@ -29,8 +29,8 @@ export const ProductDetailModal: React.FC<ProductDetailModalProps> = ({
     setIsEditing(false);
   };
 
-  const handleSaveEdit = (updatedProduct: Product) => {
-    onSave(updatedProduct);
+  const handleSaveEdit = (updatedEmployee: Employee) => {
+    onSave(updatedEmployee);
     setIsEditing(false);
   };
 
@@ -47,13 +47,13 @@ export const ProductDetailModal: React.FC<ProductDetailModalProps> = ({
             <img src={leftArrowIcon} alt="Back" className="w-8 h-8" />
           </button>
           <h1 className="text-3xl font-bold text-white mb-2">
-            Редагувати товар
+            Редагувати працівника {employee.full_name}
           </h1>
         </div>
 
         <div className="flex-1 overflow-y-auto px-6 py-6">
-          <EditProductForm
-            product={product}
+          <EditEmployeeForm
+            employee={employee}
             onClose={handleCancelEdit}
             onSave={handleSaveEdit}
           />
@@ -74,10 +74,10 @@ export const ProductDetailModal: React.FC<ProductDetailModalProps> = ({
           <img src={leftArrowIcon} alt="Back" className="w-8 h-8" />
         </button>
 
-        <h1 className="text-3xl font-bold text-white mb-2">{product.name}</h1>
-        <p className="text-indigo-100">
-          Категорія: {categoryMap[product.category]}
-        </p>
+        <h1 className="text-3xl font-bold text-white mb-2">
+          {employee.full_name}
+        </h1>
+        <p className="text-indigo-100">{roleMap[employee.role]}</p>
       </div>
 
       <div className="flex-1 overflow-y-auto px-6 py-6 space-y-6 pb-24">
@@ -86,16 +86,12 @@ export const ProductDetailModal: React.FC<ProductDetailModalProps> = ({
             Основна інформація
           </h2>
           <ItemElement
-            descriptionText={"Назва товару"}
-            elementText={product.name}
+            descriptionText={"Ім'я працівника"}
+            elementText={employee.full_name}
           />
           <ItemElement
-            descriptionText={"Категорія"}
-            elementText={categoryMap[product.category]}
-          />
-          <ItemElement
-            descriptionText={"Ціна"}
-            elementText={`₴${product.price}`}
+            descriptionText={"Роль працівника"}
+            elementText={roleMap[employee.role]}
           />
         </div>
         <ModalButtons

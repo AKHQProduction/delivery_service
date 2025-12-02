@@ -1,24 +1,20 @@
 import React, { useState } from "react";
-import { FormWrapper } from "../ui/formWrapper";
-import { FormInput } from "../ui/formInput";
-import { FormSelect } from "../ui/formSelect";
-import { type Product } from "../../types/entities/Product";
+import { FormWrapper } from "../shared/FormWrapper";
+import { FormInput } from "../shared/FormInput";
+import { FormSelect } from "../shared/FormSelect";
+import { useProducts } from "../../../hooks/useProducts";
 
-interface EditProductFormProps {
-  product: Product;
+interface AddProductFormProps {
   onClose: () => void;
-  onSave: (updatedProduct: Product) => void;
 }
 
-export const EditProductForm: React.FC<EditProductFormProps> = ({
-  product,
-  onClose,
-  onSave,
-}) => {
+export const AddProductForm: React.FC<AddProductFormProps> = ({ onClose }) => {
+  const { addProduct } = useProducts();
+
   const [formData, setFormData] = useState({
-    name: product.name,
-    category: product.category,
-    price: product.price.toString(),
+    name: "",
+    category: "",
+    price: "",
   });
 
   const handleChange = (
@@ -27,30 +23,28 @@ export const EditProductForm: React.FC<EditProductFormProps> = ({
     setFormData({ ...formData, [e.target.name]: e.target.value });
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    const updatedProduct: Product = {
-      product_id: product.product_id,
-      name: formData.name,
-      category: formData.category,
-      price: parseFloat(formData.price),
-    };
-
-    onSave(updatedProduct);
+    await addProduct(
+      formData.name,
+      parseFloat(formData.price),
+      formData.category
+    );
+    window.location.reload();
     onClose();
   };
 
   const categoryOptions = [
-    { value: "Вода", label: "Вода" },
-    { value: "Інше", label: "Інше" },
+    { value: "WATER", label: "Вода" },
+    { value: "OTHER", label: "Інше" },
   ];
 
   return (
     <FormWrapper
       onSubmit={handleSubmit}
       onClose={onClose}
-      submitLabel="Зберегти зміни"
+      submitLabel="Додати товар"
     >
       <FormInput
         label="Назва товару"

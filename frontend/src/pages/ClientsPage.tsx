@@ -2,8 +2,8 @@ import { useState } from "react";
 import { PageHeader } from "../components/ui/pageHeader";
 import { SearchBar } from "../components/ui/searchBar";
 import { ClientCard } from "../components/ui/clientsCard";
-import { ClientDetailModal } from "../components/features/clientDetailModal";
-import { RightModal } from "../components/ui/rightModal";
+import { ClientDetailModal } from "../components/modals/detailsModals/ClientDetailModal";
+import { RightModal } from "../components/modals/RightModal";
 import { type Client } from "../types/entities/Client";
 
 const clientsData = {

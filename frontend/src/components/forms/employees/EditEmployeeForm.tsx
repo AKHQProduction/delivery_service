@@ -1,8 +1,8 @@
 import React, { useState } from "react";
-import { FormWrapper } from "../ui/formWrapper";
-import { FormInput } from "../ui/formInput";
-import { FormSelect } from "../ui/formSelect";
-import { type Employee } from "../../types/entities/Employee";
+import { FormWrapper } from "../shared/formWrapper";
+import { FormInput } from "../shared/formInput";
+import { FormSelect } from "../shared/formSelect";
+import { type Employee } from "../../../types/entities/Employee";
 
 interface EditEmployeeFormProps {
   employee: Employee;

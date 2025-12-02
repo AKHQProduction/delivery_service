@@ -1,13 +1,13 @@
 import { useState } from "react";
 import { useLocation } from "react-router-dom";
-import { BottomModal } from "../ui/bottomModal";
+import { BottomModal } from "../modals/BottomModal";
 import { MODAL_CONFIG } from "../../constants/modalContent";
-import { AddProductForm } from "../forms/addProductForm";
-import { AddClientForm } from "../forms/addClientForm";
-import { AddOrderForm } from "../forms/addOrderForm";
-import { InviteUserForm } from "../forms/inviteUserForm";
+import { AddProductForm } from "../forms/products/AddProductForm";
+import { AddClientForm } from "../forms/client/AddClientForm";
+import { AddOrderForm } from "../forms/orders/AddOrderForm";
+import { InviteUserForm } from "../forms/employees/InviteUserForm";
 import { useUserStore } from "../../context/useUserStore";
-import { InviteLinkModal } from "./inviteLinkModal";
+import { InviteLinkModal } from "../modals/InviteLinkModal";
 
 export const AddItemComponent = () => {
   const [isModalOpen, setIsModalOpen] = useState(false);

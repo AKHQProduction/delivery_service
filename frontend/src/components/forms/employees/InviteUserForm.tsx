@@ -1,8 +1,8 @@
 import React, { useState } from "react";
-import { FormWrapper } from "../ui/formWrapper";
-import { FormInput } from "../ui/formInput";
-import { FormSelect } from "../ui/formSelect";
-import { useEmployees } from "../../hooks/useEmployees";
+import { FormWrapper } from "../shared/FormWrapper";
+import { FormInput } from "../shared/FormInput";
+import { FormSelect } from "../shared/FormSelect";
+import { useEmployees } from "../../../hooks/useEmployees";
 
 export const InviteUserForm: React.FC<{
   onClose: () => void;
@@ -61,4 +61,3 @@ export const InviteUserForm: React.FC<{
     </FormWrapper>
   );
 };
-

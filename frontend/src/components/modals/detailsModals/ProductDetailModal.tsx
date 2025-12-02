@@ -1,19 +1,20 @@
 import React, { useState } from "react";
-import { ItemElement } from "../ui/itemElement";
-import { ModalButtons } from "../ui/modalButtons";
-import leftArrowIcon from "../../assets/icons/left_arrow.svg";
-import { EditClientForm } from "../forms/editClientForm";
-import { type Client } from "../../types/entities/Client";
+import { EditProductForm } from "../../forms/products/EditProductForm";
+import { ItemElement } from "../../ui/itemElement";
+import { ModalButtons } from "../../ui/modalButtons";
+import leftArrowIcon from "../../../assets/icons/left_arrow.svg";
+import { categoryMap } from "../../../utils/dataMap";
+import { type Product } from "../../../types/entities/Product";
 
-interface ClientDetailModalProps {
-  client: Client;
+interface ProductDetailModalProps {
+  product: Product;
   onClose: () => void;
   onDelete: () => void;
-  onSave: (updatedProduct: Client) => void;
+  onSave: (updatedProduct: Product) => void;
 }
 
-export const ClientDetailModal: React.FC<ClientDetailModalProps> = ({
-  client,
+export const ProductDetailModal: React.FC<ProductDetailModalProps> = ({
+  product,
   onClose,
   onDelete,
   onSave,
@@ -28,8 +29,8 @@ export const ClientDetailModal: React.FC<ClientDetailModalProps> = ({
     setIsEditing(false);
   };
 
-  const handleSaveEdit = (updatedEmployee: Client) => {
-    onSave(updatedEmployee);
+  const handleSaveEdit = (updatedProduct: Product) => {
+    onSave(updatedProduct);
     setIsEditing(false);
   };
 
@@ -46,13 +47,13 @@ export const ClientDetailModal: React.FC<ClientDetailModalProps> = ({
             <img src={leftArrowIcon} alt="Back" className="w-8 h-8" />
           </button>
           <h1 className="text-3xl font-bold text-white mb-2">
-            Редагувати клієнта {client.full_name}
+            Редагувати товар
           </h1>
         </div>
 
         <div className="flex-1 overflow-y-auto px-6 py-6">
-          <EditClientForm
-            client={client}
+          <EditProductForm
+            product={product}
             onClose={handleCancelEdit}
             onSave={handleSaveEdit}
           />
@@ -73,10 +74,10 @@ export const ClientDetailModal: React.FC<ClientDetailModalProps> = ({
           <img src={leftArrowIcon} alt="Back" className="w-8 h-8" />
         </button>
 
-        <h1 className="text-3xl font-bold text-white mb-2">
-          {client.full_name}
-        </h1>
-        <p className="text-indigo-100">Клієнт ID: #{client.client_id}</p>
+        <h1 className="text-3xl font-bold text-white mb-2">{product.name}</h1>
+        <p className="text-indigo-100">
+          Категорія: {categoryMap[product.category]}
+        </p>
       </div>
 
       <div className="flex-1 overflow-y-auto px-6 py-6 space-y-6 pb-24">
@@ -85,23 +86,17 @@ export const ClientDetailModal: React.FC<ClientDetailModalProps> = ({
             Основна інформація
           </h2>
           <ItemElement
-            descriptionText={"Ім'я клієнта"}
-            elementText={client.full_name}
+            descriptionText={"Назва товару"}
+            elementText={product.name}
           />
-          {client.number.map((phone, index) => (
-            <ItemElement
-              key={index}
-              descriptionText={`Телефон ${index + 1}`}
-              elementText={phone}
-            />
-          ))}
-          {client.adress.map((address, index) => (
-            <ItemElement
-              key={index}
-              descriptionText={`Адреса ${index + 1}`}
-              elementText={address}
-            />
-          ))}
+          <ItemElement
+            descriptionText={"Категорія"}
+            elementText={categoryMap[product.category]}
+          />
+          <ItemElement
+            descriptionText={"Ціна"}
+            elementText={`₴${product.price}`}
+          />
         </div>
         <ModalButtons
           firstButtonText={"Редагувати"}
