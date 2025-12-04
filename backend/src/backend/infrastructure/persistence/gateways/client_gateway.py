@@ -45,6 +45,7 @@ class SQLAlchemyClientGateway(ClientGateway):
 
         new_client = Client(
             id=dto.client_id,
+            custom_id=dto.custom_id,
             full_name=dto.full_name,
             shop_id=dto.shop_id,
             phones=phones,

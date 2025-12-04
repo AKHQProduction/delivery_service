@@ -33,6 +33,7 @@ async def test_create_client_with_apartment(
 
     json = {
         "full_name": "Іван Іванов",
+        "custom_id": "ABCD",
         "phones": [{"number": "+380501234567"}],
         "addresses": [
             {
@@ -60,6 +61,7 @@ async def test_create_client_with_apartment(
     )
     client = result.scalar_one()
     assert client.full_name == "Іван Іванов"
+    assert client.custom_id == "ABCD"
 
     phone_result = await session.execute(
         select(ClientPhone).where(

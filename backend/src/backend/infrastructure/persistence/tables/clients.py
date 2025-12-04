@@ -19,6 +19,7 @@ class Client(Base, CreatedAt, UpdatedAt):
     __tablename__ = "clients"
 
     id: Mapped[uuid.UUID] = mapped_column(sa.UUID, primary_key=True)
+    custom_id: Mapped[str | None] = mapped_column(sa.String, nullable=True)
     full_name: Mapped[str] = mapped_column(sa.String, nullable=False)
 
     shop_id: Mapped[uuid.UUID] = mapped_column(

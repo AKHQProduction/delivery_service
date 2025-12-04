@@ -22,6 +22,7 @@ def upgrade() -> None:
     op.create_table(
         "clients",
         sa.Column("id", sa.UUID(), nullable=False),
+        sa.Column("custom_id", sa.String(), nullable=True),
         sa.Column("full_name", sa.String(), nullable=False),
         sa.Column("shop_id", sa.UUID(), nullable=False),
         sa.Column("user_id", sa.UUID(), nullable=True),
