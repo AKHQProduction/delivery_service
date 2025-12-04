@@ -6,6 +6,7 @@ from sqlalchemy.ext.asyncio import (
 
 from backend.infrastructure.persistence.gateways import (
     RedisLinkGateway,
+    SQLAlchemyClientGateway,
     SQLAlchemyProductGateway,
     SQLAlchemyShopGateway,
     SQLAlchemyUserGateway,
@@ -30,3 +31,8 @@ async def product_gateway(session: AsyncSession) -> SQLAlchemyProductGateway:
 @pytest_asyncio.fixture()
 async def link_gateway(redis_client: Redis) -> RedisLinkGateway:
     return RedisLinkGateway(redis=redis_client)
+
+
+@pytest_asyncio.fixture()
+async def client_gateway(session: AsyncSession) -> SQLAlchemyClientGateway:
+    return SQLAlchemyClientGateway(session=session)

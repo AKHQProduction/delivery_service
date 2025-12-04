@@ -90,7 +90,7 @@ class ClientAddress(Base, CreatedAt, UpdatedAt):
         sa.String, nullable=True, default=None
     )
     entrance: Mapped[str | None] = mapped_column(
-        sa.String, nullable=True, default=None
+        sa.String, nullable=True, default=None, comment="Подъезд"
     )
     floor: Mapped[str | None] = mapped_column(
         sa.String, nullable=True, default=None

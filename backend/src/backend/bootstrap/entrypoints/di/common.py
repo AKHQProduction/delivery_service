@@ -28,6 +28,7 @@ from backend.bootstrap.config import (
 )
 from backend.infrastructure.persistence.gateways import (
     RedisLinkGateway,
+    SQLAlchemyClientGateway,
     SQLAlchemyShopGateway,
     SQLAlchemyUserGateway,
 )
@@ -94,6 +95,7 @@ class PersistenceProvider(Provider):
         WithParents[SQLAlchemyUserGateway],
         WithParents[SQLAlchemyShopGateway],
         WithParents[SQLAlchemyProductGateway],
+        WithParents[SQLAlchemyClientGateway],
     )
 
 
