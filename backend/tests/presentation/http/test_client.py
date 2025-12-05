@@ -632,3 +632,30 @@ async def test_get_all_clients_unauthorized(
     response = await http_client.get(url=f"{BASE_URL}/all")
 
     assert response.status_code == status.HTTP_403_FORBIDDEN
+
+
+@pytest.mark.asyncio()
+async def test_delete_product(
+    http_client: AsyncClient,
+    session: AsyncSession,
+    customer_headers: Callable[[int], dict[str, Any]],
+    setup_full_test_user_with_shop,
+    setup_test_client,
+) -> None:
+    telegram_id = 1000
+    _, shop_id = await setup_full_test_user_with_shop(telegram_id=telegram_id)
+    client_id = await setup_test_client(shop_id=shop_id)
+    await session.commit()
+
+    headers = customer_headers(telegram_id)
+
+    url = BASE_URL + f"/{client_id}"
+    response = await http_client.delete(url=url, headers=headers)
+
+    assert response.status_code == status.HTTP_200_OK
+    await session.flush()
+
+    deleted_entity = await session.execute(
+        select(Client).where(Client.id == client_id)
+    )
+    assert deleted_entity.scalar_one_or_none() is None

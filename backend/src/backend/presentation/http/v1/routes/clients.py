@@ -10,6 +10,10 @@ from backend.application.commands.create_client import (
     CreateClientCommand,
     CreateClientCommandHandler,
 )
+from backend.application.commands.delete_client import (
+    DeleteClientCommand,
+    DeleteClientCommandHandler,
+)
 from backend.application.interfaces.gateways import Pagination, SortOrder
 from backend.application.interfaces.gateways.client_gateway import (
     ClientReadModel,
@@ -169,3 +173,19 @@ async def get_client(
     client_id: ClientId, handler: FromDishka[GetClientQueryHandler]
 ) -> ClientReadModel:
     return await handler.handle(client_id=client_id)
+
+
+@router.delete(
+    "/{client_id}",
+    status_code=status.HTTP_200_OK,
+    responses={
+        status.HTTP_401_UNAUTHORIZED: {"model": ErrorSchema},
+        status.HTTP_403_FORBIDDEN: {"model": ErrorSchema},
+        status.HTTP_404_NOT_FOUND: {"model": ErrorSchema},
+    },
+    dependencies=[Depends(HTTPBearer())],
+)
+async def delete_product(
+    client_id: ClientId, handler: FromDishka[DeleteClientCommandHandler]
+) -> None:
+    await handler.handle(DeleteClientCommand(client_id=client_id))

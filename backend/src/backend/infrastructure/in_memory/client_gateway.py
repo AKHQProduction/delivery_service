@@ -2,6 +2,7 @@ import uuid
 
 from backend.application.interfaces.gateways import Pagination, SortOrder
 from backend.application.interfaces.gateways.client_gateway import (
+    ClientDM,
     ClientGateway,
     ClientReadModel,
     CreateClientDTO,
@@ -17,6 +18,19 @@ class InMemoryClientGateway(ClientGateway):
 
     async def create_client(self, dto: CreateClientDTO) -> None:
         self.clients[dto.client_id] = dto
+
+    async def load(self, client_id: ClientId) -> ClientDM | None:
+        entity = self.clients.get(client_id)
+        if not entity:
+            return None
+        return ClientDM(
+            client_id=entity.client_id,
+            shop_id=entity.shop_id,
+            full_name=entity.full_name,
+            phones=entity.phones,
+            addresses=entity.addresses,
+            custom_id=entity.custom_id,
+        )
 
     async def read(self, client_id: ClientId) -> ClientReadModel | None:
         dto = self.clients.get(client_id)
@@ -78,6 +92,10 @@ class InMemoryClientGateway(ClientGateway):
         start = pagination.offset
         end = pagination.offset + pagination.limit
         return result[start:end]
+
+    async def delete(self, client_id: ClientId) -> None:
+        if client_id in self.clients:
+            del self.clients[client_id]
 
     def next_id(self) -> ClientId:
         return self.client_id or ClientId(uuid.uuid4())

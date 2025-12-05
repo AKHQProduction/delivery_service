@@ -34,6 +34,16 @@ class CreateClientDTO:
     custom_id: str | None = None
 
 
+@dataclass
+class ClientDM:  # Like entity
+    client_id: ClientId
+    shop_id: ShopId
+    full_name: str
+    phones: list[PhoneDTO]
+    addresses: list[AddressDTO]
+    custom_id: str | None = None
+
+
 @dataclass(frozen=True)
 class ClientReadModel:
     client_id: ClientId
@@ -54,6 +64,14 @@ class GetClientsFilters:
 class ClientGateway(Protocol):
     @abstractmethod
     async def create_client(self, dto: CreateClientDTO) -> None:
+        raise NotImplementedError
+
+    @abstractmethod
+    async def load(self, client_id: ClientId) -> ClientDM | None:
+        raise NotImplementedError
+
+    @abstractmethod
+    async def delete(self, client_id: ClientId) -> None:
         raise NotImplementedError
 
     @abstractmethod

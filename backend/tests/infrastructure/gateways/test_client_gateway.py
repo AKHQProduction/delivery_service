@@ -783,3 +783,69 @@ async def test_read_all_sorts_by_full_name_descending(
     assert result[0].full_name == "Віктор"
     assert result[1].full_name == "Борис"
     assert result[2].full_name == "Анна"
+
+
+@pytest.mark.asyncio()
+async def test_delete_client(
+    client_gateway: SQLAlchemyClientGateway,
+    session: AsyncSession,
+    setup_test_client,
+    create_shop,
+) -> None:
+    shop_id = await create_shop()
+    client_id = await setup_test_client(shop_id)
+    await session.flush()
+
+    client_before = await session.execute(
+        select(Client).where(Client.id == client_id)
+    )
+    assert client_before.scalar_one() is not None
+
+    await client_gateway.delete(client_id)
+    await session.flush()
+
+    client_after = await session.execute(
+        select(Client).where(Client.id == client_id)
+    )
+    assert client_after.scalar_one_or_none() is None
+
+
+@pytest.mark.asyncio()
+async def test_delete_product_not_exists(
+    client_gateway: SQLAlchemyClientGateway,
+    session: AsyncSession,
+) -> None:
+    non_existent_product_id = ClientId(uuid.uuid4())
+
+    await client_gateway.delete(non_existent_product_id)
+    await session.flush()
+
+
+@pytest.mark.asyncio()
+async def test_load_product(
+    client_gateway: SQLAlchemyClientGateway,
+    session: AsyncSession,
+    setup_test_client,
+    create_shop,
+) -> None:
+    shop_id = await create_shop()
+    client_id = await setup_test_client(shop_id)
+    await session.flush()
+
+    client = await client_gateway.load(client_id)
+
+    assert client is not None
+    assert client.client_id == client_id
+    assert client.shop_id == shop_id
+    assert client.full_name == "Test Client"
+
+
+@pytest.mark.asyncio()
+async def test_load_product_returns_none_when_not_exists(
+    client_gateway: SQLAlchemyClientGateway,
+) -> None:
+    client_id = ClientId(uuid.uuid4())
+
+    client = await client_gateway.load(client_id)
+
+    assert client is None

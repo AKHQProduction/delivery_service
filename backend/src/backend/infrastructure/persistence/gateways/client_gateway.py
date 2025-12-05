@@ -8,13 +8,14 @@ from uuid_utils import uuid7
 from backend.application.interfaces.gateways import Pagination, SortOrder
 from backend.application.interfaces.gateways.client_gateway import (
     AddressDTO,
+    ClientDM,
     ClientGateway,
     ClientReadModel,
     CreateClientDTO,
     GetClientsFilters,
     PhoneDTO,
 )
-from backend.application.vars import AddressType, ClientId
+from backend.application.vars import AddressType, ClientId, ShopId
 from backend.infrastructure.persistence.tables.clients import (
     Client,
     ClientAddress,
@@ -60,6 +61,54 @@ class SQLAlchemyClientGateway(ClientGateway):
         )
 
         self._session.add(new_client)
+
+    async def load(self, client_id: ClientId) -> ClientDM | None:
+        query = (
+            select(Client)
+            .where(Client.id == client_id)
+            .options(
+                selectinload(Client.phones), selectinload(Client.addresses)
+            )
+        )
+
+        result = await self._session.execute(query)
+        client = result.scalar_one_or_none()
+
+        if client is None:
+            return None
+
+        phones = [
+            PhoneDTO(number=phone.number, is_primary=phone.is_primary)
+            for phone in client.phones
+        ]
+
+        addresses = [
+            AddressDTO(
+                street=address.street,
+                house=address.house,
+                address_type=AddressType(address.address_type),
+                apartment=address.apartment,
+                entrance=address.entrance,
+                floor=address.floor,
+                intercom=address.intercom,
+                is_primary=address.is_primary,
+            )
+            for address in client.addresses
+        ]
+
+        return ClientDM(
+            client_id=ClientId(client.id),
+            custom_id=client.custom_id,
+            shop_id=ShopId(client.shop_id),
+            full_name=client.full_name,
+            phones=phones,
+            addresses=addresses,
+        )
+
+    async def delete(self, client_id: ClientId) -> None:
+        client_db = await self._session.get(Client, client_id)
+        if client_db:
+            await self._session.delete(client_db)
 
     async def read(self, client_id: ClientId) -> ClientReadModel | None:
         query = (
