@@ -218,7 +218,10 @@ async def update_client(
             client_id=client_id,
             full_name=body.full_name,
             custom_id=body.custom_id,
-            phones=[Phone(number=phone.number) for phone in body.phones]
+            phones=[
+                Phone(number=phone.number, is_primary=phone.is_primary)
+                for phone in body.phones
+            ]
             if body.phones is not None
             else None,
             addresses=[
@@ -230,6 +233,7 @@ async def update_client(
                     entrance=address.entrance,
                     floor=address.floor,
                     intercom=address.intercom,
+                    is_primary=address.is_primary,
                 )
                 for address in body.addresses
             ]

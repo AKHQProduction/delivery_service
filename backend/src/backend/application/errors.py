@@ -33,6 +33,10 @@ class EntityNotFoundError(ApplicationError):
 
 
 class ValidationError(ApplicationError):
+    pass
+
+
+class FieldError(ValidationError):
     def __init__(
         self, field: str, value: str, acceptable_values: list[Any]
     ) -> None:
@@ -55,4 +59,19 @@ class PhoneNumberAlreadyExistsError(ApplicationError):
         return (
             f"Phone number {self._phone_number} is already used "
             "by another client"
+        )
+
+
+class InvalidPrimaryFlagError(ValidationError):
+    def __init__(self, field: str, count: int) -> None:
+        self._field = field
+        self._count = count
+
+    @property
+    def message(self) -> str:
+        if self._count == 0:
+            return f"Exactly one {self._field} must be marked as primary"
+        return (
+            f"Only one {self._field} can be marked as primary, "
+            f"but {self._count} were provided"
         )

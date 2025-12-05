@@ -5,6 +5,7 @@ from backend.application.vars import AddressType
 
 class PhoneSchema(BaseModel):
     number: str
+    is_primary: bool = False
 
 
 class AddressSchema(BaseModel):
@@ -15,6 +16,7 @@ class AddressSchema(BaseModel):
     entrance: str | None = None
     floor: str | None = None
     intercom: str | None = None
+    is_primary: bool = False
 
 
 class EditClientSchema(BaseModel):

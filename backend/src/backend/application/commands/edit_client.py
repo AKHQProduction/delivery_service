@@ -4,6 +4,7 @@ from dataclasses import dataclass
 from backend.application.errors import (
     AccessDeniedError,
     EntityNotFoundError,
+    InvalidPrimaryFlagError,
     PhoneNumberAlreadyExistsError,
 )
 from backend.application.interfaces import (
@@ -27,6 +28,7 @@ logger = logging.getLogger(__name__)
 @dataclass(frozen=True)
 class Phone:
     number: str
+    is_primary: bool = False
 
 
 @dataclass(frozen=True)
@@ -38,6 +40,7 @@ class Address:
     entrance: str | None = None
     floor: str | None = None
     intercom: str | None = None
+    is_primary: bool = False
 
 
 @dataclass(frozen=True)
@@ -47,6 +50,23 @@ class EditClientCommand:
     custom_id: str | None = None
     phones: list[Phone] | None = None
     addresses: list[Address] | None = None
+
+    def __post_init__(self) -> None:
+        if self.phones is not None and self.phones:
+            primary_count = sum(1 for phone in self.phones if phone.is_primary)
+            if primary_count != 1:
+                raise InvalidPrimaryFlagError(
+                    field="phone", count=primary_count
+                )
+
+        if self.addresses is not None and self.addresses:
+            primary_count = sum(
+                1 for address in self.addresses if address.is_primary
+            )
+            if primary_count != 1:
+                raise InvalidPrimaryFlagError(
+                    field="address", count=primary_count
+                )
 
 
 class EditClientCommandHandler:
@@ -127,8 +147,8 @@ class EditClientCommandHandler:
                     raise PhoneNumberAlreadyExistsError(phone.number)
 
             client.phones = [
-                PhoneDTO(number=phone.number, is_primary=(idx == 0))
-                for idx, phone in enumerate(command.phones)
+                PhoneDTO(number=phone.number, is_primary=phone.is_primary)
+                for phone in command.phones
             ]
             updates.append(f"phones={len(command.phones)}")
 
@@ -142,9 +162,9 @@ class EditClientCommandHandler:
                     entrance=address.entrance,
                     floor=address.floor,
                     intercom=address.intercom,
-                    is_primary=(idx == 0),
+                    is_primary=address.is_primary,
                 )
-                for idx, address in enumerate(command.addresses)
+                for address in command.addresses
             ]
             updates.append(f"addresses={len(command.addresses)}")
 

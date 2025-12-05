@@ -768,16 +768,15 @@ async def test_edit_client_phones(
 
     json = {
         "phones": [
-            {"number": "+380509999999"},
-            {"number": "+380508888888"},
-            {"number": "+380507777777"},
+            {"number": "+380509999999", "is_primary": True},
+            {"number": "+380508888888", "is_primary": False},
+            {"number": "+380507777777", "is_primary": False},
         ]
     }
 
     response = await http_client.patch(
         url=f"{BASE_URL}/{client_id}", headers=headers, json=json
     )
-
     assert response.status_code == status.HTTP_200_OK
 
     await session.flush()
@@ -830,12 +829,14 @@ async def test_edit_client_addresses(
                 "street": "Нова вулиця",
                 "house": "100",
                 "address_type": AddressType.PRIVATE_HOUSE,
+                "is_primary": True,
             },
             {
                 "street": "Ще одна вулиця",
                 "house": "200",
                 "address_type": AddressType.APARTMENT,
                 "apartment": "50",
+                "is_primary": False,
             },
         ]
     }
@@ -895,12 +896,13 @@ async def test_edit_client_all_fields(
     json = {
         "full_name": "Повністю Нове Ім'я",
         "custom_id": "ALL-NEW-999",
-        "phones": [{"number": "+380501234567"}],
+        "phones": [{"number": "+380501234567", "is_primary": True}],
         "addresses": [
             {
                 "street": "Повністю нова вулиця",
                 "house": "999",
                 "address_type": AddressType.PRIVATE_HOUSE,
+                "is_primary": True,
             }
         ],
     }
@@ -1151,7 +1153,9 @@ async def test_edit_client_with_duplicate_phone_number_integration(
 
     headers = customer_headers(telegram_id)
 
-    json = {"phones": [{"number": "+380509999999"}]}  # Same as client1!
+    json = {
+        "phones": [{"number": "+380509999999", "is_primary": True}]
+    }  # Same as client1!
 
     response = await http_client.patch(
         url=f"{BASE_URL}/{client2_id}", headers=headers, json=json
@@ -1183,8 +1187,8 @@ async def test_edit_client_keep_same_phone_numbers_integration(
 
     json = {
         "phones": [
-            {"number": "+380501111111"},  # Original phone
-            {"number": "+380502222222"},  # Original phone
+            {"number": "+380501111111", "is_primary": True},  # Original phone
+            {"number": "+380502222222", "is_primary": False},  # Original phone
         ]
     }
 

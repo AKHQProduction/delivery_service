@@ -2,7 +2,7 @@ import uuid
 
 import pytest
 
-from backend.application.errors import AccessDeniedError, ValidationError
+from backend.application.errors import AccessDeniedError, FieldError
 from backend.application.usecases.invite_employee import (
     GenerateInviteLinkCommand,
     GenerateInviteLinkCommandHandler,
@@ -120,7 +120,7 @@ async def test_save_link_in_gateway(make_handler) -> None:
 
 @pytest.mark.asyncio()
 async def test_raise_validation_error_when_role_is_owner() -> None:
-    with pytest.raises(ValidationError) as exc_info:
+    with pytest.raises(FieldError) as exc_info:
         GenerateInviteLinkCommand(role=ShopRole.OWNER, full_name="John Doe")
 
     assert exc_info.value._field == "role"

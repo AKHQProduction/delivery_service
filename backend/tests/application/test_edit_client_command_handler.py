@@ -12,6 +12,7 @@ from backend.application.errors import (
     AccessDeniedError,
     AuthorizationError,
     EntityNotFoundError,
+    InvalidPrimaryFlagError,
     PhoneNumberAlreadyExistsError,
 )
 from backend.application.interfaces.gateways.client_gateway import (
@@ -142,9 +143,9 @@ async def test_edit_client_phones(make_handler) -> None:
     command = EditClientCommand(
         client_id=client_id,
         phones=[
-            Phone(number="+380509999999"),
-            Phone(number="+380508888888"),
-            Phone(number="+380507777777"),
+            Phone(number="+380509999999", is_primary=True),
+            Phone(number="+380508888888", is_primary=False),
+            Phone(number="+380507777777", is_primary=False),
         ],
     )
 
@@ -177,12 +178,14 @@ async def test_edit_client_addresses(make_handler) -> None:
                 street="New Street",
                 house="100",
                 address_type=AddressType.PRIVATE_HOUSE,
+                is_primary=True,
             ),
             Address(
                 street="Another Street",
                 house="200",
                 address_type=AddressType.APARTMENT,
                 apartment="50",
+                is_primary=False,
             ),
         ],
     )
@@ -215,13 +218,14 @@ async def test_edit_client_all_fields(make_handler) -> None:
         client_id=client_id,
         full_name="Completely New Name",
         custom_id="ALL-NEW-003",
-        phones=[Phone(number="+380501234567")],
+        phones=[Phone(number="+380501234567", is_primary=True)],
         addresses=[
             Address(
                 street="Brand New Street",
                 house="999",
                 address_type=AddressType.APARTMENT,
                 apartment="1",
+                is_primary=True,
             )
         ],
     )
@@ -429,7 +433,9 @@ async def test_edit_client_with_duplicate_phone_number(make_handler) -> None:
 
     command = EditClientCommand(
         client_id=client2_id,
-        phones=[Phone(number="+380509999999")],  # Same as client1!
+        phones=[
+            Phone(number="+380509999999", is_primary=True)
+        ],  # Same as client1!
     )
 
     with pytest.raises(PhoneNumberAlreadyExistsError) as exc_info:
@@ -451,8 +457,8 @@ async def test_edit_client_keep_same_phone_numbers(make_handler) -> None:
     command = EditClientCommand(
         client_id=client_id,
         phones=[
-            Phone(number="+380501111111"),  # Original phone
-            Phone(number="+380502222222"),  # Original phone
+            Phone(number="+380501111111", is_primary=True),  # Original phone
+            Phone(number="+380502222222", is_primary=False),  # Original phone
         ],
     )
 
@@ -477,8 +483,10 @@ async def test_edit_client_partially_update_phones(make_handler) -> None:
     command = EditClientCommand(
         client_id=client_id,
         phones=[
-            Phone(number="+380501111111"),  # Keep this old phone
-            Phone(number="+380509999999"),  # Add new phone
+            Phone(
+                number="+380501111111", is_primary=True
+            ),  # Keep this old phone
+            Phone(number="+380509999999", is_primary=False),  # Add new phone
         ],
     )
 
@@ -488,3 +496,125 @@ async def test_edit_client_partially_update_phones(make_handler) -> None:
     assert len(updated_client.phones) == 2
     assert updated_client.phones[0].number == "+380501111111"
     assert updated_client.phones[1].number == "+380509999999"
+
+
+def test_edit_command_raises_error_when_no_primary_phone() -> None:
+    client_id = ClientId(uuid.uuid4())
+
+    with pytest.raises(InvalidPrimaryFlagError) as exc_info:
+        EditClientCommand(
+            client_id=client_id,
+            phones=[
+                Phone(number="+380501234567", is_primary=False),
+                Phone(number="+380507654321", is_primary=False),
+            ],
+        )
+
+    assert "phone" in exc_info.value.message.lower()
+
+
+def test_edit_command_raises_error_when_multiple_primary_phones() -> None:
+    client_id = ClientId(uuid.uuid4())
+
+    with pytest.raises(InvalidPrimaryFlagError) as exc_info:
+        EditClientCommand(
+            client_id=client_id,
+            phones=[
+                Phone(number="+380501234567", is_primary=True),
+                Phone(number="+380507654321", is_primary=True),
+            ],
+        )
+
+    assert "phone" in exc_info.value.message.lower()
+    assert "2" in exc_info.value.message
+
+
+def test_edit_command_raises_error_when_no_primary_address() -> None:
+    client_id = ClientId(uuid.uuid4())
+
+    with pytest.raises(InvalidPrimaryFlagError) as exc_info:
+        EditClientCommand(
+            client_id=client_id,
+            addresses=[
+                Address(
+                    street="Street 1",
+                    house="1",
+                    address_type=AddressType.APARTMENT,
+                    is_primary=False,
+                ),
+                Address(
+                    street="Street 2",
+                    house="2",
+                    address_type=AddressType.APARTMENT,
+                    is_primary=False,
+                ),
+            ],
+        )
+
+    assert "address" in exc_info.value.message.lower()
+
+
+def test_edit_command_raises_error_when_multiple_primary_addresses() -> None:
+    client_id = ClientId(uuid.uuid4())
+
+    with pytest.raises(InvalidPrimaryFlagError) as exc_info:
+        EditClientCommand(
+            client_id=client_id,
+            addresses=[
+                Address(
+                    street="Street 1",
+                    house="1",
+                    address_type=AddressType.APARTMENT,
+                    is_primary=True,
+                ),
+                Address(
+                    street="Street 2",
+                    house="2",
+                    address_type=AddressType.APARTMENT,
+                    is_primary=True,
+                ),
+            ],
+        )
+
+    assert "address" in exc_info.value.message.lower()
+    assert "2" in exc_info.value.message
+
+
+def test_edit_command_succeeds_with_exactly_one_primary_phone() -> None:
+    client_id = ClientId(uuid.uuid4())
+
+    command = EditClientCommand(
+        client_id=client_id,
+        phones=[
+            Phone(number="+380501234567", is_primary=True),
+            Phone(number="+380507654321", is_primary=False),
+        ],
+    )
+
+    assert command.phones is not None
+    assert len(command.phones) == 2
+
+
+def test_edit_command_succeeds_with_exactly_one_primary_address() -> None:
+    client_id = ClientId(uuid.uuid4())
+
+    command = EditClientCommand(
+        client_id=client_id,
+        addresses=[
+            Address(
+                street="Street 1",
+                house="1",
+                address_type=AddressType.APARTMENT,
+                is_primary=True,
+            ),
+            Address(
+                street="Street 2",
+                house="2",
+                address_type=AddressType.APARTMENT,
+                is_primary=False,
+            ),
+        ],
+    )
+
+    assert command.addresses is not None
+    assert len(command.addresses) == 2

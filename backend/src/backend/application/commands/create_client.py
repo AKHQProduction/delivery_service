@@ -78,7 +78,8 @@ class CreateClientCommandHandler:
                 raise PhoneNumberAlreadyExistsError(phone.number)
 
         phones_dto = [
-            PhoneDTO(number=phone.number) for phone in command.phones
+            PhoneDTO(number=phone.number, is_primary=(idx == 0))
+            for idx, phone in enumerate(command.phones)
         ]
 
         addresses_dto = [
@@ -90,8 +91,9 @@ class CreateClientCommandHandler:
                 entrance=address.entrance,
                 floor=address.floor,
                 intercom=address.intercom,
+                is_primary=(idx == 0),
             )
-            for address in command.addresses
+            for idx, address in enumerate(command.addresses)
         ]
 
         client_id = self._client_gateway.next_id()

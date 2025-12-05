@@ -11,6 +11,7 @@ from backend.infrastructure.persistence.tables.base import (
 )
 
 if TYPE_CHECKING:
+    from backend.infrastructure.persistence.tables.orders import Order
     from backend.infrastructure.persistence.tables.shops import Shop
     from backend.infrastructure.persistence.tables.users import User
 
@@ -35,6 +36,9 @@ class Client(Base, CreatedAt, UpdatedAt):
         back_populates="client", cascade="all, delete-orphan"
     )
     addresses: Mapped[list["ClientAddress"]] = relationship(
+        back_populates="client", cascade="all, delete-orphan"
+    )
+    orders: Mapped[list["Order"]] = relationship(
         back_populates="client", cascade="all, delete-orphan"
     )
 
