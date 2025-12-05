@@ -1,6 +1,6 @@
 from uuid import UUID
 
-from sqlalchemy import asc, delete, desc, select
+from sqlalchemy import asc, delete, desc, exists, select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 from uuid_utils import uuid7
@@ -234,7 +234,6 @@ class SQLAlchemyClientGateway(ClientGateway):
                 )
                 self._session.add(new_phone)
 
-            # Update addresses
             await self._session.execute(
                 delete(ClientAddress).where(
                     ClientAddress.client_id == updated_client.client_id
@@ -256,3 +255,8 @@ class SQLAlchemyClientGateway(ClientGateway):
 
     def next_id(self) -> ClientId:
         return ClientId(UUID(str(uuid7())))
+
+    async def exists_with_number(self, number: str) -> bool:
+        query = select(exists().where(ClientPhone.number == number))
+        result = await self._session.execute(query)
+        return bool(result.scalar())

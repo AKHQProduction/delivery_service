@@ -1,7 +1,10 @@
 import logging
 from dataclasses import dataclass, field
 
-from backend.application.errors import AccessDeniedError
+from backend.application.errors import (
+    AccessDeniedError,
+    PhoneNumberAlreadyExistsError,
+)
 from backend.application.interfaces import IdentityProvider, TransactionManager
 from backend.application.interfaces.gateways.client_gateway import (
     AddressDTO,
@@ -65,6 +68,14 @@ class CreateClientCommandHandler:
             command.full_name,
             current_user.shop_id,
         )
+
+        for phone in command.phones:
+            if await self._client_gateway.exists_with_number(phone.number):
+                logger.warning(
+                    "Phone number %s already exists for another client",
+                    phone.number,
+                )
+                raise PhoneNumberAlreadyExistsError(phone.number)
 
         phones_dto = [
             PhoneDTO(number=phone.number) for phone in command.phones

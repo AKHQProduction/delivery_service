@@ -1,7 +1,11 @@
 import logging
 from dataclasses import dataclass
 
-from backend.application.errors import AccessDeniedError, EntityNotFoundError
+from backend.application.errors import (
+    AccessDeniedError,
+    EntityNotFoundError,
+    PhoneNumberAlreadyExistsError,
+)
 from backend.application.interfaces import (
     ClientGateway,
     IdentityProvider,
@@ -107,6 +111,21 @@ class EditClientCommandHandler:
             updates.append(f"custom_id={command.custom_id}")
 
         if command.phones is not None:
+            current_numbers = {phone.number for phone in client.phones}
+
+            for phone in command.phones:
+                if (
+                    phone.number not in current_numbers
+                    and await self._client_gateway.exists_with_number(
+                        phone.number
+                    )
+                ):
+                    logger.warning(
+                        "Phone number %s already exists for another client",
+                        phone.number,
+                    )
+                    raise PhoneNumberAlreadyExistsError(phone.number)
+
             client.phones = [
                 PhoneDTO(number=phone.number, is_primary=(idx == 0))
                 for idx, phone in enumerate(command.phones)

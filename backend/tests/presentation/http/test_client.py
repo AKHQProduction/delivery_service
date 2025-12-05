@@ -955,7 +955,7 @@ async def test_edit_client_clear_phones(
 
     headers = customer_headers(telegram_id)
 
-    json = {"phones": []}
+    json: dict[str, list[Any]] = {"phones": []}
 
     response = await http_client.patch(
         url=f"{BASE_URL}/{client_id}", headers=headers, json=json
@@ -999,7 +999,7 @@ async def test_edit_client_clear_addresses(
 
     headers = customer_headers(telegram_id)
 
-    json = {"addresses": []}
+    json: dict[str, list[Any]] = {"addresses": []}
 
     response = await http_client.patch(
         url=f"{BASE_URL}/{client_id}", headers=headers, json=json
@@ -1083,3 +1083,125 @@ async def test_edit_client_as_courier_forbidden(
     )
 
     assert response.status_code == status.HTTP_403_FORBIDDEN
+
+
+@pytest.mark.asyncio()
+async def test_create_client_with_duplicate_phone_number(
+    http_client: AsyncClient,
+    session: AsyncSession,
+    customer_headers: Callable[[int], dict[str, Any]],
+    setup_full_test_user_with_shop,
+) -> None:
+    telegram_id = 3100
+    await setup_full_test_user_with_shop(telegram_id=telegram_id)
+    await session.commit()
+
+    headers = customer_headers(telegram_id)
+
+    json1 = {
+        "full_name": "Перший Клієнт",
+        "phones": [{"number": "+380991234567"}],
+        "addresses": [],
+    }
+
+    response1 = await http_client.post(
+        url=BASE_URL, headers=headers, json=json1
+    )
+    assert response1.status_code == status.HTTP_201_CREATED
+
+    await session.flush()
+
+    json2 = {
+        "full_name": "Другий Клієнт",
+        "phones": [{"number": "+380991234567"}],  # Same phone!
+        "addresses": [],
+    }
+
+    response2 = await http_client.post(
+        url=BASE_URL, headers=headers, json=json2
+    )
+
+    assert response2.status_code == status.HTTP_409_CONFLICT
+    assert "+380991234567" in response2.json()["detail"]
+
+
+@pytest.mark.asyncio()
+async def test_edit_client_with_duplicate_phone_number_integration(
+    http_client: AsyncClient,
+    session: AsyncSession,
+    customer_headers: Callable[[int], dict[str, Any]],
+    setup_full_test_user_with_shop,
+    setup_test_client,
+) -> None:
+    telegram_id = 3101
+    _, shop_id = await setup_full_test_user_with_shop(telegram_id=telegram_id)
+
+    await setup_test_client(
+        shop_id=shop_id,
+        full_name="Перший Клієнт",
+        phones=["+380509999999"],
+    )
+
+    client2_id = await setup_test_client(
+        shop_id=shop_id,
+        full_name="Другий Клієнт",
+        phones=["+380508888888"],
+    )
+    await session.commit()
+
+    headers = customer_headers(telegram_id)
+
+    json = {"phones": [{"number": "+380509999999"}]}  # Same as client1!
+
+    response = await http_client.patch(
+        url=f"{BASE_URL}/{client2_id}", headers=headers, json=json
+    )
+
+    assert response.status_code == status.HTTP_409_CONFLICT
+    assert "+380509999999" in response.json()["detail"]
+
+
+@pytest.mark.asyncio()
+async def test_edit_client_keep_same_phone_numbers_integration(
+    http_client: AsyncClient,
+    session: AsyncSession,
+    customer_headers: Callable[[int], dict[str, Any]],
+    setup_full_test_user_with_shop,
+    setup_test_client,
+) -> None:
+    telegram_id = 3102
+    _, shop_id = await setup_full_test_user_with_shop(telegram_id=telegram_id)
+
+    client_id = await setup_test_client(
+        shop_id=shop_id,
+        full_name="Клієнт",
+        phones=["+380501111111", "+380502222222"],
+    )
+    await session.commit()
+
+    headers = customer_headers(telegram_id)
+
+    json = {
+        "phones": [
+            {"number": "+380501111111"},  # Original phone
+            {"number": "+380502222222"},  # Original phone
+        ]
+    }
+
+    response = await http_client.patch(
+        url=f"{BASE_URL}/{client_id}", headers=headers, json=json
+    )
+
+    assert response.status_code == status.HTTP_200_OK
+
+    await session.flush()
+
+    phone_result = await session.execute(
+        select(ClientPhone)
+        .where(ClientPhone.client_id == client_id)
+        .order_by(ClientPhone.id)
+    )
+    phones = phone_result.scalars().all()
+    assert len(phones) == 2
+    assert phones[0].number == "+380501111111"
+    assert phones[1].number == "+380502222222"

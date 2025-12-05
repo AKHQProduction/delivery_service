@@ -91,13 +91,11 @@ class InMemoryClientGateway(ClientGateway):
                 )
             )
 
-        # Sort
         if pagination.order == SortOrder.ASC:
             result.sort(key=lambda x: x.full_name)
         else:
             result.sort(key=lambda x: x.full_name, reverse=True)
 
-        # Apply pagination
         start = pagination.offset
         end = pagination.offset + pagination.limit
         return result[start:end]
@@ -113,3 +111,9 @@ class InMemoryClientGateway(ClientGateway):
 
     def next_id(self) -> ClientId:
         return self.client_id or ClientId(uuid.uuid4())
+
+    async def exists_with_number(self, number: str) -> bool:
+        for client in self.clients.values():
+            if any(phone.number == number for phone in client.phones):
+                return True
+        return False

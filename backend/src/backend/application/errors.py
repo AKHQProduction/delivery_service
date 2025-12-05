@@ -44,3 +44,15 @@ class ValidationError(ApplicationError):
     def message(self) -> str:
         acceptable_values = " ,".join(self._acceptable_values)
         return f"{self._field} cant be {self._value}, use: {acceptable_values}"
+
+
+class PhoneNumberAlreadyExistsError(ApplicationError):
+    def __init__(self, phone_number: str) -> None:
+        self._phone_number = phone_number
+
+    @property
+    def message(self) -> str:
+        return (
+            f"Phone number {self._phone_number} is already used "
+            "by another client"
+        )

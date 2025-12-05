@@ -12,6 +12,7 @@ from backend.application.errors import (
     AccessDeniedError,
     AuthorizationError,
     EntityNotFoundError,
+    PhoneNumberAlreadyExistsError,
 )
 from backend.application.interfaces.gateways.client_gateway import (
     AddressDTO,
@@ -59,7 +60,6 @@ def make_handler():
 def setup_client_in_gateway(
     client_gateway: InMemoryClientGateway, shop_id: ShopId
 ) -> ClientId:
-    """Helper function to setup a test client in the gateway."""
     client_id = ClientId(uuid.uuid4())
     client = ClientDM(
         client_id=client_id,
@@ -103,7 +103,7 @@ async def test_edit_client_full_name(make_handler) -> None:
 
     updated_client = client_gateway.clients[client_id]
     assert updated_client.full_name == "Updated Name"
-    assert updated_client.custom_id == "ORIG-001"  # Unchanged
+    assert updated_client.custom_id == "ORIG-001"
     assert tr_manager.committed is True
 
 
@@ -126,7 +126,7 @@ async def test_edit_client_custom_id(make_handler) -> None:
 
     updated_client = client_gateway.clients[client_id]
     assert updated_client.custom_id == "NEW-002"
-    assert updated_client.full_name == "Original Name"  # Unchanged
+    assert updated_client.full_name == "Original Name"
 
 
 @pytest.mark.asyncio()
@@ -323,7 +323,6 @@ async def test_edit_client_access_denied_courier(make_handler) -> None:
     _, client_gateway, _, _ = make_handler(user_id=user_id, shop_id=shop_id)
     client_id = setup_client_in_gateway(client_gateway, shop_id)
 
-    # Handler with COURIER role
     handler, _, _, _ = make_handler(
         user_id=user_id, shop_id=shop_id, role=ShopRole.COURIER
     )
@@ -345,7 +344,6 @@ async def test_edit_client_access_denied_different_shop(make_handler) -> None:
     _, client_gateway, _, _ = make_handler(user_id=user_id, shop_id=shop_id)
     client_id = setup_client_in_gateway(client_gateway, shop_id)
 
-    # Create handler with different shop_id but same gateway
     different_shop_id = ShopId(uuid.uuid4())
     identity_provider = InMemoryIdentityProvider(
         user_id=user_id, shop_id=different_shop_id, role=ShopRole.OWNER
@@ -353,7 +351,7 @@ async def test_edit_client_access_denied_different_shop(make_handler) -> None:
     tr_manager = FakeTransactionManager()
     handler = EditClientCommandHandler(
         idp=identity_provider,
-        client_gateway=client_gateway,  # Use same gateway
+        client_gateway=client_gateway,
         tr_manager=tr_manager,
     )
 
@@ -406,3 +404,87 @@ async def test_manager_can_edit_client(make_handler) -> None:
 
     updated_client = client_gateway.clients[client_id]
     assert updated_client.full_name == "Manager Updated"
+
+
+@pytest.mark.asyncio()
+async def test_edit_client_with_duplicate_phone_number(make_handler) -> None:
+    user_id = UserId(uuid.uuid4())
+    shop_id = ShopId(uuid.uuid4())
+
+    handler, client_gateway, _, _ = make_handler(
+        user_id=user_id, shop_id=shop_id
+    )
+
+    client1_id = ClientId(uuid.uuid4())
+    client1 = ClientDM(
+        client_id=client1_id,
+        shop_id=shop_id,
+        full_name="First Client",
+        phones=[PhoneDTO(number="+380509999999", is_primary=True)],
+        addresses=[],
+    )
+    client_gateway.clients[client1_id] = client1
+
+    client2_id = setup_client_in_gateway(client_gateway, shop_id)
+
+    command = EditClientCommand(
+        client_id=client2_id,
+        phones=[Phone(number="+380509999999")],  # Same as client1!
+    )
+
+    with pytest.raises(PhoneNumberAlreadyExistsError) as exc_info:
+        await handler.handle(command)
+
+    assert "+380509999999" in str(exc_info.value.message)
+
+
+@pytest.mark.asyncio()
+async def test_edit_client_keep_same_phone_numbers(make_handler) -> None:
+    user_id = UserId(uuid.uuid4())
+    shop_id = ShopId(uuid.uuid4())
+
+    handler, client_gateway, _, _ = make_handler(
+        user_id=user_id, shop_id=shop_id
+    )
+    client_id = setup_client_in_gateway(client_gateway, shop_id)
+
+    command = EditClientCommand(
+        client_id=client_id,
+        phones=[
+            Phone(number="+380501111111"),  # Original phone
+            Phone(number="+380502222222"),  # Original phone
+        ],
+    )
+
+    await handler.handle(command)
+
+    updated_client = client_gateway.clients[client_id]
+    assert len(updated_client.phones) == 2
+    assert updated_client.phones[0].number == "+380501111111"
+    assert updated_client.phones[1].number == "+380502222222"
+
+
+@pytest.mark.asyncio()
+async def test_edit_client_partially_update_phones(make_handler) -> None:
+    user_id = UserId(uuid.uuid4())
+    shop_id = ShopId(uuid.uuid4())
+
+    handler, client_gateway, _, _ = make_handler(
+        user_id=user_id, shop_id=shop_id
+    )
+    client_id = setup_client_in_gateway(client_gateway, shop_id)
+
+    command = EditClientCommand(
+        client_id=client_id,
+        phones=[
+            Phone(number="+380501111111"),  # Keep this old phone
+            Phone(number="+380509999999"),  # Add new phone
+        ],
+    )
+
+    await handler.handle(command)
+
+    updated_client = client_gateway.clients[client_id]
+    assert len(updated_client.phones) == 2
+    assert updated_client.phones[0].number == "+380501111111"
+    assert updated_client.phones[1].number == "+380509999999"

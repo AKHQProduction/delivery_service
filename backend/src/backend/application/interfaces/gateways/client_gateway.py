@@ -79,6 +79,10 @@ class ClientGateway(Protocol):
         raise NotImplementedError
 
     @abstractmethod
+    async def exists_with_number(self, number: str) -> bool:
+        raise NotImplementedError
+
+    @abstractmethod
     async def read(self, client_id: ClientId) -> ClientReadModel | None:
         raise NotImplementedError
 
