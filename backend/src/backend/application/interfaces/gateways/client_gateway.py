@@ -75,6 +75,10 @@ class ClientGateway(Protocol):
         raise NotImplementedError
 
     @abstractmethod
+    async def update(self, updated_client: ClientDM) -> None:
+        raise NotImplementedError
+
+    @abstractmethod
     async def read(self, client_id: ClientId) -> ClientReadModel | None:
         raise NotImplementedError
 

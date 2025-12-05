@@ -24,6 +24,7 @@ from backend.application.commands.delete_client import (
 from backend.application.commands.delete_product import (
     DeleteProductCommandHandler,
 )
+from backend.application.commands.edit_client import EditClientCommandHandler
 from backend.application.commands.edit_product import EditProductCommandHandler
 from backend.application.interfaces import IdentityProvider
 from backend.application.queries.get_client import GetClientQueryHandler
@@ -69,6 +70,7 @@ class APIInteractorsProvider(Provider):
         GetClientQueryHandler,
         GetClientsQueryHandler,
         DeleteClientCommandHandler,
+        EditClientCommandHandler,
     )
 
     add_employee = provide_all(GenerateInviteLinkCommandHandler)

@@ -13,11 +13,20 @@ from backend.application.vars import ClientId
 
 class InMemoryClientGateway(ClientGateway):
     def __init__(self, client_id: ClientId | None = None) -> None:
-        self.clients: dict[ClientId, CreateClientDTO] = {}
+        self.clients: dict[ClientId, ClientDM] = {}
         self.client_id = client_id
+        self.updated = False
 
     async def create_client(self, dto: CreateClientDTO) -> None:
-        self.clients[dto.client_id] = dto
+        client = ClientDM(
+            client_id=dto.client_id,
+            shop_id=dto.shop_id,
+            full_name=dto.full_name,
+            phones=dto.phones,
+            addresses=dto.addresses,
+            custom_id=dto.custom_id,
+        )
+        self.clients[dto.client_id] = client
 
     async def load(self, client_id: ClientId) -> ClientDM | None:
         entity = self.clients.get(client_id)
@@ -96,6 +105,11 @@ class InMemoryClientGateway(ClientGateway):
     async def delete(self, client_id: ClientId) -> None:
         if client_id in self.clients:
             del self.clients[client_id]
+
+    async def update(self, updated_client: ClientDM) -> None:
+        if updated_client.client_id in self.clients:
+            self.clients[updated_client.client_id] = updated_client
+            self.updated = True
 
     def next_id(self) -> ClientId:
         return self.client_id or ClientId(uuid.uuid4())

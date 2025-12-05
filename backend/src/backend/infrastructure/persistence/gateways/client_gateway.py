@@ -1,6 +1,6 @@
 from uuid import UUID
 
-from sqlalchemy import asc, desc, select
+from sqlalchemy import asc, delete, desc, select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 from uuid_utils import uuid7
@@ -212,6 +212,47 @@ class SQLAlchemyClientGateway(ClientGateway):
             )
             for client in clients
         ]
+
+    async def update(self, updated_client: ClientDM) -> None:
+        client = await self._session.get(Client, updated_client.client_id)
+        if client:
+            client.custom_id = updated_client.custom_id
+            client.full_name = updated_client.full_name
+
+            # Update phones
+            await self._session.execute(
+                delete(ClientPhone).where(
+                    ClientPhone.client_id == updated_client.client_id
+                )
+            )
+            for idx, phone_dto in enumerate(updated_client.phones):
+                new_phone = ClientPhone(
+                    number=phone_dto.number,
+                    is_primary=(idx == 0),
+                    client_id=updated_client.client_id,
+                    shop_id=updated_client.shop_id,
+                )
+                self._session.add(new_phone)
+
+            # Update addresses
+            await self._session.execute(
+                delete(ClientAddress).where(
+                    ClientAddress.client_id == updated_client.client_id
+                )
+            )
+            for idx, address_dto in enumerate(updated_client.addresses):
+                new_address = ClientAddress(
+                    street=address_dto.street,
+                    house=address_dto.house,
+                    address_type=address_dto.address_type.value,
+                    apartment=address_dto.apartment,
+                    entrance=address_dto.entrance,
+                    floor=address_dto.floor,
+                    intercom=address_dto.intercom,
+                    is_primary=(idx == 0),
+                    client_id=updated_client.client_id,
+                )
+                self._session.add(new_address)
 
     def next_id(self) -> ClientId:
         return ClientId(UUID(str(uuid7())))

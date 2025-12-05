@@ -811,7 +811,7 @@ async def test_delete_client(
 
 
 @pytest.mark.asyncio()
-async def test_delete_product_not_exists(
+async def test_delete_client_not_exists(
     client_gateway: SQLAlchemyClientGateway,
     session: AsyncSession,
 ) -> None:
@@ -822,7 +822,7 @@ async def test_delete_product_not_exists(
 
 
 @pytest.mark.asyncio()
-async def test_load_product(
+async def test_load_client(
     client_gateway: SQLAlchemyClientGateway,
     session: AsyncSession,
     setup_test_client,
@@ -841,7 +841,7 @@ async def test_load_product(
 
 
 @pytest.mark.asyncio()
-async def test_load_product_returns_none_when_not_exists(
+async def test_load_client_returns_none_when_not_exists(
     client_gateway: SQLAlchemyClientGateway,
 ) -> None:
     client_id = ClientId(uuid.uuid4())
@@ -849,3 +849,32 @@ async def test_load_product_returns_none_when_not_exists(
     client = await client_gateway.load(client_id)
 
     assert client is None
+
+
+@pytest.mark.asyncio()
+async def test_update_client(
+    client_gateway: SQLAlchemyClientGateway,
+    session: AsyncSession,
+    setup_test_client,
+    create_shop,
+) -> None:
+    shop_id = await create_shop()
+    client_id = await setup_test_client(shop_id)
+    await session.flush()
+
+    client = await client_gateway.load(client_id)
+    assert client is not None
+
+    client.full_name = "Updated Client"
+    client.custom_id = "AAAA"
+
+    await client_gateway.update(client)
+    await session.flush()
+
+    result = await session.execute(
+        select(Client).where(Client.id == client_id)
+    )
+    updated_client_db = result.scalar_one()
+
+    assert updated_client_db.full_name == "Updated Client"
+    assert updated_client_db.custom_id == "AAAA"

@@ -14,6 +14,12 @@ from backend.application.commands.delete_client import (
     DeleteClientCommand,
     DeleteClientCommandHandler,
 )
+from backend.application.commands.edit_client import (
+    Address,
+    EditClientCommand,
+    EditClientCommandHandler,
+    Phone,
+)
 from backend.application.interfaces.gateways import Pagination, SortOrder
 from backend.application.interfaces.gateways.client_gateway import (
     ClientReadModel,
@@ -24,6 +30,7 @@ from backend.application.queries.get_clients import (
     GetClientsQueryHandler,
 )
 from backend.application.vars import AddressType, ClientId
+from backend.presentation.http.v1.schemas.client import EditClientSchema
 from backend.presentation.http.v1.schemas.error import ErrorSchema
 
 router = APIRouter(
@@ -131,6 +138,105 @@ async def create_new_client(
     handler: FromDishka[CreateClientCommandHandler],
 ) -> ClientId:
     return await handler.handle(body)
+
+
+@router.patch(
+    "/{client_id}",
+    status_code=status.HTTP_200_OK,
+    responses={
+        status.HTTP_401_UNAUTHORIZED: {"model": ErrorSchema},
+        status.HTTP_403_FORBIDDEN: {"model": ErrorSchema},
+        status.HTTP_404_NOT_FOUND: {"model": ErrorSchema},
+    },
+    dependencies=[Depends(HTTPBearer())],
+)
+async def update_client(
+    client_id: ClientId,
+    body: Annotated[
+        EditClientSchema,
+        Body(
+            openapi_examples={
+                "full_name": Example(
+                    description="Update only client's full name",
+                    value={"full_name": "Оновлене Ім'я"},
+                ),
+                "custom_id": Example(
+                    description="Update only client's custom ID",
+                    value={"custom_id": "NEW-ID-123"},
+                ),
+                "phones": Example(
+                    description="Replace all phones with new list",
+                    value={
+                        "phones": [
+                            {"number": "+380509999999"},
+                            {"number": "+380508888888"},
+                        ]
+                    },
+                ),
+                "addresses": Example(
+                    description="Replace all addresses with new list",
+                    value={
+                        "addresses": [
+                            {
+                                "street": "Нова вулиця",
+                                "house": "100",
+                                "address_type": AddressType.APARTMENT,
+                                "apartment": "50",
+                                "entrance": "2",
+                                "floor": "10",
+                                "intercom": "50",
+                            }
+                        ]
+                    },
+                ),
+                "all_fields": Example(
+                    description="Update all fields at once",
+                    value={
+                        "full_name": "Повністю Оновлене Ім'я",
+                        "custom_id": "ALL-NEW-999",
+                        "phones": [{"number": "+380501234567"}],
+                        "addresses": [
+                            {
+                                "street": "Повністю нова адреса",
+                                "house": "1",
+                                "address_type": AddressType.PRIVATE_HOUSE,
+                            }
+                        ],
+                    },
+                ),
+                "clear_phones": Example(
+                    description="Clear all phones (empty array)",
+                    value={"phones": []},
+                ),
+            }
+        ),
+    ],
+    handler: FromDishka[EditClientCommandHandler],
+) -> None:
+    await handler.handle(
+        EditClientCommand(
+            client_id=client_id,
+            full_name=body.full_name,
+            custom_id=body.custom_id,
+            phones=[Phone(number=phone.number) for phone in body.phones]
+            if body.phones is not None
+            else None,
+            addresses=[
+                Address(
+                    street=address.street,
+                    house=address.house,
+                    address_type=address.address_type,
+                    apartment=address.apartment,
+                    entrance=address.entrance,
+                    floor=address.floor,
+                    intercom=address.intercom,
+                )
+                for address in body.addresses
+            ]
+            if body.addresses is not None
+            else None,
+        )
+    )
 
 
 @router.get(

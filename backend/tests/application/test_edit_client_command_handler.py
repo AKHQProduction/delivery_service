@@ -1,0 +1,408 @@
+import uuid
+
+import pytest
+
+from backend.application.commands.edit_client import (
+    Address,
+    EditClientCommand,
+    EditClientCommandHandler,
+    Phone,
+)
+from backend.application.errors import (
+    AccessDeniedError,
+    AuthorizationError,
+    EntityNotFoundError,
+)
+from backend.application.interfaces.gateways.client_gateway import (
+    AddressDTO,
+    ClientDM,
+    PhoneDTO,
+)
+from backend.application.vars import (
+    AddressType,
+    ClientId,
+    ShopId,
+    ShopRole,
+    UserId,
+)
+from backend.infrastructure.in_memory import (
+    FakeTransactionManager,
+    InMemoryClientGateway,
+    InMemoryIdentityProvider,
+)
+
+
+@pytest.fixture()
+def make_handler():
+    def _make_handler(
+        user_id: UserId | None = None,
+        shop_id: ShopId | None = None,
+        role: ShopRole = ShopRole.OWNER,
+    ):
+        identity_provider = InMemoryIdentityProvider(
+            user_id=user_id, shop_id=shop_id, role=role
+        )
+        client_gateway = InMemoryClientGateway()
+        tr_manager = FakeTransactionManager()
+
+        handler = EditClientCommandHandler(
+            idp=identity_provider,
+            client_gateway=client_gateway,
+            tr_manager=tr_manager,
+        )
+
+        return handler, client_gateway, identity_provider, tr_manager
+
+    return _make_handler
+
+
+def setup_client_in_gateway(
+    client_gateway: InMemoryClientGateway, shop_id: ShopId
+) -> ClientId:
+    """Helper function to setup a test client in the gateway."""
+    client_id = ClientId(uuid.uuid4())
+    client = ClientDM(
+        client_id=client_id,
+        shop_id=shop_id,
+        full_name="Original Name",
+        custom_id="ORIG-001",
+        phones=[
+            PhoneDTO(number="+380501111111", is_primary=True),
+            PhoneDTO(number="+380502222222", is_primary=False),
+        ],
+        addresses=[
+            AddressDTO(
+                street="Original Street",
+                house="1",
+                address_type=AddressType.APARTMENT,
+                apartment="10",
+                is_primary=True,
+            )
+        ],
+    )
+    client_gateway.clients[client_id] = client
+    return client_id
+
+
+@pytest.mark.asyncio()
+async def test_edit_client_full_name(make_handler) -> None:
+    user_id = UserId(uuid.uuid4())
+    shop_id = ShopId(uuid.uuid4())
+
+    handler, client_gateway, _, tr_manager = make_handler(
+        user_id=user_id, shop_id=shop_id
+    )
+    client_id = setup_client_in_gateway(client_gateway, shop_id)
+
+    command = EditClientCommand(
+        client_id=client_id,
+        full_name="Updated Name",
+    )
+
+    await handler.handle(command)
+
+    updated_client = client_gateway.clients[client_id]
+    assert updated_client.full_name == "Updated Name"
+    assert updated_client.custom_id == "ORIG-001"  # Unchanged
+    assert tr_manager.committed is True
+
+
+@pytest.mark.asyncio()
+async def test_edit_client_custom_id(make_handler) -> None:
+    user_id = UserId(uuid.uuid4())
+    shop_id = ShopId(uuid.uuid4())
+
+    handler, client_gateway, _, _ = make_handler(
+        user_id=user_id, shop_id=shop_id
+    )
+    client_id = setup_client_in_gateway(client_gateway, shop_id)
+
+    command = EditClientCommand(
+        client_id=client_id,
+        custom_id="NEW-002",
+    )
+
+    await handler.handle(command)
+
+    updated_client = client_gateway.clients[client_id]
+    assert updated_client.custom_id == "NEW-002"
+    assert updated_client.full_name == "Original Name"  # Unchanged
+
+
+@pytest.mark.asyncio()
+async def test_edit_client_phones(make_handler) -> None:
+    user_id = UserId(uuid.uuid4())
+    shop_id = ShopId(uuid.uuid4())
+
+    handler, client_gateway, _, _ = make_handler(
+        user_id=user_id, shop_id=shop_id
+    )
+    client_id = setup_client_in_gateway(client_gateway, shop_id)
+
+    command = EditClientCommand(
+        client_id=client_id,
+        phones=[
+            Phone(number="+380509999999"),
+            Phone(number="+380508888888"),
+            Phone(number="+380507777777"),
+        ],
+    )
+
+    await handler.handle(command)
+
+    updated_client = client_gateway.clients[client_id]
+    assert len(updated_client.phones) == 3
+    assert updated_client.phones[0].number == "+380509999999"
+    assert updated_client.phones[0].is_primary is True
+    assert updated_client.phones[1].number == "+380508888888"
+    assert updated_client.phones[1].is_primary is False
+    assert updated_client.phones[2].number == "+380507777777"
+    assert updated_client.phones[2].is_primary is False
+
+
+@pytest.mark.asyncio()
+async def test_edit_client_addresses(make_handler) -> None:
+    user_id = UserId(uuid.uuid4())
+    shop_id = ShopId(uuid.uuid4())
+
+    handler, client_gateway, _, _ = make_handler(
+        user_id=user_id, shop_id=shop_id
+    )
+    client_id = setup_client_in_gateway(client_gateway, shop_id)
+
+    command = EditClientCommand(
+        client_id=client_id,
+        addresses=[
+            Address(
+                street="New Street",
+                house="100",
+                address_type=AddressType.PRIVATE_HOUSE,
+            ),
+            Address(
+                street="Another Street",
+                house="200",
+                address_type=AddressType.APARTMENT,
+                apartment="50",
+            ),
+        ],
+    )
+
+    await handler.handle(command)
+
+    updated_client = client_gateway.clients[client_id]
+    assert len(updated_client.addresses) == 2
+    assert updated_client.addresses[0].street == "New Street"
+    assert updated_client.addresses[0].house == "100"
+    assert (
+        updated_client.addresses[0].address_type == AddressType.PRIVATE_HOUSE
+    )
+    assert updated_client.addresses[0].is_primary is True
+    assert updated_client.addresses[1].street == "Another Street"
+    assert updated_client.addresses[1].is_primary is False
+
+
+@pytest.mark.asyncio()
+async def test_edit_client_all_fields(make_handler) -> None:
+    user_id = UserId(uuid.uuid4())
+    shop_id = ShopId(uuid.uuid4())
+
+    handler, client_gateway, _, _ = make_handler(
+        user_id=user_id, shop_id=shop_id
+    )
+    client_id = setup_client_in_gateway(client_gateway, shop_id)
+
+    command = EditClientCommand(
+        client_id=client_id,
+        full_name="Completely New Name",
+        custom_id="ALL-NEW-003",
+        phones=[Phone(number="+380501234567")],
+        addresses=[
+            Address(
+                street="Brand New Street",
+                house="999",
+                address_type=AddressType.APARTMENT,
+                apartment="1",
+            )
+        ],
+    )
+
+    await handler.handle(command)
+
+    updated_client = client_gateway.clients[client_id]
+    assert updated_client.full_name == "Completely New Name"
+    assert updated_client.custom_id == "ALL-NEW-003"
+    assert len(updated_client.phones) == 1
+    assert updated_client.phones[0].number == "+380501234567"
+    assert len(updated_client.addresses) == 1
+    assert updated_client.addresses[0].street == "Brand New Street"
+
+
+@pytest.mark.asyncio()
+async def test_edit_client_clear_phones(make_handler) -> None:
+    user_id = UserId(uuid.uuid4())
+    shop_id = ShopId(uuid.uuid4())
+
+    handler, client_gateway, _, _ = make_handler(
+        user_id=user_id, shop_id=shop_id
+    )
+    client_id = setup_client_in_gateway(client_gateway, shop_id)
+
+    command = EditClientCommand(
+        client_id=client_id,
+        phones=[],  # Clear all phones
+    )
+
+    await handler.handle(command)
+
+    updated_client = client_gateway.clients[client_id]
+    assert len(updated_client.phones) == 0
+
+
+@pytest.mark.asyncio()
+async def test_edit_client_clear_addresses(make_handler) -> None:
+    user_id = UserId(uuid.uuid4())
+    shop_id = ShopId(uuid.uuid4())
+
+    handler, client_gateway, _, _ = make_handler(
+        user_id=user_id, shop_id=shop_id
+    )
+    client_id = setup_client_in_gateway(client_gateway, shop_id)
+
+    command = EditClientCommand(
+        client_id=client_id,
+        addresses=[],  # Clear all addresses
+    )
+
+    await handler.handle(command)
+
+    updated_client = client_gateway.clients[client_id]
+    assert len(updated_client.addresses) == 0
+
+
+@pytest.mark.asyncio()
+async def test_edit_client_not_found(make_handler) -> None:
+    user_id = UserId(uuid.uuid4())
+    shop_id = ShopId(uuid.uuid4())
+    handler, _, _, _ = make_handler(user_id=user_id, shop_id=shop_id)
+
+    non_existent_client_id = ClientId(uuid.uuid4())
+
+    command = EditClientCommand(
+        client_id=non_existent_client_id,
+        full_name="New Name",
+    )
+
+    with pytest.raises(EntityNotFoundError):
+        await handler.handle(command)
+
+
+@pytest.mark.asyncio()
+async def test_edit_client_unauthorized(make_handler) -> None:
+    user_id = UserId(uuid.uuid4())
+    shop_id = ShopId(uuid.uuid4())
+
+    _, client_gateway, _, _ = make_handler(user_id=user_id, shop_id=shop_id)
+    client_id = setup_client_in_gateway(client_gateway, shop_id)
+
+    handler, _, _, _ = make_handler()
+
+    command = EditClientCommand(
+        client_id=client_id,
+        full_name="New Name",
+    )
+
+    with pytest.raises(AuthorizationError):
+        await handler.handle(command)
+
+
+@pytest.mark.asyncio()
+async def test_edit_client_access_denied_courier(make_handler) -> None:
+    user_id = UserId(uuid.uuid4())
+    shop_id = ShopId(uuid.uuid4())
+
+    _, client_gateway, _, _ = make_handler(user_id=user_id, shop_id=shop_id)
+    client_id = setup_client_in_gateway(client_gateway, shop_id)
+
+    # Handler with COURIER role
+    handler, _, _, _ = make_handler(
+        user_id=user_id, shop_id=shop_id, role=ShopRole.COURIER
+    )
+
+    command = EditClientCommand(
+        client_id=client_id,
+        full_name="New Name",
+    )
+
+    with pytest.raises(AccessDeniedError):
+        await handler.handle(command)
+
+
+@pytest.mark.asyncio()
+async def test_edit_client_access_denied_different_shop(make_handler) -> None:
+    user_id = UserId(uuid.uuid4())
+    shop_id = ShopId(uuid.uuid4())
+
+    _, client_gateway, _, _ = make_handler(user_id=user_id, shop_id=shop_id)
+    client_id = setup_client_in_gateway(client_gateway, shop_id)
+
+    # Create handler with different shop_id but same gateway
+    different_shop_id = ShopId(uuid.uuid4())
+    identity_provider = InMemoryIdentityProvider(
+        user_id=user_id, shop_id=different_shop_id, role=ShopRole.OWNER
+    )
+    tr_manager = FakeTransactionManager()
+    handler = EditClientCommandHandler(
+        idp=identity_provider,
+        client_gateway=client_gateway,  # Use same gateway
+        tr_manager=tr_manager,
+    )
+
+    command = EditClientCommand(
+        client_id=client_id,
+        full_name="New Name",
+    )
+
+    with pytest.raises(AccessDeniedError):
+        await handler.handle(command)
+
+
+@pytest.mark.asyncio()
+async def test_owner_can_edit_client(make_handler) -> None:
+    user_id = UserId(uuid.uuid4())
+    shop_id = ShopId(uuid.uuid4())
+
+    handler, client_gateway, _, _ = make_handler(
+        user_id=user_id, shop_id=shop_id, role=ShopRole.OWNER
+    )
+    client_id = setup_client_in_gateway(client_gateway, shop_id)
+
+    command = EditClientCommand(
+        client_id=client_id,
+        full_name="Owner Updated",
+    )
+
+    await handler.handle(command)
+
+    updated_client = client_gateway.clients[client_id]
+    assert updated_client.full_name == "Owner Updated"
+
+
+@pytest.mark.asyncio()
+async def test_manager_can_edit_client(make_handler) -> None:
+    user_id = UserId(uuid.uuid4())
+    shop_id = ShopId(uuid.uuid4())
+
+    handler, client_gateway, _, _ = make_handler(
+        user_id=user_id, shop_id=shop_id, role=ShopRole.MANAGER
+    )
+    client_id = setup_client_in_gateway(client_gateway, shop_id)
+
+    command = EditClientCommand(
+        client_id=client_id,
+        full_name="Manager Updated",
+    )
+
+    await handler.handle(command)
+
+    updated_client = client_gateway.clients[client_id]
+    assert updated_client.full_name == "Manager Updated"
