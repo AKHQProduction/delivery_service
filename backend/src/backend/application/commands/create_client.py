@@ -2,7 +2,7 @@ import logging
 from dataclasses import dataclass, field
 
 from backend.application.errors import AccessDeniedError
-from backend.application.interfaces import IdentityProvider
+from backend.application.interfaces import IdentityProvider, TransactionManager
 from backend.application.interfaces.gateways.client_gateway import (
     AddressDTO,
     ClientGateway,
@@ -41,10 +41,14 @@ class CreateClientCommand:
 
 class CreateClientCommandHandler:
     def __init__(
-        self, idp: IdentityProvider, client_gateway: ClientGateway
+        self,
+        idp: IdentityProvider,
+        client_gateway: ClientGateway,
+        tr_manager: TransactionManager,
     ) -> None:
         self._idp = idp
         self._client_gateway = client_gateway
+        self._tr_manager = tr_manager
 
     async def handle(self, command: CreateClientCommand) -> ClientId:
         current_user = await self._idp.current_user()
@@ -91,6 +95,7 @@ class CreateClientCommandHandler:
         )
 
         await self._client_gateway.create_client(create_dto)
+        await self._tr_manager.commit()
 
         logger.info(
             "Client '%s' (id=%s) created successfully with %d "

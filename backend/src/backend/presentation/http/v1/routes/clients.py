@@ -10,6 +10,15 @@ from backend.application.commands.create_client import (
     CreateClientCommand,
     CreateClientCommandHandler,
 )
+from backend.application.interfaces.gateways import Pagination, SortOrder
+from backend.application.interfaces.gateways.client_gateway import (
+    ClientReadModel,
+)
+from backend.application.queries.get_client import GetClientQueryHandler
+from backend.application.queries.get_clients import (
+    GetClientsQuery,
+    GetClientsQueryHandler,
+)
 from backend.application.vars import AddressType, ClientId
 from backend.presentation.http.v1.schemas.error import ErrorSchema
 
@@ -118,3 +127,45 @@ async def create_new_client(
     handler: FromDishka[CreateClientCommandHandler],
 ) -> ClientId:
     return await handler.handle(body)
+
+
+@router.get(
+    "/all",
+    status_code=status.HTTP_200_OK,
+    responses={
+        status.HTTP_401_UNAUTHORIZED: {"model": ErrorSchema},
+    },
+    dependencies=[Depends(HTTPBearer())],
+)
+async def get_all_clients(
+    handler: FromDishka[GetClientsQueryHandler],
+    full_name: str | None = None,
+    custom_id: str | None = None,
+    phone: str | None = None,
+    limit: int = 100,
+    offset: int = 0,
+    order: SortOrder = SortOrder.ASC,
+) -> list[ClientReadModel]:
+    return await handler.handle(
+        GetClientsQuery(
+            full_name=full_name,
+            custom_id=custom_id,
+            phone=phone,
+            pagination=Pagination(limit=limit, offset=offset, order=order),
+        )
+    )
+
+
+@router.get(
+    "/{client_id}",
+    status_code=status.HTTP_200_OK,
+    responses={
+        status.HTTP_401_UNAUTHORIZED: {"model": ErrorSchema},
+        status.HTTP_404_NOT_FOUND: {"model": ErrorSchema},
+    },
+    dependencies=[Depends(HTTPBearer())],
+)
+async def get_client(
+    client_id: ClientId, handler: FromDishka[GetClientQueryHandler]
+) -> ClientReadModel:
+    return await handler.handle(client_id=client_id)

@@ -25,6 +25,7 @@ from sqlalchemy.ext.asyncio import (
 
 from backend.application.interfaces import TransactionManager
 from backend.application.vars import (
+    ClientId,
     ProductCategory,
     ProductId,
     ShopId,
@@ -50,6 +51,11 @@ from backend.infrastructure.persistence.tables import (
     ShopMembership,
     TelegramAccount,
     User,
+)
+from backend.infrastructure.persistence.tables.clients import (
+    Client,
+    ClientAddress,
+    ClientPhone,
 )
 
 
@@ -278,3 +284,55 @@ def setup_test_product(session: AsyncSession):
         return product_id, name, price, category
 
     return _setup_test_product
+
+
+@pytest.fixture()
+def setup_test_client(session: AsyncSession):
+    async def _setup_test_client(
+        shop_id: ShopId,
+        full_name: str = "Test Client",
+        custom_id: str | None = None,
+        phones: list[str] | None = None,
+        addresses: list[dict[str, Any]] | None = None,
+    ) -> ClientId:
+        client_id = ClientId(uuid.uuid4())
+
+        await session.execute(
+            insert(Client).values(
+                id=client_id,
+                full_name=full_name,
+                custom_id=custom_id,
+                shop_id=shop_id,
+            )
+        )
+
+        if phones:
+            for idx, phone_number in enumerate(phones):
+                await session.execute(
+                    insert(ClientPhone).values(
+                        number=phone_number,
+                        is_primary=(idx == 0),
+                        client_id=client_id,
+                        shop_id=shop_id,
+                    )
+                )
+
+        if addresses:
+            for idx, address in enumerate(addresses):
+                await session.execute(
+                    insert(ClientAddress).values(
+                        street=address["street"],
+                        house=address["house"],
+                        address_type=address["address_type"],
+                        apartment=address.get("apartment"),
+                        entrance=address.get("entrance"),
+                        floor=address.get("floor"),
+                        intercom=address.get("intercom"),
+                        is_primary=(idx == 0),
+                        client_id=client_id,
+                    )
+                )
+
+        return client_id
+
+    return _setup_test_client

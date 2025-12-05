@@ -11,6 +11,7 @@ from backend.application.commands.create_client import (
 from backend.application.errors import AccessDeniedError, AuthorizationError
 from backend.application.vars import AddressType, ShopId, ShopRole, UserId
 from backend.infrastructure.in_memory import (
+    FakeTransactionManager,
     InMemoryClientGateway,
     InMemoryIdentityProvider,
 )
@@ -27,13 +28,15 @@ def make_handler():
             user_id=user_id, shop_id=shop_id, role=role
         )
         client_gateway = InMemoryClientGateway()
+        tr_manager = FakeTransactionManager()
 
         handler = CreateClientCommandHandler(
             idp=identity_provider,
             client_gateway=client_gateway,
+            tr_manager=tr_manager,
         )
 
-        return handler, client_gateway, identity_provider
+        return handler, client_gateway, identity_provider, tr_manager
 
     return _make_handler
 
@@ -58,12 +61,15 @@ def command() -> CreateClientCommand:
 async def test_create_client_successfully(make_handler, command) -> None:
     user_id = UserId(uuid.uuid4())
     shop_id = ShopId(uuid.uuid4())
-    handler, client_gateway, _ = make_handler(user_id=user_id, shop_id=shop_id)
+    handler, client_gateway, _, tr_manager = make_handler(
+        user_id=user_id, shop_id=shop_id
+    )
 
     client_id = await handler.handle(command)
 
     assert len(client_gateway.clients) == 1
     assert client_id in client_gateway.clients
+    assert tr_manager.committed is True
 
     created_client = client_gateway.clients[client_id]
     assert created_client.full_name == "Іван Іванов"
@@ -80,7 +86,9 @@ async def test_create_client_with_multiple_phones_and_addresses(
 ) -> None:
     user_id = UserId(uuid.uuid4())
     shop_id = ShopId(uuid.uuid4())
-    handler, client_gateway, _ = make_handler(user_id=user_id, shop_id=shop_id)
+    handler, client_gateway, _, _ = make_handler(
+        user_id=user_id, shop_id=shop_id
+    )
 
     command = CreateClientCommand(
         full_name="Петро Петренко",
@@ -114,7 +122,7 @@ async def test_create_client_with_multiple_phones_and_addresses(
 async def test_raise_authorization_error_when_user_not_authorized(
     make_handler, command
 ) -> None:
-    handler, _, _ = make_handler()
+    handler, _, _, _ = make_handler()
 
     with pytest.raises(AuthorizationError):
         await handler.handle(command)
@@ -126,7 +134,7 @@ async def test_raise_access_denied_when_user_is_courier(
 ) -> None:
     user_id = UserId(uuid.uuid4())
     shop_id = ShopId(uuid.uuid4())
-    handler, _, _ = make_handler(
+    handler, _, _, _ = make_handler(
         user_id=user_id, shop_id=shop_id, role=ShopRole.COURIER
     )
 
@@ -138,7 +146,7 @@ async def test_raise_access_denied_when_user_is_courier(
 async def test_owner_can_create_client(make_handler, command) -> None:
     user_id = UserId(uuid.uuid4())
     shop_id = ShopId(uuid.uuid4())
-    handler, client_gateway, _ = make_handler(
+    handler, client_gateway, _, _ = make_handler(
         user_id=user_id, shop_id=shop_id, role=ShopRole.OWNER
     )
 
@@ -152,7 +160,7 @@ async def test_owner_can_create_client(make_handler, command) -> None:
 async def test_manager_can_create_client(make_handler, command) -> None:
     user_id = UserId(uuid.uuid4())
     shop_id = ShopId(uuid.uuid4())
-    handler, client_gateway, _ = make_handler(
+    handler, client_gateway, _, _ = make_handler(
         user_id=user_id, shop_id=shop_id, role=ShopRole.MANAGER
     )
 
@@ -166,7 +174,9 @@ async def test_manager_can_create_client(make_handler, command) -> None:
 async def test_create_client_with_custom_id(make_handler) -> None:
     user_id = UserId(uuid.uuid4())
     shop_id = ShopId(uuid.uuid4())
-    handler, client_gateway, _ = make_handler(user_id=user_id, shop_id=shop_id)
+    handler, client_gateway, _, _ = make_handler(
+        user_id=user_id, shop_id=shop_id
+    )
 
     command = CreateClientCommand(
         full_name="Марія Марченко",
@@ -194,7 +204,9 @@ async def test_create_client_with_no_phones_and_addresses(
 ) -> None:
     user_id = UserId(uuid.uuid4())
     shop_id = ShopId(uuid.uuid4())
-    handler, client_gateway, _ = make_handler(user_id=user_id, shop_id=shop_id)
+    handler, client_gateway, _, _ = make_handler(
+        user_id=user_id, shop_id=shop_id
+    )
 
     command = CreateClientCommand(
         full_name="Олексій Олексієнко",
@@ -216,7 +228,7 @@ async def test_create_client_returns_unique_client_id(
 ) -> None:
     user_id = UserId(uuid.uuid4())
     shop_id = ShopId(uuid.uuid4())
-    handler, _, _ = make_handler(user_id=user_id, shop_id=shop_id)
+    handler, _, _, _ = make_handler(user_id=user_id, shop_id=shop_id)
 
     client_id_1 = await handler.handle(command)
     client_id_2 = await handler.handle(command)
@@ -228,7 +240,9 @@ async def test_create_client_returns_unique_client_id(
 async def test_create_client_with_private_house_address(make_handler) -> None:
     user_id = UserId(uuid.uuid4())
     shop_id = ShopId(uuid.uuid4())
-    handler, client_gateway, _ = make_handler(user_id=user_id, shop_id=shop_id)
+    handler, client_gateway, _, _ = make_handler(
+        user_id=user_id, shop_id=shop_id
+    )
 
     command = CreateClientCommand(
         full_name="Сергій Сергієнко",

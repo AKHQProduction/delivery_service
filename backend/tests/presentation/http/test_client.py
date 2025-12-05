@@ -298,3 +298,337 @@ async def test_create_client_as_courier_forbidden(
     response = await http_client.post(url=BASE_URL, headers=headers, json=json)
 
     assert response.status_code == status.HTTP_403_FORBIDDEN
+
+
+@pytest.mark.asyncio()
+async def test_get_client_by_id(
+    http_client: AsyncClient,
+    session: AsyncSession,
+    customer_headers: Callable[[int], dict[str, Any]],
+    setup_full_test_user_with_shop,
+    setup_test_client,
+) -> None:
+    telegram_id = 2000
+    _, shop_id = await setup_full_test_user_with_shop(telegram_id=telegram_id)
+
+    # Create client directly in DB
+    client_id = await setup_test_client(
+        shop_id=shop_id,
+        full_name="Тестовий Клієнт",
+        custom_id="TEST-001",
+        phones=["+380501234567", "+380507654321"],
+        addresses=[
+            {
+                "street": "Хрещатик",
+                "house": "10",
+                "address_type": AddressType.APARTMENT.value,
+                "apartment": "5",
+            }
+        ],
+    )
+    await session.commit()
+
+    headers = customer_headers(telegram_id)
+
+    # Get the client by ID
+    response = await http_client.get(
+        url=f"{BASE_URL}/{client_id}", headers=headers
+    )
+
+    assert response.status_code == status.HTTP_200_OK
+    data = response.json()
+    assert data["client_id"] == str(client_id)
+    assert data["full_name"] == "Тестовий Клієнт"
+    assert data["custom_id"] == "TEST-001"
+    assert len(data["phones"]) == 2
+    assert data["phones"][0]["number"] == "+380501234567"
+    assert data["phones"][0]["is_primary"] is True
+    assert data["phones"][1]["number"] == "+380507654321"
+    assert data["phones"][1]["is_primary"] is False
+    assert len(data["addresses"]) == 1
+    assert data["addresses"][0]["street"] == "Хрещатик"
+    assert data["addresses"][0]["is_primary"] is True
+
+
+@pytest.mark.asyncio()
+async def test_get_client_by_id_not_found(
+    http_client: AsyncClient,
+    session: AsyncSession,
+    customer_headers: Callable[[int], dict[str, Any]],
+    setup_full_test_user_with_shop,
+) -> None:
+    telegram_id = 2001
+    await setup_full_test_user_with_shop(telegram_id=telegram_id)
+    await session.commit()
+
+    headers = customer_headers(telegram_id)
+
+    non_existent_id = str(uuid.uuid4())
+
+    response = await http_client.get(
+        url=f"{BASE_URL}/{non_existent_id}", headers=headers
+    )
+
+    assert response.status_code == status.HTTP_404_NOT_FOUND
+
+
+@pytest.mark.asyncio()
+async def test_get_client_unauthorized(
+    http_client: AsyncClient,
+) -> None:
+    client_id = str(uuid.uuid4())
+
+    response = await http_client.get(url=f"{BASE_URL}/{client_id}")
+
+    assert response.status_code == status.HTTP_403_FORBIDDEN
+
+
+@pytest.mark.asyncio()
+async def test_get_all_clients(
+    http_client: AsyncClient,
+    session: AsyncSession,
+    customer_headers: Callable[[int], dict[str, Any]],
+    setup_full_test_user_with_shop,
+    setup_test_client,
+) -> None:
+    telegram_id = 2100
+    _, shop_id = await setup_full_test_user_with_shop(telegram_id=telegram_id)
+
+    # Create three clients directly in DB
+    await setup_test_client(
+        shop_id=shop_id,
+        full_name="Анна Антоненко",
+        custom_id="VIP-001",
+        phones=["+380501111111"],
+    )
+    await setup_test_client(
+        shop_id=shop_id,
+        full_name="Борис Борисенко",
+        custom_id="VIP-002",
+        phones=["+380502222222"],
+    )
+    await setup_test_client(
+        shop_id=shop_id,
+        full_name="Віктор Вікторенко",
+        phones=["+380503333333"],
+    )
+    await session.commit()
+
+    headers = customer_headers(telegram_id)
+
+    # Get all clients
+    response = await http_client.get(url=f"{BASE_URL}/all", headers=headers)
+
+    assert response.status_code == status.HTTP_200_OK
+    data = response.json()
+    assert len(data) == 3
+    assert data[0]["full_name"] == "Анна Антоненко"
+    assert data[1]["full_name"] == "Борис Борисенко"
+    assert data[2]["full_name"] == "Віктор Вікторенко"
+
+
+@pytest.mark.asyncio()
+async def test_get_all_clients_filter_by_full_name(
+    http_client: AsyncClient,
+    session: AsyncSession,
+    customer_headers: Callable[[int], dict[str, Any]],
+    setup_full_test_user_with_shop,
+    setup_test_client,
+) -> None:
+    telegram_id = 2101
+    _, shop_id = await setup_full_test_user_with_shop(telegram_id=telegram_id)
+
+    # Create clients directly in DB
+    await setup_test_client(
+        shop_id=shop_id,
+        full_name="Анна Антоненко",
+        phones=["+380501111111"],
+    )
+    await setup_test_client(
+        shop_id=shop_id,
+        full_name="Борис Борисенко",
+        phones=["+380502222222"],
+    )
+    await session.commit()
+
+    headers = customer_headers(telegram_id)
+
+    # Filter by full name
+    response = await http_client.get(
+        url=f"{BASE_URL}/all", headers=headers, params={"full_name": "Анна"}
+    )
+
+    assert response.status_code == status.HTTP_200_OK
+    data = response.json()
+    assert len(data) == 1
+    assert data[0]["full_name"] == "Анна Антоненко"
+
+
+@pytest.mark.asyncio()
+async def test_get_all_clients_filter_by_phone(
+    http_client: AsyncClient,
+    session: AsyncSession,
+    customer_headers: Callable[[int], dict[str, Any]],
+    setup_full_test_user_with_shop,
+    setup_test_client,
+) -> None:
+    telegram_id = 2102
+    _, shop_id = await setup_full_test_user_with_shop(telegram_id=telegram_id)
+
+    # Create clients directly in DB
+    await setup_test_client(
+        shop_id=shop_id,
+        full_name="Анна Антоненко",
+        phones=["+380501111111"],
+    )
+    await setup_test_client(
+        shop_id=shop_id,
+        full_name="Борис Борисенко",
+        phones=["+380502222222"],
+    )
+    await session.commit()
+
+    headers = customer_headers(telegram_id)
+
+    # Filter by phone
+    response = await http_client.get(
+        url=f"{BASE_URL}/all", headers=headers, params={"phone": "1111"}
+    )
+
+    assert response.status_code == status.HTTP_200_OK
+    data = response.json()
+    assert len(data) == 1
+    assert data[0]["full_name"] == "Анна Антоненко"
+
+
+@pytest.mark.asyncio()
+async def test_get_all_clients_filter_by_custom_id(
+    http_client: AsyncClient,
+    session: AsyncSession,
+    customer_headers: Callable[[int], dict[str, Any]],
+    setup_full_test_user_with_shop,
+    setup_test_client,
+) -> None:
+    telegram_id = 2103
+    _, shop_id = await setup_full_test_user_with_shop(telegram_id=telegram_id)
+
+    # Create clients directly in DB
+    await setup_test_client(
+        shop_id=shop_id,
+        full_name="Анна Антоненко",
+        custom_id="VIP-001",
+    )
+    await setup_test_client(
+        shop_id=shop_id,
+        full_name="Борис Борисенко",
+        custom_id="VIP-002",
+    )
+    await session.commit()
+
+    headers = customer_headers(telegram_id)
+
+    # Filter by custom_id
+    response = await http_client.get(
+        url=f"{BASE_URL}/all", headers=headers, params={"custom_id": "VIP-001"}
+    )
+
+    assert response.status_code == status.HTTP_200_OK
+    data = response.json()
+    assert len(data) == 1
+    assert data[0]["full_name"] == "Анна Антоненко"
+    assert data[0]["custom_id"] == "VIP-001"
+
+
+@pytest.mark.asyncio()
+async def test_get_all_clients_with_pagination(
+    http_client: AsyncClient,
+    session: AsyncSession,
+    customer_headers: Callable[[int], dict[str, Any]],
+    setup_full_test_user_with_shop,
+    setup_test_client,
+) -> None:
+    telegram_id = 2104
+    _, shop_id = await setup_full_test_user_with_shop(telegram_id=telegram_id)
+
+    # Create 5 clients directly in DB
+    for i in range(5):
+        await setup_test_client(
+            shop_id=shop_id,
+            full_name=f"Client {i:02d}",
+        )
+    await session.commit()
+
+    headers = customer_headers(telegram_id)
+
+    # Get first 3 clients
+    response = await http_client.get(
+        url=f"{BASE_URL}/all",
+        headers=headers,
+        params={"limit": 3, "offset": 0},
+    )
+
+    assert response.status_code == status.HTTP_200_OK
+    data = response.json()
+    assert len(data) == 3
+
+    # Get next 2 clients
+    response = await http_client.get(
+        url=f"{BASE_URL}/all",
+        headers=headers,
+        params={"limit": 3, "offset": 3},
+    )
+
+    assert response.status_code == status.HTTP_200_OK
+    data = response.json()
+    assert len(data) == 2
+
+
+@pytest.mark.asyncio()
+async def test_get_all_clients_with_sorting(
+    http_client: AsyncClient,
+    session: AsyncSession,
+    customer_headers: Callable[[int], dict[str, Any]],
+    setup_full_test_user_with_shop,
+    setup_test_client,
+) -> None:
+    telegram_id = 2105
+    _, shop_id = await setup_full_test_user_with_shop(telegram_id=telegram_id)
+
+    # Create clients directly in DB
+    await setup_test_client(shop_id=shop_id, full_name="Віктор")
+    await setup_test_client(shop_id=shop_id, full_name="Анна")
+    await setup_test_client(shop_id=shop_id, full_name="Борис")
+    await session.commit()
+
+    headers = customer_headers(telegram_id)
+
+    # Sort ascending (default)
+    response = await http_client.get(
+        url=f"{BASE_URL}/all", headers=headers, params={"order": "ASC"}
+    )
+
+    assert response.status_code == status.HTTP_200_OK
+    data = response.json()
+    assert data[0]["full_name"] == "Анна"
+    assert data[1]["full_name"] == "Борис"
+    assert data[2]["full_name"] == "Віктор"
+
+    # Sort descending
+    response = await http_client.get(
+        url=f"{BASE_URL}/all", headers=headers, params={"order": "DESC"}
+    )
+
+    assert response.status_code == status.HTTP_200_OK
+    data = response.json()
+    assert data[0]["full_name"] == "Віктор"
+    assert data[1]["full_name"] == "Борис"
+    assert data[2]["full_name"] == "Анна"
+
+
+@pytest.mark.asyncio()
+async def test_get_all_clients_unauthorized(
+    http_client: AsyncClient,
+) -> None:
+    response = await http_client.get(url=f"{BASE_URL}/all")
+
+    assert response.status_code == status.HTTP_403_FORBIDDEN
