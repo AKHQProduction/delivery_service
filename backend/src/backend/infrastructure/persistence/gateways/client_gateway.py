@@ -1,6 +1,6 @@
 from uuid import UUID
 
-from sqlalchemy import asc, delete, desc, exists, select
+from sqlalchemy import asc, desc, exists, select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 from uuid_utils import uuid7
@@ -78,7 +78,11 @@ class SQLAlchemyClientGateway(ClientGateway):
             return None
 
         phones = [
-            PhoneDTO(number=phone.number, is_primary=phone.is_primary)
+            PhoneDTO(
+                number=phone.number,
+                is_primary=phone.is_primary,
+                id=phone.id,
+            )
             for phone in client.phones
         ]
 
@@ -92,6 +96,7 @@ class SQLAlchemyClientGateway(ClientGateway):
                 floor=address.floor,
                 intercom=address.intercom,
                 is_primary=address.is_primary,
+                id=address.id,
             )
             for address in client.addresses
         ]
@@ -126,7 +131,11 @@ class SQLAlchemyClientGateway(ClientGateway):
             return None
 
         phones = [
-            PhoneDTO(number=phone.number, is_primary=phone.is_primary)
+            PhoneDTO(
+                number=phone.number,
+                is_primary=phone.is_primary,
+                id=phone.id,
+            )
             for phone in client.phones
         ]
 
@@ -140,6 +149,7 @@ class SQLAlchemyClientGateway(ClientGateway):
                 floor=address.floor,
                 intercom=address.intercom,
                 is_primary=address.is_primary,
+                id=address.id,
             )
             for address in client.addresses
         ]
@@ -192,7 +202,11 @@ class SQLAlchemyClientGateway(ClientGateway):
                 client_id=ClientId(client.id),
                 full_name=client.full_name,
                 phones=[
-                    PhoneDTO(number=phone.number, is_primary=phone.is_primary)
+                    PhoneDTO(
+                        number=phone.number,
+                        is_primary=phone.is_primary,
+                        id=phone.id,
+                    )
                     for phone in client.phones
                 ],
                 addresses=[
@@ -205,6 +219,7 @@ class SQLAlchemyClientGateway(ClientGateway):
                         floor=address.floor,
                         intercom=address.intercom,
                         is_primary=address.is_primary,
+                        id=address.id,
                     )
                     for address in client.addresses
                 ],
@@ -214,32 +229,64 @@ class SQLAlchemyClientGateway(ClientGateway):
         ]
 
     async def update(self, updated_client: ClientDM) -> None:
-        client = await self._session.get(Client, updated_client.client_id)
-        if client:
-            client.custom_id = updated_client.custom_id
-            client.full_name = updated_client.full_name
-
-            # Update phones
-            await self._session.execute(
-                delete(ClientPhone).where(
-                    ClientPhone.client_id == updated_client.client_id
-                )
+        query = (
+            select(Client)
+            .where(Client.id == updated_client.client_id)
+            .options(
+                selectinload(Client.phones), selectinload(Client.addresses)
             )
-            for idx, phone_dto in enumerate(updated_client.phones):
+        )
+        result = await self._session.execute(query)
+        client = result.scalar_one_or_none()
+
+        if not client:
+            return
+
+        client.custom_id = updated_client.custom_id
+        client.full_name = updated_client.full_name
+
+        existing_phones_by_id = {phone.id: phone for phone in client.phones}
+        updated_phone_ids = {
+            phone_dto.id for phone_dto in updated_client.phones if phone_dto.id
+        }
+
+        for phone_dto in updated_client.phones:
+            if phone_dto.id and phone_dto.id in existing_phones_by_id:
+                existing_phone = existing_phones_by_id[phone_dto.id]
+                existing_phone.number = phone_dto.number
+                existing_phone.is_primary = phone_dto.is_primary
+            else:
                 new_phone = ClientPhone(
                     number=phone_dto.number,
-                    is_primary=(idx == 0),
+                    is_primary=phone_dto.is_primary,
                     client_id=updated_client.client_id,
                     shop_id=updated_client.shop_id,
                 )
                 self._session.add(new_phone)
 
-            await self._session.execute(
-                delete(ClientAddress).where(
-                    ClientAddress.client_id == updated_client.client_id
-                )
-            )
-            for idx, address_dto in enumerate(updated_client.addresses):
+        for phone_id, phone in existing_phones_by_id.items():
+            if phone_id not in updated_phone_ids:
+                await self._session.delete(phone)
+
+        existing_addresses_by_id = {
+            address.id: address for address in client.addresses
+        }
+        updated_address_ids = {
+            addr_dto.id for addr_dto in updated_client.addresses if addr_dto.id
+        }
+
+        for address_dto in updated_client.addresses:
+            if address_dto.id and address_dto.id in existing_addresses_by_id:
+                existing_address = existing_addresses_by_id[address_dto.id]
+                existing_address.street = address_dto.street
+                existing_address.house = address_dto.house
+                existing_address.address_type = address_dto.address_type
+                existing_address.apartment = address_dto.apartment
+                existing_address.entrance = address_dto.entrance
+                existing_address.floor = address_dto.floor
+                existing_address.intercom = address_dto.intercom
+                existing_address.is_primary = address_dto.is_primary
+            else:
                 new_address = ClientAddress(
                     street=address_dto.street,
                     house=address_dto.house,
@@ -248,10 +295,14 @@ class SQLAlchemyClientGateway(ClientGateway):
                     entrance=address_dto.entrance,
                     floor=address_dto.floor,
                     intercom=address_dto.intercom,
-                    is_primary=(idx == 0),
+                    is_primary=address_dto.is_primary,
                     client_id=updated_client.client_id,
                 )
                 self._session.add(new_address)
+
+        for address_id, address in existing_addresses_by_id.items():
+            if address_id not in updated_address_ids:
+                await self._session.delete(address)
 
     def next_id(self) -> ClientId:
         return ClientId(UUID(str(uuid7())))

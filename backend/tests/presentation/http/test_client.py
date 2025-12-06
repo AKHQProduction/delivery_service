@@ -1185,10 +1185,26 @@ async def test_edit_client_keep_same_phone_numbers_integration(
 
     headers = customer_headers(telegram_id)
 
+    # First, get the client to obtain phone IDs
+    get_response = await http_client.get(
+        url=f"{BASE_URL}/{client_id}", headers=headers
+    )
+    assert get_response.status_code == status.HTTP_200_OK
+    client_data = get_response.json()
+    phone_ids = [phone["id"] for phone in client_data["phones"]]
+
     json = {
         "phones": [
-            {"number": "+380501111111", "is_primary": True},  # Original phone
-            {"number": "+380502222222", "is_primary": False},  # Original phone
+            {
+                "number": "+380501111111",
+                "is_primary": True,
+                "id": phone_ids[0],
+            },
+            {
+                "number": "+380502222222",
+                "is_primary": False,
+                "id": phone_ids[1],
+            },
         ]
     }
 
@@ -1208,4 +1224,6 @@ async def test_edit_client_keep_same_phone_numbers_integration(
     phones = phone_result.scalars().all()
     assert len(phones) == 2
     assert phones[0].number == "+380501111111"
+    assert phones[0].is_primary is True
     assert phones[1].number == "+380502222222"
+    assert phones[1].is_primary is False

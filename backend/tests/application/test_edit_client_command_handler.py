@@ -618,3 +618,137 @@ def test_edit_command_succeeds_with_exactly_one_primary_address() -> None:
 
     assert command.addresses is not None
     assert len(command.addresses) == 2
+
+
+@pytest.mark.asyncio()
+async def test_smart_update_phone_update_existing(make_handler) -> None:
+    user_id = UserId(uuid.uuid4())
+    shop_id = ShopId(uuid.uuid4())
+
+    handler, client_gateway, _, _ = make_handler(
+        user_id=user_id, shop_id=shop_id
+    )
+    client_id = setup_client_in_gateway(client_gateway, shop_id)
+
+    # Get original phone IDs
+    original_client = client_gateway.clients[client_id]
+    original_phone_id = original_client.phones[0].id
+
+    command = EditClientCommand(
+        client_id=client_id,
+        phones=[
+            Phone(
+                number="+380509999999",  # Changed number
+                is_primary=True,
+                id=original_phone_id,  # Same ID
+            )
+        ],
+    )
+
+    await handler.handle(command)
+
+    updated_client = client_gateway.clients[client_id]
+    assert len(updated_client.phones) == 1
+    assert updated_client.phones[0].number == "+380509999999"
+    assert updated_client.phones[0].id == original_phone_id  # ID not changed
+
+
+@pytest.mark.asyncio()
+async def test_smart_update_phone_add_new(make_handler) -> None:
+    user_id = UserId(uuid.uuid4())
+    shop_id = ShopId(uuid.uuid4())
+
+    handler, client_gateway, _, _ = make_handler(
+        user_id=user_id, shop_id=shop_id
+    )
+    client_id = setup_client_in_gateway(client_gateway, shop_id)
+
+    # Keep existing phone + add new one
+    original_client = client_gateway.clients[client_id]
+    original_phone_id = original_client.phones[0].id
+
+    command = EditClientCommand(
+        client_id=client_id,
+        phones=[
+            Phone(
+                number="+380501111111",
+                is_primary=True,
+                id=original_phone_id,
+            ),  # Keep existing
+            Phone(number="+380509999999", is_primary=False),  # Add new
+        ],
+    )
+
+    await handler.handle(command)
+
+    updated_client = client_gateway.clients[client_id]
+    assert len(updated_client.phones) == 2
+    assert updated_client.phones[0].number == "+380501111111"
+    assert updated_client.phones[1].number == "+380509999999"
+
+
+@pytest.mark.asyncio()
+async def test_smart_update_phone_remove(make_handler) -> None:
+    user_id = UserId(uuid.uuid4())
+    shop_id = ShopId(uuid.uuid4())
+
+    handler, client_gateway, _, _ = make_handler(
+        user_id=user_id, shop_id=shop_id
+    )
+    client_id = setup_client_in_gateway(client_gateway, shop_id)
+
+    # Only send first phone, second should be deleted
+    original_client = client_gateway.clients[client_id]
+    first_phone_id = original_client.phones[0].id
+
+    command = EditClientCommand(
+        client_id=client_id,
+        phones=[
+            Phone(
+                number="+380501111111",
+                is_primary=True,
+                id=first_phone_id,
+            )  # Only keep first
+        ],
+    )
+
+    await handler.handle(command)
+
+    updated_client = client_gateway.clients[client_id]
+    assert len(updated_client.phones) == 1
+    assert updated_client.phones[0].number == "+380501111111"
+
+
+@pytest.mark.asyncio()
+async def test_smart_update_address_update_existing(make_handler) -> None:
+    user_id = UserId(uuid.uuid4())
+    shop_id = ShopId(uuid.uuid4())
+
+    handler, client_gateway, _, _ = make_handler(
+        user_id=user_id, shop_id=shop_id
+    )
+    client_id = setup_client_in_gateway(client_gateway, shop_id)
+
+    # Get original address ID
+    original_client = client_gateway.clients[client_id]
+    original_address_id = original_client.addresses[0].id
+
+    command = EditClientCommand(
+        client_id=client_id,
+        addresses=[
+            Address(
+                street="New Street",  # Changed
+                house="100",  # Changed
+                address_type=AddressType.PRIVATE_HOUSE,  # Changed
+                is_primary=True,
+                id=original_address_id,  # Same ID
+            )
+        ],
+    )
+
+    await handler.handle(command)
+
+    updated_client = client_gateway.clients[client_id]
+    assert len(updated_client.addresses) == 1
+    assert updated_client.addresses[0].street == "New Street"
+    assert updated_client.addresses[0].id == original_address_id

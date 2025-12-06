@@ -29,6 +29,7 @@ logger = logging.getLogger(__name__)
 class Phone:
     number: str
     is_primary: bool = False
+    id: int | None = None
 
 
 @dataclass(frozen=True)
@@ -41,6 +42,7 @@ class Address:
     floor: str | None = None
     intercom: str | None = None
     is_primary: bool = False
+    id: int | None = None
 
 
 @dataclass(frozen=True)
@@ -147,7 +149,11 @@ class EditClientCommandHandler:
                     raise PhoneNumberAlreadyExistsError(phone.number)
 
             client.phones = [
-                PhoneDTO(number=phone.number, is_primary=phone.is_primary)
+                PhoneDTO(
+                    number=phone.number,
+                    is_primary=phone.is_primary,
+                    id=phone.id,
+                )
                 for phone in command.phones
             ]
             updates.append(f"phones={len(command.phones)}")
@@ -163,6 +169,7 @@ class EditClientCommandHandler:
                     floor=address.floor,
                     intercom=address.intercom,
                     is_primary=address.is_primary,
+                    id=address.id,
                 )
                 for address in command.addresses
             ]

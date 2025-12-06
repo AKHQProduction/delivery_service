@@ -165,26 +165,35 @@ async def update_client(
                     value={"custom_id": "NEW-ID-123"},
                 ),
                 "phones": Example(
-                    description="Replace all phones with new list",
+                    description="Update existing phones and add new ones",
                     value={
                         "phones": [
-                            {"number": "+380509999999"},
-                            {"number": "+380508888888"},
+                            {
+                                "number": "+380509999999",
+                                "is_primary": True,
+                                "id": 1,
+                            },
+                            {
+                                "number": "+380508888888",
+                                "is_primary": False,
+                            },
                         ]
                     },
                 ),
                 "addresses": Example(
-                    description="Replace all addresses with new list",
+                    description="Update existing addresses and add new ones",
                     value={
                         "addresses": [
                             {
-                                "street": "Нова вулиця",
+                                "street": "Оновлена вулиця",
                                 "house": "100",
                                 "address_type": AddressType.APARTMENT,
                                 "apartment": "50",
                                 "entrance": "2",
                                 "floor": "10",
                                 "intercom": "50",
+                                "is_primary": True,
+                                "id": 5,
                             }
                         ]
                     },
@@ -194,12 +203,19 @@ async def update_client(
                     value={
                         "full_name": "Повністю Оновлене Ім'я",
                         "custom_id": "ALL-NEW-999",
-                        "phones": [{"number": "+380501234567"}],
+                        "phones": [
+                            {
+                                "number": "+380501234567",
+                                "is_primary": True,
+                                "id": 2,
+                            }
+                        ],
                         "addresses": [
                             {
                                 "street": "Повністю нова адреса",
                                 "house": "1",
                                 "address_type": AddressType.PRIVATE_HOUSE,
+                                "is_primary": True,
                             }
                         ],
                     },
@@ -219,7 +235,11 @@ async def update_client(
             full_name=body.full_name,
             custom_id=body.custom_id,
             phones=[
-                Phone(number=phone.number, is_primary=phone.is_primary)
+                Phone(
+                    number=phone.number,
+                    is_primary=phone.is_primary,
+                    id=phone.id,
+                )
                 for phone in body.phones
             ]
             if body.phones is not None
@@ -234,6 +254,7 @@ async def update_client(
                     floor=address.floor,
                     intercom=address.intercom,
                     is_primary=address.is_primary,
+                    id=address.id,
                 )
                 for address in body.addresses
             ]

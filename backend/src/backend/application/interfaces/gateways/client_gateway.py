@@ -10,6 +10,7 @@ from backend.application.vars import AddressType, ClientId, ShopId
 class PhoneDTO:
     number: str
     is_primary: bool = False
+    id: int | None = None
 
 
 @dataclass(frozen=True)
@@ -22,6 +23,7 @@ class AddressDTO:
     floor: str | None = None
     intercom: str | None = None
     is_primary: bool = False
+    id: int | None = None
 
 
 @dataclass(frozen=True)
