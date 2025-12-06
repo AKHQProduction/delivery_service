@@ -1,7 +1,7 @@
 import React, { useState } from "react";
-import { FormWrapper } from "../shared/FormWrapper";
-import { FormInput } from "../shared/FormInput";
-import { FormSelect } from "../shared/FormSelect";
+import { FormWrapper } from "../../shared/FormWrapper";
+import { FormInput } from "../../shared/FormInput";
+import { FormSelect } from "../../shared/FormSelect";
 import { useProducts } from "../../../hooks/useProducts";
 
 interface AddProductFormProps {

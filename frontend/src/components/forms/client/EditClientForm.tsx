@@ -1,7 +1,7 @@
 import React, { useState } from "react";
-import { FormWrapper } from "../shared/FormWrapper";
-import { FormInput } from "../shared/FormInput";
-import { DynamicInputList } from "../shared/DynamicInputList";
+import { FormWrapper } from "../../shared/FormWrapper";
+import { FormInput } from "../../shared/FormInput";
+import { DynamicInputList } from "../../shared/DynamicInputList";
 import { type Client } from "../../../types/entities/Client";
 
 interface EditClientFormProps {
@@ -18,7 +18,7 @@ export const EditClientForm: React.FC<EditClientFormProps> = ({
   const [formData, setFormData] = useState({
     full_name: client.full_name,
     number: client.number.length > 0 ? client.number : [""],
-    adress: client.adress.length > 0 ? client.adress : [""],
+    adress: client.address.length > 0 ? client.address : [""],
   });
 
   const handleChange = (
@@ -34,7 +34,7 @@ export const EditClientForm: React.FC<EditClientFormProps> = ({
       client_id: client.client_id,
       full_name: formData.full_name,
       number: formData.number.filter((p) => p.trim() !== ""),
-      adress: formData.adress.filter((a) => a.trim() !== ""),
+      address: formData.adress.filter((a) => a.trim() !== ""),
     };
 
     onSave(updatedClient);

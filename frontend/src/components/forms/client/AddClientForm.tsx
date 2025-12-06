@@ -1,7 +1,7 @@
 import React, { useState } from "react";
-import { FormWrapper } from "../shared/FormWrapper";
-import { FormInput } from "../shared/FormInput";
-import { DynamicInputList } from "../shared/DynamicInputList";
+import { FormWrapper } from "../../shared/FormWrapper";
+import { FormInput } from "../../shared/FormInput";
+import { DynamicInputList } from "../../shared/DynamicInputList";
 
 interface AddClientFormProps {
   onClose: () => void;

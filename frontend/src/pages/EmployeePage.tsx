@@ -3,7 +3,7 @@ import { PageHeader } from "../components/ui/pageHeader";
 import { SearchBar } from "../components/ui/searchBar";
 import { EmployeeCard } from "../components/ui/employeeCard";
 import { EmployeeDetailModal } from "../components/modals/detailsModals/EmployeeDetailModal";
-import { RightModal } from "../components/modals/rightModal";
+import { RightModal } from "../components/modals/RightModal";
 import { useEmployees } from "../hooks/useEmployees";
 import { reverseRoleMap } from "../utils/dataMap";
 import { type Employee } from "../types/entities/Employee";
@@ -55,11 +55,14 @@ export const EmployeePage = () => {
   return (
     <div className="min-h-screen bg-gray-50">
       <PageHeader title="Персонал" />
-      <SearchBar
-        placeholder="Пошук працівників..."
-        searchTerm={searchTerm}
-        setSearchTerm={setSearchTerm}
-      />
+      
+      <div className="px-6 pb-4">
+        <SearchBar
+          placeholder="Пошук товарів"
+          searchTerm={searchTerm}
+          setSearchTerm={setSearchTerm}
+        />
+      </div>
 
       {employeesList.length === 0 ? (
         <div className="flex flex-col items-center justify-center mt-20">

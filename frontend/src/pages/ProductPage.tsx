@@ -53,11 +53,14 @@ export const ProductPage = () => {
   return (
     <div className="min-h-screen bg-gray-50">
       <PageHeader title="Товари" />
-      <SearchBar
-        placeholder="Пошук товарів"
-        searchTerm={searchTerm}
-        setSearchTerm={setSearchTerm}
-      />
+
+      <div className="px-6 pb-4">
+        <SearchBar
+          placeholder="Пошук товарів"
+          searchTerm={searchTerm}
+          setSearchTerm={setSearchTerm}
+        />
+      </div>
 
       {products.length === 0 ? (
         <div className="flex flex-col items-center justify-center mt-20">
@@ -83,7 +86,6 @@ export const ProductPage = () => {
           </div>
         </div>
       )}
-
       <RightModal isOpen={isModalOpen} onClose={handleCloseModal}>
         {selectedProduct && (
           <ProductDetailModal

@@ -95,7 +95,7 @@ export const ClientDetailModal: React.FC<ClientDetailModalProps> = ({
               elementText={phone}
             />
           ))}
-          {client.adress.map((address, index) => (
+          {client.address.map((address, index) => (
             <ItemElement
               key={index}
               descriptionText={`Адреса ${index + 1}`}

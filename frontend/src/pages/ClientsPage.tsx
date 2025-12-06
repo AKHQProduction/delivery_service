@@ -12,19 +12,19 @@ const clientsData = {
       client_id: "БИДЛ001",
       full_name: "Іван Петренко",
       number: ["+380501234567"],
-      adress: ["вул. Шевченка який пасе ягнят за селом, 10, Київ"],
+      address: ["вул. Шевченка який пасе ягнят за селом, 10, Київ"],
     },
     {
       client_id: "БИДЛ002",
       full_name: "Олена Ковальчук",
       number: ["+380671112233", "+380631112233"],
-      adress: ["просп. ТЦК, 5, Львів", "вул. Грушевського, 20, Львів"],
+      address: ["просп. ТЦК, 5, Львів", "вул. Грушевського, 20, Львів"],
     },
     {
       client_id: "БИДЛ003",
       full_name: "Петро Іванов",
       number: ["+380931234567"],
-      adress: ["вул. Пушкіна Гандона, 15, Одеса"],
+      address: ["вул. Пушкіна Гандона, 15, Одеса"],
     },
   ],
 };
@@ -62,11 +62,14 @@ export const ClientsPage = () => {
   return (
     <div className="min-h-screen bg-gray-50">
       <PageHeader title="Клієнти" />
-      <SearchBar
-        placeholder="Пошук клієнтів..."
-        searchTerm={searchTerm}
-        setSearchTerm={setSearchTerm}
-      />
+
+      <div className="px-6 pb-4">
+        <SearchBar
+          placeholder="Пошук товарів"
+          searchTerm={searchTerm}
+          setSearchTerm={setSearchTerm}
+        />
+      </div>
 
       {clientsList.length === 0 ? (
         <div className="flex flex-col items-center justify-center mt-20">

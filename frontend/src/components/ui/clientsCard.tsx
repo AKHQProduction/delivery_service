@@ -50,7 +50,7 @@ export const ClientCard: React.FC<ClientCardProps> = ({ client, onClick }) => {
               </div>
             </div>
 
-            {client.adress.length > 0 && client.adress[0] && (
+            {client.address.length > 0 && client.address[0] && (
               <div className="flex items-start gap-2">
                 <svg
                   className="w-4 h-4 text-purple-500 mt-0.5 shrink-0"
@@ -76,7 +76,7 @@ export const ClientCard: React.FC<ClientCardProps> = ({ client, onClick }) => {
                     className="text-sm text-gray-700 bg-purple-50 px-2.5 py-0.5 rounded-lg font-medium
                         group-hover:bg-purple-100 transition-colors"
                   >
-                    {client.adress[0]}
+                    {client.address[0]}
                   </span>
                 </div>
               </div>
