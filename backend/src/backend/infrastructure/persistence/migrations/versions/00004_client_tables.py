@@ -52,7 +52,7 @@ def upgrade() -> None:
         sa.Column("street", sa.String(), nullable=False),
         sa.Column("house", sa.String(), nullable=False),
         sa.Column("apartment", sa.String(), nullable=True),
-        sa.Column("entrance", sa.String(), nullable=True),
+        sa.Column("entrance", sa.String(), nullable=True, comment="Подъезд"),
         sa.Column("floor", sa.String(), nullable=True),
         sa.Column("intercom", sa.String(), nullable=True),
         sa.Column("is_primary", sa.Boolean(), nullable=False),
