@@ -97,7 +97,6 @@ class CreateClientCommandHandler:
         ]
 
         client_id = self._client_gateway.next_id()
-
         create_dto = CreateClientDTO(
             client_id=client_id,
             shop_id=current_user.shop_id,

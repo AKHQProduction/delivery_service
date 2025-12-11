@@ -29,7 +29,7 @@ from backend.application.queries.get_clients import (
     GetClientsQuery,
     GetClientsQueryHandler,
 )
-from backend.application.vars import AddressType, ClientId
+from backend.application.vars import AddressId, AddressType, ClientId, PhoneId
 from backend.presentation.http.v1.schemas.client import EditClientSchema
 from backend.presentation.http.v1.schemas.error import ErrorSchema
 
@@ -238,7 +238,7 @@ async def update_client(
                 Phone(
                     number=phone.number,
                     is_primary=phone.is_primary,
-                    id=phone.id,
+                    id=PhoneId(phone.id) if phone.id is not None else None,
                 )
                 for phone in body.phones
             ]
@@ -254,7 +254,9 @@ async def update_client(
                     floor=address.floor,
                     intercom=address.intercom,
                     is_primary=address.is_primary,
-                    id=address.id,
+                    id=AddressId(address.id)
+                    if address.id is not None
+                    else None,
                 )
                 for address in body.addresses
             ]

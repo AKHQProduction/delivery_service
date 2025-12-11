@@ -15,7 +15,13 @@ from backend.application.interfaces.gateways.client_gateway import (
     GetClientsFilters,
     PhoneDTO,
 )
-from backend.application.vars import AddressType, ClientId, ShopId
+from backend.application.vars import (
+    AddressId,
+    AddressType,
+    ClientId,
+    PhoneId,
+    ShopId,
+)
 from backend.infrastructure.persistence.tables.clients import (
     Client,
     ClientAddress,
@@ -81,7 +87,7 @@ class SQLAlchemyClientGateway(ClientGateway):
             PhoneDTO(
                 number=phone.number,
                 is_primary=phone.is_primary,
-                id=phone.id,
+                id=PhoneId(phone.id),
             )
             for phone in client.phones
         ]
@@ -96,7 +102,7 @@ class SQLAlchemyClientGateway(ClientGateway):
                 floor=address.floor,
                 intercom=address.intercom,
                 is_primary=address.is_primary,
-                id=address.id,
+                id=AddressId(address.id),
             )
             for address in client.addresses
         ]
@@ -134,7 +140,7 @@ class SQLAlchemyClientGateway(ClientGateway):
             PhoneDTO(
                 number=phone.number,
                 is_primary=phone.is_primary,
-                id=phone.id,
+                id=PhoneId(phone.id),
             )
             for phone in client.phones
         ]
@@ -149,7 +155,7 @@ class SQLAlchemyClientGateway(ClientGateway):
                 floor=address.floor,
                 intercom=address.intercom,
                 is_primary=address.is_primary,
-                id=address.id,
+                id=AddressId(address.id),
             )
             for address in client.addresses
         ]
@@ -205,7 +211,7 @@ class SQLAlchemyClientGateway(ClientGateway):
                     PhoneDTO(
                         number=phone.number,
                         is_primary=phone.is_primary,
-                        id=phone.id,
+                        id=PhoneId(phone.id),
                     )
                     for phone in client.phones
                 ],
@@ -219,7 +225,7 @@ class SQLAlchemyClientGateway(ClientGateway):
                         floor=address.floor,
                         intercom=address.intercom,
                         is_primary=address.is_primary,
-                        id=address.id,
+                        id=AddressId(address.id),
                     )
                     for address in client.addresses
                 ],

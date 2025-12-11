@@ -25,6 +25,8 @@ def upgrade() -> None:
         sa.Column("date", sa.Date(), nullable=False),
         sa.Column("delivery_address", sa.JSON(), nullable=False),
         sa.Column("delivery_phone", sa.String(), nullable=False),
+        sa.Column("time_preference", sa.String(), nullable=False),
+        sa.Column("comment", sa.String(), nullable=True),
         sa.Column("shop_id", sa.UUID(), nullable=False),
         sa.Column("client_id", sa.UUID(), nullable=False),
         sa.Column(

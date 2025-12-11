@@ -1,3 +1,4 @@
+from datetime import date
 from typing import Any
 
 
@@ -24,12 +25,15 @@ class AccessDeniedError(ApplicationError):
 
 
 class EntityNotFoundError(ApplicationError):
-    def __init__(self, entity: str) -> None:
+    def __init__(self, entity: str, entity_id: Any | None = None) -> None:
         self._entity = entity
+        self._id = entity_id
 
     @property
     def message(self) -> str:
-        return f"{self._entity} not found"
+        if not self._id:
+            return f"{self._entity} not found"
+        return f"{self._entity} with id {self._id} not found"
 
 
 class ValidationError(ApplicationError):
@@ -75,3 +79,12 @@ class InvalidPrimaryFlagError(ValidationError):
             f"Only one {self._field} can be marked as primary, "
             f"but {self._count} were provided"
         )
+
+
+class DateMustBeGreaterThanError(ValidationError):
+    def __init__(self, greater_than: date) -> None:
+        self._greater_than = greater_than
+
+    @property
+    def message(self) -> str:
+        return f"Date must be greater than {self._greater_than}"

@@ -23,6 +23,8 @@ class Order(Base, CreatedAt, UpdatedAt):
     date: Mapped[datetime.date] = mapped_column(sa.Date, nullable=False)
     delivery_address: Mapped[dict] = mapped_column(sa.JSON, nullable=False)
     delivery_phone: Mapped[str] = mapped_column(sa.String, nullable=False)
+    time_preference: Mapped[str] = mapped_column(sa.String, nullable=False)
+    comment: Mapped[str] = mapped_column(sa.String, nullable=True)
 
     shop_id: Mapped[uuid.UUID] = mapped_column(
         sa.ForeignKey("shops.id", ondelete="CASCADE"), nullable=False
@@ -31,7 +33,6 @@ class Order(Base, CreatedAt, UpdatedAt):
         sa.ForeignKey("clients.id", ondelete="CASCADE"), nullable=False
     )
 
-    # Relationships
     shop: Mapped["Shop"] = relationship(back_populates="orders")
     client: Mapped["Client"] = relationship(back_populates="orders")
     items: Mapped[list["OrderItem"]] = relationship(

@@ -6,6 +6,10 @@ UserId = NewType("UserId", UUID)
 ShopId = NewType("ShopId", UUID)
 ProductId = NewType("ProductId", UUID)
 ClientId = NewType("ClientId", UUID)
+OrderId = NewType("OrderId", UUID)
+OrderItemId = NewType("OrderItemId", int)
+AddressId = NewType("AddressId", int)
+PhoneId = NewType("PhoneId", int)
 
 
 class ShopRole(StrEnum):
@@ -22,3 +26,8 @@ class ProductCategory(StrEnum):
 class AddressType(StrEnum):
     APARTMENT = "APARTMENT"
     PRIVATE_HOUSE = "PRIVATE_HOUSE"
+
+
+class TimePreference(StrEnum):
+    FIRST_HALF = "FIRST_HALF"
+    SECOND_HALF = "SECOND_HALF"

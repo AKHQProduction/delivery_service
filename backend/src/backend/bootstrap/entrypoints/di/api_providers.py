@@ -15,6 +15,7 @@ from backend.application.commands import (
 from backend.application.commands.create_client import (
     CreateClientCommandHandler,
 )
+from backend.application.commands.create_order import CreateOrderCommandHandler
 from backend.application.commands.create_product import (
     CreateProductCommandHandler,
 )
@@ -71,6 +72,7 @@ class APIInteractorsProvider(Provider):
         GetClientsQueryHandler,
         DeleteClientCommandHandler,
         EditClientCommandHandler,
+        CreateOrderCommandHandler,
     )
 
     add_employee = provide_all(GenerateInviteLinkCommandHandler)

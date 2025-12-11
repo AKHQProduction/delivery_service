@@ -3,14 +3,20 @@ from dataclasses import dataclass
 from typing import Protocol
 
 from backend.application.interfaces.gateways import Pagination
-from backend.application.vars import AddressType, ClientId, ShopId
+from backend.application.vars import (
+    AddressId,
+    AddressType,
+    ClientId,
+    PhoneId,
+    ShopId,
+)
 
 
 @dataclass(frozen=True)
 class PhoneDTO:
     number: str
     is_primary: bool = False
-    id: int | None = None
+    id: PhoneId | None = None
 
 
 @dataclass(frozen=True)
@@ -23,7 +29,7 @@ class AddressDTO:
     floor: str | None = None
     intercom: str | None = None
     is_primary: bool = False
-    id: int | None = None
+    id: AddressId | None = None
 
 
 @dataclass(frozen=True)

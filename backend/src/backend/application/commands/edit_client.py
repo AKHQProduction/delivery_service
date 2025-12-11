@@ -20,7 +20,7 @@ from backend.application.policies.access import (
     IsRelatedToShop,
     can_shop_manage_policy,
 )
-from backend.application.vars import AddressType, ClientId
+from backend.application.vars import AddressId, AddressType, ClientId, PhoneId
 
 logger = logging.getLogger(__name__)
 
@@ -29,7 +29,7 @@ logger = logging.getLogger(__name__)
 class Phone:
     number: str
     is_primary: bool = False
-    id: int | None = None
+    id: PhoneId | None = None
 
 
 @dataclass(frozen=True)
@@ -42,7 +42,7 @@ class Address:
     floor: str | None = None
     intercom: str | None = None
     is_primary: bool = False
-    id: int | None = None
+    id: AddressId | None = None
 
 
 @dataclass(frozen=True)
