@@ -1,6 +1,7 @@
 import os
 import uuid
 from collections.abc import AsyncGenerator, Callable
+from datetime import UTC, datetime, timedelta
 from typing import Any, cast
 from unittest.mock import AsyncMock
 
@@ -25,11 +26,14 @@ from sqlalchemy.ext.asyncio import (
 
 from backend.application.interfaces import TransactionManager
 from backend.application.vars import (
+    AddressType,
     ClientId,
+    OrderId,
     ProductCategory,
     ProductId,
     ShopId,
     ShopRole,
+    TimePreference,
     UserId,
 )
 from backend.bootstrap.config import Config, PostgresConfig, RedisConfig
@@ -57,6 +61,7 @@ from backend.infrastructure.persistence.tables.clients import (
     ClientAddress,
     ClientPhone,
 )
+from backend.infrastructure.persistence.tables.orders import Order, OrderItem
 
 
 @pytest.fixture(scope="session")
@@ -336,3 +341,61 @@ def setup_test_client(session: AsyncSession):
         return client_id
 
     return _setup_test_client
+
+
+@pytest.fixture()
+def setup_test_order(session: AsyncSession):
+    async def _setup_test_order(
+        shop_id: ShopId,
+        client_id: ClientId,
+        order_id: OrderId | None = None,
+        delivery_date: datetime | None = None,
+        time_preference: TimePreference = TimePreference.FIRST_HALF,
+        delivery_phone: str = "+380501234567",
+        delivery_address: dict[str, Any] | None = None,
+        comment: str | None = None,
+        items: list[dict[str, Any]] | None = None,
+    ) -> OrderId:
+        if order_id is None:
+            order_id = OrderId(uuid.uuid4())
+        if delivery_date is None:
+            delivery_date = datetime.now(UTC).date() + timedelta(days=1)
+        if delivery_address is None:
+            delivery_address = {
+                "street": "Test Street",
+                "house": "1",
+                "address_type": AddressType.APARTMENT.value,
+                "apartment": "5",
+            }
+
+        await session.execute(
+            insert(Order).values(
+                id=order_id,
+                date=delivery_date,
+                delivery_address=delivery_address,
+                delivery_phone=delivery_phone,
+                time_preference=time_preference.value,
+                comment=comment,
+                shop_id=shop_id,
+                client_id=client_id,
+            )
+        )
+
+        if items is None:
+            items = [
+                {"name": "Test Product", "quantity": 1, "price_per_item": 100}
+            ]
+
+        for item in items:
+            await session.execute(
+                insert(OrderItem).values(
+                    name=item["name"],
+                    quantity=item["quantity"],
+                    price_per_item=item["price_per_item"],
+                    order_id=order_id,
+                )
+            )
+
+        return order_id
+
+    return _setup_test_order

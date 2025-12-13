@@ -22,6 +22,7 @@ from backend.application.commands.create_product import (
 from backend.application.commands.delete_client import (
     DeleteClientCommandHandler,
 )
+from backend.application.commands.delete_order import DeleteOrderCommandHandler
 from backend.application.commands.delete_product import (
     DeleteProductCommandHandler,
 )
@@ -32,6 +33,8 @@ from backend.application.queries.get_client import GetClientQueryHandler
 from backend.application.queries.get_clients import GetClientsQueryHandler
 from backend.application.queries.get_employee import GetEmployeeQueryHandler
 from backend.application.queries.get_employees import GetEmployeesQueryHandler
+from backend.application.queries.get_order import GetOrderQueryHandler
+from backend.application.queries.get_orders import GetOrdersQueryHandler
 from backend.application.queries.get_product import GetProductQueryHandler
 from backend.application.queries.get_products import GetProductsQueryHandler
 from backend.application.usecases.invite_employee import (
@@ -73,6 +76,9 @@ class APIInteractorsProvider(Provider):
         DeleteClientCommandHandler,
         EditClientCommandHandler,
         CreateOrderCommandHandler,
+        DeleteOrderCommandHandler,
+        GetOrderQueryHandler,
+        GetOrdersQueryHandler,
     )
 
     add_employee = provide_all(GenerateInviteLinkCommandHandler)
