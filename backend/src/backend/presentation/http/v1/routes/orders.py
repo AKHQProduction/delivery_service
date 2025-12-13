@@ -15,6 +15,10 @@ from backend.application.commands.delete_order import (
     DeleteOrderCommand,
     DeleteOrderCommandHandler,
 )
+from backend.application.commands.edit_order import (
+    UpdateOrderCommand,
+    UpdateOrderCommandHandler,
+)
 from backend.application.interfaces.gateways import Pagination
 from backend.application.interfaces.gateways.order_gateway import (
     OrderReadModel,
@@ -127,6 +131,173 @@ async def create_new_order(
     handler: FromDishka[CreateOrderCommandHandler],
 ) -> OrderId:
     return await handler.handle(body)
+
+
+@router.put(
+    "/{order_id}",
+    status_code=status.HTTP_200_OK,
+    responses={
+        status.HTTP_401_UNAUTHORIZED: {"model": ErrorSchema},
+        status.HTTP_403_FORBIDDEN: {"model": ErrorSchema},
+        status.HTTP_404_NOT_FOUND: {"model": ErrorSchema},
+    },
+    dependencies=[Depends(HTTPBearer())],
+)
+async def update_order(
+    order_id: OrderId,
+    body: Annotated[
+        UpdateOrderCommand,
+        Body(
+            openapi_examples={
+                "change_delivery_date": Example(
+                    description="Change delivery date and time preference",
+                    value={
+                        "order_id": "550e8400-e29b-41d4-a716-446655440000",
+                        "delivery_date": (
+                            datetime.now(UTC).date() + timedelta(days=2)
+                        ).isoformat(),
+                        "time_preference": TimePreference.SECOND_HALF,
+                    },
+                ),
+                "change_client": Example(
+                    description="Change client with new phone and address",
+                    value={
+                        "order_id": "550e8400-e29b-41d4-a716-446655440000",
+                        "client_id": "650e8400-e29b-41d4-a716-446655440000",
+                        "phone_id": 1,
+                        "address_id": 2,
+                    },
+                ),
+                "change_phone_only": Example(
+                    description="Change delivery phone only",
+                    value={
+                        "order_id": "550e8400-e29b-41d4-a716-446655440000",
+                        "phone_id": 2,
+                    },
+                ),
+                "change_address_only": Example(
+                    description="Change delivery address only",
+                    value={
+                        "order_id": "550e8400-e29b-41d4-a716-446655440000",
+                        "address_id": 3,
+                    },
+                ),
+                "add_items": Example(
+                    description="Add new items to order",
+                    value={
+                        "order_id": "550e8400-e29b-41d4-a716-446655440000",
+                        "items_to_add": [
+                            {
+                                "product_id": (
+                                    "750e8400-e29b-41d4-a716-446655440000"
+                                ),
+                                "quantity": 2,
+                            },
+                            {
+                                "product_id": (
+                                    "850e8400-e29b-41d4-a716-446655440000"
+                                ),
+                                "quantity": 1,
+                            },
+                        ],
+                    },
+                ),
+                "update_items": Example(
+                    description="Update existing order items",
+                    value={
+                        "order_id": "550e8400-e29b-41d4-a716-446655440000",
+                        "items_to_update": [
+                            {"item_id": 1, "quantity": 5},
+                            {
+                                "item_id": 2,
+                                "quantity": 3,
+                                "price_per_item": 150,
+                            },
+                            {"item_id": 3, "name": "Вода 19л (акція)"},
+                        ],
+                    },
+                ),
+                "delete_items": Example(
+                    description="Delete order items",
+                    value={
+                        "order_id": "550e8400-e29b-41d4-a716-446655440000",
+                        "items_to_delete": [2, 3],
+                    },
+                ),
+                "full_items_update": Example(
+                    description="Add, update and delete items in one request",
+                    value={
+                        "order_id": "550e8400-e29b-41d4-a716-446655440000",
+                        "items_to_add": [
+                            {
+                                "product_id": (
+                                    "750e8400-e29b-41d4-a716-446655440000"
+                                ),
+                                "quantity": 2,
+                            }
+                        ],
+                        "items_to_update": [
+                            {"item_id": 1, "quantity": 5},
+                        ],
+                        "items_to_delete": [2, 3],
+                    },
+                ),
+                "update_comment": Example(
+                    description="Update order comment (set new value)",
+                    value={
+                        "order_id": "550e8400-e29b-41d4-a716-446655440000",
+                        "comment": "Новий коментар до замовлення",
+                    },
+                ),
+                "clear_comment": Example(
+                    description="Clear order comment (set to empty)",
+                    value={
+                        "order_id": "550e8400-e29b-41d4-a716-446655440000",
+                        "comment": "EMPTY",
+                    },
+                ),
+                "full_update": Example(
+                    description="Full order update with all fields",
+                    value={
+                        "order_id": "550e8400-e29b-41d4-a716-446655440000",
+                        "client_id": "650e8400-e29b-41d4-a716-446655440000",
+                        "delivery_date": (
+                            datetime.now(UTC).date() + timedelta(days=3)
+                        ).isoformat(),
+                        "time_preference": TimePreference.FIRST_HALF,
+                        "phone_id": 1,
+                        "address_id": 2,
+                        "comment": "Терміново",
+                        "items_to_add": [
+                            {
+                                "product_id": (
+                                    "750e8400-e29b-41d4-a716-446655440000"
+                                ),
+                                "quantity": 1,
+                            }
+                        ],
+                        "items_to_update": [{"item_id": 1, "quantity": 10}],
+                        "items_to_delete": [3],
+                    },
+                ),
+            }
+        ),
+    ],
+    handler: FromDishka[UpdateOrderCommandHandler],
+) -> None:
+    command = UpdateOrderCommand(
+        order_id=order_id,
+        client_id=body.client_id,
+        delivery_date=body.delivery_date,
+        time_preference=body.time_preference,
+        address_id=body.address_id,
+        phone_id=body.phone_id,
+        comment=body.comment,
+        items_to_add=body.items_to_add,
+        items_to_update=body.items_to_update,
+        items_to_delete=body.items_to_delete,
+    )
+    await handler.handle(command)
 
 
 @router.delete(

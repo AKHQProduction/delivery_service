@@ -6,10 +6,18 @@ from backend.application.interfaces.gateways.order_gateway import (
     GetOrdersFilters,
     Order,
     OrderGateway,
+    OrderItemDTO,
     OrderItemReadModel,
     OrderReadModel,
+    UpdateOrderDTO,
 )
-from backend.application.vars import ClientId, OrderId, ShopId
+from backend.application.vars import (
+    ClientId,
+    Empty,
+    OrderId,
+    OrderItemId,
+    ShopId,
+)
 
 
 class InMemoryOrderGateway(OrderGateway):
@@ -93,7 +101,7 @@ class InMemoryOrderGateway(OrderGateway):
             client_name=self.client_names.get(dto.client_id, "Unknown"),
             items=[
                 OrderItemReadModel(
-                    id=idx + 1,
+                    id=item.id or idx + 1,
                     name=item.name,
                     quantity=item.quantity,
                     price_per_item=item.price_per_item,
@@ -101,3 +109,99 @@ class InMemoryOrderGateway(OrderGateway):
                 for idx, item in enumerate(dto.order_items)
             ],
         )
+
+    async def update(self, dto: UpdateOrderDTO) -> None:
+        existing = self.orders.get(dto.order_id)
+        if not existing:
+            return
+
+        new_client_id = (
+            dto.client_id if dto.client_id is not None else existing.client_id
+        )
+        new_delivery_date = (
+            dto.delivery_date
+            if dto.delivery_date is not None
+            else existing.delivery_date
+        )
+        new_time_preference = (
+            dto.time_preference
+            if dto.time_preference is not None
+            else existing.time_preference
+        )
+        new_delivery_phone = (
+            dto.delivery_phone
+            if dto.delivery_phone is not None
+            else existing.delivery_phone
+        )
+        new_delivery_address = (
+            dto.delivery_address
+            if dto.delivery_address is not None
+            else existing.delivery_address
+        )
+
+        if dto.comment is not None:
+            new_comment = None if dto.comment == Empty.EMPTY else dto.comment
+        else:
+            new_comment = existing.comment
+
+        # Process items
+        current_items = list(existing.order_items)
+
+        # Delete items
+        if dto.items_to_delete:
+            current_items = [
+                item
+                for item in current_items
+                if item.id not in dto.items_to_delete
+            ]
+
+        # Update existing items
+        if dto.items_to_update:
+            updated_items = []
+            for item in current_items:
+                update_item = next(
+                    (u for u in dto.items_to_update if u.id == item.id), None
+                )
+                if update_item:
+                    updated_items.append(
+                        OrderItemDTO(
+                            id=item.id,
+                            name=update_item.name or item.name,
+                            quantity=(update_item.quantity or item.quantity),
+                            price_per_item=(
+                                update_item.price_per_item
+                                or item.price_per_item
+                            ),
+                        )
+                    )
+                else:
+                    updated_items.append(item)
+            current_items = updated_items
+
+        # Add new items
+        if dto.items_to_add:
+            max_id = max((item.id or 0 for item in current_items), default=0)
+            for add_item in dto.items_to_add:
+                max_id += 1
+                current_items.append(
+                    OrderItemDTO(
+                        id=OrderItemId(max_id),
+                        name=add_item.name,
+                        quantity=add_item.quantity,
+                        price_per_item=add_item.price_per_item,
+                    )
+                )
+
+        updated_order = CreateOrderDTO(
+            order_id=existing.order_id,
+            shop_id=existing.shop_id,
+            client_id=new_client_id,
+            delivery_date=new_delivery_date,
+            time_preference=new_time_preference,
+            delivery_phone=new_delivery_phone,
+            delivery_address=new_delivery_address,
+            order_items=current_items,
+            comment=new_comment,
+        )
+
+        self.orders[dto.order_id] = updated_order

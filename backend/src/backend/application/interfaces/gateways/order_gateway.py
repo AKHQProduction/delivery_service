@@ -7,6 +7,7 @@ from backend.application.interfaces.gateways import Pagination
 from backend.application.vars import (
     AddressType,
     ClientId,
+    Empty,
     OrderId,
     OrderItemId,
     ShopId,
@@ -86,6 +87,28 @@ class GetOrdersFilters:
     time_preference: TimePreference | None = None
 
 
+@dataclass(frozen=True)
+class UpdateOrderItemDTO:
+    name: str
+    quantity: int
+    price_per_item: int
+    id: OrderItemId | None = None
+
+
+@dataclass(frozen=True)
+class UpdateOrderDTO:
+    order_id: OrderId
+    client_id: ClientId | None = None
+    delivery_date: date | None = None
+    time_preference: TimePreference | None = None
+    delivery_phone: str | None = None
+    delivery_address: DeliveryAddressDTO | None = None
+    comment: str | Empty | None = None
+    items_to_add: list[UpdateOrderItemDTO] | None = None
+    items_to_update: list[UpdateOrderItemDTO] | None = None
+    items_to_delete: list[OrderItemId] | None = None
+
+
 class OrderGateway(Protocol):
     @abstractmethod
     def next_id(self) -> OrderId:
@@ -113,4 +136,8 @@ class OrderGateway(Protocol):
     async def read_all(
         self, filters: GetOrdersFilters, pagination: Pagination
     ) -> list[OrderReadModel]:
+        raise NotImplementedError
+
+    @abstractmethod
+    async def update(self, dto: UpdateOrderDTO) -> None:
         raise NotImplementedError

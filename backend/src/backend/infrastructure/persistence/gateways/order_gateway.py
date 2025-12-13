@@ -15,10 +15,12 @@ from backend.application.interfaces.gateways.order_gateway import (
     OrderGateway,
     OrderItemReadModel,
     OrderReadModel,
+    UpdateOrderDTO,
 )
 from backend.application.vars import (
     AddressType,
     ClientId,
+    Empty,
     OrderId,
     ShopId,
     TimePreference,
@@ -194,3 +196,80 @@ class SQLAlchemyOrderGateway(OrderGateway):
                 for item in row.items
             ],
         )
+
+    async def update(self, dto: UpdateOrderDTO) -> None:
+        query = (
+            select(Order)
+            .options(selectinload(Order.items))
+            .where(Order.id == dto.order_id)
+        )
+        result = await self._session.execute(query)
+        order_db = result.scalar_one_or_none()
+
+        if not order_db:
+            return
+
+        if dto.client_id is not None:
+            order_db.client_id = dto.client_id
+
+        if dto.delivery_date is not None:
+            order_db.date = dto.delivery_date
+
+        if dto.time_preference is not None:
+            order_db.time_preference = dto.time_preference.value
+
+        if dto.delivery_phone is not None:
+            order_db.delivery_phone = dto.delivery_phone
+
+        if dto.delivery_address is not None:
+            order_db.delivery_address = {
+                "street": dto.delivery_address.street,
+                "house": dto.delivery_address.house,
+                "address_type": dto.delivery_address.address_type.value,
+                "apartment": dto.delivery_address.apartment,
+                "entrance": dto.delivery_address.entrance,
+                "floor": dto.delivery_address.floor,
+                "intercom": dto.delivery_address.intercom,
+            }
+
+        if dto.comment is not None:
+            if dto.comment == Empty.EMPTY:
+                order_db.comment = cast("str", None)
+            else:
+                order_db.comment = dto.comment
+
+        # Delete items
+        if dto.items_to_delete:
+            items_to_remove = [
+                item
+                for item in order_db.items
+                if item.id in dto.items_to_delete
+            ]
+            for item in items_to_remove:
+                await self._session.delete(item)
+
+        # Update existing items
+        if dto.items_to_update:
+            for update_item in dto.items_to_update:
+                if update_item.id is None:
+                    continue
+                for item in order_db.items:
+                    if item.id == update_item.id:
+                        if update_item.name:
+                            item.name = update_item.name
+                        if update_item.quantity:
+                            item.quantity = update_item.quantity
+                        if update_item.price_per_item:
+                            item.price_per_item = update_item.price_per_item
+                        break
+
+        # Add new items
+        if dto.items_to_add:
+            for add_item in dto.items_to_add:
+                new_item = OrderItem(
+                    name=add_item.name,
+                    quantity=add_item.quantity,
+                    price_per_item=add_item.price_per_item,
+                    order_id=dto.order_id,
+                )
+                self._session.add(new_item)

@@ -31,3 +31,7 @@ class AddressType(StrEnum):
 class TimePreference(StrEnum):
     FIRST_HALF = "FIRST_HALF"
     SECOND_HALF = "SECOND_HALF"
+
+
+class Empty(StrEnum):
+    EMPTY = "EMPTY"
