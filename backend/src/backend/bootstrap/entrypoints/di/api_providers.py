@@ -30,6 +30,10 @@ from backend.application.commands.edit_client import EditClientCommandHandler
 from backend.application.commands.edit_order import UpdateOrderCommandHandler
 from backend.application.commands.edit_product import EditProductCommandHandler
 from backend.application.interfaces import IdentityProvider
+from backend.application.interfaces.pdf_generator import OrdersPDFGenerator
+from backend.application.queries.export_orders_pdf import (
+    ExportOrdersPDFQueryHandler,
+)
 from backend.application.queries.get_client import GetClientQueryHandler
 from backend.application.queries.get_clients import GetClientsQueryHandler
 from backend.application.queries.get_employee import GetEmployeeQueryHandler
@@ -42,6 +46,7 @@ from backend.application.usecases.invite_employee import (
     GenerateInviteLinkCommandHandler,
 )
 from backend.infrastructure.idp import TelegramIdentityProvider
+from backend.infrastructure.pdf import ReportLabOrdersPDFGenerator
 from backend.infrastructure.persistence.gateways import (
     SQLAlchemyShopGateway,
     SQLAlchemyUserGateway,
@@ -56,6 +61,10 @@ class AdaptersProvider(Provider):
     scope = Scope.APP
 
     link_generator = provide(WithParents[TelegramInviteLinkGenerator])
+
+    @provide
+    def pdf_generator(self) -> OrdersPDFGenerator:
+        return ReportLabOrdersPDFGenerator()
 
 
 class APIInteractorsProvider(Provider):
@@ -81,6 +90,7 @@ class APIInteractorsProvider(Provider):
         DeleteOrderCommandHandler,
         GetOrderQueryHandler,
         GetOrdersQueryHandler,
+        ExportOrdersPDFQueryHandler,
     )
 
     add_employee = provide_all(GenerateInviteLinkCommandHandler)

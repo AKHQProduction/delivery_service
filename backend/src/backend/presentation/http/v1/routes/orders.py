@@ -5,6 +5,7 @@ from dishka import FromDishka
 from dishka.integrations.fastapi import DishkaRoute
 from fastapi import APIRouter, Body, Depends, status
 from fastapi.openapi.models import Example
+from fastapi.responses import Response
 from fastapi.security import HTTPBearer
 
 from backend.application.commands.create_order import (
@@ -22,6 +23,10 @@ from backend.application.commands.edit_order import (
 from backend.application.interfaces.gateways import Pagination
 from backend.application.interfaces.gateways.order_gateway import (
     OrderReadModel,
+)
+from backend.application.queries.export_orders_pdf import (
+    ExportOrdersPDFQuery,
+    ExportOrdersPDFQueryHandler,
 )
 from backend.application.queries.get_order import GetOrderQueryHandler
 from backend.application.queries.get_orders import (
@@ -336,6 +341,30 @@ async def get_all_orders(
             time_preference=time_preference,
             pagination=Pagination(limit=limit, offset=offset),
         )
+    )
+
+
+@router.get(
+    "/export/pdf",
+    status_code=status.HTTP_200_OK,
+    responses={
+        status.HTTP_401_UNAUTHORIZED: {"model": ErrorSchema},
+        status.HTTP_403_FORBIDDEN: {"model": ErrorSchema},
+        status.HTTP_404_NOT_FOUND: {"model": ErrorSchema},
+    },
+    dependencies=[Depends(HTTPBearer())],
+)
+async def export_orders_pdf(
+    delivery_date: date,
+    handler: FromDishka[ExportOrdersPDFQueryHandler],
+) -> Response:
+    query = ExportOrdersPDFQuery(delivery_date=delivery_date)
+    pdf_bytes = await handler.handle(query)
+    filename = f"orders_{delivery_date.isoformat()}.pdf"
+    return Response(
+        content=pdf_bytes,
+        media_type="application/pdf",
+        headers={"Content-Disposition": f'attachment; filename="{filename}"'},
     )
 
 
