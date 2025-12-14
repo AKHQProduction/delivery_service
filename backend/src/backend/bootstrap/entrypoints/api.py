@@ -10,6 +10,7 @@ from starlette.middleware.cors import CORSMiddleware
 from backend.bootstrap.config import Config
 from backend.bootstrap.entrypoints.di.containers import api_container
 from backend.bootstrap.logger import setup_logging
+from backend.bootstrap.telemetry import instrument_fastapi, setup_telemetry
 from backend.presentation.http.v1 import setup_v1_router
 from backend.presentation.http.v1.routes import setup_exc_handlers
 
@@ -35,6 +36,8 @@ def create_app() -> FastAPI:
     config = Config()
     setup_logging("DEBUG" if config.app_config.debug else "INFO")
 
+    setup_telemetry(config.otel_config)
+
     app = FastAPI(
         title="Water delivery API",
         docs_url="/docs",
@@ -49,6 +52,9 @@ def create_app() -> FastAPI:
     setup_middlewares(app)
     setup_exc_handlers(app)
     setup_v1_router(app)
+
+    if config.otel_config.enabled:
+        instrument_fastapi(app)
 
     logger.info("Setup API")
     return app
