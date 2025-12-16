@@ -1,7 +1,7 @@
 import logging
 from dataclasses import dataclass
 
-from backend.application.errors import AccessDeniedError, ValidationError
+from backend.application.errors import AccessDeniedError, FieldError
 from backend.application.interfaces import IdentityProvider
 from backend.application.policies.access import IsOwner
 from backend.application.usecases.invite_employee.interfaces import (
@@ -21,7 +21,7 @@ class GenerateInviteLinkCommand:
 
     def __post_init__(self) -> None:
         if self.role == ShopRole.OWNER:
-            raise ValidationError(
+            raise FieldError(
                 field="role",
                 value=self.role,
                 acceptable_values=[ShopRole.MANAGER, ShopRole.COURIER],

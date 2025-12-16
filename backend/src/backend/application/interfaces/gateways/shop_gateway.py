@@ -73,3 +73,7 @@ class ShopGateway(Protocol):
         self, filters: EmployeeFilters, pagination: Pagination
     ) -> list[EmployeeReadModel]:
         raise NotImplementedError
+
+    @abstractmethod
+    async def get_shop_name(self, shop_id: ShopId) -> str | None:
+        raise NotImplementedError

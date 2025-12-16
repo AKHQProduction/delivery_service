@@ -12,6 +12,7 @@ from backend.application.errors import (
     AccessDeniedError,
     AuthorizationError,
     EntityNotFoundError,
+    PhoneNumberAlreadyExistsError,
     ValidationError,
 )
 
@@ -49,5 +50,9 @@ def setup_exc_handlers(app: FastAPI) -> None:
     app.add_exception_handler(
         ValidationError,
         partial(validate, status=code.HTTP_422_UNPROCESSABLE_CONTENT),
+    )
+    app.add_exception_handler(
+        PhoneNumberAlreadyExistsError,
+        partial(validate, status=code.HTTP_409_CONFLICT),
     )
     app.exception_handler(Exception)(internal_trouble)

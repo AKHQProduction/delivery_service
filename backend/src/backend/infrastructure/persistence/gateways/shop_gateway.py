@@ -152,3 +152,8 @@ class SQLAlchemyShopGateway(ShopGateway):
 
     def next_id(self) -> ShopId:
         return ShopId(UUID(str(uuid7())))
+
+    async def get_shop_name(self, shop_id: ShopId) -> str | None:
+        query = select(Shop.name).where(Shop.id == shop_id)
+        result = await self._session.execute(query)
+        return result.scalar_one_or_none()

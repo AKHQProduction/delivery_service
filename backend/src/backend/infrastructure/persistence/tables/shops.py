@@ -12,7 +12,9 @@ from backend.infrastructure.persistence.tables.base import (
 )
 
 if TYPE_CHECKING:
-    from backend.infrastructure.persistence.tables.product import Product
+    from backend.infrastructure.persistence.tables.clients import Client
+    from backend.infrastructure.persistence.tables.orders import Order
+    from backend.infrastructure.persistence.tables.products import Product
     from backend.infrastructure.persistence.tables.users import User
 
 
@@ -26,6 +28,8 @@ class Shop(Base, CreatedAt, UpdatedAt):
         back_populates="shop"
     )
     products: Mapped[list["Product"]] = relationship(back_populates="shop")
+    clients: Mapped[list["Client"]] = relationship(back_populates="shop")
+    orders: Mapped[list["Order"]] = relationship(back_populates="shop")
 
     def __repr__(self) -> str:
         return f"<Shop id={self.id} name={self.name}>"

@@ -4,7 +4,7 @@ from dataclasses import dataclass
 from backend.application.errors import (
     AccessDeniedError,
     EntityNotFoundError,
-    ValidationError,
+    FieldError,
 )
 from backend.application.interfaces import (
     IdentityProvider,
@@ -26,7 +26,7 @@ class EditEmployeeCommand:
 
     def __post_init__(self) -> None:
         if self.new_role == ShopRole.OWNER:
-            raise ValidationError(
+            raise FieldError(
                 field="new_role",
                 value=self.new_role,
                 acceptable_values=[ShopRole.MANAGER, ShopRole.COURIER],

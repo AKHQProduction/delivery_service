@@ -100,3 +100,7 @@ class InMemoryShopGateway(ShopGateway):
 
     def next_id(self) -> ShopId:
         return self.shop_id or ShopId(uuid.uuid4())
+
+    async def get_shop_name(self, shop_id: ShopId) -> str | None:
+        shop = self.shops.get(shop_id)
+        return shop["name"] if shop else None

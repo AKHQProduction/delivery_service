@@ -9,7 +9,7 @@ from backend.application.commands.edit_employee import (
 from backend.application.errors import (
     AccessDeniedError,
     EntityNotFoundError,
-    ValidationError,
+    FieldError,
 )
 from backend.application.interfaces.gateways.shop_gateway import ShopEmployee
 from backend.application.vars import ShopId, ShopRole, UserId
@@ -227,7 +227,7 @@ async def test_raise_access_denied_when_employee_from_different_shop(
 async def test_raise_validation_error_when_new_role_is_owner() -> None:
     employee_id = UserId(uuid.uuid4())
 
-    with pytest.raises(ValidationError) as exc_info:
+    with pytest.raises(FieldError) as exc_info:
         EditEmployeeCommand(user_id=employee_id, new_role=ShopRole.OWNER)
 
     assert exc_info.value._field == "new_role"

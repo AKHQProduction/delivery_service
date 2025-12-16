@@ -17,6 +17,7 @@ dependencies = [
     "psycopg[binary]>=3.2.12",
     "python-dotenv>=1.2.1",
     "redis>=7.0.1",
+    "reportlab>=4.4.1",
     "sqlalchemy[asyncio]>=2.0.44",
     "uuid-utils>=0.11.1",
     "uvicorn>=0.38.0",
@@ -41,4 +42,5 @@ lint = [
     "codespell>=2.4.1",
     "mypy>=1.18.2",
     "ruff>=0.14.3",
+    "types-reportlab>=4.4.0",
 ]
