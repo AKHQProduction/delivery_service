@@ -1,8 +1,9 @@
 import SearchIcon from "../../assets/icons/search.svg";
+
 type SearchBarProps = {
   placeholder: string;
   searchTerm: string;
-  setSearchTerm: (term: string) => void;
+  setSearchTerm: (term: any) => void;
 };
 
 export const SearchBar = ({
@@ -11,7 +12,7 @@ export const SearchBar = ({
   setSearchTerm,
 }: SearchBarProps) => {
   return (
-    <div className="px-6 pb-6">
+    <>
       <div className="relative">
         <img
           src={SearchIcon}
@@ -23,9 +24,9 @@ export const SearchBar = ({
           placeholder={placeholder}
           value={searchTerm}
           onChange={(e) => setSearchTerm(e.target.value)}
-          className="w-full pl-12 pr-4 py-3 bg-white  rounded-xl text-base placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+          className="w-full pl-12 pr-4 py-3 border border-gray-300 bg-white  rounded-xl text-base placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-indigo-500"
         />
       </div>
-    </div>
+    </>
   );
 };

@@ -45,14 +45,15 @@ export const BottomModal: React.FC<BottomModalProps> = ({
       />
 
       <div
-        className={`fixed bottom-0 left-0 right-0 bg-white rounded-t-3xl shadow-2xl transition-transform duration-300 z-9999
-        } ${isVisible ? "translate-y-0" : "translate-y-full"}`}
+        className={`fixed bottom-0 left-0 right-0 bg-white rounded-t-3xl shadow-2xl transition-transform duration-300 z-9999 max-h-[90vh] flex flex-col ${
+          isVisible ? "translate-y-0" : "translate-y-full"
+        }`}
       >
-        <div className="flex justify-center pt-3 pb-2">
+        <div className="flex justify-center pt-3 pb-2 shrink-0">
           <div className="w-12 h-1 bg-gray-300 rounded-full" />
         </div>
 
-        <div className="flex items-center justify-between px-6 py-4 border-b border-gray-200">
+        <div className="flex items-center justify-between px-6 py-4 border-b border-gray-200 shrink-0">
           <h2 className="text-xl font-bold">{title}</h2>
           <button
             onClick={handleClose}
@@ -75,7 +76,9 @@ export const BottomModal: React.FC<BottomModalProps> = ({
           </button>
         </div>
 
-        <div className="px-6 py-4 overflow-y-auto">{children}</div>
+        <div className="px-6 py-4 overflow-y-auto flex-1">
+          {children}
+        </div>
       </div>
     </>
   );

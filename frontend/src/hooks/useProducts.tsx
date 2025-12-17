@@ -4,7 +4,7 @@ import {
   getAllProducts,
   deleteProductById,
   updateExistingProductById,
-} from "../services/productService";
+} from "../services/api/productApi";
 
 export const useProducts = () => {
   const [products, setProducts] = useState<Array<any>>([]);
@@ -67,7 +67,6 @@ export const useProducts = () => {
           product.id === productId ? updatedProduct : product
         )
       );
-      
     } catch (err) {
       setError("Не вдалося оновити товар.");
     }

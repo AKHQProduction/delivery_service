@@ -1,59 +1,61 @@
 import { useEffect, useState } from "react";
 import { PageHeader } from "../components/ui/pageHeader";
 import { SearchBar } from "../components/ui/searchBar";
-import { ProductCard } from "../components/ui/productCard";
-import { ProductDetailModal } from "../components/modals/detailsModals/ProductDetailModal";
+import { EmployeeCard } from "../components/ui/employeeCard";
+import { EmployeeDetailModal } from "../components/modals/detailsModals/EmployeeDetailModal";
 import { RightModal } from "../components/modals/RightModal";
-import { useProducts } from "../hooks/useProducts";
-import { reverseCategoryMap } from "../utils/dataMap";
-import { type Product } from "../types/entities/Product";
+import { useEmployees } from "../hooks/useEmployees";
+import { reverseRoleMap } from "../utils/dataMap";
+import { type Employee } from "../types/entities/Employee";
 
-export const ProductPage = () => {
+export const EmployeePage = () => {
   const [searchTerm, setSearchTerm] = useState("");
-  const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
+  const [selectedEmployee, setSelectedEmployee] = useState<Employee | null>(
+    null
+  );
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const { getProducts, deleteProduct, updateProduct, products } = useProducts();
+  const { getEmployees, deleteEmployees, updateEmployee, employees } =
+    useEmployees();
 
   useEffect(() => {
-    getProducts();
+    getEmployees();
   }, []);
 
-  const productsList = products.filter((product) =>
-    product.name.toLowerCase().includes(searchTerm.toLowerCase())
+  const employeesList = employees.filter((employee) =>
+    employee.full_name.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
-  const handleProductClick = (product: Product) => {
-    setSelectedProduct(product);
+  const handleEmployeeClick = (employee: Employee) => {
+    setSelectedEmployee(employee);
     setIsModalOpen(true);
   };
 
   const handleCloseModal = () => {
     setIsModalOpen(false);
-    setTimeout(() => setSelectedProduct(null), 300);
+    setTimeout(() => setSelectedEmployee(null), 300);
   };
 
-  const handleSave = (updatedProduct: Product) => {
-    const reverseCategory = reverseCategoryMap[updatedProduct.category];
-    updateProduct(
-      updatedProduct.product_id,
-      updatedProduct.name,
-      updatedProduct.price,
-      reverseCategory
+  const handleSave = (updatedEmployee: Employee) => {
+    const reverseRole = reverseRoleMap[updatedEmployee.role];
+    updateEmployee(
+      updatedEmployee.user_id,
+      updatedEmployee.full_name,
+      reverseRole
     );
     window.location.reload(); //TEMPORARY SOLUTION
   };
 
   const handleDelete = () => {
-    console.log("Delete product:", selectedProduct);
-    deleteProduct(selectedProduct!.product_id);
+    console.log("Delete employee:", selectedEmployee);
+    deleteEmployees(selectedEmployee!.user_id);
     window.location.reload(); //TEMPORARY SOLUTION
     handleCloseModal();
   };
 
   return (
     <div className="min-h-screen bg-gray-50">
-      <PageHeader title="Товари" />
-
+      <PageHeader title="Персонал" />
+      
       <div className="px-6 pb-4">
         <SearchBar
           placeholder="Пошук товарів"
@@ -62,10 +64,10 @@ export const ProductPage = () => {
         />
       </div>
 
-      {products.length === 0 ? (
+      {employeesList.length === 0 ? (
         <div className="flex flex-col items-center justify-center mt-20">
           <p className="text-gray-500 text-lg font-medium">
-            {searchTerm ? "Товари не знайдено" : "Товари відсутні"}
+            {searchTerm ? "Працівників не знайдено" : "Працівники відсутні"}
           </p>
           {searchTerm && (
             <p className="text-gray-400 text-sm mt-2">
@@ -76,20 +78,21 @@ export const ProductPage = () => {
       ) : (
         <div className="px-6 pb-24">
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-            {productsList.map((product) => (
-              <ProductCard
-                key={product.id}
-                product={product}
-                onClick={() => handleProductClick(product)}
+            {employees.map((employee) => (
+              <EmployeeCard
+                key={employee.user_id}
+                employee={employee}
+                onClick={() => handleEmployeeClick(employee)}
               />
             ))}
           </div>
         </div>
       )}
+
       <RightModal isOpen={isModalOpen} onClose={handleCloseModal}>
-        {selectedProduct && (
-          <ProductDetailModal
-            product={selectedProduct}
+        {selectedEmployee && (
+          <EmployeeDetailModal
+            employee={selectedEmployee}
             onClose={handleCloseModal}
             onDelete={handleDelete}
             onSave={handleSave}
