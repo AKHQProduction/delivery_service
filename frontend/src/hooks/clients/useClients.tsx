@@ -8,6 +8,7 @@ import {
   getAllClients,
   createNewClient,
   updateExistingClientById,
+  deleteClientById,
 } from "../../services/api/clientApi";
 
 export const useClient = () => {
@@ -26,6 +27,17 @@ export const useClient = () => {
     } finally {
       setLoading(false);
     }
+  };
+
+  const deleteClient = async (clientId: string) => {
+    setLoading(true);
+    setError(null);
+    try {
+      await deleteClientById(clientId);
+    } catch (err) {
+      setError("Не вдалося видалити працівника.");
+    }
+    setLoading(false);
   };
 
   const createClient = async (clientData: {
@@ -92,5 +104,6 @@ export const useClient = () => {
     createClient,
     getClients,
     updateClient,
+    deleteClient,
   };
 };

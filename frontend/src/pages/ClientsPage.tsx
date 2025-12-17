@@ -11,14 +11,16 @@ export const ClientsPage = () => {
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedClient, setSelectedClient] = useState<Client | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const { clients, getClients } = useClient();
+  const { clients, getClients, deleteClient } = useClient();
 
   useEffect(() => {
     getClients();
   }, []);
 
-  const clientsList = clients.filter((client) =>
-    client.full_name.toLowerCase().includes(searchTerm.toLowerCase())
+  const clientsList = clients.filter(
+    (client) =>
+      client.full_name?.toLowerCase().includes(searchTerm.toLowerCase()) ??
+      false
   );
 
   const handleClientClick = (client: Client) => {
@@ -37,7 +39,9 @@ export const ClientsPage = () => {
   };
 
   const handleDelete = () => {
-    console.log("Delete employee:", selectedClient);
+    if (selectedClient) {
+      deleteClient(selectedClient.client_id);
+    }
     window.location.reload(); //TEMPORARY SOLUTION
     handleCloseModal();
   };
