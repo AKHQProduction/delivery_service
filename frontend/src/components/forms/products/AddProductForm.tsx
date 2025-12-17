@@ -31,7 +31,7 @@ export const AddProductForm: React.FC<AddProductFormProps> = ({ onClose }) => {
       parseFloat(formData.price),
       formData.category
     );
-    window.location.reload();
+    window.location.reload(); //TEMPORARY SOLUTION
     onClose();
   };
 

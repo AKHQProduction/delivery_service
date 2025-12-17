@@ -12,7 +12,7 @@ export const DevPage = () => {
       user_id: data.user_id,
       role: data.role,
     });
-    window.location.reload();
+    window.location.reload(); //TEMPORARY SOLUTION
   };
 
   return (

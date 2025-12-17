@@ -40,13 +40,13 @@ export const ProductPage = () => {
       updatedProduct.price,
       reverseCategory
     );
-    window.location.reload();
+    window.location.reload(); //TEMPORARY SOLUTION
   };
 
   const handleDelete = () => {
     console.log("Delete product:", selectedProduct);
     deleteProduct(selectedProduct!.product_id);
-    window.location.reload();
+    window.location.reload(); //TEMPORARY SOLUTION
     handleCloseModal();
   };
 

@@ -1,44 +1,27 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { PageHeader } from "../components/ui/pageHeader";
 import { SearchBar } from "../components/ui/searchBar";
 import { ClientCard } from "../components/ui/clientsCard";
 import { ClientDetailModal } from "../components/modals/detailsModals/ClientDetailModal";
 import { RightModal } from "../components/modals/RightModal";
 import { type Client } from "../types/entities/Client";
-
-const clientsData = {
-  clients: [
-    {
-      client_id: "БИДЛ001",
-      full_name: "Іван Петренко",
-      number: ["+380501234567"],
-      address: ["вул. Шевченка який пасе ягнят за селом, 10, Київ"],
-    },
-    {
-      client_id: "БИДЛ002",
-      full_name: "Олена Ковальчук",
-      number: ["+380671112233", "+380631112233"],
-      address: ["просп. ТЦК, 5, Львів", "вул. Грушевського, 20, Львів"],
-    },
-    {
-      client_id: "БИДЛ003",
-      full_name: "Петро Іванов",
-      number: ["+380931234567"],
-      address: ["вул. Пушкіна Гандона, 15, Одеса"],
-    },
-  ],
-};
+import { useClient } from "../hooks/clients/useClients";
 
 export const ClientsPage = () => {
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedClient, setSelectedClient] = useState<Client | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const { clients, getClients } = useClient();
 
-  const clientsList = clientsData.clients.filter((client) =>
+  useEffect(() => {
+    getClients();
+  }, []);
+
+  const clientsList = clients.filter((client) =>
     client.full_name.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
-  const handleEmployeeClick = (client: Client) => {
+  const handleClientClick = (client: Client) => {
     setSelectedClient(client);
     setIsModalOpen(true);
   };
@@ -50,12 +33,12 @@ export const ClientsPage = () => {
 
   const handleSave = (updatedClient: Client) => {
     console.log("Save employee:", updatedClient);
-    window.location.reload();
+    window.location.reload(); //TEMPORARY SOLUTION
   };
 
   const handleDelete = () => {
     console.log("Delete employee:", selectedClient);
-    window.location.reload();
+    window.location.reload(); //TEMPORARY SOLUTION
     handleCloseModal();
   };
 
@@ -85,11 +68,11 @@ export const ClientsPage = () => {
       ) : (
         <div className="px-6 pb-24">
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-            {clientsData.clients.map((client) => (
+            {clients.map((client) => (
               <ClientCard
                 key={client.client_id}
                 client={client}
-                onClick={() => handleEmployeeClick(client)}
+                onClick={() => handleClientClick(client)}
               />
             ))}
           </div>

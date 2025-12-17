@@ -86,20 +86,20 @@ export const ClientDetailModal: React.FC<ClientDetailModalProps> = ({
           </h2>
           <ItemElement
             descriptionText={"Ім'я клієнта"}
-            elementText={client.full_name}
+            elementText={client.full_name || "Не вказано"}
           />
-          {client.number.map((phone, index) => (
+          {client.phones?.map((phone, index) => (
             <ItemElement
               key={index}
               descriptionText={`Телефон ${index + 1}`}
-              elementText={phone}
+              elementText={phone.number}
             />
           ))}
-          {client.address.map((address, index) => (
+          {client.addresses?.map((address, index) => (
             <ItemElement
               key={index}
               descriptionText={`Адреса ${index + 1}`}
-              elementText={address}
+              elementText={address.street + ", " + address.house + ", " + address.apartment + ", " + address.entrance + ", " + address.floor + ", " + address.intercom}
             />
           ))}
         </div>

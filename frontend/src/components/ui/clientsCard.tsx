@@ -7,6 +7,8 @@ interface ClientCardProps {
 }
 
 export const ClientCard: React.FC<ClientCardProps> = ({ client, onClick }) => {
+  const primaryPhone =
+  client.phones?.find((p) => p.is_primary) ?? client.phones?.[0];
   return (
     <div
       onClick={() => onClick(client)}
@@ -21,7 +23,7 @@ export const ClientCard: React.FC<ClientCardProps> = ({ client, onClick }) => {
               {client.full_name}
             </h3>
             <span className="px-2.5 py-0.5 text-xs font-medium bg-gray-100 text-gray-600 rounded-full">
-              #{client.client_id}
+              #{client.custom_id}
             </span>
           </div>
 
@@ -45,12 +47,12 @@ export const ClientCard: React.FC<ClientCardProps> = ({ client, onClick }) => {
                   className="text-sm text-gray-700 bg-indigo-50 px-2.5 py-0.5 rounded-lg font-medium
                       group-hover:bg-indigo-100 transition-colors"
                 >
-                  {client.number[0]}
+                  {primaryPhone?.number}
                 </span>
               </div>
             </div>
 
-            {client.address.length > 0 && client.address[0] && (
+            {(client.addresses ?? []).length > 0 && (client.addresses ?? [])[0] && (
               <div className="flex items-start gap-2">
                 <svg
                   className="w-4 h-4 text-purple-500 mt-0.5 shrink-0"
@@ -76,7 +78,12 @@ export const ClientCard: React.FC<ClientCardProps> = ({ client, onClick }) => {
                     className="text-sm text-gray-700 bg-purple-50 px-2.5 py-0.5 rounded-lg font-medium
                         group-hover:bg-purple-100 transition-colors"
                   >
-                    {client.address[0]}
+                    {(client.addresses ?? [])[0].apartment},{" "}
+                    {(client.addresses ?? [])[0].entrance},{" "}
+                    {(client.addresses ?? [])[0].floor},{" "}
+                    {(client.addresses ?? [])[0].house},{" "}
+                    {(client.addresses ?? [])[0].intercom},{" "}
+                    {(client.addresses ?? [])[0].street}
                   </span>
                 </div>
               </div>

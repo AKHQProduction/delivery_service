@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { useClient } from "../../../hooks/useClient";
+import { useClient } from "../../../hooks/clients/useClients";
 import { useProducts } from "../../../hooks/useProducts";
 import { type Client } from "../../../types/entities/Client";
 import { type Product } from "../../../types/entities/Product";
@@ -36,13 +36,13 @@ export const AddOrderForm: React.FC<AddOrderFormProps> = ({ onClose }) => {
 
   useEffect(() => {
     if (formData.client) {
-      if (formData.client.number?.length === 1) {
+      if (formData.client.phones?.length === 1) {
         setFormData((prev) => ({
           ...prev,
           deliveryPhone: formData.client!.number[0],
         }));
       }
-      if (formData.client.address?.length === 1) {
+      if (formData.client.addresses?.length === 1) {
         setFormData((prev) => ({
           ...prev,
           deliveryAddress: formData.client!.address[0],

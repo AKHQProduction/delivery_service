@@ -42,13 +42,13 @@ export const EmployeePage = () => {
       updatedEmployee.full_name,
       reverseRole
     );
-    window.location.reload();
+    window.location.reload(); //TEMPORARY SOLUTION
   };
 
   const handleDelete = () => {
     console.log("Delete employee:", selectedEmployee);
     deleteEmployees(selectedEmployee!.user_id);
-    window.location.reload();
+    window.location.reload(); //TEMPORARY SOLUTION
     handleCloseModal();
   };
 
