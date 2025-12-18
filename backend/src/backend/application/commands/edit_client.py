@@ -183,7 +183,7 @@ class EditClientCommandHandler:
         await self._tr_manager.commit()
 
         logger.info(
-            "Successfully edited client: id=%s, shop_id=%s, updates=%s",
+            "Successfully edited client: id=%s, shop_id=%s, updates={%s}",
             command.client_id,
             client.shop_id,
             ", ".join(updates),
