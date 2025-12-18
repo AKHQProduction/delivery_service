@@ -3,6 +3,7 @@ import { type Client } from "../../../../types/entities/Client";
 import { type Product } from "../../../../types/entities/Product";
 import { Tooltip } from "../../../ui/tooltip";
 import { DateSelectInput } from "../../../shared/DateSelectInput";
+import { FormSelect } from "../../../shared/FormSelect";
 
 interface SelectedProduct {
   product: Product;
@@ -15,7 +16,9 @@ interface DeliveryDateStepProps {
   selectedAddress: string;
   selectedProducts: SelectedProduct[];
   deliveryDate: string;
+  deliveryTime: string;
   onDateChange: (date: string) => void;
+  onTimeChange: (time: string) => void;
 }
 
 export const DeliveryDateStep: React.FC<DeliveryDateStepProps> = ({
@@ -24,7 +27,9 @@ export const DeliveryDateStep: React.FC<DeliveryDateStepProps> = ({
   selectedAddress,
   selectedProducts,
   deliveryDate,
+  deliveryTime,
   onDateChange,
+  onTimeChange,
 }) => {
   const totalAmount = selectedProducts.reduce(
     (sum, p) => sum + p.product.price * p.quantity,
@@ -71,6 +76,19 @@ export const DeliveryDateStep: React.FC<DeliveryDateStepProps> = ({
         }
       />
 
+      <FormSelect
+        label="Час доставки"
+        name="deliveryTime"
+        value={deliveryTime}
+        required ={true}
+        onChange={onTimeChange}
+        options={[
+          { value: "FIRST_HALF", label: "Ранок (8:00 - 12:00)" },
+          { value: "SECOND_HALF", label: "День (12:00 - 16:00)" },
+        ]}
+        
+      />
+
       <div>
         {deliveryDate && (
           <div className="flex items-center gap-2 text-sm text-indigo-600 mt-2">
@@ -82,7 +100,8 @@ export const DeliveryDateStep: React.FC<DeliveryDateStepProps> = ({
               />
             </svg>
             <span className="font-medium">
-              Доставка: {formatDate(deliveryDate)}
+              Доставка: {formatDate(deliveryDate)}  <br />
+              {deliveryTime === "FIRST_HALF" ? "Ранок (8:00 - 12:00)" : "День (12:00 - 16:00)"}
             </span>
           </div>
         )}

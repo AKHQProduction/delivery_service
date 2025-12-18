@@ -4,7 +4,7 @@ interface FormSelectProps {
   label: string;
   name: string;
   value: string;
-  onChange: (e: any) => void;
+  onChange: (value: any) => void
   options: any[];
   required?: boolean;
 }
@@ -27,7 +27,7 @@ export const FormSelect: React.FC<FormSelectProps> = ({
         name={name}
         value={value}
         
-        onChange={onChange}
+        onChange={(e) => onChange(e.target.value)}
         required={required}
         className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
       >

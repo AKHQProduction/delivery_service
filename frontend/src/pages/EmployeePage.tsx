@@ -58,7 +58,7 @@ export const EmployeePage = () => {
       
       <div className="px-6 pb-4">
         <SearchBar
-          placeholder="Пошук товарів"
+          placeholder="Пошук працівників"
           searchTerm={searchTerm}
           setSearchTerm={setSearchTerm}
         />

@@ -10,6 +10,7 @@ import { ProductSelectionStep } from "./steps/ProductSelectionStep";
 import { ContactInfoStep } from "./steps/ContactInfoStep";
 import { DeliveryDateStep } from "./steps/DeliveryDateStep";
 import { FormNavigationButtons } from "../../shared/FormNavigationButtons";
+import { useOrders } from "../../../hooks/orders/useOrders";
 
 interface AddOrderFormProps {
   onClose: () => void;
@@ -19,19 +20,24 @@ export const AddOrderForm: React.FC<AddOrderFormProps> = ({ onClose }) => {
   const [step, setStep] = useState(1);
   const [searchClient, setSearchClient] = useState("");
   const [searchProduct, setSearchProduct] = useState("");
-  const { clients } = useClient();
+  const { clients, getClients } = useClient();
   const { products, getProducts } = useProducts();
-
+  const { createNewOrder } = useOrders();
   const [formData, setFormData] = useState({
     client: null as Client | null,
     products: [] as { product: Product; quantity: number }[],
     deliveryPhone: "",
     deliveryAddress: "",
     deliveryDate: "",
+    deliveryTime: "",
   });
 
   useEffect(() => {
     getProducts();
+    getClients();
+    console.log("Selected client changed:", formData);
+    console.log("Selected client:", clients);
+    console.log("Selected client details:", products);
   }, []);
 
   useEffect(() => {
@@ -39,22 +45,32 @@ export const AddOrderForm: React.FC<AddOrderFormProps> = ({ onClose }) => {
       if (formData.client.phones?.length === 1) {
         setFormData((prev) => ({
           ...prev,
-          deliveryPhone: formData.client!.number[0],
+          deliveryPhone: formData.client?.phones?.[0]?.number || "",
         }));
       }
       if (formData.client.addresses?.length === 1) {
+        const addr = formData.client.addresses[0];
+        const fullAddress = `${addr.street || ""} ${addr.house || ""} ${
+          addr.apartment || ""
+        } ${addr.entrance || ""} ${addr.floor || ""} ${
+          addr.intercom || ""
+        }`.trim();
+
         setFormData((prev) => ({
           ...prev,
-          deliveryAddress: formData.client!.address[0],
+          deliveryAddress: fullAddress,
         }));
       }
     }
+    console.log("Selected client changed:", formData);
+    console.log("Selected client:", clients);
+    console.log("Selected client details:", products);
   }, [formData.client]);
 
   const filteredClients = clients.filter(
     (client) =>
-      client.full_name.toLowerCase().includes(searchClient.toLowerCase()) ||
-      client.number.some((num) => num.includes(searchClient))
+      client?.full_name.toLowerCase().includes(searchClient.toLowerCase()) ||
+      client?.phones?.some((num) => num.number.includes(searchClient))
   );
 
   const filteredProducts = products.filter((product) =>
@@ -103,6 +119,18 @@ export const AddOrderForm: React.FC<AddOrderFormProps> = ({ onClose }) => {
 
   const handleSubmit = () => {
     console.log("Order submitted:", formData);
+    createNewOrder({
+      client_id: formData.client?.client_id,
+      products: formData.products.map((p) => ({
+        product_id: p.product.product_id,
+        quantity: p.quantity,
+      })),
+      phone_id: formData.client.phones[0]?.id,
+      address_id: formData.client.addresses[0]?.id,
+      delivery_date: formData.deliveryDate,
+      time_preference: formData.deliveryTime,
+    });
+
     onClose();
   };
 
@@ -118,7 +146,10 @@ export const AddOrderForm: React.FC<AddOrderFormProps> = ({ onClose }) => {
           formData.deliveryAddress.trim() !== ""
         );
       case 4:
-        return formData.deliveryDate.trim() !== "";
+        return (
+          formData.deliveryDate.trim() !== "" &&
+          formData.deliveryTime.trim() !== ""
+        );
       default:
         return false;
     }
@@ -174,8 +205,12 @@ export const AddOrderForm: React.FC<AddOrderFormProps> = ({ onClose }) => {
             selectedAddress={formData.deliveryAddress}
             selectedProducts={formData.products}
             deliveryDate={formData.deliveryDate}
+            deliveryTime={formData.deliveryTime}
             onDateChange={(date) =>
               setFormData({ ...formData, deliveryDate: date })
+            }
+            onTimeChange={(time) =>
+              setFormData({ ...formData, deliveryTime: time })
             }
           />
         )}

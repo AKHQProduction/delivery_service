@@ -52,7 +52,7 @@ export const ClientsPage = () => {
 
       <div className="px-6 pb-4">
         <SearchBar
-          placeholder="Пошук товарів"
+          placeholder="Пошук клієнтів"
           searchTerm={searchTerm}
           setSearchTerm={setSearchTerm}
         />

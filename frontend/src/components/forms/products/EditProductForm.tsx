@@ -64,7 +64,9 @@ export const EditProductForm: React.FC<EditProductFormProps> = ({
         label="Категорія"
         name="category"
         value={formData.category}
-        onChange={handleChange}
+         onChange={(value) =>
+          setFormData((prev) => ({ ...prev, category: value }))
+        }
         options={categoryOptions}
         required
       />
