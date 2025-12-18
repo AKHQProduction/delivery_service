@@ -1,8 +1,8 @@
 import React, { useState } from "react";
-import { FormWrapper } from "../ui/formWrapper";
-import { FormInput } from "../ui/formInput";
-import { FormSelect } from "../ui/formSelect";
-import { useProducts } from "../../hooks/useProducts";
+import { FormWrapper } from "../../shared/FormWrapper";
+import { FormInput } from "../../shared/FormInput";
+import { FormSelect } from "../../shared/FormSelect";
+import { useProducts } from "../../../hooks/useProducts";
 
 interface AddProductFormProps {
   onClose: () => void;
@@ -31,7 +31,7 @@ export const AddProductForm: React.FC<AddProductFormProps> = ({ onClose }) => {
       parseFloat(formData.price),
       formData.category
     );
-    window.location.reload();
+    window.location.reload(); //TEMPORARY SOLUTION
     onClose();
   };
 

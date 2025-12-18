@@ -1,18 +1,10 @@
 import React, { useState } from "react";
-import { EditProductForm } from "../forms/editProductForm";
-import { ItemElement } from "../ui/itemElement";
-import { ModalButtons } from "../ui/modalButtons";
-import leftArrowIcon from "../../assets/icons/left_arrow.svg";
-import { categoryMap } from "../../utils/categoryMap";
-
-interface Product {
-  product_id: string;
-  name: string;
-  category: string;
-  price: number;
-  stock?: number;
-  discount?: number;
-}
+import { EditProductForm } from "../../forms/products/EditProductForm";
+import { ItemElement } from "../../ui/itemElement";
+import { ModalButtons } from "../../ui/modalButtons";
+import leftArrowIcon from "../../../assets/icons/left_arrow.svg";
+import { categoryMap } from "../../../utils/dataMap";
+import { type Product } from "../../../types/entities/Product";
 
 interface ProductDetailModalProps {
   product: Product;
