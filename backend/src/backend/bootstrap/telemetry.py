@@ -1,4 +1,5 @@
 import logging
+import time
 from typing import TYPE_CHECKING
 
 from opentelemetry import metrics, trace
@@ -11,6 +12,7 @@ from opentelemetry.exporter.otlp.proto.grpc.trace_exporter import (
 from opentelemetry.instrumentation.fastapi import FastAPIInstrumentor
 from opentelemetry.instrumentation.logging import LoggingInstrumentor
 from opentelemetry.instrumentation.sqlalchemy import SQLAlchemyInstrumentor
+from opentelemetry.metrics import Observation
 from opentelemetry.sdk.metrics import MeterProvider
 from opentelemetry.sdk.metrics.export import PeriodicExportingMetricReader
 from opentelemetry.sdk.resources import (
@@ -28,6 +30,8 @@ if TYPE_CHECKING:
     from backend.bootstrap.config import OTELConfig
 
 logger = logging.getLogger(__name__)
+
+_process_start_time = time.time()
 
 
 def _create_resource(config: "OTELConfig") -> Resource:
@@ -52,6 +56,14 @@ def _setup_metrics(config: "OTELConfig", resource: Resource) -> None:
     )
     provider = MeterProvider(resource=resource, metric_readers=[reader])
     metrics.set_meter_provider(provider)
+
+    meter = metrics.get_meter(__name__)
+    meter.create_observable_gauge(
+        name="process_start_time_seconds",
+        callbacks=[lambda options: [Observation(_process_start_time)]],
+        description="Start time of the process since unix epoch in seconds",
+    )
+
     logger.info("Metrics configured: endpoint=%s", config.otlp_endpoint)
 
 
