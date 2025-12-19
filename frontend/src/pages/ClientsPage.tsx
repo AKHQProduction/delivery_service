@@ -35,7 +35,7 @@ export const ClientsPage = () => {
 
   const handleSave = (updatedClient: Client) => {
     console.log("Save employee:", updatedClient);
-    //window.location.reload(); //TEMPORARY SOLUTION
+    window.location.reload(); //TEMPORARY SOLUTION
   };
 
   const handleDelete = () => {

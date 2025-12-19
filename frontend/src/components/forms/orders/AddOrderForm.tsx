@@ -56,6 +56,7 @@ export const AddOrderForm: React.FC<AddOrderFormProps> = ({ onClose }) => {
       delivery_date: formData.deliveryDate,
       time_preference: formData.deliveryTime,
     });
+    window.location.reload(); //TEMPORARY SOLUTION
     onClose();
   };
 

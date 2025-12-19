@@ -46,8 +46,8 @@ export const EditClientForm: React.FC<EditClientFormProps> = ({
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     updateClient(client.client_id, formData);
-    onClose();
     window.location.reload(); //TEMPORARY SOLUTION
+    onClose();
   };
 
   return (

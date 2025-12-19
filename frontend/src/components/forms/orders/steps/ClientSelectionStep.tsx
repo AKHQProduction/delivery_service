@@ -67,7 +67,7 @@ export const ClientSelectionStep: React.FC<ClientSelectionStepProps> = ({
                       : "bg-gray-200 text-gray-600"
                   }`}
                 >
-                  {client.full_name
+                  {(client.full_name || "")
                     .split(" ")
                     .map((n) => n[0])
                     .join("")
@@ -77,7 +77,7 @@ export const ClientSelectionStep: React.FC<ClientSelectionStepProps> = ({
 
                 <div className="flex-1 min-w-0">
                   <div className="font-semibold text-gray-900">
-                    {client.full_name}
+                    {client.full_name || "Unknown"}
                   </div>
                   <div className="text-sm text-gray-600 flex items-center gap-1">
                     <svg

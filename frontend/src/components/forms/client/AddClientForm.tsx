@@ -33,8 +33,8 @@ export const AddClientForm: React.FC<AddClientFormProps> = ({ onClose }) => {
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     createClient(formData);
-    onClose();
     window.location.reload(); //TEMPORARY SOLUTION
+    onClose();
   };
 
   return (
