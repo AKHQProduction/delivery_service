@@ -19,3 +19,9 @@ export const reverseRoleMap: Record<string, string> = {
   "Кур'єр": "COURIER",
   Менеджер: "MANAGER",
 };
+
+
+export const timeMap: Record<string, string> = {
+  FIRST_HALF: "Перша половина дня",
+  SECOND_HALF: "Друга половина дня",
+};

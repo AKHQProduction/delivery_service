@@ -1,5 +1,9 @@
 import { useState } from "react";
-import { getAllOrders, createOrder } from "../../services/api/ordersApi";
+import {
+  getAllOrders,
+  createOrder,
+  updateOrder,
+} from "../../services/api/ordersApi";
 
 export const useOrders = () => {
   const [orders, setOrders] = useState();
@@ -31,5 +35,24 @@ export const useOrders = () => {
     }
   };
 
-  return { orders, loading, error, getOrders, createNewOrder };
+  const updateCurrentOrder = async (orderId: string, orderData: any) => {
+    setLoading(true);
+    setError(null);
+    try {
+      await updateOrder(orderId, orderData);
+    } catch {
+      setError("Не вдалося оновити замовлення.");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return {
+    orders,
+    loading,
+    error,
+    getOrders,
+    createNewOrder,
+    updateCurrentOrder,
+  };
 };

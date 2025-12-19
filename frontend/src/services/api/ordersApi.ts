@@ -29,3 +29,12 @@ export const createOrder = async (orderData: any) => {
     throw error;
   }
 };
+
+export const updateOrder = async (orderId: string, orderData: any) => {
+  try {
+    const response = await api.patch(`v1/orders/${orderId}`, orderData);
+    return response.data;
+  } catch (error) {
+    throw error;
+  }
+};
