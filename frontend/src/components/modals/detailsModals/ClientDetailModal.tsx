@@ -76,7 +76,6 @@ export const ClientDetailModal: React.FC<ClientDetailModalProps> = ({
         <h1 className="text-3xl font-bold text-white mb-2">
           {client.full_name}
         </h1>
-        <p className="text-indigo-100">Клієнт ID: #{client.client_id}</p>
       </div>
 
       <div className="flex-1 overflow-y-auto px-6 py-6 space-y-6 pb-24">
@@ -87,6 +86,10 @@ export const ClientDetailModal: React.FC<ClientDetailModalProps> = ({
           <ItemElement
             descriptionText={"Ім'я клієнта"}
             elementText={client.full_name || "Не вказано"}
+          />
+          <ItemElement
+            descriptionText="Тег клієнта"
+            elementText={client.custom_id || "Не вказано"}
           />
           {client.phones?.map((phone, index) => (
             <ItemElement

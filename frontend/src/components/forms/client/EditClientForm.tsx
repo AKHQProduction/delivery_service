@@ -97,6 +97,13 @@ export const EditClientForm: React.FC<EditClientFormProps> = ({
         placeholder="Введіть повне ім'я..."
         required
       />
+      <FormInput
+        label="Тег клієнта"
+        name="custom_id"
+        value={formData.custom_id || ""}
+        onChange={handleChange}
+        placeholder="Наприклад: VIP-001"
+      />
 
       <PhoneInputList
         phones={formData.phones}
