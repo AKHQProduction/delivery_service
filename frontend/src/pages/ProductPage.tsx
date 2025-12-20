@@ -1,4 +1,4 @@
-import { useEffect, useState, useRef } from "react";
+import { useEffect, useState, useRef, useCallback } from "react";
 import { PageHeader } from "../components/ui/pageHeader";
 import { SearchBar } from "../components/ui/searchBar";
 import { ProductCard } from "../components/ui/productCard";
@@ -12,8 +12,10 @@ export const ProductPage = () => {
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const { getProducts, deleteProduct, updateProduct, products } = useProducts();
+  const { getProducts, deleteProduct, updateProduct, products, loadMoreProducts, loadingMore, hasMore } = useProducts();
   const debounceRef = useRef<NodeJS.Timeout | null>(null);
+  const observerRef = useRef<IntersectionObserver | null>(null);
+  const loadMoreRef = useRef<HTMLDivElement | null>(null);
 
   useEffect(() => {
     getProducts();
@@ -35,6 +37,38 @@ export const ProductPage = () => {
     };
   }, [searchTerm]);
 
+  const handleObserver = useCallback(
+    (entries: IntersectionObserverEntry[]) => {
+      const [entry] = entries;
+      if (entry.isIntersecting && hasMore && !loadingMore) {
+        loadMoreProducts();
+      }
+    },
+    [hasMore, loadingMore, loadMoreProducts]
+  );
+
+  useEffect(() => {
+    if (observerRef.current) {
+      observerRef.current.disconnect();
+    }
+
+    observerRef.current = new IntersectionObserver(handleObserver, {
+      root: null,
+      rootMargin: "100px",
+      threshold: 0,
+    });
+
+    if (loadMoreRef.current) {
+      observerRef.current.observe(loadMoreRef.current);
+    }
+
+    return () => {
+      if (observerRef.current) {
+        observerRef.current.disconnect();
+      }
+    };
+  }, [handleObserver]);
+
   const handleProductClick = (product: Product) => {
     setSelectedProduct(product);
     setIsModalOpen(true);
@@ -54,7 +88,6 @@ export const ProductPage = () => {
       reverseCategory
     );
     await getProducts();
-    // Update selectedProduct with the new data (use backend category format)
     setSelectedProduct({
       ...updatedProduct,
       category: reverseCategory,
@@ -64,7 +97,7 @@ export const ProductPage = () => {
   const handleDelete = () => {
     console.log("Delete product:", selectedProduct);
     deleteProduct(selectedProduct!.product_id);
-    window.location.reload(); //TEMPORARY SOLUTION
+    window.location.reload();
     handleCloseModal();
   };
 
@@ -101,6 +134,18 @@ export const ProductPage = () => {
                 onClick={() => handleProductClick(product)}
               />
             ))}
+          </div>
+
+          <div ref={loadMoreRef} className="py-4 flex justify-center">
+            {loadingMore && (
+              <div className="flex items-center gap-2 text-gray-500">
+                <svg className="animate-spin h-5 w-5" viewBox="0 0 24 24">
+                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
+                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
+                </svg>
+                <span>Завантаження...</span>
+              </div>
+            )}
           </div>
         </div>
       )}

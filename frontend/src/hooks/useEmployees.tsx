@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useCallback } from "react";
 import {
   updateEmployeeById,
   deleteEmployeeById,
@@ -6,17 +6,27 @@ import {
 } from "../services/api/employeeApi";
 import { createInviteUserLink } from "../services/api/userApi";
 
+const PAGE_SIZE = 20;
+
 export const useEmployees = () => {
   const [employees, setEmployees] = useState<Array<any>>([]);
   const [loading, setLoading] = useState<boolean>(false);
+  const [loadingMore, setLoadingMore] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
+  const [hasMore, setHasMore] = useState<boolean>(true);
+  const [offset, setOffset] = useState<number>(0);
+  const [currentSearch, setCurrentSearch] = useState<string>("");
 
   const getEmployees = async (search: string = "") => {
     setLoading(true);
     setError(null);
+    setCurrentSearch(search);
+    setOffset(0);
     try {
-      const fetchedEmployees = await getAllEmployees(search, 100, 0, "ASC");
+      const fetchedEmployees = await getAllEmployees(search, PAGE_SIZE, 0, "ASC");
       setEmployees(fetchedEmployees);
+      setHasMore(fetchedEmployees.length >= PAGE_SIZE);
+      setOffset(PAGE_SIZE);
       return fetchedEmployees;
     } catch (err) {
       setError("Не вдалося завантажити працівників.");
@@ -25,6 +35,22 @@ export const useEmployees = () => {
       setLoading(false);
     }
   };
+
+  const loadMoreEmployees = useCallback(async () => {
+    if (loadingMore || !hasMore) return;
+
+    setLoadingMore(true);
+    try {
+      const fetchedEmployees = await getAllEmployees(currentSearch, PAGE_SIZE, offset, "ASC");
+      setEmployees((prev) => [...prev, ...fetchedEmployees]);
+      setHasMore(fetchedEmployees.length >= PAGE_SIZE);
+      setOffset((prev) => prev + PAGE_SIZE);
+    } catch (err) {
+      setError("Не вдалося завантажити більше працівників.");
+    } finally {
+      setLoadingMore(false);
+    }
+  }, [loadingMore, hasMore, offset, currentSearch]);
 
   const deleteEmployees = async (productId: string) => {
     setLoading(true);
@@ -73,10 +99,13 @@ export const useEmployees = () => {
   return {
     employees,
     getEmployees,
+    loadMoreEmployees,
     deleteEmployees,
     updateEmployee,
     createInviteLink,
     error,
     loading,
+    loadingMore,
+    hasMore,
   };
 };

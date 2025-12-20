@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useCallback } from "react";
 import {
   createNewProduct,
   getAllProducts,
@@ -6,10 +6,16 @@ import {
   updateExistingProductById,
 } from "../services/api/productApi";
 
+const PAGE_SIZE = 20;
+
 export const useProducts = () => {
   const [products, setProducts] = useState<Array<any>>([]);
   const [loading, setLoading] = useState<boolean>(false);
+  const [loadingMore, setLoadingMore] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
+  const [hasMore, setHasMore] = useState<boolean>(true);
+  const [offset, setOffset] = useState<number>(0);
+  const [currentSearch, setCurrentSearch] = useState<string>("");
 
   const addProduct = async (name: string, price: number, category: string) => {
     setLoading(true);
@@ -26,9 +32,13 @@ export const useProducts = () => {
   const getProducts = async (search: string = "") => {
     setLoading(true);
     setError(null);
+    setCurrentSearch(search);
+    setOffset(0);
     try {
-      const fetchedProducts = await getAllProducts(search, 100, 0, "ASC");
+      const fetchedProducts = await getAllProducts(search, PAGE_SIZE, 0, "ASC");
       setProducts(fetchedProducts);
+      setHasMore(fetchedProducts.length >= PAGE_SIZE);
+      setOffset(PAGE_SIZE);
       return fetchedProducts;
     } catch (err) {
       setError("Не вдалося завантажити товари.");
@@ -37,6 +47,22 @@ export const useProducts = () => {
       setLoading(false);
     }
   };
+
+  const loadMoreProducts = useCallback(async () => {
+    if (loadingMore || !hasMore) return;
+
+    setLoadingMore(true);
+    try {
+      const fetchedProducts = await getAllProducts(currentSearch, PAGE_SIZE, offset, "ASC");
+      setProducts((prev) => [...prev, ...fetchedProducts]);
+      setHasMore(fetchedProducts.length >= PAGE_SIZE);
+      setOffset((prev) => prev + PAGE_SIZE);
+    } catch (err) {
+      setError("Не вдалося завантажити більше товарів.");
+    } finally {
+      setLoadingMore(false);
+    }
+  }, [loadingMore, hasMore, offset, currentSearch]);
 
   const deleteProduct = async (productId: string) => {
     setLoading(true);
@@ -79,9 +105,12 @@ export const useProducts = () => {
     products,
     addProduct,
     getProducts,
+    loadMoreProducts,
     deleteProduct,
     updateProduct,
     error,
     loading,
+    loadingMore,
+    hasMore,
   };
 };

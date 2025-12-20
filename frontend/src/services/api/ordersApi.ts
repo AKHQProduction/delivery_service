@@ -44,6 +44,15 @@ export const updateOrder = async (orderId: string, orderData: any) => {
   }
 };
 
+export const deleteOrderById = async (orderId: string) => {
+  try {
+    const response = await api.delete(`v1/orders/${orderId}`);
+    return response.data;
+  } catch (error) {
+    throw error;
+  }
+};
+
 export const exportOrdersPdf = async (deliveryDate: string) => {
   try {
     const response = await api.get(`v1/orders/export/pdf`, {
