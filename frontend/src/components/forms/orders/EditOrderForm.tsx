@@ -66,17 +66,20 @@ export const EditOrderForm: React.FC<EditOrderFormProps> = ({
     try {
       await updateCurrentOrder(order.order_id, {
         client_id: formData.client?.client_id,
-        items: formData.products.map((p) => ({
-          product_id: p.product.product_id,
-          quantity: p.quantity,
-          price_per_item: p.product.price,
-        })),
+        items: formData.products.map((p) => {
+          if (p.itemId) {
+            // Existing item - send id + quantity
+            return { id: p.itemId, quantity: p.quantity };
+          } else {
+            // New item - send product_id + quantity
+            return { product_id: p.product.product_id, quantity: p.quantity };
+          }
+        }),
         phone_id: formData.deliveryPhone.id,
         address_id: formData.deliveryAddress.id,
-        date: formData.deliveryDate,
+        delivery_date: formData.deliveryDate,
         time_preference: formData.deliveryTime,
-        note: formData.note,
-        order_id: order.order_id,
+        comment: formData.note,
       });
       onClose();
     } catch (error) {

@@ -4,9 +4,16 @@ import { useProducts } from "../useProducts";
 import { type Client } from "../../types/entities/Client";
 import { type Product } from "../../types/entities/Product";
 
+interface OrderFormProduct {
+  product: Product;
+  quantity: number;
+  originalQuantity?: number;
+  itemId?: number; // ID позиции для существующих items
+}
+
 interface OrderFormData {
   client: Client | null;
-  products: { product: Product; quantity: number; originalQuantity?: number }[];
+  products: OrderFormProduct[];
   deliveryPhone: any;
   deliveryAddress: any;
   deliveryDate: string;
@@ -71,16 +78,17 @@ export const useOrderForm = (options: UseOrderFormOptions = {}) => {
         initialOrder.items
           ?.map((item: any) => {
             const product = products.find(
-              (p) => p.id === item.product_id
+              (p) => p.product_id === item.product_id
             );
             return {
               product: product || {
                 product_id: item.product_id,
-                name: item.product_name,
+                name: item.name,
                 price: item.price_per_item,
               },
               quantity: item.quantity,
               originalQuantity: item.quantity,
+              itemId: item.id, // Сохраняем ID позиции
             };
           })
           .filter((p: any) => p.product) || [];
