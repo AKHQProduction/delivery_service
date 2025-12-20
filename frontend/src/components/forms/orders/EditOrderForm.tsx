@@ -11,10 +11,12 @@ import { FormNavigationButtons } from "../../shared/FormNavigationButtons";
 interface EditOrderFormProps {
   order: any;
   onClose: () => void;
+  onSave?: () => void;
 }
 
 export const EditOrderForm: React.FC<EditOrderFormProps> = ({
   onClose,
+  onSave,
   order,
 }) => {
   const { updateCurrentOrder } = useOrders();
@@ -81,7 +83,7 @@ export const EditOrderForm: React.FC<EditOrderFormProps> = ({
         time_preference: formData.deliveryTime,
         comment: formData.note,
       });
-      onClose();
+      onSave ? onSave() : onClose();
     } catch (error) {
       console.error("Error updating order:", error);
       alert("Failed to update order. Please check the console for details.");

@@ -4,7 +4,7 @@ import { timeMap } from "../../../utils/dataMap";
 import { useState } from "react";
 import { EditOrderForm } from "../../forms/orders/EditOrderForm";
 
-export const OrderDetailModal = ({ order, onClose, onDelete }) => {
+export const OrderDetailModal = ({ order, onClose, onDelete, onSave }) => {
   const [isEditing, setIsEditing] = useState(false);
 
   const handleEditClick = () => {
@@ -17,6 +17,7 @@ export const OrderDetailModal = ({ order, onClose, onDelete }) => {
 
   const handleSaveEdit = () => {
     setIsEditing(false);
+    onSave?.();
   };
 
   const getOrderTotal = () => {
