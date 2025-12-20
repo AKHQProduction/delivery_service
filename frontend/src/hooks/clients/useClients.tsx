@@ -16,11 +16,11 @@ export const useClient = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const getClients = async () => {
+  const getClients = async (search: string = "") => {
     setLoading(true);
     setError(null);
     try {
-      const fetchedClients = await getAllClients("", "", "", 100, 0, "ASC");
+      const fetchedClients = await getAllClients(search, search, search, 100, 0, "ASC");
       setClients(fetchedClients);
       return fetchedClients;
     } catch {

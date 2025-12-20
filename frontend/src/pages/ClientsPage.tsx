@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { PageHeader } from "../components/ui/pageHeader";
 import { SearchBar } from "../components/ui/searchBar";
 import { ClientCard } from "../components/ui/clientsCard";
@@ -12,16 +12,27 @@ export const ClientsPage = () => {
   const [selectedClient, setSelectedClient] = useState<Client | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const { clients, getClients, deleteClient } = useClient();
+  const debounceRef = useRef<NodeJS.Timeout | null>(null);
 
   useEffect(() => {
     getClients();
   }, []);
 
-  const clientsList = clients.filter(
-    (client) =>
-      client.full_name?.toLowerCase().includes(searchTerm.toLowerCase()) ??
-      false
-  );
+  useEffect(() => {
+    if (debounceRef.current) {
+      clearTimeout(debounceRef.current);
+    }
+
+    debounceRef.current = setTimeout(() => {
+      getClients(searchTerm);
+    }, 100);
+
+    return () => {
+      if (debounceRef.current) {
+        clearTimeout(debounceRef.current);
+      }
+    };
+  }, [searchTerm]);
 
   const handleClientClick = (client: Client) => {
     setSelectedClient(client);
@@ -65,7 +76,7 @@ export const ClientsPage = () => {
         />
       </div>
 
-      {clientsList.length === 0 ? (
+      {clients.length === 0 ? (
         <div className="flex flex-col items-center justify-center mt-20">
           <p className="text-gray-500 text-lg font-medium">
             {searchTerm ? "Клієнтів не знайдено" : "Клієнти відсутні"}

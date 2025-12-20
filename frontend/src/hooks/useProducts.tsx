@@ -23,16 +23,19 @@ export const useProducts = () => {
     setLoading(false);
   };
 
-  const getProducts = async () => {
+  const getProducts = async (search: string = "") => {
     setLoading(true);
     setError(null);
     try {
-      const fetchedProducts = await getAllProducts("", 100, 0, "ASC");
+      const fetchedProducts = await getAllProducts(search, 100, 0, "ASC");
       setProducts(fetchedProducts);
+      return fetchedProducts;
     } catch (err) {
       setError("Не вдалося завантажити товари.");
+      return [];
+    } finally {
+      setLoading(false);
     }
-    setLoading(false);
   };
 
   const deleteProduct = async (productId: string) => {

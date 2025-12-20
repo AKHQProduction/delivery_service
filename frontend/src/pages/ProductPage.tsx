@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { PageHeader } from "../components/ui/pageHeader";
 import { SearchBar } from "../components/ui/searchBar";
 import { ProductCard } from "../components/ui/productCard";
@@ -13,14 +13,27 @@ export const ProductPage = () => {
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const { getProducts, deleteProduct, updateProduct, products } = useProducts();
+  const debounceRef = useRef<NodeJS.Timeout | null>(null);
 
   useEffect(() => {
     getProducts();
   }, []);
 
-  const productsList = products.filter((product) =>
-    product.name.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  useEffect(() => {
+    if (debounceRef.current) {
+      clearTimeout(debounceRef.current);
+    }
+
+    debounceRef.current = setTimeout(() => {
+      getProducts(searchTerm);
+    }, 100);
+
+    return () => {
+      if (debounceRef.current) {
+        clearTimeout(debounceRef.current);
+      }
+    };
+  }, [searchTerm]);
 
   const handleProductClick = (product: Product) => {
     setSelectedProduct(product);
@@ -81,7 +94,7 @@ export const ProductPage = () => {
       ) : (
         <div className="px-6 pb-24">
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-            {productsList.map((product) => (
+            {products.map((product) => (
               <ProductCard
                 key={product.id}
                 product={product}

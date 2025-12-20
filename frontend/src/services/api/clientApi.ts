@@ -54,16 +54,17 @@ export const getAllClients = async (
   order: string
 ) => {
   try {
-    const response = await api.get(`v1/clients/all`, {
-      params: {
-        full_name: full_name,
-        custom_id: custom_id,
-        phone: phone,
-        limit: clientsLimit,
-        offset: offset,
-        order: order,
-      },
-    });
+    const params: Record<string, string | number> = {
+      limit: clientsLimit,
+      offset: offset,
+      order: order,
+    };
+
+    if (full_name) params.full_name = full_name;
+    if (custom_id) params.custom_id = custom_id;
+    if (phone) params.phone = phone;
+
+    const response = await api.get(`v1/clients/all`, { params });
     return response.data;
   } catch (error) {
     throw error;
