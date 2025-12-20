@@ -22,8 +22,10 @@ export const useClient = () => {
     try {
       const fetchedClients = await getAllClients("", "", "", 100, 0, "ASC");
       setClients(fetchedClients);
+      return fetchedClients;
     } catch {
       setError("Не вдалося завантажити клієнтів.");
+      return [];
     } finally {
       setLoading(false);
     }

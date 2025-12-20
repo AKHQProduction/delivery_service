@@ -10,7 +10,7 @@ import { useClientForm } from "../../../hooks/clients/useClientForm";
 interface EditClientFormProps {
   client: Client;
   onClose: () => void;
-  onSave?: () => void;
+  onSave?: () => Promise<void> | void;
 }
 
 export const EditClientForm: React.FC<EditClientFormProps> = ({
@@ -69,8 +69,7 @@ export const EditClientForm: React.FC<EditClientFormProps> = ({
 
     try {
       await updateClient(client.client_id, formData);
-      onSave?.();
-      onClose();
+      await onSave?.();
     } catch (err: any) {
       const errorMessage = err?.message || "";
       const phoneNumber = extractPhoneFromError(errorMessage);

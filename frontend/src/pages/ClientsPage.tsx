@@ -33,9 +33,16 @@ export const ClientsPage = () => {
     setTimeout(() => setSelectedClient(null), 300);
   };
 
-  const handleSave = (updatedClient: Client) => {
-    console.log("Save employee:", updatedClient);
-    window.location.reload(); //TEMPORARY SOLUTION
+  const handleSave = async () => {
+    const updatedClients = await getClients();
+    if (selectedClient) {
+      const updated = updatedClients.find(
+        (c: Client) => c.client_id === selectedClient.client_id
+      );
+      if (updated) {
+        setSelectedClient(updated);
+      }
+    }
   };
 
   const handleDelete = () => {

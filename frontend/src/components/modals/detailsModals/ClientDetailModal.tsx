@@ -9,7 +9,7 @@ interface ClientDetailModalProps {
   client: Client;
   onClose: () => void;
   onDelete: () => void;
-  onSave: (updatedProduct: Client) => void;
+  onSave: () => Promise<void> | void;
 }
 
 export const ClientDetailModal: React.FC<ClientDetailModalProps> = ({
@@ -28,8 +28,8 @@ export const ClientDetailModal: React.FC<ClientDetailModalProps> = ({
     setIsEditing(false);
   };
 
-  const handleSaveEdit = (updatedEmployee: Client) => {
-    onSave(updatedEmployee);
+  const handleSaveEdit = async () => {
+    await onSave();
     setIsEditing(false);
   };
 
