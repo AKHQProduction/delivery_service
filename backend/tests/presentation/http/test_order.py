@@ -1033,3 +1033,118 @@ async def test_get_all_orders_filters_by_shop(
 
     assert len(response_1.json()) == 2
     assert len(response_2.json()) == 3
+
+
+@pytest.mark.asyncio()
+async def test_get_all_orders_with_client_name_filter(
+    http_client: AsyncClient,
+    session: AsyncSession,
+    customer_headers: Callable[[int], dict[str, Any]],
+    setup_full_test_user_with_shop,
+    setup_test_client,
+    setup_test_order,
+) -> None:
+    telegram_id = 5306
+    _, shop_id = await setup_full_test_user_with_shop(telegram_id=telegram_id)
+
+    client_id_1 = await setup_test_client(
+        shop_id=shop_id, full_name="Іван Іванов"
+    )
+    client_id_2 = await setup_test_client(
+        shop_id=shop_id, full_name="Петро Петренко"
+    )
+
+    await setup_test_order(shop_id=shop_id, client_id=client_id_1)
+    await setup_test_order(shop_id=shop_id, client_id=client_id_1)
+    await setup_test_order(shop_id=shop_id, client_id=client_id_2)
+
+    await session.commit()
+
+    headers = customer_headers(telegram_id)
+
+    response = await http_client.get(
+        url=f"{BASE_URL}/all",
+        headers=headers,
+        params={"client_name": "Іван"},
+    )
+
+    assert response.status_code == status.HTTP_200_OK
+    orders = response.json()
+    assert len(orders) == 2
+    assert all(order["client_name"] == "Іван Іванов" for order in orders)
+
+
+@pytest.mark.asyncio()
+async def test_get_all_orders_with_custom_id_filter(
+    http_client: AsyncClient,
+    session: AsyncSession,
+    customer_headers: Callable[[int], dict[str, Any]],
+    setup_full_test_user_with_shop,
+    setup_test_client,
+    setup_test_order,
+) -> None:
+    telegram_id = 5307
+    _, shop_id = await setup_full_test_user_with_shop(telegram_id=telegram_id)
+
+    client_id_1 = await setup_test_client(
+        shop_id=shop_id, full_name="Клієнт 1", custom_id="VIP-001"
+    )
+    client_id_2 = await setup_test_client(
+        shop_id=shop_id, full_name="Клієнт 2", custom_id="REG-002"
+    )
+
+    await setup_test_order(shop_id=shop_id, client_id=client_id_1)
+    await setup_test_order(shop_id=shop_id, client_id=client_id_1)
+    await setup_test_order(shop_id=shop_id, client_id=client_id_2)
+
+    await session.commit()
+
+    headers = customer_headers(telegram_id)
+
+    response = await http_client.get(
+        url=f"{BASE_URL}/all",
+        headers=headers,
+        params={"custom_id": "VIP"},
+    )
+
+    assert response.status_code == status.HTTP_200_OK
+    orders = response.json()
+    assert len(orders) == 2
+    assert all(order["client_name"] == "Клієнт 1" for order in orders)
+
+
+@pytest.mark.asyncio()
+async def test_get_all_orders_with_combined_client_filters(
+    http_client: AsyncClient,
+    session: AsyncSession,
+    customer_headers: Callable[[int], dict[str, Any]],
+    setup_full_test_user_with_shop,
+    setup_test_client,
+    setup_test_order,
+) -> None:
+    telegram_id = 5308
+    _, shop_id = await setup_full_test_user_with_shop(telegram_id=telegram_id)
+
+    client_id_1 = await setup_test_client(
+        shop_id=shop_id, full_name="Іван Іванов", custom_id="VIP-001"
+    )
+    client_id_2 = await setup_test_client(
+        shop_id=shop_id, full_name="Петро Петренко", custom_id="REG-002"
+    )
+
+    await setup_test_order(shop_id=shop_id, client_id=client_id_1)
+    await setup_test_order(shop_id=shop_id, client_id=client_id_2)
+
+    await session.commit()
+
+    headers = customer_headers(telegram_id)
+
+    response = await http_client.get(
+        url=f"{BASE_URL}/all",
+        headers=headers,
+        params={"client_name": "Іван", "custom_id": "REG"},
+    )
+
+    assert response.status_code == status.HTTP_200_OK
+    orders = response.json()
+    assert len(orders) == 2

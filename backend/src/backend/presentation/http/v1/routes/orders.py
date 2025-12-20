@@ -346,6 +346,8 @@ async def get_all_orders(
     handler: FromDishka[GetOrdersQueryHandler],
     delivery_date: date | None = None,
     time_preference: TimePreference | None = None,
+    client_name: str | None = None,
+    custom_id: str | None = None,
     limit: int = 100,
     offset: int = 0,
 ) -> list[OrderReadModel]:
@@ -353,6 +355,8 @@ async def get_all_orders(
         GetOrdersQuery(
             delivery_date=delivery_date,
             time_preference=time_preference,
+            client_name=client_name,
+            custom_id=custom_id,
             pagination=Pagination(limit=limit, offset=offset),
         )
     )

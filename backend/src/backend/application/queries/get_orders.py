@@ -16,6 +16,8 @@ class GetOrdersQuery:
     pagination: Pagination
     delivery_date: date | None = None
     time_preference: TimePreference | None = None
+    client_name: str | None = None
+    custom_id: str | None = None
 
 
 class GetOrdersQueryHandler:
@@ -33,6 +35,8 @@ class GetOrdersQueryHandler:
                 shop_id=current_user.shop_id,
                 delivery_date=query.delivery_date,
                 time_preference=query.time_preference,
+                client_name=query.client_name,
+                custom_id=query.custom_id,
             ),
             pagination=query.pagination,
         )
