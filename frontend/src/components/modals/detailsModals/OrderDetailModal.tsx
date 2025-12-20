@@ -75,9 +75,8 @@ export const OrderDetailModal = ({ order, onClose, onDelete, onSave }) => {
           <img src={leftArrowIcon} alt="Back" className="w-8 h-8" />
         </button>
         <h1 className="text-3xl font-bold text-white mb-2">
-          Замовлення: {order.order_id}
+          Замовлення для {order.client_name}
         </h1>
-        <p className="text-indigo-100">{order.client_name}</p>
       </div>
 
       <div className="flex-1 overflow-y-auto px-6 py-6 space-y-4 pb-24">
@@ -129,10 +128,6 @@ export const OrderDetailModal = ({ order, onClose, onDelete, onSave }) => {
               <p className="font-semibold text-gray-900 text-lg">
                 {order.client_name}
               </p>
-              <p className="text-sm text-gray-400">
-                {order.client_name} (Custom ID{" "}
-                {order.custom_id ? order.custom_id : "N/A"})
-              </p>
             </div>
 
             <div className="flex items-center gap-3">
@@ -179,8 +174,7 @@ export const OrderDetailModal = ({ order, onClose, onDelete, onSave }) => {
                 </svg>
               </div>
               <span className="text-gray-700 flex-1 leading-relaxed">
-                {order.address ||
-                  `вул. ${order.delivery_address.street}, ${order.delivery_address.house}, ${order.delivery_address.apartment}, ${order.delivery_address.floor}, ${order.delivery_address.intercom}`}
+                вул. {order.delivery_address?.street}, {order.delivery_address?.house}
               </span>
             </div>
           </div>

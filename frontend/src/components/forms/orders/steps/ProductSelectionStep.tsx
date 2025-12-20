@@ -107,12 +107,16 @@ export const ProductSelectionStep: React.FC<ProductSelectionStepProps> = ({
                   {selected ? (
                     <div className="flex items-center  shrink-0">
                       <button
-                        onClick={() =>
-                          onQuantityChange(
-                            product.product_id,
-                            Math.max(1, selected.quantity - 1)
-                          )
-                        }
+                        onClick={() => {
+                          if (selected.quantity <= 1) {
+                            onProductToggle(product);
+                          } else {
+                            onQuantityChange(
+                              product.product_id,
+                              selected.quantity - 1
+                            );
+                          }
+                        }}
                         type="button"
                         className="w-9 h-9 rounded-lg bg-gray-200 hover:bg-gray-300 flex items-center justify-center transition-colors font-bold text-lg"
                       >

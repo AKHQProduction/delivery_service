@@ -83,8 +83,8 @@ export const DeliveryDateStep: React.FC<DeliveryDateStepProps> = ({
         required ={true}
         onChange={onTimeChange}
         options={[
-          { value: "FIRST_HALF", label: "Ранок (8:00 - 12:00)" },
-          { value: "SECOND_HALF", label: "День (12:00 - 16:00)" },
+          { value: "FIRST_HALF", label: "Перша половина дня" },
+          { value: "SECOND_HALF", label: "Друга половина дня" },
         ]}
         
       />
@@ -101,7 +101,7 @@ export const DeliveryDateStep: React.FC<DeliveryDateStepProps> = ({
             </svg>
             <span className="font-medium">
               Доставка: {formatDate(deliveryDate)}  <br />
-              {deliveryTime === "FIRST_HALF" ? "Ранок (8:00 - 12:00)" : "День (12:00 - 16:00)"}
+              {deliveryTime === "FIRST_HALF" ? "Перша половина дня" : "Друга половина дня"}
             </span>
           </div>
         )}
