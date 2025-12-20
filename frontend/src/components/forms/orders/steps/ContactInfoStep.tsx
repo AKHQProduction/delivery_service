@@ -169,9 +169,9 @@ export const ContactInfoStep: React.FC<ContactInfoStepProps> = ({
               className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500 appearance-none bg-white pr-10 font-medium"
             >
               <option value="">Оберіть адресу...</option>
-              {client.addresses.map((addr, idx) => (
-                <option key={idx} value={addr.street}>
-                  {addr.street}
+              {client.addresses.map((addr) => (
+                <option key={addr.id} value={addr.id}>
+                  вул. {addr.street}, {addr.house}
                 </option>
               ))}
             </select>

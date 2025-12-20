@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useRef, useEffect, useCallback } from "react";
 import { type Client } from "../../../../types/entities/Client";
 import { SearchBar } from "../../../ui/searchBar";
 
@@ -9,6 +9,9 @@ interface ClientSelectionStepProps {
   onSearchChange: (value: string) => void;
   onClientSelect: (client: Client) => void;
   onAddNewClient?: () => void;
+  loadMore?: () => void;
+  loadingMore?: boolean;
+  hasMore?: boolean;
 }
 
 export const ClientSelectionStep: React.FC<ClientSelectionStepProps> = ({
@@ -18,7 +21,46 @@ export const ClientSelectionStep: React.FC<ClientSelectionStepProps> = ({
   onSearchChange,
   onClientSelect,
   onAddNewClient,
+  loadMore,
+  loadingMore,
+  hasMore,
 }) => {
+  const observerRef = useRef<IntersectionObserver | null>(null);
+  const loadMoreRef = useRef<HTMLDivElement | null>(null);
+  const scrollContainerRef = useRef<HTMLDivElement | null>(null);
+
+  const handleObserver = useCallback(
+    (entries: IntersectionObserverEntry[]) => {
+      const [entry] = entries;
+      if (entry.isIntersecting && hasMore && !loadingMore && loadMore) {
+        loadMore();
+      }
+    },
+    [hasMore, loadingMore, loadMore]
+  );
+
+  useEffect(() => {
+    if (observerRef.current) {
+      observerRef.current.disconnect();
+    }
+
+    observerRef.current = new IntersectionObserver(handleObserver, {
+      root: scrollContainerRef.current,
+      rootMargin: "100px",
+      threshold: 0,
+    });
+
+    if (loadMoreRef.current) {
+      observerRef.current.observe(loadMoreRef.current);
+    }
+
+    return () => {
+      if (observerRef.current) {
+        observerRef.current.disconnect();
+      }
+    };
+  }, [handleObserver]);
+
   return (
     <div className="space-y-4">
       <h3 className="text-xl font-bold text-gray-900">Вибір клієнта</h3>
@@ -29,7 +71,7 @@ export const ClientSelectionStep: React.FC<ClientSelectionStepProps> = ({
         placeholder="Пошук за ім'ям або телефоном..."
       />
 
-      <div className="space-y-2 max-h-96 overflow-y-auto">
+      <div ref={scrollContainerRef} className="space-y-2 max-h-96 overflow-y-auto">
         {clients.length === 0 ? (
           <div className="text-center py-8 text-gray-500">
             <svg
@@ -49,70 +91,83 @@ export const ClientSelectionStep: React.FC<ClientSelectionStepProps> = ({
             <p className="text-sm">Спробуйте інший пошуковий запит</p>
           </div>
         ) : (
-          clients.map((client) => (
-            <div
-              key={client.client_id}
-              onClick={() => onClientSelect(client)}
-              className={`p-4 rounded-xl border-2 cursor-pointer transition-all ${
-                selectedClient?.client_id === client.client_id
-                  ? "border-indigo-600 bg-indigo-50"
-                  : "border-gray-200 hover:border-indigo-300 bg-white"
-              }`}
-            >
-              <div className="flex items-center gap-3">
-                <div
-                  className={`w-10 h-10 rounded-full flex items-center justify-center font-bold text-sm ${
-                    selectedClient?.client_id === client.client_id
-                      ? "bg-indigo-600 text-white"
-                      : "bg-gray-200 text-gray-600"
-                  }`}
-                >
-                  {(client.full_name || "")
-                    .split(" ")
-                    .map((n) => n[0])
-                    .join("")
-                    .toUpperCase()
-                    .slice(0, 2)}
-                </div>
-
-                <div className="flex-1 min-w-0">
-                  <div className="font-semibold text-gray-900">
-                    {client.full_name || "Unknown"}
+          <>
+            {clients.map((client) => (
+              <div
+                key={client.client_id}
+                onClick={() => onClientSelect(client)}
+                className={`p-4 rounded-xl border-2 cursor-pointer transition-all ${
+                  selectedClient?.client_id === client.client_id
+                    ? "border-indigo-600 bg-indigo-50"
+                    : "border-gray-200 hover:border-indigo-300 bg-white"
+                }`}
+              >
+                <div className="flex items-center gap-3">
+                  <div
+                    className={`w-10 h-10 rounded-full flex items-center justify-center font-bold text-sm ${
+                      selectedClient?.client_id === client.client_id
+                        ? "bg-indigo-600 text-white"
+                        : "bg-gray-200 text-gray-600"
+                    }`}
+                  >
+                    {(client.full_name || "")
+                      .split(" ")
+                      .map((n) => n[0])
+                      .join("")
+                      .toUpperCase()
+                      .slice(0, 2)}
                   </div>
-                  <div className="text-sm text-gray-600 flex items-center gap-1">
+
+                  <div className="flex-1 min-w-0">
+                    <div className="font-semibold text-gray-900">
+                      {client.full_name || "Unknown"}
+                    </div>
+                    <div className="text-sm text-gray-600 flex items-center gap-1">
+                      <svg
+                        className="w-4 h-4"
+                        fill="none"
+                        stroke="currentColor"
+                        viewBox="0 0 24 24"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth={2}
+                          d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z"
+                        />
+                      </svg>
+                      {client.phones?.[0]?.number || "—"}
+                    </div>
+                  </div>
+
+                  {selectedClient?.client_id === client.client_id && (
                     <svg
-                      className="w-4 h-4"
-                      fill="none"
-                      stroke="currentColor"
-                      viewBox="0 0 24 24"
+                      className="w-6 h-6 text-indigo-600"
+                      fill="currentColor"
+                      viewBox="0 0 20 20"
                     >
                       <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth={2}
-                        d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z"
+                        fillRule="evenodd"
+                        d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z"
+                        clipRule="evenodd"
                       />
                     </svg>
-                    {client.phones?.[0]?.number || "—"}
-                  </div>
+                  )}
                 </div>
-
-                {selectedClient?.client_id === client.client_id && (
-                  <svg
-                    className="w-6 h-6 text-indigo-600"
-                    fill="currentColor"
-                    viewBox="0 0 20 20"
-                  >
-                    <path
-                      fillRule="evenodd"
-                      d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z"
-                      clipRule="evenodd"
-                    />
-                  </svg>
-                )}
               </div>
+            ))}
+            <div ref={loadMoreRef} className="py-2 flex justify-center">
+              {loadingMore && (
+                <div className="flex items-center gap-2 text-gray-500">
+                  <svg className="animate-spin h-5 w-5" viewBox="0 0 24 24">
+                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
+                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
+                  </svg>
+                  <span className="text-sm">Завантаження...</span>
+                </div>
+              )}
             </div>
-          ))
+          </>
         )}
       </div>
 

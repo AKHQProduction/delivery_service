@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState } from "react";
 import { useOrderForm } from "../../../hooks/orders/useOrdersForm";
 import { useOrders } from "../../../hooks/orders/useOrders";
 import { ProgressSteps } from "../../shared/ProgressSteps";
@@ -7,6 +7,8 @@ import { ProductSelectionStep } from "./steps/ProductSelectionStep";
 import { ContactInfoStep } from "./steps/ContactInfoStep";
 import { DeliveryDateStep } from "./steps/DeliveryDateStep";
 import { FormNavigationButtons } from "../../shared/FormNavigationButtons";
+import { AddClientForm } from "../client/AddClientForm";
+import { type Client } from "../../../types/entities/Client";
 
 interface AddOrderFormProps {
   onClose: () => void;
@@ -14,14 +16,21 @@ interface AddOrderFormProps {
 
 export const AddOrderForm: React.FC<AddOrderFormProps> = ({ onClose }) => {
   const { createNewOrder } = useOrders();
-  
+  const [showAddClient, setShowAddClient] = useState(false);
+
   const {
     step,
     formData,
     searchClient,
     searchProduct,
-    filteredClients,
-    filteredProducts,
+    clients,
+    products,
+    loadMoreClients,
+    clientsLoadingMore,
+    clientsHasMore,
+    loadMoreProducts,
+    productsLoadingMore,
+    productsHasMore,
     setSearchClient,
     setSearchProduct,
     handleClientSelect,
@@ -36,7 +45,20 @@ export const AddOrderForm: React.FC<AddOrderFormProps> = ({ onClose }) => {
     canProceed,
     getPhoneString,
     getAddressString,
+    getAddressId,
+    addAndSelectNewClient,
   } = useOrderForm();
+
+  const handleAddNewClient = () => {
+    setShowAddClient(true);
+  };
+
+  const handleClientCreated = (newClient?: Client) => {
+    setShowAddClient(false);
+    if (newClient) {
+      addAndSelectNewClient(newClient);
+    }
+  };
 
   const handleSubmit = () => {
     console.log("Order submitted:", formData);
@@ -60,6 +82,15 @@ export const AddOrderForm: React.FC<AddOrderFormProps> = ({ onClose }) => {
     onClose();
   };
 
+  if (showAddClient) {
+    return (
+      <AddClientForm
+        onClose={() => setShowAddClient(false)}
+        onSuccess={handleClientCreated}
+      />
+    );
+  }
+
   return (
     <div className="flex flex-col h-full max-h-[85vh]">
       <ProgressSteps currentStep={step} totalSteps={4} />
@@ -67,25 +98,29 @@ export const AddOrderForm: React.FC<AddOrderFormProps> = ({ onClose }) => {
       <div className="flex-1 overflow-y-auto px-6 pb-4">
         {step === 1 && (
           <ClientSelectionStep
-            clients={filteredClients}
+            clients={clients}
             selectedClient={formData.client}
             searchValue={searchClient}
             onSearchChange={setSearchClient}
             onClientSelect={handleClientSelect}
-            onAddNewClient={() => {
-              /* add new client need to be added */
-            }}
+            onAddNewClient={handleAddNewClient}
+            loadMore={loadMoreClients}
+            loadingMore={clientsLoadingMore}
+            hasMore={clientsHasMore}
           />
         )}
 
         {step === 2 && (
           <ProductSelectionStep
-            products={filteredProducts}
+            products={products}
             selectedProducts={formData.products}
             searchValue={searchProduct}
             onSearchChange={setSearchProduct}
             onProductToggle={handleProductToggle}
             onQuantityChange={handleQuantityChange}
+            loadMore={loadMoreProducts}
+            loadingMore={productsLoadingMore}
+            hasMore={productsHasMore}
           />
         )}
 
@@ -93,7 +128,7 @@ export const AddOrderForm: React.FC<AddOrderFormProps> = ({ onClose }) => {
           <ContactInfoStep
             client={formData.client}
             selectedPhone={getPhoneString()}
-            selectedAddress={getAddressString()}
+            selectedAddress={getAddressId()}
             onPhoneChange={handlePhoneChange}
             onAddressChange={handleAddressChange}
           />

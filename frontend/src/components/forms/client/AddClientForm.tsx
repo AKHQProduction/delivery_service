@@ -5,10 +5,11 @@ import { PhoneInputList } from "../../shared/PhoneInputList";
 import { AddressInputList } from "../../shared/AddressInputList";
 import { useClient } from "../../../hooks/clients/useClients";
 import { useClientForm } from "../../../hooks/clients/useClientForm";
+import { type Client } from "../../../types/entities/Client";
 
 interface AddClientFormProps {
   onClose: () => void;
-  onSuccess?: () => void;
+  onSuccess?: (client?: Client) => void;
 }
 
 export const AddClientForm: React.FC<AddClientFormProps> = ({
@@ -57,8 +58,16 @@ export const AddClientForm: React.FC<AddClientFormProps> = ({
     setPhoneErrors({});
 
     try {
-      await createClient(formData);
-      onSuccess?.();
+      const response = await createClient(formData);
+      // Construct full client object from form data + response client_id
+      const fullClient: Client = {
+        client_id: response.client_id,
+        full_name: formData.full_name,
+        custom_id: formData.custom_id || undefined,
+        phones: formData.phones.filter((p) => p.number.trim() !== ""),
+        addresses: formData.addresses.filter((a) => a.street.trim() !== ""),
+      };
+      onSuccess?.(fullClient);
       onClose();
     } catch (err: any) {
       const errorMessage = err?.message || "";
