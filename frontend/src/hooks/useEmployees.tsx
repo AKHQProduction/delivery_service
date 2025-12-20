@@ -11,16 +11,19 @@ export const useEmployees = () => {
   const [loading, setLoading] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
 
-  const getEmployees = async () => {
+  const getEmployees = async (search: string = "") => {
     setLoading(true);
     setError(null);
     try {
-      const fetchedProducts = await getAllEmployees("", 100, 0, "ASC");
-      setEmployees(fetchedProducts);
+      const fetchedEmployees = await getAllEmployees(search, 100, 0, "ASC");
+      setEmployees(fetchedEmployees);
+      return fetchedEmployees;
     } catch (err) {
       setError("Не вдалося завантажити працівників.");
+      return [];
+    } finally {
+      setLoading(false);
     }
-    setLoading(false);
   };
 
   const deleteEmployees = async (productId: string) => {

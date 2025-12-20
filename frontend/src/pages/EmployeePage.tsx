@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { PageHeader } from "../components/ui/pageHeader";
 import { SearchBar } from "../components/ui/searchBar";
 import { EmployeeCard } from "../components/ui/employeeCard";
@@ -16,14 +16,27 @@ export const EmployeePage = () => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const { getEmployees, deleteEmployees, updateEmployee, employees } =
     useEmployees();
+  const debounceRef = useRef<NodeJS.Timeout | null>(null);
 
   useEffect(() => {
     getEmployees();
   }, []);
 
-  const employeesList = employees.filter((employee) =>
-    employee.full_name.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  useEffect(() => {
+    if (debounceRef.current) {
+      clearTimeout(debounceRef.current);
+    }
+
+    debounceRef.current = setTimeout(() => {
+      getEmployees(searchTerm);
+    }, 100);
+
+    return () => {
+      if (debounceRef.current) {
+        clearTimeout(debounceRef.current);
+      }
+    };
+  }, [searchTerm]);
 
   const handleEmployeeClick = (employee: Employee) => {
     setSelectedEmployee(employee);
@@ -64,7 +77,7 @@ export const EmployeePage = () => {
         />
       </div>
 
-      {employeesList.length === 0 ? (
+      {employees.length === 0 ? (
         <div className="flex flex-col items-center justify-center mt-20">
           <p className="text-gray-500 text-lg font-medium">
             {searchTerm ? "Працівників не знайдено" : "Працівники відсутні"}
