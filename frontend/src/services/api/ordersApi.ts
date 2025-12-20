@@ -43,3 +43,15 @@ export const updateOrder = async (orderId: string, orderData: any) => {
     throw error;
   }
 };
+
+export const exportOrdersPdf = async (deliveryDate: string) => {
+  try {
+    const response = await api.get(`v1/orders/export/pdf`, {
+      params: { delivery_date: deliveryDate },
+      responseType: "blob",
+    });
+    return response.data;
+  } catch (error) {
+    throw error;
+  }
+};

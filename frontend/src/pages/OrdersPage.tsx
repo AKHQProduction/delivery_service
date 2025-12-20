@@ -5,11 +5,14 @@ import { useOrders } from "../hooks/orders/useOrders";
 import { timeMap } from "../utils/dataMap";
 import { OrderDetailModal } from "../components/modals/detailsModals/OrderDetailModal";
 import { RightModal } from "../components/modals/RightModal";
+import { exportOrdersPdf } from "../services/api/ordersApi";
 
 export const OrdersPage = () => {
   const [searchTerm, setSearchTerm] = useState("");
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedOrder, setSelectedOrder] = useState(null);
+  const [exportDate, setExportDate] = useState("");
+  const [exportError, setExportError] = useState(false);
   const { getOrders, orders, deleteOrder } = useOrders();
   const debounceRef = useRef<NodeJS.Timeout | null>(null);
 
@@ -72,6 +75,27 @@ export const OrdersPage = () => {
     getOrders();
   };
 
+  const handleExportPdf = async () => {
+    if (!exportDate) {
+      setExportError(true);
+      return;
+    }
+    setExportError(false);
+    try {
+      const blob = await exportOrdersPdf(exportDate);
+      const url = window.URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = `orders_${exportDate}.pdf`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      window.URL.revokeObjectURL(url);
+    } catch {
+      setExportError(true);
+    }
+  };
+
   return (
     <div className="min-h-screen bg-gray-50 pb-24">
       <PageHeader title="Замовлення" />
@@ -84,58 +108,49 @@ export const OrdersPage = () => {
         />
       </div>
 
-      <div className="pt-6 pb-4 w-full px-6">
-        <div className="bg-linear-to-r from-yellow-50 to-amber-50 border-2 border-yellow-200 rounded-2xl p-4">
-          <div className="flex items-start gap-3">
-            <svg
-              className="w-6 h-6 text-amber-600 shrink-0 mt-1"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
+      <div className="px-6 pb-4">
+        <div className="bg-gradient-to-r from-yellow-50 to-amber-50 border-2 border-yellow-200 rounded-2xl p-4">
+          <h3 className="font-bold text-amber-900 mb-3 text-center">
+            Сформувати документ
+          </h3>
+          <div className="flex flex-col items-center gap-2">
+            <div className="flex items-center justify-center gap-3 flex-wrap">
+              <input
+                type="date"
+                value={exportDate}
+                onChange={(e) => {
+                  setExportDate(e.target.value);
+                  setExportError(false);
+                }}
+                className={`px-3 py-2 border rounded-lg bg-white focus:outline-none focus:ring-2 ${
+                  exportError
+                    ? "border-red-500 focus:ring-red-400"
+                    : "border-amber-300 focus:ring-amber-400"
+                }`}
               />
-            </svg>
-
-            <div className="flex-1">
-              <h3 className="font-bold text-amber-900 mb-2">
-                Сформувати документ по замовленням
-              </h3>
-
-              <div className="flex items-center gap-3 flex-wrap pl-6 sm:pl-9">
-                <input
-                  type="date"
-                  className="w-48 max-w-full px-3 py-2 border border-amber-300 rounded-lg bg-white
-               focus:outline-none focus:ring-2 focus:ring-amber-400"
-                />
-
-                <button
-                  className="px-4 py-2 bg-linear-to-r from-amber-500  to-orange-500 text-white
-               rounded-lg font-semibold shadow-md transition-all
-               hover:from-amber-600 hover:to-orange-600
-               flex items-center justify-center gap-2 whitespace-nowrap"
+              <button
+                onClick={handleExportPdf}
+                className="px-4 py-2 bg-gradient-to-r from-amber-500 to-orange-500 text-white rounded-lg font-semibold shadow-md transition-all hover:from-amber-600 hover:to-orange-600 flex items-center gap-2"
+              >
+                <svg
+                  className="w-5 h-5"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
                 >
-                  <svg
-                    className="w-5 h-5"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"
-                    />
-                  </svg>
-                  Завантажити
-                </button>
-              </div>
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"
+                  />
+                </svg>
+                Завантажити
+              </button>
             </div>
+            {exportError && (
+              <p className="text-red-500 text-sm">Оберіть дату</p>
+            )}
           </div>
         </div>
       </div>
@@ -235,7 +250,7 @@ export const OrdersPage = () => {
                     </svg>
                   </div>
                   <span className="text-gray-700">
-                    {order.items.length} товари
+                    {(order.items ?? []).reduce((sum, item) => sum + (item.quantity || 0), 0)} товарів
                   </span>
                 </div>
               </div>
