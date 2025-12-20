@@ -1,20 +1,25 @@
 import api from "../../config/api.config";
 
 export const getAllOrders = async (
+  clientName: string,
+  customId: string,
   deliveryDate: string,
   timePreference: string,
   ordersLimit: number,
   offset: number
 ) => {
   try {
-    const response = await api.get(`v1/orders/all`, {
-      params: {
-        deliveryDate: deliveryDate,
-        timePreference: timePreference,
-        limit: ordersLimit,
-        offset: offset,
-      },
-    });
+    const params: Record<string, string | number> = {
+      limit: ordersLimit,
+      offset: offset,
+    };
+
+    if (clientName) params.client_name = clientName;
+    if (customId) params.custom_id = customId;
+    if (deliveryDate) params.delivery_date = deliveryDate;
+    if (timePreference) params.time_preference = timePreference;
+
+    const response = await api.get(`v1/orders/all`, { params });
     return response.data;
   } catch (error) {
     throw error;

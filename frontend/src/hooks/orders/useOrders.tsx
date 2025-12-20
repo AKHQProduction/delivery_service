@@ -10,14 +10,16 @@ export const useOrders = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const getOrders = async () => {
+  const getOrders = async (search: string = "") => {
     setLoading(true);
     setError(null);
     try {
-      const fetchedOrders = await getAllOrders("", "", 100, 0);
+      const fetchedOrders = await getAllOrders(search, search, "", "", 100, 0);
       setOrders(fetchedOrders);
+      return fetchedOrders;
     } catch {
       setError("Не вдалося завантажити замовлення.");
+      return [];
     } finally {
       setLoading(false);
     }

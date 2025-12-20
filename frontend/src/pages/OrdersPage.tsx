@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { PageHeader } from "../components/ui/pageHeader";
 import { SearchBar } from "../components/ui/searchBar";
 import { useOrders } from "../hooks/orders/useOrders";
@@ -11,14 +11,27 @@ export const OrdersPage = () => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedOrder, setSelectedOrder] = useState(null);
   const { getOrders, orders, deleteOrder } = useOrders();
+  const debounceRef = useRef<NodeJS.Timeout | null>(null);
 
   useEffect(() => {
     getOrders();
   }, []);
 
-  const ordersList = (orders ?? []).filter((order) =>
-    order.client_name?.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  useEffect(() => {
+    if (debounceRef.current) {
+      clearTimeout(debounceRef.current);
+    }
+
+    debounceRef.current = setTimeout(() => {
+      getOrders(searchTerm);
+    }, 100);
+
+    return () => {
+      if (debounceRef.current) {
+        clearTimeout(debounceRef.current);
+      }
+    };
+  }, [searchTerm]);
 
   const getOrderTotal = (order) => {
     return (order.items ?? []).reduce((sum, item) => {
@@ -128,7 +141,7 @@ export const OrdersPage = () => {
       </div>
 
       <div className="px-6 space-y-3">
-        {ordersList.length === 0 ? (
+        {(orders ?? []).length === 0 ? (
           <div className="text-center py-12">
             <svg
               className="w-16 h-16 mx-auto mb-4 text-gray-300"
@@ -149,7 +162,7 @@ export const OrdersPage = () => {
             </p>
           </div>
         ) : (
-          ordersList.map((order) => (
+          (orders ?? []).map((order) => (
             <div
               key={order.order_id}
               onClick={() => handleOrderClick(order)}
