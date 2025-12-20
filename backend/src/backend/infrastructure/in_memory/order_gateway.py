@@ -25,6 +25,7 @@ class InMemoryOrderGateway(OrderGateway):
         self.orders: dict[OrderId, CreateOrderDTO] = {}
         self.order_id = order_id
         self.client_names: dict[ClientId, str] = {}
+        self.client_custom_ids: dict[ClientId, str | None] = {}
 
     def next_id(self) -> OrderId:
         return self.order_id or OrderId(uuid.uuid4())
@@ -80,6 +81,24 @@ class InMemoryOrderGateway(OrderGateway):
                 for o in filtered_orders
                 if o.time_preference == filters.time_preference
             ]
+
+        if filters.client_name or filters.custom_id:
+
+            def matches_search(order: CreateOrderDTO) -> bool:
+                client_name = self.client_names.get(order.client_id, "")
+                custom_id = self.client_custom_ids.get(order.client_id, "")
+                name_match = (
+                    filters.client_name
+                    and filters.client_name.lower() in client_name.lower()
+                )
+                custom_id_match = (
+                    filters.custom_id
+                    and custom_id
+                    and filters.custom_id.lower() in custom_id.lower()
+                )
+                return bool(name_match or custom_id_match)
+
+            filtered_orders = [o for o in filtered_orders if matches_search(o)]
 
         filtered_orders.sort(key=lambda o: o.delivery_date)
 

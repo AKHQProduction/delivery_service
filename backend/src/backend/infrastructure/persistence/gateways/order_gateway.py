@@ -1,7 +1,7 @@
 from typing import cast
 from uuid import UUID
 
-from sqlalchemy import asc, select
+from sqlalchemy import asc, or_, select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 from uuid_utils import uuid7
@@ -26,6 +26,7 @@ from backend.application.vars import (
     ShopId,
     TimePreference,
 )
+from backend.infrastructure.persistence.tables.clients import Client
 from backend.infrastructure.persistence.tables.orders import Order, OrderItem
 
 
@@ -146,6 +147,22 @@ class SQLAlchemyOrderGateway(OrderGateway):
             query = query.where(
                 Order.time_preference == filters.time_preference.value
             )
+
+        search_conditions = []
+        if filters.client_name:
+            query = query.join(Client)
+            search_conditions.append(
+                Client.full_name.ilike(f"%{filters.client_name}%")
+            )
+        if filters.custom_id:
+            if not filters.client_name:
+                query = query.join(Client)
+            search_conditions.append(
+                Client.custom_id.ilike(f"%{filters.custom_id}%")
+            )
+
+        if search_conditions:
+            query = query.where(or_(*search_conditions))
 
         query = query.order_by(asc(Order.date))
         query = query.offset(pagination.offset).limit(pagination.limit)
