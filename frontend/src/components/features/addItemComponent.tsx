@@ -37,7 +37,15 @@ export const AddItemComponent = () => {
       case "AddClientForm":
         return <AddClientForm onClose={() => setIsModalOpen(false)} />;
       case "AddOrderForm":
-        return <AddOrderForm onClose={() => setIsModalOpen(false)} />;
+        return (
+          <AddOrderForm
+            onClose={() => setIsModalOpen(false)}
+            onSave={() => {
+              setIsModalOpen(false);
+              window.location.reload();
+            }}
+          />
+        );
       case "InviteUserForm":
         return (
           <InviteUserForm

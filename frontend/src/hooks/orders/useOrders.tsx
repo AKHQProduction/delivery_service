@@ -56,9 +56,13 @@ export const useOrders = () => {
     setLoading(true);
     setError(null);
     try {
-      await createOrder(orderData);
+      const newOrder = await createOrder(orderData);
+      // Add new order to the beginning of the list
+      setOrders((prev) => [newOrder, ...(prev || [])]);
+      return newOrder;
     } catch {
       setError("Не вдалося створити замовлення.");
+      throw new Error("Не вдалося створити замовлення.");
     } finally {
       setLoading(false);
     }

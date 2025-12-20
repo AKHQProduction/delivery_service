@@ -17,8 +17,10 @@ interface DeliveryDateStepProps {
   selectedProducts: SelectedProduct[];
   deliveryDate: string;
   deliveryTime: string;
+  note: string;
   onDateChange: (date: string) => void;
   onTimeChange: (time: string) => void;
+  onNoteChange: (note: string) => void;
 }
 
 export const DeliveryDateStep: React.FC<DeliveryDateStepProps> = ({
@@ -28,8 +30,10 @@ export const DeliveryDateStep: React.FC<DeliveryDateStepProps> = ({
   selectedProducts,
   deliveryDate,
   deliveryTime,
+  note,
   onDateChange,
   onTimeChange,
+  onNoteChange,
 }) => {
   const totalAmount = selectedProducts.reduce(
     (sum, p) => sum + p.product.price * p.quantity,
@@ -226,6 +230,14 @@ export const DeliveryDateStep: React.FC<DeliveryDateStepProps> = ({
           </div>
         </div>
       </div>
+
+      <textarea
+        value={note}
+        onChange={(e) => onNoteChange(e.target.value)}
+        placeholder="Примітка до замовлення..."
+        rows={2}
+        className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500 resize-none text-sm"
+      />
 
       <div>
         <Tooltip

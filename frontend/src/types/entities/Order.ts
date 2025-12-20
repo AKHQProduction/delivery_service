@@ -5,6 +5,7 @@ export interface OrderItem {
   name: string;
   quantity: number;
   price_per_item: number;
+  product_id: string | null;
 }
 
 export interface Order {

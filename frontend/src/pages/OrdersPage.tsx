@@ -100,9 +100,16 @@ export const OrdersPage = () => {
     }
   };
 
-  const handleSave = () => {
-    handleCloseModal();
-    getOrders();
+  const handleSave = async () => {
+    const orderId = selectedOrder?.order_id;
+    const freshOrders = await getOrders();
+    // Update selectedOrder with fresh data
+    if (orderId && freshOrders) {
+      const updatedOrder = freshOrders.find((o: any) => o.order_id === orderId);
+      if (updatedOrder) {
+        setSelectedOrder(updatedOrder);
+      }
+    }
   };
 
   const handleExportPdf = async () => {

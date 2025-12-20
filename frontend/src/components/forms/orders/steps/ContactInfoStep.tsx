@@ -171,7 +171,7 @@ export const ContactInfoStep: React.FC<ContactInfoStepProps> = ({
               <option value="">Оберіть адресу...</option>
               {client.addresses.map((addr) => (
                 <option key={addr.id} value={addr.id}>
-                  вул. {addr.street}, {addr.house}
+                  {addr.street}, {addr.house}
                 </option>
               ))}
             </select>
@@ -215,8 +215,7 @@ export const ContactInfoStep: React.FC<ContactInfoStepProps> = ({
                   </svg>
                 </div>
                 <span className="font-semibold text-gray-900 flex-1">
-                  
-                   {client.addresses?.[0]?.street || "—"}
+                  {client.addresses?.[0]?.street}, {client.addresses?.[0]?.house}
                 </span>
               </div>
               <svg

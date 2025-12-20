@@ -12,11 +12,13 @@ import { type Client } from "../../../types/entities/Client";
 
 interface AddOrderFormProps {
   onClose: () => void;
+  onSave?: () => void;
 }
 
-export const AddOrderForm: React.FC<AddOrderFormProps> = ({ onClose }) => {
+export const AddOrderForm: React.FC<AddOrderFormProps> = ({ onClose, onSave }) => {
   const { createNewOrder } = useOrders();
   const [showAddClient, setShowAddClient] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const {
     step,
@@ -40,6 +42,7 @@ export const AddOrderForm: React.FC<AddOrderFormProps> = ({ onClose }) => {
     handleAddressChange,
     handleDateChange,
     handleTimeChange,
+    handleNoteChange,
     handleNext,
     handleBack,
     canProceed,
@@ -60,26 +63,30 @@ export const AddOrderForm: React.FC<AddOrderFormProps> = ({ onClose }) => {
     }
   };
 
-  const handleSubmit = () => {
-    console.log("Order submitted:", formData);
-    console.log("deliveryPhone:", formData.deliveryPhone);
-    console.log("deliveryAddress:", formData.deliveryAddress);
-    console.log("phone_id:", formData.deliveryPhone?.id);
-    console.log("address_id:", formData.deliveryAddress?.id);
-    
-    createNewOrder({
-      client_id: formData.client?.client_id,
-      products: formData.products.map((p) => ({
-        product_id: p.product.product_id,
-        quantity: p.quantity,
-      })),
-      phone_id: formData.deliveryPhone?.id,
-      address_id: formData.deliveryAddress?.id,
-      delivery_date: formData.deliveryDate,
-      time_preference: formData.deliveryTime,
-    });
-    window.location.reload(); //TEMPORARY SOLUTION
-    onClose();
+  const handleSubmit = async () => {
+    if (isSubmitting) return;
+
+    setIsSubmitting(true);
+    try {
+      await createNewOrder({
+        client_id: formData.client?.client_id,
+        products: formData.products.map((p) => ({
+          product_id: p.product.product_id,
+          quantity: p.quantity,
+        })),
+        phone_id: formData.deliveryPhone?.id,
+        address_id: formData.deliveryAddress?.id,
+        delivery_date: formData.deliveryDate,
+        time_preference: formData.deliveryTime,
+        comment: formData.note,
+      });
+      onSave ? onSave() : onClose();
+    } catch (error) {
+      console.error("Error creating order:", error);
+      alert("Помилка при створенні замовлення");
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   if (showAddClient) {
@@ -142,8 +149,10 @@ export const AddOrderForm: React.FC<AddOrderFormProps> = ({ onClose }) => {
             selectedProducts={formData.products}
             deliveryDate={formData.deliveryDate}
             deliveryTime={formData.deliveryTime}
+            note={formData.note || ""}
             onDateChange={handleDateChange}
             onTimeChange={handleTimeChange}
+            onNoteChange={handleNoteChange}
           />
         )}
       </div>

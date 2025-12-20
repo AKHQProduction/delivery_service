@@ -81,6 +81,10 @@ export const OrderDetailModal = ({ order, onClose, onDelete, onSave }) => {
 
       <div className="flex-1 overflow-y-auto px-6 py-6 space-y-4 pb-24">
         {/* Items List */}
+        <div>
+          <h2 className="text-xs font-bold text-gray-500 uppercase tracking-wide mb-3">
+            Товари
+          </h2>
         <div className="space-y-3">
           {order.items?.map((item, index) => (
             <div
@@ -100,6 +104,7 @@ export const OrderDetailModal = ({ order, onClose, onDelete, onSave }) => {
               </p>
             </div>
           ))}
+        </div>
         </div>
 
         <div className="bg-indigo-50 rounded-2xl p-4 border-2 border-indigo-200">
@@ -174,7 +179,7 @@ export const OrderDetailModal = ({ order, onClose, onDelete, onSave }) => {
                 </svg>
               </div>
               <span className="text-gray-700 flex-1 leading-relaxed">
-                вул. {order.delivery_address?.street}, {order.delivery_address?.house}
+                {order.delivery_address?.street}, {order.delivery_address?.house}
               </span>
             </div>
           </div>
@@ -198,12 +203,12 @@ export const OrderDetailModal = ({ order, onClose, onDelete, onSave }) => {
               </p>
             </div>
 
-            {order.note && (
+            {(order.note || order.comment) && (
               <div>
                 <p className="text-xs text-gray-500 mb-1">
-                  Примітка для кур'єра
+                  Примітка до замовлення
                 </p>
-                <p className="text-gray-700">{order.note}</p>
+                <p className="text-gray-700">{order.note || order.comment}</p>
               </div>
             )}
           </div>

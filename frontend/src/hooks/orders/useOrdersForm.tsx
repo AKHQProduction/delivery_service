@@ -281,9 +281,7 @@ export const useOrderForm = (options: UseOrderFormOptions = {}) => {
     if (!formData.deliveryAddress) return "";
 
     const addr = formData.deliveryAddress;
-    return `${addr.street || ""} ${addr.house || ""} ${addr.apartment || ""} ${
-      addr.entrance || ""
-    } ${addr.floor || ""} ${addr.intercom || ""}`.trim();
+    return `${addr.street || ""}, ${addr.house || ""}`.trim();
   };
 
   const getAddressId = () => {
