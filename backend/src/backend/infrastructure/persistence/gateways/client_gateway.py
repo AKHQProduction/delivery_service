@@ -1,6 +1,6 @@
 from uuid import UUID
 
-from sqlalchemy import asc, desc, exists, select
+from sqlalchemy import asc, desc, exists, or_, select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 from uuid_utils import uuid7
@@ -180,18 +180,23 @@ class SQLAlchemyClientGateway(ClientGateway):
         if filters.shop_id:
             query = query.where(Client.shop_id == filters.shop_id)
 
+        search_conditions = []
         if filters.full_name:
-            query = query.where(
+            search_conditions.append(
                 Client.full_name.ilike(f"%{filters.full_name}%")
             )
-
         if filters.custom_id:
-            query = query.where(Client.custom_id == filters.custom_id)
-
+            search_conditions.append(
+                Client.custom_id.ilike(f"%{filters.custom_id}%")
+            )
         if filters.phone:
-            query = query.join(ClientPhone).where(
+            query = query.outerjoin(ClientPhone)
+            search_conditions.append(
                 ClientPhone.number.ilike(f"%{filters.phone}%")
             )
+
+        if search_conditions:
+            query = query.where(or_(*search_conditions))
 
         if pagination.order == SortOrder.ASC:
             query = query.order_by(asc(Client.full_name))
