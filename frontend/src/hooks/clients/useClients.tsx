@@ -58,9 +58,11 @@ export const useClient = () => {
 
       setClients((prev) => [...prev, newClient]);
       return newClient;
-    } catch {
-      setError("Не вдалося додати клієнта.");
-      throw error;
+    } catch (err: any) {
+      const errorMessage =
+        err?.response?.data?.detail || "Не вдалося додати клієнта.";
+      setError(errorMessage);
+      throw new Error(errorMessage);
     } finally {
       setLoading(false);
     }
@@ -89,9 +91,11 @@ export const useClient = () => {
         prev.map((c) => (c.client_id === clientId ? updatedClient : c))
       );
       return updatedClient;
-    } catch {
-      setError("Не вдалося оновити клієнта.");
-      throw error;
+    } catch (err: any) {
+      const errorMessage =
+        err?.response?.data?.detail || "Не вдалося оновити клієнта.";
+      setError(errorMessage);
+      throw new Error(errorMessage);
     } finally {
       setLoading(false);
     }

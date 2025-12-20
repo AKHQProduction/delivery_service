@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState } from "react";
 import { FormWrapper } from "../../shared/FormWrapper";
 import { FormInput } from "../../shared/FormInput";
 import { PhoneInputList } from "../../shared/PhoneInputList";
@@ -8,13 +8,17 @@ import { useClientForm } from "../../../hooks/clients/useClientForm";
 
 interface AddClientFormProps {
   onClose: () => void;
+  onSuccess?: () => void;
 }
 
-export const AddClientForm: React.FC<AddClientFormProps> = ({ onClose }) => {
+export const AddClientForm: React.FC<AddClientFormProps> = ({
+  onClose,
+  onSuccess,
+}) => {
   const {
     formData,
     setFormData,
-    handlePhoneChange,
+    handlePhoneChange: originalHandlePhoneChange,
     addPhone,
     removePhone,
     setPrimaryPhone,
@@ -25,16 +29,47 @@ export const AddClientForm: React.FC<AddClientFormProps> = ({ onClose }) => {
   } = useClientForm();
 
   const { createClient } = useClient();
+  const [phoneErrors, setPhoneErrors] = useState<Record<string, string>>({});
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handlePhoneChange = (index: number, value: string) => {
+    const oldNumber = formData.phones[index]?.number;
+    if (oldNumber && phoneErrors[oldNumber]) {
+      setPhoneErrors((prev) => {
+        const newErrors = { ...prev };
+        delete newErrors[oldNumber];
+        return newErrors;
+      });
+    }
+    originalHandlePhoneChange(index, value);
+  };
+
+  const extractPhoneFromError = (errorMessage: string): string | null => {
+    const match = errorMessage.match(/Phone number (\+?\d+)/);
+    return match ? match[1] : null;
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    createClient(formData);
-    window.location.reload(); //TEMPORARY SOLUTION
-    onClose();
+    setPhoneErrors({});
+
+    try {
+      await createClient(formData);
+      onSuccess?.();
+      onClose();
+    } catch (err: any) {
+      const errorMessage = err?.message || "";
+      const phoneNumber = extractPhoneFromError(errorMessage);
+
+      if (phoneNumber) {
+        setPhoneErrors({
+          [phoneNumber]: "Цей номер вже використовується іншим клієнтом",
+        });
+      }
+    }
   };
 
   return (
@@ -65,6 +100,7 @@ export const AddClientForm: React.FC<AddClientFormProps> = ({ onClose }) => {
         onSetPrimary={setPrimaryPhone}
         onRemove={removePhone}
         onAdd={addPhone}
+        errors={phoneErrors}
       />
 
       <AddressInputList
