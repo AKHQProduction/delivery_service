@@ -3,11 +3,12 @@ import { FormWrapper } from "../../shared/FormWrapper";
 import { FormInput } from "../../shared/FormInput";
 import { FormSelect } from "../../shared/FormSelect";
 import { type Product } from "../../../types/entities/Product";
+import { categoryMap } from "../../../utils/dataMap";
 
 interface EditProductFormProps {
   product: Product;
   onClose: () => void;
-  onSave: (updatedProduct: Product) => void;
+  onSave: (updatedProduct: Product) => Promise<void> | void;
 }
 
 export const EditProductForm: React.FC<EditProductFormProps> = ({
@@ -17,7 +18,7 @@ export const EditProductForm: React.FC<EditProductFormProps> = ({
 }) => {
   const [formData, setFormData] = useState({
     name: product.name,
-    category: product.category,
+    category: categoryMap[product.category] || product.category,
     price: product.price.toString(),
   });
 
@@ -38,7 +39,6 @@ export const EditProductForm: React.FC<EditProductFormProps> = ({
     };
 
     onSave(updatedProduct);
-    onClose();
   };
 
   const categoryOptions = [

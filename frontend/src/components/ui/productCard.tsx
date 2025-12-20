@@ -16,9 +16,7 @@ export const ProductCard: React.FC<ProductCardProps> = ({
       onClick={() => onClick(product)}
       className="bg-white rounded-2xl p-5 shadow-sm cursor-pointer hover:shadow-md transition-shadow"
     >
-      <h3 className="text-lg font-semibold mb-1">
-        {categoryMap[product.category]} "{product.name}"
-      </h3>
+      <h3 className="text-lg font-semibold mb-1">{product.name}</h3>
       <p className="text-sm text-gray-500 mb-3">
         Категорія: {categoryMap[product.category]}
       </p>

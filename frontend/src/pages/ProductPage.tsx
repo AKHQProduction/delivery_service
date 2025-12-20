@@ -32,15 +32,20 @@ export const ProductPage = () => {
     setTimeout(() => setSelectedProduct(null), 300);
   };
 
-  const handleSave = (updatedProduct: Product) => {
+  const handleSave = async (updatedProduct: Product) => {
     const reverseCategory = reverseCategoryMap[updatedProduct.category];
-    updateProduct(
+    await updateProduct(
       updatedProduct.product_id,
       updatedProduct.name,
       updatedProduct.price,
       reverseCategory
     );
-    window.location.reload(); //TEMPORARY SOLUTION
+    await getProducts();
+    // Update selectedProduct with the new data (use backend category format)
+    setSelectedProduct({
+      ...updatedProduct,
+      category: reverseCategory,
+    });
   };
 
   const handleDelete = () => {
