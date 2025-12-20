@@ -10,6 +10,7 @@ from backend.application.vars import (
     Empty,
     OrderId,
     OrderItemId,
+    ProductId,
     ShopId,
     TimePreference,
 )
@@ -28,10 +29,11 @@ class DeliveryAddressDTO:
 
 @dataclass(frozen=True)
 class OrderItemDTO:
-    name: str
     quantity: int
-    price_per_item: int
+    name: str | None = None
+    price_per_item: int | None = None
     id: OrderItemId | None = None
+    product_id: ProductId | None = None
 
 
 @dataclass(frozen=True)
@@ -65,6 +67,7 @@ class OrderItemReadModel:
     name: str
     quantity: int
     price_per_item: int
+    product_id: ProductId | None = None
 
 
 @dataclass(frozen=True)
@@ -88,14 +91,6 @@ class GetOrdersFilters:
 
 
 @dataclass(frozen=True)
-class UpdateOrderItemDTO:
-    name: str
-    quantity: int
-    price_per_item: int
-    id: OrderItemId | None = None
-
-
-@dataclass(frozen=True)
 class UpdateOrderDTO:
     order_id: OrderId
     client_id: ClientId | None = None
@@ -104,9 +99,7 @@ class UpdateOrderDTO:
     delivery_phone: str | None = None
     delivery_address: DeliveryAddressDTO | None = None
     comment: str | Empty | None = None
-    items_to_add: list[UpdateOrderItemDTO] | None = None
-    items_to_update: list[UpdateOrderItemDTO] | None = None
-    items_to_delete: list[OrderItemId] | None = None
+    items: list[OrderItemDTO] | None = None
 
 
 class OrderGateway(Protocol):
@@ -140,4 +133,8 @@ class OrderGateway(Protocol):
 
     @abstractmethod
     async def update(self, dto: UpdateOrderDTO) -> None:
+        raise NotImplementedError
+
+    @abstractmethod
+    async def load_items(self, order_id: OrderId) -> list[OrderItemReadModel]:
         raise NotImplementedError

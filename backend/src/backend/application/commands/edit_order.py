@@ -6,6 +6,7 @@ from backend.application.errors import (
     AccessDeniedError,
     DateMustBeGreaterThanError,
     EntityNotFoundError,
+    ProductIdRequiredForNewItemError,
 )
 from backend.application.interfaces import (
     ClientGateway,
@@ -17,8 +18,8 @@ from backend.application.interfaces.gateways.order_gateway import (
     DeliveryAddressDTO,
     Order,
     OrderGateway,
+    OrderItemDTO,
     UpdateOrderDTO,
-    UpdateOrderItemDTO,
 )
 from backend.application.interfaces.gateways.product_gateway import (
     ProductGateway,
@@ -42,17 +43,14 @@ logger = logging.getLogger(__name__)
 
 
 @dataclass(frozen=True)
-class NewItemDTO:
-    product_id: ProductId
+class OrderItem:
     quantity: int
+    product_id: ProductId | None = None
+    id: OrderItemId | None = None
 
-
-@dataclass(frozen=True)
-class ItemToUpdateDTO:
-    item_id: OrderItemId
-    quantity: int | None = None
-    price_per_item: int | None = None
-    name: str | None = None
+    def __post_init__(self) -> None:
+        if self.id is None and self.product_id is None:
+            raise ProductIdRequiredForNewItemError
 
 
 @dataclass(frozen=True)
@@ -64,9 +62,7 @@ class UpdateOrderCommand:
     address_id: AddressId | None = None
     phone_id: PhoneId | None = None
     comment: str | Empty | None = None
-    items_to_add: list[NewItemDTO] | None = None
-    items_to_update: list[ItemToUpdateDTO] | None = None
-    items_to_delete: list[OrderItemId] | None = None
+    items: list[OrderItem] | None = None
 
     def __post_init__(self) -> None:
         if self.delivery_date is not None:
@@ -135,12 +131,6 @@ class UpdateOrderCommandHandler:
     async def _build_update_dto(
         self, command: UpdateOrderCommand, order: Order
     ) -> UpdateOrderDTO:
-        client_id: ClientId | None = None
-        delivery_phone: str | None = None
-        delivery_address: DeliveryAddressDTO | None = None
-        items_to_add: list[UpdateOrderItemDTO] | None = None
-        items_to_update: list[UpdateOrderItemDTO] | None = None
-
         # Handle client/phone/address changes
         (
             client_id,
@@ -148,24 +138,13 @@ class UpdateOrderCommandHandler:
             delivery_address,
         ) = await self._process_client_changes(command, order)
 
-        # Handle items to add
-        if command.items_to_add:
-            items_to_add = await self._process_items_to_add(
-                command.items_to_add
+        # Handle items replacement
+        items: list[OrderItemDTO] | None = None
+        if command.items is not None:
+            items = await self._process_items(
+                command.order_id,
+                command.items,  # type: ignore[arg-type]
             )
-
-        # Handle items to update
-        if command.items_to_update:
-            items_to_update = [
-                UpdateOrderItemDTO(
-                    id=item_dto.item_id,
-                    name=item_dto.name or "",
-                    quantity=item_dto.quantity or 0,
-                    price_per_item=item_dto.price_per_item or 0,
-                )
-                for item_dto in command.items_to_update
-            ]
-
         return UpdateOrderDTO(
             order_id=command.order_id,
             client_id=client_id,
@@ -174,9 +153,7 @@ class UpdateOrderCommandHandler:
             delivery_phone=delivery_phone,
             delivery_address=delivery_address,
             comment=command.comment,
-            items_to_add=items_to_add,
-            items_to_update=items_to_update,
-            items_to_delete=command.items_to_delete,
+            items=items,
         )
 
     async def _process_client_changes(
@@ -224,7 +201,8 @@ class UpdateOrderCommandHandler:
 
         return client_id, delivery_phone, delivery_address
 
-    def _get_phone_number(self, client: ClientDM, phone_id: PhoneId) -> str:
+    @staticmethod
+    def _get_phone_number(client: ClientDM, phone_id: PhoneId) -> str:
         phone = next(
             (p for p in client.phones if p.id == phone_id),
             None,
@@ -234,8 +212,9 @@ class UpdateOrderCommandHandler:
             raise EntityNotFoundError(entity="Phone")
         return phone.number
 
+    @staticmethod
     def _get_delivery_address(
-        self, client: ClientDM, address_id: AddressId
+        client: ClientDM, address_id: AddressId
     ) -> DeliveryAddressDTO:
         address = next(
             (a for a in client.addresses if a.id == address_id),
@@ -254,25 +233,51 @@ class UpdateOrderCommandHandler:
             intercom=address.intercom,
         )
 
-    async def _process_items_to_add(
-        self, items: list[NewItemDTO]
-    ) -> list[UpdateOrderItemDTO]:
-        result: list[UpdateOrderItemDTO] = []
-        for product_dto in items:
-            product = await self._product_gateway.load(product_dto.product_id)
-            if not product:
-                logger.warning(
-                    "Product not found: product_id=%s",
-                    product_dto.product_id,
-                )
-                raise EntityNotFoundError(
-                    entity="Product", entity_id=product_dto.product_id
-                )
+    async def _process_items(
+        self, order_id: OrderId, items: list[OrderItem]
+    ) -> list[OrderItemDTO]:
+        # Load existing items to get their product_id from DB
+        existing_items = await self._order_gateway.load_items(order_id)
+        existing_items_map = {item.id: item for item in existing_items}
+
+        result: list[OrderItemDTO] = []
+        for item in items:
+            product_id_to_use: ProductId | None = None
+            name: str | None = None
+            price_per_item: int | None = None
+
+            # Determine which product_id to use
+            if item.product_id is not None:
+                # Explicitly passed product_id - use it
+                product_id_to_use = item.product_id
+            elif item.id is not None:
+                # Existing item - check if it has product_id in DB
+                existing_item = existing_items_map.get(item.id)
+                if existing_item and existing_item.product_id:
+                    product_id_to_use = existing_item.product_id
+
+            # If we have a product_id, load current price
+            if product_id_to_use is not None:
+                product = await self._product_gateway.load(product_id_to_use)
+                if not product:
+                    logger.warning(
+                        "Product not found: product_id=%s",
+                        product_id_to_use,
+                    )
+                    raise EntityNotFoundError(
+                        entity="Product", entity_id=product_id_to_use
+                    )
+                name = product.name
+                price_per_item = product.price
+
             result.append(
-                UpdateOrderItemDTO(
-                    name=product.name,
-                    quantity=product_dto.quantity,
-                    price_per_item=product.price,
+                OrderItemDTO(
+                    quantity=item.quantity,
+                    name=name,
+                    price_per_item=price_per_item,
+                    id=item.id,
+                    product_id=product_id_to_use,
                 )
             )
+
         return result

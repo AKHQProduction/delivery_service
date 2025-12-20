@@ -88,3 +88,9 @@ class DateMustBeGreaterThanError(ValidationError):
     @property
     def message(self) -> str:
         return f"Date must be greater than {self._greater_than}"
+
+
+class ProductIdRequiredForNewItemError(ValidationError):
+    @property
+    def message(self) -> str:
+        return "product_id is required for new items (items without id)"
