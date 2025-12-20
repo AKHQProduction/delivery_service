@@ -102,7 +102,7 @@ export const ClientDetailModal: React.FC<ClientDetailModalProps> = ({
             <ItemElement
               key={index}
               descriptionText={`Адреса ${index + 1}`}
-              elementText={address.street + ", " + address.house + ", " + address.apartment + ", " + address.entrance + ", " + address.floor + ", " + address.intercom}
+              elementText={`${address.street} ${address.house}`}
             />
           ))}
         </div>
