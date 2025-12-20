@@ -401,3 +401,127 @@ async def test_order_items_linked_to_order_via_relationship(
 
     assert len(items) == 1
     assert items[0].order_id == order_id
+
+
+@pytest.mark.asyncio()
+async def test_create_order_with_product_id(
+    session: AsyncSession,
+    order_gateway: SQLAlchemyOrderGateway,
+    create_shop,
+    setup_test_client,
+    setup_test_product,
+) -> None:
+    shop_id = await create_shop()
+    client_id = await setup_test_client(shop_id)
+    product_id, _, _, _ = await setup_test_product(shop_id)
+    order_id = OrderId(uuid.uuid4())
+    delivery_date = datetime.now(UTC).date() + timedelta(days=1)
+
+    delivery_address = DeliveryAddressDTO(
+        street="Хрещатик",
+        house="10",
+        address_type=AddressType.APARTMENT,
+        apartment="5",
+    )
+
+    order_item = OrderItemDTO(
+        name="Вода 19л",
+        quantity=2,
+        price_per_item=100,
+        product_id=product_id,
+    )
+
+    dto = CreateOrderDTO(
+        order_id=order_id,
+        shop_id=shop_id,
+        client_id=client_id,
+        delivery_date=delivery_date,
+        time_preference=TimePreference.FIRST_HALF,
+        delivery_phone="+380501234567",
+        delivery_address=delivery_address,
+        order_items=[order_item],
+        comment=None,
+    )
+
+    await order_gateway.create_order(dto)
+    await session.flush()
+
+    result = await session.execute(
+        select(OrderItem).where(OrderItem.order_id == order_id)
+    )
+    items = result.scalars().all()
+
+    assert len(items) == 1
+    assert items[0].product_id == product_id
+
+
+@pytest.mark.asyncio()
+async def test_load_items_returns_order_items(
+    session: AsyncSession,
+    order_gateway: SQLAlchemyOrderGateway,
+    create_shop,
+    setup_test_client,
+    setup_test_product,
+) -> None:
+    shop_id = await create_shop()
+    client_id = await setup_test_client(shop_id)
+    product_id, _, _, _ = await setup_test_product(shop_id)
+    order_id = OrderId(uuid.uuid4())
+    delivery_date = datetime.now(UTC).date() + timedelta(days=1)
+
+    delivery_address = DeliveryAddressDTO(
+        street="Хрещатик",
+        house="10",
+        address_type=AddressType.APARTMENT,
+        apartment="5",
+    )
+
+    order_items = [
+        OrderItemDTO(
+            name="Вода 19л",
+            quantity=2,
+            price_per_item=100,
+            product_id=product_id,
+        ),
+        OrderItemDTO(
+            name="Помпа", quantity=1, price_per_item=50, product_id=None
+        ),
+    ]
+
+    dto = CreateOrderDTO(
+        order_id=order_id,
+        shop_id=shop_id,
+        client_id=client_id,
+        delivery_date=delivery_date,
+        time_preference=TimePreference.FIRST_HALF,
+        delivery_phone="+380501234567",
+        delivery_address=delivery_address,
+        order_items=order_items,
+        comment=None,
+    )
+
+    await order_gateway.create_order(dto)
+    await session.flush()
+
+    items = await order_gateway.load_items(order_id)
+
+    assert len(items) == 2
+    assert items[0].name == "Вода 19л"
+    assert items[0].quantity == 2
+    assert items[0].price_per_item == 100
+    assert items[0].product_id == product_id
+    assert items[1].name == "Помпа"
+    assert items[1].quantity == 1
+    assert items[1].price_per_item == 50
+    assert items[1].product_id is None
+
+
+@pytest.mark.asyncio()
+async def test_load_items_returns_empty_list_for_nonexistent_order(
+    order_gateway: SQLAlchemyOrderGateway,
+) -> None:
+    non_existent_order_id = OrderId(uuid.uuid4())
+
+    items = await order_gateway.load_items(non_existent_order_id)
+
+    assert items == []

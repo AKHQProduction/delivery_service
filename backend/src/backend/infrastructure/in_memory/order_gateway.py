@@ -102,9 +102,10 @@ class InMemoryOrderGateway(OrderGateway):
             items=[
                 OrderItemReadModel(
                     id=item.id or idx + 1,
-                    name=item.name,
+                    name=item.name or "",
                     quantity=item.quantity,
-                    price_per_item=item.price_per_item,
+                    price_per_item=item.price_per_item or 0,
+                    product_id=item.product_id,
                 )
                 for idx, item in enumerate(dto.order_items)
             ],
@@ -115,93 +116,81 @@ class InMemoryOrderGateway(OrderGateway):
         if not existing:
             return
 
-        new_client_id = (
-            dto.client_id if dto.client_id is not None else existing.client_id
-        )
-        new_delivery_date = (
-            dto.delivery_date
-            if dto.delivery_date is not None
-            else existing.delivery_date
-        )
-        new_time_preference = (
-            dto.time_preference
-            if dto.time_preference is not None
-            else existing.time_preference
-        )
-        new_delivery_phone = (
-            dto.delivery_phone
-            if dto.delivery_phone is not None
-            else existing.delivery_phone
-        )
-        new_delivery_address = (
-            dto.delivery_address
-            if dto.delivery_address is not None
-            else existing.delivery_address
-        )
-
-        if dto.comment is not None:
-            new_comment = None if dto.comment == Empty.EMPTY else dto.comment
-        else:
-            new_comment = existing.comment
-
-        # Process items
-        current_items = list(existing.order_items)
-
-        # Delete items
-        if dto.items_to_delete:
-            current_items = [
-                item
-                for item in current_items
-                if item.id not in dto.items_to_delete
-            ]
-
-        # Update existing items
-        if dto.items_to_update:
-            updated_items = []
-            for item in current_items:
-                update_item = next(
-                    (u for u in dto.items_to_update if u.id == item.id), None
-                )
-                if update_item:
-                    updated_items.append(
-                        OrderItemDTO(
-                            id=item.id,
-                            name=update_item.name or item.name,
-                            quantity=(update_item.quantity or item.quantity),
-                            price_per_item=(
-                                update_item.price_per_item
-                                or item.price_per_item
-                            ),
-                        )
-                    )
-                else:
-                    updated_items.append(item)
-            current_items = updated_items
-
-        # Add new items
-        if dto.items_to_add:
-            max_id = max((item.id or 0 for item in current_items), default=0)
-            for add_item in dto.items_to_add:
-                max_id += 1
-                current_items.append(
-                    OrderItemDTO(
-                        id=OrderItemId(max_id),
-                        name=add_item.name,
-                        quantity=add_item.quantity,
-                        price_per_item=add_item.price_per_item,
-                    )
-                )
+        comment = self._resolve_comment(dto.comment, existing.comment)
+        items = self._process_update_items(dto.items, existing.order_items)
 
         updated_order = CreateOrderDTO(
             order_id=existing.order_id,
             shop_id=existing.shop_id,
-            client_id=new_client_id,
-            delivery_date=new_delivery_date,
-            time_preference=new_time_preference,
-            delivery_phone=new_delivery_phone,
-            delivery_address=new_delivery_address,
-            order_items=current_items,
-            comment=new_comment,
+            client_id=dto.client_id or existing.client_id,
+            delivery_date=dto.delivery_date or existing.delivery_date,
+            time_preference=dto.time_preference or existing.time_preference,
+            delivery_phone=dto.delivery_phone or existing.delivery_phone,
+            delivery_address=dto.delivery_address or existing.delivery_address,
+            order_items=items,
+            comment=comment,
         )
 
         self.orders[dto.order_id] = updated_order
+
+    def _resolve_comment(
+        self, new_comment: str | Empty | None, existing_comment: str | None
+    ) -> str | None:
+        if new_comment is None:
+            return existing_comment
+        return None if new_comment == Empty.EMPTY else new_comment
+
+    def _process_update_items(
+        self,
+        new_items: list[OrderItemDTO] | None,
+        existing_items: list[OrderItemDTO],
+    ) -> list[OrderItemDTO]:
+        if new_items is None:
+            return list(existing_items)
+
+        existing_map = {i.id: i for i in existing_items if i.id is not None}
+        max_id = max((i.id or 0 for i in existing_items), default=0)
+        result: list[OrderItemDTO] = []
+
+        for item in new_items:
+            if item.id is not None:
+                existing = existing_map.get(item.id)
+                result.append(
+                    OrderItemDTO(
+                        quantity=item.quantity,
+                        name=item.name or (existing.name if existing else ""),
+                        price_per_item=item.price_per_item
+                        or (existing.price_per_item if existing else 0),
+                        id=item.id,
+                        product_id=item.product_id
+                        or (existing.product_id if existing else None),
+                    )
+                )
+            else:
+                max_id += 1
+                result.append(
+                    OrderItemDTO(
+                        quantity=item.quantity,
+                        name=item.name or "",
+                        price_per_item=item.price_per_item or 0,
+                        id=OrderItemId(max_id),
+                        product_id=item.product_id,
+                    )
+                )
+
+        return result
+
+    async def load_items(self, order_id: OrderId) -> list[OrderItemReadModel]:
+        dto = self.orders.get(order_id)
+        if not dto:
+            return []
+        return [
+            OrderItemReadModel(
+                id=item.id or idx + 1,
+                name=item.name or "",
+                quantity=item.quantity,
+                price_per_item=item.price_per_item or 0,
+                product_id=item.product_id,
+            )
+            for idx, item in enumerate(dto.order_items)
+        ]

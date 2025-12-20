@@ -57,6 +57,7 @@ def upgrade() -> None:
             "price_per_item", sa.Numeric(precision=10, scale=2), nullable=False
         ),
         sa.Column("order_id", sa.UUID(), nullable=False),
+        sa.Column("product_id", sa.UUID(), nullable=True),
         sa.Column(
             "created_at",
             sa.TIMESTAMP(),
@@ -71,6 +72,9 @@ def upgrade() -> None:
         ),
         sa.ForeignKeyConstraint(
             ["order_id"], ["orders.id"], ondelete="CASCADE"
+        ),
+        sa.ForeignKeyConstraint(
+            ["product_id"], ["products.id"], ondelete="SET NULL"
         ),
         sa.PrimaryKeyConstraint("id"),
     )

@@ -4,8 +4,7 @@ from datetime import UTC, datetime, timedelta
 import pytest
 
 from backend.application.commands.edit_order import (
-    ItemToUpdateDTO,
-    NewItemDTO,
+    OrderItem,
     UpdateOrderCommand,
     UpdateOrderCommandHandler,
 )
@@ -96,6 +95,7 @@ def create_order_dto(
     shop_id: ShopId,
     client_id: ClientId | None = None,
     comment: str | None = "Initial comment",
+    product_id: ProductId | None = None,
 ) -> CreateOrderDTO:
     return CreateOrderDTO(
         order_id=order_id,
@@ -111,7 +111,11 @@ def create_order_dto(
         ),
         order_items=[
             OrderItemDTO(
-                id=1, name="Test Product", quantity=1, price_per_item=100
+                id=1,
+                name="Test Product",
+                quantity=1,
+                price_per_item=100,
+                product_id=product_id,
             )
         ],
         comment=comment,
@@ -345,7 +349,7 @@ async def test_update_order_change_address(make_handler) -> None:
 
 
 @pytest.mark.asyncio()
-async def test_update_order_add_items(make_handler) -> None:
+async def test_update_order_replace_items(make_handler) -> None:
     shop_id = ShopId(uuid.uuid4())
     handler, _, _, product_gateway, order_gateway, tr_manager = make_handler(
         shop_id=shop_id
@@ -365,14 +369,14 @@ async def test_update_order_add_items(make_handler) -> None:
 
     command = UpdateOrderCommand(
         order_id=order_id,
-        items_to_add=[NewItemDTO(product_id=product_id, quantity=3)],
+        items=[OrderItem(product_id=product_id, quantity=3)],
     )
 
     await handler.handle(command)
 
     updated_order = order_gateway.orders[order_id]
-    assert len(updated_order.order_items) == 2
-    new_item = updated_order.order_items[1]
+    assert len(updated_order.order_items) == 1
+    new_item = updated_order.order_items[0]
     assert new_item.name == "New Product"
     assert new_item.quantity == 3
     assert new_item.price_per_item == 200
@@ -380,33 +384,54 @@ async def test_update_order_add_items(make_handler) -> None:
 
 
 @pytest.mark.asyncio()
-async def test_update_order_update_items(make_handler) -> None:
+async def test_update_order_keep_existing_item_and_add_new(
+    make_handler,
+) -> None:
     shop_id = ShopId(uuid.uuid4())
-    handler, _, _, _, order_gateway, tr_manager = make_handler(shop_id=shop_id)
+    handler, _, _, product_gateway, order_gateway, tr_manager = make_handler(
+        shop_id=shop_id
+    )
+
+    new_product_id = ProductId(uuid.uuid4())
+    product_gateway.products[new_product_id] = Product(
+        product_id=new_product_id,
+        shop_id=shop_id,
+        name="New Product",
+        price=200,
+        category=ProductCategory.WATER,
+    )
 
     order_id = OrderId(uuid.uuid4())
     await order_gateway.create_order(create_order_dto(order_id, shop_id))
 
+    # Keep existing item (id + quantity), add new item (product_id required)
     command = UpdateOrderCommand(
         order_id=order_id,
-        items_to_update=[
-            ItemToUpdateDTO(
-                item_id=OrderItemId(1), quantity=10, price_per_item=150
-            )
+        items=[
+            OrderItem(quantity=5, id=OrderItemId(1)),
+            OrderItem(product_id=new_product_id, quantity=3),
         ],
     )
 
     await handler.handle(command)
 
     updated_order = order_gateway.orders[order_id]
-    item = updated_order.order_items[0]
-    assert item.quantity == 10
-    assert item.price_per_item == 150
+    assert len(updated_order.order_items) == 2
+
+    existing_item = updated_order.order_items[0]
+    assert existing_item.id == OrderItemId(1)
+    assert existing_item.quantity == 5
+
+    new_item = updated_order.order_items[1]
+    assert new_item.name == "New Product"
+    assert new_item.quantity == 3
     assert tr_manager.committed
 
 
 @pytest.mark.asyncio()
-async def test_update_order_delete_items(make_handler) -> None:
+async def test_update_order_remove_items_by_not_including(
+    make_handler,
+) -> None:
     shop_id = ShopId(uuid.uuid4())
     handler, _, _, _, order_gateway, tr_manager = make_handler(shop_id=shop_id)
 
@@ -425,13 +450,13 @@ async def test_update_order_delete_items(make_handler) -> None:
         ),
         order_items=[
             OrderItemDTO(
-                id=1, name="Product 1", quantity=1, price_per_item=100
+                quantity=1, name="Product 1", price_per_item=100, id=1
             ),
             OrderItemDTO(
-                id=2, name="Product 2", quantity=2, price_per_item=200
+                quantity=2, name="Product 2", price_per_item=200, id=2
             ),
             OrderItemDTO(
-                id=3, name="Product 3", quantity=3, price_per_item=300
+                quantity=3, name="Product 3", price_per_item=300, id=3
             ),
         ],
         comment=None,
@@ -440,15 +465,17 @@ async def test_update_order_delete_items(make_handler) -> None:
 
     command = UpdateOrderCommand(
         order_id=order_id,
-        items_to_delete=[OrderItemId(2)],
+        items=[
+            OrderItem(quantity=5, id=OrderItemId(1)),
+        ],
     )
 
     await handler.handle(command)
 
     updated_order = order_gateway.orders[order_id]
-    assert len(updated_order.order_items) == 2
-    item_ids = [item.id for item in updated_order.order_items]
-    assert OrderItemId(2) not in item_ids
+    assert len(updated_order.order_items) == 1
+    assert updated_order.order_items[0].id == OrderItemId(1)
+    assert updated_order.order_items[0].quantity == 5
     assert tr_manager.committed
 
 
@@ -597,9 +624,7 @@ async def test_update_order_product_not_found(make_handler) -> None:
     non_existent_product_id = ProductId(uuid.uuid4())
     command = UpdateOrderCommand(
         order_id=order_id,
-        items_to_add=[
-            NewItemDTO(product_id=non_existent_product_id, quantity=1)
-        ],
+        items=[OrderItem(product_id=non_existent_product_id, quantity=1)],
     )
 
     with pytest.raises(EntityNotFoundError) as exc_info:
@@ -699,4 +724,138 @@ async def test_update_order_no_changes(make_handler) -> None:
     assert updated_order.delivery_date == original_dto.delivery_date
     assert updated_order.time_preference == original_dto.time_preference
     assert updated_order.comment == original_dto.comment
+    assert tr_manager.committed
+
+
+@pytest.mark.asyncio()
+async def test_update_item_quantity_auto_fetches_current_price(
+    make_handler,
+) -> None:
+    """Item with product_id in DB auto-fetches current price on update."""
+    shop_id = ShopId(uuid.uuid4())
+    handler, _, _, product_gateway, order_gateway, tr_manager = make_handler(
+        shop_id=shop_id
+    )
+
+    # Create product with initial price
+    product_id = ProductId(uuid.uuid4())
+    product_gateway.products[product_id] = Product(
+        product_id=product_id,
+        shop_id=shop_id,
+        name="Вода 19л",
+        price=100,
+        category=ProductCategory.WATER,
+    )
+
+    # Create order with product_id linked
+    order_id = OrderId(uuid.uuid4())
+    await order_gateway.create_order(
+        create_order_dto(order_id, shop_id, product_id=product_id)
+    )
+
+    # Change product price
+    product_gateway.products[product_id] = Product(
+        product_id=product_id,
+        shop_id=shop_id,
+        name="Вода 19л",
+        price=150,  # New price
+        category=ProductCategory.WATER,
+    )
+
+    # Update only quantity, no product_id passed
+    command = UpdateOrderCommand(
+        order_id=order_id,
+        items=[OrderItem(quantity=5, id=OrderItemId(1))],
+    )
+
+    await handler.handle(command)
+
+    updated_order = order_gateway.orders[order_id]
+    item = updated_order.order_items[0]
+    assert item.quantity == 5
+    assert item.price_per_item == 150  # Auto-updated to current price
+    assert item.product_id == product_id
+    assert tr_manager.committed
+
+
+@pytest.mark.asyncio()
+async def test_update_old_item_without_product_id_keeps_old_price(
+    make_handler,
+) -> None:
+    """Old items without product_id keep their existing price."""
+    shop_id = ShopId(uuid.uuid4())
+    handler, _, _, _, order_gateway, tr_manager = make_handler(shop_id=shop_id)
+
+    # Create order without product_id (legacy order)
+    order_id = OrderId(uuid.uuid4())
+    await order_gateway.create_order(
+        create_order_dto(order_id, shop_id, product_id=None)
+    )
+
+    # Update only quantity
+    command = UpdateOrderCommand(
+        order_id=order_id,
+        items=[OrderItem(quantity=10, id=OrderItemId(1))],
+    )
+
+    await handler.handle(command)
+
+    updated_order = order_gateway.orders[order_id]
+    item = updated_order.order_items[0]
+    assert item.quantity == 10
+    assert item.price_per_item == 100  # Kept old price
+    assert item.product_id is None
+    assert tr_manager.committed
+
+
+@pytest.mark.asyncio()
+async def test_update_item_with_explicit_product_id(make_handler) -> None:
+    """When product_id is explicitly passed, use that product's price."""
+    shop_id = ShopId(uuid.uuid4())
+    handler, _, _, product_gateway, order_gateway, tr_manager = make_handler(
+        shop_id=shop_id
+    )
+
+    # Create original product
+    original_product_id = ProductId(uuid.uuid4())
+    product_gateway.products[original_product_id] = Product(
+        product_id=original_product_id,
+        shop_id=shop_id,
+        name="Вода 19л",
+        price=100,
+        category=ProductCategory.WATER,
+    )
+
+    # Create new product
+    new_product_id = ProductId(uuid.uuid4())
+    product_gateway.products[new_product_id] = Product(
+        product_id=new_product_id,
+        shop_id=shop_id,
+        name="Вода 12л",
+        price=80,
+        category=ProductCategory.WATER,
+    )
+
+    # Create order with original product
+    order_id = OrderId(uuid.uuid4())
+    await order_gateway.create_order(
+        create_order_dto(order_id, shop_id, product_id=original_product_id)
+    )
+
+    # Update with new product_id
+    command = UpdateOrderCommand(
+        order_id=order_id,
+        items=[
+            OrderItem(quantity=2, id=OrderItemId(1), product_id=new_product_id)
+        ],
+    )
+
+    await handler.handle(command)
+
+    updated_order = order_gateway.orders[order_id]
+    item = updated_order.order_items[0]
+    assert item.quantity == 2
+    assert item.name == "Вода 12л"
+    assert item.price_per_item == 80
+    assert item.product_id == new_product_id
     assert tr_manager.committed

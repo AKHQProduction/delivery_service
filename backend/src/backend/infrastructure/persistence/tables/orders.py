@@ -62,6 +62,9 @@ class OrderItem(Base, CreatedAt, UpdatedAt):
     order_id: Mapped[uuid.UUID] = mapped_column(
         sa.ForeignKey("orders.id", ondelete="CASCADE"), nullable=False
     )
+    product_id: Mapped[uuid.UUID | None] = mapped_column(
+        sa.ForeignKey("products.id", ondelete="SET NULL"), nullable=True
+    )
 
     order: Mapped["Order"] = relationship(back_populates="items")
 

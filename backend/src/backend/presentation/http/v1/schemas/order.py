@@ -13,16 +13,10 @@ from backend.application.vars import (
 )
 
 
-class NewItemSchema(BaseModel):
-    product_id: ProductId
+class OrderItemSchema(BaseModel):
     quantity: int
-
-
-class ItemToUpdateSchema(BaseModel):
-    item_id: OrderItemId
-    quantity: int | None = None
-    price_per_item: int | None = None
-    name: str | None = None
+    product_id: ProductId | None = None
+    id: OrderItemId | None = None
 
 
 class UpdateOrderSchema(BaseModel):
@@ -32,6 +26,4 @@ class UpdateOrderSchema(BaseModel):
     address_id: AddressId | None = None
     phone_id: PhoneId | None = None
     comment: str | Empty | None = None
-    items_to_add: list[NewItemSchema] | None = None
-    items_to_update: list[ItemToUpdateSchema] | None = None
-    items_to_delete: list[OrderItemId] | None = None
+    items: list[OrderItemSchema] | None = None
