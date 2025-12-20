@@ -93,10 +93,7 @@ export const OrdersPage = () => {
   };
 
   const handleDelete = async () => {
-    if (
-      selectedOrder &&
-      confirm("Ви впевнені, що хочете видалити це замовлення?")
-    ) {
+    if (selectedOrder) {
       await deleteOrder(selectedOrder.order_id);
       handleCloseModal();
       getOrders();
