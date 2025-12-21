@@ -95,7 +95,7 @@ export const ClientsPage = () => {
   };
 
   const handleSave = async () => {
-    const updatedClients = await getClients();
+    const updatedClients = await getClients(searchTerm);
     if (selectedClient) {
       const updated = updatedClients.find(
         (c: Client) => c.client_id === selectedClient.client_id
@@ -110,7 +110,7 @@ export const ClientsPage = () => {
     if (selectedClient) {
       await deleteClient(selectedClient.client_id);
       handleCloseModal();
-      getClients();
+      getClients(searchTerm);
     }
   };
 

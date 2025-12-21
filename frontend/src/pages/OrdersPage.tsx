@@ -111,14 +111,13 @@ export const OrdersPage = () => {
     if (selectedOrder) {
       await deleteOrder(selectedOrder.order_id);
       handleCloseModal();
-      getOrders();
+      getOrders(searchTerm);
     }
   };
 
   const handleSave = async () => {
     const orderId = selectedOrder?.order_id;
-    const freshOrders = await getOrders();
-    // Update selectedOrder with fresh data
+    const freshOrders = await getOrders(searchTerm);
     if (orderId && freshOrders) {
       const updatedOrder = freshOrders.find((o: any) => o.order_id === orderId);
       if (updatedOrder) {

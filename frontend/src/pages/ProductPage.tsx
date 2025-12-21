@@ -103,7 +103,7 @@ export const ProductPage = () => {
       updatedProduct.price,
       reverseCategory
     );
-    await getProducts();
+    await getProducts(searchTerm);
     setSelectedProduct({
       ...updatedProduct,
       category: reverseCategory,
@@ -114,7 +114,7 @@ export const ProductPage = () => {
     if (selectedProduct) {
       await deleteProduct(selectedProduct.product_id);
       handleCloseModal();
-      getProducts();
+      getProducts(searchTerm);
     }
   };
 

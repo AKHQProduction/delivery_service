@@ -89,14 +89,14 @@ export const EmployeePage = () => {
       updatedEmployee.full_name,
       reverseRole
     );
-    await getEmployees();
+    await getEmployees(searchTerm);
   };
 
   const handleDelete = async () => {
     if (selectedEmployee) {
       await deleteEmployees(selectedEmployee.user_id);
       handleCloseModal();
-      getEmployees();
+      getEmployees(searchTerm);
     }
   };
 
