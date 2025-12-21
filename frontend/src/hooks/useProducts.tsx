@@ -22,11 +22,14 @@ export const useProducts = () => {
     setError(null);
     try {
       const newProduct = await createNewProduct(name, price, category);
-      setProducts((prevProducts) => [...prevProducts, newProduct]);
+      setProducts((prevProducts) => [newProduct, ...prevProducts]);
+      return newProduct;
     } catch (err) {
       setError("Не вдалося додати товар.");
+      throw err;
+    } finally {
+      setLoading(false);
     }
-    setLoading(false);
   };
 
   const getProducts = async (search: string = "") => {

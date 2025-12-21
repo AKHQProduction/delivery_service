@@ -6,6 +6,7 @@ import { ClientDetailModal } from "../components/modals/detailsModals/ClientDeta
 import { RightModal } from "../components/modals/RightModal";
 import { type Client } from "../types/entities/Client";
 import { useClient } from "../hooks/clients/useClients";
+import { getClientById } from "../services/api/clientApi";
 
 export const ClientsPage = () => {
   const [searchTerm, setSearchTerm] = useState("");
@@ -17,7 +18,22 @@ export const ClientsPage = () => {
   const loadMoreRef = useRef<HTMLDivElement | null>(null);
 
   useEffect(() => {
-    getClients();
+    const initClients = async () => {
+      await getClients();
+
+      const openClientId = sessionStorage.getItem("openClientId");
+      if (openClientId) {
+        try {
+          const client = await getClientById(openClientId);
+          setSelectedClient(client);
+          setIsModalOpen(true);
+        } catch (e) {
+          console.error("Failed to fetch client by ID");
+        }
+        sessionStorage.removeItem("openClientId");
+      }
+    };
+    initClients();
   }, []);
 
   useEffect(() => {
@@ -90,12 +106,12 @@ export const ClientsPage = () => {
     }
   };
 
-  const handleDelete = () => {
+  const handleDelete = async () => {
     if (selectedClient) {
-      deleteClient(selectedClient.client_id);
+      await deleteClient(selectedClient.client_id);
+      handleCloseModal();
+      getClients();
     }
-    window.location.reload();
-    handleCloseModal();
   };
 
   return (

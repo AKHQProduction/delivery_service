@@ -33,14 +33,36 @@ export const AddItemComponent = () => {
   const renderModalContent = () => {
     switch (currentConfig.component) {
       case "AddProductForm":
-        return <AddProductForm onClose={() => setIsModalOpen(false)} />;
+        return (
+          <AddProductForm
+            onClose={() => setIsModalOpen(false)}
+            onSuccess={(productId: any) => {
+              const id = typeof productId === "string" ? productId : productId?.product_id ?? productId?.id;
+              sessionStorage.setItem("openProductId", id);
+              window.location.reload();
+            }}
+          />
+        );
       case "AddClientForm":
-        return <AddClientForm onClose={() => setIsModalOpen(false)} />;
+        return (
+          <AddClientForm
+            onClose={() => setIsModalOpen(false)}
+            onSuccess={(clientData: any) => {
+              const id = typeof clientData === "string" ? clientData : clientData?.client_id ?? clientData?.id;
+              sessionStorage.setItem("openClientId", id);
+              window.location.reload();
+            }}
+          />
+        );
       case "AddOrderForm":
         return (
           <AddOrderForm
             onClose={() => setIsModalOpen(false)}
-            onSave={() => {
+            onSave={(orderData: any) => {
+              const id = typeof orderData === "string" ? orderData : orderData?.order_id ?? orderData?.id;
+              if (id) {
+                sessionStorage.setItem("openOrderId", id);
+              }
               setIsModalOpen(false);
               window.location.reload();
             }}

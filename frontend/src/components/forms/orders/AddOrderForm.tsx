@@ -12,7 +12,7 @@ import { type Client } from "../../../types/entities/Client";
 
 interface AddOrderFormProps {
   onClose: () => void;
-  onSave?: () => void;
+  onSave?: (order?: any) => void;
 }
 
 export const AddOrderForm: React.FC<AddOrderFormProps> = ({ onClose, onSave }) => {
@@ -68,7 +68,7 @@ export const AddOrderForm: React.FC<AddOrderFormProps> = ({ onClose, onSave }) =
 
     setIsSubmitting(true);
     try {
-      await createNewOrder({
+      const newOrder = await createNewOrder({
         client_id: formData.client?.client_id,
         products: formData.products.map((p) => ({
           product_id: p.product.product_id,
@@ -80,7 +80,7 @@ export const AddOrderForm: React.FC<AddOrderFormProps> = ({ onClose, onSave }) =
         time_preference: formData.deliveryTime,
         comment: formData.note,
       });
-      onSave ? onSave() : onClose();
+      onSave ? onSave(newOrder) : onClose();
     } catch (error) {
       console.error("Error creating order:", error);
       alert("Помилка при створенні замовлення");

@@ -53,6 +53,15 @@ export const deleteOrderById = async (orderId: string) => {
   }
 };
 
+export const getOrderById = async (orderId: string) => {
+  try {
+    const response = await api.get(`v1/orders/${orderId}`);
+    return response.data;
+  } catch (error) {
+    throw error;
+  }
+};
+
 export const exportOrdersPdf = async (deliveryDate: string) => {
   try {
     const response = await api.get(`v1/orders/export/pdf`, {

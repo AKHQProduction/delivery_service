@@ -45,6 +45,15 @@ export const deleteClientById = async (clientId: string) => {
   }
 };
 
+export const getClientById = async (clientId: string) => {
+  try {
+    const response = await api.get(`v1/clients/${clientId}`);
+    return response.data;
+  } catch (error) {
+    throw error;
+  }
+};
+
 export const getAllClients = async (
   full_name: string,
   custom_id: string,

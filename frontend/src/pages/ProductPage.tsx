@@ -5,6 +5,7 @@ import { ProductCard } from "../components/ui/productCard";
 import { ProductDetailModal } from "../components/modals/detailsModals/ProductDetailModal";
 import { RightModal } from "../components/modals/RightModal";
 import { useProducts } from "../hooks/useProducts";
+import { getProductById } from "../services/api/productApi";
 import { reverseCategoryMap } from "../utils/dataMap";
 import { type Product } from "../types/entities/Product";
 
@@ -18,7 +19,22 @@ export const ProductPage = () => {
   const loadMoreRef = useRef<HTMLDivElement | null>(null);
 
   useEffect(() => {
-    getProducts();
+    const initProducts = async () => {
+      await getProducts();
+
+      const openProductId = sessionStorage.getItem("openProductId");
+      if (openProductId) {
+        try {
+          const product = await getProductById(openProductId);
+          setSelectedProduct(product);
+          setIsModalOpen(true);
+        } catch (e) {
+          console.error("Failed to fetch product by ID");
+        }
+        sessionStorage.removeItem("openProductId");
+      }
+    };
+    initProducts();
   }, []);
 
   useEffect(() => {
@@ -94,11 +110,12 @@ export const ProductPage = () => {
     });
   };
 
-  const handleDelete = () => {
-    console.log("Delete product:", selectedProduct);
-    deleteProduct(selectedProduct!.product_id);
-    window.location.reload();
-    handleCloseModal();
+  const handleDelete = async () => {
+    if (selectedProduct) {
+      await deleteProduct(selectedProduct.product_id);
+      handleCloseModal();
+      getProducts();
+    }
   };
 
   return (

@@ -5,7 +5,7 @@ import { useOrders } from "../hooks/orders/useOrders";
 import { timeMap } from "../utils/dataMap";
 import { OrderDetailModal } from "../components/modals/detailsModals/OrderDetailModal";
 import { RightModal } from "../components/modals/RightModal";
-import { exportOrdersPdf } from "../services/api/ordersApi";
+import { exportOrdersPdf, getOrderById } from "../services/api/ordersApi";
 
 export const OrdersPage = () => {
   const [searchTerm, setSearchTerm] = useState("");
@@ -19,7 +19,22 @@ export const OrdersPage = () => {
   const loadMoreRef = useRef<HTMLDivElement | null>(null);
 
   useEffect(() => {
-    getOrders();
+    const initOrders = async () => {
+      await getOrders();
+
+      const openOrderId = sessionStorage.getItem("openOrderId");
+      if (openOrderId) {
+        try {
+          const order = await getOrderById(openOrderId);
+          setSelectedOrder(order);
+          setIsModalOpen(true);
+        } catch (e) {
+          console.error("Failed to fetch order by ID");
+        }
+        sessionStorage.removeItem("openOrderId");
+      }
+    };
+    initOrders();
   }, []);
 
   useEffect(() => {

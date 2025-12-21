@@ -82,21 +82,22 @@ export const EmployeePage = () => {
     setTimeout(() => setSelectedEmployee(null), 300);
   };
 
-  const handleSave = (updatedEmployee: Employee) => {
+  const handleSave = async (updatedEmployee: Employee) => {
     const reverseRole = reverseRoleMap[updatedEmployee.role];
-    updateEmployee(
+    await updateEmployee(
       updatedEmployee.user_id,
       updatedEmployee.full_name,
       reverseRole
     );
-    window.location.reload();
+    await getEmployees();
   };
 
-  const handleDelete = () => {
-    console.log("Delete employee:", selectedEmployee);
-    deleteEmployees(selectedEmployee!.user_id);
-    window.location.reload();
-    handleCloseModal();
+  const handleDelete = async () => {
+    if (selectedEmployee) {
+      await deleteEmployees(selectedEmployee.user_id);
+      handleCloseModal();
+      getEmployees();
+    }
   };
 
   return (

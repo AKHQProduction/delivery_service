@@ -3,12 +3,14 @@ import { FormWrapper } from "../../shared/FormWrapper";
 import { FormInput } from "../../shared/FormInput";
 import { FormSelect } from "../../shared/FormSelect";
 import { useProducts } from "../../../hooks/useProducts";
+import { type Product } from "../../../types/entities/Product";
 
 interface AddProductFormProps {
   onClose: () => void;
+  onSuccess?: (product: Product) => void;
 }
 
-export const AddProductForm: React.FC<AddProductFormProps> = ({ onClose }) => {
+export const AddProductForm: React.FC<AddProductFormProps> = ({ onClose, onSuccess }) => {
   const { addProduct } = useProducts();
 
   const [formData, setFormData] = useState({
@@ -26,13 +28,19 @@ export const AddProductForm: React.FC<AddProductFormProps> = ({ onClose }) => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    await addProduct(
-      formData.name,
-      parseFloat(formData.price),
-      formData.category
-    );
-    window.location.reload(); //TEMPORARY SOLUTION
-    onClose();
+    try {
+      const newProduct = await addProduct(
+        formData.name,
+        parseFloat(formData.price),
+        formData.category
+      );
+      if (onSuccess && newProduct) {
+        onSuccess(newProduct);
+      }
+      onClose();
+    } catch (error) {
+      console.error("Error creating product:", error);
+    }
   };
 
   const categoryOptions = [
