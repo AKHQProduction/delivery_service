@@ -179,7 +179,7 @@ export const OrderDetailModal = ({ order, onClose, onDelete, onSave }) => {
                 </svg>
               </div>
               <span className="text-gray-700 flex-1 leading-relaxed">
-                {order.delivery_address?.street}, {order.delivery_address?.house}
+                {order.delivery_address?.street} {order.delivery_address?.house}
               </span>
             </div>
           </div>

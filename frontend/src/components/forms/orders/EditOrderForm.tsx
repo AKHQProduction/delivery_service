@@ -523,7 +523,7 @@ export const EditOrderForm: React.FC<EditOrderFormProps> = ({
                     <option value="">Оберіть адресу...</option>
                     {selectedClient.addresses.map((addr) => (
                       <option key={addr.id} value={addr.id}>
-                        {addr.street}, {addr.house} {addr.is_primary ? "(основна)" : ""}
+                        {addr.street} {addr.house} {addr.is_primary ? "(основна)" : ""}
                       </option>
                     ))}
                   </select>
@@ -537,7 +537,7 @@ export const EditOrderForm: React.FC<EditOrderFormProps> = ({
                     <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
                   </svg>
                   {selectedClient.addresses?.[0]
-                    ? `${selectedClient.addresses[0].street}, ${selectedClient.addresses[0].house}`
+                    ? `${selectedClient.addresses[0].street} ${selectedClient.addresses[0].house}`
                     : "Немає адреси"}
                 </div>
               )}

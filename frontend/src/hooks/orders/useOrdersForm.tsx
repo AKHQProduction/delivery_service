@@ -281,7 +281,7 @@ export const useOrderForm = (options: UseOrderFormOptions = {}) => {
     if (!formData.deliveryAddress) return "";
 
     const addr = formData.deliveryAddress;
-    return `${addr.street || ""}, ${addr.house || ""}`.trim();
+    return `${addr.street || ""} ${addr.house || ""}`.trim();
   };
 
   const getAddressId = () => {
@@ -299,7 +299,6 @@ export const useOrderForm = (options: UseOrderFormOptions = {}) => {
     [clients]
   );
 
-  // Add newly created client to the top of the list and select it
   const addAndSelectNewClient = useCallback((client: Client) => {
     setNewlyCreatedClients((prev) => [client, ...prev.filter(c => c.client_id !== client.client_id)]);
     handleClientSelect(client);
