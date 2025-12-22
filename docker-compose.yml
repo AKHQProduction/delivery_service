@@ -85,7 +85,6 @@ services:
     volumes:
       - ./backend/src:/usr/src/app/src
 
-
   webapp:
     build:
       context: ./frontend
@@ -108,6 +107,7 @@ services:
     command: tunnel --no-autoupdate run --token ${CLOUDFLARE_TUNNEL_TOKEN}
     depends_on:
       - reverse-proxy
+
   reverse-proxy:
     depends_on:
       - webapp
