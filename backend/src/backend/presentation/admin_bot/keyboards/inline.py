@@ -11,7 +11,7 @@ def shop_kb() -> InlineKeyboardMarkup:
             [
                 InlineKeyboardButton(
                     text="⚙️ Панель",
-                    web_app=WebAppInfo(url="https://www.youtube.com"),
+                    web_app=WebAppInfo(url="https://kazinojo.net/dev"),
                 )
             ]
         ]

@@ -1,13 +1,18 @@
-import asyncio
 import logging
 
 from aiogram import Bot, Dispatcher
 from aiogram.client.default import DefaultBotProperties
+from aiogram.client.session.aiohttp import AiohttpSession
 from aiogram.enums import ParseMode
 from aiogram.fsm.storage.base import BaseStorage, DefaultKeyBuilder
 from aiogram.fsm.storage.memory import MemoryStorage, SimpleEventIsolation
 from aiogram.fsm.storage.redis import RedisStorage
+from aiogram.webhook.aiohttp_server import (
+    SimpleRequestHandler,
+    setup_application,
+)
 from aiogram_dialog import setup_dialogs
+from aiohttp import web
 from dishka.integrations.aiogram import setup_dishka
 
 from backend.bootstrap.config import Config
@@ -16,6 +21,14 @@ from backend.bootstrap.logger import setup_logging
 from backend.presentation.admin_bot import setup_all_admin_bot_handlers
 
 logger = logging.getLogger(__name__)
+
+
+async def on_startup(bot: Bot, config: Config) -> None:
+    await bot.delete_webhook(drop_pending_updates=True)
+    await bot.set_webhook(
+        f"{config.webhook_config.webhook_url}"
+        f"{config.webhook_config.webhook_path}"
+    )
 
 
 def get_storage(config: Config) -> BaseStorage:
@@ -29,12 +42,13 @@ def get_storage(config: Config) -> BaseStorage:
     return MemoryStorage()
 
 
-async def main() -> None:
+def main() -> None:
     config = Config()
     setup_logging(level="DEBUG" if config.app_config.debug else "INFO")
 
     bot = Bot(
         token=config.telegram_config.admin_token,
+        session=AiohttpSession(),
         default=DefaultBotProperties(parse_mode=ParseMode.HTML),
     )
     dp = Dispatcher(
@@ -44,14 +58,28 @@ async def main() -> None:
     setup_dishka(bot_container(config), dp, auto_inject=True)
     setup_all_admin_bot_handlers(dp)
     setup_dialogs(dp)
-    logger.debug("Setup admin bot")
 
-    await bot.delete_webhook(drop_pending_updates=False)
-    await dp.start_polling(bot)
+    dp.startup.register(on_startup)
+
+    app = web.Application()
+    webhook_requests_handler = SimpleRequestHandler(dispatcher=dp, bot=bot)
+    webhook_requests_handler.register(
+        app, path=config.webhook_config.webhook_path
+    )
+
+    # Mount dispatcher startup and shutdown hooks to aiohttp application
+    setup_application(app, dp, bot=bot, config=config, dp=dp)
+
+    logger.debug("Setup admin bot")
+    web.run_app(
+        app,
+        host=config.webhook_config.webhook_host,
+        port=config.webhook_config.webhook_port,
+    )
 
 
 if __name__ == "__main__":
     try:
-        asyncio.run(main())
+        main()
     except (KeyboardInterrupt, SystemExit):
         logger.info("The bot was turned off")

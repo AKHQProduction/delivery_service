@@ -47,6 +47,13 @@ class PostgresConfig(BaseModel):
         )
 
 
+class WebhookConfig(BaseModel):
+    webhook_url: str = Field(alias="WEBHOOK_URL")
+    webhook_path: str = Field(alias="WEBHOOK_PATH")
+    webhook_host: str = Field(alias="WEBHOOK_HOST")
+    webhook_port: int = Field(alias="WEBHOOK_PORT")
+
+
 class Config(BaseModel):
     def __init__(self) -> None:
         load_dotenv(
@@ -69,4 +76,8 @@ class Config(BaseModel):
 
     postgres_config: PostgresConfig = Field(
         default_factory=lambda: PostgresConfig.model_validate(env)
+    )
+
+    webhook_config: WebhookConfig = Field(
+        default_factory=lambda: WebhookConfig.model_validate(env)
     )
