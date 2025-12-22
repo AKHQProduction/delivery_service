@@ -4,7 +4,7 @@ import { timeMap } from "../../../utils/dataMap";
 import { useState } from "react";
 import { EditOrderForm } from "../../forms/orders/EditOrderForm";
 
-export const OrderDetailModal = ({ order, onClose, onDelete }) => {
+export const OrderDetailModal = ({ order, onClose, onDelete, onSave }) => {
   const [isEditing, setIsEditing] = useState(false);
 
   const handleEditClick = () => {
@@ -17,6 +17,7 @@ export const OrderDetailModal = ({ order, onClose, onDelete }) => {
 
   const handleSaveEdit = () => {
     setIsEditing(false);
+    onSave?.();
   };
 
   const getOrderTotal = () => {
@@ -74,13 +75,16 @@ export const OrderDetailModal = ({ order, onClose, onDelete }) => {
           <img src={leftArrowIcon} alt="Back" className="w-8 h-8" />
         </button>
         <h1 className="text-3xl font-bold text-white mb-2">
-          Замовлення: {order.order_id}
+          Замовлення для {order.client_name}
         </h1>
-        <p className="text-indigo-100">{order.client_name}</p>
       </div>
 
       <div className="flex-1 overflow-y-auto px-6 py-6 space-y-4 pb-24">
         {/* Items List */}
+        <div>
+          <h2 className="text-xs font-bold text-gray-500 uppercase tracking-wide mb-3">
+            Товари
+          </h2>
         <div className="space-y-3">
           {order.items?.map((item, index) => (
             <div
@@ -100,6 +104,7 @@ export const OrderDetailModal = ({ order, onClose, onDelete }) => {
               </p>
             </div>
           ))}
+        </div>
         </div>
 
         <div className="bg-indigo-50 rounded-2xl p-4 border-2 border-indigo-200">
@@ -127,10 +132,6 @@ export const OrderDetailModal = ({ order, onClose, onDelete }) => {
               <p className="text-xs text-gray-500 mb-1">Клієнт</p>
               <p className="font-semibold text-gray-900 text-lg">
                 {order.client_name}
-              </p>
-              <p className="text-sm text-gray-400">
-                {order.client_name} (Custom ID{" "}
-                {order.custom_id ? order.custom_id : "N/A"})
               </p>
             </div>
 
@@ -178,8 +179,7 @@ export const OrderDetailModal = ({ order, onClose, onDelete }) => {
                 </svg>
               </div>
               <span className="text-gray-700 flex-1 leading-relaxed">
-                {order.address ||
-                  `вул. ${order.delivery_address.street}, ${order.delivery_address.house}, ${order.delivery_address.apartment}, ${order.delivery_address.floor}, ${order.delivery_address.intercom}`}
+                {order.delivery_address?.street} {order.delivery_address?.house}
               </span>
             </div>
           </div>
@@ -203,12 +203,12 @@ export const OrderDetailModal = ({ order, onClose, onDelete }) => {
               </p>
             </div>
 
-            {order.note && (
+            {(order.note || order.comment) && (
               <div>
                 <p className="text-xs text-gray-500 mb-1">
-                  Примітка для кур'єра
+                  Примітка до замовлення
                 </p>
-                <p className="text-gray-700">{order.note}</p>
+                <p className="text-gray-700">{order.note || order.comment}</p>
               </div>
             )}
           </div>

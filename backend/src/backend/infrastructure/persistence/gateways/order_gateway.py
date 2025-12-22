@@ -1,7 +1,7 @@
 from typing import cast
 from uuid import UUID
 
-from sqlalchemy import asc, select
+from sqlalchemy import asc, or_, select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 from uuid_utils import uuid7
@@ -22,9 +22,11 @@ from backend.application.vars import (
     ClientId,
     Empty,
     OrderId,
+    ProductId,
     ShopId,
     TimePreference,
 )
+from backend.infrastructure.persistence.tables.clients import Client
 from backend.infrastructure.persistence.tables.orders import Order, OrderItem
 
 
@@ -51,6 +53,7 @@ class SQLAlchemyOrderGateway(OrderGateway):
                 name=item.name,
                 quantity=item.quantity,
                 price_per_item=item.price_per_item,
+                product_id=item.product_id,
             )
             for item in dto.order_items
         ]
@@ -145,6 +148,22 @@ class SQLAlchemyOrderGateway(OrderGateway):
                 Order.time_preference == filters.time_preference.value
             )
 
+        search_conditions = []
+        if filters.client_name:
+            query = query.join(Client)
+            search_conditions.append(
+                Client.full_name.ilike(f"%{filters.client_name}%")
+            )
+        if filters.custom_id:
+            if not filters.client_name:
+                query = query.join(Client)
+            search_conditions.append(
+                Client.custom_id.ilike(f"%{filters.custom_id}%")
+            )
+
+        if search_conditions:
+            query = query.where(or_(*search_conditions))
+
         query = query.order_by(asc(Order.date))
         query = query.offset(pagination.offset).limit(pagination.limit)
 
@@ -192,6 +211,13 @@ class SQLAlchemyOrderGateway(OrderGateway):
                     price_per_item=int(
                         cast("int", cast("object", item.price_per_item))
                     ),
+                    product_id=(
+                        ProductId(
+                            cast("UUID", cast("object", item.product_id))
+                        )
+                        if item.product_id
+                        else None
+                    ),
                 )
                 for item in row.items
             ],
@@ -238,38 +264,60 @@ class SQLAlchemyOrderGateway(OrderGateway):
             else:
                 order_db.comment = dto.comment
 
-        # Delete items
-        if dto.items_to_delete:
-            items_to_remove = [
-                item
-                for item in order_db.items
-                if item.id in dto.items_to_delete
-            ]
-            for item in items_to_remove:
-                await self._session.delete(item)
+        # Process items - full replacement
+        if dto.items is not None:
+            existing_items_map = {item.id: item for item in order_db.items}
+            new_ids = {item.id for item in dto.items if item.id is not None}
 
-        # Update existing items
-        if dto.items_to_update:
-            for update_item in dto.items_to_update:
-                if update_item.id is None:
-                    continue
-                for item in order_db.items:
-                    if item.id == update_item.id:
-                        if update_item.name:
-                            item.name = update_item.name
-                        if update_item.quantity:
-                            item.quantity = update_item.quantity
-                        if update_item.price_per_item:
-                            item.price_per_item = update_item.price_per_item
-                        break
+            # Delete items not in new list
+            for item in order_db.items:
+                if item.id not in new_ids:
+                    await self._session.delete(item)
 
-        # Add new items
-        if dto.items_to_add:
-            for add_item in dto.items_to_add:
-                new_item = OrderItem(
-                    name=add_item.name,
-                    quantity=add_item.quantity,
-                    price_per_item=add_item.price_per_item,
-                    order_id=dto.order_id,
-                )
-                self._session.add(new_item)
+            # Update existing or add new items
+            for item_dto in dto.items:
+                if (
+                    item_dto.id is not None
+                    and item_dto.id in existing_items_map
+                ):
+                    # Update existing item (partial update supported)
+                    item = existing_items_map[item_dto.id]
+                    item.quantity = item_dto.quantity
+                    if item_dto.name is not None:
+                        item.name = item_dto.name
+                    if item_dto.price_per_item is not None:
+                        item.price_per_item = item_dto.price_per_item
+                    if item_dto.product_id is not None:
+                        item.product_id = item_dto.product_id
+                else:
+                    # Add new item
+                    new_item = OrderItem(
+                        name=item_dto.name or "",
+                        quantity=item_dto.quantity,
+                        price_per_item=item_dto.price_per_item or 0,
+                        order_id=dto.order_id,
+                        product_id=item_dto.product_id,
+                    )
+                    self._session.add(new_item)
+
+    async def load_items(self, order_id: OrderId) -> list[OrderItemReadModel]:
+        query = select(OrderItem).where(OrderItem.order_id == order_id)
+        result = await self._session.execute(query)
+        items = result.scalars().all()
+
+        return [
+            OrderItemReadModel(
+                id=int(cast("int", cast("object", item.id))),
+                name=cast("str", cast("object", item.name)),
+                quantity=int(cast("int", cast("object", item.quantity))),
+                price_per_item=int(
+                    cast("int", cast("object", item.price_per_item))
+                ),
+                product_id=(
+                    ProductId(cast("UUID", cast("object", item.product_id)))
+                    if item.product_id
+                    else None
+                ),
+            )
+            for item in items
+        ]

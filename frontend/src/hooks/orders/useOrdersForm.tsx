@@ -1,12 +1,19 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import { useClient } from "../clients/useClients";
 import { useProducts } from "../useProducts";
 import { type Client } from "../../types/entities/Client";
 import { type Product } from "../../types/entities/Product";
 
+interface OrderFormProduct {
+  product: Product;
+  quantity: number;
+  originalQuantity?: number;
+  itemId?: number;
+}
+
 interface OrderFormData {
   client: Client | null;
-  products: { product: Product; quantity: number; originalQuantity?: number }[];
+  products: OrderFormProduct[];
   deliveryPhone: any;
   deliveryAddress: any;
   deliveryDate: string;
@@ -23,9 +30,34 @@ export const useOrderForm = (options: UseOrderFormOptions = {}) => {
   const [step, setStep] = useState(1);
   const [searchClient, setSearchClient] = useState("");
   const [searchProduct, setSearchProduct] = useState("");
+  const [newlyCreatedClients, setNewlyCreatedClients] = useState<Client[]>([]);
 
-  const { clients, getClients } = useClient();
-  const { products, getProducts } = useProducts();
+  const {
+    clients: fetchedClients,
+    getClients,
+    loadMoreClients,
+    loadingMore: clientsLoadingMore,
+    hasMore: clientsHasMore,
+  } = useClient();
+
+  // Merge newly created clients (at the top) with fetched clients
+  const clients = [
+    ...newlyCreatedClients.filter(
+      (nc) => !fetchedClients.some((fc) => fc.client_id === nc.client_id)
+    ),
+    ...fetchedClients,
+  ];
+
+  const {
+    products,
+    getProducts,
+    loadMoreProducts,
+    loadingMore: productsLoadingMore,
+    hasMore: productsHasMore,
+  } = useProducts();
+
+  const clientDebounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const productDebounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const [formData, setFormData] = useState<OrderFormData>({
     client: null,
@@ -37,10 +69,45 @@ export const useOrderForm = (options: UseOrderFormOptions = {}) => {
     note: "",
   });
 
+  // Initial load
   useEffect(() => {
     getClients();
     getProducts();
   }, []);
+
+  // Debounced client search
+  useEffect(() => {
+    if (clientDebounceRef.current) {
+      clearTimeout(clientDebounceRef.current);
+    }
+
+    clientDebounceRef.current = setTimeout(() => {
+      getClients(searchClient);
+    }, 300);
+
+    return () => {
+      if (clientDebounceRef.current) {
+        clearTimeout(clientDebounceRef.current);
+      }
+    };
+  }, [searchClient]);
+
+  // Debounced product search
+  useEffect(() => {
+    if (productDebounceRef.current) {
+      clearTimeout(productDebounceRef.current);
+    }
+
+    productDebounceRef.current = setTimeout(() => {
+      getProducts(searchProduct);
+    }, 300);
+
+    return () => {
+      if (productDebounceRef.current) {
+        clearTimeout(productDebounceRef.current);
+      }
+    };
+  }, [searchProduct]);
 
   useEffect(() => {
     if (formData.client && !initialOrder) {
@@ -66,21 +133,21 @@ export const useOrderForm = (options: UseOrderFormOptions = {}) => {
         (c) => c.client_id === initialOrder.client_id
       );
 
-      // Map order items and preserve original quantity for edit mode
       const orderProducts =
         initialOrder.items
           ?.map((item: any) => {
             const product = products.find(
-              (p) => p.id === item.product_id
+              (p) => p.product_id === item.product_id
             );
             return {
               product: product || {
                 product_id: item.product_id,
-                name: item.product_name,
+                name: item.name,
                 price: item.price_per_item,
               },
               quantity: item.quantity,
               originalQuantity: item.quantity,
+              itemId: item.id,
             };
           })
           .filter((p: any) => p.product) || [];
@@ -92,11 +159,6 @@ export const useOrderForm = (options: UseOrderFormOptions = {}) => {
         client?.addresses?.find((a) => a.id === initialOrder.address_id) ||
         client?.addresses?.[0];
 
-      console.log("=== INITIALIZING EDIT ORDER ===");
-      console.log("Found phone:", phone);
-      console.log("Found address:", address);
-        console.log("Found Products:", initialOrder)
-        console.log("afasfsaf", orderProducts)
       setFormData({
         client: client || null,
         products: orderProducts,
@@ -108,16 +170,6 @@ export const useOrderForm = (options: UseOrderFormOptions = {}) => {
       });
     }
   }, [initialOrder, clients, products]);
-
-  const filteredClients = clients.filter(
-    (client) =>
-      client?.full_name?.toLowerCase().includes(searchClient.toLowerCase()) ||
-      client?.phones?.some((num) => num.number.includes(searchClient))
-  );
-
-  const filteredProducts = products.filter((product) =>
-    product.name.toLowerCase().includes(searchProduct.toLowerCase())
-  );
 
   const handleClientSelect = (client: Client) => {
     setFormData({
@@ -140,7 +192,6 @@ export const useOrderForm = (options: UseOrderFormOptions = {}) => {
         ),
       });
     } else {
-      // When adding a new product in edit mode, don't set originalQuantity
       setFormData({
         ...formData,
         products: [...formData.products, { product, quantity: 1 }],
@@ -152,15 +203,12 @@ export const useOrderForm = (options: UseOrderFormOptions = {}) => {
     setFormData({
       ...formData,
       products: formData.products.map((p) =>
-        p.product.product_id === productId 
-          ? { ...p, quantity } // Keep originalQuantity intact
-          : p
+        p.product.product_id === productId ? { ...p, quantity } : p
       ),
     });
   };
 
   const handlePhoneChange = (phone: any) => {
-    console.log("handlePhoneChange called with:", phone);
     if (typeof phone === "string") {
       const phoneObj = formData.client?.phones?.find((p) => p.number === phone);
       setFormData({ ...formData, deliveryPhone: phoneObj || null });
@@ -170,20 +218,12 @@ export const useOrderForm = (options: UseOrderFormOptions = {}) => {
   };
 
   const handleAddressChange = (address: any) => {
-    console.log("handleAddressChange called with:", address);
-
-    if (typeof address === "string") {
-      const addressObj = formData.client?.addresses?.find((a) => {
-        if (a.street === address) return true;
-
-        const fullAddress = `${a.street || ""} ${a.house || ""} ${
-          a.apartment || ""
-        } ${a.entrance || ""} ${a.floor || ""} ${a.intercom || ""}`.trim();
-        if (fullAddress === address) return true;
-
-        return false;
-      });
-
+    if (typeof address === "string" || typeof address === "number") {
+      const addressId =
+        typeof address === "string" ? parseInt(address, 10) : address;
+      const addressObj = formData.client?.addresses?.find(
+        (a) => a.id === addressId
+      );
       setFormData({ ...formData, deliveryAddress: addressObj || null });
     } else {
       setFormData({ ...formData, deliveryAddress: address });
@@ -241,18 +281,46 @@ export const useOrderForm = (options: UseOrderFormOptions = {}) => {
     if (!formData.deliveryAddress) return "";
 
     const addr = formData.deliveryAddress;
-    return `${addr.street || ""} ${addr.house || ""} ${addr.apartment || ""} ${
-      addr.entrance || ""
-    } ${addr.floor || ""} ${addr.intercom || ""}`.trim();
+    return `${addr.street || ""} ${addr.house || ""}`.trim();
   };
+
+  const getAddressId = () => {
+    return formData.deliveryAddress?.id?.toString() || "";
+  };
+
+  // Select newly created client
+  const selectClientById = useCallback(
+    (clientId: string) => {
+      const client = clients.find((c) => c.client_id === clientId);
+      if (client) {
+        handleClientSelect(client);
+      }
+    },
+    [clients]
+  );
+
+  const addAndSelectNewClient = useCallback((client: Client) => {
+    setNewlyCreatedClients((prev) => [client, ...prev.filter(c => c.client_id !== client.client_id)]);
+    handleClientSelect(client);
+  }, []);
 
   return {
     step,
     formData,
     searchClient,
     searchProduct,
-    filteredClients,
-    filteredProducts,
+    clients,
+    products,
+
+    // Infinite scroll for clients
+    loadMoreClients,
+    clientsLoadingMore,
+    clientsHasMore,
+
+    // Infinite scroll for products
+    loadMoreProducts,
+    productsLoadingMore,
+    productsHasMore,
 
     setSearchClient,
     setSearchProduct,
@@ -272,5 +340,10 @@ export const useOrderForm = (options: UseOrderFormOptions = {}) => {
 
     getPhoneString,
     getAddressString,
+    getAddressId,
+
+    selectClientById,
+    addAndSelectNewClient,
+    refreshClients: getClients,
   };
 };

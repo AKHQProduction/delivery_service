@@ -17,8 +17,10 @@ interface DeliveryDateStepProps {
   selectedProducts: SelectedProduct[];
   deliveryDate: string;
   deliveryTime: string;
+  note: string;
   onDateChange: (date: string) => void;
   onTimeChange: (time: string) => void;
+  onNoteChange: (note: string) => void;
 }
 
 export const DeliveryDateStep: React.FC<DeliveryDateStepProps> = ({
@@ -28,8 +30,10 @@ export const DeliveryDateStep: React.FC<DeliveryDateStepProps> = ({
   selectedProducts,
   deliveryDate,
   deliveryTime,
+  note,
   onDateChange,
   onTimeChange,
+  onNoteChange,
 }) => {
   const totalAmount = selectedProducts.reduce(
     (sum, p) => sum + p.product.price * p.quantity,
@@ -83,8 +87,8 @@ export const DeliveryDateStep: React.FC<DeliveryDateStepProps> = ({
         required ={true}
         onChange={onTimeChange}
         options={[
-          { value: "FIRST_HALF", label: "Ранок (8:00 - 12:00)" },
-          { value: "SECOND_HALF", label: "День (12:00 - 16:00)" },
+          { value: "FIRST_HALF", label: "Перша половина дня" },
+          { value: "SECOND_HALF", label: "Друга половина дня" },
         ]}
         
       />
@@ -101,7 +105,7 @@ export const DeliveryDateStep: React.FC<DeliveryDateStepProps> = ({
             </svg>
             <span className="font-medium">
               Доставка: {formatDate(deliveryDate)}  <br />
-              {deliveryTime === "FIRST_HALF" ? "Ранок (8:00 - 12:00)" : "День (12:00 - 16:00)"}
+              {deliveryTime === "FIRST_HALF" ? "Перша половина дня" : "Друга половина дня"}
             </span>
           </div>
         )}
@@ -226,6 +230,14 @@ export const DeliveryDateStep: React.FC<DeliveryDateStepProps> = ({
           </div>
         </div>
       </div>
+
+      <textarea
+        value={note}
+        onChange={(e) => onNoteChange(e.target.value)}
+        placeholder="Примітка до замовлення..."
+        rows={2}
+        className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500 resize-none text-sm"
+      />
 
       <div>
         <Tooltip

@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState } from "react";
 import { useOrderForm } from "../../../hooks/orders/useOrdersForm";
 import { useOrders } from "../../../hooks/orders/useOrders";
 import { ProgressSteps } from "../../shared/ProgressSteps";
@@ -7,21 +7,32 @@ import { ProductSelectionStep } from "./steps/ProductSelectionStep";
 import { ContactInfoStep } from "./steps/ContactInfoStep";
 import { DeliveryDateStep } from "./steps/DeliveryDateStep";
 import { FormNavigationButtons } from "../../shared/FormNavigationButtons";
+import { AddClientForm } from "../client/AddClientForm";
+import { type Client } from "../../../types/entities/Client";
 
 interface AddOrderFormProps {
   onClose: () => void;
+  onSave?: (order?: any) => void;
 }
 
-export const AddOrderForm: React.FC<AddOrderFormProps> = ({ onClose }) => {
+export const AddOrderForm: React.FC<AddOrderFormProps> = ({ onClose, onSave }) => {
   const { createNewOrder } = useOrders();
-  
+  const [showAddClient, setShowAddClient] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
   const {
     step,
     formData,
     searchClient,
     searchProduct,
-    filteredClients,
-    filteredProducts,
+    clients,
+    products,
+    loadMoreClients,
+    clientsLoadingMore,
+    clientsHasMore,
+    loadMoreProducts,
+    productsLoadingMore,
+    productsHasMore,
     setSearchClient,
     setSearchProduct,
     handleClientSelect,
@@ -31,34 +42,61 @@ export const AddOrderForm: React.FC<AddOrderFormProps> = ({ onClose }) => {
     handleAddressChange,
     handleDateChange,
     handleTimeChange,
+    handleNoteChange,
     handleNext,
     handleBack,
     canProceed,
     getPhoneString,
     getAddressString,
+    getAddressId,
+    addAndSelectNewClient,
   } = useOrderForm();
 
-  const handleSubmit = () => {
-    console.log("Order submitted:", formData);
-    console.log("deliveryPhone:", formData.deliveryPhone);
-    console.log("deliveryAddress:", formData.deliveryAddress);
-    console.log("phone_id:", formData.deliveryPhone?.id);
-    console.log("address_id:", formData.deliveryAddress?.id);
-    
-    createNewOrder({
-      client_id: formData.client?.client_id,
-      products: formData.products.map((p) => ({
-        product_id: p.product.product_id,
-        quantity: p.quantity,
-      })),
-      phone_id: formData.deliveryPhone?.id,
-      address_id: formData.deliveryAddress?.id,
-      delivery_date: formData.deliveryDate,
-      time_preference: formData.deliveryTime,
-    });
-    window.location.reload(); //TEMPORARY SOLUTION
-    onClose();
+  const handleAddNewClient = () => {
+    setShowAddClient(true);
   };
+
+  const handleClientCreated = (newClient?: Client) => {
+    setShowAddClient(false);
+    if (newClient) {
+      addAndSelectNewClient(newClient);
+    }
+  };
+
+  const handleSubmit = async () => {
+    if (isSubmitting) return;
+
+    setIsSubmitting(true);
+    try {
+      const newOrder = await createNewOrder({
+        client_id: formData.client?.client_id,
+        products: formData.products.map((p) => ({
+          product_id: p.product.product_id,
+          quantity: p.quantity,
+        })),
+        phone_id: formData.deliveryPhone?.id,
+        address_id: formData.deliveryAddress?.id,
+        delivery_date: formData.deliveryDate,
+        time_preference: formData.deliveryTime,
+        comment: formData.note,
+      });
+      onSave ? onSave(newOrder) : onClose();
+    } catch (error) {
+      console.error("Error creating order:", error);
+      alert("Помилка при створенні замовлення");
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  if (showAddClient) {
+    return (
+      <AddClientForm
+        onClose={() => setShowAddClient(false)}
+        onSuccess={handleClientCreated}
+      />
+    );
+  }
 
   return (
     <div className="flex flex-col h-full max-h-[85vh]">
@@ -67,25 +105,29 @@ export const AddOrderForm: React.FC<AddOrderFormProps> = ({ onClose }) => {
       <div className="flex-1 overflow-y-auto px-6 pb-4">
         {step === 1 && (
           <ClientSelectionStep
-            clients={filteredClients}
+            clients={clients}
             selectedClient={formData.client}
             searchValue={searchClient}
             onSearchChange={setSearchClient}
             onClientSelect={handleClientSelect}
-            onAddNewClient={() => {
-              /* add new client need to be added */
-            }}
+            onAddNewClient={handleAddNewClient}
+            loadMore={loadMoreClients}
+            loadingMore={clientsLoadingMore}
+            hasMore={clientsHasMore}
           />
         )}
 
         {step === 2 && (
           <ProductSelectionStep
-            products={filteredProducts}
+            products={products}
             selectedProducts={formData.products}
             searchValue={searchProduct}
             onSearchChange={setSearchProduct}
             onProductToggle={handleProductToggle}
             onQuantityChange={handleQuantityChange}
+            loadMore={loadMoreProducts}
+            loadingMore={productsLoadingMore}
+            hasMore={productsHasMore}
           />
         )}
 
@@ -93,7 +135,7 @@ export const AddOrderForm: React.FC<AddOrderFormProps> = ({ onClose }) => {
           <ContactInfoStep
             client={formData.client}
             selectedPhone={getPhoneString()}
-            selectedAddress={getAddressString()}
+            selectedAddress={getAddressId()}
             onPhoneChange={handlePhoneChange}
             onAddressChange={handleAddressChange}
           />
@@ -107,8 +149,10 @@ export const AddOrderForm: React.FC<AddOrderFormProps> = ({ onClose }) => {
             selectedProducts={formData.products}
             deliveryDate={formData.deliveryDate}
             deliveryTime={formData.deliveryTime}
+            note={formData.note || ""}
             onDateChange={handleDateChange}
             onTimeChange={handleTimeChange}
+            onNoteChange={handleNoteChange}
           />
         )}
       </div>

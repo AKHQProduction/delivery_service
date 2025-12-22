@@ -60,14 +60,15 @@ export const getAllProducts = async (
   order: string
 ) => {
   try {
-    const response = await api.get(`v1/products/all`, {
-      params: {
-        name: productName,
-        limit: productLimit,
-        offset: offset,
-        order: order,
-      },
-    });
+    const params: Record<string, string | number> = {
+      limit: productLimit,
+      offset: offset,
+      order: order,
+    };
+
+    if (productName) params.name = productName;
+
+    const response = await api.get(`v1/products/all`, { params });
     return response.data;
   } catch (error) {
     throw error;
