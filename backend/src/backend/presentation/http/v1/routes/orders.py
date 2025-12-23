@@ -30,6 +30,11 @@ from backend.application.queries.export_orders_pdf import (
     ExportOrdersPDFQueryHandler,
 )
 from backend.application.queries.get_order import GetOrderQueryHandler
+from backend.application.queries.get_order_stats import (
+    GetOrderStatsQuery,
+    GetOrderStatsQueryHandler,
+    GetOrderStatsResponse,
+)
 from backend.application.queries.get_orders import (
     GetOrdersQuery,
     GetOrdersQueryHandler,
@@ -360,6 +365,21 @@ async def get_all_orders(
             pagination=Pagination(limit=limit, offset=offset),
         )
     )
+
+
+@router.get(
+    "/stats",
+    status_code=status.HTTP_200_OK,
+    responses={
+        status.HTTP_401_UNAUTHORIZED: {"model": ErrorSchema},
+    },
+    dependencies=[Depends(HTTPBearer())],
+)
+async def get_order_stats(
+    delivery_date: date,
+    handler: FromDishka[GetOrderStatsQueryHandler],
+) -> GetOrderStatsResponse:
+    return await handler.handle(GetOrderStatsQuery(date=delivery_date))
 
 
 @router.get(

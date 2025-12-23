@@ -39,6 +39,9 @@ from backend.application.queries.get_clients import GetClientsQueryHandler
 from backend.application.queries.get_employee import GetEmployeeQueryHandler
 from backend.application.queries.get_employees import GetEmployeesQueryHandler
 from backend.application.queries.get_order import GetOrderQueryHandler
+from backend.application.queries.get_order_stats import (
+    GetOrderStatsQueryHandler,
+)
 from backend.application.queries.get_orders import GetOrdersQueryHandler
 from backend.application.queries.get_product import GetProductQueryHandler
 from backend.application.queries.get_products import GetProductsQueryHandler
@@ -90,6 +93,7 @@ class APIInteractorsProvider(Provider):
         DeleteOrderCommandHandler,
         GetOrderQueryHandler,
         GetOrdersQueryHandler,
+        GetOrderStatsQueryHandler,
         ExportOrdersPDFQueryHandler,
     )
 

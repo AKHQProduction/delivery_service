@@ -1,7 +1,7 @@
 from typing import cast
 from uuid import UUID
 
-from sqlalchemy import asc, or_, select
+from sqlalchemy import asc, case, func, or_, select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 from uuid_utils import uuid7
@@ -15,6 +15,7 @@ from backend.application.interfaces.gateways.order_gateway import (
     OrderGateway,
     OrderItemReadModel,
     OrderReadModel,
+    OrderStatsReadModel,
     UpdateOrderDTO,
 )
 from backend.application.vars import (
@@ -321,3 +322,56 @@ class SQLAlchemyOrderGateway(OrderGateway):
             )
             for item in items
         ]
+
+    async def get_stats(
+        self, filters: GetOrdersFilters
+    ) -> OrderStatsReadModel:
+        query = (
+            select(
+                func.count(Order.id).label("total_orders"),
+                func.sum(
+                    case(
+                        (
+                            Order.time_preference
+                            == TimePreference.FIRST_HALF.value,
+                            1,
+                        ),
+                        else_=0,
+                    )
+                ).label("total_orders_in_first_half"),
+                func.sum(
+                    case(
+                        (
+                            Order.time_preference
+                            == TimePreference.SECOND_HALF.value,
+                            1,
+                        ),
+                        else_=0,
+                    )
+                ).label("total_orders_in_second_half"),
+                func.coalesce(
+                    func.sum(OrderItem.quantity * OrderItem.price_per_item), 0
+                ).label("total_orders_sum"),
+            )
+            .select_from(Order)
+            .outerjoin(OrderItem, Order.id == OrderItem.order_id)
+        )
+
+        if filters.shop_id:
+            query = query.where(Order.shop_id == filters.shop_id)
+        if filters.delivery_date:
+            query = query.where(Order.date == filters.delivery_date)
+
+        result = await self._session.execute(query)
+        row = result.one()
+
+        return OrderStatsReadModel(
+            total_orders=row.total_orders or 0,
+            total_orders_in_first_half=int(
+                row.total_orders_in_first_half or 0
+            ),
+            total_orders_in_second_half=int(
+                row.total_orders_in_second_half or 0
+            ),
+            total_orders_sum=int(row.total_orders_sum or 0),
+        )

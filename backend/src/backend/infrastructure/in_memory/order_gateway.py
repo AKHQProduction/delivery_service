@@ -9,6 +9,7 @@ from backend.application.interfaces.gateways.order_gateway import (
     OrderItemDTO,
     OrderItemReadModel,
     OrderReadModel,
+    OrderStatsReadModel,
     UpdateOrderDTO,
 )
 from backend.application.vars import (
@@ -17,6 +18,7 @@ from backend.application.vars import (
     OrderId,
     OrderItemId,
     ShopId,
+    TimePreference,
 )
 
 
@@ -213,3 +215,43 @@ class InMemoryOrderGateway(OrderGateway):
             )
             for idx, item in enumerate(dto.order_items)
         ]
+
+    async def get_stats(
+        self, filters: GetOrdersFilters
+    ) -> OrderStatsReadModel:
+        filtered_orders = list(self.orders.values())
+
+        if filters.shop_id:
+            filtered_orders = [
+                o for o in filtered_orders if o.shop_id == filters.shop_id
+            ]
+        if filters.delivery_date:
+            filtered_orders = [
+                o
+                for o in filtered_orders
+                if o.delivery_date == filters.delivery_date
+            ]
+
+        total_orders = len(filtered_orders)
+        total_orders_in_first_half = sum(
+            1
+            for o in filtered_orders
+            if o.time_preference == TimePreference.FIRST_HALF
+        )
+        total_orders_in_second_half = sum(
+            1
+            for o in filtered_orders
+            if o.time_preference == TimePreference.SECOND_HALF
+        )
+        total_orders_sum = sum(
+            (item.quantity * (item.price_per_item or 0))
+            for o in filtered_orders
+            for item in o.order_items
+        )
+
+        return OrderStatsReadModel(
+            total_orders=total_orders,
+            total_orders_in_first_half=total_orders_in_first_half,
+            total_orders_in_second_half=total_orders_in_second_half,
+            total_orders_sum=total_orders_sum,
+        )

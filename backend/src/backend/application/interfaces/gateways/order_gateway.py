@@ -93,6 +93,14 @@ class GetOrdersFilters:
 
 
 @dataclass(frozen=True)
+class OrderStatsReadModel:
+    total_orders: int
+    total_orders_in_first_half: int
+    total_orders_in_second_half: int
+    total_orders_sum: int
+
+
+@dataclass(frozen=True)
 class UpdateOrderDTO:
     order_id: OrderId
     client_id: ClientId | None = None
@@ -139,4 +147,10 @@ class OrderGateway(Protocol):
 
     @abstractmethod
     async def load_items(self, order_id: OrderId) -> list[OrderItemReadModel]:
+        raise NotImplementedError
+
+    @abstractmethod
+    async def get_stats(
+        self, filters: GetOrdersFilters
+    ) -> OrderStatsReadModel:
         raise NotImplementedError
