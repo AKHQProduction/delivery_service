@@ -328,25 +328,29 @@ class SQLAlchemyOrderGateway(OrderGateway):
     ) -> OrderStatsReadModel:
         query = (
             select(
-                func.count(Order.id).label("total_orders"),
-                func.sum(
-                    case(
-                        (
-                            Order.time_preference
-                            == TimePreference.FIRST_HALF.value,
-                            1,
-                        ),
-                        else_=0,
+                func.count(func.distinct(Order.id)).label("total_orders"),
+                func.count(
+                    func.distinct(
+                        case(
+                            (
+                                Order.time_preference
+                                == TimePreference.FIRST_HALF.value,
+                                Order.id,
+                            ),
+                            else_=None,
+                        )
                     )
                 ).label("total_orders_in_first_half"),
-                func.sum(
-                    case(
-                        (
-                            Order.time_preference
-                            == TimePreference.SECOND_HALF.value,
-                            1,
-                        ),
-                        else_=0,
+                func.count(
+                    func.distinct(
+                        case(
+                            (
+                                Order.time_preference
+                                == TimePreference.SECOND_HALF.value,
+                                Order.id,
+                            ),
+                            else_=None,
+                        )
                     )
                 ).label("total_orders_in_second_half"),
                 func.coalesce(

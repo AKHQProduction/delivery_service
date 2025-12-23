@@ -1166,7 +1166,6 @@ async def test_get_order_stats(
 
     tomorrow = datetime.now(UTC).date() + timedelta(days=1)
 
-    # Create 2 orders for first half, 1 for second half
     await setup_test_order(
         shop_id=shop_id,
         client_id=client_id,
@@ -1205,6 +1204,53 @@ async def test_get_order_stats(
     assert stats["total_orders_in_first_half"] == 2
     assert stats["total_orders_in_second_half"] == 1
     # 2*100 + 3*50 + 1*200 = 200 + 150 + 200 = 550
+    assert stats["total_orders_sum"] == 550
+
+
+@pytest.mark.asyncio()
+async def test_get_order_stats_with_multiple_items_per_order(
+    http_client: AsyncClient,
+    session: AsyncSession,
+    customer_headers: Callable[[int], dict[str, Any]],
+    setup_full_test_user_with_shop,
+    setup_test_client,
+    setup_test_order,
+) -> None:
+    telegram_id = 5404
+    _, shop_id = await setup_full_test_user_with_shop(telegram_id=telegram_id)
+
+    client_id = await setup_test_client(shop_id=shop_id)
+
+    tomorrow = datetime.now(UTC).date() + timedelta(days=1)
+
+    await setup_test_order(
+        shop_id=shop_id,
+        client_id=client_id,
+        delivery_date=tomorrow,
+        time_preference=TimePreference.FIRST_HALF,
+        items=[
+            {"name": "Product 1", "quantity": 2, "price_per_item": 100},
+            {"name": "Product 2", "quantity": 1, "price_per_item": 200},
+            {"name": "Product 3", "quantity": 3, "price_per_item": 50},
+        ],
+    )
+
+    await session.commit()
+
+    headers = customer_headers(telegram_id)
+
+    response = await http_client.get(
+        url=f"{BASE_URL}/stats",
+        headers=headers,
+        params={"delivery_date": tomorrow.isoformat()},
+    )
+
+    assert response.status_code == status.HTTP_200_OK
+    stats = response.json()
+    assert stats["total_orders"] == 1
+    assert stats["total_orders_in_first_half"] == 1
+    assert stats["total_orders_in_second_half"] == 0
+    # 2*100 + 1*200 + 3*50 = 200 + 200 + 150 = 550
     assert stats["total_orders_sum"] == 550
 
 
