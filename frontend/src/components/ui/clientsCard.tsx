@@ -8,7 +8,10 @@ interface ClientCardProps {
 
 export const ClientCard: React.FC<ClientCardProps> = ({ client, onClick }) => {
   const primaryPhone =
-  client.phones?.find((p) => p.is_primary) ?? client.phones?.[0];
+    client.phones?.find((p) => p.is_primary) ?? client.phones?.[0];
+  const primaryAddress =
+    client.addresses?.find((a) => a.is_primary) ?? client.addresses?.[0];
+
   return (
     <div
       onClick={() => onClick(client)}
@@ -52,7 +55,7 @@ export const ClientCard: React.FC<ClientCardProps> = ({ client, onClick }) => {
               </div>
             </div>
 
-            {(client.addresses ?? []).length > 0 && (client.addresses ?? [])[0] && (
+            {primaryAddress && (
               <div className="flex items-start gap-2">
                 <svg
                   className="w-4 h-4 text-purple-500 mt-0.5 shrink-0"
@@ -78,12 +81,7 @@ export const ClientCard: React.FC<ClientCardProps> = ({ client, onClick }) => {
                     className="text-sm text-gray-700 bg-purple-50 px-2.5 py-0.5 rounded-lg font-medium
                         group-hover:bg-purple-100 transition-colors"
                   >
-                    {(client.addresses ?? [])[0].apartment},{" "}
-                    {(client.addresses ?? [])[0].entrance},{" "}
-                    {(client.addresses ?? [])[0].floor},{" "}
-                    {(client.addresses ?? [])[0].house},{" "}
-                    {(client.addresses ?? [])[0].intercom},{" "}
-                    {(client.addresses ?? [])[0].street}
+                    {primaryAddress.street} {primaryAddress.house}
                   </span>
                 </div>
               </div>

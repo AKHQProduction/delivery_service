@@ -10,7 +10,7 @@ from fastapi import HTTPException, status
 from fastapi.security.utils import get_authorization_scheme_param
 from pydantic import BaseModel
 
-from backend.bootstrap.config import Config
+from backend.bootstrap.config import AppConfig, TelegramConfig
 
 logger = logging.getLogger(__name__)
 
@@ -24,13 +24,13 @@ AUTH_ERROR = HTTPException(
 class WebAppUser(BaseModel):
     id: int
     first_name: str
-    last_name: str
-    username: str | None
-    language_code: str
-    is_premium: bool
-    added_to_attachment_menu: bool
-    allows_write_to_pm: bool
-    photo_url: str
+    last_name: str = ""
+    username: str | None = None
+    language_code: str = ""
+    is_premium: bool = False
+    added_to_attachment_menu: bool = False
+    allows_write_to_pm: bool = False
+    photo_url: str = ""
 
 
 class InitData(BaseModel):
@@ -44,13 +44,19 @@ Headers = NewType("Headers", Mapping[str, str])
 
 
 class WebAppAuth:
-    def __init__(self, config: Config, headers: Headers) -> None:
+    def __init__(
+        self,
+        app_config: AppConfig,
+        telegram_config: TelegramConfig,
+        headers: Headers,
+    ) -> None:
         self._headers = headers
-        self._config = config
+        self._app_config = app_config
+        self._telegram_config = telegram_config
 
     def with_init_data(self) -> InitData:
         logger.debug("Initialize auth with headers: %s", self._headers)
-        if self._config.app_config.debug:
+        if self._app_config.debug:
             return self._validate_fake_headers_param(self._get_headers_param())
         return self._validate_headers_param(self._get_headers_param())
 
@@ -74,11 +80,11 @@ class WebAppAuth:
             for key, value in parsed_init_data.items()
             if key != "hash"
         ])
-        data_check_string = "\n".join(f"{k}-{v}" for k, v in fields)
+        data_check_string = "\n".join(f"{k}={v}" for k, v in fields)
 
         secret_key = hmac.new(
             b"WebAppData",
-            self._config.telegram_config.admin_token.encode(),
+            self._telegram_config.admin_token.encode(),
             hashlib.sha256,
         ).digest()
 

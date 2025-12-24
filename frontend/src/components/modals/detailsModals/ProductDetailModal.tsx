@@ -10,7 +10,7 @@ interface ProductDetailModalProps {
   product: Product;
   onClose: () => void;
   onDelete: () => void;
-  onSave: (updatedProduct: Product) => void;
+  onSave: (updatedProduct: Product) => Promise<void> | void;
 }
 
 export const ProductDetailModal: React.FC<ProductDetailModalProps> = ({
@@ -29,8 +29,8 @@ export const ProductDetailModal: React.FC<ProductDetailModalProps> = ({
     setIsEditing(false);
   };
 
-  const handleSaveEdit = (updatedProduct: Product) => {
-    onSave(updatedProduct);
+  const handleSaveEdit = async (updatedProduct: Product) => {
+    await onSave(updatedProduct);
     setIsEditing(false);
   };
 

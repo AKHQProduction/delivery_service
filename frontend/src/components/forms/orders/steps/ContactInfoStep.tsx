@@ -60,7 +60,7 @@ export const ContactInfoStep: React.FC<ContactInfoStepProps> = ({
           Телефон для зв'язку <span className="text-red-500">*</span>
         </label>
 
-        {client?.number && client.number.length > 1 ? (
+        {client?.phones && client.phones.length > 1 ? (
           <div className="relative">
             <select
               title="Phone select"
@@ -69,9 +69,9 @@ export const ContactInfoStep: React.FC<ContactInfoStepProps> = ({
               className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500 appearance-none bg-white pr-10 font-medium"
             >
               <option value="">Оберіть телефон...</option>
-              {client.number.map((phone, idx) => (
-                <option key={idx} value={phone}>
-                  {phone}
+              {client.phones.map((phone, idx) => (
+                <option key={idx} value={phone.number}>
+                  {phone.number}
                 </option>
               ))}
             </select>
@@ -89,7 +89,7 @@ export const ContactInfoStep: React.FC<ContactInfoStepProps> = ({
               />
             </svg>
           </div>
-        ) : client?.number && client.number.length === 1 ? (
+        ) : client?.phones && client.phones.length === 1 ? (
           <div className="p-4 rounded-xl border-2 border-indigo-600 bg-indigo-50">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-3">
@@ -109,7 +109,7 @@ export const ContactInfoStep: React.FC<ContactInfoStepProps> = ({
                   </svg>
                 </div>
                 <span className="font-semibold text-gray-900">
-                  {client.number[0]}
+                  {client.phones?.[0]?.number || "—"}
                 </span>
               </div>
               <svg
@@ -160,7 +160,7 @@ export const ContactInfoStep: React.FC<ContactInfoStepProps> = ({
           Адреса доставки <span className="text-red-500">*</span>
         </label>
 
-        {client?.address && client.address.length > 1 ? (
+        {client?.addresses && client.addresses.length > 1 ? (
           <div className="relative">
             <select
               title="Select address"
@@ -169,9 +169,9 @@ export const ContactInfoStep: React.FC<ContactInfoStepProps> = ({
               className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500 appearance-none bg-white pr-10 font-medium"
             >
               <option value="">Оберіть адресу...</option>
-              {client.address.map((addr, idx) => (
-                <option key={idx} value={addr}>
-                  {addr}
+              {client.addresses.map((addr) => (
+                <option key={addr.id} value={addr.id}>
+                  {addr.street} {addr.house}
                 </option>
               ))}
             </select>
@@ -189,7 +189,7 @@ export const ContactInfoStep: React.FC<ContactInfoStepProps> = ({
               />
             </svg>
           </div>
-        ) : client?.address && client.address.length === 1 ? (
+        ) : client?.addresses && client.addresses.length === 1 ? (
           <div className="p-4 rounded-xl border-2 border-indigo-600 bg-indigo-50">
             <div className="flex items-start justify-between gap-3">
               <div className="flex items-start gap-3 flex-1">
@@ -215,7 +215,7 @@ export const ContactInfoStep: React.FC<ContactInfoStepProps> = ({
                   </svg>
                 </div>
                 <span className="font-semibold text-gray-900 flex-1">
-                  {client.address[0]}
+                  {client.addresses?.[0]?.street} {client.addresses?.[0]?.house}
                 </span>
               </div>
               <svg
