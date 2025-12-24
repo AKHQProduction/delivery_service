@@ -25,6 +25,7 @@ from backend.bootstrap.config import (
     PostgresConfig,
     RedisConfig,
     TelegramConfig,
+    WebhookConfig,
 )
 from backend.infrastructure.persistence.gateways import (
     RedisLinkGateway,
@@ -59,6 +60,10 @@ class ConfigProvider(Provider):
     @provide
     def postgres_config(self, config: Config) -> PostgresConfig:
         return config.postgres_config
+
+    @provide
+    def webhook_config(self, config: Config) -> WebhookConfig:
+        return config.webhook_config
 
 
 class PersistenceProvider(Provider):
