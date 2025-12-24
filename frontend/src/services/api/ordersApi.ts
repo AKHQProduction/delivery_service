@@ -28,7 +28,7 @@ export const getAllOrders = async (
 
 export const createOrder = async (orderData: any) => {
   try {
-    const response = await api.post(`v1/orders/`, orderData);
+    const response = await api.post(`v1/orders`, orderData);
     return response.data;
   } catch (error) {
     throw error;
