@@ -9,7 +9,7 @@ const api = axios.create({
   headers: {
     "Content-Type": "application/json",
     Authorization: `Bearer ${
-      initDataTG ? JSON.stringify(initDataTG.initDataUnsafe) : userID
+      initDataTG ? JSON.stringify(initDataTG.initData) : userID
     }`,
   },
 });
@@ -17,7 +17,7 @@ const api = axios.create({
 api.interceptors.request.use((config) => {
   if (initDataTG) {
     config.headers.Authorization = `Bearer ${
-      initDataTG ? JSON.stringify(initDataTG.initDataUnsafe) : userID
+      initDataTG ? JSON.stringify(initDataTG.initData) : userID
     }`;
   }
   return config;
