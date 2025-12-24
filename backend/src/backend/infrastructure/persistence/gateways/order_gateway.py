@@ -23,12 +23,14 @@ from backend.application.vars import (
     ClientId,
     Empty,
     OrderId,
+    ProductCategory,
     ProductId,
     ShopId,
     TimePreference,
 )
 from backend.infrastructure.persistence.tables.clients import Client
 from backend.infrastructure.persistence.tables.orders import Order, OrderItem
+from backend.infrastructure.persistence.tables.products import Product
 
 
 class SQLAlchemyOrderGateway(OrderGateway):
@@ -356,9 +358,36 @@ class SQLAlchemyOrderGateway(OrderGateway):
                 func.coalesce(
                     func.sum(OrderItem.quantity * OrderItem.price_per_item), 0
                 ).label("total_orders_sum"),
+                func.coalesce(
+                    func.sum(
+                        case(
+                            (
+                                Product.category
+                                == ProductCategory.WATER.value,
+                                OrderItem.quantity,
+                            ),
+                            else_=0,
+                        )
+                    ),
+                    0,
+                ).label("total_water"),
+                func.coalesce(
+                    func.sum(
+                        case(
+                            (
+                                Product.category
+                                == ProductCategory.OTHER.value,
+                                OrderItem.quantity,
+                            ),
+                            else_=0,
+                        )
+                    ),
+                    0,
+                ).label("total_other"),
             )
             .select_from(Order)
             .outerjoin(OrderItem, Order.id == OrderItem.order_id)
+            .outerjoin(Product, OrderItem.product_id == Product.id)
         )
 
         if filters.shop_id:
@@ -378,4 +407,6 @@ class SQLAlchemyOrderGateway(OrderGateway):
                 row.total_orders_in_second_half or 0
             ),
             total_orders_sum=int(row.total_orders_sum or 0),
+            total_water=int(row.total_water or 0),
+            total_other=int(row.total_other or 0),
         )

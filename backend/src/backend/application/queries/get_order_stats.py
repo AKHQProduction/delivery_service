@@ -22,6 +22,8 @@ class GetOrderStatsResponse:
     total_orders_in_first_half: int
     total_orders_in_second_half: int
     total_orders_sum: int
+    total_water: int
+    total_other: int
 
 
 class GetOrderStatsQueryHandler:
@@ -61,4 +63,6 @@ class GetOrderStatsQueryHandler:
             total_orders_in_first_half=stats.total_orders_in_first_half,
             total_orders_in_second_half=stats.total_orders_in_second_half,
             total_orders_sum=stats.total_orders_sum,
+            total_water=stats.total_water,
+            total_other=stats.total_other,
         )
