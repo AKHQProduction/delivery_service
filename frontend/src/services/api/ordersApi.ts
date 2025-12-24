@@ -73,3 +73,14 @@ export const exportOrdersPdf = async (deliveryDate: string) => {
     throw error;
   }
 };
+
+export const getOrderStats = async (date: string) => {
+  try {
+    const response = await api.get(`/api/v1/orders/stats`, {
+      params: { delivery_date: date },
+    });
+    return response.data;
+  } catch (error) {
+    throw error;
+  }
+};
