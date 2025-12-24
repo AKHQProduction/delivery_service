@@ -4,7 +4,7 @@ from urllib.parse import parse_qsl, unquote, urlencode
 
 import pytest
 
-from backend.bootstrap.config import AppConfig, Config, TelegramConfig
+from backend.bootstrap.config import AppConfig, TelegramConfig
 from backend.infrastructure.telegram.auth import (
     AUTH_ERROR,
     Headers,
@@ -18,23 +18,18 @@ def telegram_token() -> str:
 
 
 @pytest.fixture()
-def config(telegram_token: str) -> Config:
-    config = Config()
-    config.telegram_config = TelegramConfig(
-        ADMIN_BOT_TOKEN=telegram_token, USE_REDIS=False
-    )
-    config.app_config = AppConfig(DEBUG=False)
-    return config
+def telegram_config(telegram_token: str) -> TelegramConfig:
+    return TelegramConfig(ADMIN_BOT_TOKEN=telegram_token, USE_REDIS=False)
 
 
 @pytest.fixture()
-def debug_config(telegram_token: str) -> Config:
-    config = Config()
-    config.telegram_config = TelegramConfig(
-        ADMIN_BOT_TOKEN=telegram_token, USE_REDIS=False
-    )
-    config.app_config = AppConfig(DEBUG=True)
-    return config
+def app_config() -> AppConfig:
+    return AppConfig(DEBUG=False)
+
+
+@pytest.fixture()
+def debug_app_config() -> AppConfig:
+    return AppConfig(DEBUG=True)
 
 
 def generate_init_data_with_hash(data: dict[str, str], bot_token: str) -> str:
@@ -42,7 +37,7 @@ def generate_init_data_with_hash(data: dict[str, str], bot_token: str) -> str:
     parsed = dict(parse_qsl(encoded_data))
 
     sorted_data = sorted([(k, unquote(str(v))) for k, v in parsed.items()])
-    data_check_string = "\n".join(f"{k}-{v}" for k, v in sorted_data)
+    data_check_string = "\n".join(f"{k}={v}" for k, v in sorted_data)
 
     secret_key = hmac.new(
         b"WebAppData",
@@ -60,7 +55,9 @@ def generate_init_data_with_hash(data: dict[str, str], bot_token: str) -> str:
 
 
 def test_valid_init_data_with_correct_hash(
-    config: Config, telegram_token: str
+    app_config: AppConfig,
+    telegram_config: TelegramConfig,
+    telegram_token: str,
 ):
     user_json = (
         '{"id": 123, "first_name": "John", "last_name": "Doe", '
@@ -77,7 +74,7 @@ def test_valid_init_data_with_correct_hash(
     init_data = generate_init_data_with_hash(data, telegram_token)
     headers = Headers({"Authorization": f"Bearer {init_data}"})
 
-    auth = WebAppAuth(config, headers)
+    auth = WebAppAuth(app_config, telegram_config, headers)
     result = auth.with_init_data()
 
     assert result.query_id == "test_query_id"
@@ -87,7 +84,10 @@ def test_valid_init_data_with_correct_hash(
     assert result.auth_date == "1234567890"
 
 
-def test_invalid_hash_raises_auth_error(config: Config):
+def test_invalid_hash_raises_auth_error(
+    app_config: AppConfig,
+    telegram_config: TelegramConfig,
+):
     user_json = (
         '{"id": 123, "first_name": "John", "last_name": "Doe", '
         '"username": "johndoe", "language_code": "en", "is_premium": true, '
@@ -104,13 +104,16 @@ def test_invalid_hash_raises_auth_error(config: Config):
     init_data = urlencode(data)
     headers = Headers({"Authorization": f"Bearer {init_data}"})
 
-    auth = WebAppAuth(config, headers)
+    auth = WebAppAuth(app_config, telegram_config, headers)
 
     with pytest.raises(type(AUTH_ERROR)):
         auth.with_init_data()
 
 
-def test_missing_hash_raises_auth_error(config: Config):
+def test_missing_hash_raises_auth_error(
+    app_config: AppConfig,
+    telegram_config: TelegramConfig,
+):
     data = {
         "query_id": "test_query_id",
         "auth_date": "1234567890",
@@ -119,35 +122,44 @@ def test_missing_hash_raises_auth_error(config: Config):
     init_data = urlencode(data)
     headers = Headers({"Authorization": f"Bearer {init_data}"})
 
-    auth = WebAppAuth(config, headers)
+    auth = WebAppAuth(app_config, telegram_config, headers)
 
     with pytest.raises(type(AUTH_ERROR)):
         auth.with_init_data()
 
 
-def test_missing_authorization_header_raises_auth_error(config: Config):
+def test_missing_authorization_header_raises_auth_error(
+    app_config: AppConfig,
+    telegram_config: TelegramConfig,
+):
     headers = Headers({})
 
-    auth = WebAppAuth(config, headers)
+    auth = WebAppAuth(app_config, telegram_config, headers)
 
     with pytest.raises(type(AUTH_ERROR)):
         auth.with_init_data()
 
 
-def test_invalid_authorization_scheme_raises_auth_error(config: Config):
+def test_invalid_authorization_scheme_raises_auth_error(
+    app_config: AppConfig,
+    telegram_config: TelegramConfig,
+):
     headers = Headers({"Authorization": "Basic some_token"})
 
-    auth = WebAppAuth(config, headers)
+    auth = WebAppAuth(app_config, telegram_config, headers)
 
     with pytest.raises(type(AUTH_ERROR)):
         auth.with_init_data()
 
 
-def test_debug_mode_returns_dummy_data(debug_config: Config):
+def test_debug_mode_returns_dummy_data(
+    debug_app_config: AppConfig,
+    telegram_config: TelegramConfig,
+):
     user_id = 999
     headers = Headers({"Authorization": f"Bearer {user_id}"})
 
-    auth = WebAppAuth(debug_config, headers)
+    auth = WebAppAuth(debug_app_config, telegram_config, headers)
     result = auth.with_init_data()
 
     assert result.user.id == user_id
@@ -156,7 +168,11 @@ def test_debug_mode_returns_dummy_data(debug_config: Config):
     assert result.hash == ""
 
 
-def test_url_encoded_values_are_decoded(config: Config, telegram_token: str):
+def test_url_encoded_values_are_decoded(
+    app_config: AppConfig,
+    telegram_config: TelegramConfig,
+    telegram_token: str,
+):
     user_json = (
         '{"id": 123, "first_name": "John", "last_name": "Doe", '
         '"username": "johndoe", "language_code": "en", "is_premium": true, '
@@ -172,7 +188,7 @@ def test_url_encoded_values_are_decoded(config: Config, telegram_token: str):
     init_data = generate_init_data_with_hash(data, telegram_token)
     headers = Headers({"Authorization": f"Bearer {init_data}"})
 
-    auth = WebAppAuth(config, headers)
+    auth = WebAppAuth(app_config, telegram_config, headers)
     result = auth.with_init_data()
 
     assert result.query_id == "test query"

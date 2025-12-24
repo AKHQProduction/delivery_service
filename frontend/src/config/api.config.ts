@@ -8,17 +8,13 @@ const api = axios.create({
   baseURL: baseURL,
   headers: {
     "Content-Type": "application/json",
-    Authorization: `Bearer ${
-      initDataTG ? JSON.stringify(initDataTG.initData) : userID
-    }`,
+    Authorization: `Bearer ${initDataTG?.initData || userID}`,
   },
 });
 
 api.interceptors.request.use((config) => {
-  if (initDataTG) {
-    config.headers.Authorization = `Bearer ${
-      initDataTG ? JSON.stringify(initDataTG.initData) : userID
-    }`;
+  if (initDataTG?.initData) {
+    config.headers.Authorization = `Bearer ${initDataTG.initData}`;
   }
   return config;
 });

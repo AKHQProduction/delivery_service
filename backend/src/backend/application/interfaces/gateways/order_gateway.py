@@ -98,6 +98,8 @@ class OrderStatsReadModel:
     total_orders_in_first_half: int
     total_orders_in_second_half: int
     total_orders_sum: int
+    total_water: int
+    total_other: int
 
 
 @dataclass(frozen=True)

@@ -254,4 +254,6 @@ class InMemoryOrderGateway(OrderGateway):
             total_orders_in_first_half=total_orders_in_first_half,
             total_orders_in_second_half=total_orders_in_second_half,
             total_orders_sum=total_orders_sum,
+            total_water=0,
+            total_other=0,
         )
