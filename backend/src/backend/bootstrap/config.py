@@ -47,17 +47,6 @@ class PostgresConfig(BaseModel):
         )
 
 
-class OTELConfig(BaseModel):
-    enabled: bool = Field(alias="OTEL_ENABLED", default=False)
-    service_name: str = Field(
-        alias="OTEL_SERVICE_NAME", default="water-delivery"
-    )
-    environment: str = Field(alias="OTEL_ENVIRONMENT", default="dev")
-    otlp_endpoint: str = Field(
-        alias="OTEL_EXPORTER_OTLP_ENDPOINT", default="http://localhost:4317"
-    )
-
-
 class Config(BaseModel):
     def __init__(self) -> None:
         load_dotenv(
@@ -80,8 +69,4 @@ class Config(BaseModel):
 
     postgres_config: PostgresConfig = Field(
         default_factory=lambda: PostgresConfig.model_validate(env)
-    )
-
-    otel_config: OTELConfig = Field(
-        default_factory=lambda: OTELConfig.model_validate(env)
     )

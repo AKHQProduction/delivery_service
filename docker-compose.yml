@@ -87,54 +87,6 @@ services:
     volumes:
       - ./backend/src:/usr/src/app/src
 
-  otel-collector:
-    container_name: "water_delivery-otel-collector"
-    image: otel/opentelemetry-collector-contrib:0.114.0
-    command: [ "--config=/etc/otel-collector.yml" ]
-    volumes:
-      - ./configs/otel-collector.yml:/etc/otel-collector.yml:ro
-    depends_on:
-      - victoriametrics
-      - loki
-      - tempo
-    restart: unless-stopped
-
-  victoriametrics:
-    container_name: "water_delivery-victoriametrics"
-    image: victoriametrics/victoria-metrics:v1.106.1
-    command:
-      - "--storageDataPath=/victoria-metrics-data"
-      - "--httpListenAddr=:8428"
-      - "--retentionPeriod=30d"
-    volumes:
-      - victoriametrics_data:/victoria-metrics-data
-    ports:
-      - "8428:8428"
-    restart: unless-stopped
-
-  loki:
-    container_name: "water_delivery-loki"
-    image: grafana/loki:3.3.2
-    command: [ "-config.file=/etc/loki/loki.yml" ]
-    volumes:
-      - ./configs/loki.yml:/etc/loki/loki.yml:ro
-      - loki_data:/loki
-    ports:
-      - "3100:3100"
-    restart: unless-stopped
-
-  tempo:
-    container_name: "water_delivery-tempo"
-    image: grafana/tempo:2.6.1
-    user: "0"
-    command: [ "-config.file=/etc/tempo/tempo.yml" ]
-    volumes:
-      - ./configs/tempo.yml:/etc/tempo/tempo.yml:ro
-      - tempo_data:/tmp/tempo
-    ports:
-      - "3200:3200"
-    restart: unless-stopped
-
   grafana:
     container_name: "water_delivery-grafana"
     image: grafana/grafana:11.4.0
@@ -145,19 +97,13 @@ services:
     volumes:
       - grafana_data:/var/lib/grafana
       - ./configs/grafana/provisioning/datasources:/etc/grafana/provisioning/datasources:ro
-      - ./configs/grafana/provisioning/dashboards:/etc/grafana/provisioning/dashboards:ro
     ports:
       - "3000:3000"
     depends_on:
-      - victoriametrics
-      - loki
-      - tempo
+      -
     restart: unless-stopped
 
 volumes:
   redis_data:
   postgres_data:
-  victoriametrics_data:
-  loki_data:
-  tempo_data:
   grafana_data:

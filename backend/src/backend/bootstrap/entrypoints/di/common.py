@@ -22,12 +22,10 @@ from backend.application.interfaces import TransactionManager
 from backend.bootstrap.config import (
     AppConfig,
     Config,
-    OTELConfig,
     PostgresConfig,
     RedisConfig,
     TelegramConfig,
 )
-from backend.bootstrap.telemetry import instrument_sqlalchemy
 from backend.infrastructure.persistence.gateways import (
     RedisLinkGateway,
     SQLAlchemyClientGateway,
@@ -62,21 +60,16 @@ class ConfigProvider(Provider):
     def postgres_config(self, config: Config) -> PostgresConfig:
         return config.postgres_config
 
-    @provide
-    def otel_config(self, config: Config) -> OTELConfig:
-        return config.otel_config
-
 
 class PersistenceProvider(Provider):
     scope = Scope.REQUEST
 
     @provide(scope=Scope.APP)
     async def engine(
-        self, config: PostgresConfig, otel_config: OTELConfig
+        self, config: PostgresConfig
     ) -> AsyncIterator[AsyncEngine]:
         engine = create_async_engine(config.uri)
-        if otel_config.enabled:
-            instrument_sqlalchemy(engine)
+
         yield engine
         await engine.dispose()
 
