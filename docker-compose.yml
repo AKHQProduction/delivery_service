@@ -33,8 +33,6 @@ services:
     depends_on:
       postgres:
         condition: service_healthy
-      otel-collector:
-        condition: service_started
 
   redis:
     container_name: "water_delivery-redis"
@@ -103,7 +101,42 @@ services:
       -
     restart: unless-stopped
 
+  webapp:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    working_dir: /home/node/app
+    stop_signal: SIGINT
+    volumes:
+      - ./frontend:/home/node/app
+      - node_modules_volumes:/home/node/app/node_modules
+    env_file:
+      - .env
+    command: [ "npm", "run", "dev", "--host" ]
+    depends_on:
+      - api
+      - admin_bot
+
+  tunnel:
+    image: cloudflare/cloudflared:latest
+    restart: unless-stopped
+    command: tunnel --no-autoupdate run --token ${CLOUDFLARE_TUNNEL_TOKEN}
+    depends_on:
+      - reverse-proxy
+
+  reverse-proxy:
+    depends_on:
+      - webapp
+      - admin_bot
+      - api
+    stop_signal: SIGINT
+    restart: always
+    image: nginx:latest
+    volumes:
+      - ./nginx/nginx-dev.conf:/etc/nginx/conf.d/default.conf
+
 volumes:
+  node_modules_volumes:
   redis_data:
   postgres_data:
   grafana_data:

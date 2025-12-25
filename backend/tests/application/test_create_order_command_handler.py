@@ -197,6 +197,7 @@ async def test_create_order_successfully(
     assert created_order.order_items[0].name == "Вода 19л"
     assert created_order.order_items[0].quantity == 2
     assert created_order.order_items[0].price_per_item == 100
+    assert created_order.order_items[0].product_id == product_id
     assert created_order.comment == "Доставити до 12:00"
 
 

@@ -9,7 +9,7 @@ interface ClientDetailModalProps {
   client: Client;
   onClose: () => void;
   onDelete: () => void;
-  onSave: (updatedProduct: Client) => void;
+  onSave: () => Promise<void> | void;
 }
 
 export const ClientDetailModal: React.FC<ClientDetailModalProps> = ({
@@ -28,8 +28,8 @@ export const ClientDetailModal: React.FC<ClientDetailModalProps> = ({
     setIsEditing(false);
   };
 
-  const handleSaveEdit = (updatedEmployee: Client) => {
-    onSave(updatedEmployee);
+  const handleSaveEdit = async () => {
+    await onSave();
     setIsEditing(false);
   };
 
@@ -76,7 +76,6 @@ export const ClientDetailModal: React.FC<ClientDetailModalProps> = ({
         <h1 className="text-3xl font-bold text-white mb-2">
           {client.full_name}
         </h1>
-        <p className="text-indigo-100">Клієнт ID: #{client.client_id}</p>
       </div>
 
       <div className="flex-1 overflow-y-auto px-6 py-6 space-y-6 pb-24">
@@ -87,6 +86,10 @@ export const ClientDetailModal: React.FC<ClientDetailModalProps> = ({
           <ItemElement
             descriptionText={"Ім'я клієнта"}
             elementText={client.full_name || "Не вказано"}
+          />
+          <ItemElement
+            descriptionText="Тег клієнта"
+            elementText={client.custom_id || "Не вказано"}
           />
           {client.phones?.map((phone, index) => (
             <ItemElement
@@ -99,7 +102,7 @@ export const ClientDetailModal: React.FC<ClientDetailModalProps> = ({
             <ItemElement
               key={index}
               descriptionText={`Адреса ${index + 1}`}
-              elementText={address.street + ", " + address.house + ", " + address.apartment + ", " + address.entrance + ", " + address.floor + ", " + address.intercom}
+              elementText={`${address.street} ${address.house}`}
             />
           ))}
         </div>

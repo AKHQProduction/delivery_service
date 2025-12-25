@@ -3,10 +3,12 @@ import { ProductPage } from "../pages/ProductPage";
 import { ClientsPage } from "../pages/ClientsPage";
 import { OrdersPage } from "../pages/OrdersPage";
 import { EmployeePage } from "../pages/EmployeePage";
+import { OrdersStatsPage } from "../pages/OrderStatsPage";
 import goodsIcon from "../assets/icons/goods.svg";
 import clientsIcon from "../assets/icons/client.svg";
 import ordersIcon from "../assets/icons/order.svg";
 import usersIcon from "../assets/icons/users.svg";
+import statisticIcon from "../assets/icons/statistic-board-com.svg";
 
 export interface RouteConfig {
   path: string;
@@ -17,6 +19,13 @@ export interface RouteConfig {
 }
 
 export const routeConfig: RouteConfig[] = [
+  {
+    path: "/",
+    label: "Статистика",
+    icon: statisticIcon,
+    component: OrdersStatsPage,
+    allowedRoles: [UserRole.OWNER],
+  },
   {
     path: "/products",
     label: "Товари",

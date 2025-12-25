@@ -20,6 +20,7 @@ from backend.application.usecases.invite_employee import (
     AcceptInviteCommand,
     AcceptInviteCommandHandler,
 )
+from backend.bootstrap.config import WebhookConfig
 from backend.presentation.admin_bot import states
 from backend.presentation.admin_bot.keyboards.inline import shop_kb
 
@@ -31,6 +32,7 @@ async def cmd_start_with_invite(
     message: Message,
     command: CommandObject,
     handler: FromDishka[AcceptInviteCommandHandler],
+    webhook_config: FromDishka[WebhookConfig],
 ) -> Message:
     user: User = cast("User", message.from_user)
     if command.args:
@@ -44,8 +46,9 @@ async def cmd_start_with_invite(
             )
         except (EntityNotFoundError, UserAlreadyRelatedToShopError):
             return await message.answer("❌ Сталася помилка")
+
     return await message.answer(
-        f"🙋 Привіт, {user.first_name}!", reply_markup=shop_kb()
+        f"🙋 Привіт, {user.first_name}!", reply_markup=shop_kb(webhook_config)
     )
 
 
@@ -54,6 +57,7 @@ async def cmd_start(
     message: Message,
     dialog_manager: DialogManager,
     handler: FromDishka[BotStartCommandHandler],
+    webhook_config: FromDishka[WebhookConfig],
 ) -> Message | None:
     user: User = cast("User", message.from_user)
 
@@ -62,7 +66,8 @@ async def cmd_start(
     )
     if exists:
         return await message.answer(
-            f"🙋 Привіт, {user.first_name}!", reply_markup=shop_kb()
+            f"🙋 Привіт, {user.first_name}!",
+            reply_markup=shop_kb(webhook_config),
         )
     await dialog_manager.start(
         state=states.NewShop.NAME, mode=StartMode.RESET_STACK

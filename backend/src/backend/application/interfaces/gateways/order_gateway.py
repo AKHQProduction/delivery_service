@@ -10,6 +10,7 @@ from backend.application.vars import (
     Empty,
     OrderId,
     OrderItemId,
+    ProductId,
     ShopId,
     TimePreference,
 )
@@ -28,10 +29,11 @@ class DeliveryAddressDTO:
 
 @dataclass(frozen=True)
 class OrderItemDTO:
-    name: str
     quantity: int
-    price_per_item: int
+    name: str | None = None
+    price_per_item: int | None = None
     id: OrderItemId | None = None
+    product_id: ProductId | None = None
 
 
 @dataclass(frozen=True)
@@ -65,6 +67,7 @@ class OrderItemReadModel:
     name: str
     quantity: int
     price_per_item: int
+    product_id: ProductId | None = None
 
 
 @dataclass(frozen=True)
@@ -85,14 +88,18 @@ class GetOrdersFilters:
     shop_id: ShopId | None = None
     delivery_date: date | None = None
     time_preference: TimePreference | None = None
+    client_name: str | None = None
+    custom_id: str | None = None
 
 
 @dataclass(frozen=True)
-class UpdateOrderItemDTO:
-    name: str
-    quantity: int
-    price_per_item: int
-    id: OrderItemId | None = None
+class OrderStatsReadModel:
+    total_orders: int
+    total_orders_in_first_half: int
+    total_orders_in_second_half: int
+    total_orders_sum: int
+    total_water: int
+    total_other: int
 
 
 @dataclass(frozen=True)
@@ -104,9 +111,7 @@ class UpdateOrderDTO:
     delivery_phone: str | None = None
     delivery_address: DeliveryAddressDTO | None = None
     comment: str | Empty | None = None
-    items_to_add: list[UpdateOrderItemDTO] | None = None
-    items_to_update: list[UpdateOrderItemDTO] | None = None
-    items_to_delete: list[OrderItemId] | None = None
+    items: list[OrderItemDTO] | None = None
 
 
 class OrderGateway(Protocol):
@@ -140,4 +145,14 @@ class OrderGateway(Protocol):
 
     @abstractmethod
     async def update(self, dto: UpdateOrderDTO) -> None:
+        raise NotImplementedError
+
+    @abstractmethod
+    async def load_items(self, order_id: OrderId) -> list[OrderItemReadModel]:
+        raise NotImplementedError
+
+    @abstractmethod
+    async def get_stats(
+        self, filters: GetOrdersFilters
+    ) -> OrderStatsReadModel:
         raise NotImplementedError

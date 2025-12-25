@@ -41,14 +41,15 @@ export const getAllEmployees = async (
   order: string
 ) => {
   try {
-    const response = await api.get(`v1/employee/all`, {
-      params: {
-        name: employeeName,
-        limit: employeeLimit,
-        offset: offset,
-        order: order,
-      },
-    });
+    const params: Record<string, string | number> = {
+      limit: employeeLimit,
+      offset: offset,
+      order: order,
+    };
+
+    if (employeeName) params.name = employeeName;
+
+    const response = await api.get(`v1/employee/all`, { params });
     return response.data;
   } catch (error) {
     throw error;

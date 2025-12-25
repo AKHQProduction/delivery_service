@@ -1033,3 +1033,351 @@ async def test_get_all_orders_filters_by_shop(
 
     assert len(response_1.json()) == 2
     assert len(response_2.json()) == 3
+
+
+@pytest.mark.asyncio()
+async def test_get_all_orders_with_client_name_filter(
+    http_client: AsyncClient,
+    session: AsyncSession,
+    customer_headers: Callable[[int], dict[str, Any]],
+    setup_full_test_user_with_shop,
+    setup_test_client,
+    setup_test_order,
+) -> None:
+    telegram_id = 5306
+    _, shop_id = await setup_full_test_user_with_shop(telegram_id=telegram_id)
+
+    client_id_1 = await setup_test_client(
+        shop_id=shop_id, full_name="Іван Іванов"
+    )
+    client_id_2 = await setup_test_client(
+        shop_id=shop_id, full_name="Петро Петренко"
+    )
+
+    await setup_test_order(shop_id=shop_id, client_id=client_id_1)
+    await setup_test_order(shop_id=shop_id, client_id=client_id_1)
+    await setup_test_order(shop_id=shop_id, client_id=client_id_2)
+
+    await session.commit()
+
+    headers = customer_headers(telegram_id)
+
+    response = await http_client.get(
+        url=f"{BASE_URL}/all",
+        headers=headers,
+        params={"client_name": "Іван"},
+    )
+
+    assert response.status_code == status.HTTP_200_OK
+    orders = response.json()
+    assert len(orders) == 2
+    assert all(order["client_name"] == "Іван Іванов" for order in orders)
+
+
+@pytest.mark.asyncio()
+async def test_get_all_orders_with_custom_id_filter(
+    http_client: AsyncClient,
+    session: AsyncSession,
+    customer_headers: Callable[[int], dict[str, Any]],
+    setup_full_test_user_with_shop,
+    setup_test_client,
+    setup_test_order,
+) -> None:
+    telegram_id = 5307
+    _, shop_id = await setup_full_test_user_with_shop(telegram_id=telegram_id)
+
+    client_id_1 = await setup_test_client(
+        shop_id=shop_id, full_name="Клієнт 1", custom_id="VIP-001"
+    )
+    client_id_2 = await setup_test_client(
+        shop_id=shop_id, full_name="Клієнт 2", custom_id="REG-002"
+    )
+
+    await setup_test_order(shop_id=shop_id, client_id=client_id_1)
+    await setup_test_order(shop_id=shop_id, client_id=client_id_1)
+    await setup_test_order(shop_id=shop_id, client_id=client_id_2)
+
+    await session.commit()
+
+    headers = customer_headers(telegram_id)
+
+    response = await http_client.get(
+        url=f"{BASE_URL}/all",
+        headers=headers,
+        params={"custom_id": "VIP"},
+    )
+
+    assert response.status_code == status.HTTP_200_OK
+    orders = response.json()
+    assert len(orders) == 2
+    assert all(order["client_name"] == "Клієнт 1" for order in orders)
+
+
+@pytest.mark.asyncio()
+async def test_get_all_orders_with_combined_client_filters(
+    http_client: AsyncClient,
+    session: AsyncSession,
+    customer_headers: Callable[[int], dict[str, Any]],
+    setup_full_test_user_with_shop,
+    setup_test_client,
+    setup_test_order,
+) -> None:
+    telegram_id = 5308
+    _, shop_id = await setup_full_test_user_with_shop(telegram_id=telegram_id)
+
+    client_id_1 = await setup_test_client(
+        shop_id=shop_id, full_name="Іван Іванов", custom_id="VIP-001"
+    )
+    client_id_2 = await setup_test_client(
+        shop_id=shop_id, full_name="Петро Петренко", custom_id="REG-002"
+    )
+
+    await setup_test_order(shop_id=shop_id, client_id=client_id_1)
+    await setup_test_order(shop_id=shop_id, client_id=client_id_2)
+
+    await session.commit()
+
+    headers = customer_headers(telegram_id)
+
+    response = await http_client.get(
+        url=f"{BASE_URL}/all",
+        headers=headers,
+        params={"client_name": "Іван", "custom_id": "REG"},
+    )
+
+    assert response.status_code == status.HTTP_200_OK
+    orders = response.json()
+    assert len(orders) == 2
+
+
+@pytest.mark.asyncio()
+async def test_get_order_stats(
+    http_client: AsyncClient,
+    session: AsyncSession,
+    customer_headers: Callable[[int], dict[str, Any]],
+    setup_full_test_user_with_shop,
+    setup_test_client,
+    setup_test_order,
+) -> None:
+    telegram_id = 5400
+    _, shop_id = await setup_full_test_user_with_shop(telegram_id=telegram_id)
+
+    client_id = await setup_test_client(shop_id=shop_id)
+
+    tomorrow = datetime.now(UTC).date() + timedelta(days=1)
+
+    await setup_test_order(
+        shop_id=shop_id,
+        client_id=client_id,
+        delivery_date=tomorrow,
+        time_preference=TimePreference.FIRST_HALF,
+        items=[{"name": "Product 1", "quantity": 2, "price_per_item": 100}],
+    )
+    await setup_test_order(
+        shop_id=shop_id,
+        client_id=client_id,
+        delivery_date=tomorrow,
+        time_preference=TimePreference.FIRST_HALF,
+        items=[{"name": "Product 2", "quantity": 3, "price_per_item": 50}],
+    )
+    await setup_test_order(
+        shop_id=shop_id,
+        client_id=client_id,
+        delivery_date=tomorrow,
+        time_preference=TimePreference.SECOND_HALF,
+        items=[{"name": "Product 3", "quantity": 1, "price_per_item": 200}],
+    )
+
+    await session.commit()
+
+    headers = customer_headers(telegram_id)
+
+    response = await http_client.get(
+        url=f"{BASE_URL}/stats",
+        headers=headers,
+        params={"delivery_date": tomorrow.isoformat()},
+    )
+
+    assert response.status_code == status.HTTP_200_OK
+    stats = response.json()
+    assert stats["total_orders"] == 3
+    assert stats["total_orders_in_first_half"] == 2
+    assert stats["total_orders_in_second_half"] == 1
+    # 2*100 + 3*50 + 1*200 = 200 + 150 + 200 = 550
+    assert stats["total_orders_sum"] == 550
+
+
+@pytest.mark.asyncio()
+async def test_get_order_stats_with_multiple_items_per_order(
+    http_client: AsyncClient,
+    session: AsyncSession,
+    customer_headers: Callable[[int], dict[str, Any]],
+    setup_full_test_user_with_shop,
+    setup_test_client,
+    setup_test_order,
+) -> None:
+    telegram_id = 5404
+    _, shop_id = await setup_full_test_user_with_shop(telegram_id=telegram_id)
+
+    client_id = await setup_test_client(shop_id=shop_id)
+
+    tomorrow = datetime.now(UTC).date() + timedelta(days=1)
+
+    await setup_test_order(
+        shop_id=shop_id,
+        client_id=client_id,
+        delivery_date=tomorrow,
+        time_preference=TimePreference.FIRST_HALF,
+        items=[
+            {"name": "Product 1", "quantity": 2, "price_per_item": 100},
+            {"name": "Product 2", "quantity": 1, "price_per_item": 200},
+            {"name": "Product 3", "quantity": 3, "price_per_item": 50},
+        ],
+    )
+
+    await session.commit()
+
+    headers = customer_headers(telegram_id)
+
+    response = await http_client.get(
+        url=f"{BASE_URL}/stats",
+        headers=headers,
+        params={"delivery_date": tomorrow.isoformat()},
+    )
+
+    assert response.status_code == status.HTTP_200_OK
+    stats = response.json()
+    assert stats["total_orders"] == 1
+    assert stats["total_orders_in_first_half"] == 1
+    assert stats["total_orders_in_second_half"] == 0
+    # 2*100 + 1*200 + 3*50 = 200 + 200 + 150 = 550
+    assert stats["total_orders_sum"] == 550
+
+
+@pytest.mark.asyncio()
+async def test_get_order_stats_empty(
+    http_client: AsyncClient,
+    session: AsyncSession,
+    customer_headers: Callable[[int], dict[str, Any]],
+    setup_full_test_user_with_shop,
+) -> None:
+    telegram_id = 5401
+    await setup_full_test_user_with_shop(telegram_id=telegram_id)
+    await session.commit()
+
+    headers = customer_headers(telegram_id)
+    tomorrow = datetime.now(UTC).date() + timedelta(days=1)
+
+    response = await http_client.get(
+        url=f"{BASE_URL}/stats",
+        headers=headers,
+        params={"delivery_date": tomorrow.isoformat()},
+    )
+
+    assert response.status_code == status.HTTP_200_OK
+    stats = response.json()
+    assert stats["total_orders"] == 0
+    assert stats["total_orders_in_first_half"] == 0
+    assert stats["total_orders_in_second_half"] == 0
+    assert stats["total_orders_sum"] == 0
+
+
+@pytest.mark.asyncio()
+async def test_get_order_stats_filters_by_shop(
+    http_client: AsyncClient,
+    session: AsyncSession,
+    customer_headers: Callable[[int], dict[str, Any]],
+    setup_test_client,
+    setup_test_order,
+    create_user,
+    create_telegram_account,
+    create_role,
+    create_shop_membership,
+    create_shop,
+) -> None:
+    user1_telegram_id = 5402
+    user2_telegram_id = 5403
+
+    role_id = await create_role(role_id=1, name=ShopRole.OWNER)
+
+    # User 1 with shop 1
+    shop_id_1 = await create_shop()
+    user_id_1 = await create_user()
+    await create_telegram_account(
+        user_id=user_id_1, telegram_id=user1_telegram_id, full_name="User 1"
+    )
+    await create_shop_membership(
+        user_id=user_id_1, shop_id=shop_id_1, role_id=role_id
+    )
+
+    # User 2 with shop 2
+    shop_id_2 = await create_shop()
+    user_id_2 = await create_user()
+    await create_telegram_account(
+        user_id=user_id_2, telegram_id=user2_telegram_id, full_name="User 2"
+    )
+    await create_shop_membership(
+        user_id=user_id_2, shop_id=shop_id_2, role_id=role_id
+    )
+
+    client_id_1 = await setup_test_client(shop_id=shop_id_1)
+    client_id_2 = await setup_test_client(shop_id=shop_id_2)
+
+    tomorrow = datetime.now(UTC).date() + timedelta(days=1)
+
+    # 2 orders for shop 1
+    for _ in range(2):
+        await setup_test_order(
+            shop_id=shop_id_1,
+            client_id=client_id_1,
+            delivery_date=tomorrow,
+            items=[{"name": "Product", "quantity": 1, "price_per_item": 100}],
+        )
+
+    # 3 orders for shop 2
+    for _ in range(3):
+        await setup_test_order(
+            shop_id=shop_id_2,
+            client_id=client_id_2,
+            delivery_date=tomorrow,
+            items=[{"name": "Product", "quantity": 1, "price_per_item": 100}],
+        )
+
+    await session.commit()
+
+    headers_1 = customer_headers(user1_telegram_id)
+    headers_2 = customer_headers(user2_telegram_id)
+
+    response_1 = await http_client.get(
+        url=f"{BASE_URL}/stats",
+        headers=headers_1,
+        params={"delivery_date": tomorrow.isoformat()},
+    )
+    response_2 = await http_client.get(
+        url=f"{BASE_URL}/stats",
+        headers=headers_2,
+        params={"delivery_date": tomorrow.isoformat()},
+    )
+
+    assert response_1.status_code == status.HTTP_200_OK
+    assert response_2.status_code == status.HTTP_200_OK
+
+    stats_1 = response_1.json()
+    stats_2 = response_2.json()
+
+    assert stats_1["total_orders"] == 2
+    assert stats_2["total_orders"] == 3
+
+
+@pytest.mark.asyncio()
+async def test_get_order_stats_unauthorized(
+    http_client: AsyncClient,
+) -> None:
+    tomorrow = datetime.now(UTC).date() + timedelta(days=1)
+
+    response = await http_client.get(
+        url=f"{BASE_URL}/stats",
+        params={"delivery_date": tomorrow.isoformat()},
+    )
+
+    assert response.status_code == status.HTTP_403_FORBIDDEN

@@ -162,6 +162,7 @@ class CreateOrderCommandHandler:
                     name=product[0].name,
                     quantity=product[1],
                     price_per_item=product[0].price,
+                    product_id=product[0].product_id,
                 )
                 for product in products
             ],

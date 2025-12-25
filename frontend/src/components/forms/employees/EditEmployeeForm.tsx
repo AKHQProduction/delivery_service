@@ -3,6 +3,7 @@ import { FormWrapper } from "../../shared/formWrapper";
 import { FormInput } from "../../shared/formInput";
 import { FormSelect } from "../../shared/formSelect";
 import { type Employee } from "../../../types/entities/Employee";
+import { roleMap } from "../../../utils/dataMap";
 
 interface EditEmployeeFormProps {
   employee: Employee;
@@ -17,7 +18,7 @@ export const EditEmployeeForm: React.FC<EditEmployeeFormProps> = ({
 }) => {
   const [formData, setFormData] = useState({
     full_name: employee.full_name,
-    role: employee.role,
+    role: roleMap[employee.role] || employee.role,
   });
 
   const handleChange = (

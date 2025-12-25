@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useCallback } from "react";
 import {
   type Client,
   type Address,
@@ -8,24 +8,64 @@ import {
   getAllClients,
   createNewClient,
   updateExistingClientById,
+  deleteClientById,
 } from "../../services/api/clientApi";
+
+const PAGE_SIZE = 20;
 
 export const useClient = () => {
   const [clients, setClients] = useState<Client[]>([]);
   const [loading, setLoading] = useState(false);
+  const [loadingMore, setLoadingMore] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [hasMore, setHasMore] = useState(true);
+  const [offset, setOffset] = useState(0);
+  const [currentSearch, setCurrentSearch] = useState("");
 
-  const getClients = async () => {
+  const getClients = async (search: string = "") => {
     setLoading(true);
     setError(null);
+    setCurrentSearch(search);
+    setOffset(0);
     try {
-      const fetchedClients = await getAllClients("", "", "", 100, 0, "ASC");
+      const fetchedClients = await getAllClients(search, search, search, PAGE_SIZE, 0, "ASC");
       setClients(fetchedClients);
+      setHasMore(fetchedClients.length >= PAGE_SIZE);
+      setOffset(PAGE_SIZE);
+      return fetchedClients;
     } catch {
       setError("Не вдалося завантажити клієнтів.");
+      return [];
     } finally {
       setLoading(false);
     }
+  };
+
+  const loadMoreClients = useCallback(async () => {
+    if (loadingMore || !hasMore) return;
+
+    setLoadingMore(true);
+    try {
+      const fetchedClients = await getAllClients(currentSearch, currentSearch, currentSearch, PAGE_SIZE, offset, "ASC");
+      setClients((prev) => [...prev, ...fetchedClients]);
+      setHasMore(fetchedClients.length >= PAGE_SIZE);
+      setOffset((prev) => prev + PAGE_SIZE);
+    } catch {
+      setError("Не вдалося завантажити більше клієнтів.");
+    } finally {
+      setLoadingMore(false);
+    }
+  }, [loadingMore, hasMore, offset, currentSearch]);
+
+  const deleteClient = async (clientId: string) => {
+    setLoading(true);
+    setError(null);
+    try {
+      await deleteClientById(clientId);
+    } catch (err) {
+      setError("Не вдалося видалити працівника.");
+    }
+    setLoading(false);
   };
 
   const createClient = async (clientData: {
@@ -46,9 +86,11 @@ export const useClient = () => {
 
       setClients((prev) => [...prev, newClient]);
       return newClient;
-    } catch {
-      setError("Не вдалося додати клієнта.");
-      throw error;
+    } catch (err: any) {
+      const errorMessage =
+        err?.response?.data?.detail || "Не вдалося додати клієнта.";
+      setError(errorMessage);
+      throw new Error(errorMessage);
     } finally {
       setLoading(false);
     }
@@ -77,9 +119,11 @@ export const useClient = () => {
         prev.map((c) => (c.client_id === clientId ? updatedClient : c))
       );
       return updatedClient;
-    } catch {
-      setError("Не вдалося оновити клієнта.");
-      throw error;
+    } catch (err: any) {
+      const errorMessage =
+        err?.response?.data?.detail || "Не вдалося оновити клієнта.";
+      setError(errorMessage);
+      throw new Error(errorMessage);
     } finally {
       setLoading(false);
     }
@@ -88,9 +132,13 @@ export const useClient = () => {
   return {
     clients,
     loading,
+    loadingMore,
     error,
+    hasMore,
     createClient,
     getClients,
+    loadMoreClients,
     updateClient,
+    deleteClient,
   };
 };

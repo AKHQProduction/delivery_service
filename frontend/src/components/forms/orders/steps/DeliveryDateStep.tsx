@@ -3,6 +3,7 @@ import { type Client } from "../../../../types/entities/Client";
 import { type Product } from "../../../../types/entities/Product";
 import { Tooltip } from "../../../ui/tooltip";
 import { DateSelectInput } from "../../../shared/DateSelectInput";
+import { FormSelect } from "../../../shared/FormSelect";
 
 interface SelectedProduct {
   product: Product;
@@ -15,7 +16,11 @@ interface DeliveryDateStepProps {
   selectedAddress: string;
   selectedProducts: SelectedProduct[];
   deliveryDate: string;
+  deliveryTime: string;
+  note: string;
   onDateChange: (date: string) => void;
+  onTimeChange: (time: string) => void;
+  onNoteChange: (note: string) => void;
 }
 
 export const DeliveryDateStep: React.FC<DeliveryDateStepProps> = ({
@@ -24,7 +29,11 @@ export const DeliveryDateStep: React.FC<DeliveryDateStepProps> = ({
   selectedAddress,
   selectedProducts,
   deliveryDate,
+  deliveryTime,
+  note,
   onDateChange,
+  onTimeChange,
+  onNoteChange,
 }) => {
   const totalAmount = selectedProducts.reduce(
     (sum, p) => sum + p.product.price * p.quantity,
@@ -71,6 +80,19 @@ export const DeliveryDateStep: React.FC<DeliveryDateStepProps> = ({
         }
       />
 
+      <FormSelect
+        label="Час доставки"
+        name="deliveryTime"
+        value={deliveryTime}
+        required ={true}
+        onChange={onTimeChange}
+        options={[
+          { value: "FIRST_HALF", label: "Перша половина дня" },
+          { value: "SECOND_HALF", label: "Друга половина дня" },
+        ]}
+        
+      />
+
       <div>
         {deliveryDate && (
           <div className="flex items-center gap-2 text-sm text-indigo-600 mt-2">
@@ -82,7 +104,8 @@ export const DeliveryDateStep: React.FC<DeliveryDateStepProps> = ({
               />
             </svg>
             <span className="font-medium">
-              Доставка: {formatDate(deliveryDate)}
+              Доставка: {formatDate(deliveryDate)}  <br />
+              {deliveryTime === "FIRST_HALF" ? "Перша половина дня" : "Друга половина дня"}
             </span>
           </div>
         )}
@@ -207,6 +230,14 @@ export const DeliveryDateStep: React.FC<DeliveryDateStepProps> = ({
           </div>
         </div>
       </div>
+
+      <textarea
+        value={note}
+        onChange={(e) => onNoteChange(e.target.value)}
+        placeholder="Примітка до замовлення..."
+        rows={2}
+        className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500 resize-none text-sm"
+      />
 
       <div>
         <Tooltip

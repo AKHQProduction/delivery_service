@@ -4,14 +4,16 @@ from aiogram.types import (
     WebAppInfo,
 )
 
+from backend.bootstrap.config import WebhookConfig
 
-def shop_kb() -> InlineKeyboardMarkup:
+
+def shop_kb(webhook_config: WebhookConfig) -> InlineKeyboardMarkup:
     return InlineKeyboardMarkup(
         inline_keyboard=[
             [
                 InlineKeyboardButton(
                     text="⚙️ Панель",
-                    web_app=WebAppInfo(url="https://www.youtube.com"),
+                    web_app=WebAppInfo(url=webhook_config.webhook_url),
                 )
             ]
         ]

@@ -4,10 +4,29 @@ import { routeConfig } from "./config/roles.config";
 import { ProtectedRoute } from "./components/ProtectedRoute";
 import { DevPage } from "./pages/DevPage";
 import { AddItemComponent } from "./components/features/addItemComponent";
+import { getUser } from "./services/api/userApi";
+import { useEffect } from "react";
+import { useUserStore } from "./context/useUserStore";
 
 const isDev = import.meta.env.MODE === "development";
 
 function App() {
+  useEffect(() => {
+    const fetchUser = async () => {
+      try {
+        const data = await getUser();
+        useUserStore.getState().setUser({
+          user_id: data.user_id,
+          role: data.role,
+        });
+      } catch (error) {
+        console.error("Failed to fetch user:", error);
+      }
+    };
+
+    fetchUser();
+  }, []);
+  
   return (
     <>
       <BrowserRouter>

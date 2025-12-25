@@ -17,8 +17,7 @@ from backend.application.commands.delete_order import (
     DeleteOrderCommandHandler,
 )
 from backend.application.commands.edit_order import (
-    ItemToUpdateDTO,
-    NewItemDTO,
+    OrderItem,
     UpdateOrderCommand,
     UpdateOrderCommandHandler,
 )
@@ -31,6 +30,11 @@ from backend.application.queries.export_orders_pdf import (
     ExportOrdersPDFQueryHandler,
 )
 from backend.application.queries.get_order import GetOrderQueryHandler
+from backend.application.queries.get_order_stats import (
+    GetOrderStatsQuery,
+    GetOrderStatsQueryHandler,
+    GetOrderStatsResponse,
+)
 from backend.application.queries.get_orders import (
     GetOrdersQuery,
     GetOrdersQueryHandler,
@@ -186,10 +190,61 @@ async def update_order(
                         "address_id": 3,
                     },
                 ),
-                "add_items": Example(
-                    description="Add new items to order",
+                "update_item_quantity": Example(
+                    description=(
+                        "Update quantity of existing item. "
+                        "Pass id to keep the item, change quantity. "
+                        "No need to pass product_id for existing items. "
+                        "If order has items [id=1, id=2], this keeps both "
+                        "but changes quantity of item 1 to 10."
+                    ),
                     value={
-                        "items_to_add": [
+                        "items": [
+                            {"id": 1, "quantity": 10},
+                            {"id": 2, "quantity": 2},
+                        ],
+                    },
+                ),
+                "add_new_item": Example(
+                    description=(
+                        "Add new item to order. "
+                        "Keep existing items (pass their ids), "
+                        "add new item with product_id but without id. "
+                        "If order has [id=1], this keeps it and adds new."
+                    ),
+                    value={
+                        "items": [
+                            {"id": 1, "quantity": 1},
+                            {
+                                "product_id": (
+                                    "850e8400-e29b-41d4-a716-446655440000"
+                                ),
+                                "quantity": 3,
+                            },
+                        ],
+                    },
+                ),
+                "delete_item": Example(
+                    description=(
+                        "Delete item from order. "
+                        "Simply don't include it in the list. "
+                        "If order has [id=1, id=2, id=3], "
+                        "this removes id=2 and id=3."
+                    ),
+                    value={
+                        "items": [
+                            {"id": 1, "quantity": 1},
+                        ],
+                    },
+                ),
+                "replace_all_items": Example(
+                    description=(
+                        "Replace all items with completely new list. "
+                        "Don't pass any ids - all old items will be deleted, "
+                        "new items will be created."
+                    ),
+                    value={
+                        "items": [
                             {
                                 "product_id": (
                                     "750e8400-e29b-41d4-a716-446655440000"
@@ -203,43 +258,6 @@ async def update_order(
                                 "quantity": 1,
                             },
                         ],
-                    },
-                ),
-                "update_items": Example(
-                    description="Update existing order items",
-                    value={
-                        "items_to_update": [
-                            {"item_id": 1, "quantity": 5},
-                            {
-                                "item_id": 2,
-                                "quantity": 3,
-                                "price_per_item": 150,
-                            },
-                            {"item_id": 3, "name": "Вода 19л (акція)"},
-                        ],
-                    },
-                ),
-                "delete_items": Example(
-                    description="Delete order items",
-                    value={
-                        "items_to_delete": [2, 3],
-                    },
-                ),
-                "full_items_update": Example(
-                    description="Add, update and delete items in one request",
-                    value={
-                        "items_to_add": [
-                            {
-                                "product_id": (
-                                    "750e8400-e29b-41d4-a716-446655440000"
-                                ),
-                                "quantity": 2,
-                            }
-                        ],
-                        "items_to_update": [
-                            {"item_id": 1, "quantity": 5},
-                        ],
-                        "items_to_delete": [2, 3],
                     },
                 ),
                 "update_comment": Example(
@@ -265,16 +283,15 @@ async def update_order(
                         "phone_id": 1,
                         "address_id": 2,
                         "comment": "Терміново",
-                        "items_to_add": [
+                        "items": [
+                            {"id": 1, "quantity": 10},
                             {
                                 "product_id": (
                                     "750e8400-e29b-41d4-a716-446655440000"
                                 ),
                                 "quantity": 1,
-                            }
+                            },
                         ],
-                        "items_to_update": [{"item_id": 1, "quantity": 10}],
-                        "items_to_delete": [3],
                     },
                 ),
             }
@@ -282,25 +299,16 @@ async def update_order(
     ],
     handler: FromDishka[UpdateOrderCommandHandler],
 ) -> None:
-    items_to_add = (
+    items = (
         [
-            NewItemDTO(product_id=item.product_id, quantity=item.quantity)
-            for item in body.items_to_add
-        ]
-        if body.items_to_add
-        else None
-    )
-    items_to_update = (
-        [
-            ItemToUpdateDTO(
-                item_id=item.item_id,
+            OrderItem(
+                product_id=item.product_id,
                 quantity=item.quantity,
-                price_per_item=item.price_per_item,
-                name=item.name,
+                id=item.id,
             )
-            for item in body.items_to_update
+            for item in body.items
         ]
-        if body.items_to_update
+        if body.items
         else None
     )
     command = UpdateOrderCommand(
@@ -311,9 +319,7 @@ async def update_order(
         address_id=body.address_id,
         phone_id=body.phone_id,
         comment=body.comment,
-        items_to_add=items_to_add,
-        items_to_update=items_to_update,
-        items_to_delete=body.items_to_delete,
+        items=items,
     )
     await handler.handle(command)
 
@@ -345,6 +351,8 @@ async def get_all_orders(
     handler: FromDishka[GetOrdersQueryHandler],
     delivery_date: date | None = None,
     time_preference: TimePreference | None = None,
+    client_name: str | None = None,
+    custom_id: str | None = None,
     limit: int = 100,
     offset: int = 0,
 ) -> list[OrderReadModel]:
@@ -352,9 +360,26 @@ async def get_all_orders(
         GetOrdersQuery(
             delivery_date=delivery_date,
             time_preference=time_preference,
+            client_name=client_name,
+            custom_id=custom_id,
             pagination=Pagination(limit=limit, offset=offset),
         )
     )
+
+
+@router.get(
+    "/stats",
+    status_code=status.HTTP_200_OK,
+    responses={
+        status.HTTP_401_UNAUTHORIZED: {"model": ErrorSchema},
+    },
+    dependencies=[Depends(HTTPBearer())],
+)
+async def get_order_stats(
+    delivery_date: date,
+    handler: FromDishka[GetOrderStatsQueryHandler],
+) -> GetOrderStatsResponse:
+    return await handler.handle(GetOrderStatsQuery(date=delivery_date))
 
 
 @router.get(
