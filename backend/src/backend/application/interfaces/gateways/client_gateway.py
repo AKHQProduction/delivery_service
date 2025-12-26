@@ -87,7 +87,8 @@ class ClientGateway(Protocol):
         raise NotImplementedError
 
     @abstractmethod
-    async def exists_with_number(self, number: str) -> bool:
+    async def check_existing_numbers(self, numbers: list[str]) -> set[str]:
+        """Return set of phone numbers that already exist in the database."""
         raise NotImplementedError
 
     @abstractmethod

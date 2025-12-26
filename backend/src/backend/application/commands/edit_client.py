@@ -134,19 +134,23 @@ class EditClientCommandHandler:
 
         if command.phones is not None:
             current_numbers = {phone.number for phone in client.phones}
+            new_numbers = [
+                phone.number
+                for phone in command.phones
+                if phone.number not in current_numbers
+            ]
 
-            for phone in command.phones:
-                if (
-                    phone.number not in current_numbers
-                    and await self._client_gateway.exists_with_number(
-                        phone.number
-                    )
-                ):
+            if new_numbers:
+                existing = await self._client_gateway.check_existing_numbers(
+                    new_numbers
+                )
+                if existing:
+                    duplicate = next(iter(existing))
                     logger.warning(
                         "Phone number %s already exists for another client",
-                        phone.number,
+                        duplicate,
                     )
-                    raise PhoneNumberAlreadyExistsError(phone.number)
+                    raise PhoneNumberAlreadyExistsError(duplicate)
 
             client.phones = [
                 PhoneDTO(

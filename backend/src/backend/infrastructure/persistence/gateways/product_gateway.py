@@ -38,16 +38,30 @@ class SQLAlchemyProductGateway(ProductGateway):
     async def load(self, product_id: ProductId) -> Product | None:
         row = await self._session.get(ProductDB, product_id)
         if row:
-            return Product(
-                product_id=ProductId(cast("UUID", cast("object", row.id))),
-                shop_id=ShopId(cast("UUID", cast("object", row.shop_id))),
-                name=cast("str", cast("object", row.name)),
-                category=ProductCategory(
-                    cast("str", cast("object", row.category))
-                ),
-                price=int(cast("int", cast("object", row.price))),
-            )
+            return self._to_entity(row)
         return None
+
+    async def load_many(self, product_ids: list[ProductId]) -> list[Product]:
+        if not product_ids:
+            return []
+
+        query = select(ProductDB).where(ProductDB.id.in_(product_ids))
+        result = await self._session.execute(query)
+        rows = result.scalars().all()
+
+        return [self._to_entity(row) for row in rows]
+
+    @staticmethod
+    def _to_entity(row: ProductDB) -> Product:
+        return Product(
+            product_id=ProductId(cast("UUID", cast("object", row.id))),
+            shop_id=ShopId(cast("UUID", cast("object", row.shop_id))),
+            name=cast("str", cast("object", row.name)),
+            category=ProductCategory(
+                cast("str", cast("object", row.category))
+            ),
+            price=int(cast("int", cast("object", row.price))),
+        )
 
     async def update(self, updated_product: Product) -> None:
         product_db = await self._session.get(

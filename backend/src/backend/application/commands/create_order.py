@@ -128,17 +128,18 @@ class CreateOrderCommandHandler:
             )
             raise EntityNotFoundError(entity="Address")
 
-        products: list[tuple[Product, int]] = []
-        for product in command.products:
-            product_dm = await self._product_gateway.load(product.product_id)
-            if not product_dm:
-                logger.warning(
-                    "Product not found: product_id=%s", product.product_id
-                )
-                raise EntityNotFoundError(
-                    entity="Product", entity_id=product.product_id
-                )
-            products.append((product_dm, product.quantity))
+        product_ids = [p.product_id for p in command.products]
+        loaded_products = await self._product_gateway.load_many(product_ids)
+        products_map = {p.product_id: p for p in loaded_products}
+
+        for pid in product_ids:
+            if pid not in products_map:
+                logger.warning("Product not found: product_id=%s", pid)
+                raise EntityNotFoundError(entity="Product", entity_id=pid)
+
+        products: list[tuple[Product, int]] = [
+            (products_map[p.product_id], p.quantity) for p in command.products
+        ]
 
         order_id = self._order_gateway.next_id()
         new_order = CreateOrderDTO(

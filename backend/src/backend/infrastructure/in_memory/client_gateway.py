@@ -112,8 +112,10 @@ class InMemoryClientGateway(ClientGateway):
     def next_id(self) -> ClientId:
         return self.client_id or ClientId(uuid.uuid4())
 
-    async def exists_with_number(self, number: str) -> bool:
+    async def check_existing_numbers(self, numbers: list[str]) -> set[str]:
+        existing: set[str] = set()
         for client in self.clients.values():
-            if any(phone.number == number for phone in client.phones):
-                return True
-        return False
+            for phone in client.phones:
+                if phone.number in numbers:
+                    existing.add(phone.number)
+        return existing
