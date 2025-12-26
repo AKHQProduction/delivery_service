@@ -24,7 +24,7 @@ export const routeConfig: RouteConfig[] = [
     label: "Статистика",
     icon: statisticIcon,
     component: OrdersStatsPage,
-    allowedRoles: [UserRole.OWNER],
+    allowedRoles: [UserRole.MANAGER, UserRole.OWNER],
   },
   {
     path: "/products",

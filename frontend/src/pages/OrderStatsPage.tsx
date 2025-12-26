@@ -37,15 +37,6 @@ export const OrdersStatsPage = () => {
     }
   }, [selectedDate]);
 
-  const formatDate = (dateString: string) => {
-    const date = new Date(dateString);
-    return date.toLocaleDateString("uk-UA", {
-      day: "2-digit",
-      month: "2-digit",
-      year: "numeric",
-    });
-  };
-
   return (
     <div className="min-h-screen bg-gray-50 pb-24">
       <PageHeader title="Статистика" />
@@ -56,7 +47,7 @@ export const OrdersStatsPage = () => {
             Оберіть дату
           </label>
           <input
-          title="date selector"
+            title="date selector"
             type="date"
             value={selectedDate}
             onChange={(e) => setSelectedDate(e.target.value)}
@@ -64,9 +55,6 @@ export const OrdersStatsPage = () => {
                      focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent
                      text-gray-900 font-medium"
           />
-          <p className="text-xs text-gray-500 mt-2">
-            за {formatDate(selectedDate)}
-          </p>
         </div>
       </div>
 
@@ -99,9 +87,6 @@ export const OrdersStatsPage = () => {
                 </p>
                 <p className="text-4xl font-bold text-gray-900 mt-1">
                   {stats.total_orders}
-                </p>
-                <p className="text-xs text-gray-400 mt-1">
-                  за {formatDate(selectedDate)}
                 </p>
               </div>
             </div>
