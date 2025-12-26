@@ -1,3 +1,4 @@
+import asyncio
 import logging
 from dataclasses import dataclass
 
@@ -46,7 +47,11 @@ class AcceptInviteCommandHandler:
             extra={"payload": command.payload, "tg_id": command.tg_id},
         )
 
-        link = await self._link_gateway.load_by_payload(command.payload)
+        link, current_user_id = await asyncio.gather(
+            self._link_gateway.load_by_payload(command.payload),
+            self._idp.current_user_id(),
+        )
+
         if not link:
             logger.warning(
                 "Invite link not found",
@@ -62,8 +67,6 @@ class AcceptInviteCommandHandler:
                 "full_name": link.full_name,
             },
         )
-
-        current_user_id = await self._idp.current_user_id()
         if not current_user_id:
             logger.info("Creating new user via Telegram")
             new_user_id = self._user_gateway.next_id()

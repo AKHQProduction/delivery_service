@@ -31,6 +31,13 @@ class InMemoryProductGateway(ProductGateway):
     async def load(self, product_id: ProductId) -> Product | None:
         return self.products.get(product_id)
 
+    async def load_many(self, product_ids: list[ProductId]) -> list[Product]:
+        return [
+            product
+            for pid in product_ids
+            if (product := self.products.get(pid)) is not None
+        ]
+
     async def read(
         self, product_id: ProductId, shop_id: ShopId
     ) -> ProductReadModel | None:

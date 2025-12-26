@@ -48,6 +48,10 @@ class ProductGateway(Protocol):
         raise NotImplementedError
 
     @abstractmethod
+    async def load_many(self, product_ids: list[ProductId]) -> list[Product]:
+        raise NotImplementedError
+
+    @abstractmethod
     async def update(self, updated_product: Product) -> None:
         raise NotImplementedError
 

@@ -240,35 +240,52 @@ class UpdateOrderCommandHandler:
         existing_items = await self._order_gateway.load_items(order_id)
         existing_items_map = {item.id: item for item in existing_items}
 
-        result: list[OrderItemDTO] = []
-        for item in items:
-            product_id_to_use: ProductId | None = None
-            name: str | None = None
-            price_per_item: int | None = None
+        # Collect all product IDs that need to be loaded
+        product_ids_to_load: set[ProductId] = set()
+        item_product_map: dict[int, ProductId] = {}
 
-            # Determine which product_id to use
+        for idx, item in enumerate(items):
+            product_id_to_use: ProductId | None = None
+
             if item.product_id is not None:
-                # Explicitly passed product_id - use it
                 product_id_to_use = item.product_id
             elif item.id is not None:
-                # Existing item - check if it has product_id in DB
                 existing_item = existing_items_map.get(item.id)
                 if existing_item and existing_item.product_id:
                     product_id_to_use = existing_item.product_id
 
-            # If we have a product_id, load current price
             if product_id_to_use is not None:
-                product = await self._product_gateway.load(product_id_to_use)
-                if not product:
+                product_ids_to_load.add(product_id_to_use)
+                item_product_map[idx] = product_id_to_use
+
+        # Batch load all products at once
+        products_map: dict[ProductId, tuple[str, int]] = {}
+        if product_ids_to_load:
+            products = await self._product_gateway.load_many(
+                list(product_ids_to_load)
+            )
+            products_map = {p.product_id: (p.name, p.price) for p in products}
+
+            # Validate all products exist
+            for product_id in product_ids_to_load:
+                if product_id not in products_map:
                     logger.warning(
                         "Product not found: product_id=%s",
-                        product_id_to_use,
+                        product_id,
                     )
                     raise EntityNotFoundError(
-                        entity="Product", entity_id=product_id_to_use
+                        entity="Product", entity_id=product_id
                     )
-                name = product.name
-                price_per_item = product.price
+
+        # Build result using preloaded products
+        result: list[OrderItemDTO] = []
+        for idx, item in enumerate(items):
+            product_id_to_use = item_product_map.get(idx)
+            name: str | None = None
+            price_per_item: int | None = None
+
+            if product_id_to_use is not None:
+                name, price_per_item = products_map[product_id_to_use]
 
             result.append(
                 OrderItemDTO(

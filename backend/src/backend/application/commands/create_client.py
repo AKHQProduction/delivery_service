@@ -69,13 +69,17 @@ class CreateClientCommandHandler:
             current_user.shop_id,
         )
 
-        for phone in command.phones:
-            if await self._client_gateway.exists_with_number(phone.number):
-                logger.warning(
-                    "Phone number %s already exists for another client",
-                    phone.number,
-                )
-                raise PhoneNumberAlreadyExistsError(phone.number)
+        phone_numbers = [phone.number for phone in command.phones]
+        existing_numbers = await self._client_gateway.check_existing_numbers(
+            phone_numbers
+        )
+        if existing_numbers:
+            duplicate = next(iter(existing_numbers))
+            logger.warning(
+                "Phone number %s already exists for another client",
+                duplicate,
+            )
+            raise PhoneNumberAlreadyExistsError(duplicate)
 
         phones_dto = [
             PhoneDTO(number=phone.number, is_primary=(idx == 0))
