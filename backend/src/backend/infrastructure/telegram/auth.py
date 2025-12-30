@@ -57,7 +57,7 @@ class WebAppAuth:
     def with_init_data(self) -> InitData:
         logger.debug("Initialize auth with headers: %s", self._headers)
         if self._app_config.debug:
-            return self._validate_fake_headers_param(self._get_headers_param())
+            return self._validate_fake_headers_param()
         return self._validate_headers_param(self._get_headers_param())
 
     def _get_headers_param(self) -> str:
@@ -106,8 +106,8 @@ class WebAppAuth:
         parsed_init_data["hash"] = received_hash
         return InitData(**parsed_init_data)
 
-    def _validate_fake_headers_param(self, param: str) -> InitData:
-        return self._get_dummy_init_data(int(param))
+    def _validate_fake_headers_param(self) -> InitData:
+        return self._get_dummy_init_data(self._app_config.debug_user_id)
 
     @staticmethod
     def _parse_init_data(param: str) -> dict[str, Any]:

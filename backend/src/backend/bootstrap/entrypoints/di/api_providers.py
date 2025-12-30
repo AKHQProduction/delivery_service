@@ -12,12 +12,18 @@ from backend.application.commands import (
     DeleteEmployeeCommandHandler,
     EditEmployeeCommandHandler,
 )
+from backend.application.commands.create_category import (
+    CreateCategoryCommandHandler,
+)
 from backend.application.commands.create_client import (
     CreateClientCommandHandler,
 )
 from backend.application.commands.create_order import CreateOrderCommandHandler
 from backend.application.commands.create_product import (
     CreateProductCommandHandler,
+)
+from backend.application.commands.delete_category import (
+    DeleteCategoryCommandHandler,
 )
 from backend.application.commands.delete_client import (
     DeleteClientCommandHandler,
@@ -26,6 +32,9 @@ from backend.application.commands.delete_order import DeleteOrderCommandHandler
 from backend.application.commands.delete_product import (
     DeleteProductCommandHandler,
 )
+from backend.application.commands.edit_category import (
+    EditCategoryCommandHandler,
+)
 from backend.application.commands.edit_client import EditClientCommandHandler
 from backend.application.commands.edit_order import UpdateOrderCommandHandler
 from backend.application.commands.edit_product import EditProductCommandHandler
@@ -33,6 +42,9 @@ from backend.application.interfaces import IdentityProvider
 from backend.application.interfaces.pdf_generator import OrdersPDFGenerator
 from backend.application.queries.export_orders_pdf import (
     ExportOrdersPDFQueryHandler,
+)
+from backend.application.queries.get_categories import (
+    GetCategoriesQueryHandler,
 )
 from backend.application.queries.get_client import GetClientQueryHandler
 from backend.application.queries.get_clients import GetClientsQueryHandler
@@ -79,6 +91,10 @@ class APIInteractorsProvider(Provider):
         DeleteProductCommandHandler,
         GetProductQueryHandler,
         GetProductsQueryHandler,
+        CreateCategoryCommandHandler,
+        EditCategoryCommandHandler,
+        DeleteCategoryCommandHandler,
+        GetCategoriesQueryHandler,
         DeleteEmployeeCommandHandler,
         EditEmployeeCommandHandler,
         GetEmployeeQueryHandler,

@@ -7,7 +7,7 @@ from backend.application.commands.create_product import (
     CreateProductCommandHandler,
 )
 from backend.application.errors import AccessDeniedError
-from backend.application.vars import ProductCategory, ShopId, ShopRole, UserId
+from backend.application.vars import ShopId, ShopRole, UserId
 from backend.infrastructure.in_memory import (
     FakeTransactionManager,
     InMemoryIdentityProvider,
@@ -45,9 +45,7 @@ def make_handler():
 
 @pytest.fixture()
 def command() -> CreateProductCommand:
-    return CreateProductCommand(
-        name="Test Product", price=100, category=ProductCategory.WATER
-    )
+    return CreateProductCommand(name="Test Product", price=100)
 
 
 @pytest.mark.parametrize("role", (ShopRole.OWNER, ShopRole.MANAGER))

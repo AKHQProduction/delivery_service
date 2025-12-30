@@ -11,7 +11,7 @@ from backend.application.interfaces.gateways.product_gateway import (
     ProductGateway,
 )
 from backend.application.policies.access import can_shop_manage_policy
-from backend.application.vars import ProductCategory, ProductId
+from backend.application.vars import CategoryId, ProductId
 
 logger = logging.getLogger(__name__)
 
@@ -20,7 +20,7 @@ logger = logging.getLogger(__name__)
 class CreateProductCommand:
     name: str
     price: int
-    category: ProductCategory
+    category_id: CategoryId | None = None
 
 
 class CreateProductCommandHandler:
@@ -36,10 +36,10 @@ class CreateProductCommandHandler:
 
     async def handle(self, command: CreateProductCommand) -> ProductId:
         logger.info(
-            "Creating product: name=%s, price=%d, category=%s",
+            "Creating product: name=%s, price=%d, category_id=%s",
             command.name,
             command.price,
-            command.category,
+            command.category_id,
         )
 
         current_user = await self._idp.current_user()
@@ -64,7 +64,7 @@ class CreateProductCommandHandler:
                 shop_id=current_user.shop_id,
                 name=command.name,
                 price=command.price,
-                category=command.category,
+                category_id=command.category_id,
             )
         )
         await self._tr_manager.commit()

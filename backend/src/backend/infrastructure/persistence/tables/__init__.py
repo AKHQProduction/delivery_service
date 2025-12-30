@@ -1,4 +1,5 @@
 from .base import Base
+from .categories import Category
 from .clients import Client
 from .orders import Order, OrderItem
 from .products import Product
@@ -7,6 +8,7 @@ from .users import TelegramAccount, User
 
 __all__ = [
     "Base",
+    "Category",
     "Client",
     "Order",
     "OrderItem",

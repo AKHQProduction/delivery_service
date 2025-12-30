@@ -11,7 +11,6 @@ from backend.application.interfaces.gateways.product_gateway import (
     CreateProductDTO,
 )
 from backend.application.vars import (
-    ProductCategory,
     ProductId,
     ShopId,
     ShopRole,
@@ -67,7 +66,7 @@ async def test_delete_product_success(make_handler) -> None:
             shop_id=shop_id,
             name="Test Product",
             price=100,
-            category=ProductCategory.WATER,
+            category_id=None,
         )
     )
 
@@ -97,7 +96,7 @@ async def test_delete_product_access_denied_no_management_rights(
             shop_id=shop_id,
             name="Test Product",
             price=100,
-            category=ProductCategory.WATER,
+            category_id=None,
         )
     )
 
@@ -147,7 +146,7 @@ async def test_delete_product_access_denied_different_shop(
             shop_id=other_shop_id,
             name="Test Product",
             price=100,
-            category=ProductCategory.WATER,
+            category_id=None,
         )
     )
 

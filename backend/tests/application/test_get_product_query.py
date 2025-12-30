@@ -8,7 +8,6 @@ from backend.application.interfaces.gateways.product_gateway import (
 )
 from backend.application.queries.get_product import GetProductQueryHandler
 from backend.application.vars import (
-    ProductCategory,
     ProductId,
     ShopId,
     ShopRole,
@@ -56,7 +55,6 @@ async def test_get_product_success(make_query) -> None:
     product_id = ProductId(uuid.uuid4())
     product_name = "Test Product"
     product_price = 100
-    product_category = ProductCategory.WATER
 
     await product_gateway.create_product(
         CreateProductDTO(
@@ -64,7 +62,7 @@ async def test_get_product_success(make_query) -> None:
             shop_id=shop_id,
             name=product_name,
             price=product_price,
-            category=product_category,
+            category_id=None,
         )
     )
 
@@ -74,7 +72,7 @@ async def test_get_product_success(make_query) -> None:
     assert result.product_id == product_id
     assert result.name == product_name
     assert result.price == product_price
-    assert result.category == product_category
+    assert result.category_id is None
 
 
 @pytest.mark.asyncio()
@@ -109,7 +107,7 @@ async def test_get_product_accessible_by_different_roles(make_query) -> None:
             shop_id=shop_id,
             name="Test Product",
             price=100,
-            category=ProductCategory.WATER,
+            category_id=None,
         )
     )
 

@@ -11,7 +11,7 @@ from backend.application.interfaces.gateways.product_gateway import (
     CreateProductDTO,
 )
 from backend.application.vars import (
-    ProductCategory,
+    CategoryId,
     ProductId,
     ShopId,
     ShopRole,
@@ -61,13 +61,14 @@ async def test_edit_product_all_fields(make_handler) -> None:
     )
 
     product_id = ProductId(uuid.uuid4())
+    new_category_id = CategoryId(uuid.uuid4())
     await product_gateway.create_product(
         CreateProductDTO(
             product_id=product_id,
             shop_id=shop_id,
             name="Old Product",
             price=100,
-            category=ProductCategory.WATER,
+            category_id=None,
         )
     )
 
@@ -75,7 +76,7 @@ async def test_edit_product_all_fields(make_handler) -> None:
         product_id=product_id,
         new_name="New Product",
         new_price=200,
-        new_category=ProductCategory.OTHER,
+        new_category_id=new_category_id,
     )
 
     await handler.handle(command)
@@ -84,7 +85,7 @@ async def test_edit_product_all_fields(make_handler) -> None:
     assert updated_product is not None
     assert updated_product.name == "New Product"
     assert updated_product.price == 200
-    assert updated_product.category == ProductCategory.OTHER
+    assert updated_product.category_id == new_category_id
     assert tr_manager.committed
 
 
@@ -103,7 +104,7 @@ async def test_edit_product_only_name(make_handler) -> None:
             shop_id=shop_id,
             name="Old Product",
             price=100,
-            category=ProductCategory.WATER,
+            category_id=None,
         )
     )
 
@@ -118,7 +119,7 @@ async def test_edit_product_only_name(make_handler) -> None:
     assert updated_product is not None
     assert updated_product.name == "New Product"
     assert updated_product.price == 100
-    assert updated_product.category == ProductCategory.WATER
+    assert updated_product.category_id is None
     assert tr_manager.committed
 
 
@@ -137,7 +138,7 @@ async def test_edit_product_only_price(make_handler) -> None:
             shop_id=shop_id,
             name="Old Product",
             price=100,
-            category=ProductCategory.WATER,
+            category_id=None,
         )
     )
 
@@ -152,7 +153,7 @@ async def test_edit_product_only_price(make_handler) -> None:
     assert updated_product is not None
     assert updated_product.name == "Old Product"
     assert updated_product.price == 200
-    assert updated_product.category == ProductCategory.WATER
+    assert updated_product.category_id is None
     assert tr_manager.committed
 
 
@@ -165,19 +166,20 @@ async def test_edit_product_only_category(make_handler) -> None:
     )
 
     product_id = ProductId(uuid.uuid4())
+    new_category_id = CategoryId(uuid.uuid4())
     await product_gateway.create_product(
         CreateProductDTO(
             product_id=product_id,
             shop_id=shop_id,
             name="Old Product",
             price=100,
-            category=ProductCategory.WATER,
+            category_id=None,
         )
     )
 
     command = EditProductCommand(
         product_id=product_id,
-        new_category=ProductCategory.OTHER,
+        new_category_id=new_category_id,
     )
 
     await handler.handle(command)
@@ -186,7 +188,7 @@ async def test_edit_product_only_category(make_handler) -> None:
     assert updated_product is not None
     assert updated_product.name == "Old Product"
     assert updated_product.price == 100
-    assert updated_product.category == ProductCategory.OTHER
+    assert updated_product.category_id == new_category_id
     assert tr_manager.committed
 
 
@@ -207,7 +209,7 @@ async def test_edit_product_access_denied_no_management_rights(
             shop_id=shop_id,
             name="Test Product",
             price=100,
-            category=ProductCategory.WATER,
+            category_id=None,
         )
     )
 
@@ -260,7 +262,7 @@ async def test_edit_product_access_denied_different_shop(make_handler) -> None:
             shop_id=other_shop_id,
             name="Test Product",
             price=100,
-            category=ProductCategory.WATER,
+            category_id=None,
         )
     )
 

@@ -11,6 +11,7 @@ from backend.infrastructure.persistence.tables.base import (
 )
 
 if TYPE_CHECKING:
+    from backend.infrastructure.persistence.tables.categories import Category
     from backend.infrastructure.persistence.tables.shops import Shop
 
 
@@ -22,16 +23,21 @@ class Product(Base, CreatedAt, UpdatedAt):
     price: Mapped[int] = mapped_column(
         sa.Numeric(precision=10, scale=2), nullable=False
     )
-    category: Mapped[str] = mapped_column(sa.String, nullable=False)
 
+    category_id: Mapped[UUID | None] = mapped_column(
+        sa.ForeignKey("categories.id", ondelete="SET NULL"), nullable=True
+    )
     shop_id: Mapped[UUID] = mapped_column(
         sa.ForeignKey("shops.id", ondelete="CASCADE")
     )
 
     shop: Mapped["Shop"] = relationship(back_populates="products")
+    category: Mapped["Category | None"] = relationship(
+        back_populates="products"
+    )
 
     def __repr__(self) -> str:
         return (
             f"<Product id={self.id}, name={self.name}, "
-            f"price={self.price}, category={self.category}>"
+            f"price={self.price}, category_id={self.category_id}>"
         )
