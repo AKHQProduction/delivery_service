@@ -10,6 +10,7 @@ from fastapi.responses import ORJSONResponse
 
 from backend.application.errors import (
     AccessDeniedError,
+    AlreadyExistsError,
     AuthorizationError,
     EntityNotFoundError,
     PhoneNumberAlreadyExistsError,
@@ -53,6 +54,10 @@ def setup_exc_handlers(app: FastAPI) -> None:
     )
     app.add_exception_handler(
         PhoneNumberAlreadyExistsError,
+        partial(validate, status=code.HTTP_409_CONFLICT),
+    )
+    app.add_exception_handler(
+        AlreadyExistsError,
         partial(validate, status=code.HTTP_409_CONFLICT),
     )
     app.exception_handler(Exception)(internal_trouble)

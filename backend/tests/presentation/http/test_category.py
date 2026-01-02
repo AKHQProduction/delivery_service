@@ -8,14 +8,14 @@ from httpx import AsyncClient
 from sqlalchemy import insert, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from backend.application.vars import ProductId
-from backend.infrastructure.persistence.tables import Product
+from backend.application.vars import CategoryId
+from backend.infrastructure.persistence.tables import Category
 
-BASE_URL = "/api/v1/products"
+BASE_URL = "/api/v1/categories"
 
 
 @pytest.mark.asyncio()
-async def test_new_product_endpoint_without_category(
+async def test_create_category(
     http_client: AsyncClient,
     session: AsyncSession,
     customer_headers: Callable[[int], dict[str, Any]],
@@ -26,33 +26,47 @@ async def test_new_product_endpoint_without_category(
     await session.commit()
 
     headers = customer_headers(telegram_id)
+    name = "Water"
 
-    name = "Test Product"
-    price = 100
-
-    json = {"name": name, "price": price}
+    json = {"name": name}
     response = await http_client.post(url=BASE_URL, headers=headers, json=json)
 
     assert response.status_code == status.HTTP_201_CREATED
     await session.flush()
 
     new_entity = await session.execute(
-        select(Product).where(
-            Product.name == name,
-            Product.price == price,
-        )
+        select(Category).where(Category.name == name)
     )
     rows = new_entity.fetchall()
     assert len(rows) == 1
 
-    product = rows[0][0]
-    assert product.name == name
-    assert product.price == price
-    assert product.category_id is None
+    category = rows[0][0]
+    assert category.name == name
 
 
 @pytest.mark.asyncio()
-async def test_new_product_endpoint_with_category(
+async def test_create_category_duplicate_name_conflict(
+    http_client: AsyncClient,
+    session: AsyncSession,
+    customer_headers: Callable[[int], dict[str, Any]],
+    setup_full_test_user_with_shop,
+    setup_test_category,
+) -> None:
+    telegram_id = 1000
+    _, shop_id = await setup_full_test_user_with_shop(telegram_id=telegram_id)
+    await setup_test_category(shop_id=shop_id, name="Water")
+    await session.commit()
+
+    headers = customer_headers(telegram_id)
+
+    json = {"name": "Water"}
+    response = await http_client.post(url=BASE_URL, headers=headers, json=json)
+
+    assert response.status_code == status.HTTP_409_CONFLICT
+
+
+@pytest.mark.asyncio()
+async def test_edit_category(
     http_client: AsyncClient,
     session: AsyncSession,
     customer_headers: Callable[[int], dict[str, Any]],
@@ -65,162 +79,77 @@ async def test_new_product_endpoint_with_category(
     await session.commit()
 
     headers = customer_headers(telegram_id)
+    new_name = "Beverages"
 
-    name = "Test Product"
-    price = 100
+    json = {"name": new_name}
+    url = BASE_URL + f"/{category_id}"
+    response = await http_client.patch(url=url, headers=headers, json=json)
 
-    json = {"name": name, "price": price, "category_id": str(category_id)}
-    response = await http_client.post(url=BASE_URL, headers=headers, json=json)
-
-    assert response.status_code == status.HTTP_201_CREATED
+    assert response.status_code == status.HTTP_200_OK
     await session.flush()
 
-    new_entity = await session.execute(
-        select(Product).where(
-            Product.name == name,
-            Product.price == price,
-        )
+    updated_entity = await session.execute(
+        select(Category).where(Category.id == category_id)
     )
-    rows = new_entity.fetchall()
+    rows = updated_entity.fetchall()
     assert len(rows) == 1
 
-    product = rows[0][0]
-    assert product.name == name
-    assert product.price == price
-    assert product.category_id == category_id
+    category = rows[0][0]
+    assert category.name == new_name
 
 
 @pytest.mark.asyncio()
-async def test_edit_all_product_fields(
+async def test_edit_category_duplicate_name_conflict(
     http_client: AsyncClient,
     session: AsyncSession,
     customer_headers: Callable[[int], dict[str, Any]],
     setup_full_test_user_with_shop,
-    setup_test_product,
     setup_test_category,
 ) -> None:
     telegram_id = 1000
     _, shop_id = await setup_full_test_user_with_shop(telegram_id=telegram_id)
-    product_id, _, _, _ = await setup_test_product(shop_id=shop_id)
-    new_category_id = await setup_test_category(shop_id=shop_id, name="Other")
+    await setup_test_category(shop_id=shop_id, name="Water")
+    category_id = await setup_test_category(shop_id=shop_id, name="Other")
     await session.commit()
 
     headers = customer_headers(telegram_id)
-    new_name = "NewName"
-    new_price = 150
 
-    json = {
-        "name": new_name,
-        "price": new_price,
-        "category_id": str(new_category_id),
-    }
-    url = BASE_URL + f"/{product_id}"
+    json = {"name": "Water"}
+    url = BASE_URL + f"/{category_id}"
     response = await http_client.patch(url=url, headers=headers, json=json)
 
-    assert response.status_code == status.HTTP_200_OK
-    await session.flush()
-
-    updated_entity = await session.execute(
-        select(Product).where(Product.id == product_id)
-    )
-    rows = updated_entity.fetchall()
-    assert len(rows) == 1
-
-    product = rows[0][0]
-    assert product.name == new_name
-    assert product.price == new_price
-    assert product.category_id == new_category_id
+    assert response.status_code == status.HTTP_409_CONFLICT
 
 
 @pytest.mark.asyncio()
-async def test_edit_one_product_fields(
+async def test_delete_category(
     http_client: AsyncClient,
     session: AsyncSession,
     customer_headers: Callable[[int], dict[str, Any]],
     setup_full_test_user_with_shop,
-    setup_test_product,
+    setup_test_category,
 ) -> None:
     telegram_id = 1000
     _, shop_id = await setup_full_test_user_with_shop(telegram_id=telegram_id)
-    product_id, _, _, _ = await setup_test_product(shop_id=shop_id)
-    await session.commit()
-
-    headers = customer_headers(telegram_id)
-    new_name = "NewName"
-
-    json = {"name": new_name}
-    url = BASE_URL + f"/{product_id}"
-    response = await http_client.patch(url=url, headers=headers, json=json)
-
-    assert response.status_code == status.HTTP_200_OK
-    await session.flush()
-
-    updated_entity = await session.execute(
-        select(Product).where(Product.id == product_id)
-    )
-    rows = updated_entity.fetchall()
-    assert len(rows) == 1
-
-    product = rows[0][0]
-    assert product.name == new_name
-
-
-@pytest.mark.asyncio()
-async def test_delete_product(
-    http_client: AsyncClient,
-    session: AsyncSession,
-    customer_headers: Callable[[int], dict[str, Any]],
-    setup_full_test_user_with_shop,
-    setup_test_product,
-) -> None:
-    telegram_id = 1000
-    _, shop_id = await setup_full_test_user_with_shop(telegram_id=telegram_id)
-    product_id, _, _, _ = await setup_test_product(shop_id=shop_id)
+    category_id = await setup_test_category(shop_id=shop_id)
     await session.commit()
 
     headers = customer_headers(telegram_id)
 
-    url = BASE_URL + f"/{product_id}"
+    url = BASE_URL + f"/{category_id}"
     response = await http_client.delete(url=url, headers=headers)
 
     assert response.status_code == status.HTTP_200_OK
     await session.flush()
 
     deleted_entity = await session.execute(
-        select(Product).where(Product.id == product_id)
+        select(Category).where(Category.id == category_id)
     )
     assert deleted_entity.scalar_one_or_none() is None
 
 
 @pytest.mark.asyncio()
-async def test_get_product(
-    http_client: AsyncClient,
-    session: AsyncSession,
-    customer_headers: Callable[[int], dict[str, Any]],
-    setup_full_test_user_with_shop,
-    setup_test_product,
-) -> None:
-    telegram_id = 1000
-    _, shop_id = await setup_full_test_user_with_shop(telegram_id=telegram_id)
-    product_id, name, price, _ = await setup_test_product(shop_id=shop_id)
-    await session.commit()
-
-    headers = customer_headers(telegram_id)
-
-    url = BASE_URL + f"/{product_id}"
-    response = await http_client.get(url=url, headers=headers)
-
-    assert response.status_code == status.HTTP_200_OK
-    await session.flush()
-
-    assert response.json()["product_id"] == str(product_id)
-    assert response.json()["name"] == name
-    assert response.json()["price"] == price
-    assert response.json()["category_id"] is None
-
-
-@pytest.mark.asyncio()
-async def test_get_all_products(
+async def test_get_all_categories(
     http_client: AsyncClient,
     session: AsyncSession,
     customer_headers: Callable[[int], dict[str, Any]],
@@ -229,19 +158,14 @@ async def test_get_all_products(
     telegram_id = 1000
     _, shop_id = await setup_full_test_user_with_shop(telegram_id=telegram_id)
 
-    products_data = [
-        ("Water Bottle", 100),
-        ("Water Gallon", 200),
-        ("Soda Can", 50),
-    ]
+    categories_data = ["Water", "Beverages", "Accessories"]
 
-    for name, price in products_data:
+    for name in categories_data:
         await session.execute(
-            insert(Product).values(
-                id=ProductId(uuid.uuid4()),
+            insert(Category).values(
+                id=CategoryId(uuid.uuid4()),
                 shop_id=shop_id,
                 name=name,
-                price=price,
             )
         )
     await session.flush()
@@ -255,13 +179,13 @@ async def test_get_all_products(
     result = response.json()
 
     assert len(result) == 3
-    assert result[0]["name"] == "Soda Can"
-    assert result[1]["name"] == "Water Bottle"
-    assert result[2]["name"] == "Water Gallon"
+    assert result[0]["name"] == "Accessories"
+    assert result[1]["name"] == "Beverages"
+    assert result[2]["name"] == "Water"
 
 
 @pytest.mark.asyncio()
-async def test_get_all_products_with_name_filter(
+async def test_get_all_categories_with_name_filter(
     http_client: AsyncClient,
     session: AsyncSession,
     customer_headers: Callable[[int], dict[str, Any]],
@@ -270,19 +194,14 @@ async def test_get_all_products_with_name_filter(
     telegram_id = 1000
     _, shop_id = await setup_full_test_user_with_shop(telegram_id=telegram_id)
 
-    products_data = [
-        ("Water Bottle", 100),
-        ("Water Gallon", 200),
-        ("Soda Can", 50),
-    ]
+    categories_data = ["Water Bottles", "Water Gallons", "Accessories"]
 
-    for name, price in products_data:
+    for name in categories_data:
         await session.execute(
-            insert(Product).values(
-                id=ProductId(uuid.uuid4()),
+            insert(Category).values(
+                id=CategoryId(uuid.uuid4()),
                 shop_id=shop_id,
                 name=name,
-                price=price,
             )
         )
     await session.flush()
@@ -298,13 +217,11 @@ async def test_get_all_products_with_name_filter(
     result = response.json()
 
     assert len(result) == 2
-    assert all("Water" in p["name"] for p in result)
-    assert result[0]["name"] == "Water Bottle"
-    assert result[1]["name"] == "Water Gallon"
+    assert all("Water" in c["name"] for c in result)
 
 
 @pytest.mark.asyncio()
-async def test_get_all_products_with_pagination(
+async def test_get_all_categories_with_pagination(
     http_client: AsyncClient,
     session: AsyncSession,
     customer_headers: Callable[[int], dict[str, Any]],
@@ -315,11 +232,10 @@ async def test_get_all_products_with_pagination(
 
     for i in range(5):
         await session.execute(
-            insert(Product).values(
-                id=ProductId(uuid.uuid4()),
+            insert(Category).values(
+                id=CategoryId(uuid.uuid4()),
                 shop_id=shop_id,
-                name=f"Product {i}",
-                price=100,
+                name=f"Category {i}",
             )
         )
     await session.flush()
@@ -354,13 +270,13 @@ async def test_get_all_products_with_pagination(
 
     # Verify no duplicates
     all_ids = [
-        p["product_id"] for p in result_page1 + result_page2 + result_page3
+        c["category_id"] for c in result_page1 + result_page2 + result_page3
     ]
     assert len(all_ids) == len(set(all_ids))
 
 
 @pytest.mark.asyncio()
-async def test_get_all_products_sorted_desc(
+async def test_get_all_categories_sorted_desc(
     http_client: AsyncClient,
     session: AsyncSession,
     customer_headers: Callable[[int], dict[str, Any]],
@@ -371,11 +287,10 @@ async def test_get_all_products_sorted_desc(
 
     for name in ["Apple", "Banana", "Cherry"]:
         await session.execute(
-            insert(Product).values(
-                id=ProductId(uuid.uuid4()),
+            insert(Category).values(
+                id=CategoryId(uuid.uuid4()),
                 shop_id=shop_id,
                 name=name,
-                price=100,
             )
         )
     await session.flush()
@@ -397,7 +312,7 @@ async def test_get_all_products_sorted_desc(
 
 
 @pytest.mark.asyncio()
-async def test_get_all_products_filters_by_shop_id(
+async def test_get_all_categories_filters_by_shop_id(
     http_client: AsyncClient,
     session: AsyncSession,
     customer_headers: Callable[[int], dict[str, Any]],
@@ -412,22 +327,20 @@ async def test_get_all_products_filters_by_shop_id(
 
     for i in range(3):
         await session.execute(
-            insert(Product).values(
-                id=ProductId(uuid.uuid4()),
+            insert(Category).values(
+                id=CategoryId(uuid.uuid4()),
                 shop_id=shop_id_1,
-                name=f"Shop1 Product {i}",
-                price=100,
+                name=f"Shop1 Category {i}",
             )
         )
 
-    # Create products for shop 2 (should not be returned)
+    # Create categories for shop 2 (should not be returned)
     for i in range(2):
         await session.execute(
-            insert(Product).values(
-                id=ProductId(uuid.uuid4()),
+            insert(Category).values(
+                id=CategoryId(uuid.uuid4()),
                 shop_id=shop_id_2,
-                name=f"Shop2 Product {i}",
-                price=100,
+                name=f"Shop2 Category {i}",
             )
         )
     await session.flush()
@@ -440,6 +353,6 @@ async def test_get_all_products_filters_by_shop_id(
     assert response.status_code == status.HTTP_200_OK
     result = response.json()
 
-    # Should only return products from shop 1
+    # Should only return categories from shop 1
     assert len(result) == 3
-    assert all("Shop1" in p["name"] for p in result)
+    assert all("Shop1" in c["name"] for c in result)

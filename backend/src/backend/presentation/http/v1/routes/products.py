@@ -27,7 +27,7 @@ from backend.application.queries.get_products import (
     GetProductQuery,
     GetProductsQueryHandler,
 )
-from backend.application.vars import ProductCategory, ProductId
+from backend.application.vars import CategoryId, ProductId
 from backend.presentation.http.v1.schemas.error import ErrorSchema
 from backend.presentation.http.v1.schemas.product import EditProductSchema
 
@@ -47,20 +47,19 @@ async def create_new_product(
         CreateProductCommand,
         Body(
             openapi_examples={
-                "water": Example(
-                    description="Create new product with water category",
+                "without_category": Example(
+                    description="Create new product without category",
                     value={
                         "name": "Test Product",
                         "price": 100,
-                        "category": ProductCategory.WATER,
                     },
                 ),
-                "other": Example(
-                    description="Create new product with other category",
+                "with_category": Example(
+                    description="Create new product with category",
                     value={
-                        "name": "Test Other Product",
+                        "name": "Test Product",
                         "price": 100,
-                        "category": ProductCategory.OTHER,
+                        "category_id": "550e8400-e29b-41d4-a716-446655440000",
                     },
                 ),
             }
@@ -91,7 +90,9 @@ async def update_product(
             product_id=product_id,
             new_name=body.name,
             new_price=body.price,
-            new_category=body.category,
+            new_category_id=CategoryId(body.category_id)
+            if body.category_id
+            else None,
         )
     )
 

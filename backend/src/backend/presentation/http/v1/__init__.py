@@ -1,5 +1,8 @@
 from fastapi import APIRouter, FastAPI
 
+from backend.presentation.http.v1.routes.categories import (
+    router as category_router,
+)
 from backend.presentation.http.v1.routes.clients import (
     router as client_router,
 )
@@ -21,6 +24,7 @@ def setup_v1_router(app: FastAPI) -> None:
 
     v1_router.include_router(user_router)
     v1_router.include_router(product_router)
+    v1_router.include_router(category_router)
     v1_router.include_router(link_router)
     v1_router.include_router(employee_router)
     v1_router.include_router(client_router)

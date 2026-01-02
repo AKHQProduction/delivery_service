@@ -9,7 +9,7 @@ from backend.application.interfaces.gateways.product_gateway import (
     CreateProductDTO,
     GetProductsFilters,
 )
-from backend.application.vars import ProductCategory, ProductId, ShopId
+from backend.application.vars import ProductId, ShopId
 from backend.infrastructure.persistence.gateways import (
     SQLAlchemyProductGateway,
 )
@@ -31,7 +31,7 @@ async def test_create_product(
         shop_id=shop_id,
         name="Test Water",
         price=100,
-        category=ProductCategory.WATER,
+        category_id=None,
     )
 
     await product_gateway.create_product(product_dto)
@@ -45,7 +45,7 @@ async def test_create_product(
     product = rows[0][0]
     assert product.name == product_dto.name
     assert product.price == product_dto.price
-    assert product.category == product_dto.category.value
+    assert product.category_id is None
     assert product.shop_id == shop_id
 
 
@@ -89,7 +89,7 @@ async def test_load_product(
     assert product.shop_id == shop_id
     assert product.name == "Test Product"
     assert product.price == 100
-    assert product.category == ProductCategory.WATER
+    assert product.category_id is None
 
 
 @pytest.mark.asyncio()
@@ -119,7 +119,6 @@ async def test_update_product(
 
     product.name = "Updated Product"
     product.price = 200
-    product.category = ProductCategory.OTHER
 
     await product_gateway.update(product)
     await session.flush()
@@ -131,7 +130,6 @@ async def test_update_product(
 
     assert updated_product_db.name == "Updated Product"
     assert updated_product_db.price == 200
-    assert updated_product_db.category == ProductCategory.OTHER.value
 
 
 @pytest.mark.asyncio()
@@ -187,7 +185,7 @@ async def test_read_product(
     assert product.product_id == product_id
     assert product.name == "Test Product"
     assert product.price == 100
-    assert product.category == ProductCategory.WATER
+    assert product.category_id is None
 
 
 @pytest.mark.asyncio()
@@ -222,7 +220,6 @@ async def test_read_all_products_with_name_filter(
             shop_id=shop_id,
             name=name,
             price=100 * i,
-            category=ProductCategory.WATER.value,
         )
         session.add(product)
     await session.flush()
@@ -255,7 +252,6 @@ async def test_read_all_products_sorted_desc(
             shop_id=shop_id,
             name=name,
             price=100,
-            category=ProductCategory.OTHER.value,
         )
         session.add(product)
     await session.flush()
@@ -287,7 +283,6 @@ async def test_read_all_products_with_pagination(
             shop_id=shop_id,
             name=f"Product {i}",
             price=100,
-            category=ProductCategory.WATER.value,
         )
         session.add(product)
     await session.flush()
@@ -343,7 +338,6 @@ async def test_read_all_products_case_insensitive_filter(
         shop_id=shop_id,
         name="WaTeR BoTtLe",
         price=100,
-        category=ProductCategory.WATER.value,
     )
     session.add(product)
     await session.flush()
@@ -375,7 +369,6 @@ async def test_read_all_products_with_shop_id_filter(
             shop_id=shop_id_1,
             name=f"Shop1 Product {i}",
             price=100,
-            category=ProductCategory.WATER.value,
         )
         session.add(product)
 
@@ -387,7 +380,6 @@ async def test_read_all_products_with_shop_id_filter(
             shop_id=shop_id_2,
             name=f"Shop2 Product {i}",
             price=100,
-            category=ProductCategory.OTHER.value,
         )
         session.add(product)
     await session.flush()
@@ -419,7 +411,6 @@ async def test_read_all_products_with_shop_id_and_name_filter(
             shop_id=shop_id_1,
             name=name,
             price=100,
-            category=ProductCategory.WATER.value,
         )
         session.add(product)
 
@@ -431,7 +422,6 @@ async def test_read_all_products_with_shop_id_and_name_filter(
             shop_id=shop_id_2,
             name=name,
             price=100,
-            category=ProductCategory.OTHER.value,
         )
         session.add(product)
     await session.flush()
@@ -466,7 +456,6 @@ async def test_read_all_products_no_filters(
                 shop_id=shop_id,
                 name=f"Product {i}",
                 price=100,
-                category=ProductCategory.WATER.value,
             )
             session.add(product)
     await session.flush()

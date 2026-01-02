@@ -25,7 +25,6 @@ from backend.application.vars import (
     AddressType,
     ClientId,
     PhoneId,
-    ProductCategory,
     ProductId,
     ShopId,
     ShopRole,
@@ -140,7 +139,7 @@ async def setup_client_and_product(
         shop_id=shop_id,
         name="Вода 19л",
         price=100,
-        category=ProductCategory.WATER,
+        category_id=None,
     )
     product_gateway.products[product_id] = product
 
@@ -219,7 +218,7 @@ async def test_create_order_with_multiple_products(
         shop_id=shop_id,
         name="Помпа",
         price=50,
-        category=ProductCategory.OTHER,
+        category_id=None,
     )
     product_gateway.products[product_id_2] = product_2
 
@@ -402,7 +401,7 @@ async def test_raise_error_when_user_is_courier(
         shop_id=shop_id,
         name="Вода 19л",
         price=100,
-        category=ProductCategory.WATER,
+        category_id=None,
     )
     product_gateway.products[product_id] = product
 
@@ -459,7 +458,7 @@ async def test_raise_error_when_client_belongs_to_different_shop(
         shop_id=shop_id_1,
         name="Вода 19л",
         price=100,
-        category=ProductCategory.WATER,
+        category_id=None,
     )
     product_gateway.products[product_id] = product
 
@@ -537,7 +536,7 @@ async def test_owner_and_manager_can_create_order(
         shop_id=shop_id,
         name="Вода 19л",
         price=100,
-        category=ProductCategory.WATER,
+        category_id=None,
     )
     product_gateway.products[product_id] = product
 

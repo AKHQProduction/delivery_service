@@ -12,6 +12,7 @@ from backend.infrastructure.persistence.tables.base import (
 )
 
 if TYPE_CHECKING:
+    from backend.infrastructure.persistence.tables.categories import Category
     from backend.infrastructure.persistence.tables.clients import Client
     from backend.infrastructure.persistence.tables.orders import Order
     from backend.infrastructure.persistence.tables.products import Product
@@ -28,6 +29,7 @@ class Shop(Base, CreatedAt, UpdatedAt):
         back_populates="shop"
     )
     products: Mapped[list["Product"]] = relationship(back_populates="shop")
+    categories: Mapped[list["Category"]] = relationship(back_populates="shop")
     clients: Mapped[list["Client"]] = relationship(back_populates="shop")
     orders: Mapped[list["Order"]] = relationship(back_populates="shop")
 

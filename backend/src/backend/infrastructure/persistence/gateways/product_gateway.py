@@ -3,6 +3,7 @@ from uuid import UUID
 
 from sqlalchemy import asc, desc, select
 from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.orm import selectinload
 from uuid_utils import uuid7
 
 from backend.application.interfaces.gateways import Pagination, SortOrder
@@ -13,7 +14,7 @@ from backend.application.interfaces.gateways.product_gateway import (
     ProductGateway,
     ProductReadModel,
 )
-from backend.application.vars import ProductCategory, ProductId, ShopId
+from backend.application.vars import CategoryId, ProductId, ShopId
 from backend.infrastructure.persistence.tables import Product as ProductDB
 
 
@@ -31,7 +32,7 @@ class SQLAlchemyProductGateway(ProductGateway):
                 shop_id=dto.shop_id,
                 name=dto.name,
                 price=dto.price,
-                category=str(dto.category),
+                category_id=dto.category_id,
             )
         )
 
@@ -57,9 +58,9 @@ class SQLAlchemyProductGateway(ProductGateway):
             product_id=ProductId(cast("UUID", cast("object", row.id))),
             shop_id=ShopId(cast("UUID", cast("object", row.shop_id))),
             name=cast("str", cast("object", row.name)),
-            category=ProductCategory(
-                cast("str", cast("object", row.category))
-            ),
+            category_id=CategoryId(row.category_id)
+            if row.category_id
+            else None,
             price=int(cast("int", cast("object", row.price))),
         )
 
@@ -70,7 +71,7 @@ class SQLAlchemyProductGateway(ProductGateway):
         if product_db:
             product_db.name = updated_product.name
             product_db.price = updated_product.price
-            product_db.category = str(updated_product.category)
+            product_db.category_id = updated_product.category_id
 
     async def delete(self, product_id: ProductId) -> None:
         product_db = await self._session.get(ProductDB, product_id)
@@ -80,14 +81,21 @@ class SQLAlchemyProductGateway(ProductGateway):
     async def read(
         self, product_id: ProductId, shop_id: ShopId
     ) -> ProductReadModel | None:
-        row = await self._session.get(ProductDB, product_id)
+        query = (
+            select(ProductDB)
+            .where(ProductDB.id == product_id)
+            .options(selectinload(ProductDB.category))
+        )
+        result = await self._session.execute(query)
+        row = result.scalar_one_or_none()
         if row:
             return ProductReadModel(
                 product_id=ProductId(cast("UUID", cast("object", row.id))),
                 name=cast("str", cast("object", row.name)),
-                category=ProductCategory(
-                    cast("str", cast("object", row.category))
-                ),
+                category_id=CategoryId(row.category_id)
+                if row.category_id
+                else None,
+                category_name=row.category.name if row.category else None,
                 price=int(cast("int", cast("object", row.price))),
             )
         return None
@@ -95,7 +103,7 @@ class SQLAlchemyProductGateway(ProductGateway):
     async def read_all(
         self, filters: GetProductsFilters, pagination: Pagination
     ) -> list[ProductReadModel]:
-        query = select(ProductDB)
+        query = select(ProductDB).options(selectinload(ProductDB.category))
 
         if filters.shop_id:
             query = query.where(ProductDB.shop_id == filters.shop_id)
@@ -116,9 +124,10 @@ class SQLAlchemyProductGateway(ProductGateway):
             ProductReadModel(
                 product_id=ProductId(cast("UUID", cast("object", row.id))),
                 name=cast("str", cast("object", row.name)),
-                category=ProductCategory(
-                    cast("str", cast("object", row.category))
-                ),
+                category_id=CategoryId(row.category_id)
+                if row.category_id
+                else None,
+                category_name=row.category.name if row.category else None,
                 price=int(cast("int", cast("object", row.price))),
             )
             for row in rows

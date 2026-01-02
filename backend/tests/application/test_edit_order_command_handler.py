@@ -32,7 +32,6 @@ from backend.application.vars import (
     OrderId,
     OrderItemId,
     PhoneId,
-    ProductCategory,
     ProductId,
     ShopId,
     ShopRole,
@@ -361,7 +360,7 @@ async def test_update_order_replace_items(make_handler) -> None:
         shop_id=shop_id,
         name="New Product",
         price=200,
-        category=ProductCategory.WATER,
+        category_id=None,
     )
 
     order_id = OrderId(uuid.uuid4())
@@ -398,7 +397,7 @@ async def test_update_order_keep_existing_item_and_add_new(
         shop_id=shop_id,
         name="New Product",
         price=200,
-        category=ProductCategory.WATER,
+        category_id=None,
     )
 
     order_id = OrderId(uuid.uuid4())
@@ -744,7 +743,7 @@ async def test_update_item_quantity_auto_fetches_current_price(
         shop_id=shop_id,
         name="Вода 19л",
         price=100,
-        category=ProductCategory.WATER,
+        category_id=None,
     )
 
     # Create order with product_id linked
@@ -759,7 +758,7 @@ async def test_update_item_quantity_auto_fetches_current_price(
         shop_id=shop_id,
         name="Вода 19л",
         price=150,  # New price
-        category=ProductCategory.WATER,
+        category_id=None,
     )
 
     # Update only quantity, no product_id passed
@@ -823,7 +822,7 @@ async def test_update_item_with_explicit_product_id(make_handler) -> None:
         shop_id=shop_id,
         name="Вода 19л",
         price=100,
-        category=ProductCategory.WATER,
+        category_id=None,
     )
 
     # Create new product
@@ -833,7 +832,7 @@ async def test_update_item_with_explicit_product_id(make_handler) -> None:
         shop_id=shop_id,
         name="Вода 12л",
         price=80,
-        category=ProductCategory.WATER,
+        category_id=None,
     )
 
     # Create order with original product

@@ -3,16 +3,16 @@ from dataclasses import dataclass
 from typing import Protocol
 
 from backend.application.interfaces.gateways import Pagination
-from backend.application.vars import ProductCategory, ProductId, ShopId
+from backend.application.vars import CategoryId, ProductId, ShopId
 
 
 @dataclass
-class Product:  # Like entity
+class Product:
     product_id: ProductId
     shop_id: ShopId
     name: str
     price: int
-    category: ProductCategory
+    category_id: CategoryId | None
 
 
 @dataclass(frozen=True)
@@ -21,7 +21,7 @@ class CreateProductDTO:
     shop_id: ShopId
     name: str
     price: int
-    category: ProductCategory
+    category_id: CategoryId | None
 
 
 @dataclass(frozen=True)
@@ -29,7 +29,8 @@ class ProductReadModel:
     product_id: ProductId
     name: str
     price: int
-    category: ProductCategory
+    category_id: CategoryId | None
+    category_name: str | None
 
 
 @dataclass(frozen=True)

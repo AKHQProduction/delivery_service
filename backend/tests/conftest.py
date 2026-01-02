@@ -27,9 +27,9 @@ from sqlalchemy.ext.asyncio import (
 from backend.application.interfaces import TransactionManager
 from backend.application.vars import (
     AddressType,
+    CategoryId,
     ClientId,
     OrderId,
-    ProductCategory,
     ProductId,
     ShopId,
     ShopRole,
@@ -49,6 +49,7 @@ from backend.bootstrap.entrypoints.di.tests_providers import (
 )
 from backend.infrastructure.persistence.tables import (
     Base,
+    Category,
     Product,
     Role,
     Shop,
@@ -267,26 +268,49 @@ def setup_full_test_user_with_shop(
 
 
 @pytest.fixture()
+def setup_test_category(session: AsyncSession):
+    async def _setup_test_category(
+        shop_id: ShopId,
+        name: str = "Test Category",
+        category_id: CategoryId | None = None,
+    ) -> CategoryId:
+        if category_id is None:
+            category_id = CategoryId(uuid.uuid4())
+
+        await session.execute(
+            insert(Category).values(
+                id=category_id,
+                name=name,
+                shop_id=shop_id,
+            )
+        )
+
+        return category_id
+
+    return _setup_test_category
+
+
+@pytest.fixture()
 def setup_test_product(session: AsyncSession):
     async def _setup_test_product(
         shop_id: ShopId,
-    ) -> tuple[ProductId, str, int, ProductCategory]:
+        category_id: CategoryId | None = None,
+    ) -> tuple[ProductId, str, int, CategoryId | None]:
         product_id = ProductId(uuid.uuid4())
         name = "Test Product"
         price = 100
-        category = ProductCategory.WATER
 
         await session.execute(
             insert(Product).values(
                 id=product_id,
                 name=name,
                 price=price,
-                category=category,
+                category_id=category_id,
                 shop_id=shop_id,
             )
         )
 
-        return product_id, name, price, category
+        return product_id, name, price, category_id
 
     return _setup_test_product
 

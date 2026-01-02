@@ -1,3 +1,4 @@
+from .category_gateway import InMemoryCategoryGateway
 from .client_gateway import InMemoryClientGateway
 from .identity_provider import InMemoryIdentityProvider
 from .link_gateway import InMemoryLinkGateway
@@ -8,6 +9,7 @@ from .user_gateway import InMemoryUserGateway
 
 __all__ = [
     "FakeTransactionManager",
+    "InMemoryCategoryGateway",
     "InMemoryClientGateway",
     "InMemoryIdentityProvider",
     "InMemoryLinkGateway",

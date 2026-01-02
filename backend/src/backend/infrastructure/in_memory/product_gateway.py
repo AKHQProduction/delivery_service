@@ -1,3 +1,4 @@
+import asyncio
 from uuid import UUID
 
 from uuid_utils import uuid7
@@ -11,12 +12,18 @@ from backend.application.interfaces.gateways.product_gateway import (
     ProductReadModel,
 )
 from backend.application.vars import ProductId, ShopId
+from backend.infrastructure.in_memory.category_gateway import (
+    InMemoryCategoryGateway,
+)
 
 
 class InMemoryProductGateway(ProductGateway):
-    def __init__(self) -> None:
+    def __init__(
+        self, category_gateway: InMemoryCategoryGateway | None = None
+    ) -> None:
         self.products: dict[ProductId, Product] = {}
         self.updated = False
+        self._category_gateway = category_gateway
 
     async def create_product(self, dto: CreateProductDTO) -> None:
         product = Product(
@@ -24,7 +31,7 @@ class InMemoryProductGateway(ProductGateway):
             shop_id=dto.shop_id,
             name=dto.name,
             price=dto.price,
-            category=dto.category,
+            category_id=dto.category_id,
         )
         self.products.setdefault(dto.product_id, product)
 
@@ -38,6 +45,12 @@ class InMemoryProductGateway(ProductGateway):
             if (product := self.products.get(pid)) is not None
         ]
 
+    async def _get_category_name(self, product: Product) -> str | None:
+        if not product.category_id or not self._category_gateway:
+            return None
+        category = await self._category_gateway.load(product.category_id)
+        return category.name if category else None
+
     async def read(
         self, product_id: ProductId, shop_id: ShopId
     ) -> ProductReadModel | None:
@@ -47,40 +60,50 @@ class InMemoryProductGateway(ProductGateway):
                 product_id=product_id,
                 name=product.name,
                 price=product.price,
-                category=product.category,
+                category_id=product.category_id,
+                category_name=await self._get_category_name(product),
             )
         return None
 
     async def read_all(
         self, filters: GetProductsFilters, pagination: Pagination
     ) -> list[ProductReadModel]:
-        # Filter by name
-        filtered_products = [
-            product
-            for product in self.products.values()
-            if filters.name and filters.name.lower() in product.name.lower()
-        ]
+        filtered_products = list(self.products.values())
 
-        # Sort by name
+        if filters.shop_id:
+            filtered_products = [
+                p for p in filtered_products if p.shop_id == filters.shop_id
+            ]
+        if filters.name:
+            filtered_products = [
+                p
+                for p in filtered_products
+                if filters.name.lower() in p.name.lower()
+            ]
+
         if pagination.order == SortOrder.ASC:
             filtered_products.sort(key=lambda p: p.name)
         else:
             filtered_products.sort(key=lambda p: p.name, reverse=True)
 
-        # Apply pagination
         start = pagination.offset
         end = start + pagination.limit
         paginated_products = filtered_products[start:end]
 
-        # Convert to ProductReadModel
+        category_names = await asyncio.gather(*[
+            self._get_category_name(product) for product in paginated_products
+        ])
         return [
             ProductReadModel(
                 product_id=product.product_id,
                 name=product.name,
                 price=product.price,
-                category=product.category,
+                category_id=product.category_id,
+                category_name=category_name,
             )
-            for product in paginated_products
+            for product, category_name in zip(
+                paginated_products, category_names, strict=True
+            )
         ]
 
     async def update(self, updated_product: Product) -> None:

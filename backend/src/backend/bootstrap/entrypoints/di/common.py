@@ -29,13 +29,12 @@ from backend.bootstrap.config import (
 )
 from backend.infrastructure.persistence.gateways import (
     RedisLinkGateway,
+    SQLAlchemyCategoryGateway,
     SQLAlchemyClientGateway,
     SQLAlchemyOrderGateway,
+    SQLAlchemyProductGateway,
     SQLAlchemyShopGateway,
     SQLAlchemyUserGateway,
-)
-from backend.infrastructure.persistence.gateways.product_gateway import (
-    SQLAlchemyProductGateway,
 )
 
 logger = logging.getLogger(__name__)
@@ -102,6 +101,7 @@ class PersistenceProvider(Provider):
         WithParents[SQLAlchemyUserGateway],
         WithParents[SQLAlchemyShopGateway],
         WithParents[SQLAlchemyProductGateway],
+        WithParents[SQLAlchemyCategoryGateway],
         WithParents[SQLAlchemyClientGateway],
         WithParents[SQLAlchemyOrderGateway],
     )

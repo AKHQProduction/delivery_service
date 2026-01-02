@@ -1,9 +1,9 @@
-from pydantic import BaseModel
+from uuid import UUID
 
-from backend.application.vars import ProductCategory
+from pydantic import BaseModel
 
 
 class EditProductSchema(BaseModel):
     name: str | None = None
     price: int | None = None
-    category: ProductCategory | None = None
+    category_id: UUID | None = None

@@ -7,6 +7,7 @@ from pydantic import BaseModel, Field
 
 class AppConfig(BaseModel):
     debug: bool = Field(alias="DEBUG", default=True)
+    debug_user_id: int = Field(alias="DEBUG_USER_ID", default=1)
 
 
 class TelegramConfig(BaseModel):

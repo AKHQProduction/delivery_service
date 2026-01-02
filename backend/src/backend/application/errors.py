@@ -36,6 +36,15 @@ class EntityNotFoundError(ApplicationError):
         return f"{self._entity} with id {self._id} not found"
 
 
+class AlreadyExistsError(ApplicationError):
+    def __init__(self, entity: str) -> None:
+        self._entity = entity
+
+    @property
+    def message(self) -> str:
+        return f"{self._entity} already exists"
+
+
 class ValidationError(ApplicationError):
     pass
 
