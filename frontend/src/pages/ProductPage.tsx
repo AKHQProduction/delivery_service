@@ -131,7 +131,7 @@ export const ProductPage = () => {
       updatedProduct.price,
       updatedProduct.category_id
     );
-    await getProducts(searchTerm);
+    await getProducts();
     setSelectedProduct({
       ...updatedProduct,
     });
@@ -166,6 +166,7 @@ export const ProductPage = () => {
     try {
       await updateCategory(id, name);
       await fetchCategories();
+      await getProducts(searchTerm);
     } catch (error) {
       console.error("Failed to update category:", error);
     }
@@ -175,6 +176,7 @@ export const ProductPage = () => {
     try {
       await deleteCategory(id);
       await fetchCategories();
+      await getProducts(searchTerm);
     } catch (error) {
       console.error("Failed to delete category:", error);
     }

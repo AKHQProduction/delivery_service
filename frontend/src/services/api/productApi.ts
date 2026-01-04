@@ -3,13 +3,13 @@ import api from "../../config/api.config";
 export const createNewProduct = async (
   productName: string,
   productPrice: number,
-  productCategory: string
+  productCategory?: string
 ) => {
   try {
     const response = await api.post(`v1/products`, {
       name: productName,
       price: productPrice,
-      category: productCategory,
+      category_id: productCategory,
     });
     return response.data;
   } catch (error) {

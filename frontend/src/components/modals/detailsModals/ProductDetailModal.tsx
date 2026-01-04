@@ -3,7 +3,6 @@ import { EditProductForm } from "../../forms/products/EditProductForm";
 import { ItemElement } from "../../ui/itemElement";
 import { ModalButtons } from "../../ui/modalButtons";
 import leftArrowIcon from "../../../assets/icons/left_arrow.svg";
-import { categoryMap } from "../../../utils/dataMap";
 import { type Product } from "../../../types/entities/Product";
 
 interface ProductDetailModalProps {
