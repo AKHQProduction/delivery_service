@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef, useCallback } from "react";
 import { useOrders } from "../../../hooks/orders/useOrders";
 import { useClient } from "../../../hooks/clients/useClients";
-import { useProducts } from "../../../hooks/useProducts";
+import { useProducts } from "../../../hooks/products/useProducts";
 import { type Client } from "../../../types/entities/Client";
 import { type Product } from "../../../types/entities/Product";
 import { SearchBar } from "../../ui/searchBar";

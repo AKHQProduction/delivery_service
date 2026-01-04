@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef, useCallback } from "react";
 import { useClient } from "../clients/useClients";
-import { useProducts } from "../useProducts";
+import { useProducts } from "../products/useProducts";
 import { type Client } from "../../types/entities/Client";
 import { type Product } from "../../types/entities/Product";
 

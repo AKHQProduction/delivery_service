@@ -76,7 +76,7 @@ export const ProductDetailModal: React.FC<ProductDetailModalProps> = ({
 
         <h1 className="text-3xl font-bold text-white mb-2">{product.name}</h1>
         <p className="text-indigo-100">
-          Категорія: {categoryMap[product.category]}
+          Категорія: {product.category_name || "Немає"}
         </p>
       </div>
 
@@ -91,7 +91,7 @@ export const ProductDetailModal: React.FC<ProductDetailModalProps> = ({
           />
           <ItemElement
             descriptionText={"Категорія"}
-            elementText={categoryMap[product.category]}
+            elementText={product.category_name || "Немає"}
           />
           <ItemElement
             descriptionText={"Ціна"}

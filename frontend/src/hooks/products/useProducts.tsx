@@ -4,7 +4,7 @@ import {
   getAllProducts,
   deleteProductById,
   updateExistingProductById,
-} from "../services/api/productApi";
+} from "../../services/api/productApi";
 
 const PAGE_SIZE = 20;
 
