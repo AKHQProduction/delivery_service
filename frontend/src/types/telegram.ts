@@ -13,6 +13,8 @@ declare global {
         initDataUnsafe: any;
         BackButton: any;
         openLink(arg0: string): unknown;
+        platform: string;
+        openTelegramLink(arg0: string): unknown;
       };
     };
   }

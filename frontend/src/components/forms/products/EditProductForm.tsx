@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import { FormWrapper } from "../../shared/FormWrapper";
 import { FormInput } from "../../shared/FormInput";
 import { type Product } from "../../../types/entities/Product";
@@ -51,7 +51,6 @@ export const EditProductForm: React.FC<EditProductFormProps> = ({
       category_id: selectedCategory,
       price: parseFloat(formData.price),
     };
-    console.log("Submitting updated product:", updatedProduct);
     
     onSave(updatedProduct);
   };

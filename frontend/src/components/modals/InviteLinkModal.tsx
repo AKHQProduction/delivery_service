@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import initDataTG from "../../services/tgInitData";
 
 interface InviteLinkModalProps {
   link: string;
@@ -15,6 +16,16 @@ export const InviteLinkModal: React.FC<InviteLinkModalProps> = ({
     navigator.clipboard.writeText(link);
     setCopied(true);
     setTimeout(() => setCopied(false), 1500);
+  };
+
+  const handleTelegramShare = () => {
+    if (initDataTG?.platform !== "unknown") {
+      const telegramShareUrl = `https://t.me/share/url?url=${encodeURIComponent(
+        link
+      )}&text=${encodeURIComponent("Запрошено до групи")}`;
+      initDataTG?.openTelegramLink(telegramShareUrl);
+      onClose();
+    }
   };
   return (
     <div className="fixed inset-0 flex items-center justify-center px-4 z-9999 bg-black/50">
@@ -44,13 +55,12 @@ export const InviteLinkModal: React.FC<InviteLinkModalProps> = ({
             {copied ? "Copied!" : "Copy"}
           </button>
 
-          <a
-            href={link}
-            target="_blank"
-            className="flex-1 py-4 bg-indigo-600 hover:bg-indigo-700 text-white font-semibold rounded-2xl transition-colors text-center"
+          <button
+            onClick={handleTelegramShare}
+            className="flex-1 py-4 bg-blue-500 hover:bg-blue-600 text-white font-semibold rounded-2xl transition-colors"
           >
             Share
-          </a>
+          </button>
         </div>
 
         <button className="mt-4 text-sm text-gray-400 w-full" onClick={onClose}>
