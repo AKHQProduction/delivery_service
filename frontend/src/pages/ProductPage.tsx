@@ -15,6 +15,7 @@ export const ProductPage = () => {
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isCategoryModalOpen, setIsCategoryModalOpen] = useState(false);
+
   const {
     getProducts,
     deleteProduct,
@@ -49,6 +50,7 @@ export const ProductPage = () => {
       if (openProductId) {
         try {
           const product = await getProductById(openProductId);
+          console.log("Fetched product for modal:", product);
           setSelectedProduct(product);
           setIsModalOpen(true);
         } catch (e) {
@@ -124,7 +126,6 @@ export const ProductPage = () => {
   };
 
   const handleSave = async (updatedProduct: Product) => {
-
     await updateProduct(
       updatedProduct.product_id,
       updatedProduct.name,
@@ -132,7 +133,13 @@ export const ProductPage = () => {
       updatedProduct.category_id
     );
     await getProducts();
+
+    const categoryName = categories.find(
+      (cat) => cat.category_id === updatedProduct.category_id
+    )?.name;
+
     setSelectedProduct({
+      category_name: categoryName || "",
       ...updatedProduct,
     });
   };
