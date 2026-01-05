@@ -139,7 +139,7 @@ export const ProductPage = () => {
     )?.name;
 
     setSelectedProduct({
-      category_name: categoryName || "",
+      category_name: categoryName || "Без категорії",
       ...updatedProduct,
     });
   };
@@ -156,7 +156,6 @@ export const ProductPage = () => {
   const transformedCategories = categories.map((cat) => ({
     id: cat.category_id,
     name: cat.name,
-    productCount: cat.product_count || 0,
     emoji: "📁",
   }));
 
@@ -286,7 +285,6 @@ export const ProductPage = () => {
           </svg>
         </button>
 
-        {/* Add Button (your existing button) */}
         <div className="relative">
           <div className="absolute inset-0 bg-indigo-600 rounded-full animate-ping-slow opacity-75"></div>
           <button

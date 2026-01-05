@@ -30,7 +30,10 @@ export const useCategoriesForm = (options?: UseCategoriesFormOptions) => {
 
   // Update selectedCategory if initialCategory changes
   useEffect(() => {
-    if (options?.initialCategory && options.initialCategory !== selectedCategory) {
+    if (
+      options?.initialCategory &&
+      options.initialCategory !== selectedCategory
+    ) {
       setSelectedCategory(options.initialCategory);
     }
   }, [options?.initialCategory]);
@@ -43,18 +46,24 @@ export const useCategoriesForm = (options?: UseCategoriesFormOptions) => {
 
   // Transform categories for the management modal
   const transformedCategories = categories.map((cat) => ({
-    id: cat.category_id,
+    category_id: cat.category_id,
     name: cat.name,
-    productCount: cat.product_count || 0,
     emoji: "📁",
   }));
+  console.log("transformedCategories:", transformedCategories);
 
   const handleAddCategory = async (name: string) => {
     try {
-      const newCategory = await addCategory(name);
-      // Automatically select the newly created category
-      setSelectedCategory(newCategory.category_id);
-      setIsCategoryModalOpen(false);
+      const newCategoryId = await addCategory(name); // Returns UUID
+
+      if (newCategoryId) {
+        // Refresh categories to get the full list including the new one
+        await fetchCategories();
+
+        // Select the newly created category
+        setSelectedCategory(newCategoryId);
+        setIsCategoryModalOpen(false);
+      }
     } catch (error) {
       console.error("Failed to add category:", error);
     }

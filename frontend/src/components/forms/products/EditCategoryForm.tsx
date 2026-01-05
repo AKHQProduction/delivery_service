@@ -14,15 +14,12 @@ export const CategoriesForm = () => {
     addCategory,
     updateCategory,
     deleteCategory,
-    isLoaded,
   } = useCategories();
 
   // Fetch categories on mount
   useEffect(() => {
-    if (!isLoaded) {
-      fetchCategories();
-    }
-  }, [isLoaded, fetchCategories]);
+    fetchCategories();
+  }, [fetchCategories]);
 
   // Transform categories for the select component
   const categoryOptions = categories.map((cat) => ({
@@ -32,23 +29,26 @@ export const CategoriesForm = () => {
 
   // Transform categories for the management modal
   const transformedCategories = categories.map((cat) => ({
-    id: cat.category_id,
+    category_id: cat.category_id,
     name: cat.name,
-    productCount: cat.product_count || 0,
     emoji: "📁",
   }));
 
   const handleAddCategory = async (name: string) => {
-    try {
-      const newCategory = await addCategory(name);
-      // Automatically select the newly created category
+  try {
+    const newCategory = await addCategory(name);
+    // Automatically select the newly created category
+    if (newCategory && newCategory.category_id) {
       setSelectedCategory(newCategory.category_id);
-    } catch (error) {
-      console.error("Failed to add category:", error);
+      setIsCategoryModalOpen(false); // Close modal
     }
-  };
-
+  } catch (error) {
+    console.error("Failed to add category:", error);
+  }
+};
+  console.log("EditCategoryForm - transformedCategories:", transformedCategories);
   const handleUpdateCategory = async (id: string, name: string) => {
+    console.log("handleUpdateCategory called with:", id, name);
     try {
       await updateCategory(id, name);
     } catch (error) {
@@ -72,7 +72,6 @@ export const CategoriesForm = () => {
       <h1 className="text-2xl font-bold mb-6">Додати товар</h1>
 
       <form className="space-y-4">
-        {/* Other form fields... */}
 
         <DynamicFormSelect
           label="Категорія"

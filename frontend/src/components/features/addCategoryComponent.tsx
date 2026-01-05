@@ -5,7 +5,6 @@ import Delete from "../../assets/icons/delete.svg";
 interface Category {
   id: string;
   name: string;
-  productCount: number;
   emoji: string;
 }
 
@@ -54,6 +53,7 @@ export const CategoryManagementModal: React.FC<
   };
 
   const handleStartEdit = (category: Category) => {
+    console.log("Editing category:", category);
     setEditingId(category.id);
     setEditingName(category.name);
   };
@@ -110,7 +110,10 @@ export const CategoryManagementModal: React.FC<
               </div>
             ) : (
               categories.map((category) => (
-                <div key={category.id} className="p-4 bg-gray-50 rounded-xl">
+                <div
+                  key={category.id}
+                  className="p-4 bg-gray-50 rounded-xl"
+                >
                   <div className="flex items-center gap-3">
                     <div className="w-12 h-12 bg-white rounded-lg flex items-center justify-center text-2xl">
                       {category.emoji}
@@ -143,9 +146,6 @@ export const CategoryManagementModal: React.FC<
                     ) : (
                       <div className="flex-1">
                         <p className="font-medium">{category.name}</p>
-                        <p className="text-sm text-gray-500">
-                          {category.productCount} товарів
-                        </p>
                       </div>
                     )}
 

@@ -39,6 +39,7 @@ export const useCategories = () => {
         const fetchedCategories = response.categories || response;
         setCategories(fetchedCategories);
         hasFetchedRef.current = true;
+        console.log("Fetched categories:", fetchedCategories);
         return fetchedCategories;
       } catch (err: any) {
         setError(err.message || "Failed to fetch categories");
@@ -129,7 +130,7 @@ export const useCategories = () => {
   );
 
   // Helper to check if categories are loaded
-  const isLoaded = hasFetchedRef.current && categories.length > 0;
+  const isLoaded = hasFetchedRef.current
 
   return {
     categories,
