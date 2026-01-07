@@ -26,8 +26,8 @@ export const InviteUserForm: React.FC<{
 
     const link = await createInviteLink(formData.role, formData.name);
 
-    onInviteCreated(link); // передаем наверх
-    onClose(); // закрываем модалку
+    onInviteCreated(link);
+    onClose();
   };
 
   const roleOptions = [

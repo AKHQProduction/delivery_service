@@ -4,7 +4,7 @@ import {
   getAllProducts,
   deleteProductById,
   updateExistingProductById,
-} from "../services/api/productApi";
+} from "../../services/api/productApi";
 
 const PAGE_SIZE = 20;
 
@@ -17,7 +17,7 @@ export const useProducts = () => {
   const [offset, setOffset] = useState<number>(0);
   const [currentSearch, setCurrentSearch] = useState<string>("");
 
-  const addProduct = async (name: string, price: number, category: string) => {
+  const addProduct = async (name: string, price: number, category?: string) => {
     setLoading(true);
     setError(null);
     try {

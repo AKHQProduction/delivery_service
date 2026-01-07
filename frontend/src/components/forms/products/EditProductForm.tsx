@@ -1,9 +1,10 @@
 import React, { useState } from "react";
 import { FormWrapper } from "../../shared/FormWrapper";
 import { FormInput } from "../../shared/FormInput";
-import { FormSelect } from "../../shared/FormSelect";
 import { type Product } from "../../../types/entities/Product";
-import { categoryMap } from "../../../utils/dataMap";
+import { DynamicFormSelect } from "../../shared/DyncamicFormSelect";
+import { useCategoriesForm } from "../../../hooks/products/useCategoriesForm";
+import { CategoryManagementModal } from "../../features/addCategoryComponent";
 
 interface EditProductFormProps {
   product: Product;
@@ -16,9 +17,22 @@ export const EditProductForm: React.FC<EditProductFormProps> = ({
   onClose,
   onSave,
 }) => {
+  // Pass initial category to the hook
+  const {
+    loading,
+    selectedCategory,
+    setSelectedCategory,
+    categoryOptions,
+    setIsCategoryModalOpen,
+    isCategoryModalOpen,
+    transformedCategories,
+    handleAddCategory,
+    handleUpdateCategory,
+    handleDeleteCategory,
+  } = useCategoriesForm({ initialCategory: product.category_id });
+
   const [formData, setFormData] = useState({
     name: product.name,
-    category: categoryMap[product.category] || product.category,
     price: product.price.toString(),
   });
 
@@ -34,17 +48,12 @@ export const EditProductForm: React.FC<EditProductFormProps> = ({
     const updatedProduct: Product = {
       product_id: product.product_id,
       name: formData.name,
-      category: formData.category,
+      category_id: selectedCategory,
       price: parseFloat(formData.price),
     };
-
+    
     onSave(updatedProduct);
   };
-
-  const categoryOptions = [
-    { value: "Вода", label: "Вода" },
-    { value: "Інше", label: "Інше" },
-  ];
 
   return (
     <FormWrapper
@@ -60,16 +69,20 @@ export const EditProductForm: React.FC<EditProductFormProps> = ({
         placeholder="Введіть назву..."
         required
       />
-      <FormSelect
+      <DynamicFormSelect
         label="Категорія"
         name="category"
-        value={formData.category}
-         onChange={(value) =>
-          setFormData((prev) => ({ ...prev, category: value }))
-        }
+        value={selectedCategory}
+        onChange={setSelectedCategory}
         options={categoryOptions}
         required
+        onAddCategory={() => setIsCategoryModalOpen(true)}
       />
+
+      {loading && (
+        <div className="text-sm text-gray-500">Завантаження категорій...</div>
+      )}
+
       <FormInput
         label="Ціна (₴)"
         name="price"
@@ -78,6 +91,15 @@ export const EditProductForm: React.FC<EditProductFormProps> = ({
         onChange={handleChange}
         placeholder="0"
         required
+      />
+
+      <CategoryManagementModal
+        isOpen={isCategoryModalOpen}
+        onClose={() => setIsCategoryModalOpen(false)}
+        categories={transformedCategories}
+        onAddCategory={handleAddCategory}
+        onUpdateCategory={handleUpdateCategory}
+        onDeleteCategory={handleDeleteCategory}
       />
     </FormWrapper>
   );
