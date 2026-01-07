@@ -133,11 +133,13 @@ export const ProductPage = () => {
       updatedProduct.category_id
     );
     await getProducts();
-
-    const categoryName = categories.find(
-      (cat) => cat.category_id === updatedProduct.category_id
+    const updatedCategories = await fetchCategories();
+    
+    const categoryName = updatedCategories.find(
+      (cat: { category_id: string }) =>
+        cat.category_id === updatedProduct.category_id
     )?.name;
-
+    console.log("Updated product category name:", categoryName);
     setSelectedProduct({
       category_name: categoryName || "Без категорії",
       ...updatedProduct,

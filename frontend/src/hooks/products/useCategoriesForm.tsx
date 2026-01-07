@@ -50,7 +50,6 @@ export const useCategoriesForm = (options?: UseCategoriesFormOptions) => {
     name: cat.name,
     emoji: "📁",
   }));
-  console.log("transformedCategories:", transformedCategories);
 
   const handleAddCategory = async (name: string) => {
     try {

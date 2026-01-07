@@ -5,3 +5,9 @@ export interface Product {
   category_name?: string;
   price: number;
 }
+
+export interface transformedCategories {
+  id: string;
+  name: string;
+  emoji: string;
+}

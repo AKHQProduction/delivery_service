@@ -1,17 +1,13 @@
 import React, { useState, useEffect } from "react";
 import Edit from "../../assets/icons/edit.svg";
 import Delete from "../../assets/icons/delete.svg";
+import { type transformedCategories } from "../../types/entities/Product";
 
-interface Category {
-  id: string;
-  name: string;
-  emoji: string;
-}
 
 interface CategoryManagementModalProps {
   isOpen: boolean;
   onClose: () => void;
-  categories: Category[];
+  categories: transformedCategories[];
   onAddCategory: (name: string) => void;
   onUpdateCategory: (id: string, name: string) => void;
   onDeleteCategory: (id: string) => void;
@@ -52,7 +48,7 @@ export const CategoryManagementModal: React.FC<
     }
   };
 
-  const handleStartEdit = (category: Category) => {
+  const handleStartEdit = (category: transformedCategories) => {
     console.log("Editing category:", category);
     setEditingId(category.id);
     setEditingName(category.name);

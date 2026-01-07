@@ -5,11 +5,11 @@ import { useProducts } from "../../../hooks/products/useProducts";
 import { DynamicFormSelect } from "../../shared/DyncamicFormSelect";
 import { useCategoriesForm } from "../../../hooks/products/useCategoriesForm";
 import { CategoryManagementModal } from "../../features/addCategoryComponent";
-import { type Product } from "../../../types/entities/Product";
+import { type transformedCategories } from "../../../types/entities/Product";
 
 interface AddProductFormProps {
   onClose: () => void;
-  onSuccess?: (product: Product) => void;
+  onSuccess?: (product: transformedCategories) => void;
 }
 
 export const AddProductForm: React.FC<AddProductFormProps> = ({

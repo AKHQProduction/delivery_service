@@ -19,7 +19,6 @@ export const ProductDetailModal: React.FC<ProductDetailModalProps> = ({
   onSave,
 }) => {
   const [isEditing, setIsEditing] = useState(false);
-
   const handleEditClick = () => {
     setIsEditing(true);
   };
