@@ -8,6 +8,7 @@ from uuid_utils import uuid7
 
 from backend.application.interfaces.gateways import Pagination
 from backend.application.interfaces.gateways.order_gateway import (
+    CategoryStatsReadModel,
     CreateOrderDTO,
     DeliveryAddressDTO,
     GetOrdersFilters,
@@ -27,8 +28,10 @@ from backend.application.vars import (
     ShopId,
     TimePreference,
 )
+from backend.infrastructure.persistence.tables.categories import Category
 from backend.infrastructure.persistence.tables.clients import Client
 from backend.infrastructure.persistence.tables.orders import Order, OrderItem
+from backend.infrastructure.persistence.tables.products import Product
 
 
 class SQLAlchemyOrderGateway(OrderGateway):
@@ -326,7 +329,7 @@ class SQLAlchemyOrderGateway(OrderGateway):
     async def get_stats(
         self, filters: GetOrdersFilters
     ) -> OrderStatsReadModel:
-        query = (
+        main_query = (
             select(
                 func.count(func.distinct(Order.id)).label("total_orders"),
                 func.count(
@@ -356,31 +359,61 @@ class SQLAlchemyOrderGateway(OrderGateway):
                 func.coalesce(
                     func.sum(OrderItem.quantity * OrderItem.price_per_item), 0
                 ).label("total_orders_sum"),
-                func.coalesce(func.sum(OrderItem.quantity), 0).label(
-                    "total_items"
-                ),
             )
             .select_from(Order)
             .outerjoin(OrderItem, Order.id == OrderItem.order_id)
         )
 
         if filters.shop_id:
-            query = query.where(Order.shop_id == filters.shop_id)
+            main_query = main_query.where(Order.shop_id == filters.shop_id)
         if filters.delivery_date:
-            query = query.where(Order.date == filters.delivery_date)
+            main_query = main_query.where(Order.date == filters.delivery_date)
 
-        result = await self._session.execute(query)
-        row = result.one()
+        main_result = await self._session.execute(main_query)
+        main_row = main_result.one()
+
+        category_query = (
+            select(
+                Category.name.label("category_name"),
+                func.coalesce(func.sum(OrderItem.quantity), 0).label(
+                    "total_quantity"
+                ),
+            )
+            .select_from(Order)
+            .join(OrderItem, Order.id == OrderItem.order_id)
+            .join(Product, OrderItem.product_id == Product.id)
+            .join(Category, Product.category_id == Category.id)
+            .group_by(Category.id, Category.name)
+        )
+
+        if filters.shop_id:
+            category_query = category_query.where(
+                Order.shop_id == filters.shop_id
+            )
+        if filters.delivery_date:
+            category_query = category_query.where(
+                Order.date == filters.delivery_date
+            )
+
+        category_result = await self._session.execute(category_query)
+        category_rows = category_result.all()
+
+        category_stats = [
+            CategoryStatsReadModel(
+                name=cast("str", row.category_name),
+                quantity=int(row.total_quantity or 0),
+            )
+            for row in category_rows
+        ]
 
         return OrderStatsReadModel(
-            total_orders=row.total_orders or 0,
+            total_orders=main_row.total_orders or 0,
             total_orders_in_first_half=int(
-                row.total_orders_in_first_half or 0
+                main_row.total_orders_in_first_half or 0
             ),
             total_orders_in_second_half=int(
-                row.total_orders_in_second_half or 0
+                main_row.total_orders_in_second_half or 0
             ),
-            total_orders_sum=int(row.total_orders_sum or 0),
-            total_water=0,
-            total_other=0,
+            total_orders_sum=int(main_row.total_orders_sum or 0),
+            category_stats=category_stats,
         )

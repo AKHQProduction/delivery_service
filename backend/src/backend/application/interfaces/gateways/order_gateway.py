@@ -93,13 +93,18 @@ class GetOrdersFilters:
 
 
 @dataclass(frozen=True)
+class CategoryStatsReadModel:
+    name: str
+    quantity: int
+
+
+@dataclass(frozen=True)
 class OrderStatsReadModel:
     total_orders: int
     total_orders_in_first_half: int
     total_orders_in_second_half: int
     total_orders_sum: int
-    total_water: int
-    total_other: int
+    category_stats: list[CategoryStatsReadModel]
 
 
 @dataclass(frozen=True)
