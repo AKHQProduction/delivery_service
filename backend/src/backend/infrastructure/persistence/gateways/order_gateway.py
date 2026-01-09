@@ -374,7 +374,9 @@ class SQLAlchemyOrderGateway(OrderGateway):
 
         category_query = (
             select(
-                Category.name.label("category_name"),
+                func.coalesce(Category.name, "Без категорії").label(
+                    "category_name"
+                ),
                 func.coalesce(func.sum(OrderItem.quantity), 0).label(
                     "total_quantity"
                 ),
@@ -382,7 +384,7 @@ class SQLAlchemyOrderGateway(OrderGateway):
             .select_from(Order)
             .join(OrderItem, Order.id == OrderItem.order_id)
             .join(Product, OrderItem.product_id == Product.id)
-            .join(Category, Product.category_id == Category.id)
+            .outerjoin(Category, Product.category_id == Category.id)
             .group_by(Category.id, Category.name)
         )
 

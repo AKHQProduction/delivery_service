@@ -133,6 +133,47 @@ async def test_edit_all_product_fields(
 
 
 @pytest.mark.asyncio()
+async def test_edit_product_remove_category_with_empty(
+    http_client: AsyncClient,
+    session: AsyncSession,
+    customer_headers: Callable[[int], dict[str, Any]],
+    setup_full_test_user_with_shop,
+    setup_test_product,
+    setup_test_category,
+) -> None:
+    telegram_id = 1000
+    _, shop_id = await setup_full_test_user_with_shop(telegram_id=telegram_id)
+    category_id = await setup_test_category(shop_id=shop_id, name="Water")
+    product_id, _, _, _ = await setup_test_product(
+        shop_id=shop_id, category_id=category_id
+    )
+    await session.commit()
+
+    # Verify product has category
+    entity = await session.execute(
+        select(Product).where(Product.id == product_id)
+    )
+    product = entity.scalar_one()
+    assert product.category_id == category_id
+
+    headers = customer_headers(telegram_id)
+
+    json = {"category_id": "EMPTY"}
+    url = BASE_URL + f"/{product_id}"
+    response = await http_client.patch(url=url, headers=headers, json=json)
+
+    assert response.status_code == status.HTTP_200_OK
+
+    # Flush and re-fetch from DB to get updated value
+    await session.flush()
+    updated_entity = await session.execute(
+        select(Product).where(Product.id == product_id)
+    )
+    updated_product = updated_entity.scalar_one()
+    assert updated_product.category_id is None
+
+
+@pytest.mark.asyncio()
 async def test_edit_one_product_fields(
     http_client: AsyncClient,
     session: AsyncSession,
