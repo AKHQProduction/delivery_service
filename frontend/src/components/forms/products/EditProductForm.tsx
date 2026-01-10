@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { FormWrapper } from "../../shared/FormWrapper";
 import { FormInput } from "../../shared/FormInput";
 import { type Product } from "../../../types/entities/Product";
@@ -17,7 +17,6 @@ export const EditProductForm: React.FC<EditProductFormProps> = ({
   onClose,
   onSave,
 }) => {
-  // Pass initial category to the hook
   const {
     loading,
     selectedCategory,
@@ -29,12 +28,22 @@ export const EditProductForm: React.FC<EditProductFormProps> = ({
     handleAddCategory,
     handleUpdateCategory,
     handleDeleteCategory,
-  } = useCategoriesForm({ initialCategory: product.category_id });
+  } = useCategoriesForm(product.category_id);
 
   const [formData, setFormData] = useState({
     name: product.name,
     price: product.price.toString(),
   });
+
+  // Sync selected category when product changes
+  useEffect(() => {
+    // If product has no category, set to "EMPTY"
+    if (product.category_id && product.category_id !== "EMPTY") {
+      setSelectedCategory(product.category_id);
+    } else {
+      setSelectedCategory("EMPTY");
+    }
+  }, [product.category_id, setSelectedCategory]);
 
   const handleChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>
@@ -46,12 +55,14 @@ export const EditProductForm: React.FC<EditProductFormProps> = ({
     e.preventDefault();
 
     const updatedProduct: Product = {
-      product_id: product.product_id,
+      ...product,
       name: formData.name,
-      category_id: selectedCategory,
       price: parseFloat(formData.price),
+      // Send "EMPTY" if no category is selected, otherwise send the category_id
+      category_id: selectedCategory || "EMPTY",
     };
-    
+
+    console.log("Submitting product:", updatedProduct);
     onSave(updatedProduct);
   };
 
@@ -69,13 +80,14 @@ export const EditProductForm: React.FC<EditProductFormProps> = ({
         placeholder="Введіть назву..."
         required
       />
+      
       <DynamicFormSelect
         label="Категорія"
         name="category"
         value={selectedCategory}
         onChange={setSelectedCategory}
         options={categoryOptions}
-        required
+        required={false}
         onAddCategory={() => setIsCategoryModalOpen(true)}
       />
 
@@ -90,6 +102,7 @@ export const EditProductForm: React.FC<EditProductFormProps> = ({
         value={formData.price}
         onChange={handleChange}
         placeholder="0"
+        step="0.01"
         required
       />
 

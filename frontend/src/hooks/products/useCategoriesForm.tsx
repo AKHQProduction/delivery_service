@@ -1,90 +1,80 @@
 import { useState, useEffect } from "react";
 import { useCategories } from "./useCategories";
 
-interface UseCategoriesFormOptions {
-  initialCategory?: string;
-}
-
-export const useCategoriesForm = (options?: UseCategoriesFormOptions) => {
-  const [selectedCategory, setSelectedCategory] = useState(
-    options?.initialCategory || ""
-  );
-  const [isCategoryModalOpen, setIsCategoryModalOpen] = useState(false);
-
+export const useCategoriesForm = (initialCategoryId?: string | null) => {
   const {
     categories,
-    loading,
     fetchCategories,
     addCategory,
     updateCategory,
     deleteCategory,
-    isLoaded,
   } = useCategories();
 
-  // Fetch categories on mount
+  const [loading, setLoading] = useState(false);
+  const [selectedCategory, setSelectedCategory] = useState<string | null>(
+    initialCategoryId || "EMPTY"
+  );
+  const [isCategoryModalOpen, setIsCategoryModalOpen] = useState(false);
+
   useEffect(() => {
-    if (!isLoaded) {
-      fetchCategories();
-    }
-  }, [isLoaded, fetchCategories]);
+    const loadCategories = async () => {
+      setLoading(true);
+      await fetchCategories();
+      setLoading(false);
+    };
+    loadCategories();
+  }, []);
 
-  // Update selectedCategory if initialCategory changes
-  useEffect(() => {
-    if (
-      options?.initialCategory &&
-      options.initialCategory !== selectedCategory
-    ) {
-      setSelectedCategory(options.initialCategory);
-    }
-  }, [options?.initialCategory]);
+  // Create category options with "No Category" as first option using "EMPTY" value
+  const categoryOptions = [
+    {
+      value: "EMPTY",
+      label: "Без категорії",
+    },
+    ...categories.map((cat) => ({
+      value: cat.category_id,
+      label: `${cat.name}`,
+    })),
+  ];
 
-  // Transform categories for the select component
-  const categoryOptions = categories.map((cat) => ({
-    value: cat.category_id,
-    label: cat.name,
-  }));
-
-  // Transform categories for the management modal
+  // Transform categories for management modal (excluding "No Category")
   const transformedCategories = categories.map((cat) => ({
-    category_id: cat.category_id,
+    id: cat.category_id,
     name: cat.name,
     emoji: "📁",
   }));
 
   const handleAddCategory = async (name: string) => {
     try {
-      const newCategoryId = await addCategory(name); // Returns UUID
-
-      if (newCategoryId) {
-        // Refresh categories to get the full list including the new one
-        await fetchCategories();
-
-        // Select the newly created category
-        setSelectedCategory(newCategoryId);
-        setIsCategoryModalOpen(false);
-      }
+      await addCategory(name);
+      await fetchCategories();
     } catch (error) {
       console.error("Failed to add category:", error);
+      throw error;
     }
   };
 
   const handleUpdateCategory = async (id: string, name: string) => {
     try {
       await updateCategory(id, name);
+      await fetchCategories();
     } catch (error) {
       console.error("Failed to update category:", error);
+      throw error;
     }
   };
 
   const handleDeleteCategory = async (id: string) => {
     try {
       await deleteCategory(id);
-      // Clear selection if deleted category was selected
+      await fetchCategories();
+      // If the deleted category was selected, reset to "EMPTY"
       if (selectedCategory === id) {
-        setSelectedCategory("");
+        setSelectedCategory("EMPTY");
       }
     } catch (error) {
       console.error("Failed to delete category:", error);
+      throw error;
     }
   };
 

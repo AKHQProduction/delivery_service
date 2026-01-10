@@ -60,13 +60,10 @@ export const ProductPage = () => {
       }
     };
     initProducts();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []); // Only run once on mount
+  }, []);
 
   // Search effect - only runs when searchTerm changes
   useEffect(() => {
-    // Skip initial mount when searchTerm is empty
-
     if (debounceRef.current) {
       clearTimeout(debounceRef.current);
     }
@@ -80,8 +77,7 @@ export const ProductPage = () => {
         clearTimeout(debounceRef.current);
       }
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [searchTerm]); // Only depend on searchTerm
+  }, [searchTerm]);
 
   const handleObserver = useCallback(
     (entries: IntersectionObserverEntry[]) => {
@@ -126,23 +122,38 @@ export const ProductPage = () => {
   };
 
   const handleSave = async (updatedProduct: Product) => {
+    // Only pass category_id if it exists
+    const updateData: any = {
+      name: updatedProduct.name,
+      price: updatedProduct.price,
+    };
+
+    if (updatedProduct.category_id) {
+      updateData.category_id = updatedProduct.category_id;
+    }
+
     await updateProduct(
       updatedProduct.product_id,
-      updatedProduct.name,
-      updatedProduct.price,
-      updatedProduct.category_id
+      updateData.name,
+      updateData.price,
+      updateData.category_id
     );
     await getProducts();
-    const updatedCategories = await fetchCategories();
+    await fetchCategories();
     
-    const categoryName = updatedCategories.find(
-      (cat: { category_id: string }) =>
-        cat.category_id === updatedProduct.category_id
-    )?.name;
+    // Handle null category
+    let categoryName = "Без категорії";
+    if (updatedProduct.category_id) {
+      const category = categories.find(
+        (cat) => cat.category_id === updatedProduct.category_id
+      );
+      categoryName = category?.name || "Без категорії";
+    }
+    
     console.log("Updated product category name:", categoryName);
     setSelectedProduct({
-      category_name: categoryName || "Без категорії",
       ...updatedProduct,
+      category_name: categoryName,
     });
   };
 
@@ -154,12 +165,18 @@ export const ProductPage = () => {
     }
   };
 
-  // Transform categories for modal
-  const transformedCategories = categories.map((cat) => ({
-    id: cat.category_id,
-    name: cat.name,
-    emoji: "📁",
-  }));
+  // Transform categories for modal with "No Category" option
+  const transformedCategories = [
+    {
+      id: null,
+      name: "Без категорії",
+    },
+    ...categories.map((cat) => ({
+      id: cat.category_id,
+      name: cat.name,
+      emoji: "📁",
+    })),
+  ];
 
   const handleAddCategory = async (name: string) => {
     try {
@@ -320,6 +337,7 @@ export const ProductPage = () => {
             onClose={handleCloseModal}
             onDelete={handleDelete}
             onSave={handleSave}
+            categories={transformedCategories}
           />
         )}
       </RightModal>
@@ -327,7 +345,7 @@ export const ProductPage = () => {
       <CategoryManagementModal
         isOpen={isCategoryModalOpen}
         onClose={() => setIsCategoryModalOpen(false)}
-        categories={transformedCategories}
+        categories={transformedCategories.filter(cat => cat.id !== null)}
         onAddCategory={handleAddCategory}
         onUpdateCategory={handleUpdateCategory}
         onDeleteCategory={handleDeleteCategory}
