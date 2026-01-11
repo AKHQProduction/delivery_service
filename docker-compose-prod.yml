@@ -114,8 +114,7 @@ services:
     working_dir: /home/node/app
     stop_signal: SIGINT
     volumes:
-      - ./frontend:/home/node/app
-      - node_modules_volumes:/home/node/app/node_modules
+      - /var/app/water-delivery/:/home/node/app/dist
     env_file:
       - .env
     command: [ "npm", "run", "build"]
