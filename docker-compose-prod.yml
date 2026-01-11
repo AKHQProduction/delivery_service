@@ -6,6 +6,8 @@ services:
       dockerfile: Dockerfile.prod
     env_file:
       - .env
+    ports:
+      - "${WEBHOOK_PORT}:${WEBHOOK_PORT}"
     command: [ "python", "-m", "backend.bootstrap.entrypoints.bot" ]
     restart: on-failure
     depends_on:
