@@ -1,0 +1,129 @@
+services:
+  admin_bot:
+    container_name: "water_delivery-admin_bot"
+    build:
+      context: ./backend
+      dockerfile: Dockerfile.prod
+    env_file:
+      - .env
+    command: [ "python", "-m", "backend.bootstrap.entrypoints.bot" ]
+    restart: on-failure
+    depends_on:
+      redis:
+        condition: service_healthy
+      postgres:
+        condition: service_healthy
+    deploy:
+      resources:
+        limits:
+          cpus: '0.5'
+          memory: 512M
+        reservations:
+          memory: 128M
+
+  api:
+    container_name: "water-delivery-api"
+    build:
+      context: ./backend
+      dockerfile: Dockerfile.prod
+    env_file:
+      - .env
+    stop_signal: SIGINT
+    restart: always
+    command: [ "uvicorn", "backend.bootstrap.entrypoints.api:create_app", "--host", "${SERVER_HOST}", "--port", "${SERVER_PORT}", "--factory" ]
+    ports:
+      - "${SERVER_PORT}:${SERVER_PORT}"
+    depends_on:
+      postgres:
+        condition: service_healthy
+    deploy:
+      resources:
+        limits:
+          cpus: '1.5'
+          memory: 1536M
+        reservations:
+          memory: 256M
+
+  redis:
+    container_name: "water_delivery-redis"
+    image: redis:8-alpine
+    restart: unless-stopped
+    env_file:
+      - .env
+    command: [ "redis-server", "--port", "${REDIS_PORT}", "--requirepass", "${REDIS_PASSWORD}" ]
+    healthcheck:
+      test: ["CMD-SHELL", "redis-cli -a $${REDIS_PASSWORD} ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+    volumes:
+      - redis_data:/data
+    deploy:
+      resources:
+        limits:
+          cpus: '0.25'
+          memory: 256M
+        reservations:
+          memory: 64M
+
+  postgres:
+    container_name: "water_delivery-postgres"
+    image: postgres:18-alpine
+    restart: unless-stopped
+    volumes:
+      - postgres_data:/var/lib/postgresql/data/
+      - ./scripts:/scripts
+    env_file:
+      - .env
+    ports:
+      - "${POSTGRES_INTERNAL_PORT}:${POSTGRES_PORT}"
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready -d $$POSTGRES_DB -U $$POSTGRES_USER" ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+    deploy:
+      resources:
+        limits:
+          cpus: '1.0'
+          memory: 1280M
+        reservations:
+          memory: 256M
+
+  migration:
+    container_name: "water_delivery-migration"
+    build:
+      context: ./backend
+      dockerfile: Dockerfile.prod
+    restart: on-failure
+    env_file:
+      - .env
+    depends_on:
+      admin_bot:
+        condition: service_started
+      postgres:
+        condition: service_healthy
+    command: [ "alembic", "upgrade", "head" ]
+
+  webapp:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    working_dir: /home/node/app
+    stop_signal: SIGINT
+    volumes:
+      - ./frontend:/home/node/app
+      - node_modules_volumes:/home/node/app/node_modules
+    env_file:
+      - .env
+    command: [ "npm", "run", "build"]
+    depends_on:
+      - api
+      - admin_bot
+
+volumes:
+  node_modules_volumes:
+  redis_data:
+  postgres_data:
