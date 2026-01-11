@@ -154,7 +154,7 @@ export const CategoryManagementModal: React.FC<
                           <img src={Edit} alt="Edit" className="w-5 h-5" />
                         </button>
                         <button
-                          onClick={() => onDeleteCategory(category.id)}
+                          onClick={() => category.id && onDeleteCategory(category.id)}
                           className="p-2 hover:bg-red-50 rounded-lg transition-colors"
                         >
                           <img src={Delete} alt="Delete" className="w-5 h-5" />

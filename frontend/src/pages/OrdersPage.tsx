@@ -7,14 +7,48 @@ import { OrderDetailModal } from "../components/modals/detailsModals/OrderDetail
 import { RightModal } from "../components/modals/RightModal";
 import { exportOrdersPdf, getOrderById } from "../services/api/ordersApi";
 
+export interface OrderItem {
+  name: string;
+  quantity?: number | string;
+  price_per_item?: number | string;
+}
+
+export interface DeliveryAddress {
+  street?: string;
+  house?: string;
+}
+
+export interface Order {
+  order_id: string;
+
+  client_name: string;
+  items?: OrderItem[];
+
+  delivery_phone?: string;
+  delivery_address?: DeliveryAddress;
+
+  date: string;
+  time_preference: keyof typeof timeMap;
+
+  note?: string;
+  comment?: string;
+}
+
 export const OrdersPage = () => {
   const [searchTerm, setSearchTerm] = useState("");
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [selectedOrder, setSelectedOrder] = useState(null);
-  const [exportDate, setExportDate] = useState("");
-  const [exportError, setExportError] = useState(false);
-  const { getOrders, orders, deleteOrder, loadMoreOrders, loadingMore, hasMore } = useOrders();
-  const debounceRef = useRef<NodeJS.Timeout | null>(null);
+  const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
+  const [exportDate, setExportDate] = useState<string>("");
+  const [exportError, setExportError] = useState<boolean>(false);
+  const {
+    getOrders,
+    orders,
+    deleteOrder,
+    loadMoreOrders,
+    loadingMore,
+    hasMore,
+  } = useOrders();
+  const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const observerRef = useRef<IntersectionObserver | null>(null);
   const loadMoreRef = useRef<HTMLDivElement | null>(null);
 
@@ -85,7 +119,7 @@ export const OrdersPage = () => {
     };
   }, [handleObserver]);
 
-  const getOrderTotal = (order) => {
+  const getOrderTotal = (order: Order) => {
     return (order.items ?? []).reduce((sum, item) => {
       const quantity = Number(item.quantity) || 0;
       const price = Number(item.price_per_item) || 0;
@@ -93,7 +127,7 @@ export const OrdersPage = () => {
     }, 0);
   };
 
-  const handleOrderClick = (order) => {
+  const handleOrderClick = (order: Order) => {
     setSelectedOrder(order);
     setIsModalOpen(true);
   };
@@ -103,16 +137,12 @@ export const OrdersPage = () => {
     setSelectedOrder(null);
   };
 
-  const handleEditClick = () => {
-    console.log("Edit order:", selectedOrder);
-  };
-
   const handleDelete = async () => {
-    if (selectedOrder) {
-      await deleteOrder(selectedOrder.order_id);
-      handleCloseModal();
-      getOrders(searchTerm);
-    }
+    if (!selectedOrder) return;
+
+    await deleteOrder(selectedOrder.order_id);
+    handleCloseModal();
+    getOrders(searchTerm);
   };
 
   const handleSave = async () => {
@@ -167,6 +197,7 @@ export const OrdersPage = () => {
           <div className="flex flex-col items-center gap-2">
             <div className="flex items-center justify-center gap-3 flex-wrap">
               <input
+                title="export date"
                 type="date"
                 value={exportDate}
                 onChange={(e) => {
@@ -302,7 +333,11 @@ export const OrdersPage = () => {
                       </svg>
                     </div>
                     <span className="text-gray-700">
-                      {(order.items ?? []).reduce((sum, item) => sum + (item.quantity || 0), 0)} товарів
+                      {(order.items ?? []).reduce(
+                        (sum: number, item: OrderItem) => sum + (Number(item.quantity) || 0),
+                        0
+                      )}{" "}
+                      товарів
                     </span>
                   </div>
                 </div>
@@ -313,8 +348,20 @@ export const OrdersPage = () => {
               {loadingMore && (
                 <div className="flex items-center gap-2 text-gray-500">
                   <svg className="animate-spin h-5 w-5" viewBox="0 0 24 24">
-                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
-                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
+                    <circle
+                      className="opacity-25"
+                      cx="12"
+                      cy="12"
+                      r="10"
+                      stroke="currentColor"
+                      strokeWidth="4"
+                      fill="none"
+                    />
+                    <path
+                      className="opacity-75"
+                      fill="currentColor"
+                      d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                    />
                   </svg>
                   <span>Завантаження...</span>
                 </div>
@@ -329,7 +376,6 @@ export const OrdersPage = () => {
           <OrderDetailModal
             order={selectedOrder}
             onClose={handleCloseModal}
-            handleEditClick={handleEditClick}
             onDelete={handleDelete}
             onSave={handleSave}
           />

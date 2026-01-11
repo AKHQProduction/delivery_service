@@ -29,7 +29,7 @@ export const CategoriesForm = () => {
 
   // Transform categories for the management modal
   const transformedCategories = categories.map((cat) => ({
-    category_id: cat.category_id,
+    id: cat.category_id,
     name: cat.name,
     emoji: "📁",
   }));

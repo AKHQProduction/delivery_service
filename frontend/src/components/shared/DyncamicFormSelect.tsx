@@ -3,7 +3,7 @@ import React, { useState, useRef, useEffect } from "react";
 interface FormSelectProps {
   label: string;
   name: string;
-  value: string;
+  value: string | null;
   onChange: (value: any) => void;
   options: any[];
   required?: boolean;
@@ -161,7 +161,7 @@ export const DynamicFormSelect: React.FC<FormSelectProps> = ({
       <select
         id={name}
         name={name}
-        value={value}
+        value={value ?? ""}
         onChange={(e) => onChange(e.target.value)}
         required={required}
         className="sr-only"

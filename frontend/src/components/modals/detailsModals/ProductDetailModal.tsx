@@ -3,10 +3,11 @@ import { EditProductForm } from "../../forms/products/EditProductForm";
 import { ItemElement } from "../../ui/itemElement";
 import { ModalButtons } from "../../ui/modalButtons";
 import leftArrowIcon from "../../../assets/icons/left_arrow.svg";
-import { type Product } from "../../../types/entities/Product";
+import { type Product, type transformedCategories } from "../../../types/entities/Product";
 
 interface ProductDetailModalProps {
   product: Product;
+  categories: transformedCategories[];
   onClose: () => void;
   onDelete: () => void;
   onSave: (updatedProduct: Product) => Promise<void> | void;

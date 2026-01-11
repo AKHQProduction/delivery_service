@@ -32,7 +32,7 @@ export const InviteLinkModal: React.FC<InviteLinkModalProps> = ({
       <div className="bg-white rounded-2xl p-6 w-full max-w-md shadow-xl">
         <h2 className="text-xl font-semibold mb-4">Запрошення створено</h2>
 
-        <label className="text-sm text-gray-500">Share Link</label>
+        <label className="text-sm text-gray-500">Поділитися посиланням</label>
         <textarea
           value={link}
           readOnly
@@ -52,14 +52,14 @@ export const InviteLinkModal: React.FC<InviteLinkModalProps> = ({
                 : "bg-white text-black"
             }`}
           >
-            {copied ? "Copied!" : "Copy"}
+            {copied ? "Скопійовано!" : "Копіювати"}
           </button>
 
           <button
             onClick={handleTelegramShare}
             className="flex-1 py-4 bg-blue-500 hover:bg-blue-600 text-white font-semibold rounded-2xl transition-colors"
           >
-            Share
+            Поділитися
           </button>
         </div>
 

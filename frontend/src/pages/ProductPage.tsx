@@ -32,7 +32,7 @@ export const ProductPage = () => {
     updateCategory,
     deleteCategory,
   } = useCategories();
-  const debounceRef = useRef<NodeJS.Timeout | null>(null);
+  const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const observerRef = useRef<IntersectionObserver | null>(null);
   const loadMoreRef = useRef<HTMLDivElement | null>(null);
   const initialLoadRef = useRef(false);
@@ -140,7 +140,7 @@ export const ProductPage = () => {
     );
     await getProducts();
     await fetchCategories();
-    
+
     // Handle null category
     let categoryName = "Без категорії";
     if (updatedProduct.category_id) {
@@ -149,7 +149,7 @@ export const ProductPage = () => {
       );
       categoryName = category?.name || "Без категорії";
     }
-    
+
     console.log("Updated product category name:", categoryName);
     setSelectedProduct({
       ...updatedProduct,
@@ -345,7 +345,7 @@ export const ProductPage = () => {
       <CategoryManagementModal
         isOpen={isCategoryModalOpen}
         onClose={() => setIsCategoryModalOpen(false)}
-        categories={transformedCategories.filter(cat => cat.id !== null)}
+        categories={transformedCategories.filter((cat) => cat.id !== null)}
         onAddCategory={handleAddCategory}
         onUpdateCategory={handleUpdateCategory}
         onDeleteCategory={handleDeleteCategory}

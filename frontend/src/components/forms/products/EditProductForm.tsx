@@ -102,7 +102,6 @@ export const EditProductForm: React.FC<EditProductFormProps> = ({
         value={formData.price}
         onChange={handleChange}
         placeholder="0"
-        step="0.01"
         required
       />
 
