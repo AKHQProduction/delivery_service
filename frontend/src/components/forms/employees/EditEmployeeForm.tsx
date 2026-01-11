@@ -1,7 +1,7 @@
 import React, { useState } from "react";
-import { FormWrapper } from "../../shared/formWrapper";
-import { FormInput } from "../../shared/formInput";
-import { FormSelect } from "../../shared/formSelect";
+import { FormWrapper } from "../../shared/FormWrapper";
+import { FormInput } from "../../shared/FormInput";
+import { FormSelect } from "../../shared/FormSelect";
 import { type Employee } from "../../../types/entities/Employee";
 import { roleMap } from "../../../utils/dataMap";
 
@@ -57,7 +57,6 @@ export const EditEmployeeForm: React.FC<EditEmployeeFormProps> = ({
         value={formData.full_name}
         onChange={handleChange}
         placeholder="Введіть ім'я..."
-        required
       />
       <FormSelect
         label="Роль працівника"
@@ -65,7 +64,6 @@ export const EditEmployeeForm: React.FC<EditEmployeeFormProps> = ({
         value={formData.role}
         onChange={handleChange}
         options={categoryOptions}
-        required
       />
     </FormWrapper>
   );

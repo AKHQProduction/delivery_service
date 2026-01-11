@@ -3,11 +3,11 @@ import { EditProductForm } from "../../forms/products/EditProductForm";
 import { ItemElement } from "../../ui/itemElement";
 import { ModalButtons } from "../../ui/modalButtons";
 import leftArrowIcon from "../../../assets/icons/left_arrow.svg";
-import { categoryMap } from "../../../utils/dataMap";
-import { type Product } from "../../../types/entities/Product";
+import { type Product, type transformedCategories } from "../../../types/entities/Product";
 
 interface ProductDetailModalProps {
   product: Product;
+  categories: transformedCategories[];
   onClose: () => void;
   onDelete: () => void;
   onSave: (updatedProduct: Product) => Promise<void> | void;
@@ -20,7 +20,6 @@ export const ProductDetailModal: React.FC<ProductDetailModalProps> = ({
   onSave,
 }) => {
   const [isEditing, setIsEditing] = useState(false);
-
   const handleEditClick = () => {
     setIsEditing(true);
   };
@@ -76,7 +75,7 @@ export const ProductDetailModal: React.FC<ProductDetailModalProps> = ({
 
         <h1 className="text-3xl font-bold text-white mb-2">{product.name}</h1>
         <p className="text-indigo-100">
-          Категорія: {categoryMap[product.category]}
+          Категорія: {product.category_name || "Без категорії"}
         </p>
       </div>
 
@@ -91,7 +90,7 @@ export const ProductDetailModal: React.FC<ProductDetailModalProps> = ({
           />
           <ItemElement
             descriptionText={"Категорія"}
-            elementText={categoryMap[product.category]}
+            elementText={product.category_name || "Без категорії"}
           />
           <ItemElement
             descriptionText={"Ціна"}

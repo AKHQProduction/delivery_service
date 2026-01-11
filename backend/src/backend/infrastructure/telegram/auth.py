@@ -107,6 +107,11 @@ class WebAppAuth:
         return InitData(**parsed_init_data)
 
     def _validate_fake_headers_param(self) -> InitData:
+        authorization = self._headers.get("Authorization")
+        if authorization:
+            _, param = get_authorization_scheme_param(authorization)
+            if param and param.isdigit():
+                return self._get_dummy_init_data(int(param))
         return self._get_dummy_init_data(self._app_config.debug_user_id)
 
     @staticmethod

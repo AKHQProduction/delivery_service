@@ -1,5 +1,4 @@
 import React from "react";
-import { categoryMap } from "../../utils/dataMap";
 import { type Product } from "../../types/entities/Product";
 
 interface ProductCardProps {
@@ -18,7 +17,7 @@ export const ProductCard: React.FC<ProductCardProps> = ({
     >
       <h3 className="text-lg font-semibold mb-1">{product.name}</h3>
       <p className="text-sm text-gray-500 mb-3">
-        Категорія: {categoryMap[product.category]}
+        Категорія: {product.category_name || "Без категорії"}
       </p>
       <p className="text-2xl font-bold text-indigo-600">₴{product.price}</p>
     </div>

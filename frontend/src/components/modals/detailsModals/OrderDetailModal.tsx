@@ -4,7 +4,44 @@ import { timeMap } from "../../../utils/dataMap";
 import { useState } from "react";
 import { EditOrderForm } from "../../forms/orders/EditOrderForm";
 
-export const OrderDetailModal = ({ order, onClose, onDelete, onSave }) => {
+export interface OrderItem {
+  name: string;
+  quantity?: number | string;
+  price_per_item?: number | string;
+}
+
+export interface DeliveryAddress {
+  street?: string;
+  house?: string;
+}
+
+export interface Order {
+  client_name: string;
+  items?: OrderItem[];
+
+  delivery_phone?: string;
+  delivery_address?: DeliveryAddress;
+
+  date: string;
+  time_preference: keyof typeof timeMap;
+
+  note?: string;
+  comment?: string;
+}
+
+export interface OrderDetailModalProps {
+  order: Order;
+  onClose: () => void;
+  onDelete: () => void;
+  onSave?: () => void;
+}
+
+export const OrderDetailModal = ({
+  order,
+  onClose,
+  onDelete,
+  onSave,
+}: OrderDetailModalProps) => {
   const [isEditing, setIsEditing] = useState(false);
 
   const handleEditClick = () => {
@@ -85,26 +122,26 @@ export const OrderDetailModal = ({ order, onClose, onDelete, onSave }) => {
           <h2 className="text-xs font-bold text-gray-500 uppercase tracking-wide mb-3">
             Товари
           </h2>
-        <div className="space-y-3">
-          {order.items?.map((item, index) => (
-            <div
-              key={index}
-              className="bg-white rounded-xl p-4 border border-gray-200"
-            >
-              <div className="flex items-start justify-between mb-2">
-                <h3 className="font-medium text-gray-900 flex-1">
-                  {item.name}
-                </h3>
-                <span className="text-lg font-bold text-indigo-600 ml-3">
-                  ₴{item.price_per_item}
-                </span>
+          <div className="space-y-3">
+            {order.items?.map((item, index) => (
+              <div
+                key={index}
+                className="bg-white rounded-xl p-4 border border-gray-200"
+              >
+                <div className="flex items-start justify-between mb-2">
+                  <h3 className="font-medium text-gray-900 flex-1">
+                    {item.name}
+                  </h3>
+                  <span className="text-lg font-bold text-indigo-600 ml-3">
+                    ₴{item.price_per_item}
+                  </span>
+                </div>
+                <p className="text-sm text-gray-500">
+                  ₴{item.price_per_item} за шт
+                </p>
               </div>
-              <p className="text-sm text-gray-500">
-                ₴{item.price_per_item} за шт
-              </p>
-            </div>
-          ))}
-        </div>
+            ))}
+          </div>
         </div>
 
         <div className="bg-indigo-50 rounded-2xl p-4 border-2 border-indigo-200">

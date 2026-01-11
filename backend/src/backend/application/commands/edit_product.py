@@ -1,5 +1,6 @@
 import logging
 from dataclasses import dataclass
+from typing import cast
 
 from backend.application.errors import AccessDeniedError, EntityNotFoundError
 from backend.application.interfaces import IdentityProvider, TransactionManager
@@ -10,7 +11,7 @@ from backend.application.policies.access import (
     IsRelatedToShop,
     can_shop_manage_policy,
 )
-from backend.application.vars import CategoryId, ProductId
+from backend.application.vars import CategoryId, Empty, ProductId
 
 logger = logging.getLogger(__name__)
 
@@ -20,7 +21,7 @@ class EditProductCommand:
     product_id: ProductId
     new_name: str | None = None
     new_price: int | None = None
-    new_category_id: CategoryId | None = None
+    new_category_id: CategoryId | Empty | None = None
 
 
 class EditProductCommandHandler:
@@ -83,8 +84,14 @@ class EditProductCommandHandler:
             product.price = command.new_price
             updates.append(f"price={command.new_price}")
         if command.new_category_id is not None:
-            product.category_id = command.new_category_id
-            updates.append(f"category_id={command.new_category_id}")
+            if command.new_category_id == Empty.EMPTY:
+                product.category_id = None
+                updates.append("category_id=None")
+            else:
+                product.category_id = cast(
+                    "CategoryId", command.new_category_id
+                )
+                updates.append(f"category_id={command.new_category_id}")
 
         logger.debug(
             "Updating product %s: %s", command.product_id, ", ".join(updates)

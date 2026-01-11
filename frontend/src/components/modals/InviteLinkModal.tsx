@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import initDataTG from "../../services/tgInitData";
 
 interface InviteLinkModalProps {
   link: string;
@@ -16,12 +17,22 @@ export const InviteLinkModal: React.FC<InviteLinkModalProps> = ({
     setCopied(true);
     setTimeout(() => setCopied(false), 1500);
   };
+
+  const handleTelegramShare = () => {
+    if (initDataTG?.platform !== "unknown") {
+      const telegramShareUrl = `https://t.me/share/url?url=${encodeURIComponent(
+        link
+      )}&text=${encodeURIComponent("Запрошено до групи")}`;
+      initDataTG?.openTelegramLink(telegramShareUrl);
+      onClose();
+    }
+  };
   return (
     <div className="fixed inset-0 flex items-center justify-center px-4 z-9999 bg-black/50">
       <div className="bg-white rounded-2xl p-6 w-full max-w-md shadow-xl">
         <h2 className="text-xl font-semibold mb-4">Запрошення створено</h2>
 
-        <label className="text-sm text-gray-500">Share Link</label>
+        <label className="text-sm text-gray-500">Поділитися посиланням</label>
         <textarea
           value={link}
           readOnly
@@ -41,16 +52,15 @@ export const InviteLinkModal: React.FC<InviteLinkModalProps> = ({
                 : "bg-white text-black"
             }`}
           >
-            {copied ? "Copied!" : "Copy"}
+            {copied ? "Скопійовано!" : "Копіювати"}
           </button>
 
-          <a
-            href={link}
-            target="_blank"
-            className="flex-1 py-4 bg-indigo-600 hover:bg-indigo-700 text-white font-semibold rounded-2xl transition-colors text-center"
+          <button
+            onClick={handleTelegramShare}
+            className="flex-1 py-4 bg-blue-500 hover:bg-blue-600 text-white font-semibold rounded-2xl transition-colors"
           >
-            Share
-          </a>
+            Поділитися
+          </button>
         </div>
 
         <button className="mt-4 text-sm text-gray-400 w-full" onClick={onClose}>

@@ -1,23 +1,45 @@
 import React, { useState } from "react";
 import { FormWrapper } from "../../shared/FormWrapper";
 import { FormInput } from "../../shared/FormInput";
-import { FormSelect } from "../../shared/FormSelect";
-import { useProducts } from "../../../hooks/useProducts";
-import { type Product } from "../../../types/entities/Product";
+import { useProducts } from "../../../hooks/products/useProducts";
+import { DynamicFormSelect } from "../../shared/DyncamicFormSelect";
+import { useCategoriesForm } from "../../../hooks/products/useCategoriesForm";
+import { CategoryManagementModal } from "../../features/addCategoryComponent";
+import { type transformedCategories } from "../../../types/entities/Product";
 
 interface AddProductFormProps {
   onClose: () => void;
-  onSuccess?: (product: Product) => void;
+  onSuccess?: (product: transformedCategories) => void;
 }
 
-export const AddProductForm: React.FC<AddProductFormProps> = ({ onClose, onSuccess }) => {
+export const AddProductForm: React.FC<AddProductFormProps> = ({
+  onClose,
+  onSuccess,
+}) => {
+  // Pass initial category to the hook
+  const {
+    selectedCategory,
+    setSelectedCategory,
+    categoryOptions,
+    setIsCategoryModalOpen,
+    isCategoryModalOpen,
+    transformedCategories,
+    handleAddCategory,
+    handleUpdateCategory,
+    handleDeleteCategory,
+  } = useCategoriesForm();
+
   const { addProduct } = useProducts();
 
   const [formData, setFormData] = useState({
     name: "",
-    category: "",
     price: "",
   });
+
+  const category =
+    selectedCategory && selectedCategory.trim() !== ""
+      ? selectedCategory
+      : undefined;
 
   const handleChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>
@@ -32,21 +54,17 @@ export const AddProductForm: React.FC<AddProductFormProps> = ({ onClose, onSucce
       const newProduct = await addProduct(
         formData.name,
         parseFloat(formData.price),
-        formData.category
+        category
       );
       if (onSuccess && newProduct) {
         onSuccess(newProduct);
       }
+
       onClose();
     } catch (error) {
       console.error("Error creating product:", error);
     }
   };
-
-  const categoryOptions = [
-    { value: "WATER", label: "Вода" },
-    { value: "OTHER", label: "Інше" },
-  ];
 
   return (
     <FormWrapper
@@ -62,15 +80,13 @@ export const AddProductForm: React.FC<AddProductFormProps> = ({ onClose, onSucce
         placeholder="Введіть назву..."
         required
       />
-      <FormSelect
+      <DynamicFormSelect
         label="Категорія"
         name="category"
-        value={formData.category}
-        onChange={(value) =>
-          setFormData((prev) => ({ ...prev, category: value }))
-        }
+        value={selectedCategory}
+        onChange={setSelectedCategory}
         options={categoryOptions}
-        required
+        onAddCategory={() => setIsCategoryModalOpen(true)}
       />
       <FormInput
         label="Ціна (₴)"
@@ -80,6 +96,14 @@ export const AddProductForm: React.FC<AddProductFormProps> = ({ onClose, onSucce
         onChange={handleChange}
         placeholder="0"
         required
+      />
+      <CategoryManagementModal
+        isOpen={isCategoryModalOpen}
+        onClose={() => setIsCategoryModalOpen(false)}
+        categories={transformedCategories}
+        onAddCategory={handleAddCategory}
+        onUpdateCategory={handleUpdateCategory}
+        onDeleteCategory={handleDeleteCategory}
       />
     </FormWrapper>
   );

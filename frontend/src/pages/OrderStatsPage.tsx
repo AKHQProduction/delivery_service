@@ -7,8 +7,10 @@ interface OrderStats {
   total_orders_in_first_half: number;
   total_orders_in_second_half: number;
   total_orders_sum: number;
-  total_water: number;
-  total_other: number;
+  category_stats: {
+    name: string;
+    quantity: number;
+  }[];
 }
 
 export const OrdersStatsPage = () => {
@@ -183,34 +185,35 @@ export const OrdersStatsPage = () => {
                   d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"
                 />
               </svg>
-              Товари
+              Розподіл по категоріям
             </h3>
 
-            <div className="space-y-3">
-              <div className="flex items-center justify-between p-4 bg-gradient-to-r from-blue-50 to-cyan-50 rounded-xl border border-blue-200">
-                <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-full bg-blue-400 flex items-center justify-center">
-                    <span className="text-xl">💧</span>
+            {stats.category_stats.length > 0 ? (
+              stats.category_stats.map((category) => (
+                <div
+                  key={category.name}
+                  className="flex items-center justify-between p-4 bg-gradient-to-r from-purple-50 to-pink-50 rounded-xl border border-purple-200 mb-3"
+                >
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 rounded-full bg-purple-400 flex items-center justify-center">
+                      <span className="text-xl">📦</span>
+                    </div>
+                    <span className="font-semibold text-gray-900">
+                      {category.name}
+                    </span>
                   </div>
-                  <span className="font-semibold text-gray-900">Вода</span>
+                  <span className="text-2xl font-bold text-gray-900">
+                    {category.quantity}
+                  </span>
                 </div>
-                <span className="text-2xl font-bold text-gray-900">
-                  {stats.total_water}
-                </span>
+              ))
+            ) : (
+              <div className="flex items-center justify-center py-6">
+                <p className="text-gray-500 text-center">
+                  Немає даних по категоріям.
+                </p>
               </div>
-
-              <div className="flex items-center justify-between p-4 bg-gradient-to-r from-purple-50 to-pink-50 rounded-xl border border-purple-200">
-                <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-full bg-purple-400 flex items-center justify-center">
-                    <span className="text-xl">📦</span>
-                  </div>
-                  <span className="font-semibold text-gray-900">Інше</span>
-                </div>
-                <span className="text-2xl font-bold text-gray-900">
-                  {stats.total_other}
-                </span>
-              </div>
-            </div>
+            )}
           </div>
         </div>
       ) : null}

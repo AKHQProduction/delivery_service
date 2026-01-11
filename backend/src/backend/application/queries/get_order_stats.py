@@ -17,13 +17,18 @@ class GetOrderStatsQuery:
 
 
 @dataclass(frozen=True)
+class OrderStatsByCategory:
+    name: str
+    quantity: int
+
+
+@dataclass(frozen=True)
 class GetOrderStatsResponse:
     total_orders: int
     total_orders_in_first_half: int
     total_orders_in_second_half: int
     total_orders_sum: int
-    total_water: int
-    total_other: int
+    category_stats: list[OrderStatsByCategory]
 
 
 class GetOrderStatsQueryHandler:
@@ -63,6 +68,8 @@ class GetOrderStatsQueryHandler:
             total_orders_in_first_half=stats.total_orders_in_first_half,
             total_orders_in_second_half=stats.total_orders_in_second_half,
             total_orders_sum=stats.total_orders_sum,
-            total_water=stats.total_water,
-            total_other=stats.total_other,
+            category_stats=[
+                OrderStatsByCategory(name=cat.name, quantity=cat.quantity)
+                for cat in stats.category_stats
+            ],
         )

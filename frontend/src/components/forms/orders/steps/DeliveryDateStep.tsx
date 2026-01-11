@@ -84,13 +84,12 @@ export const DeliveryDateStep: React.FC<DeliveryDateStepProps> = ({
         label="Час доставки"
         name="deliveryTime"
         value={deliveryTime}
-        required ={true}
+        required={true}
         onChange={onTimeChange}
         options={[
           { value: "FIRST_HALF", label: "Перша половина дня" },
           { value: "SECOND_HALF", label: "Друга половина дня" },
         ]}
-        
       />
 
       <div>
@@ -104,8 +103,10 @@ export const DeliveryDateStep: React.FC<DeliveryDateStepProps> = ({
               />
             </svg>
             <span className="font-medium">
-              Доставка: {formatDate(deliveryDate)}  <br />
-              {deliveryTime === "FIRST_HALF" ? "Перша половина дня" : "Друга половина дня"}
+              Доставка: {formatDate(deliveryDate)} <br />
+              {deliveryTime === "FIRST_HALF"
+                ? "Перша половина дня"
+                : "Друга половина дня"}
             </span>
           </div>
         )}
@@ -133,7 +134,7 @@ export const DeliveryDateStep: React.FC<DeliveryDateStepProps> = ({
           <div className="p-4 bg-linear-to-r from-indigo-50 to-purple-50 rounded-xl border border-indigo-100">
             <div className="flex items-start gap-3 mb-3">
               <div className="w-10 h-10 rounded-full bg-indigo-600 text-white flex items-center justify-center font-bold shrink-0">
-                {client?.full_name
+                {(client?.full_name || "")
                   .split(" ")
                   .map((n) => n[0])
                   .join("")

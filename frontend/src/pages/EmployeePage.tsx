@@ -16,7 +16,7 @@ export const EmployeePage = () => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const { getEmployees, deleteEmployees, updateEmployee, employees, loadMoreEmployees, loadingMore, hasMore } =
     useEmployees();
-  const debounceRef = useRef<NodeJS.Timeout | null>(null);
+  const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const observerRef = useRef<IntersectionObserver | null>(null);
   const loadMoreRef = useRef<HTMLDivElement | null>(null);
 

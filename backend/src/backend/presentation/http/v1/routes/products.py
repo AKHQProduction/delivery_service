@@ -1,4 +1,5 @@
 from typing import Annotated
+from uuid import UUID
 
 from dishka import FromDishka
 from dishka.integrations.fastapi import DishkaRoute
@@ -27,7 +28,7 @@ from backend.application.queries.get_products import (
     GetProductQuery,
     GetProductsQueryHandler,
 )
-from backend.application.vars import CategoryId, ProductId
+from backend.application.vars import CategoryId, Empty, ProductId
 from backend.presentation.http.v1.schemas.error import ErrorSchema
 from backend.presentation.http.v1.schemas.product import EditProductSchema
 
@@ -67,7 +68,7 @@ async def create_new_product(
     ],
     handler: FromDishka[CreateProductCommandHandler],
 ) -> ProductId:
-    return await handler.handle(body)
+    return await handler.handle(command=body)
 
 
 @router.patch(
@@ -82,17 +83,49 @@ async def create_new_product(
 )
 async def update_product(
     product_id: ProductId,
-    body: EditProductSchema,
+    body: Annotated[
+        EditProductSchema,
+        Body(
+            openapi_examples={
+                "update_name": Example(
+                    summary="Update product name",
+                    value={"name": "New Product Name"},
+                ),
+                "update_category": Example(
+                    summary="Update product category",
+                    value={
+                        "category_id": "550e8400-e29b-41d4-a716-446655440000"
+                    },
+                ),
+                "remove_category": Example(
+                    summary="Remove category from product",
+                    value={"category_id": "EMPTY"},
+                ),
+                "update_all": Example(
+                    summary="Update all fields",
+                    value={
+                        "name": "New Name",
+                        "price": 150,
+                        "category_id": "550e8400-e29b-41d4-a716-446655440000",
+                    },
+                ),
+            }
+        ),
+    ],
     handler: FromDishka[EditProductCommandHandler],
 ) -> None:
+    new_category_id: CategoryId | Empty | None = None
+    if body.category_id == Empty.EMPTY:
+        new_category_id = Empty.EMPTY
+    elif body.category_id is not None:
+        new_category_id = CategoryId(UUID(body.category_id))
+
     await handler.handle(
         EditProductCommand(
             product_id=product_id,
             new_name=body.name,
             new_price=body.price,
-            new_category_id=CategoryId(body.category_id)
-            if body.category_id
-            else None,
+            new_category_id=new_category_id,
         )
     )
 

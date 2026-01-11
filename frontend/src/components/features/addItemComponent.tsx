@@ -37,7 +37,10 @@ export const AddItemComponent = () => {
           <AddProductForm
             onClose={() => setIsModalOpen(false)}
             onSuccess={(productId: any) => {
-              const id = typeof productId === "string" ? productId : productId?.product_id ?? productId?.id;
+              const id =
+                typeof productId === "string"
+                  ? productId
+                  : productId?.product_id ?? productId?.id;
               sessionStorage.setItem("openProductId", id);
               window.location.reload();
             }}
@@ -48,7 +51,10 @@ export const AddItemComponent = () => {
           <AddClientForm
             onClose={() => setIsModalOpen(false)}
             onSuccess={(clientData: any) => {
-              const id = typeof clientData === "string" ? clientData : clientData?.client_id ?? clientData?.id;
+              const id =
+                typeof clientData === "string"
+                  ? clientData
+                  : clientData?.client_id ?? clientData?.id;
               sessionStorage.setItem("openClientId", id);
               window.location.reload();
             }}
@@ -59,7 +65,10 @@ export const AddItemComponent = () => {
           <AddOrderForm
             onClose={() => setIsModalOpen(false)}
             onSave={(orderData: any) => {
-              const id = typeof orderData === "string" ? orderData : orderData?.order_id ?? orderData?.id;
+              const id =
+                typeof orderData === "string"
+                  ? orderData
+                  : orderData?.order_id ?? orderData?.id;
               if (id) {
                 sessionStorage.setItem("openOrderId", id);
               }

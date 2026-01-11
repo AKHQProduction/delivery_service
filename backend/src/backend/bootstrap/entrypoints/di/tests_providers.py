@@ -33,9 +33,11 @@ class MockAPIInteractorsProvider(APIInteractorsProvider):
 
 
 class MockConfigProvider(ConfigProvider):
+    TEST_DEBUG_USER_ID = 1000
+
     @provide
     def app_config(self, config: Config) -> AppConfig:
-        return AppConfig(DEBUG=True)
+        return AppConfig(DEBUG=True, DEBUG_USER_ID=self.TEST_DEBUG_USER_ID)
 
 
 class MockWebAppProvider(WebAppProvider):

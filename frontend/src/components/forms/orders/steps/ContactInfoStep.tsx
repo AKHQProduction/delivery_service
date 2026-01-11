@@ -25,7 +25,7 @@ export const ContactInfoStep: React.FC<ContactInfoStepProps> = ({
         <div className="p-4 bg-linear-to-r from-indigo-50 to-purple-50 rounded-xl border border-indigo-100">
           <div className="flex items-center gap-3">
             <div className="w-12 h-12 rounded-full bg-indigo-600 text-white flex items-center justify-center font-bold text-lg">
-              {client.full_name
+              {(client.full_name || "")
                 .split(" ")
                 .map((n) => n[0])
                 .join("")
