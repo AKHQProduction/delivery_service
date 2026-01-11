@@ -1,5 +1,6 @@
 import logging
 from dataclasses import dataclass
+from uuid import UUID
 
 from backend.application.errors import AccessDeniedError
 from backend.application.interfaces import (
@@ -11,7 +12,7 @@ from backend.application.interfaces.gateways.product_gateway import (
     ProductGateway,
 )
 from backend.application.policies.access import can_shop_manage_policy
-from backend.application.vars import CategoryId, ProductId
+from backend.application.vars import CategoryId, Empty, ProductId
 
 logger = logging.getLogger(__name__)
 
@@ -20,7 +21,7 @@ logger = logging.getLogger(__name__)
 class CreateProductCommand:
     name: str
     price: int
-    category_id: CategoryId | None = None
+    category_id: CategoryId | Empty = Empty.EMPTY
 
 
 class CreateProductCommandHandler:
@@ -58,13 +59,19 @@ class CreateProductCommandHandler:
         product_id = self._gateway.next_id()
         logger.debug("Generated product_id: %s", product_id)
 
+        category_id: CategoryId | None = (
+            CategoryId(command.category_id)
+            if isinstance(command.category_id, UUID)
+            else None
+        )
+
         await self._gateway.create_product(
             CreateProductDTO(
                 product_id=product_id,
                 shop_id=current_user.shop_id,
                 name=command.name,
                 price=command.price,
-                category_id=command.category_id,
+                category_id=category_id,
             )
         )
         await self._tr_manager.commit()

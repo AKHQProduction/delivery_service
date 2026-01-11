@@ -27,7 +27,7 @@ services:
     restart: always
     volumes:
       - ./backend/src:/usr/src/app/src
-    command: [ "uvicorn", "backend.bootstrap.entrypoints.api:create_app", "--host", "${SERVER_HOST}", "--port", "${SERVER_PORT}", "--factory" ]
+    command: [ "uvicorn", "backend.bootstrap.entrypoints.api:create_app", "--host", "${SERVER_HOST}", "--port", "${SERVER_PORT}", "--factory", "--reload" ]
     ports:
       - "${SERVER_PORT}:${SERVER_PORT}"
     depends_on:

@@ -1,4 +1,4 @@
-from typing import Annotated, cast
+from typing import Annotated
 from uuid import UUID
 
 from dishka import FromDishka
@@ -68,7 +68,7 @@ async def create_new_product(
     ],
     handler: FromDishka[CreateProductCommandHandler],
 ) -> ProductId:
-    return await handler.handle(body)
+    return await handler.handle(command=body)
 
 
 @router.patch(
@@ -118,7 +118,7 @@ async def update_product(
     if body.category_id == Empty.EMPTY:
         new_category_id = Empty.EMPTY
     elif body.category_id is not None:
-        new_category_id = CategoryId(cast("UUID", body.category_id))
+        new_category_id = CategoryId(UUID(body.category_id))
 
     await handler.handle(
         EditProductCommand(
