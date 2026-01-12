@@ -67,12 +67,6 @@ class ClientPhone(Base, CreatedAt, UpdatedAt):
     client: Mapped["Client"] = relationship(back_populates="phones")
     shop: Mapped["Shop"] = relationship()
 
-    __table_args__ = (
-        sa.UniqueConstraint(
-            "shop_id", "number", name="uq_client_phone_per_shop"
-        ),
-    )
-
     def __repr__(self) -> str:
         return (
             f"<ClientPhone id={self.id} number={self.number} "

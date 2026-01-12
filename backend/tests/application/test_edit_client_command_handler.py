@@ -13,7 +13,6 @@ from backend.application.errors import (
     AuthorizationError,
     EntityNotFoundError,
     InvalidPrimaryFlagError,
-    PhoneNumberAlreadyExistsError,
 )
 from backend.application.interfaces.gateways.client_gateway import (
     AddressDTO,
@@ -408,40 +407,6 @@ async def test_manager_can_edit_client(make_handler) -> None:
 
     updated_client = client_gateway.clients[client_id]
     assert updated_client.full_name == "Manager Updated"
-
-
-@pytest.mark.asyncio()
-async def test_edit_client_with_duplicate_phone_number(make_handler) -> None:
-    user_id = UserId(uuid.uuid4())
-    shop_id = ShopId(uuid.uuid4())
-
-    handler, client_gateway, _, _ = make_handler(
-        user_id=user_id, shop_id=shop_id
-    )
-
-    client1_id = ClientId(uuid.uuid4())
-    client1 = ClientDM(
-        client_id=client1_id,
-        shop_id=shop_id,
-        full_name="First Client",
-        phones=[PhoneDTO(number="+380509999999", is_primary=True)],
-        addresses=[],
-    )
-    client_gateway.clients[client1_id] = client1
-
-    client2_id = setup_client_in_gateway(client_gateway, shop_id)
-
-    command = EditClientCommand(
-        client_id=client2_id,
-        phones=[
-            Phone(number="+380509999999", is_primary=True)
-        ],  # Same as client1!
-    )
-
-    with pytest.raises(PhoneNumberAlreadyExistsError) as exc_info:
-        await handler.handle(command)
-
-    assert "+380509999999" in str(exc_info.value.message)
 
 
 @pytest.mark.asyncio()

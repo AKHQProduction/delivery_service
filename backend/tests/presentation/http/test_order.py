@@ -1381,3 +1381,157 @@ async def test_get_order_stats_unauthorized(
     )
 
     assert response.status_code == status.HTTP_403_FORBIDDEN
+
+
+@pytest.mark.asyncio()
+async def test_generate_orders_pdf(
+    http_client: AsyncClient,
+    session: AsyncSession,
+    customer_headers: Callable[[int], dict[str, Any]],
+    setup_full_test_user_with_shop,
+    setup_test_client,
+    setup_test_product,
+) -> None:
+    telegram_id = 6100
+    _, shop_id = await setup_full_test_user_with_shop(telegram_id=telegram_id)
+
+    client_id = await setup_test_client(
+        shop_id=shop_id,
+        full_name="Тест Клієнт",
+        phones=["+380501234567"],
+        addresses=[
+            {
+                "street": "Тестова",
+                "house": "1",
+                "address_type": AddressType.APARTMENT.value,
+                "apartment": "1",
+            }
+        ],
+    )
+    product_id, _, _, _ = await setup_test_product(shop_id)
+    await session.commit()
+
+    headers = customer_headers(telegram_id)
+
+    client_response = await http_client.get(
+        url=f"/api/v1/clients/{client_id}", headers=headers
+    )
+    client_data = client_response.json()
+    phone_id = client_data["phones"][0]["id"]
+    address_id = client_data["addresses"][0]["id"]
+
+    tomorrow = (datetime.now(UTC).date() + timedelta(days=1)).isoformat()
+
+    order_json = {
+        "client_id": str(client_id),
+        "delivery_date": tomorrow,
+        "time_preference": TimePreference.FIRST_HALF,
+        "address_id": address_id,
+        "phone_id": phone_id,
+        "products": [{"product_id": str(product_id), "quantity": 1}],
+    }
+    await http_client.post(url=BASE_URL, headers=headers, json=order_json)
+    await session.commit()
+
+    response = await http_client.post(
+        url=f"{BASE_URL}/export/pdf/generate",
+        headers=headers,
+        params={"delivery_date": tomorrow},
+    )
+
+    assert response.status_code == status.HTTP_200_OK
+    data = response.json()
+    assert "file_id" in data
+    assert "filename" in data
+    assert data["filename"] == f"orders_{tomorrow}.pdf"
+
+
+@pytest.mark.asyncio()
+async def test_generate_orders_pdf_unauthorized(
+    http_client: AsyncClient,
+) -> None:
+    tomorrow = datetime.now(UTC).date() + timedelta(days=1)
+
+    response = await http_client.post(
+        url=f"{BASE_URL}/export/pdf/generate",
+        params={"delivery_date": tomorrow.isoformat()},
+    )
+
+    assert response.status_code == status.HTTP_403_FORBIDDEN
+
+
+@pytest.mark.asyncio()
+async def test_download_orders_pdf(
+    http_client: AsyncClient,
+    session: AsyncSession,
+    customer_headers: Callable[[int], dict[str, Any]],
+    setup_full_test_user_with_shop,
+    setup_test_client,
+    setup_test_product,
+) -> None:
+    telegram_id = 6101
+    _, shop_id = await setup_full_test_user_with_shop(telegram_id=telegram_id)
+
+    client_id = await setup_test_client(
+        shop_id=shop_id,
+        full_name="Тест Клієнт",
+        phones=["+380501234567"],
+        addresses=[
+            {
+                "street": "Тестова",
+                "house": "1",
+                "address_type": AddressType.APARTMENT.value,
+                "apartment": "1",
+            }
+        ],
+    )
+    product_id, _, _, _ = await setup_test_product(shop_id)
+    await session.commit()
+
+    headers = customer_headers(telegram_id)
+
+    client_response = await http_client.get(
+        url=f"/api/v1/clients/{client_id}", headers=headers
+    )
+    client_data = client_response.json()
+    phone_id = client_data["phones"][0]["id"]
+    address_id = client_data["addresses"][0]["id"]
+
+    tomorrow = (datetime.now(UTC).date() + timedelta(days=1)).isoformat()
+
+    order_json = {
+        "client_id": str(client_id),
+        "delivery_date": tomorrow,
+        "time_preference": TimePreference.FIRST_HALF,
+        "address_id": address_id,
+        "phone_id": phone_id,
+        "products": [{"product_id": str(product_id), "quantity": 1}],
+    }
+    await http_client.post(url=BASE_URL, headers=headers, json=order_json)
+    await session.commit()
+
+    generate_response = await http_client.post(
+        url=f"{BASE_URL}/export/pdf/generate",
+        headers=headers,
+        params={"delivery_date": tomorrow},
+    )
+    file_id = generate_response.json()["file_id"]
+
+    download_response = await http_client.get(
+        url=f"{BASE_URL}/export/pdf/download/{file_id}",
+    )
+
+    assert download_response.status_code == status.HTTP_200_OK
+    assert download_response.headers["content-type"] == "application/pdf"
+    assert "content-disposition" in download_response.headers
+
+
+@pytest.mark.asyncio()
+async def test_download_orders_pdf_not_found(
+    http_client: AsyncClient,
+) -> None:
+    response = await http_client.get(
+        url=f"{BASE_URL}/export/pdf/download/nonexistent-file-id",
+    )
+
+    assert response.status_code == status.HTTP_404_NOT_FOUND

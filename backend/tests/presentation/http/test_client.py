@@ -1088,7 +1088,7 @@ async def test_edit_client_as_courier_forbidden(
 
 
 @pytest.mark.asyncio()
-async def test_create_client_with_duplicate_phone_number(
+async def test_create_client_with_duplicate_phone_number_allowed(
     http_client: AsyncClient,
     session: AsyncSession,
     customer_headers: Callable[[int], dict[str, Any]],
@@ -1115,7 +1115,7 @@ async def test_create_client_with_duplicate_phone_number(
 
     json2 = {
         "full_name": "Другий Клієнт",
-        "phones": [{"number": "+380991234567"}],  # Same phone!
+        "phones": [{"number": "+380991234567"}],  # Same phone - allowed
         "addresses": [],
     }
 
@@ -1123,12 +1123,12 @@ async def test_create_client_with_duplicate_phone_number(
         url=BASE_URL, headers=headers, json=json2
     )
 
-    assert response2.status_code == status.HTTP_409_CONFLICT
-    assert "+380991234567" in response2.json()["detail"]
+    assert response2.status_code == status.HTTP_201_CREATED
+    assert response2.json() is not None  # Returns ClientId (UUID)
 
 
 @pytest.mark.asyncio()
-async def test_edit_client_with_duplicate_phone_number_integration(
+async def test_edit_client_with_duplicate_phone_number_allowed(
     http_client: AsyncClient,
     session: AsyncSession,
     customer_headers: Callable[[int], dict[str, Any]],
@@ -1155,14 +1155,13 @@ async def test_edit_client_with_duplicate_phone_number_integration(
 
     json = {
         "phones": [{"number": "+380509999999", "is_primary": True}]
-    }  # Same as client1!
+    }  # Same as client1 - allowed
 
     response = await http_client.patch(
         url=f"{BASE_URL}/{client2_id}", headers=headers, json=json
     )
 
-    assert response.status_code == status.HTTP_409_CONFLICT
-    assert "+380509999999" in response.json()["detail"]
+    assert response.status_code == status.HTTP_200_OK
 
 
 @pytest.mark.asyncio()

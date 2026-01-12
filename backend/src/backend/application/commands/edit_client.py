@@ -5,7 +5,6 @@ from backend.application.errors import (
     AccessDeniedError,
     EntityNotFoundError,
     InvalidPrimaryFlagError,
-    PhoneNumberAlreadyExistsError,
 )
 from backend.application.interfaces import (
     ClientGateway,
@@ -133,25 +132,6 @@ class EditClientCommandHandler:
             updates.append(f"custom_id={command.custom_id}")
 
         if command.phones is not None:
-            current_numbers = {phone.number for phone in client.phones}
-            new_numbers = [
-                phone.number
-                for phone in command.phones
-                if phone.number not in current_numbers
-            ]
-
-            if new_numbers:
-                existing = await self._client_gateway.check_existing_numbers(
-                    new_numbers
-                )
-                if existing:
-                    duplicate = next(iter(existing))
-                    logger.warning(
-                        "Phone number %s already exists for another client",
-                        duplicate,
-                    )
-                    raise PhoneNumberAlreadyExistsError(duplicate)
-
             client.phones = [
                 PhoneDTO(
                     number=phone.number,

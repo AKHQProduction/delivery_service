@@ -11,7 +11,6 @@ from backend.application.commands.create_client import (
 from backend.application.errors import (
     AccessDeniedError,
     AuthorizationError,
-    PhoneNumberAlreadyExistsError,
 )
 from backend.application.vars import AddressType, ShopId, ShopRole, UserId
 from backend.infrastructure.in_memory import (
@@ -274,45 +273,3 @@ async def test_create_client_with_private_house_address(make_handler) -> None:
         created_client.addresses[0].address_type == AddressType.PRIVATE_HOUSE
     )
     assert created_client.addresses[0].apartment is None
-
-
-@pytest.mark.asyncio()
-async def test_create_client_with_duplicate_phone_number(make_handler) -> None:
-    user_id = UserId(uuid.uuid4())
-    shop_id = ShopId(uuid.uuid4())
-    handler, client_gateway, _, _ = make_handler(
-        user_id=user_id, shop_id=shop_id
-    )
-
-    command1 = CreateClientCommand(
-        full_name="Перший Клієнт",
-        phones=[Phone(number="+380501234567")],
-        addresses=[
-            Address(
-                street="Вулиця 1",
-                house="1",
-                address_type=AddressType.APARTMENT,
-                apartment="1",
-            )
-        ],
-    )
-    await handler.handle(command1)
-
-    command2 = CreateClientCommand(
-        full_name="Другий Клієнт",
-        phones=[Phone(number="+380501234567")],  # Same phone!
-        addresses=[
-            Address(
-                street="Вулиця 2",
-                house="2",
-                address_type=AddressType.APARTMENT,
-                apartment="2",
-            )
-        ],
-    )
-
-    with pytest.raises(PhoneNumberAlreadyExistsError) as exc_info:
-        await handler.handle(command2)
-
-    assert "+380501234567" in str(exc_info.value.message)
-    assert len(client_gateway.clients) == 1
