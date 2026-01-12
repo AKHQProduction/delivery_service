@@ -38,11 +38,11 @@ from backend.application.commands.edit_category import (
 from backend.application.commands.edit_client import EditClientCommandHandler
 from backend.application.commands.edit_order import UpdateOrderCommandHandler
 from backend.application.commands.edit_product import EditProductCommandHandler
+from backend.application.commands.generate_order_export_pdf import (
+    GenerateOrderExportPDFCommandHandler,
+)
 from backend.application.interfaces import IdentityProvider
 from backend.application.interfaces.pdf_generator import OrdersPDFGenerator
-from backend.application.queries.export_orders_pdf import (
-    ExportOrdersPDFQueryHandler,
-)
 from backend.application.queries.get_categories import (
     GetCategoriesQueryHandler,
 )
@@ -110,7 +110,7 @@ class APIInteractorsProvider(Provider):
         GetOrderQueryHandler,
         GetOrdersQueryHandler,
         GetOrderStatsQueryHandler,
-        ExportOrdersPDFQueryHandler,
+        GenerateOrderExportPDFCommandHandler,
     )
 
     add_employee = provide_all(GenerateInviteLinkCommandHandler)
