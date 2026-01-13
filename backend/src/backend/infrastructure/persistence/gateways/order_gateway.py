@@ -1,12 +1,12 @@
 from typing import cast
 from uuid import UUID
 
-from sqlalchemy import asc, case, func, or_, select
+from sqlalchemy import asc, case, desc, func, or_, select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 from uuid_utils import uuid7
 
-from backend.application.interfaces.gateways import Pagination
+from backend.application.interfaces.gateways import Pagination, SortOrder
 from backend.application.interfaces.gateways.order_gateway import (
     CategoryStatsReadModel,
     CreateOrderDTO,
@@ -168,7 +168,8 @@ class SQLAlchemyOrderGateway(OrderGateway):
         if search_conditions:
             query = query.where(or_(*search_conditions))
 
-        query = query.order_by(asc(Order.date))
+        order_func = desc if pagination.order == SortOrder.DESC else asc
+        query = query.order_by(order_func(Order.date))
         query = query.offset(pagination.offset).limit(pagination.limit)
 
         result = await self._session.execute(query)
