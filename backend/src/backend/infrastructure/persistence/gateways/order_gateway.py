@@ -17,6 +17,7 @@ from backend.application.interfaces.gateways.order_gateway import (
     OrderItemReadModel,
     OrderReadModel,
     OrderStatsReadModel,
+    PaymentMethodStatsReadModel,
     UpdateOrderDTO,
 )
 from backend.application.vars import (
@@ -24,6 +25,7 @@ from backend.application.vars import (
     ClientId,
     Empty,
     OrderId,
+    PaymentMethod,
     ProductId,
     ShopId,
     TimePreference,
@@ -413,6 +415,40 @@ class SQLAlchemyOrderGateway(OrderGateway):
             for row in category_rows
         ]
 
+        payment_method_query = (
+            select(
+                Order.payment_method.label("payment_method"),
+                func.coalesce(
+                    func.sum(OrderItem.quantity * OrderItem.price_per_item), 0
+                ).label("orders_sum"),
+            )
+            .select_from(Order)
+            .outerjoin(OrderItem, Order.id == OrderItem.order_id)
+            .group_by(Order.payment_method)
+        )
+
+        if filters.shop_id:
+            payment_method_query = payment_method_query.where(
+                Order.shop_id == filters.shop_id
+            )
+        if filters.delivery_date:
+            payment_method_query = payment_method_query.where(
+                Order.date == filters.delivery_date
+            )
+
+        payment_method_result = await self._session.execute(
+            payment_method_query
+        )
+        payment_method_rows = payment_method_result.all()
+
+        payment_method_stats = [
+            PaymentMethodStatsReadModel(
+                method=PaymentMethod(cast("str", row.payment_method)),
+                orders_sum=int(row.orders_sum or 0),
+            )
+            for row in payment_method_rows
+        ]
+
         return OrderStatsReadModel(
             total_orders=main_row.total_orders or 0,
             total_orders_in_first_half=int(
@@ -423,4 +459,5 @@ class SQLAlchemyOrderGateway(OrderGateway):
             ),
             total_orders_sum=int(main_row.total_orders_sum or 0),
             category_stats=category_stats,
+            payment_method_stats=payment_method_stats,
         )

@@ -18,6 +18,12 @@ from backend.application.vars import (
 
 
 @dataclass(frozen=True)
+class PaymentMethodStatsReadModel:
+    method: PaymentMethod
+    orders_sum: int
+
+
+@dataclass(frozen=True)
 class DeliveryAddressDTO:
     street: str
     house: str
@@ -107,6 +113,7 @@ class OrderStatsReadModel:
     total_orders_in_second_half: int
     total_orders_sum: int
     category_stats: list[CategoryStatsReadModel]
+    payment_method_stats: list[PaymentMethodStatsReadModel]
 
 
 @dataclass(frozen=True)
