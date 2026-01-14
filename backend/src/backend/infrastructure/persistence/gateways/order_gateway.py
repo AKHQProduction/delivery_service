@@ -72,6 +72,7 @@ class SQLAlchemyOrderGateway(OrderGateway):
             shop_id=dto.shop_id,
             client_id=dto.client_id,
             items=order_items,
+            payment_method=dto.payment_method,
         )
 
         self._session.add(new_order)

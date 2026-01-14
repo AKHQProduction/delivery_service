@@ -11,6 +11,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from backend.application.vars import (
     AddressType,
+    PaymentMethod,
     ShopRole,
     TimePreference,
 )
@@ -69,6 +70,7 @@ async def test_create_order_with_single_product(
         "time_preference": TimePreference.FIRST_HALF,
         "address_id": address_id,
         "phone_id": phone_id,
+        "payment_method": PaymentMethod.CASH,
         "products": [
             {
                 "product_id": str(product_id),
@@ -160,6 +162,7 @@ async def test_create_order_with_multiple_products(
         "time_preference": TimePreference.SECOND_HALF,
         "address_id": address_id,
         "phone_id": phone_id,
+        "payment_method": PaymentMethod.BANK_TRANSFER,
         "products": [
             {"product_id": str(product_id_1), "quantity": 3},
             {"product_id": str(product_id_2), "quantity": 1},
@@ -233,6 +236,7 @@ async def test_create_order_without_comment(
         "time_preference": TimePreference.FIRST_HALF,
         "address_id": address_id,
         "phone_id": phone_id,
+        "payment_method": PaymentMethod.CASH,
         "products": [{"product_id": str(product_id), "quantity": 1}],
     }
 
@@ -297,6 +301,7 @@ async def test_create_order_with_different_time_preferences(
         "time_preference": TimePreference.FIRST_HALF,
         "address_id": address_id,
         "phone_id": phone_id,
+        "payment_method": PaymentMethod.CASH,
         "products": [{"product_id": str(product_id), "quantity": 1}],
     }
 
@@ -312,6 +317,7 @@ async def test_create_order_with_different_time_preferences(
         "time_preference": TimePreference.SECOND_HALF,
         "address_id": address_id,
         "phone_id": phone_id,
+        "payment_method": PaymentMethod.CASH,
         "products": [{"product_id": str(product_id), "quantity": 1}],
     }
 
@@ -359,6 +365,7 @@ async def test_create_order_client_not_found(
         "time_preference": TimePreference.FIRST_HALF,
         "address_id": 1,
         "phone_id": 1,
+        "payment_method": PaymentMethod.CASH,
         "products": [{"product_id": str(uuid.uuid4()), "quantity": 1}],
     }
 
@@ -410,6 +417,7 @@ async def test_create_order_product_not_found(
         "time_preference": TimePreference.FIRST_HALF,
         "address_id": address_id,
         "phone_id": phone_id,
+        "payment_method": PaymentMethod.CASH,
         "products": [{"product_id": str(uuid.uuid4()), "quantity": 1}],
     }
 
@@ -463,6 +471,7 @@ async def test_create_order_phone_not_found(
         "time_preference": TimePreference.FIRST_HALF,
         "address_id": address_id,
         "phone_id": 999,  # Non-existent phone_id
+        "payment_method": PaymentMethod.CASH,
         "products": [{"product_id": str(product_id), "quantity": 1}],
     }
 
@@ -516,6 +525,7 @@ async def test_create_order_address_not_found(
         "time_preference": TimePreference.FIRST_HALF,
         "address_id": 999,  # Non-existent address_id
         "phone_id": phone_id,
+        "payment_method": PaymentMethod.CASH,
         "products": [{"product_id": str(product_id), "quantity": 1}],
     }
 
@@ -536,6 +546,7 @@ async def test_create_order_unauthorized(
         "time_preference": TimePreference.FIRST_HALF,
         "address_id": 1,
         "phone_id": 1,
+        "payment_method": "CASH",
         "products": [{"product_id": str(uuid.uuid4()), "quantity": 1}],
     }
 
@@ -592,6 +603,7 @@ async def test_create_order_as_courier_forbidden(
         "time_preference": TimePreference.FIRST_HALF,
         "address_id": address_id,
         "phone_id": phone_id,
+        "payment_method": PaymentMethod.CASH,
         "products": [{"product_id": str(product_id), "quantity": 1}],
     }
 
@@ -647,6 +659,7 @@ async def test_create_order_with_past_delivery_date(
         "time_preference": TimePreference.FIRST_HALF,
         "address_id": address_id,
         "phone_id": phone_id,
+        "payment_method": PaymentMethod.CASH,
         "products": [{"product_id": str(product_id), "quantity": 1}],
     }
 
@@ -1428,6 +1441,7 @@ async def test_generate_orders_pdf(
         "time_preference": TimePreference.FIRST_HALF,
         "address_id": address_id,
         "phone_id": phone_id,
+        "payment_method": PaymentMethod.CASH,
         "products": [{"product_id": str(product_id), "quantity": 1}],
     }
     await http_client.post(url=BASE_URL, headers=headers, json=order_json)
@@ -1505,6 +1519,7 @@ async def test_download_orders_pdf(
         "time_preference": TimePreference.FIRST_HALF,
         "address_id": address_id,
         "phone_id": phone_id,
+        "payment_method": PaymentMethod.CASH,
         "products": [{"product_id": str(product_id), "quantity": 1}],
     }
     await http_client.post(url=BASE_URL, headers=headers, json=order_json)

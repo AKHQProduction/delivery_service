@@ -149,6 +149,7 @@ class InMemoryOrderGateway(OrderGateway):
             delivery_phone=dto.delivery_phone or existing.delivery_phone,
             delivery_address=dto.delivery_address or existing.delivery_address,
             order_items=items,
+            payment_method=existing.payment_method,
             comment=comment,
         )
 

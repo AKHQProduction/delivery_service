@@ -379,6 +379,8 @@ def setup_test_order(session: AsyncSession):
         delivery_address: dict[str, Any] | None = None,
         comment: str | None = None,
         items: list[dict[str, Any]] | None = None,
+        is_paid: bool = False,
+        payment_method: str = "OTHER",
     ) -> OrderId:
         if order_id is None:
             order_id = OrderId(uuid.uuid4())
@@ -402,6 +404,8 @@ def setup_test_order(session: AsyncSession):
                 comment=comment,
                 shop_id=shop_id,
                 client_id=client_id,
+                is_paid=is_paid,
+                payment_method=payment_method,
             )
         )
 

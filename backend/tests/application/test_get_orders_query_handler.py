@@ -17,6 +17,7 @@ from backend.application.vars import (
     AddressType,
     ClientId,
     OrderId,
+    PaymentMethod,
     ShopId,
     ShopRole,
     TimePreference,
@@ -75,6 +76,7 @@ def create_order_dto(
             OrderItemDTO(name="Test Product", quantity=1, price_per_item=100)
         ],
         comment=None,
+        payment_method=PaymentMethod.CASH,
     )
 
 

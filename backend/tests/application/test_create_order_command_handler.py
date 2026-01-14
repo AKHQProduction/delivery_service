@@ -24,6 +24,7 @@ from backend.application.vars import (
     AddressId,
     AddressType,
     ClientId,
+    PaymentMethod,
     PhoneId,
     ProductId,
     ShopId,
@@ -173,6 +174,7 @@ async def test_create_order_successfully(
         time_preference=TimePreference.FIRST_HALF,
         address_id=address_id,
         phone_id=phone_id,
+        payment_method=PaymentMethod.CASH,
         products=[ProductDTO(product_id=product_id, quantity=2)],
         comment="Доставити до 12:00",
     )
@@ -231,6 +233,7 @@ async def test_create_order_with_multiple_products(
         time_preference=TimePreference.SECOND_HALF,
         address_id=address_id,
         phone_id=phone_id,
+        payment_method=PaymentMethod.CASH,
         products=[
             ProductDTO(product_id=product_id_1, quantity=3),
             ProductDTO(product_id=product_id_2, quantity=1),
@@ -264,6 +267,7 @@ async def test_create_order_without_comment(
         time_preference=TimePreference.FIRST_HALF,
         address_id=address_id,
         phone_id=phone_id,
+        payment_method=PaymentMethod.CASH,
         products=[ProductDTO(product_id=product_id, quantity=1)],
     )
 
@@ -287,6 +291,7 @@ async def test_raise_error_when_client_not_found(
         time_preference=TimePreference.FIRST_HALF,
         address_id=address_id,
         phone_id=phone_id,
+        payment_method=PaymentMethod.CASH,
         products=[ProductDTO(product_id=product_id, quantity=1)],
     )
 
@@ -310,6 +315,7 @@ async def test_raise_error_when_phone_not_found(
         time_preference=TimePreference.FIRST_HALF,
         address_id=address_id,
         phone_id=non_existent_phone_id,
+        payment_method=PaymentMethod.CASH,
         products=[ProductDTO(product_id=product_id, quantity=1)],
     )
 
@@ -333,6 +339,7 @@ async def test_raise_error_when_address_not_found(
         time_preference=TimePreference.FIRST_HALF,
         address_id=non_existent_address_id,
         phone_id=phone_id,
+        payment_method=PaymentMethod.CASH,
         products=[ProductDTO(product_id=product_id, quantity=1)],
     )
 
@@ -356,6 +363,7 @@ async def test_raise_error_when_product_not_found(
         time_preference=TimePreference.FIRST_HALF,
         address_id=address_id,
         phone_id=phone_id,
+        payment_method=PaymentMethod.CASH,
         products=[ProductDTO(product_id=non_existent_product_id, quantity=1)],
     )
 
@@ -413,6 +421,7 @@ async def test_raise_error_when_user_is_courier(
         time_preference=TimePreference.FIRST_HALF,
         address_id=address_id,
         phone_id=phone_id,
+        payment_method=PaymentMethod.CASH,
         products=[ProductDTO(product_id=product_id, quantity=1)],
     )
 
@@ -470,6 +479,7 @@ async def test_raise_error_when_client_belongs_to_different_shop(
         time_preference=TimePreference.FIRST_HALF,
         address_id=address_id,
         phone_id=phone_id,
+        payment_method=PaymentMethod.CASH,
         products=[ProductDTO(product_id=product_id, quantity=1)],
     )
 
@@ -488,6 +498,7 @@ async def test_raise_error_when_delivery_date_is_in_past() -> None:
             time_preference=TimePreference.FIRST_HALF,
             address_id=AddressId(1),
             phone_id=PhoneId(1),
+            payment_method=PaymentMethod.CASH,
             products=[
                 ProductDTO(product_id=ProductId(uuid.uuid4()), quantity=1)
             ],
@@ -548,6 +559,7 @@ async def test_owner_and_manager_can_create_order(
         time_preference=TimePreference.SECOND_HALF,
         address_id=address_id,
         phone_id=phone_id,
+        payment_method=PaymentMethod.CASH,
         products=[ProductDTO(product_id=product_id, quantity=1)],
     )
 
@@ -577,6 +589,7 @@ async def test_create_order_with_different_time_preferences(
         time_preference=time_pref,
         address_id=address_id,
         phone_id=phone_id,
+        payment_method=PaymentMethod.CASH,
         products=[ProductDTO(product_id=product_id, quantity=1)],
     )
 

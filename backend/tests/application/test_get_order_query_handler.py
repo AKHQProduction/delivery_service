@@ -14,6 +14,7 @@ from backend.application.vars import (
     AddressType,
     ClientId,
     OrderId,
+    PaymentMethod,
     ShopId,
     ShopRole,
     TimePreference,
@@ -72,6 +73,7 @@ def create_order_dto(
             OrderItemDTO(name="Test Product", quantity=1, price_per_item=100)
         ],
         comment="Test comment",
+        payment_method=PaymentMethod.CASH,
     )
 
 
@@ -164,6 +166,7 @@ async def test_get_order_with_multiple_items(make_handler) -> None:
             OrderItemDTO(name="Product 3", quantity=5, price_per_item=50),
         ],
         comment=None,
+        payment_method=PaymentMethod.CASH,
     )
     await order_gateway.create_order(dto)
 

@@ -10,6 +10,7 @@ from backend.application.vars import (
     Empty,
     OrderId,
     OrderItemId,
+    PaymentMethod,
     ProductId,
     ShopId,
     TimePreference,
@@ -46,6 +47,7 @@ class CreateOrderDTO:
     delivery_phone: str
     delivery_address: DeliveryAddressDTO
     order_items: list[OrderItemDTO]
+    payment_method: PaymentMethod
     comment: str | None
 
 

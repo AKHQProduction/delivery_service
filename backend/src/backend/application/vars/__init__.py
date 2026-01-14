@@ -29,5 +29,11 @@ class TimePreference(StrEnum):
     SECOND_HALF = "SECOND_HALF"
 
 
+class PaymentMethod(StrEnum):
+    CASH = "CASH"
+    BANK_TRANSFER = "BANK_TRANSFER"
+    OTHER = "OTHER"
+
+
 class Empty(StrEnum):
     EMPTY = "EMPTY"

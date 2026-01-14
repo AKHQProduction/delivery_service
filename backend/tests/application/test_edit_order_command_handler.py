@@ -31,6 +31,7 @@ from backend.application.vars import (
     Empty,
     OrderId,
     OrderItemId,
+    PaymentMethod,
     PhoneId,
     ProductId,
     ShopId,
@@ -117,6 +118,7 @@ def create_order_dto(
                 product_id=product_id,
             )
         ],
+        payment_method=PaymentMethod.CASH,
         comment=comment,
     )
 
@@ -458,6 +460,7 @@ async def test_update_order_remove_items_by_not_including(
                 quantity=3, name="Product 3", price_per_item=300, id=3
             ),
         ],
+        payment_method=PaymentMethod.CASH,
         comment=None,
     )
     await order_gateway.create_order(order_dto)

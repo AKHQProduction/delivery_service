@@ -30,6 +30,7 @@ from backend.application.vars import (
     AddressId,
     ClientId,
     OrderId,
+    PaymentMethod,
     PhoneId,
     ProductId,
     TimePreference,
@@ -52,6 +53,7 @@ class CreateOrderCommand:
     address_id: AddressId
     phone_id: PhoneId
     products: list[ProductDTO]
+    payment_method: PaymentMethod
     comment: str | None = None
 
     def __post_init__(self) -> None:
@@ -168,6 +170,7 @@ class CreateOrderCommandHandler:
                 for product in products
             ],
             comment=command.comment,
+            payment_method=command.payment_method,
         )
 
         await self._order_gateway.create_order(new_order)
