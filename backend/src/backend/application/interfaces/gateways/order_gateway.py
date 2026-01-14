@@ -119,6 +119,7 @@ class UpdateOrderDTO:
     delivery_address: DeliveryAddressDTO | None = None
     comment: str | Empty | None = None
     items: list[OrderItemDTO] | None = None
+    payment_method: PaymentMethod | None = None
 
 
 class OrderGateway(Protocol):

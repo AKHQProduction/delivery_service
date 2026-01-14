@@ -34,6 +34,7 @@ from backend.application.vars import (
     Empty,
     OrderId,
     OrderItemId,
+    PaymentMethod,
     PhoneId,
     ProductId,
     TimePreference,
@@ -63,6 +64,7 @@ class UpdateOrderCommand:
     phone_id: PhoneId | None = None
     comment: str | Empty | None = None
     items: list[OrderItem] | None = None
+    payment_method: PaymentMethod | None = None
 
     def __post_init__(self) -> None:
         if self.delivery_date is not None:
@@ -154,6 +156,7 @@ class UpdateOrderCommandHandler:
             delivery_address=delivery_address,
             comment=command.comment,
             items=items,
+            payment_method=command.payment_method,
         )
 
     async def _process_client_changes(

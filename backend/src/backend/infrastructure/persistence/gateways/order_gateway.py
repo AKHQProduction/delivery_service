@@ -270,6 +270,9 @@ class SQLAlchemyOrderGateway(OrderGateway):
             else:
                 order_db.comment = dto.comment
 
+        if dto.payment_method is not None:
+            order_db.payment_method = dto.payment_method.value
+
         # Process items - full replacement
         if dto.items is not None:
             existing_items_map = {item.id: item for item in order_db.items}
