@@ -228,6 +228,12 @@ class SQLAlchemyOrderGateway(OrderGateway):
                 )
                 for item in row.items
             ],
+            payment_method=PaymentMethod(
+                cast("str", cast("object", row.payment_method))
+            ),
+            client_custom_id=cast(
+                "str | None", cast("object", row.client.custom_id)
+            ),
         )
 
     async def update(self, dto: UpdateOrderDTO) -> None:

@@ -133,6 +133,8 @@ class InMemoryOrderGateway(OrderGateway):
                 )
                 for idx, item in enumerate(dto.order_items)
             ],
+            payment_method=dto.payment_method,
+            client_custom_id=self.client_custom_ids.get(dto.client_id),
         )
 
     async def update(self, dto: UpdateOrderDTO) -> None:

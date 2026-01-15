@@ -88,6 +88,8 @@ class OrderReadModel:
     client_id: ClientId
     client_name: str
     items: list[OrderItemReadModel]
+    payment_method: PaymentMethod
+    client_custom_id: str | None = None
 
 
 @dataclass(frozen=True)
