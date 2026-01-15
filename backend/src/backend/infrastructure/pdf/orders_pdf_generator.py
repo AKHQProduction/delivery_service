@@ -11,7 +11,7 @@ from reportlab.lib.units import mm
 from reportlab.pdfbase import pdfmetrics
 from reportlab.pdfbase.ttfonts import TTFont
 from reportlab.platypus import (
-    KeepTogether,
+    PageBreak,
     Paragraph,
     SimpleDocTemplate,
     Spacer,
@@ -115,12 +115,6 @@ class ReportLabOrdersPDFGenerator(OrdersPDFGenerator):
         )
         elements.append(title)
 
-        subtitle = Paragraph(
-            f"Магазин: {shop_name} | Всього замовлень: {len(orders)}",
-            self._styles["normal"],
-        )
-        elements.extend((subtitle, Spacer(1, 5 * mm)))
-
         if not orders:
             no_orders = Paragraph(
                 "Немає замовлень на цю дату",
@@ -128,9 +122,6 @@ class ReportLabOrdersPDFGenerator(OrdersPDFGenerator):
             )
             elements.append(no_orders)
         else:
-            # Summary table at the beginning
-            elements.extend(self._build_summary_section(orders, delivery_date))
-
             # Group by time preference
             first_half = [
                 o
@@ -154,6 +145,12 @@ class ReportLabOrdersPDFGenerator(OrdersPDFGenerator):
                     Paragraph("Друга половина дня", self._styles["heading"])
                 )
                 elements.extend(self._build_orders_section(second_half))
+
+            # Summary on new page at the end
+            elements.append(PageBreak())
+            elements.extend(
+                self._build_summary_section(orders, shop_name, delivery_date)
+            )
 
         doc.build(elements)
         buffer.seek(0)
@@ -270,13 +267,13 @@ class ReportLabOrdersPDFGenerator(OrdersPDFGenerator):
         return [table, Spacer(1, 5 * mm)]
 
     def _build_summary_section(
-        self, orders: list[OrderReadModel], delivery_date: date
+        self, orders: list[OrderReadModel], shop_name: str, delivery_date: date
     ) -> list:
-        elements: list = []
-
+        # Title
         date_str = delivery_date.strftime("%d.%m.%Y")
-        elements.append(
-            Paragraph(f"Звіт замовлень на {date_str}", self._styles["heading"])
+        title = Paragraph(
+            f"Загальна статистика {shop_name} за {date_str}",
+            self._styles["title"],
         )
 
         # Aggregate items across all orders with payment method breakdown
@@ -363,11 +360,4 @@ class ReportLabOrdersPDFGenerator(OrdersPDFGenerator):
             ])
         )
 
-        # Wrap summary in KeepTogether to prevent page breaks
-        return [
-            KeepTogether([
-                elements[0],  # heading
-                Spacer(1, 3 * mm),
-                summary_table,
-            ])
-        ]
+        return [title, Spacer(1, 5 * mm), summary_table]
