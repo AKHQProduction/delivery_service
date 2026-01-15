@@ -59,7 +59,10 @@ export const AddClientForm: React.FC<AddClientFormProps> = ({
 
     try {
       const response = await createClient(formData);
-      const clientId = typeof response === "string" ? response : response?.client_id ?? response?.id;
+      const clientId =
+        typeof response === "string"
+          ? response
+          : response?.client_id ?? response?.id;
       const fullClient: Client = {
         client_id: clientId,
         full_name: formData.full_name,
