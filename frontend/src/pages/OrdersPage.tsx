@@ -2,7 +2,7 @@ import { useEffect, useState, useRef, useCallback } from "react";
 import { PageHeader } from "../components/ui/pageHeader";
 import { SearchBar } from "../components/ui/searchBar";
 import { useOrders } from "../hooks/orders/useOrders";
-import { timeMap } from "../utils/dataMap";
+import { timeMap, paymentMap } from "../utils/dataMap";
 import { OrderDetailModal } from "../components/modals/detailsModals/OrderDetailModal";
 import { RightModal } from "../components/modals/RightModal";
 import { generateOrdersPdfLink, getOrderById } from "../services/api/ordersApi";
@@ -34,6 +34,7 @@ export interface Order {
 
   date: string;
   time_preference: keyof typeof timeMap;
+  payment_method: keyof typeof paymentMap;
 
   note?: string;
   comment?: string;
