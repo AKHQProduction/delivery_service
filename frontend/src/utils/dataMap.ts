@@ -25,3 +25,9 @@ export const timeMap: Record<string, string> = {
   FIRST_HALF: "Перша половина дня",
   SECOND_HALF: "Друга половина дня",
 };
+
+export const paymentMap: Record<string, string> = {
+  CASH: "Готівка",
+  BANK_TRANSFER: "На рахунок",
+  OTHER: "Інше",
+};

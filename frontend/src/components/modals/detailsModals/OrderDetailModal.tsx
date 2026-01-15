@@ -1,6 +1,6 @@
 import { ModalButtons } from "../../ui/modalButtons";
 import leftArrowIcon from "../../../assets/icons/left_arrow.svg";
-import { timeMap } from "../../../utils/dataMap";
+import { paymentMap, timeMap } from "../../../utils/dataMap";
 import { useState } from "react";
 import { EditOrderForm } from "../../forms/orders/EditOrderForm";
 
@@ -24,7 +24,7 @@ export interface Order {
 
   date: string;
   time_preference: keyof typeof timeMap;
-
+  payment_method: keyof typeof paymentMap;
   note?: string;
   comment?: string;
 }
@@ -74,7 +74,7 @@ export const OrderDetailModal = ({
 
   if (isEditing) {
     return (
-      <div className="h-full flex flex-col">
+      <div className="h-full flex flex-col ">
         <div className="bg-linear-to-br from-indigo-600 to-indigo-700 px-6 pt-12 pb-8">
           <button
             onClick={handleCancelEdit}
@@ -248,6 +248,18 @@ export const OrderDetailModal = ({
                 <p className="text-gray-700">{order.note || order.comment}</p>
               </div>
             )}
+          </div>
+        </div>
+        <div>
+          <h2 className="text-xs font-bold text-gray-500 uppercase tracking-wide mb-3">
+           Спосіб оплати
+          </h2>
+
+          <div className="bg-white rounded-2xl p-5 border border-gray-200 space-y-4">
+            <div>
+              <p className="text-xs text-gray-500 mb-1">Тип</p>
+              <p className="font-semibold text-gray-900">{paymentMap[order.payment_method]}</p>
+            </div>
           </div>
         </div>
 

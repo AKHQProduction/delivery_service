@@ -17,9 +17,11 @@ interface DeliveryDateStepProps {
   selectedProducts: SelectedProduct[];
   deliveryDate: string;
   deliveryTime: string;
+  paymentMethod: string;
   note: string;
   onDateChange: (date: string) => void;
   onTimeChange: (time: string) => void;
+  onPaymentMethodChange: (paymentMethod: string) => void;
   onNoteChange: (note: string) => void;
 }
 
@@ -30,9 +32,11 @@ export const DeliveryDateStep: React.FC<DeliveryDateStepProps> = ({
   selectedProducts,
   deliveryDate,
   deliveryTime,
+  paymentMethod,
   note,
   onDateChange,
   onTimeChange,
+  onPaymentMethodChange,
   onNoteChange,
 }) => {
   const totalAmount = selectedProducts.reduce(
@@ -92,6 +96,19 @@ export const DeliveryDateStep: React.FC<DeliveryDateStepProps> = ({
         ]}
       />
 
+      <FormSelect
+        label="Спосіб оплати"
+        name="paymentMethod"
+        value={paymentMethod}
+        required={true}
+        onChange={onPaymentMethodChange}
+        options={[
+          { value: "CASH", label: "Готівка" },
+          { value: "BANK_TRANSFER", label: "На рахунок" },
+          { value: "OTHER", label: "Інше" },
+        ]}
+      />
+
       <div>
         {deliveryDate && (
           <div className="flex items-center gap-2 text-sm text-indigo-600 mt-2">
@@ -107,6 +124,7 @@ export const DeliveryDateStep: React.FC<DeliveryDateStepProps> = ({
               {deliveryTime === "FIRST_HALF"
                 ? "Перша половина дня"
                 : "Друга половина дня"}
+                
             </span>
           </div>
         )}

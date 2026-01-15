@@ -53,6 +53,7 @@ export const EditOrderForm: React.FC<EditOrderFormProps> = ({
   const [orderItems, setOrderItems] = useState<OrderItem[]>([]);
   const [deliveryDate, setDeliveryDate] = useState("");
   const [deliveryTime, setDeliveryTime] = useState("");
+  const [paymentMethod, setPaymentMethod] = useState("");
   const [note, setNote] = useState("");
 
   // UI state
@@ -125,6 +126,7 @@ export const EditOrderForm: React.FC<EditOrderFormProps> = ({
       setOrderItems(items);
       setDeliveryDate(order.date || "");
       setDeliveryTime(order.time_preference || "");
+      setPaymentMethod(order.payment_method || "");
       setNote(order.note || order.comment || "");
     }
   }, [order, clients, products]);
@@ -238,6 +240,7 @@ export const EditOrderForm: React.FC<EditOrderFormProps> = ({
         address_id: selectedAddressId,
         delivery_date: deliveryDate,
         time_preference: deliveryTime,
+        payment_method: paymentMethod,
         comment: note,
       });
       onSave ? onSave() : onClose();
@@ -250,7 +253,7 @@ export const EditOrderForm: React.FC<EditOrderFormProps> = ({
   };
 
   return (
-    <div className="flex flex-col h-full">
+    <div className="flex flex-col h-full ">
       {/* Content */}
       <div className="flex-1 overflow-y-auto space-y-6">
         {/* Order Items Section */}
@@ -770,7 +773,8 @@ export const EditOrderForm: React.FC<EditOrderFormProps> = ({
 
         {/* Delivery Date Section */}
         <div className="space-y-3">
-          <div className="grid grid-cols-2 gap-3">
+
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 pb-3">
             <DateSelectInput
               value={deliveryDate}
               onChange={setDeliveryDate}
@@ -802,6 +806,19 @@ export const EditOrderForm: React.FC<EditOrderFormProps> = ({
               options={[
                 { value: "FIRST_HALF", label: "Перша половина" },
                 { value: "SECOND_HALF", label: "Друга половина" },
+              ]}
+            />
+
+            <FormSelect
+              label="Спосіб оплати"
+              name="paymentMethod"
+              value={paymentMethod}
+              required={true}
+              onChange={setPaymentMethod}
+              options={[
+                { value: "CASH", label: "Готівка" },
+                { value: "BANK_TRANSFER", label: "На рахунок" },
+                { value: "OTHER", label: "Інше" },
               ]}
             />
           </div>
