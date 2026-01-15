@@ -29,7 +29,7 @@ from backend.application.queries.get_clients import (
     GetClientsQuery,
     GetClientsQueryHandler,
 )
-from backend.application.vars import AddressId, AddressType, ClientId, PhoneId
+from backend.application.vars import AddressId, ClientId, PhoneId
 from backend.presentation.http.v1.schemas.client import EditClientSchema
 from backend.presentation.http.v1.schemas.error import ErrorSchema
 
@@ -64,16 +64,15 @@ async def create_new_client(
                             {
                                 "street": "Хрещатик",
                                 "house": "10",
-                                "address_type": AddressType.APARTMENT,
                                 "apartment": "5",
                                 "entrance": "1",
                                 "floor": "2",
                                 "intercom": "5",
+                                "comment": "Біля метро",
                             },
                             {
                                 "street": "Шевченка",
                                 "house": "25",
-                                "address_type": AddressType.APARTMENT,
                                 "apartment": "12",
                                 "entrance": "2",
                                 "floor": "3",
@@ -93,11 +92,7 @@ async def create_new_client(
                             {
                                 "street": "Заміська",
                                 "house": "15А",
-                                "address_type": AddressType.PRIVATE_HOUSE,
-                                "apartment": None,
-                                "entrance": None,
-                                "floor": None,
-                                "intercom": None,
+                                "comment": "Приватний будинок, ворота сині",
                             }
                         ],
                         "custom_id": "HOUSE-001",
@@ -118,7 +113,6 @@ async def create_new_client(
                             {
                                 "street": "Грушевського",
                                 "house": "5",
-                                "address_type": AddressType.APARTMENT,
                                 "apartment": "10",
                                 "entrance": "1",
                                 "floor": "3",
@@ -127,7 +121,7 @@ async def create_new_client(
                             {
                                 "street": "Садова",
                                 "house": "22Б",
-                                "address_type": AddressType.PRIVATE_HOUSE,
+                                "comment": "Будинок з зеленим дахом",
                             },
                         ],
                     },
@@ -187,11 +181,11 @@ async def update_client(
                             {
                                 "street": "Оновлена вулиця",
                                 "house": "100",
-                                "address_type": AddressType.APARTMENT,
                                 "apartment": "50",
                                 "entrance": "2",
                                 "floor": "10",
                                 "intercom": "50",
+                                "comment": "Біля парку",
                                 "is_primary": True,
                                 "id": 5,
                             }
@@ -214,7 +208,7 @@ async def update_client(
                             {
                                 "street": "Повністю нова адреса",
                                 "house": "1",
-                                "address_type": AddressType.PRIVATE_HOUSE,
+                                "comment": "Новий будинок",
                                 "is_primary": True,
                             }
                         ],
@@ -248,11 +242,11 @@ async def update_client(
                 Address(
                     street=address.street,
                     house=address.house,
-                    address_type=address.address_type,
                     apartment=address.apartment,
                     entrance=address.entrance,
                     floor=address.floor,
                     intercom=address.intercom,
+                    comment=address.comment,
                     is_primary=address.is_primary,
                     id=AddressId(address.id)
                     if address.id is not None

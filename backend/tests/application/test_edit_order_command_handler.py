@@ -26,11 +26,11 @@ from backend.application.interfaces.gateways.order_gateway import (
 from backend.application.interfaces.gateways.product_gateway import Product
 from backend.application.vars import (
     AddressId,
-    AddressType,
     ClientId,
     Empty,
     OrderId,
     OrderItemId,
+    PaymentMethod,
     PhoneId,
     ProductId,
     ShopId,
@@ -106,7 +106,6 @@ def create_order_dto(
         delivery_address=DeliveryAddressDTO(
             street="Test Street",
             house="1",
-            address_type=AddressType.APARTMENT,
         ),
         order_items=[
             OrderItemDTO(
@@ -117,6 +116,7 @@ def create_order_dto(
                 product_id=product_id,
             )
         ],
+        payment_method=PaymentMethod.CASH,
         comment=comment,
     )
 
@@ -138,7 +138,6 @@ def create_client(
                 id=AddressId(1),
                 street="Street 1",
                 house="10",
-                address_type=AddressType.APARTMENT,
                 apartment="5",
                 is_primary=True,
             ),
@@ -146,7 +145,7 @@ def create_client(
                 id=AddressId(2),
                 street="Street 2",
                 house="20",
-                address_type=AddressType.PRIVATE_HOUSE,
+                comment="Private house",
                 is_primary=False,
             ),
         ],
@@ -263,7 +262,6 @@ async def test_update_order_change_client(make_handler) -> None:
                 id=AddressId(1),
                 street="New Street",
                 house="100",
-                address_type=AddressType.APARTMENT,
                 apartment="50",
                 is_primary=True,
             ),
@@ -340,10 +338,7 @@ async def test_update_order_change_address(make_handler) -> None:
     updated_order = order_gateway.orders[order_id]
     assert updated_order.delivery_address.street == "Street 2"
     assert updated_order.delivery_address.house == "20"
-    assert (
-        updated_order.delivery_address.address_type
-        == AddressType.PRIVATE_HOUSE
-    )
+    assert updated_order.delivery_address.comment == "Private house"
     assert tr_manager.committed
 
 
@@ -445,7 +440,6 @@ async def test_update_order_remove_items_by_not_including(
         delivery_address=DeliveryAddressDTO(
             street="Test Street",
             house="1",
-            address_type=AddressType.APARTMENT,
         ),
         order_items=[
             OrderItemDTO(
@@ -458,6 +452,7 @@ async def test_update_order_remove_items_by_not_including(
                 quantity=3, name="Product 3", price_per_item=300, id=3
             ),
         ],
+        payment_method=PaymentMethod.CASH,
         comment=None,
     )
     await order_gateway.create_order(order_dto)

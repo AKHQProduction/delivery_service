@@ -10,7 +10,7 @@ from backend.application.interfaces.gateways.client_gateway import (
     PhoneDTO,
 )
 from backend.application.policies.access import can_shop_manage_policy
-from backend.application.vars import AddressType, ClientId
+from backend.application.vars import ClientId
 
 logger = logging.getLogger(__name__)
 
@@ -19,11 +19,11 @@ logger = logging.getLogger(__name__)
 class Address:
     street: str
     house: str
-    address_type: AddressType
     apartment: str | None = None
     entrance: str | None = None
     floor: str | None = None
     intercom: str | None = None
+    comment: str | None = None
 
 
 @dataclass(frozen=True)
@@ -75,11 +75,11 @@ class CreateClientCommandHandler:
             AddressDTO(
                 street=address.street,
                 house=address.house,
-                address_type=address.address_type,
                 apartment=address.apartment,
                 entrance=address.entrance,
                 floor=address.floor,
                 intercom=address.intercom,
+                comment=address.comment,
                 is_primary=(idx == 0),
             )
             for idx, address in enumerate(command.addresses)

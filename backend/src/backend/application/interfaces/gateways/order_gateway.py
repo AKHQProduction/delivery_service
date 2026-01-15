@@ -5,11 +5,11 @@ from typing import Protocol
 
 from backend.application.interfaces.gateways import Pagination
 from backend.application.vars import (
-    AddressType,
     ClientId,
     Empty,
     OrderId,
     OrderItemId,
+    PaymentMethod,
     ProductId,
     ShopId,
     TimePreference,
@@ -17,14 +17,20 @@ from backend.application.vars import (
 
 
 @dataclass(frozen=True)
+class PaymentMethodStatsReadModel:
+    method: PaymentMethod
+    orders_sum: int
+
+
+@dataclass(frozen=True)
 class DeliveryAddressDTO:
     street: str
     house: str
-    address_type: AddressType
     apartment: str | None = None
     entrance: str | None = None
     floor: str | None = None
     intercom: str | None = None
+    comment: str | None = None
 
 
 @dataclass(frozen=True)
@@ -46,6 +52,7 @@ class CreateOrderDTO:
     delivery_phone: str
     delivery_address: DeliveryAddressDTO
     order_items: list[OrderItemDTO]
+    payment_method: PaymentMethod
     comment: str | None
 
 
@@ -81,6 +88,8 @@ class OrderReadModel:
     client_id: ClientId
     client_name: str
     items: list[OrderItemReadModel]
+    payment_method: PaymentMethod
+    client_custom_id: str | None = None
 
 
 @dataclass(frozen=True)
@@ -105,6 +114,7 @@ class OrderStatsReadModel:
     total_orders_in_second_half: int
     total_orders_sum: int
     category_stats: list[CategoryStatsReadModel]
+    payment_method_stats: list[PaymentMethodStatsReadModel]
 
 
 @dataclass(frozen=True)
@@ -117,6 +127,7 @@ class UpdateOrderDTO:
     delivery_address: DeliveryAddressDTO | None = None
     comment: str | Empty | None = None
     items: list[OrderItemDTO] | None = None
+    payment_method: PaymentMethod | None = None
 
 
 class OrderGateway(Protocol):

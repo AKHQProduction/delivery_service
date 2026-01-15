@@ -19,14 +19,15 @@ class ShopRole(StrEnum):
     COURIER = "COURIER"
 
 
-class AddressType(StrEnum):
-    APARTMENT = "APARTMENT"
-    PRIVATE_HOUSE = "PRIVATE_HOUSE"
-
-
 class TimePreference(StrEnum):
     FIRST_HALF = "FIRST_HALF"
     SECOND_HALF = "SECOND_HALF"
+
+
+class PaymentMethod(StrEnum):
+    CASH = "CASH"
+    BANK_TRANSFER = "BANK_TRANSFER"
+    OTHER = "OTHER"
 
 
 class Empty(StrEnum):

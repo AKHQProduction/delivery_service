@@ -7,6 +7,7 @@ from backend.application.interfaces.gateways.order_gateway import (
     GetOrdersFilters,
     OrderGateway,
 )
+from backend.application.vars import PaymentMethod
 
 logger = logging.getLogger(__name__)
 
@@ -23,12 +24,19 @@ class OrderStatsByCategory:
 
 
 @dataclass(frozen=True)
+class OrderStatsByPaymentMethod:
+    method: PaymentMethod
+    orders_sum: int
+
+
+@dataclass(frozen=True)
 class GetOrderStatsResponse:
     total_orders: int
     total_orders_in_first_half: int
     total_orders_in_second_half: int
     total_orders_sum: int
     category_stats: list[OrderStatsByCategory]
+    payment_method_stats: list[OrderStatsByPaymentMethod]
 
 
 class GetOrderStatsQueryHandler:
@@ -71,5 +79,11 @@ class GetOrderStatsQueryHandler:
             category_stats=[
                 OrderStatsByCategory(name=cat.name, quantity=cat.quantity)
                 for cat in stats.category_stats
+            ],
+            payment_method_stats=[
+                OrderStatsByPaymentMethod(
+                    method=pm.method, orders_sum=pm.orders_sum
+                )
+                for pm in stats.payment_method_stats
             ],
         )

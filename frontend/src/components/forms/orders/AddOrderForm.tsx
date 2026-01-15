@@ -42,6 +42,7 @@ export const AddOrderForm: React.FC<AddOrderFormProps> = ({ onClose, onSave }) =
     handleAddressChange,
     handleDateChange,
     handleTimeChange,
+    handlePaymentMethodChange,
     handleNoteChange,
     handleNext,
     handleBack,
@@ -78,6 +79,7 @@ export const AddOrderForm: React.FC<AddOrderFormProps> = ({ onClose, onSave }) =
         address_id: formData.deliveryAddress?.id,
         delivery_date: formData.deliveryDate,
         time_preference: formData.deliveryTime,
+        payment_method: formData.paymentMethod,
         comment: formData.note,
       });
       onSave ? onSave(newOrder) : onClose();
@@ -149,9 +151,11 @@ export const AddOrderForm: React.FC<AddOrderFormProps> = ({ onClose, onSave }) =
             selectedProducts={formData.products}
             deliveryDate={formData.deliveryDate}
             deliveryTime={formData.deliveryTime}
+            paymentMethod={formData.paymentMethod}
             note={formData.note || ""}
             onDateChange={handleDateChange}
             onTimeChange={handleTimeChange}
+            onPaymentMethodChange={handlePaymentMethodChange}
             onNoteChange={handleNoteChange}
           />
         )}

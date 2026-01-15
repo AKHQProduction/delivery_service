@@ -12,7 +12,7 @@ from backend.application.errors import (
     AccessDeniedError,
     AuthorizationError,
 )
-from backend.application.vars import AddressType, ShopId, ShopRole, UserId
+from backend.application.vars import ShopId, ShopRole, UserId
 from backend.infrastructure.in_memory import (
     FakeTransactionManager,
     InMemoryClientGateway,
@@ -53,7 +53,6 @@ def command() -> CreateClientCommand:
             Address(
                 street="Хрещатик",
                 house="10",
-                address_type=AddressType.APARTMENT,
                 apartment="5",
             )
         ],
@@ -103,13 +102,12 @@ async def test_create_client_with_multiple_phones_and_addresses(
             Address(
                 street="Хрещатик",
                 house="10",
-                address_type=AddressType.APARTMENT,
                 apartment="5",
             ),
             Address(
                 street="Шевченка",
                 house="20",
-                address_type=AddressType.PRIVATE_HOUSE,
+                comment="Private house",
             ),
         ],
     )
@@ -188,7 +186,6 @@ async def test_create_client_with_custom_id(make_handler) -> None:
             Address(
                 street="Хрещатик",
                 house="10",
-                address_type=AddressType.APARTMENT,
                 apartment="5",
             )
         ],
@@ -261,7 +258,7 @@ async def test_create_client_with_private_house_address(make_handler) -> None:
             Address(
                 street="Заміська",
                 house="15А",
-                address_type=AddressType.PRIVATE_HOUSE,
+                comment="Private house",
             )
         ],
     )
@@ -269,7 +266,5 @@ async def test_create_client_with_private_house_address(make_handler) -> None:
     client_id = await handler.handle(command)
 
     created_client = client_gateway.clients[client_id]
-    assert (
-        created_client.addresses[0].address_type == AddressType.PRIVATE_HOUSE
-    )
+    assert created_client.addresses[0].comment == "Private house"
     assert created_client.addresses[0].apartment is None

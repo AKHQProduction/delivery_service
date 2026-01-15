@@ -14,12 +14,12 @@ export const useClientForm = (initialData?: Partial<Client>) => {
       {
         street: "",
         house: "",
-        address_type: "APARTMENT" as const,
         apartment: "",
         entrance: "",
         floor: "",
         intercom: "",
         is_primary: true,
+        comment: "",
       },
     ] as Address[],
   });
@@ -47,23 +47,23 @@ export const useClientForm = (initialData?: Partial<Client>) => {
           ? client.addresses.map((address) => ({
               street: address.street || "",
               house: address.house || "",
-              address_type: address.address_type || "APARTMENT",
               apartment: address.apartment || "",
               entrance: address.entrance || "",
               floor: address.floor || "",
               intercom: address.intercom || "",
               is_primary: address.is_primary || false,
+              comment: address.comment || "",
             }))
           : [
               {
                 street: "",
                 house: "",
-                address_type: "APARTMENT" as const,
                 apartment: "",
                 entrance: "",
                 floor: "",
                 intercom: "",
                 is_primary: true,
+                comment: "",
               },
             ],
     });
@@ -78,12 +78,12 @@ export const useClientForm = (initialData?: Partial<Client>) => {
         {
           street: "",
           house: "",
-          address_type: "APARTMENT",
           apartment: "",
           entrance: "",
           floor: "",
           intercom: "",
           is_primary: true,
+          comment: "",
         },
       ],
     });
@@ -145,12 +145,12 @@ export const useClientForm = (initialData?: Partial<Client>) => {
         {
           street: "",
           house: "",
-          address_type: "APARTMENT",
           apartment: "",
           entrance: "",
           floor: "",
           intercom: "",
           is_primary: false,
+          comment: "",
         },
       ],
     }));

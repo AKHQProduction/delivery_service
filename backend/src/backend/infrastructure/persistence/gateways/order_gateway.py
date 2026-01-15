@@ -17,13 +17,14 @@ from backend.application.interfaces.gateways.order_gateway import (
     OrderItemReadModel,
     OrderReadModel,
     OrderStatsReadModel,
+    PaymentMethodStatsReadModel,
     UpdateOrderDTO,
 )
 from backend.application.vars import (
-    AddressType,
     ClientId,
     Empty,
     OrderId,
+    PaymentMethod,
     ProductId,
     ShopId,
     TimePreference,
@@ -45,11 +46,11 @@ class SQLAlchemyOrderGateway(OrderGateway):
         delivery_address = {
             "street": dto.delivery_address.street,
             "house": dto.delivery_address.house,
-            "address_type": dto.delivery_address.address_type.value,
             "apartment": dto.delivery_address.apartment,
             "entrance": dto.delivery_address.entrance,
             "floor": dto.delivery_address.floor,
             "intercom": dto.delivery_address.intercom,
+            "comment": dto.delivery_address.comment,
         }
 
         order_items = [
@@ -72,6 +73,7 @@ class SQLAlchemyOrderGateway(OrderGateway):
             shop_id=dto.shop_id,
             client_id=dto.client_id,
             items=order_items,
+            payment_method=dto.payment_method,
         )
 
         self._session.add(new_order)
@@ -96,9 +98,6 @@ class SQLAlchemyOrderGateway(OrderGateway):
                 delivery_address=DeliveryAddressDTO(
                     street=cast("str", delivery_address_dict.get("street")),
                     house=cast("str", delivery_address_dict.get("house")),
-                    address_type=AddressType(
-                        cast("str", delivery_address_dict.get("address_type"))
-                    ),
                     apartment=cast(
                         "str | None", delivery_address_dict.get("apartment")
                     ),
@@ -110,6 +109,9 @@ class SQLAlchemyOrderGateway(OrderGateway):
                     ),
                     intercom=cast(
                         "str | None", delivery_address_dict.get("intercom")
+                    ),
+                    comment=cast(
+                        "str | None", delivery_address_dict.get("comment")
                     ),
                 ),
                 comment=cast("str | None", cast("object", row.comment)),
@@ -191,9 +193,6 @@ class SQLAlchemyOrderGateway(OrderGateway):
             delivery_address=DeliveryAddressDTO(
                 street=cast("str", delivery_address_dict.get("street")),
                 house=cast("str", delivery_address_dict.get("house")),
-                address_type=AddressType(
-                    cast("str", delivery_address_dict.get("address_type"))
-                ),
                 apartment=cast(
                     "str | None", delivery_address_dict.get("apartment")
                 ),
@@ -203,6 +202,9 @@ class SQLAlchemyOrderGateway(OrderGateway):
                 floor=cast("str | None", delivery_address_dict.get("floor")),
                 intercom=cast(
                     "str | None", delivery_address_dict.get("intercom")
+                ),
+                comment=cast(
+                    "str | None", delivery_address_dict.get("comment")
                 ),
             ),
             comment=cast("str | None", cast("object", row.comment)),
@@ -226,6 +228,12 @@ class SQLAlchemyOrderGateway(OrderGateway):
                 )
                 for item in row.items
             ],
+            payment_method=PaymentMethod(
+                cast("str", cast("object", row.payment_method))
+            ),
+            client_custom_id=cast(
+                "str | None", cast("object", row.client.custom_id)
+            ),
         )
 
     async def update(self, dto: UpdateOrderDTO) -> None:
@@ -256,11 +264,11 @@ class SQLAlchemyOrderGateway(OrderGateway):
             order_db.delivery_address = {
                 "street": dto.delivery_address.street,
                 "house": dto.delivery_address.house,
-                "address_type": dto.delivery_address.address_type.value,
                 "apartment": dto.delivery_address.apartment,
                 "entrance": dto.delivery_address.entrance,
                 "floor": dto.delivery_address.floor,
                 "intercom": dto.delivery_address.intercom,
+                "comment": dto.delivery_address.comment,
             }
 
         if dto.comment is not None:
@@ -268,6 +276,9 @@ class SQLAlchemyOrderGateway(OrderGateway):
                 order_db.comment = cast("str", None)
             else:
                 order_db.comment = dto.comment
+
+        if dto.payment_method is not None:
+            order_db.payment_method = dto.payment_method.value
 
         # Process items - full replacement
         if dto.items is not None:
@@ -409,6 +420,40 @@ class SQLAlchemyOrderGateway(OrderGateway):
             for row in category_rows
         ]
 
+        payment_method_query = (
+            select(
+                Order.payment_method.label("payment_method"),
+                func.coalesce(
+                    func.sum(OrderItem.quantity * OrderItem.price_per_item), 0
+                ).label("orders_sum"),
+            )
+            .select_from(Order)
+            .outerjoin(OrderItem, Order.id == OrderItem.order_id)
+            .group_by(Order.payment_method)
+        )
+
+        if filters.shop_id:
+            payment_method_query = payment_method_query.where(
+                Order.shop_id == filters.shop_id
+            )
+        if filters.delivery_date:
+            payment_method_query = payment_method_query.where(
+                Order.date == filters.delivery_date
+            )
+
+        payment_method_result = await self._session.execute(
+            payment_method_query
+        )
+        payment_method_rows = payment_method_result.all()
+
+        payment_method_stats = [
+            PaymentMethodStatsReadModel(
+                method=PaymentMethod(cast("str", row.payment_method)),
+                orders_sum=int(row.orders_sum or 0),
+            )
+            for row in payment_method_rows
+        ]
+
         return OrderStatsReadModel(
             total_orders=main_row.total_orders or 0,
             total_orders_in_first_half=int(
@@ -419,4 +464,5 @@ class SQLAlchemyOrderGateway(OrderGateway):
             ),
             total_orders_sum=int(main_row.total_orders_sum or 0),
             category_stats=category_stats,
+            payment_method_stats=payment_method_stats,
         )

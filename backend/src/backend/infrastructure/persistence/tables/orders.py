@@ -25,6 +25,12 @@ class Order(Base, CreatedAt, UpdatedAt):
     delivery_phone: Mapped[str] = mapped_column(sa.String, nullable=False)
     time_preference: Mapped[str] = mapped_column(sa.String, nullable=False)
     comment: Mapped[str] = mapped_column(sa.String, nullable=True)
+    is_paid: Mapped[bool] = mapped_column(
+        sa.Boolean, nullable=False, default=False, server_default=sa.false()
+    )
+    payment_method: Mapped[str] = mapped_column(
+        sa.String, nullable=False, default="OTHER", server_default="OTHER"
+    )
 
     shop_id: Mapped[uuid.UUID] = mapped_column(
         sa.ForeignKey("shops.id", ondelete="CASCADE"), nullable=False
@@ -43,7 +49,8 @@ class Order(Base, CreatedAt, UpdatedAt):
         return (
             f"<Order id={self.id} date={self.date} "
             f"delivery_address={self.delivery_address} "
-            f"delivery_phone={self.delivery_phone}"
+            f"delivery_phone={self.delivery_phone} "
+            f"is_paid={self.is_paid}>"
         )
 
 
