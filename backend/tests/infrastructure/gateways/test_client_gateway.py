@@ -11,7 +11,7 @@ from backend.application.interfaces.gateways.client_gateway import (
     GetClientsFilters,
     PhoneDTO,
 )
-from backend.application.vars import AddressType, ClientId
+from backend.application.vars import ClientId
 from backend.infrastructure.persistence.gateways import (
     SQLAlchemyClientGateway,
 )
@@ -144,7 +144,6 @@ async def test_create_client_with_single_address_marks_it_primary(
             AddressDTO(
                 street="Хрещатик",
                 house="10",
-                address_type=AddressType.APARTMENT,
                 apartment="5",
                 entrance="1",
                 floor="2",
@@ -164,7 +163,7 @@ async def test_create_client_with_single_address_marks_it_primary(
     assert len(addresses) == 1
     assert addresses[0].street == "Хрещатик"
     assert addresses[0].house == "10"
-    assert addresses[0].address_type == AddressType.APARTMENT.value
+    assert addresses[0].comment is None
     assert addresses[0].apartment == "5"
     assert addresses[0].entrance == "1"
     assert addresses[0].floor == "2"
@@ -191,18 +190,16 @@ async def test_create_client_with_multiple_addresses_marks_first_as_primary(
             AddressDTO(
                 street="Хрещатик",
                 house="10",
-                address_type=AddressType.APARTMENT,
                 apartment="5",
             ),
             AddressDTO(
                 street="Шевченка",
                 house="20",
-                address_type=AddressType.PRIVATE_HOUSE,
+                comment="Private house",
             ),
             AddressDTO(
                 street="Грушевського",
                 house="30",
-                address_type=AddressType.APARTMENT,
                 apartment="15",
             ),
         ],
@@ -246,7 +243,7 @@ async def test_create_client_with_private_house_address(
             AddressDTO(
                 street="Заміська",
                 house="15А",
-                address_type=AddressType.PRIVATE_HOUSE,
+                comment="Private house",
             )
         ],
     )
@@ -262,7 +259,7 @@ async def test_create_client_with_private_house_address(
     assert len(addresses) == 1
     assert addresses[0].street == "Заміська"
     assert addresses[0].house == "15А"
-    assert addresses[0].address_type == AddressType.PRIVATE_HOUSE.value
+    assert addresses[0].comment == "Private house"
     assert addresses[0].apartment is None
     assert addresses[0].entrance is None
     assert addresses[0].floor is None
@@ -291,13 +288,12 @@ async def test_create_client_with_phones_and_addresses(
             AddressDTO(
                 street="Хрещатик",
                 house="10",
-                address_type=AddressType.APARTMENT,
                 apartment="5",
             ),
             AddressDTO(
                 street="Шевченка",
                 house="20",
-                address_type=AddressType.PRIVATE_HOUSE,
+                comment="Private house",
             ),
         ],
     )
@@ -410,7 +406,6 @@ async def test_read_returns_client_with_all_data(
             AddressDTO(
                 street="Хрещатик",
                 house="10",
-                address_type=AddressType.APARTMENT,
                 apartment="5",
                 entrance="1",
                 floor="2",
@@ -419,7 +414,7 @@ async def test_read_returns_client_with_all_data(
             AddressDTO(
                 street="Шевченка",
                 house="20",
-                address_type=AddressType.PRIVATE_HOUSE,
+                comment="Private house",
             ),
         ],
         custom_id="CLIENT-001",
@@ -444,12 +439,12 @@ async def test_read_returns_client_with_all_data(
     assert len(result.addresses) == 2
     assert result.addresses[0].street == "Хрещатик"
     assert result.addresses[0].house == "10"
-    assert result.addresses[0].address_type == AddressType.APARTMENT
+    assert result.addresses[0].comment is None
     assert result.addresses[0].apartment == "5"
     assert result.addresses[0].is_primary is True
     assert result.addresses[1].street == "Шевченка"
     assert result.addresses[1].house == "20"
-    assert result.addresses[1].address_type == AddressType.PRIVATE_HOUSE
+    assert result.addresses[1].comment == "Private house"
     assert result.addresses[1].is_primary is False
 
 

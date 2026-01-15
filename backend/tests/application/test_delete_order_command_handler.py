@@ -14,7 +14,6 @@ from backend.application.interfaces.gateways.order_gateway import (
     OrderItemDTO,
 )
 from backend.application.vars import (
-    AddressType,
     ClientId,
     OrderId,
     PaymentMethod,
@@ -69,7 +68,6 @@ def create_order_dto(
         delivery_address=DeliveryAddressDTO(
             street="Test Street",
             house="1",
-            address_type=AddressType.APARTMENT,
         ),
         order_items=[
             OrderItemDTO(name="Test Product", quantity=1, price_per_item=100)

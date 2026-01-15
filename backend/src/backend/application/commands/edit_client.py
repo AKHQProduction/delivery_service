@@ -19,7 +19,7 @@ from backend.application.policies.access import (
     IsRelatedToShop,
     can_shop_manage_policy,
 )
-from backend.application.vars import AddressId, AddressType, ClientId, PhoneId
+from backend.application.vars import AddressId, ClientId, PhoneId
 
 logger = logging.getLogger(__name__)
 
@@ -35,11 +35,11 @@ class Phone:
 class Address:
     street: str
     house: str
-    address_type: AddressType
     apartment: str | None = None
     entrance: str | None = None
     floor: str | None = None
     intercom: str | None = None
+    comment: str | None = None
     is_primary: bool = False
     id: AddressId | None = None
 
@@ -147,11 +147,11 @@ class EditClientCommandHandler:
                 AddressDTO(
                     street=address.street,
                     house=address.house,
-                    address_type=address.address_type,
                     apartment=address.apartment,
                     entrance=address.entrance,
                     floor=address.floor,
                     intercom=address.intercom,
+                    comment=address.comment,
                     is_primary=address.is_primary,
                     id=address.id,
                 )

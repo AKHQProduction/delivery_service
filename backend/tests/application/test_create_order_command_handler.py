@@ -22,7 +22,6 @@ from backend.application.interfaces.gateways.client_gateway import (
 from backend.application.interfaces.gateways.product_gateway import Product
 from backend.application.vars import (
     AddressId,
-    AddressType,
     ClientId,
     PaymentMethod,
     PhoneId,
@@ -126,7 +125,6 @@ async def setup_client_and_product(
                 id=address_id,
                 street="Хрещатик",
                 house="10",
-                address_type=AddressType.APARTMENT,
                 apartment="5",
                 is_primary=True,
             )
@@ -396,7 +394,6 @@ async def test_raise_error_when_user_is_courier(
                 id=address_id,
                 street="Хрещатик",
                 house="10",
-                address_type=AddressType.APARTMENT,
                 apartment="5",
                 is_primary=True,
             )
@@ -454,7 +451,6 @@ async def test_raise_error_when_client_belongs_to_different_shop(
                 id=address_id,
                 street="Хрещатик",
                 house="10",
-                address_type=AddressType.APARTMENT,
                 apartment="5",
                 is_primary=True,
             )
@@ -534,7 +530,6 @@ async def test_owner_and_manager_can_create_order(
                 id=address_id,
                 street="Хрещатик",
                 house="10",
-                address_type=AddressType.APARTMENT,
                 apartment="5",
                 is_primary=True,
             )

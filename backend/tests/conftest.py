@@ -26,7 +26,6 @@ from sqlalchemy.ext.asyncio import (
 
 from backend.application.interfaces import TransactionManager
 from backend.application.vars import (
-    AddressType,
     CategoryId,
     ClientId,
     OrderId,
@@ -352,7 +351,7 @@ def setup_test_client(session: AsyncSession):
                     insert(ClientAddress).values(
                         street=address["street"],
                         house=address["house"],
-                        address_type=address["address_type"],
+                        comment=address.get("comment"),
                         apartment=address.get("apartment"),
                         entrance=address.get("entrance"),
                         floor=address.get("floor"),
@@ -390,7 +389,6 @@ def setup_test_order(session: AsyncSession):
             delivery_address = {
                 "street": "Test Street",
                 "house": "1",
-                "address_type": AddressType.APARTMENT.value,
                 "apartment": "5",
             }
 

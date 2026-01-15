@@ -21,7 +21,6 @@ from backend.application.interfaces.gateways.order_gateway import (
     UpdateOrderDTO,
 )
 from backend.application.vars import (
-    AddressType,
     ClientId,
     Empty,
     OrderId,
@@ -47,11 +46,11 @@ class SQLAlchemyOrderGateway(OrderGateway):
         delivery_address = {
             "street": dto.delivery_address.street,
             "house": dto.delivery_address.house,
-            "address_type": dto.delivery_address.address_type.value,
             "apartment": dto.delivery_address.apartment,
             "entrance": dto.delivery_address.entrance,
             "floor": dto.delivery_address.floor,
             "intercom": dto.delivery_address.intercom,
+            "comment": dto.delivery_address.comment,
         }
 
         order_items = [
@@ -99,9 +98,6 @@ class SQLAlchemyOrderGateway(OrderGateway):
                 delivery_address=DeliveryAddressDTO(
                     street=cast("str", delivery_address_dict.get("street")),
                     house=cast("str", delivery_address_dict.get("house")),
-                    address_type=AddressType(
-                        cast("str", delivery_address_dict.get("address_type"))
-                    ),
                     apartment=cast(
                         "str | None", delivery_address_dict.get("apartment")
                     ),
@@ -113,6 +109,9 @@ class SQLAlchemyOrderGateway(OrderGateway):
                     ),
                     intercom=cast(
                         "str | None", delivery_address_dict.get("intercom")
+                    ),
+                    comment=cast(
+                        "str | None", delivery_address_dict.get("comment")
                     ),
                 ),
                 comment=cast("str | None", cast("object", row.comment)),
@@ -194,9 +193,6 @@ class SQLAlchemyOrderGateway(OrderGateway):
             delivery_address=DeliveryAddressDTO(
                 street=cast("str", delivery_address_dict.get("street")),
                 house=cast("str", delivery_address_dict.get("house")),
-                address_type=AddressType(
-                    cast("str", delivery_address_dict.get("address_type"))
-                ),
                 apartment=cast(
                     "str | None", delivery_address_dict.get("apartment")
                 ),
@@ -206,6 +202,9 @@ class SQLAlchemyOrderGateway(OrderGateway):
                 floor=cast("str | None", delivery_address_dict.get("floor")),
                 intercom=cast(
                     "str | None", delivery_address_dict.get("intercom")
+                ),
+                comment=cast(
+                    "str | None", delivery_address_dict.get("comment")
                 ),
             ),
             comment=cast("str | None", cast("object", row.comment)),
@@ -259,11 +258,11 @@ class SQLAlchemyOrderGateway(OrderGateway):
             order_db.delivery_address = {
                 "street": dto.delivery_address.street,
                 "house": dto.delivery_address.house,
-                "address_type": dto.delivery_address.address_type.value,
                 "apartment": dto.delivery_address.apartment,
                 "entrance": dto.delivery_address.entrance,
                 "floor": dto.delivery_address.floor,
                 "intercom": dto.delivery_address.intercom,
+                "comment": dto.delivery_address.comment,
             }
 
         if dto.comment is not None:

@@ -5,7 +5,6 @@ from typing import Protocol
 from backend.application.interfaces.gateways import Pagination
 from backend.application.vars import (
     AddressId,
-    AddressType,
     ClientId,
     PhoneId,
     ShopId,
@@ -23,11 +22,11 @@ class PhoneDTO:
 class AddressDTO:
     street: str
     house: str
-    address_type: AddressType
     apartment: str | None = None
     entrance: str | None = None
     floor: str | None = None
     intercom: str | None = None
+    comment: str | None = None
     is_primary: bool = False
     id: AddressId | None = None
 

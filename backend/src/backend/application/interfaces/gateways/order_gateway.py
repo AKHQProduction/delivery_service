@@ -5,7 +5,6 @@ from typing import Protocol
 
 from backend.application.interfaces.gateways import Pagination
 from backend.application.vars import (
-    AddressType,
     ClientId,
     Empty,
     OrderId,
@@ -27,11 +26,11 @@ class PaymentMethodStatsReadModel:
 class DeliveryAddressDTO:
     street: str
     house: str
-    address_type: AddressType
     apartment: str | None = None
     entrance: str | None = None
     floor: str | None = None
     intercom: str | None = None
+    comment: str | None = None
 
 
 @dataclass(frozen=True)

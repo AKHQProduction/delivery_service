@@ -11,7 +11,6 @@ from backend.application.interfaces.gateways.order_gateway import (
 )
 from backend.application.queries.get_order import GetOrderQueryHandler
 from backend.application.vars import (
-    AddressType,
     ClientId,
     OrderId,
     PaymentMethod,
@@ -67,7 +66,6 @@ def create_order_dto(
         delivery_address=DeliveryAddressDTO(
             street="Test Street",
             house="1",
-            address_type=AddressType.APARTMENT,
         ),
         order_items=[
             OrderItemDTO(name="Test Product", quantity=1, price_per_item=100)
@@ -158,7 +156,6 @@ async def test_get_order_with_multiple_items(make_handler) -> None:
         delivery_address=DeliveryAddressDTO(
             street="Test Street",
             house="1",
-            address_type=AddressType.APARTMENT,
         ),
         order_items=[
             OrderItemDTO(name="Product 1", quantity=2, price_per_item=100),

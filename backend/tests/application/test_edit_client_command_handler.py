@@ -20,7 +20,6 @@ from backend.application.interfaces.gateways.client_gateway import (
     PhoneDTO,
 )
 from backend.application.vars import (
-    AddressType,
     ClientId,
     ShopId,
     ShopRole,
@@ -74,7 +73,6 @@ def setup_client_in_gateway(
             AddressDTO(
                 street="Original Street",
                 house="1",
-                address_type=AddressType.APARTMENT,
                 apartment="10",
                 is_primary=True,
             )
@@ -176,13 +174,12 @@ async def test_edit_client_addresses(make_handler) -> None:
             Address(
                 street="New Street",
                 house="100",
-                address_type=AddressType.PRIVATE_HOUSE,
+                comment="Private house",
                 is_primary=True,
             ),
             Address(
                 street="Another Street",
                 house="200",
-                address_type=AddressType.APARTMENT,
                 apartment="50",
                 is_primary=False,
             ),
@@ -195,9 +192,7 @@ async def test_edit_client_addresses(make_handler) -> None:
     assert len(updated_client.addresses) == 2
     assert updated_client.addresses[0].street == "New Street"
     assert updated_client.addresses[0].house == "100"
-    assert (
-        updated_client.addresses[0].address_type == AddressType.PRIVATE_HOUSE
-    )
+    assert updated_client.addresses[0].comment == "Private house"
     assert updated_client.addresses[0].is_primary is True
     assert updated_client.addresses[1].street == "Another Street"
     assert updated_client.addresses[1].is_primary is False
@@ -222,7 +217,6 @@ async def test_edit_client_all_fields(make_handler) -> None:
             Address(
                 street="Brand New Street",
                 house="999",
-                address_type=AddressType.APARTMENT,
                 apartment="1",
                 is_primary=True,
             )
@@ -504,13 +498,11 @@ def test_edit_command_raises_error_when_no_primary_address() -> None:
                 Address(
                     street="Street 1",
                     house="1",
-                    address_type=AddressType.APARTMENT,
                     is_primary=False,
                 ),
                 Address(
                     street="Street 2",
                     house="2",
-                    address_type=AddressType.APARTMENT,
                     is_primary=False,
                 ),
             ],
@@ -529,13 +521,11 @@ def test_edit_command_raises_error_when_multiple_primary_addresses() -> None:
                 Address(
                     street="Street 1",
                     house="1",
-                    address_type=AddressType.APARTMENT,
                     is_primary=True,
                 ),
                 Address(
                     street="Street 2",
                     house="2",
-                    address_type=AddressType.APARTMENT,
                     is_primary=True,
                 ),
             ],
@@ -569,13 +559,11 @@ def test_edit_command_succeeds_with_exactly_one_primary_address() -> None:
             Address(
                 street="Street 1",
                 house="1",
-                address_type=AddressType.APARTMENT,
                 is_primary=True,
             ),
             Address(
                 street="Street 2",
                 house="2",
-                address_type=AddressType.APARTMENT,
                 is_primary=False,
             ),
         ],
@@ -704,7 +692,7 @@ async def test_smart_update_address_update_existing(make_handler) -> None:
             Address(
                 street="New Street",  # Changed
                 house="100",  # Changed
-                address_type=AddressType.PRIVATE_HOUSE,  # Changed
+                comment="Private house",  # Changed
                 is_primary=True,
                 id=original_address_id,  # Same ID
             )

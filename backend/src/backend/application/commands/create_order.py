@@ -154,11 +154,11 @@ class CreateOrderCommandHandler:
             delivery_address=DeliveryAddressDTO(
                 street=address.street,
                 house=address.house,
-                address_type=address.address_type,
                 apartment=address.apartment,
                 entrance=address.entrance,
                 floor=address.floor,
                 intercom=address.intercom,
+                comment=address.comment,
             ),
             order_items=[
                 OrderItemDTO(

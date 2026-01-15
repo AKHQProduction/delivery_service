@@ -10,7 +10,6 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from backend.application.vars import (
-    AddressType,
     PaymentMethod,
     ShopRole,
     TimePreference,
@@ -41,7 +40,6 @@ async def test_create_order_with_single_product(
             {
                 "street": "Хрещатик",
                 "house": "10",
-                "address_type": AddressType.APARTMENT.value,
                 "apartment": "5",
             }
         ],
@@ -133,7 +131,6 @@ async def test_create_order_with_multiple_products(
             {
                 "street": "Хрещатик",
                 "house": "10",
-                "address_type": AddressType.APARTMENT.value,
                 "apartment": "5",
             }
         ],
@@ -210,7 +207,7 @@ async def test_create_order_without_comment(
             {
                 "street": "Хрещатик",
                 "house": "10",
-                "address_type": AddressType.PRIVATE_HOUSE.value,
+                "comment": "Private house",
             }
         ],
     )
@@ -273,7 +270,6 @@ async def test_create_order_with_different_time_preferences(
             {
                 "street": "Хрещатик",
                 "house": "10",
-                "address_type": AddressType.APARTMENT.value,
                 "apartment": "5",
             }
         ],
@@ -392,7 +388,6 @@ async def test_create_order_product_not_found(
             {
                 "street": "Хрещатик",
                 "house": "10",
-                "address_type": AddressType.APARTMENT.value,
                 "apartment": "5",
             }
         ],
@@ -445,7 +440,6 @@ async def test_create_order_phone_not_found(
             {
                 "street": "Хрещатик",
                 "house": "10",
-                "address_type": AddressType.APARTMENT.value,
                 "apartment": "5",
             }
         ],
@@ -499,7 +493,6 @@ async def test_create_order_address_not_found(
             {
                 "street": "Хрещатик",
                 "house": "10",
-                "address_type": AddressType.APARTMENT.value,
                 "apartment": "5",
             }
         ],
@@ -576,7 +569,6 @@ async def test_create_order_as_courier_forbidden(
             {
                 "street": "Хрещатик",
                 "house": "10",
-                "address_type": AddressType.APARTMENT.value,
                 "apartment": "5",
             }
         ],
@@ -631,7 +623,6 @@ async def test_create_order_with_past_delivery_date(
             {
                 "street": "Хрещатик",
                 "house": "10",
-                "address_type": AddressType.APARTMENT.value,
                 "apartment": "5",
             }
         ],
@@ -766,7 +757,6 @@ async def test_get_order(
         delivery_address={
             "street": "Хрещатик",
             "house": "10",
-            "address_type": AddressType.APARTMENT.value,
             "apartment": "5",
         },
         comment="Test comment",
@@ -1416,7 +1406,6 @@ async def test_generate_orders_pdf(
             {
                 "street": "Тестова",
                 "house": "1",
-                "address_type": AddressType.APARTMENT.value,
                 "apartment": "1",
             }
         ],
@@ -1494,7 +1483,6 @@ async def test_download_orders_pdf(
             {
                 "street": "Тестова",
                 "house": "1",
-                "address_type": AddressType.APARTMENT.value,
                 "apartment": "1",
             }
         ],
