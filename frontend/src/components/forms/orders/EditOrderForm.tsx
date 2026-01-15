@@ -227,22 +227,39 @@ export const EditOrderForm: React.FC<EditOrderFormProps> = ({
 
     setIsSubmitting(true);
     try {
-      await updateCurrentOrder(order.order_id, {
-        client_id: selectedClient.client_id,
-        items: orderItems.map((item) => {
-          if (item.id) {
-            return { id: item.id, quantity: item.quantity };
-          } else {
-            return { product_id: item.product_id, quantity: item.quantity };
-          }
-        }),
-        phone_id: selectedPhoneId,
-        address_id: selectedAddressId,
-        delivery_date: deliveryDate,
-        time_preference: deliveryTime,
-        payment_method: paymentMethod,
-        comment: note,
+      const payload: Record<string, any> = {};
+
+      if (selectedClient.client_id !== order.client_id) {
+        payload.client_id = selectedClient.client_id;
+      }
+      if (selectedPhoneId !== order.phone_id) {
+        payload.phone_id = selectedPhoneId;
+      }
+      if (selectedAddressId !== order.address_id) {
+        payload.address_id = selectedAddressId;
+      }
+      if (deliveryDate !== order.date) {
+        payload.delivery_date = deliveryDate;
+      }
+      if (deliveryTime !== order.time_preference) {
+        payload.time_preference = deliveryTime;
+      }
+      if (paymentMethod !== order.payment_method) {
+        payload.payment_method = paymentMethod;
+      }
+      if (note !== (order.note || order.comment || "")) {
+        payload.comment = note;
+      }
+
+      payload.items = orderItems.map((item) => {
+        if (item.id) {
+          return { id: item.id, quantity: item.quantity };
+        } else {
+          return { product_id: item.product_id, quantity: item.quantity };
+        }
       });
+
+      await updateCurrentOrder(order.order_id, payload);
       onSave ? onSave() : onClose();
     } catch (error) {
       console.error("Error updating order:", error);
