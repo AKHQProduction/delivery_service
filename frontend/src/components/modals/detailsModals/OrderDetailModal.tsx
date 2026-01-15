@@ -255,11 +255,8 @@ export const OrderDetailModal = ({
            Спосіб оплати
           </h2>
 
-          <div className="bg-white rounded-2xl p-5 border border-gray-200 space-y-4">
-            <div>
-              <p className="text-xs text-gray-500 mb-1">Тип</p>
-              <p className="font-semibold text-gray-900">{paymentMap[order.payment_method]}</p>
-            </div>
+          <div className="bg-white rounded-2xl p-5 border border-gray-200">
+            <p className="font-semibold text-gray-900">{paymentMap[order.payment_method]}</p>
           </div>
         </div>
 
