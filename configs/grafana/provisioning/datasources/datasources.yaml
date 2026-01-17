@@ -4,6 +4,6 @@ datasources:
   - name: VictoriaMetrics
     type: prometheus
     access: proxy
-    url: http://victoriametrics:8428
+    url: http://victoria_metrics:8428
     isDefault: true
     editable: false

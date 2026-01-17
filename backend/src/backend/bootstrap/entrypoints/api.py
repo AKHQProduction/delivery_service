@@ -10,7 +10,7 @@ from starlette.middleware.cors import CORSMiddleware
 from backend.bootstrap.config import Config
 from backend.bootstrap.entrypoints.di.containers import api_container
 from backend.bootstrap.logger import setup_logging
-from backend.bootstrap.telemetry import setup_telemetry
+from backend.bootstrap.telemetry import setup_db_telemetry, setup_telemetry
 from backend.presentation.http.v1 import setup_v1_router
 from backend.presentation.http.v1.routes import setup_exc_handlers
 
@@ -20,9 +20,7 @@ logger = logging.getLogger(__name__)
 @asynccontextmanager
 async def lifespan(app: FastAPI) -> AsyncIterator[None]:
     container = app.state.dishka_container
-
-    await setup_telemetry(app, container)
-
+    await setup_db_telemetry(container)
     yield
 
 
@@ -52,6 +50,7 @@ def create_app() -> FastAPI:
         root_path="/api",
     )
 
+    setup_telemetry(config.otel_config, app)
     setup_dishka(container, app)
     setup_middlewares(app)
     setup_exc_handlers(app)
