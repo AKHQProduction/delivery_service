@@ -53,6 +53,7 @@ export const EditOrderForm: React.FC<EditOrderFormProps> = ({
   const [orderItems, setOrderItems] = useState<OrderItem[]>([]);
   const [deliveryDate, setDeliveryDate] = useState("");
   const [deliveryTime, setDeliveryTime] = useState("");
+  const [paymentMethod, setPaymentMethod] = useState("");
   const [note, setNote] = useState("");
 
   // UI state
@@ -125,6 +126,7 @@ export const EditOrderForm: React.FC<EditOrderFormProps> = ({
       setOrderItems(items);
       setDeliveryDate(order.date || "");
       setDeliveryTime(order.time_preference || "");
+      setPaymentMethod(order.payment_method || "");
       setNote(order.note || order.comment || "");
     }
   }, [order, clients, products]);
@@ -225,21 +227,39 @@ export const EditOrderForm: React.FC<EditOrderFormProps> = ({
 
     setIsSubmitting(true);
     try {
-      await updateCurrentOrder(order.order_id, {
-        client_id: selectedClient.client_id,
-        items: orderItems.map((item) => {
-          if (item.id) {
-            return { id: item.id, quantity: item.quantity };
-          } else {
-            return { product_id: item.product_id, quantity: item.quantity };
-          }
-        }),
-        phone_id: selectedPhoneId,
-        address_id: selectedAddressId,
-        delivery_date: deliveryDate,
-        time_preference: deliveryTime,
-        comment: note,
+      const payload: Record<string, any> = {};
+
+      if (selectedClient.client_id !== order.client_id) {
+        payload.client_id = selectedClient.client_id;
+      }
+      if (selectedPhoneId !== order.phone_id) {
+        payload.phone_id = selectedPhoneId;
+      }
+      if (selectedAddressId !== order.address_id) {
+        payload.address_id = selectedAddressId;
+      }
+      if (deliveryDate !== order.date) {
+        payload.delivery_date = deliveryDate;
+      }
+      if (deliveryTime !== order.time_preference) {
+        payload.time_preference = deliveryTime;
+      }
+      if (paymentMethod !== order.payment_method) {
+        payload.payment_method = paymentMethod;
+      }
+      if (note !== (order.note || order.comment || "")) {
+        payload.comment = note;
+      }
+
+      payload.items = orderItems.map((item) => {
+        if (item.id) {
+          return { id: item.id, quantity: item.quantity };
+        } else {
+          return { product_id: item.product_id, quantity: item.quantity };
+        }
       });
+
+      await updateCurrentOrder(order.order_id, payload);
       onSave ? onSave() : onClose();
     } catch (error) {
       console.error("Error updating order:", error);
@@ -250,7 +270,7 @@ export const EditOrderForm: React.FC<EditOrderFormProps> = ({
   };
 
   return (
-    <div className="flex flex-col h-full">
+    <div className="flex flex-col h-full ">
       {/* Content */}
       <div className="flex-1 overflow-y-auto space-y-6">
         {/* Order Items Section */}
@@ -770,7 +790,8 @@ export const EditOrderForm: React.FC<EditOrderFormProps> = ({
 
         {/* Delivery Date Section */}
         <div className="space-y-3">
-          <div className="grid grid-cols-2 gap-3">
+
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 pb-3">
             <DateSelectInput
               value={deliveryDate}
               onChange={setDeliveryDate}
@@ -802,6 +823,19 @@ export const EditOrderForm: React.FC<EditOrderFormProps> = ({
               options={[
                 { value: "FIRST_HALF", label: "Перша половина" },
                 { value: "SECOND_HALF", label: "Друга половина" },
+              ]}
+            />
+
+            <FormSelect
+              label="Спосіб оплати"
+              name="paymentMethod"
+              value={paymentMethod}
+              required={true}
+              onChange={setPaymentMethod}
+              options={[
+                { value: "CASH", label: "Готівка" },
+                { value: "BANK_TRANSFER", label: "На рахунок" },
+                { value: "OTHER", label: "Інше" },
               ]}
             />
           </div>

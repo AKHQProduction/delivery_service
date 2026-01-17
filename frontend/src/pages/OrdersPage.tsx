@@ -2,10 +2,15 @@ import { useEffect, useState, useRef, useCallback } from "react";
 import { PageHeader } from "../components/ui/pageHeader";
 import { SearchBar } from "../components/ui/searchBar";
 import { useOrders } from "../hooks/orders/useOrders";
-import { timeMap } from "../utils/dataMap";
+import { timeMap, paymentMap } from "../utils/dataMap";
 import { OrderDetailModal } from "../components/modals/detailsModals/OrderDetailModal";
 import { RightModal } from "../components/modals/RightModal";
-import { exportOrdersPdf, getOrderById } from "../services/api/ordersApi";
+import { generateOrdersPdfLink, getOrderById } from "../services/api/ordersApi";
+
+const getDownloadUrl = (fileId: string): string => {
+  const baseUrl = import.meta.env.VITE_API_URL;
+  return `${baseUrl}/v1/orders/export/pdf/download/${fileId}`;
+};
 
 export interface OrderItem {
   name: string;
@@ -29,6 +34,7 @@ export interface Order {
 
   date: string;
   time_preference: keyof typeof timeMap;
+  payment_method: keyof typeof paymentMap;
 
   note?: string;
   comment?: string;
@@ -163,15 +169,16 @@ export const OrdersPage = () => {
     }
     setExportError(false);
     try {
-      const blob = await exportOrdersPdf(exportDate);
-      const url = window.URL.createObjectURL(blob);
-      const link = document.createElement("a");
-      link.href = url;
-      link.download = `orders_${exportDate}.pdf`;
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-      window.URL.revokeObjectURL(url);
+      const { file_id, filename } = await generateOrdersPdfLink(exportDate);
+      const downloadUrl = getDownloadUrl(file_id);
+
+      if (window.Telegram?.WebApp?.downloadFile) {
+        window.Telegram.WebApp.downloadFile({ url: downloadUrl, file_name: filename });
+      } else if (window.Telegram?.WebApp?.openLink) {
+        window.Telegram.WebApp.openLink(downloadUrl);
+      } else {
+        window.open(downloadUrl, "_blank");
+      }
     } catch {
       setExportError(true);
     }

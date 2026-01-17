@@ -29,6 +29,7 @@ from backend.bootstrap.config import (
 )
 from backend.infrastructure.persistence.gateways import (
     RedisLinkGateway,
+    RedisPDFStorage,
     SQLAlchemyCategoryGateway,
     SQLAlchemyClientGateway,
     SQLAlchemyOrderGateway,
@@ -118,3 +119,4 @@ class RedisProvider(Provider):
             yield redis
 
     gateway = provide(WithParents[RedisLinkGateway])
+    pdf_storage = provide(WithParents[RedisPDFStorage])

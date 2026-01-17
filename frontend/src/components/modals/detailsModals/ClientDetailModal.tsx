@@ -98,14 +98,19 @@ export const ClientDetailModal: React.FC<ClientDetailModalProps> = ({
               elementText={phone.number}
             />
           ))}
+
           {client.addresses?.map((address, index) => (
             <ItemElement
               key={index}
               descriptionText={`Адреса ${index + 1}`}
-              elementText={`${address.street} ${address.house}`}
+              elementText={`${address.street} ${address.house}${
+                address.apartment ? `, кв. ${address.apartment}` : ""
+              }`}
+              comment={address.comment}
             />
           ))}
         </div>
+
         <ModalButtons
           firstButtonText={"Редагувати"}
           handleEditClick={handleEditClick}

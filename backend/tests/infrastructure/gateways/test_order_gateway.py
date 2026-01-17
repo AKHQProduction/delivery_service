@@ -11,8 +11,8 @@ from backend.application.interfaces.gateways.order_gateway import (
     OrderItemDTO,
 )
 from backend.application.vars import (
-    AddressType,
     OrderId,
+    PaymentMethod,
     TimePreference,
 )
 from backend.infrastructure.persistence.gateways import SQLAlchemyOrderGateway
@@ -56,7 +56,6 @@ async def test_create_order_saves_basic_data(
     delivery_address = DeliveryAddressDTO(
         street="Хрещатик",
         house="10",
-        address_type=AddressType.APARTMENT,
         apartment="5",
         entrance="1",
         floor="2",
@@ -73,6 +72,7 @@ async def test_create_order_saves_basic_data(
         delivery_address=delivery_address,
         order_items=[],
         comment="Доставити до 12:00",
+        payment_method=PaymentMethod.CASH,
     )
 
     await order_gateway.create_order(dto)
@@ -105,7 +105,7 @@ async def test_create_order_saves_delivery_address_as_json(
     delivery_address = DeliveryAddressDTO(
         street="Шевченка",
         house="20",
-        address_type=AddressType.PRIVATE_HOUSE,
+        comment="Private house",
         apartment=None,
         entrance=None,
         floor=None,
@@ -122,6 +122,7 @@ async def test_create_order_saves_delivery_address_as_json(
         delivery_address=delivery_address,
         order_items=[],
         comment=None,
+        payment_method=PaymentMethod.CASH,
     )
 
     await order_gateway.create_order(dto)
@@ -132,10 +133,7 @@ async def test_create_order_saves_delivery_address_as_json(
 
     assert order.delivery_address["street"] == "Шевченка"
     assert order.delivery_address["house"] == "20"
-    assert (
-        order.delivery_address["address_type"]
-        == AddressType.PRIVATE_HOUSE.value
-    )
+    assert order.delivery_address["comment"] == "Private house"
     assert order.delivery_address["apartment"] is None
     assert order.delivery_address["entrance"] is None
     assert order.delivery_address["floor"] is None
@@ -157,7 +155,6 @@ async def test_create_order_with_single_order_item(
     delivery_address = DeliveryAddressDTO(
         street="Хрещатик",
         house="10",
-        address_type=AddressType.APARTMENT,
         apartment="5",
     )
 
@@ -177,6 +174,7 @@ async def test_create_order_with_single_order_item(
         delivery_address=delivery_address,
         order_items=[order_item],
         comment=None,
+        payment_method=PaymentMethod.CASH,
     )
 
     await order_gateway.create_order(dto)
@@ -208,7 +206,6 @@ async def test_create_order_with_multiple_order_items(
     delivery_address = DeliveryAddressDTO(
         street="Хрещатик",
         house="10",
-        address_type=AddressType.APARTMENT,
         apartment="5",
     )
 
@@ -228,6 +225,7 @@ async def test_create_order_with_multiple_order_items(
         delivery_address=delivery_address,
         order_items=order_items,
         comment="Доставити після 14:00",
+        payment_method=PaymentMethod.CASH,
     )
 
     await order_gateway.create_order(dto)
@@ -267,7 +265,6 @@ async def test_create_order_without_comment(
     delivery_address = DeliveryAddressDTO(
         street="Хрещатик",
         house="10",
-        address_type=AddressType.APARTMENT,
         apartment="5",
     )
 
@@ -281,6 +278,7 @@ async def test_create_order_without_comment(
         delivery_address=delivery_address,
         order_items=[],
         comment=None,
+        payment_method=PaymentMethod.CASH,
     )
 
     await order_gateway.create_order(dto)
@@ -306,7 +304,6 @@ async def test_create_order_with_different_time_preferences(
     delivery_address = DeliveryAddressDTO(
         street="Хрещатик",
         house="10",
-        address_type=AddressType.APARTMENT,
         apartment="5",
     )
 
@@ -322,6 +319,7 @@ async def test_create_order_with_different_time_preferences(
         delivery_address=delivery_address,
         order_items=[],
         comment=None,
+        payment_method=PaymentMethod.CASH,
     )
     await order_gateway.create_order(dto_1)
 
@@ -337,6 +335,7 @@ async def test_create_order_with_different_time_preferences(
         delivery_address=delivery_address,
         order_items=[],
         comment=None,
+        payment_method=PaymentMethod.CASH,
     )
     await order_gateway.create_order(dto_2)
 
@@ -370,7 +369,6 @@ async def test_order_items_linked_to_order_via_relationship(
     delivery_address = DeliveryAddressDTO(
         street="Хрещатик",
         house="10",
-        address_type=AddressType.APARTMENT,
         apartment="5",
     )
 
@@ -388,6 +386,7 @@ async def test_order_items_linked_to_order_via_relationship(
         delivery_address=delivery_address,
         order_items=order_items,
         comment=None,
+        payment_method=PaymentMethod.CASH,
     )
 
     await order_gateway.create_order(dto)
@@ -420,7 +419,6 @@ async def test_create_order_with_product_id(
     delivery_address = DeliveryAddressDTO(
         street="Хрещатик",
         house="10",
-        address_type=AddressType.APARTMENT,
         apartment="5",
     )
 
@@ -441,6 +439,7 @@ async def test_create_order_with_product_id(
         delivery_address=delivery_address,
         order_items=[order_item],
         comment=None,
+        payment_method=PaymentMethod.CASH,
     )
 
     await order_gateway.create_order(dto)
@@ -472,7 +471,6 @@ async def test_load_items_returns_order_items(
     delivery_address = DeliveryAddressDTO(
         street="Хрещатик",
         house="10",
-        address_type=AddressType.APARTMENT,
         apartment="5",
     )
 
@@ -498,6 +496,7 @@ async def test_load_items_returns_order_items(
         delivery_address=delivery_address,
         order_items=order_items,
         comment=None,
+        payment_method=PaymentMethod.CASH,
     )
 
     await order_gateway.create_order(dto)

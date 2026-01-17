@@ -62,13 +62,12 @@ export const getOrderById = async (orderId: string) => {
   }
 };
 
-export const exportOrdersPdf = async (deliveryDate: string) => {
+export const generateOrdersPdfLink = async (deliveryDate: string) => {
   try {
-    const response = await api.get(`v1/orders/export/pdf`, {
+    const response = await api.post(`v1/orders/export/pdf/generate`, null, {
       params: { delivery_date: deliveryDate },
-      responseType: "blob",
     });
-    return response.data;
+    return response.data as { file_id: string; filename: string };
   } catch (error) {
     throw error;
   }

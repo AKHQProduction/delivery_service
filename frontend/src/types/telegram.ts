@@ -15,6 +15,7 @@ declare global {
         openLink(arg0: string): unknown;
         platform: string;
         openTelegramLink(arg0: string): unknown;
+        downloadFile(arg0: { url: string; file_name: string }): unknown;
       };
     };
   }

@@ -17,7 +17,6 @@ from backend.application.interfaces.gateways.client_gateway import (
 )
 from backend.application.vars import (
     AddressId,
-    AddressType,
     ClientId,
     PhoneId,
     ShopId,
@@ -47,7 +46,7 @@ class SQLAlchemyClientGateway(ClientGateway):
             ClientAddress(
                 street=address.street,
                 house=address.house,
-                address_type=address.address_type.value,
+                comment=address.comment,
                 apartment=address.apartment,
                 entrance=address.entrance,
                 floor=address.floor,
@@ -96,7 +95,7 @@ class SQLAlchemyClientGateway(ClientGateway):
             AddressDTO(
                 street=address.street,
                 house=address.house,
-                address_type=AddressType(address.address_type),
+                comment=address.comment,
                 apartment=address.apartment,
                 entrance=address.entrance,
                 floor=address.floor,
@@ -149,7 +148,7 @@ class SQLAlchemyClientGateway(ClientGateway):
             AddressDTO(
                 street=address.street,
                 house=address.house,
-                address_type=AddressType(address.address_type),
+                comment=address.comment,
                 apartment=address.apartment,
                 entrance=address.entrance,
                 floor=address.floor,
@@ -224,7 +223,7 @@ class SQLAlchemyClientGateway(ClientGateway):
                     AddressDTO(
                         street=address.street,
                         house=address.house,
-                        address_type=AddressType(address.address_type),
+                        comment=address.comment,
                         apartment=address.apartment,
                         entrance=address.entrance,
                         floor=address.floor,
@@ -291,7 +290,7 @@ class SQLAlchemyClientGateway(ClientGateway):
                 existing_address = existing_addresses_by_id[address_dto.id]
                 existing_address.street = address_dto.street
                 existing_address.house = address_dto.house
-                existing_address.address_type = address_dto.address_type
+                existing_address.comment = address_dto.comment
                 existing_address.apartment = address_dto.apartment
                 existing_address.entrance = address_dto.entrance
                 existing_address.floor = address_dto.floor
@@ -301,7 +300,7 @@ class SQLAlchemyClientGateway(ClientGateway):
                 new_address = ClientAddress(
                     street=address_dto.street,
                     house=address_dto.house,
-                    address_type=address_dto.address_type.value,
+                    comment=address_dto.comment,
                     apartment=address_dto.apartment,
                     entrance=address_dto.entrance,
                     floor=address_dto.floor,

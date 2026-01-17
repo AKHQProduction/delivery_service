@@ -1,7 +1,5 @@
 from pydantic import BaseModel
 
-from backend.application.vars import AddressType
-
 
 class PhoneSchema(BaseModel):
     number: str
@@ -12,11 +10,11 @@ class PhoneSchema(BaseModel):
 class AddressSchema(BaseModel):
     street: str
     house: str
-    address_type: AddressType
     apartment: str | None = None
     entrance: str | None = None
     floor: str | None = None
     intercom: str | None = None
+    comment: str | None = None
     is_primary: bool = False
     id: int | None = None
 

@@ -67,12 +67,6 @@ class ClientPhone(Base, CreatedAt, UpdatedAt):
     client: Mapped["Client"] = relationship(back_populates="phones")
     shop: Mapped["Shop"] = relationship()
 
-    __table_args__ = (
-        sa.UniqueConstraint(
-            "shop_id", "number", name="uq_client_phone_per_shop"
-        ),
-    )
-
     def __repr__(self) -> str:
         return (
             f"<ClientPhone id={self.id} number={self.number} "
@@ -87,7 +81,6 @@ class ClientAddress(Base, CreatedAt, UpdatedAt):
         sa.Integer, primary_key=True, autoincrement=True
     )
 
-    address_type: Mapped[str] = mapped_column(sa.String, nullable=False)
     street: Mapped[str] = mapped_column(sa.String, nullable=False)
     house: Mapped[str] = mapped_column(sa.String, nullable=False)
 
@@ -103,6 +96,9 @@ class ClientAddress(Base, CreatedAt, UpdatedAt):
     intercom: Mapped[str | None] = mapped_column(
         sa.String, nullable=True, default=None
     )
+    comment: Mapped[str | None] = mapped_column(
+        sa.String, nullable=True, default=None
+    )
     is_primary: Mapped[bool] = mapped_column(
         sa.Boolean, default=False, nullable=False
     )
@@ -114,7 +110,4 @@ class ClientAddress(Base, CreatedAt, UpdatedAt):
     client: Mapped["Client"] = relationship(back_populates="addresses")
 
     def __repr__(self) -> str:
-        return (
-            f"<ShopClientAddress address_type={self.address_type} "
-            f"{self.street} {self.house}>"
-        )
+        return f"<ClientAddress {self.street} {self.house}>"

@@ -18,6 +18,7 @@ interface OrderFormData {
   deliveryAddress: any;
   deliveryDate: string;
   deliveryTime: string;
+  paymentMethod: string;
   note?: string;
 }
 
@@ -66,6 +67,7 @@ export const useOrderForm = (options: UseOrderFormOptions = {}) => {
     deliveryAddress: null,
     deliveryDate: "",
     deliveryTime: "",
+    paymentMethod: "",
     note: "",
   });
 
@@ -166,6 +168,7 @@ export const useOrderForm = (options: UseOrderFormOptions = {}) => {
         deliveryAddress: address || null,
         deliveryDate: initialOrder.date || "",
         deliveryTime: initialOrder.time_preference || "",
+        paymentMethod: initialOrder.payment_method || "",
         note: initialOrder.note || "",
       });
     }
@@ -234,6 +237,10 @@ export const useOrderForm = (options: UseOrderFormOptions = {}) => {
     setFormData({ ...formData, deliveryDate: date });
   };
 
+  const handlePaymentMethodChange = (paymentMethod: string) => {
+    setFormData({ ...formData, paymentMethod });
+  };
+
   const handleTimeChange = (time: string) => {
     setFormData({ ...formData, deliveryTime: time });
   };
@@ -300,7 +307,10 @@ export const useOrderForm = (options: UseOrderFormOptions = {}) => {
   );
 
   const addAndSelectNewClient = useCallback((client: Client) => {
-    setNewlyCreatedClients((prev) => [client, ...prev.filter(c => c.client_id !== client.client_id)]);
+    setNewlyCreatedClients((prev) => [
+      client,
+      ...prev.filter((c) => c.client_id !== client.client_id),
+    ]);
     handleClientSelect(client);
   }, []);
 
@@ -333,6 +343,7 @@ export const useOrderForm = (options: UseOrderFormOptions = {}) => {
     handleDateChange,
     handleTimeChange,
     handleNoteChange,
+    handlePaymentMethodChange,
 
     handleNext,
     handleBack,

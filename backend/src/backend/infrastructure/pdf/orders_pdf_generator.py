@@ -11,7 +11,7 @@ from reportlab.lib.units import mm
 from reportlab.pdfbase import pdfmetrics
 from reportlab.pdfbase.ttfonts import TTFont
 from reportlab.platypus import (
-    KeepTogether,
+    PageBreak,
     Paragraph,
     SimpleDocTemplate,
     Spacer,
@@ -23,7 +23,7 @@ from backend.application.interfaces.gateways.order_gateway import (
     OrderReadModel,
 )
 from backend.application.interfaces.pdf_generator import OrdersPDFGenerator
-from backend.application.vars import TimePreference
+from backend.application.vars import PaymentMethod, TimePreference
 
 FONT_DIR = Path(__file__).parent / "fonts"
 
@@ -115,12 +115,6 @@ class ReportLabOrdersPDFGenerator(OrdersPDFGenerator):
         )
         elements.append(title)
 
-        subtitle = Paragraph(
-            f"Магазин: {shop_name} | Всього замовлень: {len(orders)}",
-            self._styles["normal"],
-        )
-        elements.extend((subtitle, Spacer(1, 5 * mm)))
-
         if not orders:
             no_orders = Paragraph(
                 "Немає замовлень на цю дату",
@@ -128,9 +122,6 @@ class ReportLabOrdersPDFGenerator(OrdersPDFGenerator):
             )
             elements.append(no_orders)
         else:
-            # Summary table at the beginning
-            elements.extend(self._build_summary_section(orders, delivery_date))
-
             # Group by time preference
             first_half = [
                 o
@@ -155,12 +146,19 @@ class ReportLabOrdersPDFGenerator(OrdersPDFGenerator):
                 )
                 elements.extend(self._build_orders_section(second_half))
 
+            # Summary on new page at the end
+            elements.append(PageBreak())
+            elements.extend(
+                self._build_summary_section(orders, shop_name, delivery_date)
+            )
+
         doc.build(elements)
         buffer.seek(0)
         return buffer.read()
 
     def _build_orders_section(self, orders: list[OrderReadModel]) -> list:
-        elements: list = []
+        if not orders:
+            return []
 
         font_name = (
             "DejaVu"
@@ -168,126 +166,172 @@ class ReportLabOrdersPDFGenerator(OrdersPDFGenerator):
             else "Helvetica"
         )
 
-        for idx, order in enumerate(orders, 1):
-            # Build order elements to keep together
-            order_elements: list = []
-
-            # Order header
-            order_elements.append(
-                Paragraph(
-                    f"<b>#{idx}. {order.client_name}</b>",
-                    self._styles["normal"],
-                )
-            )
-
-            # Address
-            addr = order.delivery_address
-            address_parts = [addr.street, f"буд. {addr.house}"]
-            if addr.apartment:
-                address_parts.append(f"кв. {addr.apartment}")
-            if addr.entrance:
-                address_parts.append(f"під. {addr.entrance}")
-            if addr.floor:
-                address_parts.append(f"пов. {addr.floor}")
-            if addr.intercom:
-                address_parts.append(f"домофон: {addr.intercom}")
-
-            address_str = ", ".join(address_parts)
-            order_elements.extend((
-                Paragraph(f"Адреса: {address_str}", self._styles["small"]),
-                Paragraph(
-                    f"Телефон: {order.delivery_phone}", self._styles["small"]
-                ),
-            ))
-
-            # Comment
-            if order.comment:
-                order_elements.append(
-                    Paragraph(
-                        f"Коментар: {order.comment}",
-                        self._styles["small"],
-                    )
-                )
-
-            # Items table
-            items_data = [["Товар", "К-сть", "Ціна", "Сума"]]
-            total = 0
-            for item in order.items:
-                item_total = item.quantity * item.price_per_item
-                total += item_total
-                items_data.append([
-                    item.name,
-                    str(item.quantity),
-                    f"{item.price_per_item} грн",
-                    f"{item_total} грн",
-                ])
-            items_data.append(["", "", "Разом:", f"{total} грн"])
-
-            table = Table(
-                items_data,
-                colWidths=[90 * mm, 20 * mm, 30 * mm, 30 * mm],
-            )
-            table.setStyle(
-                TableStyle([
-                    ("FONTNAME", (0, 0), (-1, -1), font_name),
-                    ("FONTSIZE", (0, 0), (-1, -1), 9),
-                    ("BACKGROUND", (0, 0), (-1, 0), colors.lightgrey),
-                    ("FONTNAME", (0, 0), (-1, 0), font_name),
-                    ("ALIGN", (1, 0), (-1, -1), "CENTER"),
-                    ("ALIGN", (0, 0), (0, -1), "LEFT"),
-                    ("GRID", (0, 0), (-1, -2), 0.5, colors.grey),
-                    ("LINEABOVE", (2, -1), (-1, -1), 1, colors.black),
-                    ("FONTNAME", (2, -1), (-1, -1), font_name),
-                ])
-            )
-
-            order_elements.extend((
-                Spacer(1, 2 * mm),
-                table,
-            ))
-
-            # Wrap entire order in KeepTogether to prevent page breaks
-            elements.extend((KeepTogether(order_elements), Spacer(1, 5 * mm)))
-
-        return elements
-
-    def _build_summary_section(
-        self, orders: list[OrderReadModel], delivery_date: date
-    ) -> list:
-        elements: list = []
-
-        date_str = delivery_date.strftime("%d.%m.%Y")
-        elements.append(
-            Paragraph(f"Звіт замовлень на {date_str}", self._styles["heading"])
+        cell_style = ParagraphStyle(
+            "CellStyle",
+            fontName=font_name,
+            fontSize=8,
+            leading=10,
         )
 
-        # Aggregate items across all orders
+        payment_labels = {
+            PaymentMethod.CASH: "Готівка",
+            PaymentMethod.BANK_TRANSFER: "На рахунок",
+            PaymentMethod.OTHER: "Інше",
+        }
+
+        # Build table data (reportlab Table accepts both str and Paragraph)
+        table_data: list = [["Клієнт", "Деталі", "Товари", "Сума", "Оплата"]]
+
+        for order in orders:
+            # Column 1: Client (custom_id with # or name)
+            if order.client_custom_id:
+                client_cell = Paragraph(
+                    f"<b>#{order.client_custom_id}</b>", cell_style
+                )
+            else:
+                client_cell = Paragraph(
+                    f"<b>{order.client_name}</b>", cell_style
+                )
+
+            # Column 2: Details (address + phone + comments)
+            addr = order.delivery_address
+            details_lines = [f"{addr.street}, {addr.house}"]
+
+            # Second line: apartment details
+            apt_parts = []
+            if addr.apartment:
+                apt_parts.append(f"кв. {addr.apartment}")
+            if addr.entrance:
+                apt_parts.append(f"під. {addr.entrance}")
+            if addr.floor:
+                apt_parts.append(f"пов. {addr.floor}")
+            if addr.intercom:
+                apt_parts.append(f"домофон: {addr.intercom}")
+            if apt_parts:
+                details_lines.append(", ".join(apt_parts))
+            if addr.comment:
+                details_lines.append(f"Нотатка: {addr.comment}")
+
+            # Empty line for separation
+            details_lines.extend(["", f"Телефон: {order.delivery_phone}"])
+            if order.comment:
+                details_lines.append(f"Коментар: {order.comment}")
+
+            details_cell = Paragraph("<br/>".join(details_lines), cell_style)
+
+            # Column 3: Products
+            products_lines = [
+                f"{item.name} × {item.quantity}" for item in order.items
+            ]
+            products_cell = Paragraph("<br/>".join(products_lines), cell_style)
+
+            # Column 4: Sum
+            total = sum(
+                item.quantity * item.price_per_item for item in order.items
+            )
+            sum_cell = Paragraph(f"<b>{total} грн</b>", cell_style)
+
+            # Column 5: Payment
+            payment_cell = Paragraph(
+                payment_labels.get(order.payment_method, ""), cell_style
+            )
+
+            table_data.append([
+                client_cell,
+                details_cell,
+                products_cell,
+                sum_cell,
+                payment_cell,
+            ])
+
+        table = Table(
+            table_data,
+            colWidths=[30 * mm, 60 * mm, 45 * mm, 22 * mm, 23 * mm],
+        )
+        table.setStyle(
+            TableStyle([
+                ("FONTNAME", (0, 0), (-1, 0), font_name),
+                ("FONTSIZE", (0, 0), (-1, 0), 9),
+                ("BACKGROUND", (0, 0), (-1, 0), colors.lightgrey),
+                ("ALIGN", (0, 0), (-1, 0), "CENTER"),
+                ("ALIGN", (3, 1), (4, -1), "CENTER"),
+                ("VALIGN", (0, 0), (-1, -1), "TOP"),
+                ("GRID", (0, 0), (-1, -1), 0.5, colors.grey),
+                ("TOPPADDING", (0, 0), (-1, -1), 3),
+                ("BOTTOMPADDING", (0, 0), (-1, -1), 3),
+                ("LEFTPADDING", (0, 0), (-1, -1), 3),
+                ("RIGHTPADDING", (0, 0), (-1, -1), 3),
+            ])
+        )
+
+        return [table, Spacer(1, 5 * mm)]
+
+    def _build_summary_section(
+        self, orders: list[OrderReadModel], shop_name: str, delivery_date: date
+    ) -> list:
+        # Title
+        date_str = delivery_date.strftime("%d.%m.%Y")
+        title = Paragraph(
+            f"Загальна статистика {shop_name} за {date_str}",
+            self._styles["title"],
+        )
+
+        # Aggregate items across all orders with payment method breakdown
         items_summary: dict[str, dict] = defaultdict(
-            lambda: {"quantity": 0, "total": Decimal(0)}
+            lambda: {
+                "quantity": 0,
+                "total": Decimal(0),
+                PaymentMethod.CASH: Decimal(0),
+                PaymentMethod.BANK_TRANSFER: Decimal(0),
+                PaymentMethod.OTHER: Decimal(0),
+            }
         )
 
         for order in orders:
             for item in order.items:
+                item_total = item.quantity * item.price_per_item
                 items_summary[item.name]["quantity"] += item.quantity
-                items_summary[item.name]["total"] += (
-                    item.quantity * item.price_per_item
-                )
+                items_summary[item.name]["total"] += item_total
+                items_summary[item.name][order.payment_method] += item_total
 
-        # Build summary table
-        summary_data = [["Товар", "Загальна к-сть", "Загальна сума"]]
+        # Build summary table with payment method columns
+        summary_data = [
+            [
+                "Товар",
+                "К-сть",
+                "Готівка",
+                "На рахунок",
+                "Інше",
+                "Разом",
+            ]
+        ]
         grand_total = Decimal(0)
+        grand_total_quantity = 0
+        grand_cash = Decimal(0)
+        grand_bank = Decimal(0)
+        grand_other = Decimal(0)
 
         for name, data in sorted(items_summary.items()):
             summary_data.append([
                 name,
                 str(data["quantity"]),
+                f"{data[PaymentMethod.CASH]} грн",
+                f"{data[PaymentMethod.BANK_TRANSFER]} грн",
+                f"{data[PaymentMethod.OTHER]} грн",
                 f"{data['total']} грн",
             ])
             grand_total += data["total"]
+            grand_total_quantity += data["quantity"]
+            grand_cash += data[PaymentMethod.CASH]
+            grand_bank += data[PaymentMethod.BANK_TRANSFER]
+            grand_other += data[PaymentMethod.OTHER]
 
         summary_data.append([
             f"Всього замовлень: {len(orders)}",
-            "",
+            str(grand_total_quantity),
+            f"{grand_cash} грн",
+            f"{grand_bank} грн",
+            f"{grand_other} грн",
             f"{grand_total} грн",
         ])
 
@@ -299,12 +343,12 @@ class ReportLabOrdersPDFGenerator(OrdersPDFGenerator):
 
         summary_table = Table(
             summary_data,
-            colWidths=[100 * mm, 35 * mm, 35 * mm],
+            colWidths=[60 * mm, 20 * mm, 28 * mm, 28 * mm, 22 * mm, 28 * mm],
         )
         summary_table.setStyle(
             TableStyle([
                 ("FONTNAME", (0, 0), (-1, -1), font_name),
-                ("FONTSIZE", (0, 0), (-1, -1), 10),
+                ("FONTSIZE", (0, 0), (-1, -1), 9),
                 ("BACKGROUND", (0, 0), (-1, 0), colors.HexColor("#4472C4")),
                 ("TEXTCOLOR", (0, 0), (-1, 0), colors.white),
                 ("ALIGN", (1, 0), (-1, -1), "CENTER"),
@@ -316,11 +360,4 @@ class ReportLabOrdersPDFGenerator(OrdersPDFGenerator):
             ])
         )
 
-        # Wrap summary in KeepTogether to prevent page breaks
-        return [
-            KeepTogether([
-                elements[0],  # heading
-                Spacer(1, 3 * mm),
-                summary_table,
-            ])
-        ]
+        return [title, Spacer(1, 5 * mm), summary_table]

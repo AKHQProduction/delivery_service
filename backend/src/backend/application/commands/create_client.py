@@ -1,10 +1,7 @@
 import logging
 from dataclasses import dataclass, field
 
-from backend.application.errors import (
-    AccessDeniedError,
-    PhoneNumberAlreadyExistsError,
-)
+from backend.application.errors import AccessDeniedError
 from backend.application.interfaces import IdentityProvider, TransactionManager
 from backend.application.interfaces.gateways.client_gateway import (
     AddressDTO,
@@ -13,7 +10,7 @@ from backend.application.interfaces.gateways.client_gateway import (
     PhoneDTO,
 )
 from backend.application.policies.access import can_shop_manage_policy
-from backend.application.vars import AddressType, ClientId
+from backend.application.vars import ClientId
 
 logger = logging.getLogger(__name__)
 
@@ -22,11 +19,11 @@ logger = logging.getLogger(__name__)
 class Address:
     street: str
     house: str
-    address_type: AddressType
     apartment: str | None = None
     entrance: str | None = None
     floor: str | None = None
     intercom: str | None = None
+    comment: str | None = None
 
 
 @dataclass(frozen=True)
@@ -69,18 +66,6 @@ class CreateClientCommandHandler:
             current_user.shop_id,
         )
 
-        phone_numbers = [phone.number for phone in command.phones]
-        existing_numbers = await self._client_gateway.check_existing_numbers(
-            phone_numbers
-        )
-        if existing_numbers:
-            duplicate = next(iter(existing_numbers))
-            logger.warning(
-                "Phone number %s already exists for another client",
-                duplicate,
-            )
-            raise PhoneNumberAlreadyExistsError(duplicate)
-
         phones_dto = [
             PhoneDTO(number=phone.number, is_primary=(idx == 0))
             for idx, phone in enumerate(command.phones)
@@ -90,11 +75,11 @@ class CreateClientCommandHandler:
             AddressDTO(
                 street=address.street,
                 house=address.house,
-                address_type=address.address_type,
                 apartment=address.apartment,
                 entrance=address.entrance,
                 floor=address.floor,
                 intercom=address.intercom,
+                comment=address.comment,
                 is_primary=(idx == 0),
             )
             for idx, address in enumerate(command.addresses)

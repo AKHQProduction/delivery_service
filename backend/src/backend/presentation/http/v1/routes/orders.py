@@ -3,7 +3,7 @@ from typing import Annotated
 
 from dishka import FromDishka
 from dishka.integrations.fastapi import DishkaRoute
-from fastapi import APIRouter, Body, Depends, status
+from fastapi import APIRouter, Body, Depends, HTTPException, status
 from fastapi.openapi.models import Example
 from fastapi.responses import Response
 from fastapi.security import HTTPBearer
@@ -21,13 +21,15 @@ from backend.application.commands.edit_order import (
     UpdateOrderCommand,
     UpdateOrderCommandHandler,
 )
+from backend.application.commands.generate_order_export_pdf import (
+    GenerateOrderExportPDFCommand,
+    GenerateOrderExportPDFCommandHandler,
+    GenerateOrderExportPDFResult,
+)
+from backend.application.interfaces import PDFStorage
 from backend.application.interfaces.gateways import Pagination
 from backend.application.interfaces.gateways.order_gateway import (
     OrderReadModel,
-)
-from backend.application.queries.export_orders_pdf import (
-    ExportOrdersPDFQuery,
-    ExportOrdersPDFQueryHandler,
 )
 from backend.application.queries.get_order import GetOrderQueryHandler
 from backend.application.queries.get_order_stats import (
@@ -39,7 +41,7 @@ from backend.application.queries.get_orders import (
     GetOrdersQuery,
     GetOrdersQueryHandler,
 )
-from backend.application.vars import OrderId, TimePreference
+from backend.application.vars import OrderId, PaymentMethod, TimePreference
 from backend.presentation.http.v1.schemas.error import ErrorSchema
 from backend.presentation.http.v1.schemas.order import UpdateOrderSchema
 
@@ -79,6 +81,7 @@ async def create_new_order(
                                 "quantity": 2,
                             }
                         ],
+                        "payment_method": PaymentMethod.CASH,
                         "comment": (
                             "Доставити до 12:00, передзвоніть за 30 хвилин"
                         ),
@@ -114,6 +117,7 @@ async def create_new_order(
                                 "quantity": 50,
                             },
                         ],
+                        "payment_method": PaymentMethod.BANK_TRANSFER,
                         "comment": "Доставка після 14:00, домофон не працює",
                     },
                 ),
@@ -135,6 +139,7 @@ async def create_new_order(
                                 "quantity": 1,
                             }
                         ],
+                        "payment_method": PaymentMethod.OTHER,
                     },
                 ),
             }
@@ -272,6 +277,12 @@ async def update_order(
                         "comment": "EMPTY",
                     },
                 ),
+                "change_payment_method": Example(
+                    description="Change payment method",
+                    value={
+                        "payment_method": PaymentMethod.BANK_TRANSFER,
+                    },
+                ),
                 "full_update": Example(
                     description="Full order update with all fields",
                     value={
@@ -283,6 +294,7 @@ async def update_order(
                         "phone_id": 1,
                         "address_id": 2,
                         "comment": "Терміново",
+                        "payment_method": PaymentMethod.CASH,
                         "items": [
                             {"id": 1, "quantity": 10},
                             {
@@ -319,6 +331,7 @@ async def update_order(
         address_id=body.address_id,
         phone_id=body.phone_id,
         comment=body.comment,
+        payment_method=body.payment_method,
         items=items,
     )
     await handler.handle(command)
@@ -382,8 +395,8 @@ async def get_order_stats(
     return await handler.handle(GetOrderStatsQuery(date=delivery_date))
 
 
-@router.get(
-    "/export/pdf",
+@router.post(
+    "/export/pdf/generate",
     status_code=status.HTTP_200_OK,
     responses={
         status.HTTP_401_UNAUTHORIZED: {"model": ErrorSchema},
@@ -392,13 +405,34 @@ async def get_order_stats(
     },
     dependencies=[Depends(HTTPBearer())],
 )
-async def export_orders_pdf(
+async def generate_orders_pdf(
     delivery_date: date,
-    handler: FromDishka[ExportOrdersPDFQueryHandler],
+    handler: FromDishka[GenerateOrderExportPDFCommandHandler],
+) -> GenerateOrderExportPDFResult:
+    return await handler.handle(
+        GenerateOrderExportPDFCommand(delivery_date=delivery_date)
+    )
+
+
+@router.get(
+    "/export/pdf/download/{file_id}",
+    status_code=status.HTTP_200_OK,
+    responses={
+        status.HTTP_404_NOT_FOUND: {"model": ErrorSchema},
+    },
+)
+async def download_orders_pdf(
+    file_id: str,
+    pdf_storage: FromDishka[PDFStorage],
 ) -> Response:
-    query = ExportOrdersPDFQuery(delivery_date=delivery_date)
-    pdf_bytes = await handler.handle(query)
-    filename = f"orders_{delivery_date.isoformat()}.pdf"
+    result = await pdf_storage.get(file_id)
+    if not result:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="File not found or expired",
+        )
+
+    pdf_bytes, filename = result
     return Response(
         content=pdf_bytes,
         media_type="application/pdf",

@@ -8,7 +8,7 @@ from httpx import AsyncClient
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from backend.application.vars import AddressType, ShopRole
+from backend.application.vars import ShopRole
 from backend.infrastructure.persistence.tables.clients import (
     Client,
     ClientAddress,
@@ -39,7 +39,6 @@ async def test_create_client_with_apartment(
             {
                 "street": "Хрещатик",
                 "house": "10",
-                "address_type": AddressType.APARTMENT,
                 "apartment": "5",
                 "entrance": "1",
                 "floor": "2",
@@ -83,7 +82,7 @@ async def test_create_client_with_apartment(
     assert addresses[0].street == "Хрещатик"
     assert addresses[0].house == "10"
     assert addresses[0].apartment == "5"
-    assert addresses[0].address_type == AddressType.APARTMENT.value
+    assert addresses[0].comment is None
     assert addresses[0].is_primary is True
 
 
@@ -107,7 +106,7 @@ async def test_create_client_with_private_house(
             {
                 "street": "Заміська",
                 "house": "15А",
-                "address_type": AddressType.PRIVATE_HOUSE,
+                "comment": "Private house",
             }
         ],
         "custom_id": "HOUSE-001",
@@ -136,7 +135,7 @@ async def test_create_client_with_private_house(
     assert len(addresses) == 1
     assert addresses[0].street == "Заміська"
     assert addresses[0].house == "15А"
-    assert addresses[0].address_type == AddressType.PRIVATE_HOUSE.value
+    assert addresses[0].comment == "Private house"
     assert addresses[0].apartment is None
     assert addresses[0].is_primary is True
 
@@ -165,13 +164,12 @@ async def test_create_client_with_multiple_phones_and_addresses(
             {
                 "street": "Грушевського",
                 "house": "5",
-                "address_type": AddressType.APARTMENT,
                 "apartment": "10",
             },
             {
                 "street": "Садова",
                 "house": "22Б",
-                "address_type": AddressType.PRIVATE_HOUSE,
+                "comment": "Private house",
             },
         ],
     }
@@ -321,7 +319,6 @@ async def test_get_client_by_id(
             {
                 "street": "Хрещатик",
                 "house": "10",
-                "address_type": AddressType.APARTMENT.value,
                 "apartment": "5",
             }
         ],
@@ -681,7 +678,6 @@ async def test_edit_client_full_name(
             {
                 "street": "Оригінальна вулиця",
                 "house": "1",
-                "address_type": AddressType.APARTMENT.value,
                 "apartment": "10",
             }
         ],
@@ -814,7 +810,6 @@ async def test_edit_client_addresses(
             {
                 "street": "Стара вулиця",
                 "house": "1",
-                "address_type": AddressType.APARTMENT.value,
                 "apartment": "10",
             }
         ],
@@ -828,13 +823,12 @@ async def test_edit_client_addresses(
             {
                 "street": "Нова вулиця",
                 "house": "100",
-                "address_type": AddressType.PRIVATE_HOUSE,
+                "comment": "Private house",
                 "is_primary": True,
             },
             {
                 "street": "Ще одна вулиця",
                 "house": "200",
-                "address_type": AddressType.APARTMENT,
                 "apartment": "50",
                 "is_primary": False,
             },
@@ -858,7 +852,7 @@ async def test_edit_client_addresses(
     assert len(addresses) == 2
     assert addresses[0].street == "Нова вулиця"
     assert addresses[0].house == "100"
-    assert addresses[0].address_type == AddressType.PRIVATE_HOUSE.value
+    assert addresses[0].comment == "Private house"
     assert addresses[0].is_primary is True
     assert addresses[1].street == "Ще одна вулиця"
     assert addresses[1].is_primary is False
@@ -884,7 +878,6 @@ async def test_edit_client_all_fields(
             {
                 "street": "Стара вулиця",
                 "house": "1",
-                "address_type": AddressType.APARTMENT.value,
                 "apartment": "10",
             }
         ],
@@ -901,7 +894,7 @@ async def test_edit_client_all_fields(
             {
                 "street": "Повністю нова вулиця",
                 "house": "999",
-                "address_type": AddressType.PRIVATE_HOUSE,
+                "comment": "Private house",
                 "is_primary": True,
             }
         ],
@@ -992,7 +985,6 @@ async def test_edit_client_clear_addresses(
             {
                 "street": "Вулиця",
                 "house": "1",
-                "address_type": AddressType.APARTMENT.value,
                 "apartment": "10",
             }
         ],
@@ -1088,7 +1080,7 @@ async def test_edit_client_as_courier_forbidden(
 
 
 @pytest.mark.asyncio()
-async def test_create_client_with_duplicate_phone_number(
+async def test_create_client_with_duplicate_phone_number_allowed(
     http_client: AsyncClient,
     session: AsyncSession,
     customer_headers: Callable[[int], dict[str, Any]],
@@ -1115,7 +1107,7 @@ async def test_create_client_with_duplicate_phone_number(
 
     json2 = {
         "full_name": "Другий Клієнт",
-        "phones": [{"number": "+380991234567"}],  # Same phone!
+        "phones": [{"number": "+380991234567"}],  # Same phone - allowed
         "addresses": [],
     }
 
@@ -1123,12 +1115,12 @@ async def test_create_client_with_duplicate_phone_number(
         url=BASE_URL, headers=headers, json=json2
     )
 
-    assert response2.status_code == status.HTTP_409_CONFLICT
-    assert "+380991234567" in response2.json()["detail"]
+    assert response2.status_code == status.HTTP_201_CREATED
+    assert response2.json() is not None  # Returns ClientId (UUID)
 
 
 @pytest.mark.asyncio()
-async def test_edit_client_with_duplicate_phone_number_integration(
+async def test_edit_client_with_duplicate_phone_number_allowed(
     http_client: AsyncClient,
     session: AsyncSession,
     customer_headers: Callable[[int], dict[str, Any]],
@@ -1155,14 +1147,13 @@ async def test_edit_client_with_duplicate_phone_number_integration(
 
     json = {
         "phones": [{"number": "+380509999999", "is_primary": True}]
-    }  # Same as client1!
+    }  # Same as client1 - allowed
 
     response = await http_client.patch(
         url=f"{BASE_URL}/{client2_id}", headers=headers, json=json
     )
 
-    assert response.status_code == status.HTTP_409_CONFLICT
-    assert "+380509999999" in response.json()["detail"]
+    assert response.status_code == status.HTTP_200_OK
 
 
 @pytest.mark.asyncio()

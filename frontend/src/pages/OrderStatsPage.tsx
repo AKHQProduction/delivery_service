@@ -1,9 +1,14 @@
 import { useEffect, useState } from "react";
 import { PageHeader } from "../components/ui/pageHeader";
 import { getOrderStats } from "../services/api/ordersApi";
+import { paymentMap } from "../utils/dataMap";
 
 interface OrderStats {
   total_orders: number;
+  payment_method_stats: {
+    method: string;
+    orders_sum: number;
+  }[];
   total_orders_in_first_half: number;
   total_orders_in_second_half: number;
   total_orders_sum: number;
@@ -66,61 +71,102 @@ export const OrdersStatsPage = () => {
         </div>
       ) : stats ? (
         <div className="px-6 space-y-4 pb-6">
-          <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-200">
-            <div className="flex items-center gap-4">
-              <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center shrink-0">
-                <svg
-                  className="w-7 h-7 text-white"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"
-                  />
-                </svg>
-              </div>
-              <div className="flex-1">
-                <p className="text-sm font-medium text-gray-500 uppercase tracking-wide">
-                  Всього замовлень
+          {/* Summary Block - Combined */}
+          <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-200 hover:shadow-md transition-shadow">
+            <h3 className="text-base font-bold text-gray-900 mb-4 flex items-center gap-2">
+              <svg
+                className="w-5 h-5 text-gray-600"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
+                />
+              </svg>
+              Загальна статистика
+            </h3>
+            <div className="grid grid-cols-2 gap-4">
+              {/* Total Orders */}
+              <div className="flex flex-col items-center text-center p-4 bg-gradient-to-br from-indigo-50 to-purple-50 rounded-xl border border-indigo-100">
+                <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center mb-3">
+                  <svg
+                    className="w-6 h-6 text-white"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"
+                    />
+                  </svg>
+                </div>
+                <p className="text-xs font-medium text-gray-500 uppercase tracking-wide mb-1">
+                  Замовлень
                 </p>
-                <p className="text-4xl font-bold text-gray-900 mt-1">
+                <p className="text-3xl font-bold text-gray-900">
                   {stats.total_orders}
                 </p>
               </div>
-            </div>
-          </div>
 
-          <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-200">
-            <div className="flex items-center gap-4">
-              <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-emerald-500 to-teal-600 flex items-center justify-center shrink-0">
-                <svg
-                  className="w-7 h-7 text-white"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
-                  />
-                </svg>
-              </div>
-              <div className="flex-1">
-                <p className="text-sm font-medium text-gray-500 uppercase tracking-wide">
-                  Загальна сума
+              {/* Total Sum */}
+              <div className="flex flex-col items-center text-center p-4 bg-gradient-to-br from-emerald-50 to-teal-50 rounded-xl border border-emerald-100">
+                <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-emerald-500 to-teal-600 flex items-center justify-center mb-3">
+                  <svg
+                    className="w-6 h-6 text-white"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+                    />
+                  </svg>
+                </div>
+                <p className="text-xs font-medium text-gray-500 uppercase tracking-wide mb-1">
+                  Сума
                 </p>
-                <p className="text-4xl font-bold text-emerald-600 mt-1">
-                  ₴{stats.total_orders_sum}
+                <p className="text-3xl font-bold text-emerald-600">
+                  {stats.total_orders_sum}₴
                 </p>
-                <p className="text-xs text-gray-400 mt-1">всіх замовлень</p>
               </div>
             </div>
+
+            {/* Payment Methods */}
+            {stats.payment_method_stats &&
+              stats.payment_method_stats.length > 0 && (
+                <div className="mt-4 pt-4 border-t border-gray-100">
+                  <p className="text-xs font-semibold text-gray-600 uppercase tracking-wide mb-3">
+                    Методи оплати
+                  </p>
+                  <div className="grid grid-cols-2 gap-3">
+                    {stats.payment_method_stats.map((payment, index) => {
+                      return (
+                        <div
+                          key={`${payment.method}-${index}`}
+                          className="flex flex-col items-center p-3 bg-gray-50 rounded-lg border border-gray-100"
+                        >
+                          <p className="text-xs text-gray-600 mb-1">
+                            {paymentMap[payment.method]}
+                          </p>
+                          <p className="text-lg font-bold text-gray-900">
+                            {payment.orders_sum}₴
+                          </p>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+              )}
           </div>
 
           <div className="bg-white rounded-2xl p-5 shadow-sm border border-gray-200">
