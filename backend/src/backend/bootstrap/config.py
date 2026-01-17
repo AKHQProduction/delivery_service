@@ -55,6 +55,17 @@ class WebhookConfig(BaseModel):
     webhook_port: int = Field(alias="WEBHOOK_PORT")
 
 
+class OTelConfig(BaseModel):
+    enabled: bool = Field(alias="OTEL_ENABLED", default=True)
+    service_name: str = Field(
+        alias="OTEL_SERVICE_NAME", default="water-delivery"
+    )
+    exporter_endpoint: str = Field(
+        alias="OTEL_EXPORTER_OTLP_ENDPOINT",
+        default="http://otel-collector:4317",
+    )
+
+
 class Config(BaseModel):
     def __init__(self) -> None:
         load_dotenv(
@@ -81,4 +92,8 @@ class Config(BaseModel):
 
     webhook_config: WebhookConfig = Field(
         default_factory=lambda: WebhookConfig.model_validate(env)
+    )
+
+    otel_config: OTelConfig = Field(
+        default_factory=lambda: OTelConfig.model_validate(env)
     )

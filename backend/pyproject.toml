@@ -21,6 +21,13 @@ dependencies = [
     "sqlalchemy[asyncio]>=2.0.44",
     "uuid-utils>=0.11.1",
     "uvicorn>=0.38.0",
+    "opentelemetry-api>=1.29.0",
+    "opentelemetry-sdk>=1.29.0",
+    "opentelemetry-exporter-otlp-proto-grpc>=1.29.0",
+    "opentelemetry-instrumentation-fastapi>=0.50b0",
+    "opentelemetry-instrumentation-sqlalchemy>=0.50b0",
+    "opentelemetry-instrumentation-redis>=0.50b0",
+    "opentelemetry-instrumentation-logging>=0.50b0",
 ]
 
 [project.scripts]

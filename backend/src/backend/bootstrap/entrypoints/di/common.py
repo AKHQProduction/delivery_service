@@ -22,6 +22,7 @@ from backend.application.interfaces import TransactionManager
 from backend.bootstrap.config import (
     AppConfig,
     Config,
+    OTelConfig,
     PostgresConfig,
     RedisConfig,
     TelegramConfig,
@@ -64,6 +65,10 @@ class ConfigProvider(Provider):
     @provide
     def webhook_config(self, config: Config) -> WebhookConfig:
         return config.webhook_config
+
+    @provide
+    def otel_config(self, config: Config) -> OTelConfig:
+        return config.otel_config
 
 
 class PersistenceProvider(Provider):
