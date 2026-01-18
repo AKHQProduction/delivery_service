@@ -319,19 +319,72 @@ GET /api/v1/orders                    [2.1s]
 
 ---
 
-## Запуск на сервере
+## Запуск
 
-### Стандартный запуск
+### Разработка (без мониторинга)
 
 ```bash
 docker compose up -d
 ```
 
-### С node_exporter (только Linux)
+При этом в `.env` должно быть `OTEL_ENABLED=false`.
+
+### С мониторингом
 
 ```bash
-docker compose --profile linux up -d
+docker compose --profile monitoring up -d
 ```
+
+При этом в `.env` должно быть `OTEL_ENABLED=true`.
+
+### С мониторингом + node_exporter (только Linux)
+
+```bash
+docker compose --profile monitoring --profile linux up -d
+```
+
+### Production
+
+```bash
+docker compose -f docker-compose-prod.yml up -d
+```
+
+При этом в `.env` должно быть:
+```
+OTEL_ENABLED=true
+GRAFANA_ADMIN_PASSWORD=secure_password_here
+GRAFANA_ROOT_URL=https://yourdomain.com/grafana
+```
+
+---
+
+## Настройка Nginx для Grafana (Production)
+
+Добавьте в существующий server block:
+
+```nginx
+location /grafana/ {
+    proxy_pass http://127.0.0.1:3000/;
+    proxy_set_header Host $host;
+    proxy_set_header X-Real-IP $remote_addr;
+    proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+    proxy_set_header X-Forwarded-Proto $scheme;
+
+    # WebSocket для live dashboards
+    proxy_http_version 1.1;
+    proxy_set_header Upgrade $http_upgrade;
+    proxy_set_header Connection "upgrade";
+}
+```
+
+После изменения конфига:
+
+```bash
+sudo nginx -t
+sudo systemctl reload nginx
+```
+
+Grafana будет доступна по адресу `https://yourdomain.com/grafana`
 
 ---
 
@@ -340,7 +393,7 @@ docker compose --profile linux up -d
 ### Вариант 1: Через Docker (уже настроено)
 
 ```bash
-docker compose --profile linux up -d
+docker compose --profile monitoring --profile linux up -d
 ```
 
 ### Вариант 2: Нативная установка (рекомендуется для прода)

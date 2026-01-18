@@ -124,7 +124,167 @@ services:
       - api
       - admin_bot
 
+
+  otel-collector:
+    container_name: "water_delivery-otel-collector"
+    image: otel/opentelemetry-collector-contrib:0.117.0
+    command: ["--config=/etc/otel-collector-config.yaml"]
+    volumes:
+      - ./configs/otel/otel-collector-config-prod.yaml:/etc/otel-collector-config.yaml:ro
+    restart: unless-stopped
+    deploy:
+      resources:
+        limits:
+          cpus: '0.5'
+          memory: 512M
+        reservations:
+          memory: 128M
+
+  postgres_exporter:
+    container_name: "water_delivery-postgres_exporter"
+    image: prometheuscommunity/postgres-exporter:latest
+    environment:
+      DATA_SOURCE_NAME: "postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres:${POSTGRES_PORT}/${POSTGRES_DB}?sslmode=disable"
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+    deploy:
+      resources:
+        limits:
+          cpus: '0.1'
+          memory: 128M
+        reservations:
+          memory: 32M
+
+  redis_exporter:
+    container_name: "water_delivery-redis_exporter"
+    image: oliver006/redis_exporter:latest
+    environment:
+      REDIS_ADDR: "redis:${REDIS_PORT}"
+      REDIS_PASSWORD: "${REDIS_PASSWORD}"
+    restart: unless-stopped
+    depends_on:
+      redis:
+        condition: service_healthy
+    deploy:
+      resources:
+        limits:
+          cpus: '0.1'
+          memory: 128M
+        reservations:
+          memory: 32M
+
+  cadvisor:
+    container_name: "water_delivery-cadvisor"
+    image: gcr.io/cadvisor/cadvisor:v0.49.1
+    privileged: true
+    volumes:
+      - /:/rootfs:ro
+      - /var/run:/var/run:ro
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+      - /sys:/sys:ro
+      - /var/lib/docker/:/var/lib/docker:ro
+      - /dev/disk/:/dev/disk:ro
+    restart: unless-stopped
+    deploy:
+      resources:
+        limits:
+          cpus: '0.25'
+          memory: 256M
+        reservations:
+          memory: 64M
+
+  loki:
+    container_name: "water_delivery-loki"
+    image: grafana/loki:3.3.2
+    command: ["-config.file=/etc/loki/loki-config.yaml"]
+    volumes:
+      - ./configs/loki/loki-config.yaml:/etc/loki/loki-config.yaml:ro
+      - loki_data:/loki
+    restart: unless-stopped
+    deploy:
+      resources:
+        limits:
+          cpus: '0.5'
+          memory: 512M
+        reservations:
+          memory: 128M
+
+  tempo:
+    container_name: "water_delivery-tempo"
+    image: grafana/tempo:2.6.1
+    command: ["-config.file=/etc/tempo/tempo-config.yaml"]
+    volumes:
+      - ./configs/tempo/tempo-config.yaml:/etc/tempo/tempo-config.yaml:ro
+      - tempo_data:/var/tempo
+    restart: unless-stopped
+    deploy:
+      resources:
+        limits:
+          cpus: '0.5'
+          memory: 512M
+        reservations:
+          memory: 128M
+
+  victoria_metrics:
+    container_name: "water_delivery-victoria_metrics"
+    image: victoriametrics/victoria-metrics:v1.106.1
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    command:
+      - "--storageDataPath=/storage"
+      - "--httpListenAddr=:8428"
+      - "--retentionPeriod=1d"
+      - "--promscrape.config=/etc/prometheus/prometheus.yml"
+    volumes:
+      - victoria_metrics_data:/storage
+      - ./configs/vm/scrape.yml:/etc/prometheus/prometheus.yml:ro
+    restart: unless-stopped
+    depends_on:
+      - postgres_exporter
+      - redis_exporter
+      - cadvisor
+    deploy:
+      resources:
+        limits:
+          cpus: '0.5'
+          memory: 1024M
+        reservations:
+          memory: 256M
+
+  grafana:
+    container_name: "water_delivery-grafana"
+    image: grafana/grafana:11.4.0
+    environment:
+      - GF_SECURITY_ADMIN_USER=${GRAFANA_ADMIN_USER:-admin}
+      - GF_SECURITY_ADMIN_PASSWORD=${GRAFANA_ADMIN_PASSWORD}
+      - GF_USERS_ALLOW_SIGN_UP=false
+      - GF_SERVER_ROOT_URL=${GRAFANA_ROOT_URL:-http://localhost:3000}
+    volumes:
+      - grafana_data:/var/lib/grafana
+      - ./configs/grafana/provisioning/datasources:/etc/grafana/provisioning/datasources:ro
+      - ./configs/grafana/provisioning/dashboards:/etc/grafana/provisioning/dashboards:ro
+    ports:
+      - "${GRAFANA_PORT}:3000"
+    restart: unless-stopped
+    depends_on:
+      - victoria_metrics
+      - loki
+      - tempo
+    deploy:
+      resources:
+        limits:
+          cpus: '0.5'
+          memory: 512M
+        reservations:
+          memory: 128M
+
 volumes:
   node_modules_volumes:
   redis_data:
   postgres_data:
+  grafana_data:
+  victoria_metrics_data:
+  loki_data:
+  tempo_data:

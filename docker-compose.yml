@@ -128,6 +128,7 @@ services:
     ports:
       - "${OTEL_COLLECTOR_PORT}:4317"
     restart: unless-stopped
+    profiles: ["monitoring"]
 
   postgres_exporter:
     container_name: "water_delivery-postgres_exporter"
@@ -140,6 +141,7 @@ services:
     depends_on:
       postgres:
         condition: service_healthy
+    profiles: ["monitoring"]
 
   redis_exporter:
     container_name: "water_delivery-redis_exporter"
@@ -152,6 +154,7 @@ services:
     depends_on:
       redis:
         condition: service_healthy
+    profiles: ["monitoring"]
 
   cadvisor:
     container_name: "water_delivery-cadvisor"
@@ -165,6 +168,7 @@ services:
       - /var/lib/docker/:/var/lib/docker:ro
       - /dev/disk/:/dev/disk:ro
     restart: unless-stopped
+    profiles: ["monitoring"]
 
   loki:
     container_name: "water_delivery-loki"
@@ -176,6 +180,7 @@ services:
     ports:
       - "${LOKI_PORT:-3100}:3100"
     restart: unless-stopped
+    profiles: ["monitoring"]
 
   tempo:
     container_name: "water_delivery-tempo"
@@ -187,6 +192,7 @@ services:
     ports:
       - "${TEMPO_PORT:-3200}:3200"
     restart: unless-stopped
+    profiles: ["monitoring"]
 
   victoria_metrics:
     container_name: "water_delivery-victoria_metrics"
@@ -208,6 +214,7 @@ services:
       - postgres_exporter
       - redis_exporter
       - cadvisor
+    profiles: ["monitoring"]
 
   grafana:
     container_name: "water_delivery-grafana"
@@ -227,6 +234,7 @@ services:
       - victoria_metrics
       - loki
       - tempo
+    profiles: ["monitoring"]
 
 volumes:
   node_modules_volumes:
