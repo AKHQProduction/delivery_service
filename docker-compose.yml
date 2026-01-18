@@ -129,6 +129,18 @@ services:
       - "${OTEL_COLLECTOR_PORT}:4317"
     restart: unless-stopped
 
+  postgres_exporter:
+    container_name: "water_delivery-postgres_exporter"
+    image: prometheuscommunity/postgres-exporter:latest
+    env_file:
+      - .env
+    environment:
+      DATA_SOURCE_NAME: "postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres:${POSTGRES_PORT}/${POSTGRES_DB}?sslmode=disable"
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+
   victoria_metrics:
     container_name: "water_delivery-victoria_metrics"
     image: victoriametrics/victoria-metrics:v1.106.1
@@ -136,11 +148,15 @@ services:
       - "--storageDataPath=/storage"
       - "--httpListenAddr=:8428"
       - "--retentionPeriod=1d"
+      - "--promscrape.config=/etc/prometheus/prometheus.yml"
     volumes:
       - victoria_metrics_data:/storage
+      - ./configs/vm/scrape.yml:/etc/prometheus/prometheus.yml:ro
     ports:
       - "${VICTORIA_METRICS_PORT}:8428"
     restart: unless-stopped
+    depends_on:
+      - postgres_exporter
 
   grafana:
     container_name: "water_delivery-grafana"
