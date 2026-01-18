@@ -177,15 +177,18 @@ services:
 
   cadvisor:
     container_name: "water_delivery-cadvisor"
-    image: gcr.io/cadvisor/cadvisor:v0.49.1
+    image: gcr.io/cadvisor/cadvisor:v0.51.0
     privileged: true
+    command:
+      - --store_container_labels=true
+      - --containerd=/run/containerd/containerd.sock
+      - --containerd-namespace=moby
     volumes:
       - /:/rootfs:ro
-      - /var/run:/var/run:ro
-      - /var/run/docker.sock:/var/run/docker.sock:ro
+      - /var/run:/var/run:rw
       - /sys:/sys:ro
-      - /var/lib/docker/:/var/lib/docker:ro
       - /dev/disk/:/dev/disk:ro
+      - /run/containerd/containerd.sock:/run/containerd/containerd.sock:ro
     restart: unless-stopped
     deploy:
       resources:

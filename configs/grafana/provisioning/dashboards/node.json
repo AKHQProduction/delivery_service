@@ -802,7 +802,7 @@
   "templating": {
     "list": [
       {
-        "current": { "selected": false, "text": "VictoriaMetrics", "value": "victoria-metrics" },
+        "current": { "selected": false, "text": "VictoriaMetrics", "value": "victoriametrics" },
         "hide": 0,
         "includeAll": false,
         "label": "Datasource",

@@ -245,7 +245,7 @@
         {
           "datasource": { "type": "prometheus", "uid": "${datasource}" },
           "expr": "rate(container_cpu_usage_seconds_total{job=\"$job\", name=~\".+\"}[5m]) * 100",
-          "legendFormat": "{{name}}",
+          "legendFormat": "{{image}}",
           "refId": "A"
         }
       ],
@@ -302,7 +302,7 @@
         {
           "datasource": { "type": "prometheus", "uid": "${datasource}" },
           "expr": "container_memory_usage_bytes{job=\"$job\", name=~\".+\"}",
-          "legendFormat": "{{name}}",
+          "legendFormat": "{{image}}",
           "refId": "A"
         }
       ],
@@ -351,7 +351,7 @@
         {
           "datasource": { "type": "prometheus", "uid": "${datasource}" },
           "expr": "container_memory_working_set_bytes{job=\"$job\", name=~\".+\"}",
-          "legendFormat": "{{name}}",
+          "legendFormat": "{{image}}",
           "refId": "A"
         }
       ],
@@ -408,7 +408,7 @@
         {
           "datasource": { "type": "prometheus", "uid": "${datasource}" },
           "expr": "rate(container_network_receive_bytes_total{job=\"$job\", name=~\".+\"}[5m])",
-          "legendFormat": "{{name}}",
+          "legendFormat": "{{image}}",
           "refId": "A"
         }
       ],
@@ -457,7 +457,7 @@
         {
           "datasource": { "type": "prometheus", "uid": "${datasource}" },
           "expr": "rate(container_network_transmit_bytes_total{job=\"$job\", name=~\".+\"}[5m])",
-          "legendFormat": "{{name}}",
+          "legendFormat": "{{image}}",
           "refId": "A"
         }
       ],
@@ -514,7 +514,7 @@
         {
           "datasource": { "type": "prometheus", "uid": "${datasource}" },
           "expr": "rate(container_fs_reads_bytes_total{job=\"$job\", name=~\".+\"}[5m])",
-          "legendFormat": "{{name}}",
+          "legendFormat": "{{image}}",
           "refId": "A"
         }
       ],
@@ -563,7 +563,7 @@
         {
           "datasource": { "type": "prometheus", "uid": "${datasource}" },
           "expr": "rate(container_fs_writes_bytes_total{job=\"$job\", name=~\".+\"}[5m])",
-          "legendFormat": "{{name}}",
+          "legendFormat": "{{image}}",
           "refId": "A"
         }
       ],
@@ -576,7 +576,7 @@
   "templating": {
     "list": [
       {
-        "current": { "selected": false, "text": "VictoriaMetrics", "value": "victoria-metrics" },
+        "current": { "selected": false, "text": "VictoriaMetrics", "value": "victoriametrics" },
         "hide": 0,
         "includeAll": false,
         "label": "Datasource",
