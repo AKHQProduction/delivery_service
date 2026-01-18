@@ -186,16 +186,16 @@ GET /api/v1/orders                    [2.1s]
 {resource.service.name="water-delivery"}
 
 # Медленные запросы (>500ms)
-{resource.service.name="water-delivery"} | duration > 500ms
+{resource.service.name="water-delivery" && duration > 500ms}
 
 # Только ошибки
-{resource.service.name="water-delivery" && status=error}
+{resource.service.name="water-delivery" && status = error}
 
 # Конкретный эндпоинт
-{resource.service.name="water-delivery" && name="GET /api/v1/orders"}
+{resource.service.name="water-delivery" && name = "GET /api/v1/orders"}
 
 # SQL запросы дольше 100ms
-{resource.service.name="water-delivery" && span.db.system="postgresql"} | duration > 100ms
+{resource.service.name="water-delivery" && span.db.system = "postgresql" && duration > 100ms}
 ```
 
 ### Loki (LogQL)
@@ -210,6 +210,35 @@ GET /api/v1/orders                    [2.1s]
 # Логи конкретного модуля
 {service_name="water-delivery"} | json | logger_name="backend.application.commands.create_order"
 ```
+
+---
+
+### SLO (`slo.json`)
+
+Дашборд Service Level Objectives для отслеживания качества сервиса.
+
+| Секция | Описание |
+|--------|----------|
+| **SLO Overview** | Gauges: Availability, Latency P95, Error Rate, Error Budget Remaining |
+| **Error Budget** | Total/Failed requests, Budget в запросах, Burn Rate (1h/6h), Time to Breach |
+| **SLI Over Time** | Графики: Availability, Latency, Error Rate, Burn Rate |
+
+**SLO Targets:**
+| SLI | Target | Error Budget |
+|-----|--------|--------------|
+| Availability | 99.9% | 0.1% запросов могут упасть |
+| Latency P95 | < 500ms | 0.1% запросов могут быть медленнее |
+| Error Rate | < 0.1% | 1 из 1000 запросов |
+
+**Ключевые понятия:**
+- **Error Budget** — сколько ошибок можно допустить до нарушения SLO
+- **Burn Rate** — скорость расходования бюджета (1.0 = норма, >1 = быстрее нормы)
+- **Time to Breach** — через сколько часов бюджет закончится при текущем burn rate
+
+**Пороги:**
+- Error Budget < 50% — жёлтый (осторожно с релизами)
+- Error Budget < 25% — красный (стоп фичам, фокус на стабильность)
+- Burn Rate > 2x — критично, нужно реагировать
 
 ---
 
