@@ -166,6 +166,17 @@ services:
       - /dev/disk/:/dev/disk:ro
     restart: unless-stopped
 
+  loki:
+    container_name: "water_delivery-loki"
+    image: grafana/loki:3.3.2
+    command: ["-config.file=/etc/loki/loki-config.yaml"]
+    volumes:
+      - ./configs/loki/loki-config.yaml:/etc/loki/loki-config.yaml:ro
+      - loki_data:/loki
+    ports:
+      - "${LOKI_PORT:-3100}:3100"
+    restart: unless-stopped
+
   victoria_metrics:
     container_name: "water_delivery-victoria_metrics"
     image: victoriametrics/victoria-metrics:v1.106.1
@@ -203,6 +214,7 @@ services:
     restart: unless-stopped
     depends_on:
       - victoria_metrics
+      - loki
 
 volumes:
   node_modules_volumes:
@@ -210,3 +222,4 @@ volumes:
   postgres_data:
   grafana_data:
   victoria_metrics_data:
+  loki_data:

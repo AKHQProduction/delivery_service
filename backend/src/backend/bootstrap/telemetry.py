@@ -5,6 +5,10 @@ from collections.abc import Iterable
 from dishka import AsyncContainer
 from fastapi import FastAPI
 from opentelemetry import metrics, trace
+from opentelemetry._logs import set_logger_provider
+from opentelemetry.exporter.otlp.proto.grpc._log_exporter import (
+    OTLPLogExporter,
+)
 from opentelemetry.exporter.otlp.proto.grpc.metric_exporter import (
     OTLPMetricExporter,
 )
@@ -13,6 +17,13 @@ from opentelemetry.instrumentation.logging import LoggingInstrumentor
 from opentelemetry.instrumentation.redis import RedisInstrumentor
 from opentelemetry.instrumentation.sqlalchemy import SQLAlchemyInstrumentor
 from opentelemetry.metrics import CallbackOptions, Meter, Observation
+from opentelemetry.sdk._logs import (
+    LoggerProvider,
+    LoggingHandler,
+)
+from opentelemetry.sdk._logs.export import (
+    BatchLogRecordProcessor,
+)
 from opentelemetry.sdk.metrics import MeterProvider
 from opentelemetry.sdk.metrics.export import PeriodicExportingMetricReader
 from opentelemetry.sdk.resources import SERVICE_NAME, Resource
@@ -36,6 +47,23 @@ def setup_custom_metrics(meter: Meter) -> None:
         callbacks=[_get_app_start_time],
         description="Start time of the process since unix epoch in seconds",
     )
+
+
+def setup_logging_export(resource: Resource, endpoint: str) -> None:
+    logger_provider = LoggerProvider(resource=resource)
+    set_logger_provider(logger_provider)
+
+    log_exporter = OTLPLogExporter(endpoint=endpoint, insecure=True)
+    logger_provider.add_log_record_processor(
+        BatchLogRecordProcessor(log_exporter)
+    )
+
+    handler = LoggingHandler(
+        level=logging.INFO, logger_provider=logger_provider
+    )
+
+    root_logger = logging.getLogger()
+    root_logger.addHandler(handler)
 
 
 def setup_telemetry(config: OTelConfig, app: FastAPI) -> None:
@@ -63,8 +91,10 @@ def setup_telemetry(config: OTelConfig, app: FastAPI) -> None:
     meter = metrics.get_meter(config.service_name)
     setup_custom_metrics(meter)
 
+    setup_logging_export(resource, config.exporter_endpoint)
+
     RedisInstrumentor().instrument()
-    LoggingInstrumentor().instrument()
+    LoggingInstrumentor().instrument(set_logging_format=True)
     FastAPIInstrumentor.instrument_app(app, meter_provider=meter_provider)
 
     logger.info("Telemetry setup completed")

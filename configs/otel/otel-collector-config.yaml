@@ -9,11 +9,26 @@ processors:
     timeout: 10s
     send_batch_size: 1024
 
+  resource:
+    attributes:
+      - key: loki.resource.labels
+        value: service.name, deployment.environment
+        action: insert
+
+  attributes/loki:
+    actions:
+      - key: loki.attribute.labels
+        value: level, logger.name
+        action: insert
+
 exporters:
   prometheusremotewrite:
     endpoint: "http://victoria_metrics:8428/api/v1/write"
     tls:
       insecure: true
+
+  loki:
+    endpoint: "http://loki:3100/loki/api/v1/push"
 
   debug:
     verbosity: basic
@@ -24,3 +39,8 @@ service:
       receivers: [otlp]
       processors: [batch]
       exporters: [prometheusremotewrite, debug]
+
+    logs:
+      receivers: [otlp]
+      processors: [batch, resource, attributes/loki]
+      exporters: [loki, debug]
