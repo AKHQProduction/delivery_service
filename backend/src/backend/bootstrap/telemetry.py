@@ -12,6 +12,9 @@ from opentelemetry.exporter.otlp.proto.grpc._log_exporter import (
 from opentelemetry.exporter.otlp.proto.grpc.metric_exporter import (
     OTLPMetricExporter,
 )
+from opentelemetry.exporter.otlp.proto.grpc.trace_exporter import (
+    OTLPSpanExporter,
+)
 from opentelemetry.instrumentation.fastapi import FastAPIInstrumentor
 from opentelemetry.instrumentation.logging import LoggingInstrumentor
 from opentelemetry.instrumentation.redis import RedisInstrumentor
@@ -28,6 +31,7 @@ from opentelemetry.sdk.metrics import MeterProvider
 from opentelemetry.sdk.metrics.export import PeriodicExportingMetricReader
 from opentelemetry.sdk.resources import SERVICE_NAME, Resource
 from opentelemetry.sdk.trace import TracerProvider
+from opentelemetry.sdk.trace.export import BatchSpanProcessor
 from sqlalchemy.ext.asyncio import AsyncEngine
 
 from backend.bootstrap.config import OTelConfig
@@ -66,6 +70,17 @@ def setup_logging_export(resource: Resource, endpoint: str) -> None:
     root_logger.addHandler(handler)
 
 
+def setup_tracing(resource: Resource, endpoint: str) -> TracerProvider:
+    tracer_provider = TracerProvider(resource=resource)
+
+    span_exporter = OTLPSpanExporter(endpoint=endpoint, insecure=True)
+    tracer_provider.add_span_processor(BatchSpanProcessor(span_exporter))
+
+    trace.set_tracer_provider(tracer_provider)
+
+    return tracer_provider
+
+
 def setup_telemetry(config: OTelConfig, app: FastAPI) -> None:
     if not config.enabled:
         logger.info("OTel disabled, skipping telemetry setup")
@@ -73,8 +88,7 @@ def setup_telemetry(config: OTelConfig, app: FastAPI) -> None:
 
     resource = Resource.create({SERVICE_NAME: config.service_name})
 
-    tracer_provider = TracerProvider(resource=resource)
-    trace.set_tracer_provider(tracer_provider)
+    tracer_provider = setup_tracing(resource, config.exporter_endpoint)
 
     exporter = OTLPMetricExporter(
         endpoint=config.exporter_endpoint,
@@ -95,7 +109,11 @@ def setup_telemetry(config: OTelConfig, app: FastAPI) -> None:
 
     RedisInstrumentor().instrument()
     LoggingInstrumentor().instrument(set_logging_format=True)
-    FastAPIInstrumentor.instrument_app(app, meter_provider=meter_provider)
+    FastAPIInstrumentor.instrument_app(
+        app,
+        tracer_provider=tracer_provider,
+        meter_provider=meter_provider,
+    )
 
     logger.info("Telemetry setup completed")
 

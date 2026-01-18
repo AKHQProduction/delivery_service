@@ -5,8 +5,9 @@
 Система мониторинга построена на стеке:
 - **VictoriaMetrics** - хранение метрик (совместим с Prometheus)
 - **Grafana Loki** - хранение и поиск логов
+- **Grafana Tempo** - хранение и поиск трейсов
 - **Grafana** - визуализация
-- **OpenTelemetry** - сбор метрик и логов из приложения
+- **OpenTelemetry** - сбор метрик, логов и трейсов из приложения
 - **Exporters** - сбор метрик из инфраструктуры
 
 ## Дашборды
@@ -93,7 +94,122 @@
 {service_name="water-delivery"} | json | level="ERROR"
 ```
 
-**Retention:** 24 часа (настраивается в `configs/loki/loki-config.yaml`)
+**Retention:** 72 часа (настраивается в `configs/loki/loki-config.yaml`)
+
+---
+
+### Tracing (Tempo)
+
+Распределённый трейсинг через Grafana Tempo. Дашборд не требуется — используется **Grafana Explore**.
+
+**Доступ:** Grafana → Explore → выбрать Tempo
+
+**Что трейсится автоматически:**
+- HTTP запросы (FastAPI) — метод, путь, статус, duration
+- SQL запросы (SQLAlchemy) — query, duration
+- Redis операции — команда, duration
+
+**Интеграции:**
+- **Traces → Logs**: из трейса можно перейти к логам этого запроса
+- **Logs → Traces**: в логах кликабельный traceID для перехода к трейсу
+- **Service Graph**: визуализация зависимостей между сервисами
+
+**Retention:** 24 часа (настраивается в `configs/tempo/tempo-config.yaml`)
+
+---
+
+## Практический пример: расследование медленного запроса
+
+Рассмотрим кейс: пользователь жалуется что страница заказов грузится медленно.
+
+### Шаг 1: Находим проблему в метриках
+
+Открываем **API Monitoring** дашборд и смотрим:
+- P95 Latency вырос до 2 секунд
+- В секции **Endpoints** видим что `/api/v1/orders` имеет высокий latency
+
+### Шаг 2: Ищем трейс медленного запроса
+
+1. Открываем **Explore → Tempo**
+2. В **Search** указываем:
+   - Service Name: `water-delivery`
+   - Span Name: `GET /api/v1/orders`
+   - Min Duration: `1s`
+3. Нажимаем **Run query**
+4. Видим список медленных запросов, выбираем один
+
+### Шаг 3: Анализируем трейс
+
+В waterfall диаграмме видим структуру запроса:
+
+```
+GET /api/v1/orders                    [2.1s]
+├── PostgreSQL: SELECT orders...      [1.8s]  ← bottleneck!
+├── PostgreSQL: SELECT clients...     [0.1s]
+└── Redis: GET cache:user:123         [0.002s]
+```
+
+**Вывод:** проблема в SQL запросе к таблице orders — занимает 1.8s.
+
+### Шаг 4: Смотрим детали SQL запроса
+
+Кликаем на span `PostgreSQL: SELECT orders...`:
+- В атрибутах видим полный SQL запрос
+- Видим что нет индекса на поле `delivery_date`
+
+### Шаг 5: Проверяем логи
+
+Кликаем **Logs for this span** (или ищем в Loki по traceID):
+
+```logql
+{service_name="water-delivery"} |= "traceID=abc123"
+```
+
+Видим логи именно этого запроса — можно найти дополнительный контекст.
+
+### Шаг 6: Проверяем PostgreSQL дашборд
+
+Открываем **PostgreSQL** дашборд:
+- Cache Hit Ratio упал до 85%
+- Много блоков читается с диска
+
+**Решение:** добавить индекс на `orders.delivery_date` и увеличить `shared_buffers`.
+
+---
+
+## Полезные запросы
+
+### Tempo (TraceQL)
+
+```traceql
+# Все трейсы сервиса
+{resource.service.name="water-delivery"}
+
+# Медленные запросы (>500ms)
+{resource.service.name="water-delivery"} | duration > 500ms
+
+# Только ошибки
+{resource.service.name="water-delivery" && status=error}
+
+# Конкретный эндпоинт
+{resource.service.name="water-delivery" && name="GET /api/v1/orders"}
+
+# SQL запросы дольше 100ms
+{resource.service.name="water-delivery" && span.db.system="postgresql"} | duration > 100ms
+```
+
+### Loki (LogQL)
+
+```logql
+# Логи с traceID
+{service_name="water-delivery"} |= "traceID=abc123def456"
+
+# Ошибки за последний час
+{service_name="water-delivery"} |~ "(?i)error|exception"
+
+# Логи конкретного модуля
+{service_name="water-delivery"} | json | logger_name="backend.application.commands.create_order"
+```
 
 ---
 

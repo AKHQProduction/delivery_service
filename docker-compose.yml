@@ -177,6 +177,17 @@ services:
       - "${LOKI_PORT:-3100}:3100"
     restart: unless-stopped
 
+  tempo:
+    container_name: "water_delivery-tempo"
+    image: grafana/tempo:2.6.1
+    command: ["-config.file=/etc/tempo/tempo-config.yaml"]
+    volumes:
+      - ./configs/tempo/tempo-config.yaml:/etc/tempo/tempo-config.yaml:ro
+      - tempo_data:/var/tempo
+    ports:
+      - "${TEMPO_PORT:-3200}:3200"
+    restart: unless-stopped
+
   victoria_metrics:
     container_name: "water_delivery-victoria_metrics"
     image: victoriametrics/victoria-metrics:v1.106.1
@@ -215,6 +226,7 @@ services:
     depends_on:
       - victoria_metrics
       - loki
+      - tempo
 
 volumes:
   node_modules_volumes:
@@ -223,3 +235,4 @@ volumes:
   grafana_data:
   victoria_metrics_data:
   loki_data:
+  tempo_data:
