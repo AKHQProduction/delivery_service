@@ -102,16 +102,23 @@
       "fieldConfig": {
         "defaults": {
           "color": { "mode": "thresholds" },
-          "mappings": [],
+          "mappings": [
+            {
+              "options": { "match": "null", "result": { "text": "N/A" } },
+              "type": "special"
+            }
+          ],
           "thresholds": {
             "mode": "absolute",
             "steps": [
-              { "color": "green", "value": null },
-              { "color": "yellow", "value": 0.7 },
-              { "color": "red", "value": 0.9 }
+              { "color": "red", "value": null },
+              { "color": "yellow", "value": 0.8 },
+              { "color": "green", "value": 0.95 }
             ]
           },
-          "unit": "percentunit"
+          "unit": "percentunit",
+          "min": 0,
+          "max": 1
         },
         "overrides": []
       },
@@ -132,11 +139,11 @@
       "targets": [
         {
           "datasource": { "type": "prometheus", "uid": "${datasource}" },
-          "expr": "redis_memory_used_bytes{job=\"$job\"} / redis_memory_max_bytes{job=\"$job\"}",
+          "expr": "redis_keyspace_hits_total{job=\"$job\"} / (redis_keyspace_hits_total{job=\"$job\"} + redis_keyspace_misses_total{job=\"$job\"}) or vector(1)",
           "refId": "A"
         }
       ],
-      "title": "Memory Usage %",
+      "title": "Hit Rate",
       "type": "stat"
     },
     {
@@ -191,7 +198,8 @@
               { "color": "green", "value": null }
             ]
           },
-          "unit": "short"
+          "unit": "none",
+          "decimals": 0
         },
         "overrides": []
       },
@@ -212,7 +220,7 @@
       "targets": [
         {
           "datasource": { "type": "prometheus", "uid": "${datasource}" },
-          "expr": "redis_db_keys{job=\"$job\"}",
+          "expr": "sum(redis_db_keys{job=\"$job\"})",
           "refId": "A"
         }
       ],

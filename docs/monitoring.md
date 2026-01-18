@@ -4,8 +4,9 @@
 
 Система мониторинга построена на стеке:
 - **VictoriaMetrics** - хранение метрик (совместим с Prometheus)
+- **Grafana Loki** - хранение и поиск логов
 - **Grafana** - визуализация
-- **OpenTelemetry** - сбор метрик из приложения
+- **OpenTelemetry** - сбор метрик и логов из приложения
 - **Exporters** - сбор метрик из инфраструктуры
 
 ## Дашборды
@@ -61,13 +62,48 @@
 
 ---
 
+### Logs (`logs.json`)
+
+Централизованные логи приложения через Grafana Loki.
+
+| Секция | Описание |
+|--------|----------|
+| **Overview** | Total Logs, Error/Warning/Info/Debug counts, Logs/min |
+| **Log Volume** | График объёма логов по уровням (stacked bars) |
+| **Error Analysis** | Error Rate Over Time, Top Error Messages |
+| **Live Logs** | Панель логов с поиском в реальном времени |
+| **Error Logs** | Отфильтрованные только ошибки (collapsed) |
+
+**Переменные:**
+- `service` - фильтр по сервису (service_name)
+- `search` - текстовый поиск по логам
+
+**Примеры LogQL запросов:**
+```logql
+# Все логи сервиса
+{service_name="water-delivery"}
+
+# Только ошибки
+{service_name="water-delivery"} |~ "(?i)error|exception"
+
+# Поиск по тексту
+{service_name="water-delivery"} |= "user_id=123"
+
+# Логи за последние 5 минут с уровнем ERROR
+{service_name="water-delivery"} | json | level="ERROR"
+```
+
+**Retention:** 24 часа (настраивается в `configs/loki/loki-config.yaml`)
+
+---
+
 ### Redis (`redis.json`)
 
 Мониторинг Redis через `redis_exporter`.
 
 | Секция | Описание |
 |--------|----------|
-| **Overview** | Uptime, Clients, Memory Usage %, Used Memory, Total Keys, Commands/sec |
+| **Overview** | Uptime, Clients, Hit Rate, Used Memory, Total Keys, Commands/sec |
 | **Memory** | Used/RSS/Peak Memory, Fragmentation Ratio |
 | **Clients & Connections** | Connected/Blocked Clients, Connections Rate |
 | **Commands & Performance** | Commands/sec, Cache Hit Ratio, Hits & Misses |
