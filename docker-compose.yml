@@ -141,9 +141,36 @@ services:
       postgres:
         condition: service_healthy
 
+  redis_exporter:
+    container_name: "water_delivery-redis_exporter"
+    image: oliver006/redis_exporter:latest
+    env_file:
+      - .env
+    environment:
+      REDIS_ADDR: "redis:${REDIS_PORT}"
+    restart: unless-stopped
+    depends_on:
+      redis:
+        condition: service_healthy
+
+  cadvisor:
+    container_name: "water_delivery-cadvisor"
+    image: gcr.io/cadvisor/cadvisor:v0.49.1
+    privileged: true
+    volumes:
+      - /:/rootfs:ro
+      - /var/run:/var/run:ro
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+      - /sys:/sys:ro
+      - /var/lib/docker/:/var/lib/docker:ro
+      - /dev/disk/:/dev/disk:ro
+    restart: unless-stopped
+
   victoria_metrics:
     container_name: "water_delivery-victoria_metrics"
     image: victoriametrics/victoria-metrics:v1.106.1
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
     command:
       - "--storageDataPath=/storage"
       - "--httpListenAddr=:8428"
@@ -157,6 +184,8 @@ services:
     restart: unless-stopped
     depends_on:
       - postgres_exporter
+      - redis_exporter
+      - cadvisor
 
   grafana:
     container_name: "water_delivery-grafana"
