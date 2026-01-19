@@ -11,7 +11,6 @@ from backend.application.commands import (
     CreateNewShopCommand,
     CreateNewShopCommandHandler,
 )
-from backend.bootstrap.config import WebhookConfig
 from backend.presentation.admin_bot import states
 from backend.presentation.admin_bot.keyboards.inline import shop_kb
 
@@ -27,7 +26,6 @@ async def on_input_shp_name(
     manager: DialogManager,
     value: str,
     handler: FromDishka[CreateNewShopCommandHandler],
-    webhook_config: FromDishka[WebhookConfig],
 ) -> None:
     bot: Bot = cast("Bot", manager.middleware_data.get("bot"))
     user: User = cast("User", manager.middleware_data.get("event_from_user"))
@@ -36,10 +34,11 @@ async def on_input_shp_name(
         CreateNewShopCommand(name=value, owner_full_name=user.full_name)
     )
 
+    bot_info = await bot.get_me()
     await bot.send_message(
         chat_id=user.id,
         text=f"🙋 З поверненням, {user.first_name}!",
-        reply_markup=shop_kb(webhook_config),
+        reply_markup=shop_kb(cast("str", bot_info.username)),
     )
     await manager.done()
 
