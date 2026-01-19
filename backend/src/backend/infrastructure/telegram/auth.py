@@ -34,7 +34,7 @@ class WebAppUser(BaseModel):
 
 
 class InitData(BaseModel):
-    query_id: str
+    query_id: str | None = None
     user: WebAppUser
     auth_date: str
     hash: str
