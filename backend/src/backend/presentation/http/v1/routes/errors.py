@@ -23,6 +23,7 @@ if TYPE_CHECKING:
     class StubError(Exception):
         message: ClassVar[str]
 
+
 logger = logging.getLogger(__name__)
 
 
@@ -34,7 +35,7 @@ async def validate(
 
 
 async def internal_trouble(request: Request, exc: Exception) -> ORJSONResponse:
-    logger.exception(
+    logger.error(
         "Internal server error",
         extra={"path": request.url.path, "method": request.method},
     )

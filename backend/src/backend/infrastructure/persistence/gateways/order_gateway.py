@@ -378,8 +378,10 @@ class SQLAlchemyOrderGateway(OrderGateway):
 
         if filters.shop_id:
             main_query = main_query.where(Order.shop_id == filters.shop_id)
-        if filters.delivery_date:
-            main_query = main_query.where(Order.date == filters.delivery_date)
+        if filters.start_date:
+            main_query = main_query.where(Order.date >= filters.start_date)
+        if filters.end_date:
+            main_query = main_query.where(Order.date <= filters.end_date)
 
         main_result = await self._session.execute(main_query)
         main_row = main_result.one()
@@ -404,9 +406,13 @@ class SQLAlchemyOrderGateway(OrderGateway):
             category_query = category_query.where(
                 Order.shop_id == filters.shop_id
             )
-        if filters.delivery_date:
+        if filters.start_date:
             category_query = category_query.where(
-                Order.date == filters.delivery_date
+                Order.date >= filters.start_date
+            )
+        if filters.end_date:
+            category_query = category_query.where(
+                Order.date <= filters.end_date
             )
 
         category_result = await self._session.execute(category_query)
@@ -436,9 +442,13 @@ class SQLAlchemyOrderGateway(OrderGateway):
             payment_method_query = payment_method_query.where(
                 Order.shop_id == filters.shop_id
             )
-        if filters.delivery_date:
+        if filters.start_date:
             payment_method_query = payment_method_query.where(
-                Order.date == filters.delivery_date
+                Order.date >= filters.start_date
+            )
+        if filters.end_date:
+            payment_method_query = payment_method_query.where(
+                Order.date <= filters.end_date
             )
 
         payment_method_result = await self._session.execute(
