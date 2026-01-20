@@ -111,9 +111,9 @@ class SQLAlchemyProductGateway(ProductGateway):
             query = query.where(ProductDB.name.ilike(f"%{filters.name}%"))
 
         if pagination.order == SortOrder.ASC:
-            query = query.order_by(asc(ProductDB.name))
+            query = query.order_by(asc(ProductDB.name), asc(ProductDB.id))
         else:
-            query = query.order_by(desc(ProductDB.name))
+            query = query.order_by(desc(ProductDB.name), asc(ProductDB.id))
 
         query = query.offset(pagination.offset).limit(pagination.limit)
 
