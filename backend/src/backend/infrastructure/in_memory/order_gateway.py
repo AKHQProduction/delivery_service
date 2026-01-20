@@ -74,11 +74,17 @@ class InMemoryOrderGateway(OrderGateway):
             filtered_orders = [
                 o for o in filtered_orders if o.shop_id == filters.shop_id
             ]
-        if filters.delivery_date:
+        if filters.start_date:
             filtered_orders = [
                 o
                 for o in filtered_orders
-                if o.delivery_date == filters.delivery_date
+                if o.delivery_date >= filters.start_date
+            ]
+        if filters.end_date:
+            filtered_orders = [
+                o
+                for o in filtered_orders
+                if o.delivery_date <= filters.end_date
             ]
         if filters.time_preference:
             filtered_orders = [
@@ -231,11 +237,17 @@ class InMemoryOrderGateway(OrderGateway):
             filtered_orders = [
                 o for o in filtered_orders if o.shop_id == filters.shop_id
             ]
-        if filters.delivery_date:
+        if filters.start_date:
             filtered_orders = [
                 o
                 for o in filtered_orders
-                if o.delivery_date == filters.delivery_date
+                if o.delivery_date >= filters.start_date
+            ]
+        if filters.end_date:
+            filtered_orders = [
+                o
+                for o in filtered_orders
+                if o.delivery_date <= filters.end_date
             ]
 
         total_orders = len(filtered_orders)

@@ -866,7 +866,10 @@ async def test_get_all_orders_with_date_filter(
     response = await http_client.get(
         url=f"{BASE_URL}/all",
         headers=headers,
-        params={"delivery_date": tomorrow.isoformat()},
+        params={
+            "start_date": tomorrow.isoformat(),
+            "end_date": tomorrow.isoformat(),
+        },
     )
 
     assert response.status_code == status.HTTP_200_OK

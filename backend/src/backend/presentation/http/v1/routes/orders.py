@@ -368,7 +368,8 @@ async def delete_order(
 )
 async def get_all_orders(
     handler: FromDishka[GetOrdersQueryHandler],
-    delivery_date: date | None = None,
+    start_date: date | None = None,
+    end_date: date | None = None,
     time_preference: TimePreference | None = None,
     client_name: str | None = None,
     custom_id: str | None = None,
@@ -377,7 +378,8 @@ async def get_all_orders(
 ) -> list[OrderReadModel]:
     return await handler.handle(
         GetOrdersQuery(
-            delivery_date=delivery_date,
+            start_date=start_date,
+            end_date=end_date,
             time_preference=time_preference,
             client_name=client_name,
             custom_id=custom_id,

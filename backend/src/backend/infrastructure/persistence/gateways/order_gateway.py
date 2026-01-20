@@ -147,8 +147,10 @@ class SQLAlchemyOrderGateway(OrderGateway):
 
         if filters.shop_id:
             query = query.where(Order.shop_id == filters.shop_id)
-        if filters.delivery_date:
-            query = query.where(Order.date == filters.delivery_date)
+        if filters.start_date:
+            query = query.where(Order.date >= filters.start_date)
+        if filters.end_date:
+            query = query.where(Order.date <= filters.end_date)
         if filters.time_preference:
             query = query.where(
                 Order.time_preference == filters.time_preference.value

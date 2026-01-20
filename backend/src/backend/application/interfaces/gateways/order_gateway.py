@@ -95,7 +95,6 @@ class OrderReadModel:
 @dataclass(frozen=True)
 class GetOrdersFilters:
     shop_id: ShopId | None = None
-    delivery_date: date | None = None
     start_date: date | None = None
     end_date: date | None = None
     time_preference: TimePreference | None = None
