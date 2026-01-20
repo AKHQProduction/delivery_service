@@ -866,7 +866,10 @@ async def test_get_all_orders_with_date_filter(
     response = await http_client.get(
         url=f"{BASE_URL}/all",
         headers=headers,
-        params={"delivery_date": tomorrow.isoformat()},
+        params={
+            "start_date": tomorrow.isoformat(),
+            "end_date": tomorrow.isoformat(),
+        },
     )
 
     assert response.status_code == status.HTTP_200_OK
@@ -1198,7 +1201,10 @@ async def test_get_order_stats(
     response = await http_client.get(
         url=f"{BASE_URL}/stats",
         headers=headers,
-        params={"delivery_date": tomorrow.isoformat()},
+        params={
+            "start_date": tomorrow.isoformat(),
+            "end_date": tomorrow.isoformat(),
+        },
     )
 
     assert response.status_code == status.HTTP_200_OK
@@ -1245,7 +1251,10 @@ async def test_get_order_stats_with_multiple_items_per_order(
     response = await http_client.get(
         url=f"{BASE_URL}/stats",
         headers=headers,
-        params={"delivery_date": tomorrow.isoformat()},
+        params={
+            "start_date": tomorrow.isoformat(),
+            "end_date": tomorrow.isoformat(),
+        },
     )
 
     assert response.status_code == status.HTTP_200_OK
@@ -1274,7 +1283,10 @@ async def test_get_order_stats_empty(
     response = await http_client.get(
         url=f"{BASE_URL}/stats",
         headers=headers,
-        params={"delivery_date": tomorrow.isoformat()},
+        params={
+            "start_date": tomorrow.isoformat(),
+            "end_date": tomorrow.isoformat(),
+        },
     )
 
     assert response.status_code == status.HTTP_200_OK
@@ -1354,12 +1366,18 @@ async def test_get_order_stats_filters_by_shop(
     response_1 = await http_client.get(
         url=f"{BASE_URL}/stats",
         headers=headers_1,
-        params={"delivery_date": tomorrow.isoformat()},
+        params={
+            "start_date": tomorrow.isoformat(),
+            "end_date": tomorrow.isoformat(),
+        },
     )
     response_2 = await http_client.get(
         url=f"{BASE_URL}/stats",
         headers=headers_2,
-        params={"delivery_date": tomorrow.isoformat()},
+        params={
+            "start_date": tomorrow.isoformat(),
+            "end_date": tomorrow.isoformat(),
+        },
     )
 
     assert response_1.status_code == status.HTTP_200_OK
@@ -1380,7 +1398,10 @@ async def test_get_order_stats_unauthorized(
 
     response = await http_client.get(
         url=f"{BASE_URL}/stats",
-        params={"delivery_date": tomorrow.isoformat()},
+        params={
+            "start_date": tomorrow.isoformat(),
+            "end_date": tomorrow.isoformat(),
+        },
     )
 
     assert response.status_code == status.HTTP_403_FORBIDDEN

@@ -65,7 +65,8 @@ class GenerateOrderExportPDFCommandHandler:
 
         filters = GetOrdersFilters(
             shop_id=shop_id,
-            delivery_date=command.delivery_date,
+            start_date=command.delivery_date,
+            end_date=command.delivery_date,
         )
         pagination = Pagination(limit=1000, offset=0)
 

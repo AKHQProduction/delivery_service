@@ -1,19 +1,16 @@
 from aiogram.types import (
     InlineKeyboardButton,
     InlineKeyboardMarkup,
-    WebAppInfo,
 )
 
-from backend.bootstrap.config import WebhookConfig
 
-
-def shop_kb(webhook_config: WebhookConfig) -> InlineKeyboardMarkup:
+def shop_kb(bot_username: str) -> InlineKeyboardMarkup:
     return InlineKeyboardMarkup(
         inline_keyboard=[
             [
                 InlineKeyboardButton(
                     text="⚙️ Панель",
-                    web_app=WebAppInfo(url=webhook_config.webhook_url),
+                    url=f"https://t.me/{bot_username}?startapp",
                 )
             ]
         ]

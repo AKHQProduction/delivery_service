@@ -1,6 +1,15 @@
+from datetime import date, datetime
 from enum import StrEnum
 from typing import NewType
 from uuid import UUID
+from zoneinfo import ZoneInfo
+
+KYIV_TZ = ZoneInfo("Europe/Kyiv")
+
+
+def today() -> date:
+    return datetime.now(KYIV_TZ).date()
+
 
 UserId = NewType("UserId", UUID)
 ShopId = NewType("ShopId", UUID)

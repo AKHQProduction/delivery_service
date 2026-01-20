@@ -1,3 +1,4 @@
+import logging
 from functools import partial
 from typing import TYPE_CHECKING, ClassVar, cast
 
@@ -23,6 +24,9 @@ if TYPE_CHECKING:
         message: ClassVar[str]
 
 
+logger = logging.getLogger(__name__)
+
+
 async def validate(
     _: "Request", exc: Exception, status: int
 ) -> ORJSONResponse:
@@ -30,7 +34,11 @@ async def validate(
     return ORJSONResponse(content={"detail": exc.message}, status_code=status)
 
 
-async def internal_trouble(_: Request, __: Exception) -> ORJSONResponse:
+async def internal_trouble(request: Request, exc: Exception) -> ORJSONResponse:
+    logger.error(
+        "Internal server error",
+        extra={"path": request.url.path, "method": request.method},
+    )
     return ORJSONResponse(
         content={"detail": "Internal server error"},
         status_code=code.HTTP_500_INTERNAL_SERVER_ERROR,
