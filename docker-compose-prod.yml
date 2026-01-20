@@ -32,7 +32,13 @@ services:
       - .env
     stop_signal: SIGINT
     restart: always
-    command: [ "uvicorn", "backend.bootstrap.entrypoints.api:create_app", "--host", "${SERVER_HOST}", "--port", "${SERVER_PORT}", "--factory" ]
+    command: [
+      "gunicorn",
+      "backend.bootstrap.entrypoints.api:create_app",
+      "--workers", "3",
+      "--worker-class", "uvicorn.workers.UvicornWorker",
+      "--bind", "0.0.0.0:${SERVER_PORT}"
+    ]
     ports:
       - "${SERVER_PORT}:${SERVER_PORT}"
     depends_on:
