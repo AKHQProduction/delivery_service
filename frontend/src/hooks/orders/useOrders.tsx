@@ -22,8 +22,9 @@ export const useOrders = () => {
     return today.toISOString().split("T")[0];
   });
   const [endDate, setEndDate] = useState(() => {
-    const today = new Date();
-    return today.toISOString().split("T")[0];
+    const date = new Date();
+    date.setDate(date.getDate() + 7);
+    return date.toISOString().split("T")[0];
   });
 
   const getOrders = async (search: string = "") => {

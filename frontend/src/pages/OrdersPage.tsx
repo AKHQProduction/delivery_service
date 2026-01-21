@@ -227,7 +227,7 @@ export const OrdersPage = () => {
               До
             </label>
             <input
-            title="end date"
+              title="end date"
               type="date"
               value={endDate}
               onChange={(e) => setEndDate(e.target.value)}
