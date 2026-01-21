@@ -1,4 +1,5 @@
 import logging
+import os
 import time
 from collections.abc import Iterable
 
@@ -86,7 +87,10 @@ def setup_telemetry(config: OTelConfig, app: FastAPI) -> None:
         logger.info("OTel disabled, skipping telemetry setup")
         return
 
-    resource = Resource.create({SERVICE_NAME: config.service_name})
+    resource = Resource.create({
+        SERVICE_NAME: config.service_name,
+        "service.instance.id": str(os.getpid()),
+    })
 
     tracer_provider = setup_tracing(resource, config.exporter_endpoint)
 

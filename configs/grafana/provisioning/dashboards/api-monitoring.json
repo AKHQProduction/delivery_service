@@ -47,7 +47,7 @@
       },
       "targets": [
         {
-          "expr": "time() - process_start_time_seconds{job=\"$job\"}",
+          "expr": "time() - max(process_start_time_seconds{job=\"$job\"})",
           "refId": "A"
         }
       ],
@@ -86,7 +86,7 @@
       },
       "targets": [
         {
-          "expr": "sum(rate(http_server_duration_milliseconds_count{job=\"$job\"}[5m]))",
+          "expr": "sum(rate(http_server_duration_milliseconds_count{job=\"$job\", http_server_name=\"water-delivery.store\"}[5m]))",
           "refId": "A"
         }
       ],
@@ -127,7 +127,7 @@
       },
       "targets": [
         {
-          "expr": "sum(rate(http_server_duration_milliseconds_count{job=\"$job\", http_status_code=~\"5..\"}[5m])) / sum(rate(http_server_duration_milliseconds_count{job=\"$job\"}[5m])) * 100 or vector(0)",
+          "expr": "sum(rate(http_server_duration_milliseconds_count{job=\"$job\", http_server_name=\"water-delivery.store\", http_status_code=~\"5..\"}[5m])) / sum(rate(http_server_duration_milliseconds_count{job=\"$job\", http_server_name=\"water-delivery.store\"}[5m])) * 100 or vector(0)",
           "refId": "A"
         }
       ],
@@ -168,7 +168,7 @@
       },
       "targets": [
         {
-          "expr": "sum(rate(http_server_duration_milliseconds_sum{job=\"$job\"}[5m])) / sum(rate(http_server_duration_milliseconds_count{job=\"$job\"}[5m]))",
+          "expr": "sum(rate(http_server_duration_milliseconds_sum{job=\"$job\", http_server_name=\"water-delivery.store\"}[5m])) / sum(rate(http_server_duration_milliseconds_count{job=\"$job\", http_server_name=\"water-delivery.store\"}[5m]))",
           "refId": "A"
         }
       ],
@@ -209,7 +209,7 @@
       },
       "targets": [
         {
-          "expr": "histogram_quantile(0.95, sum(rate(http_server_duration_milliseconds_bucket{job=\"$job\"}[5m])) by (le))",
+          "expr": "histogram_quantile(0.95, sum(rate(http_server_duration_milliseconds_bucket{job=\"$job\", http_server_name=\"water-delivery.store\"}[5m])) by (le))",
           "refId": "A"
         }
       ],
@@ -248,7 +248,7 @@
       },
       "targets": [
         {
-          "expr": "sum(http_server_active_requests{job=\"$job\"}) or vector(0)",
+          "expr": "sum(http_server_active_requests{job=\"$job\", http_server_name=\"water-delivery.store\"}) or vector(0)",
           "refId": "A"
         }
       ],
@@ -302,12 +302,12 @@
       },
       "targets": [
         {
-          "expr": "sum(rate(http_server_duration_milliseconds_count{job=\"$job\"}[5m]))",
+          "expr": "sum(rate(http_server_duration_milliseconds_count{job=\"$job\", http_server_name=\"water-delivery.store\"}[5m]))",
           "legendFormat": "Total RPS",
           "refId": "A"
         },
         {
-          "expr": "sum by (http_target) (rate(http_server_duration_milliseconds_count{job=\"$job\"}[5m]))",
+          "expr": "sum by (http_target) (rate(http_server_duration_milliseconds_count{job=\"$job\", http_server_name=\"water-delivery.store\"}[5m]))",
           "legendFormat": "{{ http_target }}",
           "refId": "B"
         }
@@ -363,12 +363,12 @@
       },
       "targets": [
         {
-          "expr": "sum(rate(http_server_duration_milliseconds_count{job=\"$job\", http_status_code=~\"5..\"}[5m])) or vector(0)",
+          "expr": "sum(rate(http_server_duration_milliseconds_count{job=\"$job\", http_server_name=\"water-delivery.store\", http_status_code=~\"5..\"}[5m])) or vector(0)",
           "legendFormat": "5xx Errors",
           "refId": "A"
         },
         {
-          "expr": "sum(rate(http_server_duration_milliseconds_count{job=\"$job\", http_status_code=~\"4..\"}[5m])) or vector(0)",
+          "expr": "sum(rate(http_server_duration_milliseconds_count{job=\"$job\", http_server_name=\"water-delivery.store\", http_status_code=~\"4..\"}[5m])) or vector(0)",
           "legendFormat": "4xx Errors",
           "refId": "B"
         }
@@ -415,22 +415,22 @@
       },
       "targets": [
         {
-          "expr": "sum(rate(http_server_duration_milliseconds_sum{job=\"$job\"}[5m])) / sum(rate(http_server_duration_milliseconds_count{job=\"$job\"}[5m]))",
+          "expr": "sum(rate(http_server_duration_milliseconds_sum{job=\"$job\", http_server_name=\"water-delivery.store\"}[5m])) / sum(rate(http_server_duration_milliseconds_count{job=\"$job\", http_server_name=\"water-delivery.store\"}[5m]))",
           "legendFormat": "Avg",
           "refId": "A"
         },
         {
-          "expr": "histogram_quantile(0.50, sum(rate(http_server_duration_milliseconds_bucket{job=\"$job\"}[5m])) by (le))",
+          "expr": "histogram_quantile(0.50, sum(rate(http_server_duration_milliseconds_bucket{job=\"$job\", http_server_name=\"water-delivery.store\"}[5m])) by (le))",
           "legendFormat": "P50",
           "refId": "B"
         },
         {
-          "expr": "histogram_quantile(0.95, sum(rate(http_server_duration_milliseconds_bucket{job=\"$job\"}[5m])) by (le))",
+          "expr": "histogram_quantile(0.95, sum(rate(http_server_duration_milliseconds_bucket{job=\"$job\", http_server_name=\"water-delivery.store\"}[5m])) by (le))",
           "legendFormat": "P95",
           "refId": "C"
         },
         {
-          "expr": "histogram_quantile(0.99, sum(rate(http_server_duration_milliseconds_bucket{job=\"$job\"}[5m])) by (le))",
+          "expr": "histogram_quantile(0.99, sum(rate(http_server_duration_milliseconds_bucket{job=\"$job\", http_server_name=\"water-delivery.store\"}[5m])) by (le))",
           "legendFormat": "P99",
           "refId": "D"
         }
@@ -490,17 +490,17 @@
       },
       "targets": [
         {
-          "expr": "histogram_quantile(0.50, sum(rate(http_server_duration_milliseconds_bucket{job=\"$job\", http_status_code=~\"2..\"}[5m])) by (le))",
+          "expr": "histogram_quantile(0.50, sum(rate(http_server_duration_milliseconds_bucket{job=\"$job\", http_server_name=\"water-delivery.store\", http_status_code=~\"2..\"}[5m])) by (le))",
           "legendFormat": "Success P50",
           "refId": "A"
         },
         {
-          "expr": "histogram_quantile(0.95, sum(rate(http_server_duration_milliseconds_bucket{job=\"$job\", http_status_code=~\"2..\"}[5m])) by (le))",
+          "expr": "histogram_quantile(0.95, sum(rate(http_server_duration_milliseconds_bucket{job=\"$job\", http_server_name=\"water-delivery.store\", http_status_code=~\"2..\"}[5m])) by (le))",
           "legendFormat": "Success P95",
           "refId": "B"
         },
         {
-          "expr": "histogram_quantile(0.50, sum(rate(http_server_duration_milliseconds_bucket{job=\"$job\", http_status_code=~\"5..\"}[5m])) by (le))",
+          "expr": "histogram_quantile(0.50, sum(rate(http_server_duration_milliseconds_bucket{job=\"$job\", http_server_name=\"water-delivery.store\", http_status_code=~\"5..\"}[5m])) by (le))",
           "legendFormat": "Errors P50",
           "refId": "C"
         }
@@ -547,12 +547,12 @@
       },
       "targets": [
         {
-          "expr": "sum(rate(http_server_duration_milliseconds_count{job=\"$job\"}[5m]))",
+          "expr": "sum(rate(http_server_duration_milliseconds_count{job=\"$job\", http_server_name=\"water-delivery.store\"}[5m]))",
           "legendFormat": "Total Traffic",
           "refId": "A"
         },
         {
-          "expr": "sum by (http_method) (rate(http_server_duration_milliseconds_count{job=\"$job\"}[5m]))",
+          "expr": "sum by (http_method) (rate(http_server_duration_milliseconds_count{job=\"$job\", http_server_name=\"water-delivery.store\"}[5m]))",
           "legendFormat": "{{ http_method }}",
           "refId": "B"
         }
@@ -599,12 +599,12 @@
       },
       "targets": [
         {
-          "expr": "sum(rate(http_server_duration_milliseconds_count{job=\"$job\", http_status_code=~\"5..\"}[5m])) / sum(rate(http_server_duration_milliseconds_count{job=\"$job\"}[5m])) * 100 or vector(0)",
+          "expr": "sum(rate(http_server_duration_milliseconds_count{job=\"$job\", http_server_name=\"water-delivery.store\", http_status_code=~\"5..\"}[5m])) / sum(rate(http_server_duration_milliseconds_count{job=\"$job\", http_server_name=\"water-delivery.store\"}[5m])) * 100 or vector(0)",
           "legendFormat": "5xx Error Rate",
           "refId": "A"
         },
         {
-          "expr": "sum(rate(http_server_duration_milliseconds_count{job=\"$job\", http_status_code=~\"4..\"}[5m])) / sum(rate(http_server_duration_milliseconds_count{job=\"$job\"}[5m])) * 100 or vector(0)",
+          "expr": "sum(rate(http_server_duration_milliseconds_count{job=\"$job\", http_server_name=\"water-delivery.store\", http_status_code=~\"4..\"}[5m])) / sum(rate(http_server_duration_milliseconds_count{job=\"$job\", http_server_name=\"water-delivery.store\"}[5m])) * 100 or vector(0)",
           "legendFormat": "4xx Error Rate",
           "refId": "B"
         }
@@ -651,7 +651,7 @@
       },
       "targets": [
         {
-          "expr": "sum(http_server_active_requests{job=\"$job\"}) or vector(0)",
+          "expr": "sum(http_server_active_requests{job=\"$job\", http_server_name=\"water-delivery.store\"}) or vector(0)",
           "legendFormat": "Active Requests",
           "refId": "A"
         }
@@ -702,7 +702,7 @@
       },
       "targets": [
         {
-          "expr": "(sum(rate(http_server_duration_milliseconds_bucket{job=\"$job\", le=\"500\"}[5m])) + sum(rate(http_server_duration_milliseconds_bucket{job=\"$job\", le=\"2000\"}[5m])) / 2) / sum(rate(http_server_duration_milliseconds_count{job=\"$job\"}[5m]))",
+          "expr": "(sum(rate(http_server_duration_milliseconds_bucket{job=\"$job\", le=\"500\"}[5m])) + sum(rate(http_server_duration_milliseconds_bucket{job=\"$job\", le=\"2000\"}[5m])) / 2) / sum(rate(http_server_duration_milliseconds_count{job=\"$job\", http_server_name=\"water-delivery.store\"}[5m]))",
           "refId": "A"
         }
       ],
@@ -756,7 +756,7 @@
       },
       "targets": [
         {
-          "expr": "(sum(rate(http_server_duration_milliseconds_bucket{job=\"$job\", le=\"500\"}[5m])) + sum(rate(http_server_duration_milliseconds_bucket{job=\"$job\", le=\"2000\"}[5m])) / 2) / sum(rate(http_server_duration_milliseconds_count{job=\"$job\"}[5m]))",
+          "expr": "(sum(rate(http_server_duration_milliseconds_bucket{job=\"$job\", le=\"500\"}[5m])) + sum(rate(http_server_duration_milliseconds_bucket{job=\"$job\", le=\"2000\"}[5m])) / 2) / sum(rate(http_server_duration_milliseconds_count{job=\"$job\", http_server_name=\"water-delivery.store\"}[5m]))",
           "legendFormat": "Apdex",
           "refId": "A"
         }
@@ -811,7 +811,7 @@
       },
       "targets": [
         {
-          "expr": "histogram_quantile(0.95, sum(rate(http_server_duration_milliseconds_bucket{job=\"$job\"}[5m])) by (le, http_target))",
+          "expr": "histogram_quantile(0.95, sum(rate(http_server_duration_milliseconds_bucket{job=\"$job\", http_server_name=\"water-delivery.store\"}[5m])) by (le, http_target))",
           "legendFormat": "{{ http_target }}",
           "refId": "A"
         }
@@ -858,7 +858,7 @@
       },
       "targets": [
         {
-          "expr": "sum by (http_status_code) (rate(http_server_duration_milliseconds_count{job=\"$job\"}[5m]))",
+          "expr": "sum by (http_status_code) (rate(http_server_duration_milliseconds_count{job=\"$job\", http_server_name=\"water-delivery.store\"}[5m]))",
           "legendFormat": "{{ http_status_code }}",
           "refId": "A"
         }

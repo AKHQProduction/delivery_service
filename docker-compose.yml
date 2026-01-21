@@ -202,7 +202,7 @@ services:
     command:
       - "--storageDataPath=/storage"
       - "--httpListenAddr=:8428"
-      - "--retentionPeriod=1d"
+      - "--retentionPeriod=7d"
       - "--promscrape.config=/etc/prometheus/prometheus.yml"
     volumes:
       - victoria_metrics_data:/storage
