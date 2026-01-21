@@ -65,7 +65,7 @@ export const useOrderForm = (options: UseOrderFormOptions = {}) => {
     products: [],
     deliveryPhone: null,
     deliveryAddress: null,
-    deliveryDate: "",
+    deliveryDate: new Date().toISOString().split("T")[0],
     deliveryTime: "",
     paymentMethod: "",
     note: "",
@@ -268,7 +268,7 @@ export const useOrderForm = (options: UseOrderFormOptions = {}) => {
           formData.deliveryPhone !== null && formData.deliveryAddress !== null
         );
       case 4:
-        return formData.deliveryDate !== "" && formData.deliveryTime !== "";
+        return formData.deliveryDate !== "" && formData.deliveryTime !== "" && formData.paymentMethod !== "";
       default:
         return false;
     }
