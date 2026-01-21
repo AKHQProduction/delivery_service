@@ -3,6 +3,7 @@ import { useOrders } from "../../../hooks/orders/useOrders";
 import { useClient } from "../../../hooks/clients/useClients";
 import { useProducts } from "../../../hooks/products/useProducts";
 import { getOrderById } from "../../../services/api/ordersApi";
+import { getClientById } from "../../../services/api/clientApi";
 import { type Client } from "../../../types/entities/Client";
 import { type Product } from "../../../types/entities/Product";
 import { SearchBar } from "../../ui/searchBar";
@@ -69,16 +70,60 @@ export const EditOrderForm: React.FC<EditOrderFormProps> = ({
   const productListRef = useRef<HTMLDivElement>(null);
   const clientListRef = useRef<HTMLDivElement>(null);
 
-  // Load order, clients and products
   useEffect(() => {
     const loadData = async () => {
       try {
-        const [orderData] = await Promise.all([
+        const [orderData, , fetchedProducts] = await Promise.all([
           getOrderById(order.order_id),
           getClients(),
           getProducts(),
         ]);
         setLoadedOrder(orderData);
+
+        if (orderData.client_id) {
+          const orderClient = await getClientById(orderData.client_id);
+          setSelectedClient(orderClient);
+
+          const matchedPhone = orderClient?.phones?.find(
+            (p: any) => p.number === orderData.delivery_phone
+          );
+          const primaryPhone = orderClient?.phones?.find((p: any) => p.is_primary);
+          setSelectedPhoneId(
+            matchedPhone?.id || primaryPhone?.id || orderClient?.phones?.[0]?.id || null
+          );
+
+          const matchedAddress = orderClient?.addresses?.find(
+            (a: any) =>
+              a.street === orderData.delivery_address?.street &&
+              a.house === orderData.delivery_address?.house
+          );
+          const primaryAddress = orderClient?.addresses?.find((a: any) => a.is_primary);
+          setSelectedAddressId(
+            matchedAddress?.id || primaryAddress?.id || orderClient?.addresses?.[0]?.id || null
+          );
+        }
+
+        const items: OrderItem[] =
+          orderData.items?.map((item: any) => ({
+            id: item.id,
+            product_id: item.product_id,
+            name:
+              item.name ||
+              fetchedProducts?.find((p: any) => p.product_id === item.product_id)?.name ||
+              "",
+            price:
+              item.price_per_item ||
+              item.price ||
+              fetchedProducts?.find((p: any) => p.product_id === item.product_id)?.price ||
+              0,
+            quantity: item.quantity,
+          })) || [];
+
+        setOrderItems(items);
+        setDeliveryDate(orderData.date || "");
+        setDeliveryTime(orderData.time_preference || "");
+        setPaymentMethod(orderData.payment_method || "");
+        setNote(orderData.note || orderData.comment || "");
       } catch (error) {
         console.error("Error loading order:", error);
       }
@@ -86,7 +131,6 @@ export const EditOrderForm: React.FC<EditOrderFormProps> = ({
     loadData();
   }, [order.order_id]);
 
-  // Debounced search for products
   const productDebounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   useEffect(() => {
     if (productDebounceRef.current) clearTimeout(productDebounceRef.current);
@@ -98,7 +142,6 @@ export const EditOrderForm: React.FC<EditOrderFormProps> = ({
     };
   }, [productSearch]);
 
-  // Debounced search for clients
   const clientDebounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   useEffect(() => {
     if (clientDebounceRef.current) clearTimeout(clientDebounceRef.current);
@@ -109,50 +152,6 @@ export const EditOrderForm: React.FC<EditOrderFormProps> = ({
       if (clientDebounceRef.current) clearTimeout(clientDebounceRef.current);
     };
   }, [clientSearch]);
-
-  // Initialize form with loaded order data
-  useEffect(() => {
-    if (loadedOrder && clients.length > 0 && products.length > 0) {
-      const client = clients.find((c) => c.client_id === loadedOrder.client_id);
-      setSelectedClient(client || null);
-
-      const matchedPhone = client?.phones?.find(
-        (p) => p.number === loadedOrder.delivery_phone
-      );
-      setSelectedPhoneId(matchedPhone?.id || client?.phones?.[0]?.id || null);
-
-      const matchedAddress = client?.addresses?.find(
-        (a) =>
-          a.street === loadedOrder.delivery_address?.street &&
-          a.house === loadedOrder.delivery_address?.house
-      );
-      setSelectedAddressId(
-        matchedAddress?.id || client?.addresses?.[0]?.id || null
-      );
-
-      const items: OrderItem[] =
-        loadedOrder.items?.map((item: any) => ({
-          id: item.id,
-          product_id: item.product_id,
-          name:
-            item.name ||
-            products.find((p) => p.product_id === item.product_id)?.name ||
-            "",
-          price:
-            item.price_per_item ||
-            item.price ||
-            products.find((p) => p.product_id === item.product_id)?.price ||
-            0,
-          quantity: item.quantity,
-        })) || [];
-
-      setOrderItems(items);
-      setDeliveryDate(loadedOrder.date || "");
-      setDeliveryTime(loadedOrder.time_preference || "");
-      setPaymentMethod(loadedOrder.payment_method || "");
-      setNote(loadedOrder.note || loadedOrder.comment || "");
-    }
-  }, [loadedOrder, clients, products]);
 
   // Infinite scroll for products
   const handleProductScroll = useCallback(() => {
