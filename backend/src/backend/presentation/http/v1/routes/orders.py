@@ -27,7 +27,7 @@ from backend.application.commands.generate_order_export_pdf import (
     GenerateOrderExportPDFResult,
 )
 from backend.application.interfaces import PDFStorage
-from backend.application.interfaces.gateways import Pagination
+from backend.application.interfaces.gateways import Pagination, SortOrder
 from backend.application.interfaces.gateways.order_gateway import (
     OrderReadModel,
 )
@@ -375,6 +375,7 @@ async def get_all_orders(
     custom_id: str | None = None,
     limit: int = 100,
     offset: int = 0,
+    order: SortOrder = SortOrder.ASC,
 ) -> list[OrderReadModel]:
     return await handler.handle(
         GetOrdersQuery(
@@ -383,7 +384,7 @@ async def get_all_orders(
             time_preference=time_preference,
             client_name=client_name,
             custom_id=custom_id,
-            pagination=Pagination(limit=limit, offset=offset),
+            pagination=Pagination(limit=limit, offset=offset, order=order),
         )
     )
 

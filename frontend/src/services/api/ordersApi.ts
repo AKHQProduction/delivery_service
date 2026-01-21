@@ -13,6 +13,7 @@ export const getAllOrders = async (
     const params: Record<string, string | number> = {
       limit: limit,
       offset: offset,
+      order: "ASC",
     };
 
     if (client_name) params.client_name = client_name;

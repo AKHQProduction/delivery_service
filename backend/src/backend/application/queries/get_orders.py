@@ -2,7 +2,7 @@ from dataclasses import dataclass
 from datetime import date
 
 from backend.application.interfaces import IdentityProvider
-from backend.application.interfaces.gateways import Pagination, SortOrder
+from backend.application.interfaces.gateways import Pagination
 from backend.application.interfaces.gateways.order_gateway import (
     GetOrdersFilters,
     OrderGateway,
@@ -40,9 +40,5 @@ class GetOrdersQueryHandler:
                 client_name=query.client_name,
                 custom_id=query.custom_id,
             ),
-            pagination=Pagination(
-                offset=query.pagination.offset,
-                limit=query.pagination.limit,
-                order=SortOrder.DESC,
-            ),
+            pagination=query.pagination,
         )
