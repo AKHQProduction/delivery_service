@@ -1,6 +1,6 @@
 from typing import cast
 
-from aiogram import F, Router
+from aiogram import Bot, F, Router
 from aiogram.enums import ChatType
 from aiogram.filters import CommandObject, CommandStart
 from aiogram.types import Message, User
@@ -20,7 +20,6 @@ from backend.application.usecases.invite_employee import (
     AcceptInviteCommand,
     AcceptInviteCommandHandler,
 )
-from backend.bootstrap.config import WebhookConfig
 from backend.presentation.admin_bot import states
 from backend.presentation.admin_bot.keyboards.inline import shop_kb
 
@@ -31,8 +30,8 @@ router = Router()
 async def cmd_start_with_invite(
     message: Message,
     command: CommandObject,
+    bot: Bot,
     handler: FromDishka[AcceptInviteCommandHandler],
-    webhook_config: FromDishka[WebhookConfig],
 ) -> Message:
     user: User = cast("User", message.from_user)
     if command.args:
@@ -47,8 +46,10 @@ async def cmd_start_with_invite(
         except (EntityNotFoundError, UserAlreadyRelatedToShopError):
             return await message.answer("❌ Сталася помилка")
 
+    bot_info = await bot.get_me()
     return await message.answer(
-        f"🙋 Привіт, {user.first_name}!", reply_markup=shop_kb(webhook_config)
+        f"🙋 Привіт, {user.first_name}!",
+        reply_markup=shop_kb(cast("str", bot_info.username)),
     )
 
 
@@ -56,8 +57,8 @@ async def cmd_start_with_invite(
 async def cmd_start(
     message: Message,
     dialog_manager: DialogManager,
+    bot: Bot,
     handler: FromDishka[BotStartCommandHandler],
-    webhook_config: FromDishka[WebhookConfig],
 ) -> Message | None:
     user: User = cast("User", message.from_user)
 
@@ -65,9 +66,10 @@ async def cmd_start(
         BotStartCommand(tg_id=user.id, full_name=user.full_name)
     )
     if exists:
+        bot_info = await bot.get_me()
         return await message.answer(
             f"🙋 Привіт, {user.first_name}!",
-            reply_markup=shop_kb(webhook_config),
+            reply_markup=shop_kb(cast("str", bot_info.username)),
         )
     await dialog_manager.start(
         state=states.NewShop.NAME, mode=StartMode.RESET_STACK

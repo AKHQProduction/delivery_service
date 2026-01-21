@@ -8,6 +8,7 @@ from pydantic import BaseModel, Field
 class AppConfig(BaseModel):
     debug: bool = Field(alias="DEBUG", default=True)
     debug_user_id: int = Field(alias="DEBUG_USER_ID", default=1)
+    cors_origins: list[str] = Field(alias="CORS_ORIGINS", default=["*"])
 
 
 class TelegramConfig(BaseModel):

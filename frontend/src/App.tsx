@@ -7,6 +7,7 @@ import { AddItemComponent } from "./components/features/addItemComponent";
 import { getUser } from "./services/api/userApi";
 import { useEffect } from "react";
 import { useUserStore } from "./context/useUserStore";
+import { MenuModal } from "./components/modals/MenuModal";
 
 const isDev = import.meta.env.MODE === "development";
 
@@ -23,10 +24,9 @@ function App() {
         console.error("Failed to fetch user:", error);
       }
     };
-
     fetchUser();
   }, []);
-  
+
   return (
     <>
       <BrowserRouter>
@@ -44,6 +44,7 @@ function App() {
             />
           ))}
         </Routes>
+        <MenuModal />
         <AddItemComponent />
         <BottomNavPanel />
       </BrowserRouter>

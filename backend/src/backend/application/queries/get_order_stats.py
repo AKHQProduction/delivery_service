@@ -14,7 +14,8 @@ logger = logging.getLogger(__name__)
 
 @dataclass(frozen=True)
 class GetOrderStatsQuery:
-    date: datetime.date
+    start_date: datetime.date
+    end_date: datetime.date
 
 
 @dataclass(frozen=True)
@@ -50,15 +51,17 @@ class GetOrderStatsQueryHandler:
         current_user = await self._idp.current_user()
 
         logger.info(
-            "Fetching order stats for shop_id=%s, date=%s",
+            "Fetching order stats for shop_id=%s, start_date=%s, end_date=%s",
             current_user.shop_id,
-            query.date,
+            query.start_date,
+            query.end_date,
         )
 
         stats = await self._order_gateway.get_stats(
             filters=GetOrdersFilters(
                 shop_id=current_user.shop_id,
-                delivery_date=query.date,
+                start_date=query.start_date,
+                end_date=query.end_date,
             )
         )
 

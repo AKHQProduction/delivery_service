@@ -62,9 +62,9 @@ class SQLAlchemyCategoryGateway(CategoryGateway):
             query = query.where(CategoryDB.name.ilike(f"%{filters.name}%"))
 
         if pagination.order == SortOrder.ASC:
-            query = query.order_by(asc(CategoryDB.name))
+            query = query.order_by(asc(CategoryDB.name), asc(CategoryDB.id))
         else:
-            query = query.order_by(desc(CategoryDB.name))
+            query = query.order_by(desc(CategoryDB.name), asc(CategoryDB.id))
 
         query = query.offset(pagination.offset).limit(pagination.limit)
 

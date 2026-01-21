@@ -19,17 +19,21 @@ interface OrderStats {
 }
 
 export const OrdersStatsPage = () => {
-  const [selectedDate, setSelectedDate] = useState(() => {
+  const [startDate, setStartDate] = useState(() => {
+    const today = new Date();
+    return today.toISOString().split("T")[0];
+  });
+  const [endDate, setEndDate] = useState(() => {
     const today = new Date();
     return today.toISOString().split("T")[0];
   });
   const [stats, setStats] = useState<OrderStats | null>(null);
   const [loading, setLoading] = useState(false);
 
-  const fetchStats = async (date: string) => {
+  const fetchStats = async (start_date: string, end_date: string) => {
     setLoading(true);
     try {
-      const data = await getOrderStats(date);
+      const data = await getOrderStats(start_date, end_date);
       setStats(data);
     } catch (error) {
       console.error("Error fetching stats:", error);
@@ -39,10 +43,10 @@ export const OrdersStatsPage = () => {
   };
 
   useEffect(() => {
-    if (selectedDate) {
-      fetchStats(selectedDate);
+    if (startDate && endDate) {
+      fetchStats(startDate, endDate);
     }
-  }, [selectedDate]);
+  }, [startDate, endDate]);
 
   return (
     <div className="min-h-screen bg-gray-50 pb-24">
@@ -51,17 +55,38 @@ export const OrdersStatsPage = () => {
       <div className="px-6 pt-6 pb-4">
         <div className="bg-white rounded-2xl p-4 shadow-sm border border-gray-200">
           <label className="block text-sm font-semibold text-gray-700 mb-2">
-            Оберіть дату
+            Оберіть період
           </label>
-          <input
-            title="date selector"
-            type="date"
-            value={selectedDate}
-            onChange={(e) => setSelectedDate(e.target.value)}
-            className="w-full px-4 py-3 border-2 border-indigo-200 rounded-xl bg-white
-                     focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent
-                     text-gray-900 font-medium"
-          />
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <label className="block text-xs font-medium text-gray-600 mb-1.5">
+                Від
+              </label>
+              <input
+                title="start date selector"
+                type="date"
+                value={startDate}
+                onChange={(e) => setStartDate(e.target.value)}
+                className="w-full px-4 py-3 border-2 border-indigo-200 rounded-xl bg-white
+                         focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent
+                         text-gray-900 font-medium transition-all"
+              />
+            </div>
+            <div>
+              <label className="block text-xs font-medium text-gray-600 mb-1.5">
+                До
+              </label>
+              <input
+                title="end date selector"
+                type="date"
+                value={endDate}
+                onChange={(e) => setEndDate(e.target.value)}
+                className="w-full px-4 py-3 border-2 border-indigo-200 rounded-xl bg-white
+                         focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent
+                         text-gray-900 font-medium transition-all"
+              />
+            </div>
+          </div>
         </div>
       </div>
 

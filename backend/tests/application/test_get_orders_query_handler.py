@@ -148,7 +148,9 @@ async def test_get_orders_filters_by_date(make_handler) -> None:
     )
 
     query = GetOrdersQuery(
-        pagination=Pagination(limit=100, offset=0), delivery_date=tomorrow
+        pagination=Pagination(limit=100, offset=0),
+        start_date=tomorrow,
+        end_date=tomorrow,
     )
     result = await handler.handle(query)
 
@@ -325,7 +327,8 @@ async def test_get_orders_with_combined_filters(make_handler) -> None:
 
     query = GetOrdersQuery(
         pagination=Pagination(limit=100, offset=0),
-        delivery_date=tomorrow,
+        start_date=tomorrow,
+        end_date=tomorrow,
         time_preference=TimePreference.FIRST_HALF,
     )
     result = await handler.handle(query)

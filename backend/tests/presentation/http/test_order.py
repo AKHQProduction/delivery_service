@@ -866,7 +866,10 @@ async def test_get_all_orders_with_date_filter(
     response = await http_client.get(
         url=f"{BASE_URL}/all",
         headers=headers,
-        params={"delivery_date": tomorrow.isoformat()},
+        params={
+            "start_date": tomorrow.isoformat(),
+            "end_date": tomorrow.isoformat(),
+        },
     )
 
     assert response.status_code == status.HTTP_200_OK
@@ -969,6 +972,47 @@ async def test_get_all_orders_with_pagination(
         o["order_id"] for o in page1.json() + page2.json() + page3.json()
     ]
     assert len(all_ids) == len(set(all_ids))
+
+
+@pytest.mark.asyncio()
+async def test_get_all_orders_pagination_no_duplicates_same_date(
+    http_client: AsyncClient,
+    session: AsyncSession,
+    customer_headers: Callable[[int], dict[str, Any]],
+    setup_full_test_user_with_shop,
+    setup_test_client,
+    setup_test_order,
+) -> None:
+    telegram_id = 5350
+    _, shop_id = await setup_full_test_user_with_shop(telegram_id=telegram_id)
+
+    client_id = await setup_test_client(shop_id=shop_id)
+
+    same_date = datetime.now(UTC).date() + timedelta(days=1)
+    for _ in range(10):
+        await setup_test_order(
+            shop_id=shop_id,
+            client_id=client_id,
+            delivery_date=same_date,
+        )
+
+    await session.commit()
+
+    headers = customer_headers(telegram_id)
+
+    all_order_ids: list[str] = []
+    for offset in range(0, 10, 2):
+        response = await http_client.get(
+            url=f"{BASE_URL}/all",
+            headers=headers,
+            params={"limit": 2, "offset": offset},
+        )
+        assert response.status_code == status.HTTP_200_OK
+        page_ids = [o["order_id"] for o in response.json()]
+        all_order_ids.extend(page_ids)
+
+    assert len(all_order_ids) == 10
+    assert len(all_order_ids) == len(set(all_order_ids))
 
 
 @pytest.mark.asyncio()
@@ -1198,7 +1242,10 @@ async def test_get_order_stats(
     response = await http_client.get(
         url=f"{BASE_URL}/stats",
         headers=headers,
-        params={"delivery_date": tomorrow.isoformat()},
+        params={
+            "start_date": tomorrow.isoformat(),
+            "end_date": tomorrow.isoformat(),
+        },
     )
 
     assert response.status_code == status.HTTP_200_OK
@@ -1245,7 +1292,10 @@ async def test_get_order_stats_with_multiple_items_per_order(
     response = await http_client.get(
         url=f"{BASE_URL}/stats",
         headers=headers,
-        params={"delivery_date": tomorrow.isoformat()},
+        params={
+            "start_date": tomorrow.isoformat(),
+            "end_date": tomorrow.isoformat(),
+        },
     )
 
     assert response.status_code == status.HTTP_200_OK
@@ -1274,7 +1324,10 @@ async def test_get_order_stats_empty(
     response = await http_client.get(
         url=f"{BASE_URL}/stats",
         headers=headers,
-        params={"delivery_date": tomorrow.isoformat()},
+        params={
+            "start_date": tomorrow.isoformat(),
+            "end_date": tomorrow.isoformat(),
+        },
     )
 
     assert response.status_code == status.HTTP_200_OK
@@ -1354,12 +1407,18 @@ async def test_get_order_stats_filters_by_shop(
     response_1 = await http_client.get(
         url=f"{BASE_URL}/stats",
         headers=headers_1,
-        params={"delivery_date": tomorrow.isoformat()},
+        params={
+            "start_date": tomorrow.isoformat(),
+            "end_date": tomorrow.isoformat(),
+        },
     )
     response_2 = await http_client.get(
         url=f"{BASE_URL}/stats",
         headers=headers_2,
-        params={"delivery_date": tomorrow.isoformat()},
+        params={
+            "start_date": tomorrow.isoformat(),
+            "end_date": tomorrow.isoformat(),
+        },
     )
 
     assert response_1.status_code == status.HTTP_200_OK
@@ -1380,7 +1439,10 @@ async def test_get_order_stats_unauthorized(
 
     response = await http_client.get(
         url=f"{BASE_URL}/stats",
-        params={"delivery_date": tomorrow.isoformat()},
+        params={
+            "start_date": tomorrow.isoformat(),
+            "end_date": tomorrow.isoformat(),
+        },
     )
 
     assert response.status_code == status.HTTP_403_FORBIDDEN

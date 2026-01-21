@@ -6,6 +6,7 @@ import { timeMap, paymentMap } from "../utils/dataMap";
 import { OrderDetailModal } from "../components/modals/detailsModals/OrderDetailModal";
 import { RightModal } from "../components/modals/RightModal";
 import { generateOrdersPdfLink, getOrderById } from "../services/api/ordersApi";
+import { SearchFiltersPopup } from "../components/shared/SearchFiltersPopup";
 
 const getDownloadUrl = (fileId: string): string => {
   const baseUrl = import.meta.env.VITE_API_URL;
@@ -51,6 +52,10 @@ export const OrdersPage = () => {
     orders,
     deleteOrder,
     loadMoreOrders,
+    setStartDate,
+    setEndDate,
+    startDate,
+    endDate,
     loadingMore,
     hasMore,
   } = useOrders();
@@ -100,7 +105,7 @@ export const OrdersPage = () => {
         loadMoreOrders();
       }
     },
-    [hasMore, loadingMore, loadMoreOrders]
+    [hasMore, loadingMore, loadMoreOrders],
   );
 
   useEffect(() => {
@@ -173,7 +178,10 @@ export const OrdersPage = () => {
       const downloadUrl = getDownloadUrl(file_id);
 
       if (window.Telegram?.WebApp?.downloadFile) {
-        window.Telegram.WebApp.downloadFile({ url: downloadUrl, file_name: filename });
+        window.Telegram.WebApp.downloadFile({
+          url: downloadUrl,
+          file_name: filename,
+        });
       } else if (window.Telegram?.WebApp?.openLink) {
         window.Telegram.WebApp.openLink(downloadUrl);
       } else {
@@ -188,12 +196,46 @@ export const OrdersPage = () => {
     <div className="min-h-screen bg-gray-50 pb-24">
       <PageHeader title="Замовлення" />
 
-      <div className="px-6 pb-4">
-        <SearchBar
-          searchTerm={searchTerm}
-          setSearchTerm={setSearchTerm}
-          placeholder="Пошук замовлень..."
-        />
+      <div className="px-6 pb-4 flex items-center gap-3 relative">
+        <div className="flex-1">
+          <SearchBar
+            searchTerm={searchTerm}
+            setSearchTerm={setSearchTerm}
+            placeholder="Пошук замовлень..."
+          />
+        </div>
+
+        <SearchFiltersPopup
+          title="Фільтри замовлень"
+          buttonTitle="Фільтри замовлень"
+           onApply={() => getOrders(searchTerm)}
+        >
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              Від
+            </label>
+            <input
+            title="start date"
+              type="date"
+              value={startDate}
+              onChange={(e) => setStartDate(e.target.value)}
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+            />
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              До
+            </label>
+            <input
+            title="end date"
+              type="date"
+              value={endDate}
+              onChange={(e) => setEndDate(e.target.value)}
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+            />
+          </div>
+        </SearchFiltersPopup>
+
       </div>
 
       <div className="px-6 pb-4">
@@ -202,7 +244,7 @@ export const OrdersPage = () => {
             Сформувати документ
           </h3>
           <div className="flex flex-col items-center gap-2">
-            <div className="flex items-center justify-center gap-3 flex-wrap">
+            <div className="flex items-center justify-center gap-3">
               <input
                 title="export date"
                 type="date"
@@ -341,8 +383,9 @@ export const OrdersPage = () => {
                     </div>
                     <span className="text-gray-700">
                       {(order.items ?? []).reduce(
-                        (sum: number, item: OrderItem) => sum + (Number(item.quantity) || 0),
-                        0
+                        (sum: number, item: OrderItem) =>
+                          sum + (Number(item.quantity) || 0),
+                        0,
                       )}{" "}
                       товарів
                     </span>

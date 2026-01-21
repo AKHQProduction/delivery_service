@@ -1,4 +1,4 @@
-from datetime import UTC, date, datetime, timedelta
+from datetime import date, datetime, timedelta
 from typing import Annotated
 
 from dishka import FromDishka
@@ -27,7 +27,7 @@ from backend.application.commands.generate_order_export_pdf import (
     GenerateOrderExportPDFResult,
 )
 from backend.application.interfaces import PDFStorage
-from backend.application.interfaces.gateways import Pagination
+from backend.application.interfaces.gateways import Pagination, SortOrder
 from backend.application.interfaces.gateways.order_gateway import (
     OrderReadModel,
 )
@@ -41,7 +41,13 @@ from backend.application.queries.get_orders import (
     GetOrdersQuery,
     GetOrdersQueryHandler,
 )
-from backend.application.vars import OrderId, PaymentMethod, TimePreference
+from backend.application.vars import (
+    KYIV_TZ,
+    OrderId,
+    PaymentMethod,
+    TimePreference,
+    today,
+)
 from backend.presentation.http.v1.schemas.error import ErrorSchema
 from backend.presentation.http.v1.schemas.order import UpdateOrderSchema
 
@@ -68,7 +74,7 @@ async def create_new_order(
                     value={
                         "client_id": "550e8400-e29b-41d4-a716-446655440000",
                         "delivery_date": (
-                            datetime.now(UTC).date() + timedelta(days=1)
+                            datetime.now(KYIV_TZ).date() + timedelta(days=1)
                         ).isoformat(),
                         "time_preference": TimePreference.FIRST_HALF,
                         "address_id": 1,
@@ -92,7 +98,7 @@ async def create_new_order(
                     value={
                         "client_id": "550e8400-e29b-41d4-a716-446655440000",
                         "delivery_date": (
-                            datetime.now(UTC).date() + timedelta(days=2)
+                            datetime.now(KYIV_TZ).date() + timedelta(days=2)
                         ).isoformat(),
                         "time_preference": TimePreference.SECOND_HALF,
                         "address_id": 2,
@@ -126,7 +132,7 @@ async def create_new_order(
                     value={
                         "client_id": "550e8400-e29b-41d4-a716-446655440000",
                         "delivery_date": (
-                            datetime.now(UTC).date() + timedelta(days=1)
+                            datetime.now(KYIV_TZ).date() + timedelta(days=1)
                         ).isoformat(),
                         "time_preference": TimePreference.FIRST_HALF,
                         "address_id": 1,
@@ -170,7 +176,7 @@ async def update_order(
                     description="Change delivery date and time preference",
                     value={
                         "delivery_date": (
-                            datetime.now(UTC).date() + timedelta(days=2)
+                            datetime.now(KYIV_TZ).date() + timedelta(days=2)
                         ).isoformat(),
                         "time_preference": TimePreference.SECOND_HALF,
                     },
@@ -288,7 +294,7 @@ async def update_order(
                     value={
                         "client_id": "650e8400-e29b-41d4-a716-446655440000",
                         "delivery_date": (
-                            datetime.now(UTC).date() + timedelta(days=3)
+                            datetime.now(KYIV_TZ).date() + timedelta(days=3)
                         ).isoformat(),
                         "time_preference": TimePreference.FIRST_HALF,
                         "phone_id": 1,
@@ -362,20 +368,23 @@ async def delete_order(
 )
 async def get_all_orders(
     handler: FromDishka[GetOrdersQueryHandler],
-    delivery_date: date | None = None,
+    start_date: date | None = None,
+    end_date: date | None = None,
     time_preference: TimePreference | None = None,
     client_name: str | None = None,
     custom_id: str | None = None,
     limit: int = 100,
     offset: int = 0,
+    order: SortOrder = SortOrder.ASC,
 ) -> list[OrderReadModel]:
     return await handler.handle(
         GetOrdersQuery(
-            delivery_date=delivery_date,
+            start_date=start_date,
+            end_date=end_date,
             time_preference=time_preference,
             client_name=client_name,
             custom_id=custom_id,
-            pagination=Pagination(limit=limit, offset=offset),
+            pagination=Pagination(limit=limit, offset=offset, order=order),
         )
     )
 
@@ -389,10 +398,16 @@ async def get_all_orders(
     dependencies=[Depends(HTTPBearer())],
 )
 async def get_order_stats(
-    delivery_date: date,
     handler: FromDishka[GetOrderStatsQueryHandler],
+    start_date: date | None = None,
+    end_date: date | None = None,
 ) -> GetOrderStatsResponse:
-    return await handler.handle(GetOrderStatsQuery(date=delivery_date))
+    return await handler.handle(
+        GetOrderStatsQuery(
+            start_date=start_date or today(),
+            end_date=end_date or today(),
+        )
+    )
 
 
 @router.post(
