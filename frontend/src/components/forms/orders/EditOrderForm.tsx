@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef, useCallback } from "react";
 import { useOrders } from "../../../hooks/orders/useOrders";
 import { useClient } from "../../../hooks/clients/useClients";
 import { useProducts } from "../../../hooks/products/useProducts";
+import { getOrderById } from "../../../services/api/ordersApi";
 import { type Client } from "../../../types/entities/Client";
 import { type Product } from "../../../types/entities/Product";
 import { SearchBar } from "../../ui/searchBar";
@@ -62,16 +63,28 @@ export const EditOrderForm: React.FC<EditOrderFormProps> = ({
   const [productSearch, setProductSearch] = useState("");
   const [clientSearch, setClientSearch] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [loadedOrder, setLoadedOrder] = useState<any>(null);
 
   // Refs for infinite scroll
   const productListRef = useRef<HTMLDivElement>(null);
   const clientListRef = useRef<HTMLDivElement>(null);
 
-  // Load clients and products
+  // Load order, clients and products
   useEffect(() => {
-    getClients();
-    getProducts();
-  }, []);
+    const loadData = async () => {
+      try {
+        const [orderData] = await Promise.all([
+          getOrderById(order.order_id),
+          getClients(),
+          getProducts(),
+        ]);
+        setLoadedOrder(orderData);
+      } catch (error) {
+        console.error("Error loading order:", error);
+      }
+    };
+    loadData();
+  }, [order.order_id]);
 
   // Debounced search for products
   const productDebounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -97,18 +110,28 @@ export const EditOrderForm: React.FC<EditOrderFormProps> = ({
     };
   }, [clientSearch]);
 
-  // Initialize form with order data
+  // Initialize form with loaded order data
   useEffect(() => {
-    if (order && clients.length > 0 && products.length > 0) {
-      const client = clients.find((c) => c.client_id === order.client_id);
+    if (loadedOrder && clients.length > 0 && products.length > 0) {
+      const client = clients.find((c) => c.client_id === loadedOrder.client_id);
       setSelectedClient(client || null);
-      setSelectedPhoneId(order.phone_id || client?.phones?.[0]?.id || null);
+
+      const matchedPhone = client?.phones?.find(
+        (p) => p.number === loadedOrder.delivery_phone
+      );
+      setSelectedPhoneId(matchedPhone?.id || client?.phones?.[0]?.id || null);
+
+      const matchedAddress = client?.addresses?.find(
+        (a) =>
+          a.street === loadedOrder.delivery_address?.street &&
+          a.house === loadedOrder.delivery_address?.house
+      );
       setSelectedAddressId(
-        order.address_id || client?.addresses?.[0]?.id || null
+        matchedAddress?.id || client?.addresses?.[0]?.id || null
       );
 
       const items: OrderItem[] =
-        order.items?.map((item: any) => ({
+        loadedOrder.items?.map((item: any) => ({
           id: item.id,
           product_id: item.product_id,
           name:
@@ -124,12 +147,12 @@ export const EditOrderForm: React.FC<EditOrderFormProps> = ({
         })) || [];
 
       setOrderItems(items);
-      setDeliveryDate(order.date || "");
-      setDeliveryTime(order.time_preference || "");
-      setPaymentMethod(order.payment_method || "");
-      setNote(order.note || order.comment || "");
+      setDeliveryDate(loadedOrder.date || "");
+      setDeliveryTime(loadedOrder.time_preference || "");
+      setPaymentMethod(loadedOrder.payment_method || "");
+      setNote(loadedOrder.note || loadedOrder.comment || "");
     }
-  }, [order, clients, products]);
+  }, [loadedOrder, clients, products]);
 
   // Infinite scroll for products
   const handleProductScroll = useCallback(() => {
@@ -219,7 +242,8 @@ export const EditOrderForm: React.FC<EditOrderFormProps> = ({
       !selectedClient ||
       !selectedPhoneId ||
       !selectedAddressId ||
-      orderItems.length === 0
+      orderItems.length === 0 ||
+      !loadedOrder
     ) {
       alert("Будь ласка, заповніть всі обов'язкові поля");
       return;
@@ -229,25 +253,24 @@ export const EditOrderForm: React.FC<EditOrderFormProps> = ({
     try {
       const payload: Record<string, any> = {};
 
-      if (selectedClient.client_id !== order.client_id) {
+      if (selectedClient.client_id !== loadedOrder.client_id) {
         payload.client_id = selectedClient.client_id;
       }
-      if (selectedPhoneId !== order.phone_id) {
-        payload.phone_id = selectedPhoneId;
-      }
-      if (selectedAddressId !== order.address_id) {
-        payload.address_id = selectedAddressId;
-      }
-      if (deliveryDate !== order.date) {
+
+      // Always send phone_id and address_id since we match them by value
+      payload.phone_id = selectedPhoneId;
+      payload.address_id = selectedAddressId;
+
+      if (deliveryDate !== loadedOrder.date) {
         payload.delivery_date = deliveryDate;
       }
-      if (deliveryTime !== order.time_preference) {
+      if (deliveryTime !== loadedOrder.time_preference) {
         payload.time_preference = deliveryTime;
       }
-      if (paymentMethod !== order.payment_method) {
+      if (paymentMethod !== loadedOrder.payment_method) {
         payload.payment_method = paymentMethod;
       }
-      if (note !== (order.note || order.comment || "")) {
+      if (note !== (loadedOrder.note || loadedOrder.comment || "")) {
         payload.comment = note;
       }
 
