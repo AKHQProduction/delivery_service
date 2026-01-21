@@ -47,7 +47,7 @@
       },
       "targets": [
         {
-          "expr": "time() - process_start_time_seconds{job=\"$job\"}",
+          "expr": "time() - max(process_start_time_seconds{job=\"$job\"})",
           "refId": "A"
         }
       ],
