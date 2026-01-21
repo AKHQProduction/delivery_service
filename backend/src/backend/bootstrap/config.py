@@ -1,14 +1,25 @@
+import json
 from os import environ as env
 from pathlib import Path
 
 from dotenv import load_dotenv
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, field_validator
 
 
 class AppConfig(BaseModel):
     debug: bool = Field(alias="DEBUG", default=True)
     debug_user_id: int = Field(alias="DEBUG_USER_ID", default=1)
     cors_origins: list[str] = Field(alias="CORS_ORIGINS", default=["*"])
+
+    @field_validator("cors_origins", mode="before")
+    @classmethod
+    def parse_cors_origins(cls, v: str | list[str]) -> list[str]:
+        if isinstance(v, str):
+            try:
+                return json.loads(v)
+            except json.JSONDecodeError:
+                return [origin.strip() for origin in v.split(",")]
+        return v
 
 
 class TelegramConfig(BaseModel):
