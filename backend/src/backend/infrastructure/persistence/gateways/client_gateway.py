@@ -1,6 +1,6 @@
 from uuid import UUID
 
-from sqlalchemy import asc, desc, or_, select
+from sqlalchemy import ColumnElement, asc, desc, exists, or_, select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 from uuid_utils import uuid7
@@ -179,7 +179,7 @@ class SQLAlchemyClientGateway(ClientGateway):
         if filters.shop_id:
             query = query.where(Client.shop_id == filters.shop_id)
 
-        search_conditions = []
+        search_conditions: list[ColumnElement[bool]] = []
         if filters.full_name:
             search_conditions.append(
                 Client.full_name.ilike(f"%{filters.full_name}%")
@@ -189,23 +189,26 @@ class SQLAlchemyClientGateway(ClientGateway):
                 Client.custom_id.ilike(f"%{filters.custom_id}%")
             )
         if filters.phone:
-            query = query.outerjoin(ClientPhone)
-            search_conditions.append(
-                ClientPhone.number.ilike(f"%{filters.phone}%")
+            phone_exists = exists(
+                select(ClientPhone.id).where(
+                    ClientPhone.client_id == Client.id,
+                    ClientPhone.number.ilike(f"%{filters.phone}%"),
+                )
             )
+            search_conditions.append(phone_exists)
 
         if search_conditions:
             query = query.where(or_(*search_conditions))
 
         if pagination.order == SortOrder.ASC:
-            query = query.order_by(asc(Client.full_name))
+            query = query.order_by(asc(Client.full_name), asc(Client.id))
         else:
-            query = query.order_by(desc(Client.full_name))
+            query = query.order_by(desc(Client.full_name), asc(Client.id))
 
         query = query.offset(pagination.offset).limit(pagination.limit)
 
         result = await self._session.execute(query)
-        clients = result.scalars().unique().all()
+        clients = result.scalars().all()
 
         return [
             ClientReadModel(

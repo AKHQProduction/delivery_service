@@ -1218,3 +1218,79 @@ async def test_edit_client_keep_same_phone_numbers_integration(
     assert phones[0].is_primary is True
     assert phones[1].number == "+380502222222"
     assert phones[1].is_primary is False
+
+
+@pytest.mark.asyncio()
+async def test_get_all_clients_filter_by_phone_no_duplicates(
+    http_client: AsyncClient,
+    session: AsyncSession,
+    customer_headers: Callable[[int], dict[str, Any]],
+    setup_full_test_user_with_shop,
+    setup_test_client,
+) -> None:
+    telegram_id = 2150
+    _, shop_id = await setup_full_test_user_with_shop(telegram_id=telegram_id)
+
+    await setup_test_client(
+        shop_id=shop_id,
+        full_name="Клієнт з багатьма телефонами",
+        phones=[
+            "+380501234567",
+            "+380501234568",
+            "+380501234569",
+        ],
+    )
+    await setup_test_client(
+        shop_id=shop_id,
+        full_name="Інший Клієнт",
+        phones=["+380509999999"],
+    )
+    await session.commit()
+
+    headers = customer_headers(telegram_id)
+
+    response = await http_client.get(
+        url=f"{BASE_URL}/all", headers=headers, params={"phone": "50123456"}
+    )
+
+    assert response.status_code == status.HTTP_200_OK
+    data = response.json()
+
+    assert len(data) == 1
+    assert data[0]["full_name"] == "Клієнт з багатьма телефонами"
+
+
+@pytest.mark.asyncio()
+async def test_get_all_clients_pagination_no_duplicates_same_name(
+    http_client: AsyncClient,
+    session: AsyncSession,
+    customer_headers: Callable[[int], dict[str, Any]],
+    setup_full_test_user_with_shop,
+    setup_test_client,
+) -> None:
+    telegram_id = 2160
+    _, shop_id = await setup_full_test_user_with_shop(telegram_id=telegram_id)
+
+    for i in range(10):
+        await setup_test_client(
+            shop_id=shop_id,
+            full_name="Однакове Ім'я",
+            custom_id=f"ID-{i:03d}",
+        )
+    await session.commit()
+
+    headers = customer_headers(telegram_id)
+
+    all_client_ids: list[str] = []
+    for offset in range(0, 10, 2):
+        response = await http_client.get(
+            url=f"{BASE_URL}/all",
+            headers=headers,
+            params={"limit": 2, "offset": offset},
+        )
+        assert response.status_code == status.HTTP_200_OK
+        page_ids = [c["client_id"] for c in response.json()]
+        all_client_ids.extend(page_ids)
+
+    assert len(all_client_ids) == 10
+    assert len(all_client_ids) == len(set(all_client_ids))

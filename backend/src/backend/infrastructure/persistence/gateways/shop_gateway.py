@@ -132,9 +132,13 @@ class SQLAlchemyShopGateway(ShopGateway):
             query = query.where(ShopMembership.name.ilike(f"%{filters.name}%"))
 
         if pagination.order == SortOrder.ASC:
-            query = query.order_by(asc(ShopMembership.name))
+            query = query.order_by(
+                asc(ShopMembership.name), asc(ShopMembership.user_id)
+            )
         else:
-            query = query.order_by(desc(ShopMembership.name))
+            query = query.order_by(
+                desc(ShopMembership.name), asc(ShopMembership.user_id)
+            )
 
         query = query.offset(pagination.offset).limit(pagination.limit)
 

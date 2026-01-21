@@ -173,7 +173,7 @@ class SQLAlchemyOrderGateway(OrderGateway):
             query = query.where(or_(*search_conditions))
 
         order_func = desc if pagination.order == SortOrder.DESC else asc
-        query = query.order_by(order_func(Order.date))
+        query = query.order_by(order_func(Order.date), asc(Order.id))
         query = query.offset(pagination.offset).limit(pagination.limit)
 
         result = await self._session.execute(query)

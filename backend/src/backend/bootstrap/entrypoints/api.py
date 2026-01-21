@@ -24,10 +24,10 @@ async def lifespan(app: FastAPI) -> AsyncIterator[None]:
     yield
 
 
-def setup_middlewares(app: FastAPI) -> None:
+def setup_middlewares(app: FastAPI, config: Config) -> None:
     app.add_middleware(
         CORSMiddleware,
-        allow_origins=["*"],
+        allow_origins=config.app_config.cors_origins,
         allow_credentials=True,
         allow_methods=["*"],
         allow_headers=["*"],
@@ -52,7 +52,7 @@ def create_app() -> FastAPI:
 
     setup_telemetry(config.otel_config, app)
     setup_dishka(container, app)
-    setup_middlewares(app)
+    setup_middlewares(app, config)
     setup_exc_handlers(app)
     setup_v1_router(app)
 
