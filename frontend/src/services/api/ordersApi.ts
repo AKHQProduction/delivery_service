@@ -6,7 +6,7 @@ export const getAllOrders = async (
   deliveryDate: string,
   timePreference: string,
   ordersLimit: number,
-  offset: number
+  offset: number,
 ) => {
   try {
     const params: Record<string, string | number> = {
@@ -73,10 +73,13 @@ export const generateOrdersPdfLink = async (deliveryDate: string) => {
   }
 };
 
-export const getOrderStats = async (date: string) => {
+export const getOrderStats = async (start_date: string, end_date: string) => {
   try {
     const response = await api.get(`/api/v1/orders/stats`, {
-      params: { delivery_date: date },
+      params: {
+        start_date,
+        end_date,
+      },
     });
     return response.data;
   } catch (error) {

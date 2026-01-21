@@ -6,7 +6,7 @@ import {
   deleteOrderById,
 } from "../../services/api/ordersApi";
 
-const PAGE_SIZE = 20;
+const PAGE_SIZE = 3;
 
 export const useOrders = () => {
   const [orders, setOrders] = useState<any[]>();
