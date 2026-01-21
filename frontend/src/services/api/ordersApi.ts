@@ -18,7 +18,7 @@ export const getAllOrders = async (
     if (client_name) params.client_name = client_name;
     if (custom_id) params.custom_id = custom_id;
     if (start_date) params.start_date = start_date;
-    if (end_date) params.end_dfate = end_date;
+    if (end_date) params.end_date = end_date;
     if (time_preference) params.time_preference = time_preference;
 
     const response = await api.get(`v1/orders/all`, { params });
