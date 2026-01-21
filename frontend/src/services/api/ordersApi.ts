@@ -1,23 +1,25 @@
 import api from "../../config/api.config";
 
 export const getAllOrders = async (
-  clientName: string,
-  customId: string,
-  deliveryDate: string,
-  timePreference: string,
-  ordersLimit: number,
-  offset: number
+  client_name: string,
+  custom_id: string,
+  start_date: string,
+  end_date: string,
+  time_preference: string,
+  limit: number,
+  offset: number,
 ) => {
   try {
     const params: Record<string, string | number> = {
-      limit: ordersLimit,
+      limit: limit,
       offset: offset,
     };
 
-    if (clientName) params.client_name = clientName;
-    if (customId) params.custom_id = customId;
-    if (deliveryDate) params.delivery_date = deliveryDate;
-    if (timePreference) params.time_preference = timePreference;
+    if (client_name) params.client_name = client_name;
+    if (custom_id) params.custom_id = custom_id;
+    if (start_date) params.start_date = start_date;
+    if (end_date) params.end_dfate = end_date;
+    if (time_preference) params.time_preference = time_preference;
 
     const response = await api.get(`v1/orders/all`, { params });
     return response.data;
@@ -73,10 +75,13 @@ export const generateOrdersPdfLink = async (deliveryDate: string) => {
   }
 };
 
-export const getOrderStats = async (date: string) => {
+export const getOrderStats = async (start_date: string, end_date: string) => {
   try {
     const response = await api.get(`/api/v1/orders/stats`, {
-      params: { delivery_date: date },
+      params: {
+        start_date,
+        end_date,
+      },
     });
     return response.data;
   } catch (error) {

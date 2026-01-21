@@ -17,13 +17,30 @@ export const useOrders = () => {
   const [offset, setOffset] = useState(0);
   const [currentSearch, setCurrentSearch] = useState("");
 
+  const [startDate, setStartDate] = useState(() => {
+    const today = new Date();
+    return today.toISOString().split("T")[0];
+  });
+  const [endDate, setEndDate] = useState(() => {
+    const today = new Date();
+    return today.toISOString().split("T")[0];
+  });
+
   const getOrders = async (search: string = "") => {
     setLoading(true);
     setError(null);
     setCurrentSearch(search);
     setOffset(0);
     try {
-      const fetchedOrders = await getAllOrders(search, search, "", "", PAGE_SIZE, 0);
+      const fetchedOrders = await getAllOrders(
+        search,
+        search,
+        startDate,
+        endDate,
+        "",
+        PAGE_SIZE,
+        0,
+      );
       setOrders(fetchedOrders);
       setHasMore(fetchedOrders.length >= PAGE_SIZE);
       setOffset(PAGE_SIZE);
@@ -41,7 +58,15 @@ export const useOrders = () => {
 
     setLoadingMore(true);
     try {
-      const fetchedOrders = await getAllOrders(currentSearch, currentSearch, "", "", PAGE_SIZE, offset);
+      const fetchedOrders = await getAllOrders(
+        currentSearch,
+        currentSearch,
+        startDate,
+        endDate,
+        "",
+        PAGE_SIZE,
+        offset,
+      );
       setOrders((prev) => [...(prev || []), ...fetchedOrders]);
       setHasMore(fetchedOrders.length >= PAGE_SIZE);
       setOffset((prev) => prev + PAGE_SIZE);
@@ -98,8 +123,12 @@ export const useOrders = () => {
     loadingMore,
     error,
     hasMore,
+    startDate,
+    endDate,
     getOrders,
     loadMoreOrders,
+    setStartDate,
+    setEndDate,
     createNewOrder,
     updateCurrentOrder,
     deleteOrder,
