@@ -50,7 +50,7 @@
       },
       "targets": [
         {
-          "expr": "pg_stat_activity_count{job=\"$job\", state=\"active\"} / pg_settings_max_connections{job=\"$job\"}",
+          "expr": "sum(pg_stat_activity_count{job=\"$job\"}) / pg_settings_max_connections{job=\"$job\"}",
           "refId": "A"
         }
       ],
@@ -92,7 +92,7 @@
       },
       "targets": [
         {
-          "expr": "pg_stat_database_blks_hit{job=\"$job\", datname=\"$database\"} / (pg_stat_database_blks_hit{job=\"$job\", datname=\"$database\"} + pg_stat_database_blks_read{job=\"$job\", datname=\"$database\"})",
+          "expr": "pg_stat_database_blks_hit{job=\"$job\", datname=\"$database\"} / clamp_min(pg_stat_database_blks_hit{job=\"$job\", datname=\"$database\"} + pg_stat_database_blks_read{job=\"$job\", datname=\"$database\"}, 1)",
           "refId": "A"
         }
       ],
@@ -546,7 +546,7 @@
       },
       "targets": [
         {
-          "expr": "pg_stat_database_blks_hit{job=\"$job\", datname=\"$database\"} / (pg_stat_database_blks_hit{job=\"$job\", datname=\"$database\"} + pg_stat_database_blks_read{job=\"$job\", datname=\"$database\"})",
+          "expr": "pg_stat_database_blks_hit{job=\"$job\", datname=\"$database\"} / clamp_min(pg_stat_database_blks_hit{job=\"$job\", datname=\"$database\"} + pg_stat_database_blks_read{job=\"$job\", datname=\"$database\"}, 1)",
           "legendFormat": "Cache Hit Ratio",
           "refId": "A"
         }
