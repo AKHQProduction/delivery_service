@@ -11,6 +11,9 @@ echo "Restarting containers..."
 docker compose -f docker-compose-prod.yml up -d --force-recreate
 
 echo "Cleaning up old images..."
-docker image prune -f
+docker image prune -a -f
+
+echo "Cleaning up build cache..."
+docker builder prune -f
 
 echo "Deploy completed!"
