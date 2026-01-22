@@ -265,6 +265,8 @@ services:
   grafana:
     container_name: "water_delivery-grafana"
     image: grafana/grafana:11.4.0
+    env_file:
+      - .env
     environment:
       - GF_SECURITY_ADMIN_USER=${GRAFANA_ADMIN_USER:-admin}
       - GF_SECURITY_ADMIN_PASSWORD=${GRAFANA_ADMIN_PASSWORD}

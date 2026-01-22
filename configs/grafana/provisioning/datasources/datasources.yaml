@@ -45,3 +45,19 @@ datasources:
           url: ""
           datasourceUid: tempo
           urlDisplayLabel: "View Trace"
+
+  - name: PostgreSQL
+    uid: postgresql
+    type: postgres
+    access: proxy
+    url: postgres:5432
+    user: ${POSTGRES_USER}
+    editable: false
+    jsonData:
+      database: ${POSTGRES_DB}
+      sslmode: disable
+      maxOpenConns: 5
+      maxIdleConns: 2
+      connMaxLifetime: 14400
+    secureJsonData:
+      password: ${POSTGRES_PASSWORD}
