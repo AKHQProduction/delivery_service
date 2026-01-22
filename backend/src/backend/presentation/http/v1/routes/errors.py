@@ -8,6 +8,7 @@ from fastapi import (
     status as code,
 )
 from fastapi.responses import ORJSONResponse
+from starlette.exceptions import HTTPException as StarletteHTTPException
 
 from backend.application.errors import (
     AccessDeniedError,
@@ -28,10 +29,38 @@ logger = logging.getLogger(__name__)
 
 
 async def validate(
-    _: "Request", exc: Exception, status: int
+    request: "Request", exc: Exception, status: int
 ) -> ORJSONResponse:
     exc = cast("StubError", exc)
+    if status == code.HTTP_404_NOT_FOUND:
+        logger.warning(
+            "Resource not found: %s",
+            exc.message,
+            extra={
+                "path": request.url.path,
+                "method": request.method,
+                "status_code": status,
+            },
+        )
     return ORJSONResponse(content={"detail": exc.message}, status_code=status)
+
+
+async def http_exception_handler(
+    request: Request, exc: StarletteHTTPException
+) -> ORJSONResponse:
+    if exc.status_code == code.HTTP_404_NOT_FOUND:
+        logger.warning(
+            "Route not found",
+            extra={
+                "path": request.url.path,
+                "method": request.method,
+                "status_code": exc.status_code,
+            },
+        )
+    return ORJSONResponse(
+        content={"detail": exc.detail or "Not found"},
+        status_code=exc.status_code,
+    )
 
 
 async def internal_trouble(request: Request, exc: Exception) -> ORJSONResponse:
@@ -46,6 +75,7 @@ async def internal_trouble(request: Request, exc: Exception) -> ORJSONResponse:
 
 
 def setup_exc_handlers(app: FastAPI) -> None:
+    app.add_exception_handler(StarletteHTTPException, http_exception_handler)
     app.add_exception_handler(
         AuthorizationError,
         partial(validate, status=code.HTTP_401_UNAUTHORIZED),
