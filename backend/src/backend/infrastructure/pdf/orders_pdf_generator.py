@@ -1,6 +1,6 @@
 import io
 from collections import defaultdict
-from datetime import date
+from datetime import date, time
 from decimal import Decimal
 from pathlib import Path
 
@@ -23,7 +23,7 @@ from backend.application.interfaces.gateways.order_gateway import (
     OrderReadModel,
 )
 from backend.application.interfaces.pdf_generator import OrdersPDFGenerator
-from backend.application.vars import PaymentMethod, TimePreference
+from backend.application.vars import PaymentMethod
 
 FONT_DIR = Path(__file__).parent / "fonts"
 
@@ -122,16 +122,10 @@ class ReportLabOrdersPDFGenerator(OrdersPDFGenerator):
             )
             elements.append(no_orders)
         else:
-            # Group by time preference
-            first_half = [
-                o
-                for o in orders
-                if o.time_preference == TimePreference.FIRST_HALF
-            ]
+            midday = time(14, 0, 0)
+            first_half = [o for o in orders if o.delivery_start_time < midday]
             second_half = [
-                o
-                for o in orders
-                if o.time_preference == TimePreference.SECOND_HALF
+                o for o in orders if o.delivery_start_time >= midday
             ]
 
             if first_half:

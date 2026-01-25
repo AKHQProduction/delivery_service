@@ -1,6 +1,6 @@
 import uuid
 from collections.abc import Callable
-from datetime import UTC, datetime, timedelta
+from datetime import UTC, datetime, time, timedelta
 from typing import Any
 
 import pytest
@@ -12,7 +12,6 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from backend.application.vars import (
     PaymentMethod,
     ShopRole,
-    TimePreference,
 )
 from backend.infrastructure.persistence.tables.orders import Order, OrderItem
 
@@ -27,6 +26,7 @@ async def test_create_order_with_single_product(
     setup_full_test_user_with_shop,
     setup_test_client,
     setup_test_product,
+    setup_test_time_slot,
 ) -> None:
     telegram_id = 5000
     _, shop_id = await setup_full_test_user_with_shop(telegram_id=telegram_id)
@@ -48,6 +48,13 @@ async def test_create_order_with_single_product(
     # Create product
     product_id, _, _, _ = await setup_test_product(shop_id)
 
+    # Create time slot
+    time_slot_id = await setup_test_time_slot(
+        shop_id=shop_id,
+        start_time=time(9, 0),
+        end_time=time(14, 0),
+    )
+
     await session.commit()
 
     headers = customer_headers(telegram_id)
@@ -65,7 +72,7 @@ async def test_create_order_with_single_product(
     json = {
         "client_id": str(client_id),
         "delivery_date": delivery_date,
-        "time_preference": TimePreference.FIRST_HALF,
+        "time_slot_id": str(time_slot_id),
         "address_id": address_id,
         "phone_id": phone_id,
         "payment_method": PaymentMethod.CASH,
@@ -94,7 +101,8 @@ async def test_create_order_with_single_product(
     assert order.client_id == client_id
     assert order.shop_id == shop_id
     assert str(order.date) == delivery_date
-    assert order.time_preference == TimePreference.FIRST_HALF.value
+    assert order.delivery_start_time == time(9, 0)
+    assert order.delivery_end_time == time(14, 0)
     assert order.delivery_phone == "+380501234567"
     assert order.comment == "Доставити до 12:00"
 
@@ -120,6 +128,7 @@ async def test_create_order_with_multiple_products(
     setup_full_test_user_with_shop,
     setup_test_client,
     setup_test_product,
+    setup_test_time_slot,
 ) -> None:
     telegram_id = 5001
     _, shop_id = await setup_full_test_user_with_shop(telegram_id=telegram_id)
@@ -140,6 +149,12 @@ async def test_create_order_with_multiple_products(
     product_id_2, _, _, _ = await setup_test_product(shop_id)
     product_id_3, _, _, _ = await setup_test_product(shop_id)
 
+    time_slot_id = await setup_test_time_slot(
+        shop_id=shop_id,
+        start_time=time(14, 0),
+        end_time=time(20, 0),
+    )
+
     await session.commit()
 
     headers = customer_headers(telegram_id)
@@ -156,7 +171,7 @@ async def test_create_order_with_multiple_products(
     json = {
         "client_id": str(client_id),
         "delivery_date": delivery_date,
-        "time_preference": TimePreference.SECOND_HALF,
+        "time_slot_id": str(time_slot_id),
         "address_id": address_id,
         "phone_id": phone_id,
         "payment_method": PaymentMethod.BANK_TRANSFER,
@@ -196,6 +211,7 @@ async def test_create_order_without_comment(
     setup_full_test_user_with_shop,
     setup_test_client,
     setup_test_product,
+    setup_test_time_slot,
 ) -> None:
     telegram_id = 5002
     _, shop_id = await setup_full_test_user_with_shop(telegram_id=telegram_id)
@@ -214,6 +230,8 @@ async def test_create_order_without_comment(
 
     product_id, _, _, _ = await setup_test_product(shop_id)
 
+    time_slot_id = await setup_test_time_slot(shop_id=shop_id)
+
     await session.commit()
 
     headers = customer_headers(telegram_id)
@@ -230,7 +248,7 @@ async def test_create_order_without_comment(
     json = {
         "client_id": str(client_id),
         "delivery_date": delivery_date,
-        "time_preference": TimePreference.FIRST_HALF,
+        "time_slot_id": str(time_slot_id),
         "address_id": address_id,
         "phone_id": phone_id,
         "payment_method": PaymentMethod.CASH,
@@ -252,13 +270,14 @@ async def test_create_order_without_comment(
 
 
 @pytest.mark.asyncio()
-async def test_create_order_with_different_time_preferences(
+async def test_create_order_with_different_time_slots(
     http_client: AsyncClient,
     session: AsyncSession,
     customer_headers: Callable[[int], dict[str, Any]],
     setup_full_test_user_with_shop,
     setup_test_client,
     setup_test_product,
+    setup_test_time_slot,
 ) -> None:
     telegram_id = 5003
     _, shop_id = await setup_full_test_user_with_shop(telegram_id=telegram_id)
@@ -277,6 +296,18 @@ async def test_create_order_with_different_time_preferences(
 
     product_id, _, _, _ = await setup_test_product(shop_id)
 
+    # Create two time slots
+    time_slot_first = await setup_test_time_slot(
+        shop_id=shop_id,
+        start_time=time(9, 0),
+        end_time=time(14, 0),
+    )
+    time_slot_second = await setup_test_time_slot(
+        shop_id=shop_id,
+        start_time=time(14, 0),
+        end_time=time(20, 0),
+    )
+
     await session.commit()
 
     headers = customer_headers(telegram_id)
@@ -290,11 +321,11 @@ async def test_create_order_with_different_time_preferences(
 
     delivery_date = (datetime.now(UTC).date() + timedelta(days=1)).isoformat()
 
-    # Test FIRST_HALF
+    # Test first time slot
     json_first = {
         "client_id": str(client_id),
         "delivery_date": delivery_date,
-        "time_preference": TimePreference.FIRST_HALF,
+        "time_slot_id": str(time_slot_first),
         "address_id": address_id,
         "phone_id": phone_id,
         "payment_method": PaymentMethod.CASH,
@@ -306,11 +337,11 @@ async def test_create_order_with_different_time_preferences(
     )
     assert response_first.status_code == status.HTTP_201_CREATED
 
-    # Test SECOND_HALF
+    # Test second time slot
     json_second = {
         "client_id": str(client_id),
         "delivery_date": delivery_date,
-        "time_preference": TimePreference.SECOND_HALF,
+        "time_slot_id": str(time_slot_second),
         "address_id": address_id,
         "phone_id": phone_id,
         "payment_method": PaymentMethod.CASH,
@@ -331,13 +362,15 @@ async def test_create_order_with_different_time_preferences(
         select(Order).where(Order.id == uuid.UUID(order_id_first))
     )
     order_first = result_first.scalar_one()
-    assert order_first.time_preference == TimePreference.FIRST_HALF.value
+    assert order_first.delivery_start_time == time(9, 0)
+    assert order_first.delivery_end_time == time(14, 0)
 
     result_second = await session.execute(
         select(Order).where(Order.id == uuid.UUID(order_id_second))
     )
     order_second = result_second.scalar_one()
-    assert order_second.time_preference == TimePreference.SECOND_HALF.value
+    assert order_second.delivery_start_time == time(14, 0)
+    assert order_second.delivery_end_time == time(20, 0)
 
 
 @pytest.mark.asyncio()
@@ -346,9 +379,11 @@ async def test_create_order_client_not_found(
     session: AsyncSession,
     customer_headers: Callable[[int], dict[str, Any]],
     setup_full_test_user_with_shop,
+    setup_test_time_slot,
 ) -> None:
     telegram_id = 5004
-    await setup_full_test_user_with_shop(telegram_id=telegram_id)
+    _, shop_id = await setup_full_test_user_with_shop(telegram_id=telegram_id)
+    time_slot_id = await setup_test_time_slot(shop_id=shop_id)
     await session.commit()
 
     headers = customer_headers(telegram_id)
@@ -358,7 +393,7 @@ async def test_create_order_client_not_found(
     json = {
         "client_id": str(uuid.uuid4()),
         "delivery_date": delivery_date,
-        "time_preference": TimePreference.FIRST_HALF,
+        "time_slot_id": str(time_slot_id),
         "address_id": 1,
         "phone_id": 1,
         "payment_method": PaymentMethod.CASH,
@@ -377,6 +412,7 @@ async def test_create_order_product_not_found(
     customer_headers: Callable[[int], dict[str, Any]],
     setup_full_test_user_with_shop,
     setup_test_client,
+    setup_test_time_slot,
 ) -> None:
     telegram_id = 5005
     _, shop_id = await setup_full_test_user_with_shop(telegram_id=telegram_id)
@@ -392,6 +428,8 @@ async def test_create_order_product_not_found(
             }
         ],
     )
+
+    time_slot_id = await setup_test_time_slot(shop_id=shop_id)
 
     await session.commit()
 
@@ -409,7 +447,7 @@ async def test_create_order_product_not_found(
     json = {
         "client_id": str(client_id),
         "delivery_date": delivery_date,
-        "time_preference": TimePreference.FIRST_HALF,
+        "time_slot_id": str(time_slot_id),
         "address_id": address_id,
         "phone_id": phone_id,
         "payment_method": PaymentMethod.CASH,
@@ -429,6 +467,7 @@ async def test_create_order_phone_not_found(
     setup_full_test_user_with_shop,
     setup_test_client,
     setup_test_product,
+    setup_test_time_slot,
 ) -> None:
     telegram_id = 5006
     _, shop_id = await setup_full_test_user_with_shop(telegram_id=telegram_id)
@@ -446,6 +485,7 @@ async def test_create_order_phone_not_found(
     )
 
     product_id, _, _, _ = await setup_test_product(shop_id)
+    time_slot_id = await setup_test_time_slot(shop_id=shop_id)
 
     await session.commit()
 
@@ -462,7 +502,7 @@ async def test_create_order_phone_not_found(
     json = {
         "client_id": str(client_id),
         "delivery_date": delivery_date,
-        "time_preference": TimePreference.FIRST_HALF,
+        "time_slot_id": str(time_slot_id),
         "address_id": address_id,
         "phone_id": 999,  # Non-existent phone_id
         "payment_method": PaymentMethod.CASH,
@@ -482,6 +522,7 @@ async def test_create_order_address_not_found(
     setup_full_test_user_with_shop,
     setup_test_client,
     setup_test_product,
+    setup_test_time_slot,
 ) -> None:
     telegram_id = 5007
     _, shop_id = await setup_full_test_user_with_shop(telegram_id=telegram_id)
@@ -499,6 +540,7 @@ async def test_create_order_address_not_found(
     )
 
     product_id, _, _, _ = await setup_test_product(shop_id)
+    time_slot_id = await setup_test_time_slot(shop_id=shop_id)
 
     await session.commit()
 
@@ -515,7 +557,7 @@ async def test_create_order_address_not_found(
     json = {
         "client_id": str(client_id),
         "delivery_date": delivery_date,
-        "time_preference": TimePreference.FIRST_HALF,
+        "time_slot_id": str(time_slot_id),
         "address_id": 999,  # Non-existent address_id
         "phone_id": phone_id,
         "payment_method": PaymentMethod.CASH,
@@ -536,7 +578,7 @@ async def test_create_order_unauthorized(
     json = {
         "client_id": str(uuid.uuid4()),
         "delivery_date": delivery_date,
-        "time_preference": TimePreference.FIRST_HALF,
+        "time_slot_id": str(uuid.uuid4()),
         "address_id": 1,
         "phone_id": 1,
         "payment_method": "CASH",
@@ -556,6 +598,7 @@ async def test_create_order_as_courier_forbidden(
     setup_full_test_user_with_shop,
     setup_test_client,
     setup_test_product,
+    setup_test_time_slot,
 ) -> None:
     telegram_id = 5008
     _, shop_id = await setup_full_test_user_with_shop(
@@ -575,6 +618,7 @@ async def test_create_order_as_courier_forbidden(
     )
 
     product_id, _, _, _ = await setup_test_product(shop_id)
+    time_slot_id = await setup_test_time_slot(shop_id=shop_id)
 
     await session.commit()
 
@@ -592,7 +636,7 @@ async def test_create_order_as_courier_forbidden(
     json = {
         "client_id": str(client_id),
         "delivery_date": delivery_date,
-        "time_preference": TimePreference.FIRST_HALF,
+        "time_slot_id": str(time_slot_id),
         "address_id": address_id,
         "phone_id": phone_id,
         "payment_method": PaymentMethod.CASH,
@@ -612,6 +656,7 @@ async def test_create_order_with_past_delivery_date(
     setup_full_test_user_with_shop,
     setup_test_client,
     setup_test_product,
+    setup_test_time_slot,
 ) -> None:
     telegram_id = 5009
     _, shop_id = await setup_full_test_user_with_shop(telegram_id=telegram_id)
@@ -629,6 +674,7 @@ async def test_create_order_with_past_delivery_date(
     )
 
     product_id, _, _, _ = await setup_test_product(shop_id)
+    time_slot_id = await setup_test_time_slot(shop_id=shop_id)
 
     await session.commit()
 
@@ -647,7 +693,7 @@ async def test_create_order_with_past_delivery_date(
     json = {
         "client_id": str(client_id),
         "delivery_date": delivery_date,
-        "time_preference": TimePreference.FIRST_HALF,
+        "time_slot_id": str(time_slot_id),
         "address_id": address_id,
         "phone_id": phone_id,
         "payment_method": PaymentMethod.CASH,
@@ -752,7 +798,8 @@ async def test_get_order(
         shop_id=shop_id,
         client_id=client_id,
         delivery_date=delivery_date,
-        time_preference=TimePreference.FIRST_HALF,
+        delivery_start_time=time(9, 0),
+        delivery_end_time=time(14, 0),
         delivery_phone="+380501234567",
         delivery_address={
             "street": "Хрещатик",
@@ -777,7 +824,8 @@ async def test_get_order(
     assert order_data["client_id"] == str(client_id)
     assert order_data["client_name"] == "Тестовий Клієнт"
     assert order_data["date"] == delivery_date.isoformat()
-    assert order_data["time_preference"] == TimePreference.FIRST_HALF.value
+    assert order_data["delivery_start_time"] == "09:00:00"
+    assert order_data["delivery_end_time"] == "14:00:00"
     assert order_data["delivery_phone"] == "+380501234567"
     assert order_data["delivery_address"]["street"] == "Хрещатик"
     assert order_data["comment"] == "Test comment"
@@ -879,7 +927,7 @@ async def test_get_all_orders_with_date_filter(
 
 
 @pytest.mark.asyncio()
-async def test_get_all_orders_with_time_preference_filter(
+async def test_get_all_orders_with_delivery_time_filter(
     http_client: AsyncClient,
     session: AsyncSession,
     customer_headers: Callable[[int], dict[str, Any]],
@@ -892,14 +940,25 @@ async def test_get_all_orders_with_time_preference_filter(
 
     client_id = await setup_test_client(shop_id=shop_id)
 
-    for time_pref in [
-        TimePreference.FIRST_HALF,
-        TimePreference.FIRST_HALF,
-        TimePreference.SECOND_HALF,
-    ]:
-        await setup_test_order(
-            shop_id=shop_id, client_id=client_id, time_preference=time_pref
-        )
+    # Create orders with different delivery times
+    await setup_test_order(
+        shop_id=shop_id,
+        client_id=client_id,
+        delivery_start_time=time(9, 0),
+        delivery_end_time=time(14, 0),
+    )
+    await setup_test_order(
+        shop_id=shop_id,
+        client_id=client_id,
+        delivery_start_time=time(9, 0),
+        delivery_end_time=time(14, 0),
+    )
+    await setup_test_order(
+        shop_id=shop_id,
+        client_id=client_id,
+        delivery_start_time=time(14, 0),
+        delivery_end_time=time(20, 0),
+    )
 
     await session.commit()
 
@@ -908,16 +967,13 @@ async def test_get_all_orders_with_time_preference_filter(
     response = await http_client.get(
         url=f"{BASE_URL}/all",
         headers=headers,
-        params={"time_preference": TimePreference.FIRST_HALF.value},
+        params={"delivery_start_time": "09:00:00"},
     )
 
     assert response.status_code == status.HTTP_200_OK
     orders = response.json()
     assert len(orders) == 2
-    assert all(
-        order["time_preference"] == TimePreference.FIRST_HALF.value
-        for order in orders
-    )
+    assert all(order["delivery_start_time"] == "09:00:00" for order in orders)
 
 
 @pytest.mark.asyncio()
@@ -1217,21 +1273,24 @@ async def test_get_order_stats(
         shop_id=shop_id,
         client_id=client_id,
         delivery_date=tomorrow,
-        time_preference=TimePreference.FIRST_HALF,
+        delivery_start_time=time(9, 0),
+        delivery_end_time=time(14, 0),
         items=[{"name": "Product 1", "quantity": 2, "price_per_item": 100}],
     )
     await setup_test_order(
         shop_id=shop_id,
         client_id=client_id,
         delivery_date=tomorrow,
-        time_preference=TimePreference.FIRST_HALF,
+        delivery_start_time=time(9, 0),
+        delivery_end_time=time(14, 0),
         items=[{"name": "Product 2", "quantity": 3, "price_per_item": 50}],
     )
     await setup_test_order(
         shop_id=shop_id,
         client_id=client_id,
         delivery_date=tomorrow,
-        time_preference=TimePreference.SECOND_HALF,
+        delivery_start_time=time(14, 0),
+        delivery_end_time=time(20, 0),
         items=[{"name": "Product 3", "quantity": 1, "price_per_item": 200}],
     )
 
@@ -1277,7 +1336,8 @@ async def test_get_order_stats_with_multiple_items_per_order(
         shop_id=shop_id,
         client_id=client_id,
         delivery_date=tomorrow,
-        time_preference=TimePreference.FIRST_HALF,
+        delivery_start_time=time(9, 0),
+        delivery_end_time=time(14, 0),
         items=[
             {"name": "Product 1", "quantity": 2, "price_per_item": 100},
             {"name": "Product 2", "quantity": 1, "price_per_item": 200},
@@ -1456,6 +1516,7 @@ async def test_generate_orders_pdf(
     setup_full_test_user_with_shop,
     setup_test_client,
     setup_test_product,
+    setup_test_time_slot,
 ) -> None:
     telegram_id = 6100
     _, shop_id = await setup_full_test_user_with_shop(telegram_id=telegram_id)
@@ -1473,6 +1534,7 @@ async def test_generate_orders_pdf(
         ],
     )
     product_id, _, _, _ = await setup_test_product(shop_id)
+    time_slot_id = await setup_test_time_slot(shop_id=shop_id)
     await session.commit()
 
     headers = customer_headers(telegram_id)
@@ -1489,7 +1551,7 @@ async def test_generate_orders_pdf(
     order_json = {
         "client_id": str(client_id),
         "delivery_date": tomorrow,
-        "time_preference": TimePreference.FIRST_HALF,
+        "time_slot_id": str(time_slot_id),
         "address_id": address_id,
         "phone_id": phone_id,
         "payment_method": PaymentMethod.CASH,
@@ -1533,6 +1595,7 @@ async def test_download_orders_pdf(
     setup_full_test_user_with_shop,
     setup_test_client,
     setup_test_product,
+    setup_test_time_slot,
 ) -> None:
     telegram_id = 6101
     _, shop_id = await setup_full_test_user_with_shop(telegram_id=telegram_id)
@@ -1550,6 +1613,7 @@ async def test_download_orders_pdf(
         ],
     )
     product_id, _, _, _ = await setup_test_product(shop_id)
+    time_slot_id = await setup_test_time_slot(shop_id=shop_id)
     await session.commit()
 
     headers = customer_headers(telegram_id)
@@ -1566,7 +1630,7 @@ async def test_download_orders_pdf(
     order_json = {
         "client_id": str(client_id),
         "delivery_date": tomorrow,
-        "time_preference": TimePreference.FIRST_HALF,
+        "time_slot_id": str(time_slot_id),
         "address_id": address_id,
         "phone_id": phone_id,
         "payment_method": PaymentMethod.CASH,

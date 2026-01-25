@@ -46,8 +46,9 @@ async def validate(
 
 
 async def http_exception_handler(
-    request: Request, exc: StarletteHTTPException
+    request: Request, exc: Exception
 ) -> ORJSONResponse:
+    exc = cast("StarletteHTTPException", exc)
     if exc.status_code == code.HTTP_404_NOT_FOUND:
         logger.warning(
             "Route not found",

@@ -5,6 +5,7 @@ from .order_gateway import SQLAlchemyOrderGateway
 from .pdf_storage import RedisPDFStorage
 from .product_gateway import SQLAlchemyProductGateway
 from .shop_gateway import SQLAlchemyShopGateway
+from .time_slot_gateway import SQLAlchemyTimeSlotGateway
 from .user_gateway import SQLAlchemyUserGateway
 
 __all__ = [
@@ -15,5 +16,6 @@ __all__ = [
     "SQLAlchemyOrderGateway",
     "SQLAlchemyProductGateway",
     "SQLAlchemyShopGateway",
+    "SQLAlchemyTimeSlotGateway",
     "SQLAlchemyUserGateway",
 ]

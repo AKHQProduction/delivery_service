@@ -1,6 +1,6 @@
 from abc import abstractmethod
 from dataclasses import dataclass
-from datetime import date
+from datetime import date, time
 from typing import Protocol
 
 from backend.application.interfaces.gateways import Pagination
@@ -12,7 +12,6 @@ from backend.application.vars import (
     PaymentMethod,
     ProductId,
     ShopId,
-    TimePreference,
 )
 
 
@@ -48,7 +47,8 @@ class CreateOrderDTO:
     shop_id: ShopId
     client_id: ClientId
     delivery_date: date
-    time_preference: TimePreference
+    delivery_start_time: time
+    delivery_end_time: time
     delivery_phone: str
     delivery_address: DeliveryAddressDTO
     order_items: list[OrderItemDTO]
@@ -62,7 +62,8 @@ class Order:
     shop_id: ShopId
     client_id: ClientId
     delivery_date: date
-    time_preference: TimePreference
+    delivery_start_time: time
+    delivery_end_time: time
     delivery_phone: str
     delivery_address: DeliveryAddressDTO
     comment: str | None
@@ -81,7 +82,8 @@ class OrderItemReadModel:
 class OrderReadModel:
     order_id: OrderId
     date: date
-    time_preference: TimePreference
+    delivery_start_time: time
+    delivery_end_time: time
     delivery_phone: str
     delivery_address: DeliveryAddressDTO
     comment: str | None
@@ -97,7 +99,7 @@ class GetOrdersFilters:
     shop_id: ShopId | None = None
     start_date: date | None = None
     end_date: date | None = None
-    time_preference: TimePreference | None = None
+    delivery_start_time: time | None = None
     client_name: str | None = None
     custom_id: str | None = None
 
@@ -123,7 +125,8 @@ class UpdateOrderDTO:
     order_id: OrderId
     client_id: ClientId | None = None
     delivery_date: date | None = None
-    time_preference: TimePreference | None = None
+    delivery_start_time: time | None = None
+    delivery_end_time: time | None = None
     delivery_phone: str | None = None
     delivery_address: DeliveryAddressDTO | None = None
     comment: str | Empty | None = None

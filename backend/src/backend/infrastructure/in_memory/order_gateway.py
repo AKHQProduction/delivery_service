@@ -1,5 +1,6 @@
 import uuid
 from collections import defaultdict
+from datetime import time
 
 from backend.application.interfaces.gateways import Pagination
 from backend.application.interfaces.gateways.order_gateway import (
@@ -21,7 +22,6 @@ from backend.application.vars import (
     OrderItemId,
     PaymentMethod,
     ShopId,
-    TimePreference,
 )
 
 
@@ -46,7 +46,8 @@ class InMemoryOrderGateway(OrderGateway):
                 shop_id=dto.shop_id,
                 client_id=dto.client_id,
                 delivery_date=dto.delivery_date,
-                time_preference=dto.time_preference,
+                delivery_start_time=dto.delivery_start_time,
+                delivery_end_time=dto.delivery_end_time,
                 delivery_phone=dto.delivery_phone,
                 delivery_address=dto.delivery_address,
                 comment=dto.comment,
@@ -86,11 +87,11 @@ class InMemoryOrderGateway(OrderGateway):
                 for o in filtered_orders
                 if o.delivery_date <= filters.end_date
             ]
-        if filters.time_preference:
+        if filters.delivery_start_time:
             filtered_orders = [
                 o
                 for o in filtered_orders
-                if o.time_preference == filters.time_preference
+                if o.delivery_start_time == filters.delivery_start_time
             ]
 
         if filters.client_name or filters.custom_id:
@@ -123,7 +124,8 @@ class InMemoryOrderGateway(OrderGateway):
         return OrderReadModel(
             order_id=dto.order_id,
             date=dto.delivery_date,
-            time_preference=dto.time_preference,
+            delivery_start_time=dto.delivery_start_time,
+            delivery_end_time=dto.delivery_end_time,
             delivery_phone=dto.delivery_phone,
             delivery_address=dto.delivery_address,
             comment=dto.comment,
@@ -156,7 +158,10 @@ class InMemoryOrderGateway(OrderGateway):
             shop_id=existing.shop_id,
             client_id=dto.client_id or existing.client_id,
             delivery_date=dto.delivery_date or existing.delivery_date,
-            time_preference=dto.time_preference or existing.time_preference,
+            delivery_start_time=dto.delivery_start_time
+            or existing.delivery_start_time,
+            delivery_end_time=dto.delivery_end_time
+            or existing.delivery_end_time,
             delivery_phone=dto.delivery_phone or existing.delivery_phone,
             delivery_address=dto.delivery_address or existing.delivery_address,
             order_items=items,
@@ -251,15 +256,12 @@ class InMemoryOrderGateway(OrderGateway):
             ]
 
         total_orders = len(filtered_orders)
+        midday = time(14, 0)
         total_orders_in_first_half = sum(
-            1
-            for o in filtered_orders
-            if o.time_preference == TimePreference.FIRST_HALF
+            1 for o in filtered_orders if o.delivery_start_time < midday
         )
         total_orders_in_second_half = sum(
-            1
-            for o in filtered_orders
-            if o.time_preference == TimePreference.SECOND_HALF
+            1 for o in filtered_orders if o.delivery_start_time >= midday
         )
         total_orders_sum = sum(
             (item.quantity * (item.price_per_item or 0))

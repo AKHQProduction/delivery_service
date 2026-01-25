@@ -1,3 +1,4 @@
+from datetime import time
 from typing import cast
 from uuid import UUID
 
@@ -27,7 +28,6 @@ from backend.application.vars import (
     PaymentMethod,
     ProductId,
     ShopId,
-    TimePreference,
 )
 from backend.infrastructure.persistence.tables.categories import Category
 from backend.infrastructure.persistence.tables.clients import Client
@@ -68,7 +68,8 @@ class SQLAlchemyOrderGateway(OrderGateway):
             date=dto.delivery_date,
             delivery_address=delivery_address,
             delivery_phone=dto.delivery_phone,
-            time_preference=dto.time_preference.value,
+            delivery_start_time=dto.delivery_start_time,
+            delivery_end_time=dto.delivery_end_time,
             comment=dto.comment,
             shop_id=dto.shop_id,
             client_id=dto.client_id,
@@ -91,9 +92,8 @@ class SQLAlchemyOrderGateway(OrderGateway):
                     cast("UUID", cast("object", row.client_id))
                 ),
                 delivery_date=row.date,
-                time_preference=TimePreference(
-                    cast("str", cast("object", row.time_preference))
-                ),
+                delivery_start_time=row.delivery_start_time,
+                delivery_end_time=row.delivery_end_time,
                 delivery_phone=cast("str", cast("object", row.delivery_phone)),
                 delivery_address=DeliveryAddressDTO(
                     street=cast("str", delivery_address_dict.get("street")),
@@ -151,9 +151,9 @@ class SQLAlchemyOrderGateway(OrderGateway):
             query = query.where(Order.date >= filters.start_date)
         if filters.end_date:
             query = query.where(Order.date <= filters.end_date)
-        if filters.time_preference:
+        if filters.delivery_start_time:
             query = query.where(
-                Order.time_preference == filters.time_preference.value
+                Order.delivery_start_time == filters.delivery_start_time
             )
 
         search_conditions = []
@@ -188,9 +188,8 @@ class SQLAlchemyOrderGateway(OrderGateway):
         return OrderReadModel(
             order_id=OrderId(cast("UUID", cast("object", row.id))),
             date=row.date,
-            time_preference=TimePreference(
-                cast("str", cast("object", row.time_preference))
-            ),
+            delivery_start_time=row.delivery_start_time,
+            delivery_end_time=row.delivery_end_time,
             delivery_phone=cast("str", cast("object", row.delivery_phone)),
             delivery_address=DeliveryAddressDTO(
                 street=cast("str", delivery_address_dict.get("street")),
@@ -256,8 +255,11 @@ class SQLAlchemyOrderGateway(OrderGateway):
         if dto.delivery_date is not None:
             order_db.date = dto.delivery_date
 
-        if dto.time_preference is not None:
-            order_db.time_preference = dto.time_preference.value
+        if dto.delivery_start_time is not None:
+            order_db.delivery_start_time = dto.delivery_start_time
+
+        if dto.delivery_end_time is not None:
+            order_db.delivery_end_time = dto.delivery_end_time
 
         if dto.delivery_phone is not None:
             order_db.delivery_phone = dto.delivery_phone
@@ -343,6 +345,7 @@ class SQLAlchemyOrderGateway(OrderGateway):
     async def get_stats(
         self, filters: GetOrdersFilters
     ) -> OrderStatsReadModel:
+        midday = time(14, 0, 0)
         main_query = (
             select(
                 func.count(func.distinct(Order.id)).label("total_orders"),
@@ -350,8 +353,7 @@ class SQLAlchemyOrderGateway(OrderGateway):
                     func.distinct(
                         case(
                             (
-                                Order.time_preference
-                                == TimePreference.FIRST_HALF.value,
+                                Order.delivery_start_time < midday,
                                 Order.id,
                             ),
                             else_=None,
@@ -362,8 +364,7 @@ class SQLAlchemyOrderGateway(OrderGateway):
                     func.distinct(
                         case(
                             (
-                                Order.time_preference
-                                == TimePreference.SECOND_HALF.value,
+                                Order.delivery_start_time >= midday,
                                 Order.id,
                             ),
                             else_=None,

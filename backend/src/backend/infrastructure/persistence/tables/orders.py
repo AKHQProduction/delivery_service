@@ -23,7 +23,12 @@ class Order(Base, CreatedAt, UpdatedAt):
     date: Mapped[datetime.date] = mapped_column(sa.Date, nullable=False)
     delivery_address: Mapped[dict] = mapped_column(sa.JSON, nullable=False)
     delivery_phone: Mapped[str] = mapped_column(sa.String, nullable=False)
-    time_preference: Mapped[str] = mapped_column(sa.String, nullable=False)
+    delivery_start_time: Mapped[datetime.time] = mapped_column(
+        sa.Time, nullable=False
+    )
+    delivery_end_time: Mapped[datetime.time] = mapped_column(
+        sa.Time, nullable=False
+    )
     comment: Mapped[str] = mapped_column(sa.String, nullable=True)
     is_paid: Mapped[bool] = mapped_column(
         sa.Boolean, nullable=False, default=False, server_default=sa.false()

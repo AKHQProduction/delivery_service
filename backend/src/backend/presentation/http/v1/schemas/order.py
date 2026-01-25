@@ -10,7 +10,7 @@ from backend.application.vars import (
     PaymentMethod,
     PhoneId,
     ProductId,
-    TimePreference,
+    TimeSlotId,
 )
 
 
@@ -23,7 +23,7 @@ class OrderItemSchema(BaseModel):
 class UpdateOrderSchema(BaseModel):
     client_id: ClientId | None = None
     delivery_date: date | None = None
-    time_preference: TimePreference | None = None
+    time_slot_id: TimeSlotId | None = None
     address_id: AddressId | None = None
     phone_id: PhoneId | None = None
     comment: str | Empty | None = None

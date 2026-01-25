@@ -1,7 +1,7 @@
 import os
 import uuid
 from collections.abc import AsyncGenerator, Callable
-from datetime import UTC, datetime, timedelta
+from datetime import UTC, datetime, time, timedelta
 from typing import Any, cast
 from unittest.mock import AsyncMock
 
@@ -32,7 +32,7 @@ from backend.application.vars import (
     ProductId,
     ShopId,
     ShopRole,
-    TimePreference,
+    TimeSlotId,
     UserId,
 )
 from backend.bootstrap.config import Config, PostgresConfig, RedisConfig
@@ -62,6 +62,9 @@ from backend.infrastructure.persistence.tables.clients import (
     ClientPhone,
 )
 from backend.infrastructure.persistence.tables.orders import Order, OrderItem
+from backend.infrastructure.persistence.tables.shops import (
+    ShopDeliveryTimeSlot,
+)
 
 
 @pytest.fixture(scope="session")
@@ -367,13 +370,41 @@ def setup_test_client(session: AsyncSession):
 
 
 @pytest.fixture()
+def setup_test_time_slot(session: AsyncSession):
+    async def _setup_test_time_slot(
+        shop_id: ShopId,
+        time_slot_id: TimeSlotId | None = None,
+        start_time: time = time(9, 0),
+        end_time: time = time(14, 0),
+        label: str | None = "Перша половина дня",
+    ) -> TimeSlotId:
+        if time_slot_id is None:
+            time_slot_id = TimeSlotId(uuid.uuid4())
+
+        await session.execute(
+            insert(ShopDeliveryTimeSlot).values(
+                id=time_slot_id,
+                shop_id=shop_id,
+                start_time=start_time,
+                end_time=end_time,
+                label=label,
+            )
+        )
+
+        return time_slot_id
+
+    return _setup_test_time_slot
+
+
+@pytest.fixture()
 def setup_test_order(session: AsyncSession):
     async def _setup_test_order(
         shop_id: ShopId,
         client_id: ClientId,
         order_id: OrderId | None = None,
         delivery_date: datetime | None = None,
-        time_preference: TimePreference = TimePreference.FIRST_HALF,
+        delivery_start_time: time = time(9, 0),
+        delivery_end_time: time = time(14, 0),
         delivery_phone: str = "+380501234567",
         delivery_address: dict[str, Any] | None = None,
         comment: str | None = None,
@@ -398,7 +429,8 @@ def setup_test_order(session: AsyncSession):
                 date=delivery_date,
                 delivery_address=delivery_address,
                 delivery_phone=delivery_phone,
-                time_preference=time_preference.value,
+                delivery_start_time=delivery_start_time,
+                delivery_end_time=delivery_end_time,
                 comment=comment,
                 shop_id=shop_id,
                 client_id=client_id,

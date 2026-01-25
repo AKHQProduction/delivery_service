@@ -24,6 +24,10 @@ from backend.application.interfaces.gateways.order_gateway import (
 from backend.application.interfaces.gateways.product_gateway import (
     ProductGateway,
 )
+from backend.application.interfaces.gateways.time_slot_gateway import (
+    TimeSlotGateway,
+)
+from backend.application.interfaces.idp import CurrentUserDTO
 from backend.application.policies.access import (
     IsRelatedToShop,
     can_shop_manage_policy,
@@ -37,7 +41,7 @@ from backend.application.vars import (
     PaymentMethod,
     PhoneId,
     ProductId,
-    TimePreference,
+    TimeSlotId,
 )
 
 logger = logging.getLogger(__name__)
@@ -59,7 +63,7 @@ class UpdateOrderCommand:
     order_id: OrderId
     client_id: ClientId | None = None
     delivery_date: date | None = None
-    time_preference: TimePreference | None = None
+    time_slot_id: TimeSlotId | None = None
     address_id: AddressId | None = None
     phone_id: PhoneId | None = None
     comment: str | Empty | None = None
@@ -81,12 +85,14 @@ class UpdateOrderCommandHandler:
         client_gateway: ClientGateway,
         product_gateway: ProductGateway,
         order_gateway: OrderGateway,
+        time_slot_gateway: TimeSlotGateway,
         tr_manager: TransactionManager,
     ) -> None:
         self._idp = idp
         self._client_gateway = client_gateway
         self._product_gateway = product_gateway
         self._order_gateway = order_gateway
+        self._time_slot_gateway = time_slot_gateway
         self._tr_manager = tr_manager
 
     async def handle(self, command: UpdateOrderCommand) -> None:
@@ -119,7 +125,7 @@ class UpdateOrderCommandHandler:
             current_user.shop_id,
         )
 
-        update_dto = await self._build_update_dto(command, order)
+        update_dto = await self._build_update_dto(command, order, current_user)
 
         await self._order_gateway.update(update_dto)
         await self._tr_manager.commit()
@@ -131,7 +137,10 @@ class UpdateOrderCommandHandler:
         )
 
     async def _build_update_dto(
-        self, command: UpdateOrderCommand, order: Order
+        self,
+        command: UpdateOrderCommand,
+        order: Order,
+        current_user: CurrentUserDTO,
     ) -> UpdateOrderDTO:
         # Handle client/phone/address changes
         (
@@ -139,6 +148,28 @@ class UpdateOrderCommandHandler:
             delivery_phone,
             delivery_address,
         ) = await self._process_client_changes(command, order)
+
+        delivery_start_time = None
+        delivery_end_time = None
+        if command.time_slot_id is not None:
+            time_slot = await self._time_slot_gateway.load(
+                command.time_slot_id
+            )
+            if not time_slot:
+                logger.warning(
+                    "TimeSlot not found: time_slot_id=%s", command.time_slot_id
+                )
+                raise EntityNotFoundError(entity="TimeSlot")
+            if not IsRelatedToShop(time_slot.shop_id).is_satisfied_by(
+                current_user
+            ):
+                logger.warning(
+                    "Access denied: time slot %s belongs to different shop",
+                    command.time_slot_id,
+                )
+                raise AccessDeniedError
+            delivery_start_time = time_slot.start_time
+            delivery_end_time = time_slot.end_time
 
         # Handle items replacement
         items: list[OrderItemDTO] | None = None
@@ -151,7 +182,8 @@ class UpdateOrderCommandHandler:
             order_id=command.order_id,
             client_id=client_id,
             delivery_date=command.delivery_date,
-            time_preference=command.time_preference,
+            delivery_start_time=delivery_start_time,
+            delivery_end_time=delivery_end_time,
             delivery_phone=delivery_phone,
             delivery_address=delivery_address,
             comment=command.comment,

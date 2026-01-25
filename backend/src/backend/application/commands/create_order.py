@@ -22,6 +22,9 @@ from backend.application.interfaces.gateways.product_gateway import (
     Product,
     ProductGateway,
 )
+from backend.application.interfaces.gateways.time_slot_gateway import (
+    TimeSlotGateway,
+)
 from backend.application.policies.access import (
     IsRelatedToShop,
     can_shop_manage_policy,
@@ -33,7 +36,7 @@ from backend.application.vars import (
     PaymentMethod,
     PhoneId,
     ProductId,
-    TimePreference,
+    TimeSlotId,
 )
 
 logger = logging.getLogger(__name__)
@@ -49,7 +52,7 @@ class ProductDTO:
 class CreateOrderCommand:
     client_id: ClientId
     delivery_date: date
-    time_preference: TimePreference
+    time_slot_id: TimeSlotId
     address_id: AddressId
     phone_id: PhoneId
     products: list[ProductDTO]
@@ -71,12 +74,14 @@ class CreateOrderCommandHandler:
         client_gateway: ClientGateway,
         product_gateway: ProductGateway,
         order_gateway: OrderGateway,
+        time_slot_gateway: TimeSlotGateway,
         tr_manager: TransactionManager,
     ) -> None:
         self._idp = idp
         self._client_gateway = client_gateway
         self._product_gateway = product_gateway
         self._order_gateway = order_gateway
+        self._time_slot_gateway = time_slot_gateway
         self._tr_manager = tr_manager
 
     async def handle(self, command: CreateOrderCommand) -> OrderId:
@@ -130,6 +135,21 @@ class CreateOrderCommandHandler:
             )
             raise EntityNotFoundError(entity="Address")
 
+        time_slot = await self._time_slot_gateway.load(command.time_slot_id)
+        if not time_slot:
+            logger.warning(
+                "TimeSlot not found: time_slot_id=%s", command.time_slot_id
+            )
+            raise EntityNotFoundError(entity="TimeSlot")
+        if not IsRelatedToShop(time_slot.shop_id).is_satisfied_by(
+            current_user
+        ):
+            logger.warning(
+                "Access denied: time slot %s belongs to different shop",
+                command.time_slot_id,
+            )
+            raise AccessDeniedError
+
         product_ids = [p.product_id for p in command.products]
         loaded_products = await self._product_gateway.load_many(product_ids)
         products_map = {p.product_id: p for p in loaded_products}
@@ -149,7 +169,8 @@ class CreateOrderCommandHandler:
             shop_id=current_user.shop_id,
             client_id=client.client_id,
             delivery_date=command.delivery_date,
-            time_preference=command.time_preference,
+            delivery_start_time=time_slot.start_time,
+            delivery_end_time=time_slot.end_time,
             delivery_phone=phone.number,
             delivery_address=DeliveryAddressDTO(
                 street=address.street,
