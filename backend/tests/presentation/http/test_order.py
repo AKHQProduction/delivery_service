@@ -1261,9 +1261,17 @@ async def test_get_order_stats(
     setup_full_test_user_with_shop,
     setup_test_client,
     setup_test_order,
+    setup_test_time_slot,
 ) -> None:
     telegram_id = 5400
     _, shop_id = await setup_full_test_user_with_shop(telegram_id=telegram_id)
+
+    await setup_test_time_slot(
+        shop_id=shop_id, start_time=time(9, 0), end_time=time(14, 0)
+    )
+    await setup_test_time_slot(
+        shop_id=shop_id, start_time=time(14, 0), end_time=time(20, 0)
+    )
 
     client_id = await setup_test_client(shop_id=shop_id)
 
@@ -1310,8 +1318,11 @@ async def test_get_order_stats(
     assert response.status_code == status.HTTP_200_OK
     stats = response.json()
     assert stats["total_orders"] == 3
-    assert stats["total_orders_in_first_half"] == 2
-    assert stats["total_orders_in_second_half"] == 1
+    assert len(stats["time_slot_stats"]) == 2
+    assert stats["time_slot_stats"][0]["time_range"] == "09:00-14:00"
+    assert stats["time_slot_stats"][0]["total"] == 2
+    assert stats["time_slot_stats"][1]["time_range"] == "14:00-20:00"
+    assert stats["time_slot_stats"][1]["total"] == 1
     # 2*100 + 3*50 + 1*200 = 200 + 150 + 200 = 550
     assert stats["total_orders_sum"] == 550
 
@@ -1324,9 +1335,14 @@ async def test_get_order_stats_with_multiple_items_per_order(
     setup_full_test_user_with_shop,
     setup_test_client,
     setup_test_order,
+    setup_test_time_slot,
 ) -> None:
     telegram_id = 5404
     _, shop_id = await setup_full_test_user_with_shop(telegram_id=telegram_id)
+
+    await setup_test_time_slot(
+        shop_id=shop_id, start_time=time(9, 0), end_time=time(14, 0)
+    )
 
     client_id = await setup_test_client(shop_id=shop_id)
 
@@ -1361,8 +1377,9 @@ async def test_get_order_stats_with_multiple_items_per_order(
     assert response.status_code == status.HTTP_200_OK
     stats = response.json()
     assert stats["total_orders"] == 1
-    assert stats["total_orders_in_first_half"] == 1
-    assert stats["total_orders_in_second_half"] == 0
+    assert len(stats["time_slot_stats"]) == 1
+    assert stats["time_slot_stats"][0]["time_range"] == "09:00-14:00"
+    assert stats["time_slot_stats"][0]["total"] == 1
     # 2*100 + 1*200 + 3*50 = 200 + 200 + 150 = 550
     assert stats["total_orders_sum"] == 550
 
@@ -1373,9 +1390,15 @@ async def test_get_order_stats_empty(
     session: AsyncSession,
     customer_headers: Callable[[int], dict[str, Any]],
     setup_full_test_user_with_shop,
+    setup_test_time_slot,
 ) -> None:
     telegram_id = 5401
-    await setup_full_test_user_with_shop(telegram_id=telegram_id)
+    _, shop_id = await setup_full_test_user_with_shop(telegram_id=telegram_id)
+
+    await setup_test_time_slot(
+        shop_id=shop_id, start_time=time(9, 0), end_time=time(14, 0)
+    )
+
     await session.commit()
 
     headers = customer_headers(telegram_id)
@@ -1393,8 +1416,8 @@ async def test_get_order_stats_empty(
     assert response.status_code == status.HTTP_200_OK
     stats = response.json()
     assert stats["total_orders"] == 0
-    assert stats["total_orders_in_first_half"] == 0
-    assert stats["total_orders_in_second_half"] == 0
+    assert len(stats["time_slot_stats"]) == 1
+    assert stats["time_slot_stats"][0]["total"] == 0
     assert stats["total_orders_sum"] == 0
 
 
@@ -1405,6 +1428,7 @@ async def test_get_order_stats_filters_by_shop(
     customer_headers: Callable[[int], dict[str, Any]],
     setup_test_client,
     setup_test_order,
+    setup_test_time_slot,
     create_user,
     create_telegram_account,
     create_role,
@@ -1435,6 +1459,9 @@ async def test_get_order_stats_filters_by_shop(
     await create_shop_membership(
         user_id=user_id_2, shop_id=shop_id_2, role_id=role_id
     )
+
+    await setup_test_time_slot(shop_id=shop_id_1)
+    await setup_test_time_slot(shop_id=shop_id_2)
 
     client_id_1 = await setup_test_client(shop_id=shop_id_1)
     client_id_2 = await setup_test_client(shop_id=shop_id_2)

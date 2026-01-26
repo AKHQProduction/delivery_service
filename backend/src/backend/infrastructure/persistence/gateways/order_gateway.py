@@ -1,10 +1,10 @@
-from datetime import time
 from typing import cast
 from uuid import UUID
 
-from sqlalchemy import asc, case, desc, func, or_, select
+from sqlalchemy import asc, desc, func, or_, select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
+from sqlalchemy.sql import Select
 from uuid_utils import uuid7
 
 from backend.application.interfaces.gateways import Pagination, SortOrder
@@ -19,6 +19,8 @@ from backend.application.interfaces.gateways.order_gateway import (
     OrderReadModel,
     OrderStatsReadModel,
     PaymentMethodStatsReadModel,
+    TimeSlotFilter,
+    TimeSlotStatsReadModel,
     UpdateOrderDTO,
 )
 from backend.application.vars import (
@@ -343,34 +345,13 @@ class SQLAlchemyOrderGateway(OrderGateway):
         ]
 
     async def get_stats(
-        self, filters: GetOrdersFilters
+        self,
+        filters: GetOrdersFilters,
+        time_slots_filter: list[TimeSlotFilter],
     ) -> OrderStatsReadModel:
-        midday = time(14, 0, 0)
         main_query = (
             select(
                 func.count(func.distinct(Order.id)).label("total_orders"),
-                func.count(
-                    func.distinct(
-                        case(
-                            (
-                                Order.delivery_start_time < midday,
-                                Order.id,
-                            ),
-                            else_=None,
-                        )
-                    )
-                ).label("total_orders_in_first_half"),
-                func.count(
-                    func.distinct(
-                        case(
-                            (
-                                Order.delivery_start_time >= midday,
-                                Order.id,
-                            ),
-                            else_=None,
-                        )
-                    )
-                ).label("total_orders_in_second_half"),
                 func.coalesce(
                     func.sum(OrderItem.quantity * OrderItem.price_per_item), 0
                 ).label("total_orders_sum"),
@@ -378,18 +359,56 @@ class SQLAlchemyOrderGateway(OrderGateway):
             .select_from(Order)
             .outerjoin(OrderItem, Order.id == OrderItem.order_id)
         )
-
-        if filters.shop_id:
-            main_query = main_query.where(Order.shop_id == filters.shop_id)
-        if filters.start_date:
-            main_query = main_query.where(Order.date >= filters.start_date)
-        if filters.end_date:
-            main_query = main_query.where(Order.date <= filters.end_date)
+        main_query = self._apply_order_filters(main_query, filters)
 
         main_result = await self._session.execute(main_query)
         main_row = main_result.one()
 
-        category_query = (
+        return OrderStatsReadModel(
+            total_orders=main_row.total_orders or 0,
+            total_orders_sum=int(main_row.total_orders_sum or 0),
+            time_slot_stats=await self._get_time_slot_stats(
+                filters, time_slots_filter
+            ),
+            category_stats=await self._get_category_stats(filters),
+            payment_method_stats=await self._get_payment_method_stats(filters),
+        )
+
+    async def _get_time_slot_stats(
+        self,
+        filters: GetOrdersFilters,
+        time_slots_filter: list[TimeSlotFilter],
+    ) -> list[TimeSlotStatsReadModel]:
+        stats: list[TimeSlotStatsReadModel] = []
+        for slot in time_slots_filter:
+            query = (
+                select(func.count(func.distinct(Order.id)).label("total"))
+                .select_from(Order)
+                .where(
+                    Order.delivery_start_time >= slot.start_time,
+                    Order.delivery_start_time < slot.end_time,
+                )
+            )
+            query = self._apply_order_filters(query, filters)
+
+            result = await self._session.execute(query)
+            row = result.one()
+
+            time_range = (
+                f"{slot.start_time.strftime('%H:%M')}-"
+                f"{slot.end_time.strftime('%H:%M')}"
+            )
+            stats.append(
+                TimeSlotStatsReadModel(
+                    time_range=time_range, total=row.total or 0
+                )
+            )
+        return stats
+
+    async def _get_category_stats(
+        self, filters: GetOrdersFilters
+    ) -> list[CategoryStatsReadModel]:
+        query = (
             select(
                 func.coalesce(Category.name, "Без категорії").label(
                     "category_name"
@@ -404,32 +423,21 @@ class SQLAlchemyOrderGateway(OrderGateway):
             .outerjoin(Category, Product.category_id == Category.id)
             .group_by(Category.id, Category.name)
         )
+        query = self._apply_order_filters(query, filters)
 
-        if filters.shop_id:
-            category_query = category_query.where(
-                Order.shop_id == filters.shop_id
-            )
-        if filters.start_date:
-            category_query = category_query.where(
-                Order.date >= filters.start_date
-            )
-        if filters.end_date:
-            category_query = category_query.where(
-                Order.date <= filters.end_date
-            )
-
-        category_result = await self._session.execute(category_query)
-        category_rows = category_result.all()
-
-        category_stats = [
+        result = await self._session.execute(query)
+        return [
             CategoryStatsReadModel(
                 name=cast("str", row.category_name),
                 quantity=int(row.total_quantity or 0),
             )
-            for row in category_rows
+            for row in result.all()
         ]
 
-        payment_method_query = (
+    async def _get_payment_method_stats(
+        self, filters: GetOrdersFilters
+    ) -> list[PaymentMethodStatsReadModel]:
+        query = (
             select(
                 Order.payment_method.label("payment_method"),
                 func.coalesce(
@@ -440,42 +448,25 @@ class SQLAlchemyOrderGateway(OrderGateway):
             .outerjoin(OrderItem, Order.id == OrderItem.order_id)
             .group_by(Order.payment_method)
         )
+        query = self._apply_order_filters(query, filters)
 
-        if filters.shop_id:
-            payment_method_query = payment_method_query.where(
-                Order.shop_id == filters.shop_id
-            )
-        if filters.start_date:
-            payment_method_query = payment_method_query.where(
-                Order.date >= filters.start_date
-            )
-        if filters.end_date:
-            payment_method_query = payment_method_query.where(
-                Order.date <= filters.end_date
-            )
-
-        payment_method_result = await self._session.execute(
-            payment_method_query
-        )
-        payment_method_rows = payment_method_result.all()
-
-        payment_method_stats = [
+        result = await self._session.execute(query)
+        return [
             PaymentMethodStatsReadModel(
                 method=PaymentMethod(cast("str", row.payment_method)),
                 orders_sum=int(row.orders_sum or 0),
             )
-            for row in payment_method_rows
+            for row in result.all()
         ]
 
-        return OrderStatsReadModel(
-            total_orders=main_row.total_orders or 0,
-            total_orders_in_first_half=int(
-                main_row.total_orders_in_first_half or 0
-            ),
-            total_orders_in_second_half=int(
-                main_row.total_orders_in_second_half or 0
-            ),
-            total_orders_sum=int(main_row.total_orders_sum or 0),
-            category_stats=category_stats,
-            payment_method_stats=payment_method_stats,
-        )
+    @staticmethod
+    def _apply_order_filters(
+        query: Select, filters: GetOrdersFilters
+    ) -> Select:
+        if filters.shop_id:
+            query = query.where(Order.shop_id == filters.shop_id)
+        if filters.start_date:
+            query = query.where(Order.date >= filters.start_date)
+        if filters.end_date:
+            query = query.where(Order.date <= filters.end_date)
+        return query

@@ -6,6 +6,10 @@ from backend.application.interfaces import IdentityProvider
 from backend.application.interfaces.gateways.order_gateway import (
     GetOrdersFilters,
     OrderGateway,
+    TimeSlotFilter,
+)
+from backend.application.interfaces.gateways.time_slot_gateway import (
+    TimeSlotGateway,
 )
 from backend.application.vars import PaymentMethod
 
@@ -31,21 +35,30 @@ class OrderStatsByPaymentMethod:
 
 
 @dataclass(frozen=True)
+class OrderStatsByTimeSlot:
+    time_range: str
+    total: int
+
+
+@dataclass(frozen=True)
 class GetOrderStatsResponse:
     total_orders: int
-    total_orders_in_first_half: int
-    total_orders_in_second_half: int
     total_orders_sum: int
+    time_slot_stats: list[OrderStatsByTimeSlot]
     category_stats: list[OrderStatsByCategory]
     payment_method_stats: list[OrderStatsByPaymentMethod]
 
 
 class GetOrderStatsQueryHandler:
     def __init__(
-        self, idp: IdentityProvider, order_gateway: OrderGateway
+        self,
+        idp: IdentityProvider,
+        order_gateway: OrderGateway,
+        time_slot_gateway: TimeSlotGateway,
     ) -> None:
         self._idp = idp
         self._order_gateway = order_gateway
+        self._time_slot_gateway = time_slot_gateway
 
     async def handle(self, query: GetOrderStatsQuery) -> GetOrderStatsResponse:
         current_user = await self._idp.current_user()
@@ -57,28 +70,42 @@ class GetOrderStatsQueryHandler:
             query.end_date,
         )
 
+        time_slots = await self._time_slot_gateway.load_by_shop(
+            current_user.shop_id
+        )
+        time_slots_filter = [
+            TimeSlotFilter(
+                start_time=slot.start_time,
+                end_time=slot.end_time,
+            )
+            for slot in time_slots
+        ]
+
         stats = await self._order_gateway.get_stats(
             filters=GetOrdersFilters(
                 shop_id=current_user.shop_id,
                 start_date=query.start_date,
                 end_date=query.end_date,
-            )
+            ),
+            time_slots_filter=time_slots_filter,
         )
 
         logger.info(
-            "Order stats retrieved: total_orders=%d, first_half=%d, "
-            "second_half=%d, total_sum=%d",
+            "Order stats retrieved: total_orders=%d, total_sum=%d",
             stats.total_orders,
-            stats.total_orders_in_first_half,
-            stats.total_orders_in_second_half,
             stats.total_orders_sum,
         )
 
         return GetOrderStatsResponse(
             total_orders=stats.total_orders,
-            total_orders_in_first_half=stats.total_orders_in_first_half,
-            total_orders_in_second_half=stats.total_orders_in_second_half,
             total_orders_sum=stats.total_orders_sum,
+            time_slot_stats=[
+                OrderStatsByTimeSlot(
+                    time_range=slot.time_range,
+                    total=slot.total,
+                )
+                for slot in stats.time_slot_stats
+            ],
             category_stats=[
                 OrderStatsByCategory(name=cat.name, quantity=cat.quantity)
                 for cat in stats.category_stats

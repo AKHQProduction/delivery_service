@@ -95,6 +95,12 @@ class OrderReadModel:
 
 
 @dataclass(frozen=True)
+class TimeSlotFilter:
+    start_time: time
+    end_time: time
+
+
+@dataclass(frozen=True)
 class GetOrdersFilters:
     shop_id: ShopId | None = None
     start_date: date | None = None
@@ -111,11 +117,16 @@ class CategoryStatsReadModel:
 
 
 @dataclass(frozen=True)
+class TimeSlotStatsReadModel:
+    time_range: str
+    total: int
+
+
+@dataclass(frozen=True)
 class OrderStatsReadModel:
     total_orders: int
-    total_orders_in_first_half: int
-    total_orders_in_second_half: int
     total_orders_sum: int
+    time_slot_stats: list[TimeSlotStatsReadModel]
     category_stats: list[CategoryStatsReadModel]
     payment_method_stats: list[PaymentMethodStatsReadModel]
 
@@ -173,6 +184,8 @@ class OrderGateway(Protocol):
 
     @abstractmethod
     async def get_stats(
-        self, filters: GetOrdersFilters
+        self,
+        filters: GetOrdersFilters,
+        time_slots_filter: list[TimeSlotFilter],
     ) -> OrderStatsReadModel:
         raise NotImplementedError
