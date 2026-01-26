@@ -82,8 +82,7 @@ class OrderItemReadModel:
 class OrderReadModel:
     order_id: OrderId
     date: date
-    delivery_start_time: time
-    delivery_end_time: time
+    time_slot: str
     delivery_phone: str
     delivery_address: DeliveryAddressDTO
     comment: str | None
@@ -118,7 +117,7 @@ class CategoryStatsReadModel:
 
 @dataclass(frozen=True)
 class TimeSlotStatsReadModel:
-    time_range: str
+    time_slot: str
     total: int
 
 

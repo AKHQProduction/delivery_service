@@ -187,11 +187,14 @@ class SQLAlchemyOrderGateway(OrderGateway):
         delivery_address_dict = cast(
             "dict[str, object]", cast("object", row.delivery_address)
         )
+        time_slot = (
+            f"{row.delivery_start_time.strftime('%H:%M')}-"
+            f"{row.delivery_end_time.strftime('%H:%M')}"
+        )
         return OrderReadModel(
             order_id=OrderId(cast("UUID", cast("object", row.id))),
             date=row.date,
-            delivery_start_time=row.delivery_start_time,
-            delivery_end_time=row.delivery_end_time,
+            time_slot=time_slot,
             delivery_phone=cast("str", cast("object", row.delivery_phone)),
             delivery_address=DeliveryAddressDTO(
                 street=cast("str", delivery_address_dict.get("street")),
@@ -394,13 +397,13 @@ class SQLAlchemyOrderGateway(OrderGateway):
             result = await self._session.execute(query)
             row = result.one()
 
-            time_range = (
+            time_slot = (
                 f"{slot.start_time.strftime('%H:%M')}-"
                 f"{slot.end_time.strftime('%H:%M')}"
             )
             stats.append(
                 TimeSlotStatsReadModel(
-                    time_range=time_range, total=row.total or 0
+                    time_slot=time_slot, total=row.total or 0
                 )
             )
         return stats

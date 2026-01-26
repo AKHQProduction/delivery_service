@@ -36,7 +36,7 @@ class OrderStatsByPaymentMethod:
 
 @dataclass(frozen=True)
 class OrderStatsByTimeSlot:
-    time_range: str
+    time_slot: str
     total: int
 
 
@@ -101,7 +101,7 @@ class GetOrderStatsQueryHandler:
             total_orders_sum=stats.total_orders_sum,
             time_slot_stats=[
                 OrderStatsByTimeSlot(
-                    time_range=slot.time_range,
+                    time_slot=slot.time_slot,
                     total=slot.total,
                 )
                 for slot in stats.time_slot_stats

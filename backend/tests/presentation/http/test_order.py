@@ -824,8 +824,7 @@ async def test_get_order(
     assert order_data["client_id"] == str(client_id)
     assert order_data["client_name"] == "Тестовий Клієнт"
     assert order_data["date"] == delivery_date.isoformat()
-    assert order_data["delivery_start_time"] == "09:00:00"
-    assert order_data["delivery_end_time"] == "14:00:00"
+    assert order_data["time_slot"] == "09:00-14:00"
     assert order_data["delivery_phone"] == "+380501234567"
     assert order_data["delivery_address"]["street"] == "Хрещатик"
     assert order_data["comment"] == "Test comment"
@@ -973,7 +972,7 @@ async def test_get_all_orders_with_delivery_time_filter(
     assert response.status_code == status.HTTP_200_OK
     orders = response.json()
     assert len(orders) == 2
-    assert all(order["delivery_start_time"] == "09:00:00" for order in orders)
+    assert all(order["time_slot"].startswith("09:00") for order in orders)
 
 
 @pytest.mark.asyncio()
@@ -1319,9 +1318,9 @@ async def test_get_order_stats(
     stats = response.json()
     assert stats["total_orders"] == 3
     assert len(stats["time_slot_stats"]) == 2
-    assert stats["time_slot_stats"][0]["time_range"] == "09:00-14:00"
+    assert stats["time_slot_stats"][0]["time_slot"] == "09:00-14:00"
     assert stats["time_slot_stats"][0]["total"] == 2
-    assert stats["time_slot_stats"][1]["time_range"] == "14:00-20:00"
+    assert stats["time_slot_stats"][1]["time_slot"] == "14:00-20:00"
     assert stats["time_slot_stats"][1]["total"] == 1
     # 2*100 + 3*50 + 1*200 = 200 + 150 + 200 = 550
     assert stats["total_orders_sum"] == 550
@@ -1378,7 +1377,7 @@ async def test_get_order_stats_with_multiple_items_per_order(
     stats = response.json()
     assert stats["total_orders"] == 1
     assert len(stats["time_slot_stats"]) == 1
-    assert stats["time_slot_stats"][0]["time_range"] == "09:00-14:00"
+    assert stats["time_slot_stats"][0]["time_slot"] == "09:00-14:00"
     assert stats["time_slot_stats"][0]["total"] == 1
     # 2*100 + 1*200 + 3*50 = 200 + 200 + 150 = 550
     assert stats["total_orders_sum"] == 550

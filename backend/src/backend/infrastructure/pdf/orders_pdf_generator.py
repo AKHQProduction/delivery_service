@@ -1,6 +1,6 @@
 import io
 from collections import defaultdict
-from datetime import date, time
+from datetime import date
 from decimal import Decimal
 from pathlib import Path
 
@@ -122,23 +122,14 @@ class ReportLabOrdersPDFGenerator(OrdersPDFGenerator):
             )
             elements.append(no_orders)
         else:
-            midday = time(14, 0, 0)
-            first_half = [o for o in orders if o.delivery_start_time < midday]
-            second_half = [
-                o for o in orders if o.delivery_start_time >= midday
-            ]
+            orders_by_slot: dict[str, list[OrderReadModel]] = defaultdict(list)
+            for order in orders:
+                orders_by_slot[order.time_slot].append(order)
 
-            if first_half:
-                elements.append(
-                    Paragraph("Перша половина дня", self._styles["heading"])
-                )
-                elements.extend(self._build_orders_section(first_half))
-
-            if second_half:
-                elements.append(
-                    Paragraph("Друга половина дня", self._styles["heading"])
-                )
-                elements.extend(self._build_orders_section(second_half))
+            for time_slot in sorted(orders_by_slot.keys()):
+                slot_orders = orders_by_slot[time_slot]
+                elements.append(Paragraph(time_slot, self._styles["heading"]))
+                elements.extend(self._build_orders_section(slot_orders))
 
             # Summary on new page at the end
             elements.append(PageBreak())
