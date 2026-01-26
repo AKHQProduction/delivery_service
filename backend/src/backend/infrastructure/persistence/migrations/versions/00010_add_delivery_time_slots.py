@@ -53,7 +53,7 @@ def upgrade() -> None:
         SELECT
             gen_random_uuid(), id,
             '09:00:00'::time, '14:00:00'::time,
-            'Первая половина дня'
+            'Перша половина дня'
         FROM shops
     """)
     op.execute("""
@@ -62,7 +62,7 @@ def upgrade() -> None:
         SELECT
             gen_random_uuid(), id,
             '14:00:00'::time, '20:00:00'::time,
-            'Вторая половина дня'
+            'Друга половина дня'
         FROM shops
     """)
 

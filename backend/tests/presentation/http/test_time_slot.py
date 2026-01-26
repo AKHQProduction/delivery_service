@@ -282,6 +282,9 @@ async def test_delete_time_slot(
     telegram_id = 7200
     _, shop_id = await setup_full_test_user_with_shop(telegram_id=telegram_id)
     time_slot_id = await setup_test_time_slot(shop_id=shop_id)
+    await setup_test_time_slot(
+        shop_id=shop_id, start_time=time(14, 0), end_time=time(20, 0)
+    )
     await session.commit()
 
     headers = customer_headers(telegram_id)
@@ -300,6 +303,29 @@ async def test_delete_time_slot(
         )
     )
     assert result.scalar_one_or_none() is None
+
+
+@pytest.mark.asyncio()
+async def test_delete_last_time_slot_conflict(
+    http_client: AsyncClient,
+    session: AsyncSession,
+    customer_headers: Callable[[int], dict[str, Any]],
+    setup_full_test_user_with_shop,
+    setup_test_time_slot,
+) -> None:
+    telegram_id = 7202
+    _, shop_id = await setup_full_test_user_with_shop(telegram_id=telegram_id)
+    time_slot_id = await setup_test_time_slot(shop_id=shop_id)
+    await session.commit()
+
+    headers = customer_headers(telegram_id)
+
+    response = await http_client.delete(
+        url=f"{BASE_URL}/{time_slot_id}", headers=headers
+    )
+
+    assert response.status_code == status.HTTP_409_CONFLICT
+    assert "last time slot" in response.json()["detail"]
 
 
 @pytest.mark.asyncio()

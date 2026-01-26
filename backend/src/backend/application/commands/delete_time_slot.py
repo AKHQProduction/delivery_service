@@ -1,7 +1,11 @@
 import logging
 from dataclasses import dataclass
 
-from backend.application.errors import AccessDeniedError, EntityNotFoundError
+from backend.application.errors import (
+    AccessDeniedError,
+    EntityNotFoundError,
+    LastTimeSlotError,
+)
 from backend.application.interfaces import IdentityProvider, TransactionManager
 from backend.application.interfaces.gateways.time_slot_gateway import (
     TimeSlotGateway,
@@ -51,6 +55,17 @@ class DeleteTimeSlotCommandHandler:
                 command.time_slot_id,
             )
             raise AccessDeniedError
+
+        time_slots_count = await self._time_slot_gateway.count_by_shop(
+            time_slot.shop_id
+        )
+        if time_slots_count <= 1:
+            logger.warning(
+                "Cannot delete the last time slot %s for shop %s",
+                command.time_slot_id,
+                time_slot.shop_id,
+            )
+            raise LastTimeSlotError
 
         await self._time_slot_gateway.delete(command.time_slot_id)
 

@@ -62,3 +62,7 @@ class TimeSlotGateway(Protocol):
         self, shop_id: ShopId, start_time: time, end_time: time
     ) -> bool:
         raise NotImplementedError
+
+    @abstractmethod
+    async def count_by_shop(self, shop_id: ShopId) -> int:
+        raise NotImplementedError

@@ -2,7 +2,7 @@ from datetime import time
 from typing import cast
 from uuid import UUID
 
-from sqlalchemy import select
+from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 from uuid_utils import uuid7
 
@@ -86,6 +86,15 @@ class SQLAlchemyTimeSlotGateway(TimeSlotGateway):
         )
         result = await self._session.execute(query)
         return result.scalar_one_or_none() is not None
+
+    async def count_by_shop(self, shop_id: ShopId) -> int:
+        query = (
+            select(func.count())
+            .select_from(TimeSlotDB)
+            .where(TimeSlotDB.shop_id == shop_id)
+        )
+        result = await self._session.execute(query)
+        return result.scalar_one()
 
     @staticmethod
     def _to_entity(row: TimeSlotDB) -> TimeSlot:

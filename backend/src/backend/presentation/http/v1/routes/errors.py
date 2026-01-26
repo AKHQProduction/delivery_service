@@ -12,10 +12,9 @@ from starlette.exceptions import HTTPException as StarletteHTTPException
 
 from backend.application.errors import (
     AccessDeniedError,
-    AlreadyExistsError,
     AuthorizationError,
+    ConflictError,
     EntityNotFoundError,
-    PhoneNumberAlreadyExistsError,
     ValidationError,
 )
 
@@ -92,11 +91,7 @@ def setup_exc_handlers(app: FastAPI) -> None:
         partial(validate, status=code.HTTP_422_UNPROCESSABLE_CONTENT),
     )
     app.add_exception_handler(
-        PhoneNumberAlreadyExistsError,
-        partial(validate, status=code.HTTP_409_CONFLICT),
-    )
-    app.add_exception_handler(
-        AlreadyExistsError,
+        ConflictError,
         partial(validate, status=code.HTTP_409_CONFLICT),
     )
     app.exception_handler(Exception)(internal_trouble)

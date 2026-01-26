@@ -36,7 +36,11 @@ class EntityNotFoundError(ApplicationError):
         return f"{self._entity} with id {self._id} not found"
 
 
-class AlreadyExistsError(ApplicationError):
+class ConflictError(ApplicationError):
+    pass
+
+
+class AlreadyExistsError(ConflictError):
     def __init__(self, entity: str) -> None:
         self._entity = entity
 
@@ -63,7 +67,7 @@ class FieldError(ValidationError):
         return f"{self._field} cant be {self._value}, use: {acceptable_values}"
 
 
-class PhoneNumberAlreadyExistsError(ApplicationError):
+class PhoneNumberAlreadyExistsError(ConflictError):
     def __init__(self, phone_number: str) -> None:
         self._phone_number = phone_number
 
@@ -103,3 +107,12 @@ class ProductIdRequiredForNewItemError(ValidationError):
     @property
     def message(self) -> str:
         return "product_id is required for new items (items without id)"
+
+
+class LastTimeSlotError(ConflictError):
+    @property
+    def message(self) -> str:
+        return (
+            "Cannot delete the last time slot. "
+            "Shop must have at least one time slot"
+        )
