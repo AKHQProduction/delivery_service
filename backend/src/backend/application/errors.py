@@ -116,3 +116,13 @@ class LastTimeSlotError(ConflictError):
             "Cannot delete the last time slot. "
             "Shop must have at least one time slot"
         )
+
+
+class InvalidPhoneNumberError(ValidationError):
+    def __init__(self, phone: str, reason: str) -> None:
+        self._phone = phone
+        self._reason = reason
+
+    @property
+    def message(self) -> str:
+        return f"Invalid phone number '{self._phone}': {self._reason}"

@@ -19,6 +19,7 @@ from backend.application.policies.access import (
     IsRelatedToShop,
     can_shop_manage_policy,
 )
+from backend.application.validators import normalize_ukraine_phone
 from backend.application.vars import AddressId, ClientId, PhoneId
 
 logger = logging.getLogger(__name__)
@@ -134,7 +135,7 @@ class EditClientCommandHandler:
         if command.phones is not None:
             client.phones = [
                 PhoneDTO(
-                    number=phone.number,
+                    number=normalize_ukraine_phone(phone.number),
                     is_primary=phone.is_primary,
                     id=phone.id,
                 )

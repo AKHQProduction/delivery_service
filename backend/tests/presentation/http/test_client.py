@@ -1294,3 +1294,204 @@ async def test_get_all_clients_pagination_no_duplicates_same_name(
 
     assert len(all_client_ids) == 10
     assert len(all_client_ids) == len(set(all_client_ids))
+
+
+@pytest.mark.asyncio()
+async def test_create_client_with_phone_normalization_leading_zero(
+    http_client: AsyncClient,
+    session: AsyncSession,
+    customer_headers: Callable[[int], dict[str, Any]],
+    setup_full_test_user_with_shop,
+) -> None:
+    telegram_id = 4000
+    await setup_full_test_user_with_shop(telegram_id=telegram_id)
+    await session.commit()
+
+    headers = customer_headers(telegram_id)
+
+    json = {
+        "full_name": "Тест Нормалізації",
+        "phones": [{"number": "0980074978"}],
+        "addresses": [],
+    }
+
+    response = await http_client.post(url=BASE_URL, headers=headers, json=json)
+
+    assert response.status_code == status.HTTP_201_CREATED
+    client_id = response.json()
+
+    await session.flush()
+
+    phone_result = await session.execute(
+        select(ClientPhone).where(
+            ClientPhone.client_id == uuid.UUID(client_id)
+        )
+    )
+    phones = phone_result.scalars().all()
+    assert len(phones) == 1
+    assert phones[0].number == "+380980074978"
+
+
+@pytest.mark.asyncio()
+async def test_create_client_with_phone_normalization_with_spaces(
+    http_client: AsyncClient,
+    session: AsyncSession,
+    customer_headers: Callable[[int], dict[str, Any]],
+    setup_full_test_user_with_shop,
+) -> None:
+    telegram_id = 4001
+    await setup_full_test_user_with_shop(telegram_id=telegram_id)
+    await session.commit()
+
+    headers = customer_headers(telegram_id)
+
+    json = {
+        "full_name": "Тест Нормалізації з Пробілами",
+        "phones": [{"number": "098 007 49 78"}],
+        "addresses": [],
+    }
+
+    response = await http_client.post(url=BASE_URL, headers=headers, json=json)
+
+    assert response.status_code == status.HTTP_201_CREATED
+    client_id = response.json()
+
+    await session.flush()
+
+    phone_result = await session.execute(
+        select(ClientPhone).where(
+            ClientPhone.client_id == uuid.UUID(client_id)
+        )
+    )
+    phones = phone_result.scalars().all()
+    assert len(phones) == 1
+    assert phones[0].number == "+380980074978"
+
+
+@pytest.mark.asyncio()
+async def test_create_client_with_phone_normalization_with_formatting(
+    http_client: AsyncClient,
+    session: AsyncSession,
+    customer_headers: Callable[[int], dict[str, Any]],
+    setup_full_test_user_with_shop,
+) -> None:
+    telegram_id = 4002
+    await setup_full_test_user_with_shop(telegram_id=telegram_id)
+    await session.commit()
+
+    headers = customer_headers(telegram_id)
+
+    json = {
+        "full_name": "Тест Нормалізації з Форматуванням",
+        "phones": [{"number": "+38(098)007-49-78"}],
+        "addresses": [],
+    }
+
+    response = await http_client.post(url=BASE_URL, headers=headers, json=json)
+
+    assert response.status_code == status.HTTP_201_CREATED
+    client_id = response.json()
+
+    await session.flush()
+
+    phone_result = await session.execute(
+        select(ClientPhone).where(
+            ClientPhone.client_id == uuid.UUID(client_id)
+        )
+    )
+    phones = phone_result.scalars().all()
+    assert len(phones) == 1
+    assert phones[0].number == "+380980074978"
+
+
+@pytest.mark.asyncio()
+async def test_create_client_with_invalid_phone_too_short(
+    http_client: AsyncClient,
+    session: AsyncSession,
+    customer_headers: Callable[[int], dict[str, Any]],
+    setup_full_test_user_with_shop,
+) -> None:
+    telegram_id = 4003
+    await setup_full_test_user_with_shop(telegram_id=telegram_id)
+    await session.commit()
+
+    headers = customer_headers(telegram_id)
+
+    json = {
+        "full_name": "Тест Невалідного Номеру",
+        "phones": [{"number": "098007497"}],
+        "addresses": [],
+    }
+
+    response = await http_client.post(url=BASE_URL, headers=headers, json=json)
+
+    assert response.status_code == status.HTTP_422_UNPROCESSABLE_CONTENT
+    assert "phone" in response.json()["detail"].lower()
+
+
+@pytest.mark.asyncio()
+async def test_edit_client_with_phone_normalization(
+    http_client: AsyncClient,
+    session: AsyncSession,
+    customer_headers: Callable[[int], dict[str, Any]],
+    setup_full_test_user_with_shop,
+    setup_test_client,
+) -> None:
+    telegram_id = 4004
+    _, shop_id = await setup_full_test_user_with_shop(telegram_id=telegram_id)
+
+    client_id = await setup_test_client(
+        shop_id=shop_id,
+        full_name="Клієнт",
+        phones=["+380501111111"],
+    )
+    await session.commit()
+
+    headers = customer_headers(telegram_id)
+
+    json = {"phones": [{"number": "0502222222", "is_primary": True}]}
+
+    response = await http_client.patch(
+        url=f"{BASE_URL}/{client_id}", headers=headers, json=json
+    )
+
+    assert response.status_code == status.HTTP_200_OK
+
+    await session.flush()
+
+    phone_result = await session.execute(
+        select(ClientPhone).where(ClientPhone.client_id == client_id)
+    )
+    phones = phone_result.scalars().all()
+    assert len(phones) == 1
+    assert phones[0].number == "+380502222222"
+
+
+@pytest.mark.asyncio()
+async def test_edit_client_with_invalid_phone(
+    http_client: AsyncClient,
+    session: AsyncSession,
+    customer_headers: Callable[[int], dict[str, Any]],
+    setup_full_test_user_with_shop,
+    setup_test_client,
+) -> None:
+    telegram_id = 4005
+    _, shop_id = await setup_full_test_user_with_shop(telegram_id=telegram_id)
+
+    client_id = await setup_test_client(
+        shop_id=shop_id,
+        full_name="Клієнт",
+        phones=["+380501111111"],
+    )
+    await session.commit()
+
+    headers = customer_headers(telegram_id)
+
+    json = {"phones": [{"number": "123", "is_primary": True}]}
+
+    response = await http_client.patch(
+        url=f"{BASE_URL}/{client_id}", headers=headers, json=json
+    )
+
+    assert response.status_code == status.HTTP_422_UNPROCESSABLE_CONTENT
+    assert "phone" in response.json()["detail"].lower()

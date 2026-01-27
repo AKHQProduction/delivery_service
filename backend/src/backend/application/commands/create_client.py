@@ -10,6 +10,7 @@ from backend.application.interfaces.gateways.client_gateway import (
     PhoneDTO,
 )
 from backend.application.policies.access import can_shop_manage_policy
+from backend.application.validators import normalize_ukraine_phone
 from backend.application.vars import ClientId
 
 logger = logging.getLogger(__name__)
@@ -67,7 +68,10 @@ class CreateClientCommandHandler:
         )
 
         phones_dto = [
-            PhoneDTO(number=phone.number, is_primary=(idx == 0))
+            PhoneDTO(
+                number=normalize_ukraine_phone(phone.number),
+                is_primary=(idx == 0),
+            )
             for idx, phone in enumerate(command.phones)
         ]
 
