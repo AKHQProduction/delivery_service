@@ -29,7 +29,6 @@ dependencies = [
     "opentelemetry-instrumentation-sqlalchemy>=0.50b0",
     "opentelemetry-instrumentation-redis>=0.50b0",
     "opentelemetry-instrumentation-logging>=0.50b0",
-    "openpyxl>=3.1.5",
 ]
 
 [project.scripts]
