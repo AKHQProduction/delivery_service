@@ -61,6 +61,18 @@ class ClientReadModel:
 
 
 @dataclass(frozen=True)
+class DuplicatePhoneOwner:
+    client_id: ClientId
+    full_name: str
+
+
+@dataclass(frozen=True)
+class DuplicatePhoneEntry:
+    phone_number: str
+    owners: list[DuplicatePhoneOwner]
+
+
+@dataclass(frozen=True)
 class GetClientsFilters:
     shop_id: ShopId | None = None
     full_name: str | None = None
@@ -86,8 +98,12 @@ class ClientGateway(Protocol):
         raise NotImplementedError
 
     @abstractmethod
-    async def check_existing_numbers(self, numbers: list[str]) -> set[str]:
-        """Return set of phone numbers that already exist in the database."""
+    async def find_duplicate_phones(
+        self,
+        shop_id: ShopId,
+        phone_numbers: list[str],
+        exclude_client_id: ClientId | None = None,
+    ) -> list[DuplicatePhoneEntry]:
         raise NotImplementedError
 
     @abstractmethod

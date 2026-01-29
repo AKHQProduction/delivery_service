@@ -24,3 +24,4 @@ class EditClientSchema(BaseModel):
     custom_id: str | None = None
     phones: list[PhoneSchema] | None = None
     addresses: list[AddressSchema] | None = None
+    confirm_duplicate_phones: bool = False

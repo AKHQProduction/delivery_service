@@ -1,5 +1,8 @@
+from dataclasses import dataclass
 from datetime import date
 from typing import Any
+
+from backend.application.vars import ClientId
 
 
 class ApplicationError(Exception):
@@ -67,16 +70,29 @@ class FieldError(ValidationError):
         return f"{self._field} cant be {self._value}, use: {acceptable_values}"
 
 
+@dataclass(frozen=True)
+class ExistingClientInfo:
+    client_id: ClientId
+    full_name: str
+
+
+@dataclass(frozen=True)
+class PhoneDuplicate:
+    phone_number: str
+    existing_clients: list[ExistingClientInfo]
+
+
 class PhoneNumberAlreadyExistsError(ConflictError):
-    def __init__(self, phone_number: str) -> None:
-        self._phone_number = phone_number
+    def __init__(self, duplicates: list[PhoneDuplicate]) -> None:
+        self._duplicates = duplicates
 
     @property
     def message(self) -> str:
-        return (
-            f"Phone number {self._phone_number} is already used "
-            "by another client"
-        )
+        return "Phone number duplicates found"
+
+    @property
+    def duplicates(self) -> list[PhoneDuplicate]:
+        return self._duplicates
 
 
 class InvalidPrimaryFlagError(ValidationError):

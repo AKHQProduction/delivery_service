@@ -1080,7 +1080,7 @@ async def test_edit_client_as_courier_forbidden(
 
 
 @pytest.mark.asyncio()
-async def test_create_client_with_duplicate_phone_number_allowed(
+async def test_create_client_with_duplicate_phone_returns_409(
     http_client: AsyncClient,
     session: AsyncSession,
     customer_headers: Callable[[int], dict[str, Any]],
@@ -1107,7 +1107,7 @@ async def test_create_client_with_duplicate_phone_number_allowed(
 
     json2 = {
         "full_name": "Другий Клієнт",
-        "phones": [{"number": "+380991234567"}],  # Same phone - allowed
+        "phones": [{"number": "+380991234567"}],
         "addresses": [],
     }
 
@@ -1115,12 +1115,60 @@ async def test_create_client_with_duplicate_phone_number_allowed(
         url=BASE_URL, headers=headers, json=json2
     )
 
-    assert response2.status_code == status.HTTP_201_CREATED
-    assert response2.json() is not None  # Returns ClientId (UUID)
+    assert response2.status_code == status.HTTP_409_CONFLICT
+    data = response2.json()
+    assert data["code"] == "duplicate_phones"
+    assert len(data["duplicates"]) == 1
+    assert data["duplicates"][0]["phone_number"] == "+380991234567"
+    assert (
+        data["duplicates"][0]["existing_clients"][0]["full_name"]
+        == "Перший Клієнт"
+    )
 
 
 @pytest.mark.asyncio()
-async def test_edit_client_with_duplicate_phone_number_allowed(
+async def test_create_client_with_duplicate_phone_confirmed(
+    http_client: AsyncClient,
+    session: AsyncSession,
+    customer_headers: Callable[[int], dict[str, Any]],
+    setup_full_test_user_with_shop,
+) -> None:
+    telegram_id = 3103
+    await setup_full_test_user_with_shop(telegram_id=telegram_id)
+    await session.commit()
+
+    headers = customer_headers(telegram_id)
+
+    json1 = {
+        "full_name": "Перший Клієнт",
+        "phones": [{"number": "+380991234567"}],
+        "addresses": [],
+    }
+
+    response1 = await http_client.post(
+        url=BASE_URL, headers=headers, json=json1
+    )
+    assert response1.status_code == status.HTTP_201_CREATED
+
+    await session.flush()
+
+    json2 = {
+        "full_name": "Другий Клієнт",
+        "phones": [{"number": "+380991234567"}],
+        "addresses": [],
+        "confirm_duplicate_phones": True,
+    }
+
+    response2 = await http_client.post(
+        url=BASE_URL, headers=headers, json=json2
+    )
+
+    assert response2.status_code == status.HTTP_201_CREATED
+    assert response2.json() is not None
+
+
+@pytest.mark.asyncio()
+async def test_edit_client_with_duplicate_phone_returns_409(
     http_client: AsyncClient,
     session: AsyncSession,
     customer_headers: Callable[[int], dict[str, Any]],
@@ -1145,9 +1193,52 @@ async def test_edit_client_with_duplicate_phone_number_allowed(
 
     headers = customer_headers(telegram_id)
 
+    json = {"phones": [{"number": "+380509999999", "is_primary": True}]}
+
+    response = await http_client.patch(
+        url=f"{BASE_URL}/{client2_id}", headers=headers, json=json
+    )
+
+    assert response.status_code == status.HTTP_409_CONFLICT
+    data = response.json()
+    assert data["code"] == "duplicate_phones"
+    assert data["duplicates"][0]["phone_number"] == "+380509999999"
+    assert (
+        data["duplicates"][0]["existing_clients"][0]["full_name"]
+        == "Перший Клієнт"
+    )
+
+
+@pytest.mark.asyncio()
+async def test_edit_client_with_duplicate_phone_confirmed(
+    http_client: AsyncClient,
+    session: AsyncSession,
+    customer_headers: Callable[[int], dict[str, Any]],
+    setup_full_test_user_with_shop,
+    setup_test_client,
+) -> None:
+    telegram_id = 3104
+    _, shop_id = await setup_full_test_user_with_shop(telegram_id=telegram_id)
+
+    await setup_test_client(
+        shop_id=shop_id,
+        full_name="Перший Клієнт",
+        phones=["+380509999999"],
+    )
+
+    client2_id = await setup_test_client(
+        shop_id=shop_id,
+        full_name="Другий Клієнт",
+        phones=["+380508888888"],
+    )
+    await session.commit()
+
+    headers = customer_headers(telegram_id)
+
     json = {
-        "phones": [{"number": "+380509999999", "is_primary": True}]
-    }  # Same as client1 - allowed
+        "phones": [{"number": "+380509999999", "is_primary": True}],
+        "confirm_duplicate_phones": True,
+    }
 
     response = await http_client.patch(
         url=f"{BASE_URL}/{client2_id}", headers=headers, json=json
