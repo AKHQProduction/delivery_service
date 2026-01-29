@@ -79,7 +79,11 @@ class PersistenceProvider(Provider):
     async def engine(
         self, config: PostgresConfig
     ) -> AsyncIterator[AsyncEngine]:
-        engine = create_async_engine(config.uri)
+        engine = create_async_engine(
+            config.uri,
+            pool_size=30,
+            max_overflow=0,
+        )
 
         yield engine
         await engine.dispose()
