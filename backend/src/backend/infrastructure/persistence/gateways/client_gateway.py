@@ -26,6 +26,7 @@ from backend.infrastructure.persistence.tables.clients import (
     ClientAddress,
     ClientPhone,
 )
+from backend.infrastructure.persistence.utils.escape import escape_like
 
 
 class SQLAlchemyClientGateway(ClientGateway):
@@ -182,17 +183,19 @@ class SQLAlchemyClientGateway(ClientGateway):
         search_conditions: list[ColumnElement[bool]] = []
         if filters.full_name:
             search_conditions.append(
-                Client.full_name.ilike(f"%{filters.full_name}%")
+                Client.full_name.ilike(f"%{escape_like(filters.full_name)}%")
             )
         if filters.custom_id:
             search_conditions.append(
-                Client.custom_id.ilike(f"%{filters.custom_id}%")
+                Client.custom_id.ilike(f"%{escape_like(filters.custom_id)}%")
             )
         if filters.phone:
             phone_exists = exists(
                 select(ClientPhone.id).where(
                     ClientPhone.client_id == Client.id,
-                    ClientPhone.number.ilike(f"%{filters.phone}%"),
+                    ClientPhone.number.ilike(
+                        f"%{escape_like(filters.phone)}%"
+                    ),
                 )
             )
             search_conditions.append(phone_exists)

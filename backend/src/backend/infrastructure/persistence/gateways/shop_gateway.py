@@ -19,6 +19,7 @@ from backend.infrastructure.persistence.tables import (
     Shop,
     ShopMembership,
 )
+from backend.infrastructure.persistence.utils.escape import escape_like
 
 
 class SQLAlchemyShopGateway(ShopGateway):
@@ -129,7 +130,9 @@ class SQLAlchemyShopGateway(ShopGateway):
         if filters.shop_id:
             query = query.where(ShopMembership.shop_id == filters.shop_id)
         if filters.name:
-            query = query.where(ShopMembership.name.ilike(f"%{filters.name}%"))
+            query = query.where(
+                ShopMembership.name.ilike(f"%{escape_like(filters.name)}%")
+            )
 
         if pagination.order == SortOrder.ASC:
             query = query.order_by(

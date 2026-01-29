@@ -35,6 +35,7 @@ from backend.infrastructure.persistence.tables.categories import Category
 from backend.infrastructure.persistence.tables.clients import Client
 from backend.infrastructure.persistence.tables.orders import Order, OrderItem
 from backend.infrastructure.persistence.tables.products import Product
+from backend.infrastructure.persistence.utils.escape import escape_like
 
 
 class SQLAlchemyOrderGateway(OrderGateway):
@@ -162,13 +163,13 @@ class SQLAlchemyOrderGateway(OrderGateway):
         if filters.client_name:
             query = query.join(Client)
             search_conditions.append(
-                Client.full_name.ilike(f"%{filters.client_name}%")
+                Client.full_name.ilike(f"%{escape_like(filters.client_name)}%")
             )
         if filters.custom_id:
             if not filters.client_name:
                 query = query.join(Client)
             search_conditions.append(
-                Client.custom_id.ilike(f"%{filters.custom_id}%")
+                Client.custom_id.ilike(f"%{escape_like(filters.custom_id)}%")
             )
 
         if search_conditions:

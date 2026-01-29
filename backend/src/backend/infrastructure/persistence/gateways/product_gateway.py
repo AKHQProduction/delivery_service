@@ -16,6 +16,7 @@ from backend.application.interfaces.gateways.product_gateway import (
 )
 from backend.application.vars import CategoryId, ProductId, ShopId
 from backend.infrastructure.persistence.tables import Product as ProductDB
+from backend.infrastructure.persistence.utils.escape import escape_like
 
 
 class SQLAlchemyProductGateway(ProductGateway):
@@ -108,7 +109,9 @@ class SQLAlchemyProductGateway(ProductGateway):
         if filters.shop_id:
             query = query.where(ProductDB.shop_id == filters.shop_id)
         if filters.name:
-            query = query.where(ProductDB.name.ilike(f"%{filters.name}%"))
+            query = query.where(
+                ProductDB.name.ilike(f"%{escape_like(filters.name)}%")
+            )
 
         if pagination.order == SortOrder.ASC:
             query = query.order_by(asc(ProductDB.name), asc(ProductDB.id))
