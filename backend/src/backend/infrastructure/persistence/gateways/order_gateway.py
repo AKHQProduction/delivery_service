@@ -1,7 +1,7 @@
 from typing import cast
 from uuid import UUID
 
-from sqlalchemy import asc, desc, func, or_, select
+from sqlalchemy import asc, case, desc, func, literal, or_, select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 from sqlalchemy.sql import Select
@@ -383,31 +383,52 @@ class SQLAlchemyOrderGateway(OrderGateway):
         filters: GetOrdersFilters,
         time_slots_filter: list[TimeSlotFilter],
     ) -> list[TimeSlotStatsReadModel]:
-        stats: list[TimeSlotStatsReadModel] = []
-        for slot in time_slots_filter:
-            query = (
-                select(func.count(func.distinct(Order.id)).label("total"))
-                .select_from(Order)
-                .where(
-                    Order.delivery_start_time >= slot.start_time,
-                    Order.delivery_start_time < slot.end_time,
-                )
-            )
-            query = self._apply_order_filters(query, filters)
+        if not time_slots_filter:
+            return []
 
-            result = await self._session.execute(query)
-            row = result.one()
+        slot_labels = {
+            f"{slot.start_time.strftime('%H:%M')}-"
+            f"{slot.end_time.strftime('%H:%M')}": slot
+            for slot in time_slots_filter
+        }
 
-            time_slot = (
-                f"{slot.start_time.strftime('%H:%M')}-"
-                f"{slot.end_time.strftime('%H:%M')}"
-            )
-            stats.append(
-                TimeSlotStatsReadModel(
-                    time_slot=time_slot, total=row.total or 0
+        time_slot_case = case(
+            *[
+                (
+                    (Order.delivery_start_time >= slot.start_time)
+                    & (Order.delivery_start_time < slot.end_time),
+                    literal(label),
                 )
+                for label, slot in slot_labels.items()
+            ],
+        ).label("time_slot")
+
+        query = (
+            select(
+                time_slot_case,
+                func.count(func.distinct(Order.id)).label("total"),
             )
-        return stats
+            .select_from(Order)
+            .where(
+                or_(*[
+                    (Order.delivery_start_time >= slot.start_time)
+                    & (Order.delivery_start_time < slot.end_time)
+                    for slot in time_slots_filter
+                ])
+            )
+            .group_by(time_slot_case)
+        )
+        query = self._apply_order_filters(query, filters)
+
+        result = await self._session.execute(query)
+        totals_by_slot = {row.time_slot: row.total for row in result.all()}
+
+        return [
+            TimeSlotStatsReadModel(
+                time_slot=label, total=totals_by_slot.get(label, 0)
+            )
+            for label in slot_labels
+        ]
 
     async def _get_category_stats(
         self, filters: GetOrdersFilters
