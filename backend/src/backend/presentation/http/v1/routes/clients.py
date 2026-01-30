@@ -312,7 +312,7 @@ async def get_client(
     },
     dependencies=[Depends(HTTPBearer())],
 )
-async def delete_product(
+async def delete_client(
     client_id: ClientId, handler: FromDishka[DeleteClientCommandHandler]
 ) -> None:
     await handler.handle(DeleteClientCommand(client_id=client_id))

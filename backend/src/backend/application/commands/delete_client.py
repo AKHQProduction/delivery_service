@@ -53,9 +53,7 @@ class DeleteClientCommandHandler:
 
         client = await self._client_gateway.load(command.client_id)
         if not client:
-            logger.warning(
-                "Product not found: client_id=%s", command.client_id
-            )
+            logger.warning("Client not found: client_id=%s", command.client_id)
             return
 
         if not IsRelatedToShop(client.shop_id).is_satisfied_by(current_user):

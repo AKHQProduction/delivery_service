@@ -15,6 +15,7 @@ from backend.application.interfaces.gateways.category_gateway import (
 )
 from backend.application.vars import CategoryId, ShopId
 from backend.infrastructure.persistence.tables import Category as CategoryDB
+from backend.infrastructure.persistence.utils.escape import escape_like
 
 
 class SQLAlchemyCategoryGateway(CategoryGateway):
@@ -59,7 +60,9 @@ class SQLAlchemyCategoryGateway(CategoryGateway):
         if filters.shop_id:
             query = query.where(CategoryDB.shop_id == filters.shop_id)
         if filters.name:
-            query = query.where(CategoryDB.name.ilike(f"%{filters.name}%"))
+            query = query.where(
+                CategoryDB.name.ilike(f"%{escape_like(filters.name)}%")
+            )
 
         if pagination.order == SortOrder.ASC:
             query = query.order_by(asc(CategoryDB.name), asc(CategoryDB.id))

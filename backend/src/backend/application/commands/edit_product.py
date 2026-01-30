@@ -80,7 +80,7 @@ class EditProductCommandHandler:
         if command.new_name:
             product.name = command.new_name
             updates.append(f"name={command.new_name}")
-        if command.new_price:
+        if command.new_price is not None:
             product.price = command.new_price
             updates.append(f"price={command.new_price}")
         if command.new_category_id is not None:
