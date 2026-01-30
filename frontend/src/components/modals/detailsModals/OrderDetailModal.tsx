@@ -1,6 +1,6 @@
 import { ModalButtons } from "../../ui/modalButtons";
 import leftArrowIcon from "../../../assets/icons/left_arrow.svg";
-import { paymentMap, timeMap } from "../../../utils/dataMap";
+import { paymentMap } from "../../../utils/dataMap";
 import { useState } from "react";
 import { EditOrderForm } from "../../forms/orders/EditOrderForm";
 
@@ -23,7 +23,7 @@ export interface Order {
   delivery_address?: DeliveryAddress;
 
   date: string;
-  time_preference: keyof typeof timeMap;
+  time_slot: string;
   payment_method: keyof typeof paymentMap;
   note?: string;
   comment?: string;
@@ -68,7 +68,7 @@ export const OrderDetailModal = ({
   const getTotalItems = () => {
     return (order.items ?? []).reduce(
       (sum, item) => sum + (Number(item.quantity) || 0),
-      0
+      0,
     );
   };
 
@@ -235,9 +235,7 @@ export const OrderDetailModal = ({
 
             <div>
               <p className="text-xs text-gray-500 mb-1">Час</p>
-              <p className="font-semibold text-gray-900">
-                {timeMap[order.time_preference]}
-              </p>
+              <p className="font-semibold text-gray-900">{order.time_slot}</p>
             </div>
 
             {(order.note || order.comment) && (
@@ -252,11 +250,13 @@ export const OrderDetailModal = ({
         </div>
         <div>
           <h2 className="text-xs font-bold text-gray-500 uppercase tracking-wide mb-3">
-           Спосіб оплати
+            Спосіб оплати
           </h2>
 
           <div className="bg-white rounded-2xl p-5 border border-gray-200">
-            <p className="font-semibold text-gray-900">{paymentMap[order.payment_method]}</p>
+            <p className="font-semibold text-gray-900">
+              {paymentMap[order.payment_method]}
+            </p>
           </div>
         </div>
 

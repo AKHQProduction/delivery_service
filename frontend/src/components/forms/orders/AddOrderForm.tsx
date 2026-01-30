@@ -15,7 +15,10 @@ interface AddOrderFormProps {
   onSave?: (order?: any) => void;
 }
 
-export const AddOrderForm: React.FC<AddOrderFormProps> = ({ onClose, onSave }) => {
+export const AddOrderForm: React.FC<AddOrderFormProps> = ({
+  onClose,
+  onSave,
+}) => {
   const { createNewOrder } = useOrders();
   const [showAddClient, setShowAddClient] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -26,6 +29,7 @@ export const AddOrderForm: React.FC<AddOrderFormProps> = ({ onClose, onSave }) =
     searchClient,
     searchProduct,
     clients,
+    timeSlots,
     products,
     loadMoreClients,
     clientsLoadingMore,
@@ -41,7 +45,7 @@ export const AddOrderForm: React.FC<AddOrderFormProps> = ({ onClose, onSave }) =
     handlePhoneChange,
     handleAddressChange,
     handleDateChange,
-    handleTimeChange,
+    handleTimeSlotChange,
     handlePaymentMethodChange,
     handleNoteChange,
     handleNext,
@@ -78,7 +82,7 @@ export const AddOrderForm: React.FC<AddOrderFormProps> = ({ onClose, onSave }) =
         phone_id: formData.deliveryPhone?.id,
         address_id: formData.deliveryAddress?.id,
         delivery_date: formData.deliveryDate,
-        time_preference: formData.deliveryTime,
+        time_slot_id: formData.timeSlotId,
         payment_method: formData.paymentMethod,
         comment: formData.note,
       });
@@ -150,11 +154,12 @@ export const AddOrderForm: React.FC<AddOrderFormProps> = ({ onClose, onSave }) =
             selectedAddress={getAddressString()}
             selectedProducts={formData.products}
             deliveryDate={formData.deliveryDate}
-            deliveryTime={formData.deliveryTime}
+            timeSlotId={formData.timeSlotId}
+            timeSlots={timeSlots}
             paymentMethod={formData.paymentMethod}
             note={formData.note || ""}
             onDateChange={handleDateChange}
-            onTimeChange={handleTimeChange}
+            onTimeChange={handleTimeSlotChange}
             onPaymentMethodChange={handlePaymentMethodChange}
             onNoteChange={handleNoteChange}
           />

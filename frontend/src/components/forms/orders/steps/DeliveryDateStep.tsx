@@ -16,7 +16,13 @@ interface DeliveryDateStepProps {
   selectedAddress: string;
   selectedProducts: SelectedProduct[];
   deliveryDate: string;
-  deliveryTime: string;
+  timeSlotId: string;
+  timeSlots: {
+    time_slot_id: string;
+    start_time: string;
+    end_time: string;
+    label: string;
+  }[];
   paymentMethod: string;
   note: string;
   onDateChange: (date: string) => void;
@@ -31,7 +37,8 @@ export const DeliveryDateStep: React.FC<DeliveryDateStepProps> = ({
   selectedAddress,
   selectedProducts,
   deliveryDate,
-  deliveryTime,
+  timeSlotId,
+  timeSlots,
   paymentMethod,
   note,
   onDateChange,
@@ -41,7 +48,7 @@ export const DeliveryDateStep: React.FC<DeliveryDateStepProps> = ({
 }) => {
   const totalAmount = selectedProducts.reduce(
     (sum, p) => sum + p.product.price * p.quantity,
-    0
+    0,
   );
 
   const totalItems = selectedProducts.reduce((sum, p) => sum + p.quantity, 0);
@@ -56,6 +63,9 @@ export const DeliveryDateStep: React.FC<DeliveryDateStepProps> = ({
     });
   };
 
+  const selectedSlot = timeSlots.find(
+    (slot) => slot.time_slot_id === timeSlotId,
+  );
   return (
     <div className="space-y-6">
       <h3 className="text-xl font-bold text-gray-900">
@@ -87,13 +97,15 @@ export const DeliveryDateStep: React.FC<DeliveryDateStepProps> = ({
       <FormSelect
         label="Час доставки"
         name="deliveryTime"
-        value={deliveryTime}
+        value={timeSlotId}
         required={true}
         onChange={onTimeChange}
-        options={[
-          { value: "FIRST_HALF", label: "Перша половина дня" },
-          { value: "SECOND_HALF", label: "Друга половина дня" },
-        ]}
+        options={timeSlots.map((slot) => ({
+          value: slot.time_slot_id,
+          label: slot.label
+            ? `${slot.label} (${slot.start_time} - ${slot.end_time})`
+            : `${slot.start_time} - ${slot.end_time}`,
+        }))}
       />
 
       <FormSelect
@@ -121,10 +133,9 @@ export const DeliveryDateStep: React.FC<DeliveryDateStepProps> = ({
             </svg>
             <span className="font-medium">
               Доставка: {formatDate(deliveryDate)} <br />
-              {deliveryTime === "FIRST_HALF"
-                ? "Перша половина дня"
-                : "Друга половина дня"}
-                
+              {selectedSlot
+                ? `${selectedSlot.label} (${selectedSlot.start_time} - ${selectedSlot.end_time})`
+                : ""}
             </span>
           </div>
         )}
