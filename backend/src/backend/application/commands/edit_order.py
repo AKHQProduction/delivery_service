@@ -147,7 +147,7 @@ class UpdateOrderCommandHandler:
             client_id,
             delivery_phone,
             delivery_address,
-        ) = await self._process_client_changes(command, order)
+        ) = await self._process_client_changes(command, order, current_user)
 
         delivery_start_time = None
         delivery_end_time = None
@@ -192,7 +192,10 @@ class UpdateOrderCommandHandler:
         )
 
     async def _process_client_changes(
-        self, command: UpdateOrderCommand, order: Order
+        self,
+        command: UpdateOrderCommand,
+        order: Order,
+        current_user: CurrentUserDTO,
     ) -> tuple[ClientId | None, str | None, DeliveryAddressDTO | None]:
         client_id: ClientId | None = None
         delivery_phone: str | None = None
@@ -214,7 +217,6 @@ class UpdateOrderCommandHandler:
             raise EntityNotFoundError(entity="Client")
 
         if command.client_id is not None:
-            current_user = await self._idp.current_user()
             is_related = IsRelatedToShop(client.shop_id).is_satisfied_by(
                 current_user
             )
