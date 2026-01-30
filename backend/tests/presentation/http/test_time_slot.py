@@ -381,8 +381,8 @@ async def test_get_all_time_slots(
     assert response.status_code == status.HTTP_200_OK
     time_slots = response.json()
     assert len(time_slots) == 2
-    assert time_slots[0]["start_time"] == "09:00:00"
-    assert time_slots[1]["start_time"] == "14:00:00"
+    assert time_slots[0]["start_time"] == "09:00"
+    assert time_slots[1]["start_time"] == "14:00"
 
 
 @pytest.mark.asyncio()

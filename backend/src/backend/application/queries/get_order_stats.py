@@ -75,8 +75,8 @@ class GetOrderStatsQueryHandler:
         )
         time_slots_filter = [
             TimeSlotFilter(
-                start_time=slot.start_time,
-                end_time=slot.end_time,
+                start_time=datetime.time.fromisoformat(slot.start_time),
+                end_time=datetime.time.fromisoformat(slot.end_time),
             )
             for slot in time_slots
         ]

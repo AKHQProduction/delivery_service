@@ -55,8 +55,12 @@ class SQLAlchemyTimeSlotGateway(TimeSlotGateway):
         return [
             TimeSlotReadModel(
                 time_slot_id=TimeSlotId(cast("UUID", cast("object", row.id))),
-                start_time=cast("time", cast("object", row.start_time)),
-                end_time=cast("time", cast("object", row.end_time)),
+                start_time=cast(
+                    "time", cast("object", row.start_time)
+                ).strftime("%H:%M"),
+                end_time=cast("time", cast("object", row.end_time)).strftime(
+                    "%H:%M"
+                ),
                 label=cast("str | None", cast("object", row.label)),
             )
             for row in rows
