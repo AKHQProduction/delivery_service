@@ -12,6 +12,8 @@ from backend.application.interfaces.gateways.client_gateway import (
     ClientGateway,
     ClientReadModel,
     CreateClientDTO,
+    DuplicatePhoneEntry,
+    DuplicatePhoneOwner,
     GetClientsFilters,
     PhoneDTO,
 )
@@ -323,13 +325,39 @@ class SQLAlchemyClientGateway(ClientGateway):
     def next_id(self) -> ClientId:
         return ClientId(UUID(str(uuid7())))
 
-    async def check_existing_numbers(self, numbers: list[str]) -> set[str]:
-        if not numbers:
-            return set()
+    async def find_duplicate_phones(
+        self,
+        shop_id: ShopId,
+        phone_numbers: list[str],
+        exclude_client_id: ClientId | None = None,
+    ) -> list[DuplicatePhoneEntry]:
+        if not phone_numbers:
+            return []
 
-        query = select(ClientPhone.number).where(
-            ClientPhone.number.in_(numbers)
+        query = (
+            select(ClientPhone.number, Client.id, Client.full_name)
+            .join(Client, ClientPhone.client_id == Client.id)
+            .where(
+                ClientPhone.shop_id == shop_id,
+                ClientPhone.number.in_(phone_numbers),
+            )
         )
+
+        if exclude_client_id is not None:
+            query = query.where(Client.id != exclude_client_id)
+
         result = await self._session.execute(query)
 
-        return {row[0] for row in result.fetchall()}
+        grouped: dict[str, list[DuplicatePhoneOwner]] = {}
+        for number, client_id, full_name in result.fetchall():
+            grouped.setdefault(number, []).append(
+                DuplicatePhoneOwner(
+                    client_id=ClientId(client_id),
+                    full_name=full_name,
+                )
+            )
+
+        return [
+            DuplicatePhoneEntry(phone_number=phone, owners=owners)
+            for phone, owners in grouped.items()
+        ]

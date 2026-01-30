@@ -1,7 +1,12 @@
 import logging
 from dataclasses import dataclass, field
 
-from backend.application.errors import AccessDeniedError
+from backend.application.errors import (
+    AccessDeniedError,
+    ExistingClientInfo,
+    PhoneDuplicate,
+    PhoneNumberAlreadyExistsError,
+)
 from backend.application.interfaces import IdentityProvider, TransactionManager
 from backend.application.interfaces.gateways.client_gateway import (
     AddressDTO,
@@ -10,6 +15,7 @@ from backend.application.interfaces.gateways.client_gateway import (
     PhoneDTO,
 )
 from backend.application.policies.access import can_shop_manage_policy
+from backend.application.validators import normalize_ukraine_phone
 from backend.application.vars import ClientId
 
 logger = logging.getLogger(__name__)
@@ -37,6 +43,7 @@ class CreateClientCommand:
     phones: list[Phone] = field(default_factory=list)
     addresses: list[Address] = field(default_factory=list)
     custom_id: str | None = None
+    confirm_duplicate_phones: bool = False
 
 
 class CreateClientCommandHandler:
@@ -67,9 +74,35 @@ class CreateClientCommandHandler:
         )
 
         phones_dto = [
-            PhoneDTO(number=phone.number, is_primary=(idx == 0))
+            PhoneDTO(
+                number=normalize_ukraine_phone(phone.number),
+                is_primary=(idx == 0),
+            )
             for idx, phone in enumerate(command.phones)
         ]
+
+        if not command.confirm_duplicate_phones and phones_dto:
+            normalized_numbers = [p.number for p in phones_dto]
+            duplicates = await self._client_gateway.find_duplicate_phones(
+                shop_id=current_user.shop_id,
+                phone_numbers=normalized_numbers,
+            )
+            if duplicates:
+                raise PhoneNumberAlreadyExistsError(
+                    duplicates=[
+                        PhoneDuplicate(
+                            phone_number=dup.phone_number,
+                            existing_clients=[
+                                ExistingClientInfo(
+                                    client_id=owner.client_id,
+                                    full_name=owner.full_name,
+                                )
+                                for owner in dup.owners
+                            ],
+                        )
+                        for dup in duplicates
+                    ]
+                )
 
         addresses_dto = [
             AddressDTO(

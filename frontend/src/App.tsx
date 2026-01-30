@@ -8,6 +8,8 @@ import { getUser } from "./services/api/userApi";
 import { useEffect } from "react";
 import { useUserStore } from "./context/useUserStore";
 import { MenuModal } from "./components/modals/MenuModal";
+import { ErrorProvider } from "./context/ErrorContext";
+import { ErrorBoundary } from "./components/ErrorBoundary";
 
 const isDev = import.meta.env.MODE === "development";
 
@@ -28,27 +30,29 @@ function App() {
   }, []);
 
   return (
-    <>
+    <ErrorBoundary>
       <BrowserRouter>
-        <Routes>
-          {isDev && <Route path="/dev" element={<DevPage />} />}
-          {routeConfig.map((route) => (
-            <Route
-              key={route.path}
-              path={route.path}
-              element={
-                <ProtectedRoute allowedRoles={route.allowedRoles}>
-                  <route.component />
-                </ProtectedRoute>
-              }
-            />
-          ))}
-        </Routes>
-        <MenuModal />
-        <AddItemComponent />
-        <BottomNavPanel />
+        <ErrorProvider>
+          <Routes>
+            {isDev && <Route path="/dev" element={<DevPage />} />}
+            {routeConfig.map((route) => (
+              <Route
+                key={route.path}
+                path={route.path}
+                element={
+                  <ProtectedRoute allowedRoles={route.allowedRoles}>
+                    <route.component />
+                  </ProtectedRoute>
+                }
+              />
+            ))}
+          </Routes>
+          <MenuModal />
+          <AddItemComponent />
+          <BottomNavPanel />
+        </ErrorProvider>
       </BrowserRouter>
-    </>
+    </ErrorBoundary>
   );
 }
 
