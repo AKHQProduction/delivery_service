@@ -706,6 +706,613 @@ async def test_create_order_with_past_delivery_date(
 
 
 @pytest.mark.asyncio()
+async def test_update_order_delivery_date(
+    http_client: AsyncClient,
+    session: AsyncSession,
+    customer_headers: Callable[[int], dict[str, Any]],
+    setup_full_test_user_with_shop,
+    setup_test_client,
+    setup_test_order,
+) -> None:
+    telegram_id = 5050
+    _, shop_id = await setup_full_test_user_with_shop(telegram_id=telegram_id)
+
+    client_id = await setup_test_client(shop_id=shop_id)
+    order_id = await setup_test_order(shop_id=shop_id, client_id=client_id)
+    await session.commit()
+
+    headers = customer_headers(telegram_id)
+
+    new_date = (datetime.now(UTC).date() + timedelta(days=5)).isoformat()
+
+    response = await http_client.patch(
+        url=f"{BASE_URL}/{order_id}",
+        headers=headers,
+        json={"delivery_date": new_date},
+    )
+
+    assert response.status_code == status.HTTP_200_OK
+
+    await session.flush()
+
+    result = await session.execute(select(Order).where(Order.id == order_id))
+    order = result.scalar_one()
+    assert str(order.date) == new_date
+
+
+@pytest.mark.asyncio()
+async def test_update_order_delivery_date_past_fails(
+    http_client: AsyncClient,
+    session: AsyncSession,
+    customer_headers: Callable[[int], dict[str, Any]],
+    setup_full_test_user_with_shop,
+    setup_test_client,
+    setup_test_order,
+) -> None:
+    telegram_id = 5051
+    _, shop_id = await setup_full_test_user_with_shop(telegram_id=telegram_id)
+
+    client_id = await setup_test_client(shop_id=shop_id)
+    order_id = await setup_test_order(shop_id=shop_id, client_id=client_id)
+    await session.commit()
+
+    headers = customer_headers(telegram_id)
+
+    past_date = (datetime.now(UTC).date() - timedelta(days=1)).isoformat()
+
+    response = await http_client.patch(
+        url=f"{BASE_URL}/{order_id}",
+        headers=headers,
+        json={"delivery_date": past_date},
+    )
+
+    assert response.status_code == status.HTTP_422_UNPROCESSABLE_CONTENT
+
+
+@pytest.mark.asyncio()
+async def test_update_order_comment(
+    http_client: AsyncClient,
+    session: AsyncSession,
+    customer_headers: Callable[[int], dict[str, Any]],
+    setup_full_test_user_with_shop,
+    setup_test_client,
+    setup_test_order,
+) -> None:
+    telegram_id = 5052
+    _, shop_id = await setup_full_test_user_with_shop(telegram_id=telegram_id)
+
+    client_id = await setup_test_client(shop_id=shop_id)
+    order_id = await setup_test_order(shop_id=shop_id, client_id=client_id)
+    await session.commit()
+
+    headers = customer_headers(telegram_id)
+
+    response = await http_client.patch(
+        url=f"{BASE_URL}/{order_id}",
+        headers=headers,
+        json={"comment": "Новий коментар"},
+    )
+
+    assert response.status_code == status.HTTP_200_OK
+
+    await session.flush()
+
+    result = await session.execute(select(Order).where(Order.id == order_id))
+    order = result.scalar_one()
+    assert order.comment == "Новий коментар"
+
+
+@pytest.mark.asyncio()
+async def test_update_order_clear_comment(
+    http_client: AsyncClient,
+    session: AsyncSession,
+    customer_headers: Callable[[int], dict[str, Any]],
+    setup_full_test_user_with_shop,
+    setup_test_client,
+    setup_test_order,
+) -> None:
+    telegram_id = 5053
+    _, shop_id = await setup_full_test_user_with_shop(telegram_id=telegram_id)
+
+    client_id = await setup_test_client(shop_id=shop_id)
+    order_id = await setup_test_order(
+        shop_id=shop_id, client_id=client_id, comment="Old comment"
+    )
+    await session.commit()
+
+    headers = customer_headers(telegram_id)
+
+    response = await http_client.patch(
+        url=f"{BASE_URL}/{order_id}",
+        headers=headers,
+        json={"comment": "EMPTY"},
+    )
+
+    assert response.status_code == status.HTTP_200_OK
+
+    await session.flush()
+
+    result = await session.execute(select(Order).where(Order.id == order_id))
+    order = result.scalar_one()
+    assert order.comment is None
+
+
+@pytest.mark.asyncio()
+async def test_update_order_payment_method(
+    http_client: AsyncClient,
+    session: AsyncSession,
+    customer_headers: Callable[[int], dict[str, Any]],
+    setup_full_test_user_with_shop,
+    setup_test_client,
+    setup_test_order,
+) -> None:
+    telegram_id = 5054
+    _, shop_id = await setup_full_test_user_with_shop(telegram_id=telegram_id)
+
+    client_id = await setup_test_client(shop_id=shop_id)
+    order_id = await setup_test_order(
+        shop_id=shop_id,
+        client_id=client_id,
+        payment_method=PaymentMethod.CASH,
+    )
+    await session.commit()
+
+    headers = customer_headers(telegram_id)
+
+    response = await http_client.patch(
+        url=f"{BASE_URL}/{order_id}",
+        headers=headers,
+        json={"payment_method": PaymentMethod.BANK_TRANSFER},
+    )
+
+    assert response.status_code == status.HTTP_200_OK
+
+    await session.flush()
+
+    result = await session.execute(select(Order).where(Order.id == order_id))
+    order = result.scalar_one()
+    assert order.payment_method == PaymentMethod.BANK_TRANSFER
+
+
+@pytest.mark.asyncio()
+async def test_update_order_time_slot(
+    http_client: AsyncClient,
+    session: AsyncSession,
+    customer_headers: Callable[[int], dict[str, Any]],
+    setup_full_test_user_with_shop,
+    setup_test_client,
+    setup_test_order,
+    setup_test_time_slot,
+) -> None:
+    telegram_id = 5055
+    _, shop_id = await setup_full_test_user_with_shop(telegram_id=telegram_id)
+
+    client_id = await setup_test_client(shop_id=shop_id)
+    order_id = await setup_test_order(
+        shop_id=shop_id,
+        client_id=client_id,
+        delivery_start_time=time(9, 0),
+        delivery_end_time=time(14, 0),
+    )
+
+    new_time_slot_id = await setup_test_time_slot(
+        shop_id=shop_id,
+        start_time=time(14, 0),
+        end_time=time(20, 0),
+    )
+    await session.commit()
+
+    headers = customer_headers(telegram_id)
+
+    response = await http_client.patch(
+        url=f"{BASE_URL}/{order_id}",
+        headers=headers,
+        json={"time_slot_id": str(new_time_slot_id)},
+    )
+
+    assert response.status_code == status.HTTP_200_OK
+
+    await session.flush()
+
+    result = await session.execute(select(Order).where(Order.id == order_id))
+    order = result.scalar_one()
+    assert order.delivery_start_time == time(14, 0)
+    assert order.delivery_end_time == time(20, 0)
+
+
+@pytest.mark.asyncio()
+async def test_update_order_phone_and_address(
+    http_client: AsyncClient,
+    session: AsyncSession,
+    customer_headers: Callable[[int], dict[str, Any]],
+    setup_full_test_user_with_shop,
+    setup_test_client,
+    setup_test_order,
+) -> None:
+    telegram_id = 5056
+    _, shop_id = await setup_full_test_user_with_shop(telegram_id=telegram_id)
+
+    client_id = await setup_test_client(
+        shop_id=shop_id,
+        phones=["+380501111111", "+380502222222"],
+        addresses=[
+            {"street": "Перша", "house": "1", "apartment": "1"},
+            {"street": "Друга", "house": "2", "apartment": "2"},
+        ],
+    )
+    order_id = await setup_test_order(
+        shop_id=shop_id,
+        client_id=client_id,
+        delivery_phone="+380501111111",
+        delivery_address={"street": "Перша", "house": "1", "apartment": "1"},
+    )
+    await session.commit()
+
+    headers = customer_headers(telegram_id)
+
+    client_response = await http_client.get(
+        url=f"/api/v1/clients/{client_id}", headers=headers
+    )
+    client_data = client_response.json()
+    second_phone_id = client_data["phones"][1]["id"]
+    second_address_id = client_data["addresses"][1]["id"]
+
+    response = await http_client.patch(
+        url=f"{BASE_URL}/{order_id}",
+        headers=headers,
+        json={
+            "phone_id": second_phone_id,
+            "address_id": second_address_id,
+        },
+    )
+
+    assert response.status_code == status.HTTP_200_OK
+
+    await session.flush()
+
+    result = await session.execute(select(Order).where(Order.id == order_id))
+    order = result.scalar_one()
+    assert order.delivery_phone == "+380502222222"
+    assert order.delivery_address["street"] == "Друга"
+
+
+@pytest.mark.asyncio()
+async def test_update_order_items_add_new(
+    http_client: AsyncClient,
+    session: AsyncSession,
+    customer_headers: Callable[[int], dict[str, Any]],
+    setup_full_test_user_with_shop,
+    setup_test_client,
+    setup_test_product,
+    setup_test_order,
+) -> None:
+    telegram_id = 5057
+    _, shop_id = await setup_full_test_user_with_shop(telegram_id=telegram_id)
+
+    client_id = await setup_test_client(shop_id=shop_id)
+    await setup_test_product(shop_id)
+    product_id_2, _, _, _ = await setup_test_product(shop_id)
+
+    order_id = await setup_test_order(shop_id=shop_id, client_id=client_id)
+    await session.commit()
+
+    headers = customer_headers(telegram_id)
+
+    items_result = await session.execute(
+        select(OrderItem).where(OrderItem.order_id == order_id)
+    )
+    existing_item = items_result.scalars().first()
+
+    response = await http_client.patch(
+        url=f"{BASE_URL}/{order_id}",
+        headers=headers,
+        json={
+            "items": [
+                {"id": existing_item.id, "quantity": 5},
+                {"product_id": str(product_id_2), "quantity": 3},
+            ],
+        },
+    )
+
+    assert response.status_code == status.HTTP_200_OK
+
+    await session.flush()
+
+    items_result = await session.execute(
+        select(OrderItem)
+        .where(OrderItem.order_id == order_id)
+        .order_by(OrderItem.id)
+    )
+    items = items_result.scalars().all()
+    assert len(items) == 2
+
+
+@pytest.mark.asyncio()
+async def test_update_order_items_delete(
+    http_client: AsyncClient,
+    session: AsyncSession,
+    customer_headers: Callable[[int], dict[str, Any]],
+    setup_full_test_user_with_shop,
+    setup_test_client,
+    setup_test_order,
+) -> None:
+    telegram_id = 5058
+    _, shop_id = await setup_full_test_user_with_shop(telegram_id=telegram_id)
+
+    client_id = await setup_test_client(shop_id=shop_id)
+    order_id = await setup_test_order(
+        shop_id=shop_id,
+        client_id=client_id,
+        items=[
+            {"name": "Product 1", "quantity": 1, "price_per_item": 100},
+            {"name": "Product 2", "quantity": 2, "price_per_item": 200},
+        ],
+    )
+    await session.commit()
+
+    headers = customer_headers(telegram_id)
+
+    items_result = await session.execute(
+        select(OrderItem)
+        .where(OrderItem.order_id == order_id)
+        .order_by(OrderItem.id)
+    )
+    items = items_result.scalars().all()
+    assert len(items) == 2
+
+    response = await http_client.patch(
+        url=f"{BASE_URL}/{order_id}",
+        headers=headers,
+        json={
+            "items": [
+                {"id": items[0].id, "quantity": 1},
+            ],
+        },
+    )
+
+    assert response.status_code == status.HTTP_200_OK
+
+    await session.flush()
+
+    items_result = await session.execute(
+        select(OrderItem).where(OrderItem.order_id == order_id)
+    )
+    remaining = items_result.scalars().all()
+    assert len(remaining) == 1
+
+
+@pytest.mark.asyncio()
+async def test_update_order_items_replace_all(
+    http_client: AsyncClient,
+    session: AsyncSession,
+    customer_headers: Callable[[int], dict[str, Any]],
+    setup_full_test_user_with_shop,
+    setup_test_client,
+    setup_test_product,
+    setup_test_order,
+) -> None:
+    telegram_id = 5059
+    _, shop_id = await setup_full_test_user_with_shop(telegram_id=telegram_id)
+
+    client_id = await setup_test_client(shop_id=shop_id)
+    product_id, _, _, _ = await setup_test_product(shop_id)
+    order_id = await setup_test_order(shop_id=shop_id, client_id=client_id)
+    await session.commit()
+
+    headers = customer_headers(telegram_id)
+
+    response = await http_client.patch(
+        url=f"{BASE_URL}/{order_id}",
+        headers=headers,
+        json={
+            "items": [
+                {"product_id": str(product_id), "quantity": 10},
+            ],
+        },
+    )
+
+    assert response.status_code == status.HTTP_200_OK
+
+    await session.flush()
+
+    items_result = await session.execute(
+        select(OrderItem).where(OrderItem.order_id == order_id)
+    )
+    items = items_result.scalars().all()
+    assert len(items) == 1
+    assert items[0].quantity == 10
+
+
+@pytest.mark.asyncio()
+async def test_update_order_not_found(
+    http_client: AsyncClient,
+    session: AsyncSession,
+    customer_headers: Callable[[int], dict[str, Any]],
+    setup_full_test_user_with_shop,
+) -> None:
+    telegram_id = 5060
+    await setup_full_test_user_with_shop(telegram_id=telegram_id)
+    await session.commit()
+
+    headers = customer_headers(telegram_id)
+
+    response = await http_client.patch(
+        url=f"{BASE_URL}/{uuid.uuid4()}",
+        headers=headers,
+        json={"comment": "test"},
+    )
+
+    assert response.status_code == status.HTTP_404_NOT_FOUND
+
+
+@pytest.mark.asyncio()
+async def test_update_order_unauthorized(
+    http_client: AsyncClient,
+) -> None:
+    response = await http_client.patch(
+        url=f"{BASE_URL}/{uuid.uuid4()}",
+        json={"comment": "test"},
+    )
+
+    assert response.status_code == status.HTTP_403_FORBIDDEN
+
+
+@pytest.mark.asyncio()
+async def test_update_order_as_courier_forbidden(
+    http_client: AsyncClient,
+    session: AsyncSession,
+    customer_headers: Callable[[int], dict[str, Any]],
+    setup_full_test_user_with_shop,
+    setup_test_client,
+    setup_test_order,
+) -> None:
+    telegram_id = 5061
+    _, shop_id = await setup_full_test_user_with_shop(
+        telegram_id=telegram_id, role=ShopRole.COURIER
+    )
+
+    client_id = await setup_test_client(shop_id=shop_id)
+    order_id = await setup_test_order(shop_id=shop_id, client_id=client_id)
+    await session.commit()
+
+    headers = customer_headers(telegram_id)
+
+    response = await http_client.patch(
+        url=f"{BASE_URL}/{order_id}",
+        headers=headers,
+        json={"comment": "test"},
+    )
+
+    assert response.status_code == status.HTTP_403_FORBIDDEN
+
+
+@pytest.mark.asyncio()
+async def test_update_order_change_client(
+    http_client: AsyncClient,
+    session: AsyncSession,
+    customer_headers: Callable[[int], dict[str, Any]],
+    setup_full_test_user_with_shop,
+    setup_test_client,
+    setup_test_order,
+) -> None:
+    telegram_id = 5062
+    _, shop_id = await setup_full_test_user_with_shop(telegram_id=telegram_id)
+
+    client_id_1 = await setup_test_client(
+        shop_id=shop_id,
+        full_name="Клієнт 1",
+        phones=["+380501111111"],
+        addresses=[{"street": "Перша", "house": "1"}],
+    )
+    client_id_2 = await setup_test_client(
+        shop_id=shop_id,
+        full_name="Клієнт 2",
+        phones=["+380502222222"],
+        addresses=[{"street": "Друга", "house": "2"}],
+    )
+
+    order_id = await setup_test_order(shop_id=shop_id, client_id=client_id_1)
+    await session.commit()
+
+    headers = customer_headers(telegram_id)
+
+    client2_response = await http_client.get(
+        url=f"/api/v1/clients/{client_id_2}", headers=headers
+    )
+    client2_data = client2_response.json()
+    phone_id = client2_data["phones"][0]["id"]
+    address_id = client2_data["addresses"][0]["id"]
+
+    response = await http_client.patch(
+        url=f"{BASE_URL}/{order_id}",
+        headers=headers,
+        json={
+            "client_id": str(client_id_2),
+            "phone_id": phone_id,
+            "address_id": address_id,
+        },
+    )
+
+    assert response.status_code == status.HTTP_200_OK
+
+    await session.flush()
+
+    result = await session.execute(select(Order).where(Order.id == order_id))
+    order = result.scalar_one()
+    assert order.client_id == client_id_2
+    assert order.delivery_phone == "+380502222222"
+    assert order.delivery_address["street"] == "Друга"
+
+
+@pytest.mark.asyncio()
+async def test_update_order_full(
+    http_client: AsyncClient,
+    session: AsyncSession,
+    customer_headers: Callable[[int], dict[str, Any]],
+    setup_full_test_user_with_shop,
+    setup_test_client,
+    setup_test_product,
+    setup_test_order,
+    setup_test_time_slot,
+) -> None:
+    telegram_id = 5063
+    _, shop_id = await setup_full_test_user_with_shop(telegram_id=telegram_id)
+
+    client_id = await setup_test_client(
+        shop_id=shop_id,
+        phones=["+380501111111"],
+        addresses=[{"street": "Тестова", "house": "1"}],
+    )
+    product_id, _, _, _ = await setup_test_product(shop_id)
+    order_id = await setup_test_order(shop_id=shop_id, client_id=client_id)
+    new_time_slot_id = await setup_test_time_slot(
+        shop_id=shop_id,
+        start_time=time(14, 0),
+        end_time=time(20, 0),
+    )
+    await session.commit()
+
+    headers = customer_headers(telegram_id)
+
+    client_response = await http_client.get(
+        url=f"/api/v1/clients/{client_id}", headers=headers
+    )
+    client_data = client_response.json()
+    phone_id = client_data["phones"][0]["id"]
+    address_id = client_data["addresses"][0]["id"]
+
+    new_date = (datetime.now(UTC).date() + timedelta(days=3)).isoformat()
+
+    response = await http_client.patch(
+        url=f"{BASE_URL}/{order_id}",
+        headers=headers,
+        json={
+            "delivery_date": new_date,
+            "time_slot_id": str(new_time_slot_id),
+            "phone_id": phone_id,
+            "address_id": address_id,
+            "comment": "Повне оновлення",
+            "payment_method": PaymentMethod.CASH,
+            "items": [
+                {"product_id": str(product_id), "quantity": 7},
+            ],
+        },
+    )
+
+    assert response.status_code == status.HTTP_200_OK
+
+    await session.flush()
+
+    result = await session.execute(select(Order).where(Order.id == order_id))
+    order = result.scalar_one()
+    assert str(order.date) == new_date
+    assert order.delivery_start_time == time(14, 0)
+    assert order.delivery_end_time == time(20, 0)
+    assert order.comment == "Повне оновлення"
+    assert order.payment_method == PaymentMethod.CASH
+
+
+@pytest.mark.asyncio()
 async def test_delete_order(
     http_client: AsyncClient,
     session: AsyncSession,
