@@ -9,7 +9,7 @@ class ApplicationError(Exception):
 class AuthorizationError(ApplicationError):
     @property
     def message(self) -> str:
-        return "User not authorization"
+        return "User not authorized"
 
 
 class UserAlreadyRelatedToShopError(ApplicationError):
@@ -63,7 +63,7 @@ class FieldError(ValidationError):
 
     @property
     def message(self) -> str:
-        acceptable_values = " ,".join(self._acceptable_values)
+        acceptable_values = ", ".join(self._acceptable_values)
         return f"{self._field} cant be {self._value}, use: {acceptable_values}"
 
 
