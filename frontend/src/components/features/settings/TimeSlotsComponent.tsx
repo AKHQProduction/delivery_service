@@ -189,7 +189,7 @@ export const TimeSlotsComponent = () => {
   return (
     <div className="pb-4">
       <div className="flex items-center justify-between mb-4">
-        <h3 className="text-lg font-semibold text-gray-800">Таймслоти</h3>
+        <h3 className="text-lg font-semibold text-gray-800">Часові проміжки</h3>
       </div>
 
       <div className="space-y-3">

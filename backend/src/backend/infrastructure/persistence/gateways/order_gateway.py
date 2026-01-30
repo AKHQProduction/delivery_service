@@ -194,7 +194,7 @@ class SQLAlchemyOrderGateway(OrderGateway):
         )
         return OrderReadModel(
             order_id=OrderId(cast("UUID", cast("object", row.id))),
-            date=row.date,
+            date=row.date.strftime("%d.%m.%Y"),
             time_slot=time_slot,
             delivery_phone=cast("str", cast("object", row.delivery_phone)),
             delivery_address=DeliveryAddressDTO(
