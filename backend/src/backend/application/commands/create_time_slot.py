@@ -9,6 +9,7 @@ from backend.application.interfaces.gateways.time_slot_gateway import (
     TimeSlotGateway,
 )
 from backend.application.policies.access import IsOwner
+from backend.application.validators.time import validate_time_slot_range
 from backend.application.vars import TimeSlotId
 
 logger = logging.getLogger(__name__)
@@ -19,6 +20,9 @@ class CreateTimeSlotCommand:
     start_time: time
     end_time: time
     label: str | None = None
+
+    def __post_init__(self) -> None:
+        validate_time_slot_range(self.start_time, self.end_time)
 
 
 class CreateTimeSlotCommandHandler:

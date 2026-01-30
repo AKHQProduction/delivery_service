@@ -134,6 +134,12 @@ class LastTimeSlotError(ConflictError):
         )
 
 
+class InvalidTimeSlotRangeError(ValidationError):
+    @property
+    def message(self) -> str:
+        return "end_time must be greater than start_time"
+
+
 class InvalidPhoneNumberError(ValidationError):
     def __init__(self, phone: str, reason: str) -> None:
         self._phone = phone
