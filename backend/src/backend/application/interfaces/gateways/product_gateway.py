@@ -1,5 +1,6 @@
 from abc import abstractmethod
 from dataclasses import dataclass
+from decimal import Decimal
 from typing import Protocol
 
 from backend.application.interfaces.gateways import Pagination
@@ -11,7 +12,7 @@ class Product:
     product_id: ProductId
     shop_id: ShopId
     name: str
-    price: int
+    price: Decimal
     category_id: CategoryId | None
 
 
@@ -20,7 +21,7 @@ class CreateProductDTO:
     product_id: ProductId
     shop_id: ShopId
     name: str
-    price: int
+    price: Decimal
     category_id: CategoryId | None
 
 

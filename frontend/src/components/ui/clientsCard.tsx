@@ -21,13 +21,10 @@ export const ClientCard: React.FC<ClientCardProps> = ({ client, onClick }) => {
     >
       <div className="relative flex items-start gap-4">
         <div className="flex-1 min-w-0">
-          <div className="flex items-center justify-between mb-2">
+          <div className="mb-2">
             <h3 className="text-lg font-bold text-gray-900 group-hover:text-indigo-600 transition-colors">
               {client.full_name}
             </h3>
-            <span className="px-2.5 py-0.5 text-xs font-medium bg-gray-100 text-gray-600 rounded-full">
-              #{client.custom_id}
-            </span>
           </div>
 
           <div className="space-y-2">

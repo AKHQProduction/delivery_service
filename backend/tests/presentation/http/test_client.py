@@ -33,7 +33,6 @@ async def test_create_client_with_apartment(
 
     json = {
         "full_name": "Іван Іванов",
-        "custom_id": "ABCD",
         "phones": [{"number": "+380501234567"}],
         "addresses": [
             {
@@ -60,7 +59,6 @@ async def test_create_client_with_apartment(
     )
     client = result.scalar_one()
     assert client.full_name == "Іван Іванов"
-    assert client.custom_id == "ABCD"
 
     phone_result = await session.execute(
         select(ClientPhone).where(
@@ -109,7 +107,6 @@ async def test_create_client_with_private_house(
                 "comment": "Private house",
             }
         ],
-        "custom_id": "HOUSE-001",
     }
 
     response = await http_client.post(url=BASE_URL, headers=headers, json=json)
@@ -313,7 +310,6 @@ async def test_get_client_by_id(
     client_id = await setup_test_client(
         shop_id=shop_id,
         full_name="Тестовий Клієнт",
-        custom_id="TEST-001",
         phones=["+380501234567", "+380507654321"],
         addresses=[
             {
@@ -336,7 +332,6 @@ async def test_get_client_by_id(
     data = response.json()
     assert data["client_id"] == str(client_id)
     assert data["full_name"] == "Тестовий Клієнт"
-    assert data["custom_id"] == "TEST-001"
     assert len(data["phones"]) == 2
     assert data["phones"][0]["number"] == "+380501234567"
     assert data["phones"][0]["is_primary"] is True
@@ -395,13 +390,11 @@ async def test_get_all_clients(
     await setup_test_client(
         shop_id=shop_id,
         full_name="Анна Антоненко",
-        custom_id="VIP-001",
         phones=["+380501111111"],
     )
     await setup_test_client(
         shop_id=shop_id,
         full_name="Борис Борисенко",
-        custom_id="VIP-002",
         phones=["+380502222222"],
     )
     await setup_test_client(
@@ -496,44 +489,6 @@ async def test_get_all_clients_filter_by_phone(
     data = response.json()
     assert len(data) == 1
     assert data[0]["full_name"] == "Анна Антоненко"
-
-
-@pytest.mark.asyncio()
-async def test_get_all_clients_filter_by_custom_id(
-    http_client: AsyncClient,
-    session: AsyncSession,
-    customer_headers: Callable[[int], dict[str, Any]],
-    setup_full_test_user_with_shop,
-    setup_test_client,
-) -> None:
-    telegram_id = 2103
-    _, shop_id = await setup_full_test_user_with_shop(telegram_id=telegram_id)
-
-    # Create clients directly in DB
-    await setup_test_client(
-        shop_id=shop_id,
-        full_name="Анна Антоненко",
-        custom_id="VIP-001",
-    )
-    await setup_test_client(
-        shop_id=shop_id,
-        full_name="Борис Борисенко",
-        custom_id="VIP-002",
-    )
-    await session.commit()
-
-    headers = customer_headers(telegram_id)
-
-    # Filter by custom_id
-    response = await http_client.get(
-        url=f"{BASE_URL}/all", headers=headers, params={"custom_id": "VIP-001"}
-    )
-
-    assert response.status_code == status.HTTP_200_OK
-    data = response.json()
-    assert len(data) == 1
-    assert data[0]["full_name"] == "Анна Антоненко"
-    assert data[0]["custom_id"] == "VIP-001"
 
 
 @pytest.mark.asyncio()
@@ -672,7 +627,6 @@ async def test_edit_client_full_name(
     client_id = await setup_test_client(
         shop_id=shop_id,
         full_name="Оригінальне Ім'я",
-        custom_id="ORIG-001",
         phones=["+380501111111", "+380502222222"],
         addresses=[
             {
@@ -701,45 +655,6 @@ async def test_edit_client_full_name(
     )
     client = result.scalar_one()
     assert client.full_name == "Оновлене Ім'я"
-    assert client.custom_id == "ORIG-001"
-
-
-@pytest.mark.asyncio()
-async def test_edit_client_custom_id(
-    http_client: AsyncClient,
-    session: AsyncSession,
-    customer_headers: Callable[[int], dict[str, Any]],
-    setup_full_test_user_with_shop,
-    setup_test_client,
-) -> None:
-    telegram_id = 3001
-    _, shop_id = await setup_full_test_user_with_shop(telegram_id=telegram_id)
-
-    client_id = await setup_test_client(
-        shop_id=shop_id,
-        full_name="Ім'я Клієнта",
-        custom_id="OLD-ID",
-    )
-    await session.commit()
-
-    headers = customer_headers(telegram_id)
-
-    json = {"custom_id": "NEW-ID-123"}
-
-    response = await http_client.patch(
-        url=f"{BASE_URL}/{client_id}", headers=headers, json=json
-    )
-
-    assert response.status_code == status.HTTP_200_OK
-
-    await session.flush()
-
-    result = await session.execute(
-        select(Client).where(Client.id == client_id)
-    )
-    client = result.scalar_one()
-    assert client.custom_id == "NEW-ID-123"
-    assert client.full_name == "Ім'я Клієнта"
 
 
 @pytest.mark.asyncio()
@@ -872,7 +787,6 @@ async def test_edit_client_all_fields(
     client_id = await setup_test_client(
         shop_id=shop_id,
         full_name="Старе Ім'я",
-        custom_id="OLD-ID",
         phones=["+380501111111"],
         addresses=[
             {
@@ -888,7 +802,6 @@ async def test_edit_client_all_fields(
 
     json = {
         "full_name": "Повністю Нове Ім'я",
-        "custom_id": "ALL-NEW-999",
         "phones": [{"number": "+380501234567", "is_primary": True}],
         "addresses": [
             {
@@ -913,7 +826,6 @@ async def test_edit_client_all_fields(
     )
     client = result.scalar_one()
     assert client.full_name == "Повністю Нове Ім'я"
-    assert client.custom_id == "ALL-NEW-999"
 
     phone_result = await session.execute(
         select(ClientPhone).where(ClientPhone.client_id == client_id)
@@ -1271,11 +1183,10 @@ async def test_get_all_clients_pagination_no_duplicates_same_name(
     telegram_id = 2160
     _, shop_id = await setup_full_test_user_with_shop(telegram_id=telegram_id)
 
-    for i in range(10):
+    for _i in range(10):
         await setup_test_client(
             shop_id=shop_id,
             full_name="Однакове Ім'я",
-            custom_id=f"ID-{i:03d}",
         )
     await session.commit()
 

@@ -12,7 +12,6 @@ from backend.application.interfaces.gateways.client_gateway import (
 class GetClientsQuery:
     pagination: Pagination
     full_name: str | None = None
-    custom_id: str | None = None
     phone: str | None = None
 
 
@@ -30,7 +29,6 @@ class GetClientsQueryHandler:
             filters=GetClientsFilters(
                 shop_id=current_user.shop_id,
                 full_name=query.full_name,
-                custom_id=query.custom_id,
                 phone=query.phone,
             ),
             pagination=query.pagination,

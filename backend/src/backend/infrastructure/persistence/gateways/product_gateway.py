@@ -62,7 +62,7 @@ class SQLAlchemyProductGateway(ProductGateway):
             category_id=CategoryId(row.category_id)
             if row.category_id
             else None,
-            price=int(cast("int", cast("object", row.price))),
+            price=row.price,
         )
 
     async def update(self, updated_product: Product) -> None:
@@ -97,7 +97,7 @@ class SQLAlchemyProductGateway(ProductGateway):
                 if row.category_id
                 else None,
                 category_name=row.category.name if row.category else None,
-                price=int(cast("int", cast("object", row.price))),
+                price=int(row.price),
             )
         return None
 
@@ -131,7 +131,7 @@ class SQLAlchemyProductGateway(ProductGateway):
                 if row.category_id
                 else None,
                 category_name=row.category.name if row.category else None,
-                price=int(cast("int", cast("object", row.price))),
+                price=int(row.price),
             )
             for row in rows
         ]

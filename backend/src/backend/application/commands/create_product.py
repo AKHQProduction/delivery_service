@@ -1,5 +1,6 @@
 import logging
 from dataclasses import dataclass
+from decimal import Decimal
 from uuid import UUID
 
 from backend.application.errors import AccessDeniedError
@@ -20,7 +21,7 @@ logger = logging.getLogger(__name__)
 @dataclass(frozen=True)
 class CreateProductCommand:
     name: str
-    price: int
+    price: Decimal
     category_id: CategoryId | Empty = Empty.EMPTY
 
 

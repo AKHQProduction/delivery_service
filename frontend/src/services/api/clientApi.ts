@@ -3,7 +3,6 @@ import { type Phone, type Address } from "../../types/entities/Client";
 
 interface UpdateClientPayload {
   full_name?: string;
-  custom_id?: string;
   phones?: Phone[];
   addresses?: Address[];
 }
@@ -12,7 +11,6 @@ interface CreateClientPayload {
   full_name: string;
   phones: Phone[];
   addresses: Address[];
-  custom_id?: string;
 }
 
 export const createNewClient = async (body: CreateClientPayload) => {
@@ -56,7 +54,6 @@ export const getClientById = async (clientId: string) => {
 
 export const getAllClients = async (
   full_name: string,
-  custom_id: string,
   phone: string,
   clientsLimit: number,
   offset: number,
@@ -70,7 +67,6 @@ export const getAllClients = async (
     };
 
     if (full_name) params.full_name = full_name;
-    if (custom_id) params.custom_id = custom_id;
     if (phone) params.phone = phone;
 
     const response = await api.get(`v1/clients/all`, { params });

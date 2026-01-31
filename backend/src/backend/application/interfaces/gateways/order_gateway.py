@@ -1,6 +1,7 @@
 from abc import abstractmethod
 from dataclasses import dataclass
 from datetime import date, time
+from decimal import Decimal
 from typing import Protocol
 
 from backend.application.interfaces.gateways import Pagination
@@ -36,7 +37,7 @@ class DeliveryAddressDTO:
 class OrderItemDTO:
     quantity: int
     name: str | None = None
-    price_per_item: int | None = None
+    price_per_item: Decimal | None = None
     id: OrderItemId | None = None
     product_id: ProductId | None = None
 
@@ -90,7 +91,6 @@ class OrderReadModel:
     client_name: str
     items: list[OrderItemReadModel]
     payment_method: PaymentMethod
-    client_custom_id: str | None = None
 
 
 @dataclass(frozen=True)
@@ -106,7 +106,6 @@ class GetOrdersFilters:
     end_date: date | None = None
     delivery_start_time: time | None = None
     client_name: str | None = None
-    custom_id: str | None = None
 
 
 @dataclass(frozen=True)

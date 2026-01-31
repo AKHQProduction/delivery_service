@@ -1,6 +1,7 @@
 import logging
 from dataclasses import dataclass
 from datetime import UTC, date, datetime, timedelta
+from decimal import Decimal
 
 from backend.application.errors import (
     AccessDeniedError,
@@ -296,7 +297,7 @@ class UpdateOrderCommandHandler:
                 item_product_map[idx] = product_id_to_use
 
         # Batch load all products at once
-        products_map: dict[ProductId, tuple[str, int]] = {}
+        products_map: dict[ProductId, tuple[str, Decimal]] = {}
         if product_ids_to_load:
             products = await self._product_gateway.load_many(
                 list(product_ids_to_load)
@@ -319,7 +320,7 @@ class UpdateOrderCommandHandler:
         for idx, item in enumerate(items):
             product_id_to_use = item_product_map.get(idx)
             name: str | None = None
-            price_per_item: int | None = None
+            price_per_item: Decimal | None = None
 
             if product_id_to_use is not None:
                 name, price_per_item = products_map[product_id_to_use]

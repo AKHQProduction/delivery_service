@@ -1,5 +1,6 @@
 import datetime
 import uuid
+from decimal import Decimal
 from typing import TYPE_CHECKING
 
 import sqlalchemy as sa
@@ -67,7 +68,7 @@ class OrderItem(Base, CreatedAt, UpdatedAt):
     )
     name: Mapped[str] = mapped_column(sa.String, nullable=False)
     quantity: Mapped[int] = mapped_column(sa.Integer, nullable=False)
-    price_per_item: Mapped[int] = mapped_column(
+    price_per_item: Mapped[Decimal] = mapped_column(
         sa.Numeric(precision=10, scale=2), nullable=False
     )
 

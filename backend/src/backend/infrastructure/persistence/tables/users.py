@@ -35,7 +35,9 @@ class TelegramAccount(Base, CreatedAt, UpdatedAt):
     user_id: Mapped[uuid.UUID] = mapped_column(
         sa.ForeignKey("users.id", ondelete="CASCADE"), unique=True
     )
-    telegram_id: Mapped[int] = mapped_column(sa.BigInteger, nullable=False)
+    telegram_id: Mapped[int] = mapped_column(
+        sa.BigInteger, nullable=False, unique=True
+    )
     full_name: Mapped[str] = mapped_column(sa.String, nullable=False)
 
     user: Mapped["User"] = relationship(back_populates="telegram_account")

@@ -59,7 +59,6 @@ class SQLAlchemyClientGateway(ClientGateway):
 
         new_client = Client(
             id=dto.client_id,
-            custom_id=dto.custom_id,
             full_name=dto.full_name,
             shop_id=dto.shop_id,
             phones=phones,
@@ -109,7 +108,6 @@ class SQLAlchemyClientGateway(ClientGateway):
 
         return ClientDM(
             client_id=ClientId(client.id),
-            custom_id=client.custom_id,
             shop_id=ShopId(client.shop_id),
             full_name=client.full_name,
             phones=phones,
@@ -165,7 +163,6 @@ class SQLAlchemyClientGateway(ClientGateway):
             full_name=client.full_name,
             phones=phones,
             addresses=addresses,
-            custom_id=client.custom_id,
         )
 
     async def read_all(
@@ -184,10 +181,6 @@ class SQLAlchemyClientGateway(ClientGateway):
         if filters.full_name:
             search_conditions.append(
                 Client.full_name.ilike(f"%{escape_like(filters.full_name)}%")
-            )
-        if filters.custom_id:
-            search_conditions.append(
-                Client.custom_id.ilike(f"%{escape_like(filters.custom_id)}%")
             )
         if filters.phone:
             phone_exists = exists(
@@ -239,7 +232,6 @@ class SQLAlchemyClientGateway(ClientGateway):
                     )
                     for address in client.addresses
                 ],
-                custom_id=client.custom_id,
             )
             for client in clients
         ]
@@ -258,7 +250,6 @@ class SQLAlchemyClientGateway(ClientGateway):
         if not client:
             return
 
-        client.custom_id = updated_client.custom_id
         client.full_name = updated_client.full_name
 
         existing_phones_by_id = {phone.id: phone for phone in client.phones}

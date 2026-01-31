@@ -28,7 +28,7 @@ export const useClient = () => {
     setCurrentSearch(search);
     setOffset(0);
     try {
-      const fetchedClients = await getAllClients(search, search, search, PAGE_SIZE, 0, "ASC");
+      const fetchedClients = await getAllClients(search, search, PAGE_SIZE, 0, "ASC");
       setClients(fetchedClients);
       setHasMore(fetchedClients.length >= PAGE_SIZE);
       setOffset(PAGE_SIZE);
@@ -46,7 +46,7 @@ export const useClient = () => {
 
     setLoadingMore(true);
     try {
-      const fetchedClients = await getAllClients(currentSearch, currentSearch, currentSearch, PAGE_SIZE, offset, "ASC");
+      const fetchedClients = await getAllClients(currentSearch, currentSearch, PAGE_SIZE, offset, "ASC");
       setClients((prev) => [...prev, ...fetchedClients]);
       setHasMore(fetchedClients.length >= PAGE_SIZE);
       setOffset((prev) => prev + PAGE_SIZE);
@@ -72,7 +72,6 @@ export const useClient = () => {
     full_name: string;
     phones: Phone[];
     addresses: Address[];
-    custom_id?: string;
   }) => {
     setLoading(true);
     setError(null);
@@ -81,7 +80,6 @@ export const useClient = () => {
         full_name: clientData.full_name,
         phones: clientData.phones.filter((p) => p.number.trim() !== ""),
         addresses: clientData.addresses.filter((a) => a.street.trim() !== ""),
-        custom_id: clientData?.custom_id,
       });
 
       setClients((prev) => [...prev, newClient]);
@@ -102,7 +100,6 @@ export const useClient = () => {
       full_name: string;
       phones: Phone[];
       addresses: Address[];
-      custom_id?: string;
     }
   ) => {
     setLoading(true);
@@ -112,7 +109,6 @@ export const useClient = () => {
         full_name: clientData.full_name,
         phones: clientData.phones.filter((p) => p.number.trim() !== ""),
         addresses: clientData.addresses.filter((a) => a.street.trim() !== ""),
-        custom_id: clientData?.custom_id,
       });
 
       setClients((prev) =>

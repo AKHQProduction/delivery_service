@@ -371,7 +371,6 @@ async def get_all_orders(
     end_date: date | None = None,
     delivery_start_time: time | None = None,
     client_name: str | None = None,
-    custom_id: str | None = None,
     limit: int = 100,
     offset: int = 0,
     order: SortOrder = SortOrder.ASC,
@@ -382,7 +381,6 @@ async def get_all_orders(
             end_date=end_date,
             delivery_start_time=delivery_start_time,
             client_name=client_name,
-            custom_id=custom_id,
             pagination=Pagination(limit=limit, offset=offset, order=order),
         )
     )

@@ -16,5 +16,5 @@ class CreatedAt:
 
 class UpdatedAt:
     updated_at: Mapped[datetime] = mapped_column(
-        TIMESTAMP, server_default=func.now()
+        TIMESTAMP, server_default=func.now(), server_onupdate=func.now()
     )

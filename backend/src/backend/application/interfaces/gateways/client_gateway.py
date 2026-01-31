@@ -38,17 +38,15 @@ class CreateClientDTO:
     full_name: str
     phones: list[PhoneDTO]
     addresses: list[AddressDTO]
-    custom_id: str | None = None
 
 
 @dataclass
-class ClientDM:  # Like entity
+class ClientDM:
     client_id: ClientId
     shop_id: ShopId
     full_name: str
     phones: list[PhoneDTO]
     addresses: list[AddressDTO]
-    custom_id: str | None = None
 
 
 @dataclass(frozen=True)
@@ -57,14 +55,12 @@ class ClientReadModel:
     full_name: str
     phones: list[PhoneDTO]
     addresses: list[AddressDTO]
-    custom_id: str | None = None
 
 
 @dataclass(frozen=True)
 class GetClientsFilters:
     shop_id: ShopId | None = None
     full_name: str | None = None
-    custom_id: str | None = None
     phone: str | None = None
 
 

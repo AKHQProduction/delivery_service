@@ -66,7 +66,6 @@ export const AddClientForm: React.FC<AddClientFormProps> = ({
       const fullClient: Client = {
         client_id: clientId,
         full_name: formData.full_name,
-        custom_id: formData.custom_id || undefined,
         phones: formData.phones.filter((p) => p.number.trim() !== ""),
         addresses: formData.addresses.filter((a) => a.street.trim() !== ""),
       };
@@ -90,13 +89,6 @@ export const AddClientForm: React.FC<AddClientFormProps> = ({
       onClose={onClose}
       submitLabel="Додати клієнта"
     >
-      <FormInput
-        label="ID клієнта"
-        name="custom_id"
-        value={formData.custom_id || ""}
-        onChange={handleChange}
-        placeholder="Наприклад: NEW-ID-123"
-      />
       <FormInput
         label="Ім'я клієнта"
         name="full_name"

@@ -1,5 +1,6 @@
 import logging
 from dataclasses import dataclass
+from decimal import Decimal
 from typing import cast
 
 from backend.application.errors import AccessDeniedError, EntityNotFoundError
@@ -20,7 +21,7 @@ logger = logging.getLogger(__name__)
 class EditProductCommand:
     product_id: ProductId
     new_name: str | None = None
-    new_price: int | None = None
+    new_price: Decimal | None = None
     new_category_id: CategoryId | Empty | None = None
 
 

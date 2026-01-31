@@ -36,7 +36,6 @@ class CreateClientCommand:
     full_name: str
     phones: list[Phone] = field(default_factory=list)
     addresses: list[Address] = field(default_factory=list)
-    custom_id: str | None = None
 
 
 class CreateClientCommandHandler:
@@ -92,7 +91,6 @@ class CreateClientCommandHandler:
             full_name=command.full_name,
             phones=phones_dto,
             addresses=addresses_dto,
-            custom_id=command.custom_id,
         )
 
         await self._client_gateway.create_client(create_dto)

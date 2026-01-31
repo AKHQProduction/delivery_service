@@ -48,7 +48,6 @@ class Address:
 class EditClientCommand:
     client_id: ClientId
     full_name: str | None = None
-    custom_id: str | None = None
     phones: list[Phone] | None = None
     addresses: list[Address] | None = None
 
@@ -84,10 +83,9 @@ class EditClientCommandHandler:
     async def handle(self, command: EditClientCommand) -> None:
         logger.info(
             "Editing client: client_id=%s, new_full_name=%s, "
-            "new_custom_id=%s, phones=%s, addresses=%s",
+            "phones=%s, addresses=%s",
             command.client_id,
             command.full_name,
-            command.custom_id,
             len(command.phones) if command.phones else None,
             len(command.addresses) if command.addresses else None,
         )
@@ -126,10 +124,6 @@ class EditClientCommandHandler:
         if command.full_name is not None:
             client.full_name = command.full_name
             updates.append(f"full_name={command.full_name}")
-
-        if command.custom_id is not None:
-            client.custom_id = command.custom_id
-            updates.append(f"custom_id={command.custom_id}")
 
         if command.phones is not None:
             client.phones = [

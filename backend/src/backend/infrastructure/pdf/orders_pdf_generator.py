@@ -168,15 +168,7 @@ class ReportLabOrdersPDFGenerator(OrdersPDFGenerator):
         table_data: list = [["Клієнт", "Деталі", "Товари", "Сума", "Оплата"]]
 
         for order in orders:
-            # Column 1: Client (custom_id with # or name)
-            if order.client_custom_id:
-                client_cell = Paragraph(
-                    f"<b>#{order.client_custom_id}</b>", cell_style
-                )
-            else:
-                client_cell = Paragraph(
-                    f"<b>{order.client_name}</b>", cell_style
-                )
+            client_cell = Paragraph(f"<b>{order.client_name}</b>", cell_style)
 
             # Column 2: Details (address + phone + comments)
             addr = order.delivery_address

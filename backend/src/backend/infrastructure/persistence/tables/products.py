@@ -1,3 +1,4 @@
+from decimal import Decimal
 from typing import TYPE_CHECKING
 from uuid import UUID
 
@@ -20,7 +21,7 @@ class Product(Base, CreatedAt, UpdatedAt):
 
     id: Mapped[UUID] = mapped_column(sa.UUID, primary_key=True)
     name: Mapped[str] = mapped_column(sa.String, nullable=False)
-    price: Mapped[int] = mapped_column(
+    price: Mapped[Decimal] = mapped_column(
         sa.Numeric(precision=10, scale=2), nullable=False
     )
 

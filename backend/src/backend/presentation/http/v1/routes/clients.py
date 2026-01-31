@@ -78,7 +78,6 @@ async def create_new_client(
                                 "floor": "3",
                             },
                         ],
-                        "custom_id": None,
                     },
                 ),
                 "private_house": Example(
@@ -95,7 +94,6 @@ async def create_new_client(
                                 "comment": "Приватний будинок, ворота сині",
                             }
                         ],
-                        "custom_id": "HOUSE-001",
                     },
                 ),
                 "multiple_addresses": Example(
@@ -154,10 +152,6 @@ async def update_client(
                     description="Update only client's full name",
                     value={"full_name": "Оновлене Ім'я"},
                 ),
-                "custom_id": Example(
-                    description="Update only client's custom ID",
-                    value={"custom_id": "NEW-ID-123"},
-                ),
                 "phones": Example(
                     description="Update existing phones and add new ones",
                     value={
@@ -196,7 +190,6 @@ async def update_client(
                     description="Update all fields at once",
                     value={
                         "full_name": "Повністю Оновлене Ім'я",
-                        "custom_id": "ALL-NEW-999",
                         "phones": [
                             {
                                 "number": "+380501234567",
@@ -227,7 +220,6 @@ async def update_client(
         EditClientCommand(
             client_id=client_id,
             full_name=body.full_name,
-            custom_id=body.custom_id,
             phones=[
                 Phone(
                     number=phone.number,
@@ -271,7 +263,6 @@ async def update_client(
 async def get_all_clients(
     handler: FromDishka[GetClientsQueryHandler],
     full_name: str | None = None,
-    custom_id: str | None = None,
     phone: str | None = None,
     limit: int = 100,
     offset: int = 0,
@@ -280,7 +271,6 @@ async def get_all_clients(
     return await handler.handle(
         GetClientsQuery(
             full_name=full_name,
-            custom_id=custom_id,
             phone=phone,
             pagination=Pagination(limit=limit, offset=offset, order=order),
         )

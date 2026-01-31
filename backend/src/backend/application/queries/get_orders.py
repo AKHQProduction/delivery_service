@@ -17,7 +17,6 @@ class GetOrdersQuery:
     end_date: date | None = None
     delivery_start_time: time | None = None
     client_name: str | None = None
-    custom_id: str | None = None
 
 
 class GetOrdersQueryHandler:
@@ -37,7 +36,6 @@ class GetOrdersQueryHandler:
                 end_date=query.end_date,
                 delivery_start_time=query.delivery_start_time,
                 client_name=query.client_name,
-                custom_id=query.custom_id,
             ),
             pagination=query.pagination,
         )

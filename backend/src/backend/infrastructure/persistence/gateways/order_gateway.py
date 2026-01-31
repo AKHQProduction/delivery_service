@@ -165,13 +165,6 @@ class SQLAlchemyOrderGateway(OrderGateway):
             search_conditions.append(
                 Client.full_name.ilike(f"%{escape_like(filters.client_name)}%")
             )
-        if filters.custom_id:
-            if not filters.client_name:
-                query = query.join(Client)
-            search_conditions.append(
-                Client.custom_id.ilike(f"%{escape_like(filters.custom_id)}%")
-            )
-
         if search_conditions:
             query = query.where(or_(*search_conditions))
 
@@ -222,9 +215,7 @@ class SQLAlchemyOrderGateway(OrderGateway):
                     id=int(cast("int", cast("object", item.id))),
                     name=cast("str", cast("object", item.name)),
                     quantity=int(cast("int", cast("object", item.quantity))),
-                    price_per_item=int(
-                        cast("int", cast("object", item.price_per_item))
-                    ),
+                    price_per_item=int(item.price_per_item),
                     product_id=(
                         ProductId(
                             cast("UUID", cast("object", item.product_id))
@@ -237,9 +228,6 @@ class SQLAlchemyOrderGateway(OrderGateway):
             ],
             payment_method=PaymentMethod(
                 cast("str", cast("object", row.payment_method))
-            ),
-            client_custom_id=cast(
-                "str | None", cast("object", row.client.custom_id)
             ),
         )
 
@@ -336,9 +324,7 @@ class SQLAlchemyOrderGateway(OrderGateway):
                 id=int(cast("int", cast("object", item.id))),
                 name=cast("str", cast("object", item.name)),
                 quantity=int(cast("int", cast("object", item.quantity))),
-                price_per_item=int(
-                    cast("int", cast("object", item.price_per_item))
-                ),
+                price_per_item=int(item.price_per_item),
                 product_id=(
                     ProductId(cast("UUID", cast("object", item.product_id)))
                     if item.product_id

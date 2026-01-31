@@ -2,6 +2,7 @@ import os
 import uuid
 from collections.abc import AsyncGenerator, Callable
 from datetime import UTC, datetime, time, timedelta
+from decimal import Decimal
 from typing import Any, cast
 from unittest.mock import AsyncMock
 
@@ -297,10 +298,10 @@ def setup_test_product(session: AsyncSession):
     async def _setup_test_product(
         shop_id: ShopId,
         category_id: CategoryId | None = None,
-    ) -> tuple[ProductId, str, int, CategoryId | None]:
+    ) -> tuple[ProductId, str, Decimal, CategoryId | None]:
         product_id = ProductId(uuid.uuid4())
         name = "Test Product"
-        price = 100
+        price = Decimal(100)
 
         await session.execute(
             insert(Product).values(
@@ -322,7 +323,6 @@ def setup_test_client(session: AsyncSession):
     async def _setup_test_client(
         shop_id: ShopId,
         full_name: str = "Test Client",
-        custom_id: str | None = None,
         phones: list[str] | None = None,
         addresses: list[dict[str, Any]] | None = None,
     ) -> ClientId:
@@ -332,7 +332,6 @@ def setup_test_client(session: AsyncSession):
             insert(Client).values(
                 id=client_id,
                 full_name=full_name,
-                custom_id=custom_id,
                 shop_id=shop_id,
             )
         )
@@ -441,7 +440,11 @@ def setup_test_order(session: AsyncSession):
 
         if items is None:
             items = [
-                {"name": "Test Product", "quantity": 1, "price_per_item": 100}
+                {
+                    "name": "Test Product",
+                    "quantity": 1,
+                    "price_per_item": Decimal(100),
+                }
             ]
 
         for item in items:
