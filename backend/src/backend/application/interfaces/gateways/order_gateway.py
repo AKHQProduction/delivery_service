@@ -82,7 +82,7 @@ class OrderItemReadModel:
 @dataclass(frozen=True)
 class OrderReadModel:
     order_id: OrderId
-    date: date
+    date: str
     time_slot: str
     delivery_phone: str
     delivery_address: DeliveryAddressDTO

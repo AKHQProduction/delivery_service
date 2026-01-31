@@ -27,8 +27,8 @@ class CreateTimeSlotDTO:
 @dataclass(frozen=True)
 class TimeSlotReadModel:
     time_slot_id: TimeSlotId
-    start_time: time
-    end_time: time
+    start_time: str
+    end_time: str
     label: str | None
 
 

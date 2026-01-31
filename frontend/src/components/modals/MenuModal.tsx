@@ -1,11 +1,12 @@
 import { useEffect, useState } from "react";
 import { createPortal } from "react-dom";
 import { useTelegram } from "../../hooks/useTelegram";
-import { useSettings } from "../../hooks/useSettings";
+import { useTGSettings } from "../../hooks/settings/useTGSettings";
+import { TimeSlotsComponent } from "../features/settings/TimeSlotsComponent";
 
 export const MenuModal = () => {
   const { isTGWebApp, initDataTG } = useTelegram();
-  const { settings, updateSetting } = useSettings();
+  const { settings, updateSetting } = useTGSettings();
   const [isOpen, setIsOpen] = useState(false);
   const [isVisible, setIsVisible] = useState(false);
 
@@ -89,9 +90,7 @@ export const MenuModal = () => {
                 Повноекранний режим
               </h3>
               <label className="flex items-center justify-between cursor-pointer">
-                <span className="text-gray-700">
-                  На весь екран
-                </span>
+                <span className="text-gray-700">На весь екран</span>
                 <div className="relative">
                   <input
                     type="checkbox"
@@ -105,6 +104,9 @@ export const MenuModal = () => {
                 </div>
               </label>
             </div>
+
+            {/* Timeslots Section */}
+            <TimeSlotsComponent />
           </div>
         </div>
       </div>

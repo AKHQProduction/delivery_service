@@ -1430,7 +1430,7 @@ async def test_get_order(
     assert order_data["order_id"] == str(order_id)
     assert order_data["client_id"] == str(client_id)
     assert order_data["client_name"] == "Тестовий Клієнт"
-    assert order_data["date"] == delivery_date.isoformat()
+    assert order_data["date"] == delivery_date.strftime("%d.%m.%Y")
     assert order_data["time_slot"] == "09:00-14:00"
     assert order_data["delivery_phone"] == "+380501234567"
     assert order_data["delivery_address"]["street"] == "Хрещатик"
@@ -1529,7 +1529,9 @@ async def test_get_all_orders_with_date_filter(
     assert response.status_code == status.HTTP_200_OK
     orders = response.json()
     assert len(orders) == 2
-    assert all(order["date"] == tomorrow.isoformat() for order in orders)
+    assert all(
+        order["date"] == tomorrow.strftime("%d.%m.%Y") for order in orders
+    )
 
 
 @pytest.mark.asyncio()

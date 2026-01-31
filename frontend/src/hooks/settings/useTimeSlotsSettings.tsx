@@ -1,0 +1,89 @@
+import { useState, useEffect } from "react";
+import {
+  getAllTimeSlots,
+  createNewTimeSlot,
+  updateTimeSlot,
+  deleteTimeSlot,
+} from "../../services/api/settingsApi";
+
+export const useTimeSlotsSettings = () => {
+  const [timeSlots, setTimeSlots] = useState<any[]>([]);
+  const [isLoading, setIsLoading] = useState(false);
+
+  const fetchTimeSlots = async () => {
+    try {
+      setIsLoading(true);
+      const data = await getAllTimeSlots();
+      setTimeSlots(data);
+    } catch (error) {
+      console.error("Error fetching time slots:", error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchTimeSlots();
+  }, []);
+
+  const addTimeSlot = async (
+    start_time: Date,
+    end_time: Date,
+    label?: string,
+  ) => {
+    try {
+      const newSlot = await createNewTimeSlot(start_time, end_time, label);
+      // Immediately update local state
+      setTimeSlots((prev) => [...prev, newSlot]);
+      // Optionally refetch to ensure sync
+      await fetchTimeSlots();
+    } catch (error) {
+      console.error("Error adding time slot:", error);
+      throw error;
+    }
+  };
+
+  const updateTimeSlotById = async (
+    id: string,
+    start_time: Date,
+    end_time: Date,
+    label?: string,
+  ) => {
+    try {
+      const updatedSlot = await updateTimeSlot(id, start_time, end_time, label);
+      // Immediately update local state
+      setTimeSlots((prev) =>
+        prev.map((slot) => 
+          slot.time_slot_id === id ? updatedSlot : slot
+        ),
+      );
+      // Optionally refetch to ensure sync
+      await fetchTimeSlots();
+    } catch (error) {
+      console.error("Error updating time slot:", error);
+      throw error;
+    }
+  };
+
+  const deleteTimeSlotById = async (id: string) => {
+    try {
+      await deleteTimeSlot(id);
+      // Immediately update local state
+      setTimeSlots((prev) => prev.filter((slot) => slot.time_slot_id !== id));
+      // Optionally refetch to ensure sync
+      await fetchTimeSlots();
+    } catch (error) {
+      console.error("Error deleting time slot:", error);
+      throw error;
+    }
+  };
+
+  return { 
+    timeSlots, 
+    addTimeSlot, 
+    updateTimeSlotById, 
+    deleteTimeSlotById,
+    isLoading,
+    refetch: fetchTimeSlots
+  };
+};

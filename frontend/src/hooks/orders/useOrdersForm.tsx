@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef, useCallback } from "react";
 import { useClient } from "../clients/useClients";
 import { useProducts } from "../products/useProducts";
+import { useTimeSlotsSettings } from "../settings/useTimeSlotsSettings";
 import { type Client } from "../../types/entities/Client";
 import { type Product } from "../../types/entities/Product";
 
@@ -17,7 +18,7 @@ interface OrderFormData {
   deliveryPhone: any;
   deliveryAddress: any;
   deliveryDate: string;
-  deliveryTime: string;
+  timeSlotId: string;
   paymentMethod: string;
   note?: string;
 }
@@ -40,6 +41,9 @@ export const useOrderForm = (options: UseOrderFormOptions = {}) => {
     loadingMore: clientsLoadingMore,
     hasMore: clientsHasMore,
   } = useClient();
+
+  // Get time slots
+  const { timeSlots } = useTimeSlotsSettings();
 
   // Merge newly created clients (at the top) with fetched clients
   const clients = [
@@ -66,7 +70,7 @@ export const useOrderForm = (options: UseOrderFormOptions = {}) => {
     deliveryPhone: null,
     deliveryAddress: null,
     deliveryDate: new Date().toISOString().split("T")[0],
-    deliveryTime: "",
+    timeSlotId: "",
     paymentMethod: "",
     note: "",
   });
@@ -166,10 +170,10 @@ export const useOrderForm = (options: UseOrderFormOptions = {}) => {
         products: orderProducts,
         deliveryPhone: phone || null,
         deliveryAddress: address || null,
-        deliveryDate: initialOrder.date || "",
-        deliveryTime: initialOrder.time_preference || "",
+        deliveryDate: initialOrder.delivery_date || initialOrder.date || "",
+        timeSlotId: initialOrder.time_slot_id || "",
         paymentMethod: initialOrder.payment_method || "",
-        note: initialOrder.note || "",
+        note: initialOrder.comment || initialOrder.note || "",
       });
     }
   }, [initialOrder, clients, products]);
@@ -241,8 +245,8 @@ export const useOrderForm = (options: UseOrderFormOptions = {}) => {
     setFormData({ ...formData, paymentMethod });
   };
 
-  const handleTimeChange = (time: string) => {
-    setFormData({ ...formData, deliveryTime: time });
+  const handleTimeSlotChange = (timeSlotId: string) => {
+    setFormData({ ...formData, timeSlotId });
   };
 
   const handleNoteChange = (note: string) => {
@@ -268,7 +272,11 @@ export const useOrderForm = (options: UseOrderFormOptions = {}) => {
           formData.deliveryPhone !== null && formData.deliveryAddress !== null
         );
       case 4:
-        return formData.deliveryDate !== "" && formData.deliveryTime !== "" && formData.paymentMethod !== "";
+        return (
+          formData.deliveryDate !== "" &&
+          formData.timeSlotId !== "" &&
+          formData.paymentMethod !== ""
+        );
       default:
         return false;
     }
@@ -295,6 +303,10 @@ export const useOrderForm = (options: UseOrderFormOptions = {}) => {
     return formData.deliveryAddress?.id?.toString() || "";
   };
 
+  const getSelectedTimeSlot = () => {
+    return timeSlots.find((slot) => slot.time_slot_id === formData.timeSlotId);
+  };
+
   // Select newly created client
   const selectClientById = useCallback(
     (clientId: string) => {
@@ -314,6 +326,23 @@ export const useOrderForm = (options: UseOrderFormOptions = {}) => {
     handleClientSelect(client);
   }, []);
 
+  // Format order data for API submission
+  const getOrderPayload = () => {
+    return {
+      client_id: formData.client?.client_id || "",
+      delivery_date: formData.deliveryDate,
+      time_slot_id: formData.timeSlotId,
+      address_id: formData.deliveryAddress?.id || 0,
+      phone_id: formData.deliveryPhone?.id || 0,
+      products: formData.products.map((p) => ({
+        product_id: p.product.product_id,
+        quantity: p.quantity,
+      })),
+      payment_method: formData.paymentMethod,
+      comment: formData.note || "",
+    };
+  };
+
   return {
     step,
     formData,
@@ -321,6 +350,7 @@ export const useOrderForm = (options: UseOrderFormOptions = {}) => {
     searchProduct,
     clients,
     products,
+    timeSlots,
 
     // Infinite scroll for clients
     loadMoreClients,
@@ -341,7 +371,7 @@ export const useOrderForm = (options: UseOrderFormOptions = {}) => {
     handlePhoneChange,
     handleAddressChange,
     handleDateChange,
-    handleTimeChange,
+    handleTimeSlotChange,
     handleNoteChange,
     handlePaymentMethodChange,
 
@@ -352,6 +382,8 @@ export const useOrderForm = (options: UseOrderFormOptions = {}) => {
     getPhoneString,
     getAddressString,
     getAddressId,
+    getSelectedTimeSlot,
+    getOrderPayload,
 
     selectClientById,
     addAndSelectNewClient,

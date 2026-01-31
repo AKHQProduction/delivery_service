@@ -1,9 +1,9 @@
 import { useState, useEffect } from "react";
-import { useTelegram } from "./useTelegram";
-import { SettingsStorage } from "../config/settings.config";
-import { type AppSettings } from "../types/settings";
+import { useTelegram } from "../useTelegram";
+import { SettingsStorage } from "../../config/settings.config";
+import { type AppSettings } from "../../types/settings";
 
-export const useSettings = () => {
+export const useTGSettings = () => {
   const { initDataTG } = useTelegram();
 
   const [settings, setSettings] = useState<AppSettings>(() =>

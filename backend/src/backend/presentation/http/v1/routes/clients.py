@@ -44,6 +44,7 @@ router = APIRouter(
     responses={
         status.HTTP_401_UNAUTHORIZED: {"model": ErrorSchema},
         status.HTTP_403_FORBIDDEN: {"model": ErrorSchema},
+        status.HTTP_409_CONFLICT: {"model": ErrorSchema},
     },
     dependencies=[Depends(HTTPBearer())],
 )
@@ -124,6 +125,24 @@ async def create_new_client(
                         ],
                     },
                 ),
+                "confirm_duplicate_phones": Example(
+                    description=(
+                        "Create client with confirmed duplicate phones"
+                    ),
+                    value={
+                        "full_name": "Олена Олійник",
+                        "phones": [
+                            {"number": "+380501234567"},
+                        ],
+                        "addresses": [
+                            {
+                                "street": "Хрещатик",
+                                "house": "10",
+                            },
+                        ],
+                        "confirm_duplicate_phones": True,
+                    },
+                ),
             }
         ),
     ],
@@ -139,6 +158,7 @@ async def create_new_client(
         status.HTTP_401_UNAUTHORIZED: {"model": ErrorSchema},
         status.HTTP_403_FORBIDDEN: {"model": ErrorSchema},
         status.HTTP_404_NOT_FOUND: {"model": ErrorSchema},
+        status.HTTP_409_CONFLICT: {"model": ErrorSchema},
     },
     dependencies=[Depends(HTTPBearer())],
 )
@@ -211,6 +231,18 @@ async def update_client(
                     description="Clear all phones (empty array)",
                     value={"phones": []},
                 ),
+                "confirm_duplicate_phones": Example(
+                    description=("Update phones with confirmed duplicates"),
+                    value={
+                        "phones": [
+                            {
+                                "number": "+380501234567",
+                                "is_primary": True,
+                            },
+                        ],
+                        "confirm_duplicate_phones": True,
+                    },
+                ),
             }
         ),
     ],
@@ -220,6 +252,7 @@ async def update_client(
         EditClientCommand(
             client_id=client_id,
             full_name=body.full_name,
+            confirm_duplicate_phones=body.confirm_duplicate_phones,
             phones=[
                 Phone(
                     number=phone.number,

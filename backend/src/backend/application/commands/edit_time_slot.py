@@ -12,6 +12,7 @@ from backend.application.interfaces.gateways.time_slot_gateway import (
     TimeSlotGateway,
 )
 from backend.application.policies.access import IsOwner
+from backend.application.validators.time import validate_time_slot_range
 from backend.application.vars import TimeSlotId
 
 logger = logging.getLogger(__name__)
@@ -62,6 +63,8 @@ class EditTimeSlotCommandHandler:
 
         new_start_time = command.start_time or time_slot.start_time
         new_end_time = command.end_time or time_slot.end_time
+
+        validate_time_slot_range(new_start_time, new_end_time)
 
         times_changed = (
             new_start_time != time_slot.start_time

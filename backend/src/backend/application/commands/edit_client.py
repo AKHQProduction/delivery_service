@@ -4,7 +4,10 @@ from dataclasses import dataclass
 from backend.application.errors import (
     AccessDeniedError,
     EntityNotFoundError,
+    ExistingClientInfo,
     InvalidPrimaryFlagError,
+    PhoneDuplicate,
+    PhoneNumberAlreadyExistsError,
 )
 from backend.application.interfaces import (
     ClientGateway,
@@ -19,6 +22,7 @@ from backend.application.policies.access import (
     IsRelatedToShop,
     can_shop_manage_policy,
 )
+from backend.application.validators import normalize_ukraine_phone
 from backend.application.vars import AddressId, ClientId, PhoneId
 
 logger = logging.getLogger(__name__)
@@ -50,6 +54,7 @@ class EditClientCommand:
     full_name: str | None = None
     phones: list[Phone] | None = None
     addresses: list[Address] | None = None
+    confirm_duplicate_phones: bool = False
 
     def __post_init__(self) -> None:
         if self.phones is not None and self.phones:
@@ -126,14 +131,40 @@ class EditClientCommandHandler:
             updates.append(f"full_name={command.full_name}")
 
         if command.phones is not None:
-            client.phones = [
+            normalized_phones = [
                 PhoneDTO(
-                    number=phone.number,
+                    number=normalize_ukraine_phone(phone.number),
                     is_primary=phone.is_primary,
                     id=phone.id,
                 )
                 for phone in command.phones
             ]
+
+            if not command.confirm_duplicate_phones and normalized_phones:
+                normalized_numbers = [p.number for p in normalized_phones]
+                duplicates = await self._client_gateway.find_duplicate_phones(
+                    shop_id=client.shop_id,
+                    phone_numbers=normalized_numbers,
+                    exclude_client_id=command.client_id,
+                )
+                if duplicates:
+                    raise PhoneNumberAlreadyExistsError(
+                        duplicates=[
+                            PhoneDuplicate(
+                                phone_number=dup.phone_number,
+                                existing_clients=[
+                                    ExistingClientInfo(
+                                        client_id=owner.client_id,
+                                        full_name=owner.full_name,
+                                    )
+                                    for owner in dup.owners
+                                ],
+                            )
+                            for dup in duplicates
+                        ]
+                    )
+
+            client.phones = normalized_phones
             updates.append(f"phones={len(command.phones)}")
 
         if command.addresses is not None:
