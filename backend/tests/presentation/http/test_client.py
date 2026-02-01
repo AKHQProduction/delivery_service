@@ -1497,3 +1497,55 @@ async def test_edit_client_with_invalid_phone(
 
     assert response.status_code == status.HTTP_422_UNPROCESSABLE_CONTENT
     assert "phone" in response.json()["detail"].lower()
+
+
+@pytest.mark.asyncio()
+async def test_delete_client_unauthorized(
+    http_client: AsyncClient,
+) -> None:
+    client_id = str(uuid.uuid4())
+    response = await http_client.delete(url=f"{BASE_URL}/{client_id}")
+
+    assert response.status_code == status.HTTP_403_FORBIDDEN
+
+
+@pytest.mark.asyncio()
+async def test_delete_client_as_courier_forbidden(
+    http_client: AsyncClient,
+    session: AsyncSession,
+    customer_headers: Callable[[int], dict[str, Any]],
+    setup_full_test_user_with_shop,
+    setup_test_client,
+) -> None:
+    telegram_id = 1050
+    _, shop_id = await setup_full_test_user_with_shop(
+        telegram_id=telegram_id, role=ShopRole.COURIER
+    )
+    client_id = await setup_test_client(shop_id=shop_id)
+    await session.commit()
+
+    headers = customer_headers(telegram_id)
+
+    url = BASE_URL + f"/{client_id}"
+    response = await http_client.delete(url=url, headers=headers)
+
+    assert response.status_code == status.HTTP_403_FORBIDDEN
+
+
+@pytest.mark.asyncio()
+async def test_delete_client_not_found_returns_ok(
+    http_client: AsyncClient,
+    session: AsyncSession,
+    customer_headers: Callable[[int], dict[str, Any]],
+    setup_full_test_user_with_shop,
+) -> None:
+    telegram_id = 1051
+    await setup_full_test_user_with_shop(telegram_id=telegram_id)
+    await session.commit()
+
+    headers = customer_headers(telegram_id)
+
+    url = BASE_URL + f"/{uuid.uuid4()}"
+    response = await http_client.delete(url=url, headers=headers)
+
+    assert response.status_code == status.HTTP_200_OK

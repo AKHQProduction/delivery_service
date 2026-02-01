@@ -443,3 +443,117 @@ async def test_get_all_time_slots_filters_by_shop(
 
     assert len(response_1.json()) == 2
     assert len(response_2.json()) == 1
+
+
+@pytest.mark.asyncio()
+async def test_update_time_slot_as_manager_forbidden(
+    http_client: AsyncClient,
+    session: AsyncSession,
+    customer_headers: Callable[[int], dict[str, Any]],
+    setup_full_test_user_with_shop,
+    setup_test_time_slot,
+) -> None:
+    telegram_id = 7103
+    _, shop_id = await setup_full_test_user_with_shop(
+        telegram_id=telegram_id, role=ShopRole.MANAGER
+    )
+    time_slot_id = await setup_test_time_slot(shop_id=shop_id)
+    await session.commit()
+
+    headers = customer_headers(telegram_id)
+
+    json = {"label": "New label"}
+    response = await http_client.patch(
+        url=f"{BASE_URL}/{time_slot_id}", headers=headers, json=json
+    )
+
+    assert response.status_code == status.HTTP_403_FORBIDDEN
+
+
+@pytest.mark.asyncio()
+async def test_update_time_slot_unauthorized(
+    http_client: AsyncClient,
+) -> None:
+    json = {"label": "New label"}
+    response = await http_client.patch(
+        url=f"{BASE_URL}/{uuid.uuid4()}", json=json
+    )
+
+    assert response.status_code == status.HTTP_403_FORBIDDEN
+
+
+@pytest.mark.asyncio()
+async def test_update_time_slot_duplicate_conflict(
+    http_client: AsyncClient,
+    session: AsyncSession,
+    customer_headers: Callable[[int], dict[str, Any]],
+    setup_full_test_user_with_shop,
+    setup_test_time_slot,
+) -> None:
+    telegram_id = 7104
+    _, shop_id = await setup_full_test_user_with_shop(telegram_id=telegram_id)
+    await setup_test_time_slot(
+        shop_id=shop_id,
+        start_time=time(9, 0),
+        end_time=time(14, 0),
+    )
+    time_slot_id = await setup_test_time_slot(
+        shop_id=shop_id,
+        start_time=time(14, 0),
+        end_time=time(20, 0),
+    )
+    await session.commit()
+
+    headers = customer_headers(telegram_id)
+
+    json = {
+        "start_time": "09:00:00",
+        "end_time": "14:00:00",
+    }
+    response = await http_client.patch(
+        url=f"{BASE_URL}/{time_slot_id}", headers=headers, json=json
+    )
+
+    assert response.status_code == status.HTTP_409_CONFLICT
+
+
+@pytest.mark.asyncio()
+async def test_delete_time_slot_as_manager_forbidden(
+    http_client: AsyncClient,
+    session: AsyncSession,
+    customer_headers: Callable[[int], dict[str, Any]],
+    setup_full_test_user_with_shop,
+    setup_test_time_slot,
+) -> None:
+    telegram_id = 7203
+    _, shop_id = await setup_full_test_user_with_shop(
+        telegram_id=telegram_id, role=ShopRole.MANAGER
+    )
+    time_slot_id = await setup_test_time_slot(shop_id=shop_id)
+    await session.commit()
+
+    headers = customer_headers(telegram_id)
+
+    response = await http_client.delete(
+        url=f"{BASE_URL}/{time_slot_id}", headers=headers
+    )
+
+    assert response.status_code == status.HTTP_403_FORBIDDEN
+
+
+@pytest.mark.asyncio()
+async def test_delete_time_slot_unauthorized(
+    http_client: AsyncClient,
+) -> None:
+    response = await http_client.delete(url=f"{BASE_URL}/{uuid.uuid4()}")
+
+    assert response.status_code == status.HTTP_403_FORBIDDEN
+
+
+@pytest.mark.asyncio()
+async def test_get_all_time_slots_unauthorized(
+    http_client: AsyncClient,
+) -> None:
+    response = await http_client.get(url=f"{BASE_URL}/all")
+
+    assert response.status_code == status.HTTP_403_FORBIDDEN

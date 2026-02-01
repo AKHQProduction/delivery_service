@@ -45,3 +45,13 @@ async def test_me_return_correct_id_and_role(
         "role": role.value,
         "shop_id": str(shop_id),
     }
+
+
+@pytest.mark.asyncio()
+async def test_me_unauthorized(
+    http_client: AsyncClient,
+) -> None:
+    url = BASE_URL + "/me"
+    response = await http_client.get(url=url)
+
+    assert response.status_code == status.HTTP_403_FORBIDDEN

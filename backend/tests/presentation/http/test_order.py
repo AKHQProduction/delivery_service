@@ -2260,3 +2260,75 @@ async def test_download_orders_pdf_not_found(
     )
 
     assert response.status_code == status.HTTP_404_NOT_FOUND
+
+
+@pytest.mark.asyncio()
+async def test_delete_order_unauthorized(
+    http_client: AsyncClient,
+) -> None:
+    response = await http_client.delete(url=f"{BASE_URL}/{uuid.uuid4()}")
+
+    assert response.status_code == status.HTTP_403_FORBIDDEN
+
+
+@pytest.mark.asyncio()
+async def test_delete_order_not_found_returns_ok(
+    http_client: AsyncClient,
+    session: AsyncSession,
+    customer_headers: Callable[[int], dict[str, Any]],
+    setup_full_test_user_with_shop,
+) -> None:
+    telegram_id = 5103
+    await setup_full_test_user_with_shop(telegram_id=telegram_id)
+    await session.commit()
+
+    headers = customer_headers(telegram_id)
+
+    response = await http_client.delete(
+        url=f"{BASE_URL}/{uuid.uuid4()}", headers=headers
+    )
+
+    assert response.status_code == status.HTTP_200_OK
+
+
+@pytest.mark.asyncio()
+async def test_get_order_unauthorized(
+    http_client: AsyncClient,
+) -> None:
+    response = await http_client.get(url=f"{BASE_URL}/{uuid.uuid4()}")
+
+    assert response.status_code == status.HTTP_403_FORBIDDEN
+
+
+@pytest.mark.asyncio()
+async def test_get_all_orders_unauthorized(
+    http_client: AsyncClient,
+) -> None:
+    response = await http_client.get(url=f"{BASE_URL}/all")
+
+    assert response.status_code == status.HTTP_403_FORBIDDEN
+
+
+@pytest.mark.asyncio()
+async def test_generate_orders_pdf_as_courier_allowed(
+    http_client: AsyncClient,
+    session: AsyncSession,
+    customer_headers: Callable[[int], dict[str, Any]],
+    setup_full_test_user_with_shop,
+) -> None:
+    telegram_id = 6102
+    await setup_full_test_user_with_shop(
+        telegram_id=telegram_id, role=ShopRole.COURIER
+    )
+    await session.commit()
+
+    headers = customer_headers(telegram_id)
+    tomorrow = (datetime.now(UTC).date() + timedelta(days=1)).isoformat()
+
+    response = await http_client.post(
+        url=f"{BASE_URL}/export/pdf/generate",
+        headers=headers,
+        params={"delivery_date": tomorrow},
+    )
+
+    assert response.status_code == status.HTTP_200_OK
