@@ -1,6 +1,6 @@
 from backend.application.errors import AuthorizationError
 from backend.application.interfaces.idp import CurrentUserDTO
-from backend.application.vars import UserId
+from backend.application.vars import ShopRole, UserId
 from backend.infrastructure.persistence.gateways import (
     SQLAlchemyShopGateway,
     SQLAlchemyUserGateway,
@@ -26,15 +26,13 @@ class TelegramIdentityProvider:
     async def current_user(self) -> CurrentUserDTO:
         user_id = await self.current_user_id()
         if user_id and (
-            shop_employee := await self._shop_gateway.get_shop_employee(
-                user_id
-            )
+            membership := await self._shop_gateway.load_membership(user_id)
         ):
             return CurrentUserDTO(
                 user_id=user_id,
-                shop_id=shop_employee.shop_id,
-                role=shop_employee.role,
-                full_name=shop_employee.full_name,
+                shop_id=membership.shop_id,
+                role=ShopRole(membership.role.name),
+                full_name=membership.name,
             )
 
         raise AuthorizationError

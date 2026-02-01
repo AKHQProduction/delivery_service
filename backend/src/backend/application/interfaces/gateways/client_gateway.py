@@ -29,24 +29,6 @@ class AddressDTO:
 
 
 @dataclass(frozen=True)
-class CreateClientDTO:
-    client_id: ClientId
-    shop_id: ShopId
-    full_name: str
-    phones: list[PhoneDTO]
-    addresses: list[AddressDTO]
-
-
-@dataclass
-class ClientDM:
-    client_id: ClientId
-    shop_id: ShopId
-    full_name: str
-    phones: list[PhoneDTO]
-    addresses: list[AddressDTO]
-
-
-@dataclass(frozen=True)
 class ClientReadModel:
     client_id: ClientId
     full_name: str

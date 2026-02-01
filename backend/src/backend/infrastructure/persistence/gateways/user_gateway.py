@@ -4,7 +4,6 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 from uuid_utils import uuid7
 
-from backend.application.interfaces import CreateUserViaTgDTO
 from backend.application.vars import UserId
 from backend.infrastructure.persistence.tables import TelegramAccount, User
 
@@ -13,15 +12,8 @@ class SQLAlchemyUserGateway:
     def __init__(self, session: AsyncSession) -> None:
         self._session = session
 
-    async def create_user_via_tg(self, data: CreateUserViaTgDTO) -> None:
-        self._session.add(
-            User(
-                id=data.user_id,
-                telegram_account=TelegramAccount(
-                    telegram_id=data.tg_id, full_name=data.full_name
-                ),
-            )
-        )
+    def save(self, user: User) -> None:
+        self._session.add(user)
 
     async def user_id_by_telegram_id(self, telegram_id: int) -> UserId | None:
         query = (

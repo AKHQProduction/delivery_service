@@ -8,6 +8,7 @@ from backend.application.errors import (
 )
 from backend.application.policies.access import IsOwner, IsRelatedToShop
 from backend.application.vars import ShopRole, UserId
+from backend.domain.services.shop import update_membership
 from backend.infrastructure.idp import TelegramIdentityProvider
 from backend.infrastructure.persistence.gateways import SQLAlchemyShopGateway
 from backend.infrastructure.transaction_manager import TransactionManager
@@ -67,8 +68,8 @@ class EditEmployeeCommandHandler:
             )
             raise AccessDeniedError
 
-        employee = await self._shop_gateway.get_shop_employee(command.user_id)
-        if not employee:
+        membership = await self._shop_gateway.load_membership(command.user_id)
+        if not membership:
             logger.warning(
                 "Employee not found",
                 extra={"employee_user_id": command.user_id},
@@ -78,14 +79,14 @@ class EditEmployeeCommandHandler:
         logger.debug(
             "Employee found",
             extra={
-                "employee_user_id": employee.user_id,
-                "shop_id": employee.shop_id,
-                "role": employee.role,
-                "full_name": employee.full_name,
+                "employee_user_id": membership.user_id,
+                "shop_id": membership.shop_id,
+                "role": membership.role.name,
+                "full_name": membership.name,
             },
         )
 
-        if not IsRelatedToShop(shop_id=employee.shop_id).is_satisfied_by(
+        if not IsRelatedToShop(shop_id=membership.shop_id).is_satisfied_by(
             current_user
         ):
             logger.warning(
@@ -93,17 +94,21 @@ class EditEmployeeCommandHandler:
                 extra={
                     "user_id": current_user.user_id,
                     "user_shop_id": current_user.shop_id,
-                    "employee_shop_id": employee.shop_id,
+                    "employee_shop_id": membership.shop_id,
                 },
             )
             raise AccessDeniedError
 
+        new_role_id = None
+        if command.new_role:
+            new_role_id = await self._shop_gateway.get_role_id(
+                command.new_role
+            )
+
         changes = []
         if command.new_role:
-            employee.role = command.new_role
             changes.append(f"role: {command.new_role}")
         if command.new_name:
-            employee.full_name = command.new_name
             changes.append(f"name: {command.new_name}")
 
         logger.info(
@@ -114,7 +119,12 @@ class EditEmployeeCommandHandler:
             },
         )
 
-        await self._shop_gateway.update_employee(employee)
+        update_membership(
+            membership,
+            name=command.new_name,
+            role_id=new_role_id,
+        )
+
         await self._tr_manager.commit()
 
         logger.info(

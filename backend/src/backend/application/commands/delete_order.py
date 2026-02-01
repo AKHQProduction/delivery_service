@@ -65,7 +65,7 @@ class DeleteOrderCommandHandler:
             )
             raise AccessDeniedError
 
-        await self._order_gateway.delete(command.order_id)
+        await self._order_gateway.delete(order)
         await self._tr_manager.commit()
 
         logger.info(

@@ -10,6 +10,7 @@ from backend.application.errors import (
 from backend.application.policies.access import IsOwner
 from backend.application.validators.time import validate_time_slot_range
 from backend.application.vars import TimeSlotId
+from backend.domain.services.time_slot import update_time_slot
 from backend.infrastructure.idp import TelegramIdentityProvider
 from backend.infrastructure.persistence.gateways import (
     SQLAlchemyTimeSlotGateway,
@@ -85,12 +86,12 @@ class EditTimeSlotCommandHandler:
             )
             raise AlreadyExistsError(entity="TimeSlot")
 
-        time_slot.start_time = new_start_time
-        time_slot.end_time = new_end_time
-        if command.label is not None:
-            time_slot.label = command.label
-
-        await self._time_slot_gateway.update(time_slot)
+        update_time_slot(
+            time_slot,
+            start_time=new_start_time,
+            end_time=new_end_time,
+            label=command.label,
+        )
 
         await self._tx.commit()
 

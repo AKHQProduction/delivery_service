@@ -10,10 +10,8 @@ from uuid_utils import uuid7
 from backend.application.interfaces.gateways import Pagination, SortOrder
 from backend.application.interfaces.gateways.order_gateway import (
     CategoryStatsReadModel,
-    CreateOrderDTO,
     DeliveryAddressDTO,
     GetOrdersFilters,
-    Order as OrderEntity,
     OrderItemReadModel,
     OrderReadModel,
     OrderStatsReadModel,
@@ -32,7 +30,10 @@ from backend.application.vars import (
 )
 from backend.infrastructure.persistence.tables.categories import Category
 from backend.infrastructure.persistence.tables.clients import Client
-from backend.infrastructure.persistence.tables.orders import Order, OrderItem
+from backend.infrastructure.persistence.tables.orders import (
+    Order,
+    OrderItem,
+)
 from backend.infrastructure.persistence.tables.products import Product
 from backend.infrastructure.persistence.utils.escape import escape_like
 
@@ -44,93 +45,24 @@ class SQLAlchemyOrderGateway:
     def next_id(self) -> OrderId:
         return OrderId(UUID(str(uuid7())))
 
-    async def create_order(self, dto: CreateOrderDTO) -> None:
-        delivery_address = {
-            "street": dto.delivery_address.street,
-            "house": dto.delivery_address.house,
-            "apartment": dto.delivery_address.apartment,
-            "entrance": dto.delivery_address.entrance,
-            "floor": dto.delivery_address.floor,
-            "intercom": dto.delivery_address.intercom,
-            "comment": dto.delivery_address.comment,
-        }
+    def save(self, order: Order) -> None:
+        self._session.add(order)
 
-        order_items = [
-            OrderItem(
-                name=item.name,
-                quantity=item.quantity,
-                price_per_item=item.price_per_item,
-                product_id=item.product_id,
-            )
-            for item in dto.order_items
-        ]
+    async def load(self, order_id: OrderId) -> Order | None:
+        return await self._session.get(Order, order_id)
 
-        new_order = Order(
-            id=dto.order_id,
-            date=dto.delivery_date,
-            delivery_address=delivery_address,
-            delivery_phone=dto.delivery_phone,
-            delivery_start_time=dto.delivery_start_time,
-            delivery_end_time=dto.delivery_end_time,
-            comment=dto.comment,
-            shop_id=dto.shop_id,
-            client_id=dto.client_id,
-            items=order_items,
-            payment_method=dto.payment_method,
-        )
-
-        self._session.add(new_order)
-
-    async def load(self, order_id: OrderId) -> OrderEntity | None:
-        row = await self._session.get(Order, order_id)
-        if row:
-            delivery_address_dict = cast(
-                "dict[str, object]", cast("object", row.delivery_address)
-            )
-            return OrderEntity(
-                order_id=OrderId(cast("UUID", cast("object", row.id))),
-                shop_id=ShopId(cast("UUID", cast("object", row.shop_id))),
-                client_id=ClientId(
-                    cast("UUID", cast("object", row.client_id))
-                ),
-                delivery_date=row.date,
-                delivery_start_time=row.delivery_start_time,
-                delivery_end_time=row.delivery_end_time,
-                delivery_phone=cast("str", cast("object", row.delivery_phone)),
-                delivery_address=DeliveryAddressDTO(
-                    street=cast("str", delivery_address_dict.get("street")),
-                    house=cast("str", delivery_address_dict.get("house")),
-                    apartment=cast(
-                        "str | None", delivery_address_dict.get("apartment")
-                    ),
-                    entrance=cast(
-                        "str | None", delivery_address_dict.get("entrance")
-                    ),
-                    floor=cast(
-                        "str | None", delivery_address_dict.get("floor")
-                    ),
-                    intercom=cast(
-                        "str | None", delivery_address_dict.get("intercom")
-                    ),
-                    comment=cast(
-                        "str | None", delivery_address_dict.get("comment")
-                    ),
-                ),
-                comment=cast("str | None", cast("object", row.comment)),
-            )
-        return None
-
-    async def delete(self, order_id: OrderId) -> None:
-        order_db = await self._session.get(Order, order_id)
-        if order_db:
-            await self._session.delete(order_db)
+    async def delete(self, order: Order) -> None:
+        await self._session.delete(order)
 
     async def read(
         self, order_id: OrderId, shop_id: ShopId
     ) -> OrderReadModel | None:
         query = (
             select(Order)
-            .options(selectinload(Order.items), selectinload(Order.client))
+            .options(
+                selectinload(Order.items),
+                selectinload(Order.client),
+            )
             .where(Order.id == order_id, Order.shop_id == shop_id)
         )
         result = await self._session.execute(query)
@@ -144,7 +76,8 @@ class SQLAlchemyOrderGateway:
         self, filters: GetOrdersFilters, pagination: Pagination
     ) -> list[OrderReadModel]:
         query = select(Order).options(
-            selectinload(Order.items), selectinload(Order.client)
+            selectinload(Order.items),
+            selectinload(Order.client),
         )
 
         if filters.shop_id:
@@ -178,7 +111,8 @@ class SQLAlchemyOrderGateway:
 
     def _to_read_model(self, row: Order) -> OrderReadModel:
         delivery_address_dict = cast(
-            "dict[str, object]", cast("object", row.delivery_address)
+            "dict[str, object]",
+            cast("object", row.delivery_address),
         )
         time_slot = (
             f"{row.delivery_start_time.strftime('%H:%M')}-"
@@ -193,17 +127,24 @@ class SQLAlchemyOrderGateway:
                 street=cast("str", delivery_address_dict.get("street")),
                 house=cast("str", delivery_address_dict.get("house")),
                 apartment=cast(
-                    "str | None", delivery_address_dict.get("apartment")
+                    "str | None",
+                    delivery_address_dict.get("apartment"),
                 ),
                 entrance=cast(
-                    "str | None", delivery_address_dict.get("entrance")
+                    "str | None",
+                    delivery_address_dict.get("entrance"),
                 ),
-                floor=cast("str | None", delivery_address_dict.get("floor")),
+                floor=cast(
+                    "str | None",
+                    delivery_address_dict.get("floor"),
+                ),
                 intercom=cast(
-                    "str | None", delivery_address_dict.get("intercom")
+                    "str | None",
+                    delivery_address_dict.get("intercom"),
                 ),
                 comment=cast(
-                    "str | None", delivery_address_dict.get("comment")
+                    "str | None",
+                    delivery_address_dict.get("comment"),
                 ),
             ),
             comment=cast("str | None", cast("object", row.comment)),
@@ -217,7 +158,10 @@ class SQLAlchemyOrderGateway:
                     price_per_item=int(item.price_per_item),
                     product_id=(
                         ProductId(
-                            cast("UUID", cast("object", item.product_id))
+                            cast(
+                                "UUID",
+                                cast("object", item.product_id),
+                            )
                         )
                         if item.product_id
                         else None
@@ -277,23 +221,19 @@ class SQLAlchemyOrderGateway:
         if dto.payment_method is not None:
             order_db.payment_method = dto.payment_method.value
 
-        # Process items - full replacement
         if dto.items is not None:
             existing_items_map = {item.id: item for item in order_db.items}
             new_ids = {item.id for item in dto.items if item.id is not None}
 
-            # Delete items not in new list
             for item in order_db.items:
                 if item.id not in new_ids:
                     await self._session.delete(item)
 
-            # Update existing or add new items
             for item_dto in dto.items:
                 if (
                     item_dto.id is not None
                     and item_dto.id in existing_items_map
                 ):
-                    # Update existing item (partial update supported)
                     item = existing_items_map[item_dto.id]
                     item.quantity = item_dto.quantity
                     if item_dto.name is not None:
@@ -303,7 +243,6 @@ class SQLAlchemyOrderGateway:
                     if item_dto.product_id is not None:
                         item.product_id = item_dto.product_id
                 else:
-                    # Add new item
                     new_item = OrderItem(
                         name=item_dto.name or "",
                         quantity=item_dto.quantity,
@@ -325,7 +264,12 @@ class SQLAlchemyOrderGateway:
                 quantity=int(cast("int", cast("object", item.quantity))),
                 price_per_item=int(item.price_per_item),
                 product_id=(
-                    ProductId(cast("UUID", cast("object", item.product_id)))
+                    ProductId(
+                        cast(
+                            "UUID",
+                            cast("object", item.product_id),
+                        )
+                    )
                     if item.product_id
                     else None
                 ),
@@ -342,7 +286,8 @@ class SQLAlchemyOrderGateway:
             select(
                 func.count(func.distinct(Order.id)).label("total_orders"),
                 func.coalesce(
-                    func.sum(OrderItem.quantity * OrderItem.price_per_item), 0
+                    func.sum(OrderItem.quantity * OrderItem.price_per_item),
+                    0,
                 ).label("total_orders_sum"),
             )
             .select_from(Order)
@@ -360,7 +305,9 @@ class SQLAlchemyOrderGateway:
                 filters, time_slots_filter
             ),
             category_stats=await self._get_category_stats(filters),
-            payment_method_stats=await self._get_payment_method_stats(filters),
+            payment_method_stats=(
+                await self._get_payment_method_stats(filters)
+            ),
         )
 
     async def _get_time_slot_stats(
@@ -410,7 +357,8 @@ class SQLAlchemyOrderGateway:
 
         return [
             TimeSlotStatsReadModel(
-                time_slot=label, total=totals_by_slot.get(label, 0)
+                time_slot=label,
+                total=totals_by_slot.get(label, 0),
             )
             for label in slot_labels
         ]
@@ -451,7 +399,8 @@ class SQLAlchemyOrderGateway:
             select(
                 Order.payment_method.label("payment_method"),
                 func.coalesce(
-                    func.sum(OrderItem.quantity * OrderItem.price_per_item), 0
+                    func.sum(OrderItem.quantity * OrderItem.price_per_item),
+                    0,
                 ).label("orders_sum"),
             )
             .select_from(Order)

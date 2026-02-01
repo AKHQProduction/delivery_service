@@ -1,7 +1,7 @@
 import logging
 from dataclasses import dataclass
 
-from backend.application.interfaces import CreateUserViaTgDTO
+from backend.domain.services.user import create_user_via_tg
 from backend.infrastructure.idp import TelegramIdentityProvider
 from backend.infrastructure.persistence.gateways import (
     SQLAlchemyShopGateway,
@@ -43,13 +43,12 @@ class BotStartCommandHandler:
                 extra={"tg_id": command.tg_id, "full_name": command.full_name},
             )
             new_user_id = self._user_gateway.next_id()
-            await self._user_gateway.create_user_via_tg(
-                CreateUserViaTgDTO(
-                    user_id=new_user_id,
-                    tg_id=command.tg_id,
-                    full_name=command.full_name,
-                )
+            user = create_user_via_tg(
+                user_id=new_user_id,
+                tg_id=command.tg_id,
+                full_name=command.full_name,
             )
+            self._user_gateway.save(user)
             await self._tr_manager.commit()
             logger.info(
                 "User created successfully",

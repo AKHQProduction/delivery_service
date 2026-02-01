@@ -8,7 +8,9 @@ from backend.application.policies.access import (
 )
 from backend.application.vars import ClientId
 from backend.infrastructure.idp import TelegramIdentityProvider
-from backend.infrastructure.persistence.gateways import SQLAlchemyClientGateway
+from backend.infrastructure.persistence.gateways import (
+    SQLAlchemyClientGateway,
+)
 from backend.infrastructure.transaction_manager import TransactionManager
 
 logger = logging.getLogger(__name__)
@@ -38,7 +40,9 @@ class DeleteClientCommandHandler:
 
         current_user = await self._idp.current_user()
         logger.debug(
-            "Current user: %s, shop_id=%s", current_user, current_user.shop_id
+            "Current user: %s, shop_id=%s",
+            current_user,
+            current_user.shop_id,
         )
 
         if not can_shop_manage_policy.is_satisfied_by(current_user):
@@ -51,13 +55,16 @@ class DeleteClientCommandHandler:
 
         client = await self._client_gateway.load(command.client_id)
         if not client:
-            logger.warning("Client not found: client_id=%s", command.client_id)
+            logger.warning(
+                "Client not found: client_id=%s",
+                command.client_id,
+            )
             return
 
         if not IsRelatedToShop(client.shop_id).is_satisfied_by(current_user):
             logger.warning(
-                "Access denied: user %s (shop_id=%s) attempted to delete "
-                "client %s (shop_id=%s)",
+                "Access denied: user %s (shop_id=%s) attempted "
+                "to delete client %s (shop_id=%s)",
                 current_user,
                 current_user.shop_id,
                 command.client_id,
@@ -65,7 +72,7 @@ class DeleteClientCommandHandler:
             )
             raise AccessDeniedError
 
-        await self._client_gateway.delete(command.client_id)
+        await self._client_gateway.delete(client)
         await self._tr_manager.commit()
 
         logger.info(

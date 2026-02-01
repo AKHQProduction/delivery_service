@@ -40,34 +40,6 @@ class OrderItemDTO:
 
 
 @dataclass(frozen=True)
-class CreateOrderDTO:
-    order_id: OrderId
-    shop_id: ShopId
-    client_id: ClientId
-    delivery_date: date
-    delivery_start_time: time
-    delivery_end_time: time
-    delivery_phone: str
-    delivery_address: DeliveryAddressDTO
-    order_items: list[OrderItemDTO]
-    payment_method: PaymentMethod
-    comment: str | None
-
-
-@dataclass
-class Order:
-    order_id: OrderId
-    shop_id: ShopId
-    client_id: ClientId
-    delivery_date: date
-    delivery_start_time: time
-    delivery_end_time: time
-    delivery_phone: str
-    delivery_address: DeliveryAddressDTO
-    comment: str | None
-
-
-@dataclass(frozen=True)
 class OrderItemReadModel:
     id: int
     name: str

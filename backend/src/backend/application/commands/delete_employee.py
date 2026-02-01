@@ -48,8 +48,8 @@ class DeleteEmployeeCommandHandler:
             )
             raise AccessDeniedError
 
-        employee = await self._shop_gateway.get_shop_employee(command.user_id)
-        if not employee:
+        membership = await self._shop_gateway.load_membership(command.user_id)
+        if not membership:
             logger.warning(
                 "Employee not found",
                 extra={"employee_user_id": command.user_id},
@@ -59,14 +59,14 @@ class DeleteEmployeeCommandHandler:
         logger.debug(
             "Employee found",
             extra={
-                "employee_user_id": employee.user_id,
-                "shop_id": employee.shop_id,
-                "role": employee.role,
-                "full_name": employee.full_name,
+                "employee_user_id": membership.user_id,
+                "shop_id": membership.shop_id,
+                "role": membership.role.name,
+                "full_name": membership.name,
             },
         )
 
-        if not IsRelatedToShop(shop_id=employee.shop_id).is_satisfied_by(
+        if not IsRelatedToShop(shop_id=membership.shop_id).is_satisfied_by(
             current_user
         ):
             logger.warning(
@@ -74,7 +74,7 @@ class DeleteEmployeeCommandHandler:
                 extra={
                     "user_id": current_user.user_id,
                     "user_shop_id": current_user.shop_id,
-                    "employee_shop_id": employee.shop_id,
+                    "employee_shop_id": membership.shop_id,
                 },
             )
             raise AccessDeniedError
@@ -83,11 +83,11 @@ class DeleteEmployeeCommandHandler:
             "Deleting employee from shop",
             extra={
                 "employee_user_id": command.user_id,
-                "shop_id": employee.shop_id,
+                "shop_id": membership.shop_id,
             },
         )
 
-        await self._shop_gateway.delete_employee(command.user_id)
+        await self._shop_gateway.delete_membership(membership)
         await self._tr_manager.commit()
 
         logger.info(

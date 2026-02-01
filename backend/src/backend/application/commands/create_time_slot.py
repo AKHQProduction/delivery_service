@@ -3,12 +3,10 @@ from dataclasses import dataclass
 from datetime import time
 
 from backend.application.errors import AccessDeniedError, AlreadyExistsError
-from backend.application.interfaces.gateways.time_slot_gateway import (
-    CreateTimeSlotDTO,
-)
 from backend.application.policies.access import IsOwner
 from backend.application.validators.time import validate_time_slot_range
 from backend.application.vars import TimeSlotId
+from backend.domain.services.time_slot import create_time_slot
 from backend.infrastructure.idp import TelegramIdentityProvider
 from backend.infrastructure.persistence.gateways import (
     SQLAlchemyTimeSlotGateway,
@@ -62,15 +60,14 @@ class CreateTimeSlotCommandHandler:
 
         time_slot_id = self._time_slot_gateway.next_id()
 
-        await self._time_slot_gateway.create(
-            CreateTimeSlotDTO(
-                time_slot_id=time_slot_id,
-                shop_id=current_user.shop_id,
-                start_time=command.start_time,
-                end_time=command.end_time,
-                label=command.label,
-            )
+        time_slot = create_time_slot(
+            time_slot_id=time_slot_id,
+            shop_id=current_user.shop_id,
+            start_time=command.start_time,
+            end_time=command.end_time,
+            label=command.label,
         )
+        self._time_slot_gateway.save(time_slot)
 
         await self._tx.commit()
 

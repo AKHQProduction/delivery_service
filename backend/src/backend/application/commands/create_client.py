@@ -7,16 +7,18 @@ from backend.application.errors import (
     PhoneDuplicate,
     PhoneNumberAlreadyExistsError,
 )
-from backend.application.interfaces.gateways.client_gateway import (
-    AddressDTO,
-    CreateClientDTO,
-    PhoneDTO,
-)
 from backend.application.policies.access import can_shop_manage_policy
 from backend.application.validators import normalize_ukraine_phone
 from backend.application.vars import ClientId
+from backend.domain.services.client import (
+    create_address,
+    create_client,
+    create_phone,
+)
 from backend.infrastructure.idp import TelegramIdentityProvider
-from backend.infrastructure.persistence.gateways import SQLAlchemyClientGateway
+from backend.infrastructure.persistence.gateways import (
+    SQLAlchemyClientGateway,
+)
 from backend.infrastructure.transaction_manager import TransactionManager
 
 logger = logging.getLogger(__name__)
@@ -73,16 +75,11 @@ class CreateClientCommandHandler:
             current_user.shop_id,
         )
 
-        phones_dto = [
-            PhoneDTO(
-                number=normalize_ukraine_phone(phone.number),
-                is_primary=(idx == 0),
-            )
-            for idx, phone in enumerate(command.phones)
+        normalized_numbers = [
+            normalize_ukraine_phone(phone.number) for phone in command.phones
         ]
 
-        if not command.confirm_duplicate_phones and phones_dto:
-            normalized_numbers = [p.number for p in phones_dto]
+        if not command.confirm_duplicate_phones and normalized_numbers:
             duplicates = await self._client_gateway.find_duplicate_phones(
                 shop_id=current_user.shop_id,
                 phone_numbers=normalized_numbers,
@@ -104,30 +101,37 @@ class CreateClientCommandHandler:
                     ]
                 )
 
-        addresses_dto = [
-            AddressDTO(
-                street=address.street,
-                house=address.house,
-                apartment=address.apartment,
-                entrance=address.entrance,
-                floor=address.floor,
-                intercom=address.intercom,
-                comment=address.comment,
-                is_primary=(idx == 0),
-            )
-            for idx, address in enumerate(command.addresses)
-        ]
-
         client_id = self._client_gateway.next_id()
-        create_dto = CreateClientDTO(
+        client = create_client(
             client_id=client_id,
             shop_id=current_user.shop_id,
             full_name=command.full_name,
-            phones=phones_dto,
-            addresses=addresses_dto,
         )
 
-        await self._client_gateway.create_client(create_dto)
+        client.phones = [
+            create_phone(
+                number=normalized_numbers[idx],
+                is_primary=(idx == 0),
+                shop_id=current_user.shop_id,
+            )
+            for idx in range(len(command.phones))
+        ]
+
+        client.addresses = [
+            create_address(
+                street=addr.street,
+                house=addr.house,
+                apartment=addr.apartment,
+                entrance=addr.entrance,
+                floor=addr.floor,
+                intercom=addr.intercom,
+                comment=addr.comment,
+                is_primary=(idx == 0),
+            )
+            for idx, addr in enumerate(command.addresses)
+        ]
+
+        self._client_gateway.save(client)
         await self._tr_manager.commit()
 
         logger.info(

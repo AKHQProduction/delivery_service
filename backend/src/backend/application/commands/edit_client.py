@@ -9,18 +9,23 @@ from backend.application.errors import (
     PhoneDuplicate,
     PhoneNumberAlreadyExistsError,
 )
-from backend.application.interfaces.gateways.client_gateway import (
-    AddressDTO,
-    PhoneDTO,
-)
 from backend.application.policies.access import (
     IsRelatedToShop,
     can_shop_manage_policy,
 )
 from backend.application.validators import normalize_ukraine_phone
 from backend.application.vars import AddressId, ClientId, PhoneId
+from backend.domain.services.client import (
+    create_address,
+    create_phone,
+    update_address,
+    update_client,
+    update_phone,
+)
 from backend.infrastructure.idp import TelegramIdentityProvider
-from backend.infrastructure.persistence.gateways import SQLAlchemyClientGateway
+from backend.infrastructure.persistence.gateways import (
+    SQLAlchemyClientGateway,
+)
 from backend.infrastructure.transaction_manager import TransactionManager
 
 logger = logging.getLogger(__name__)
@@ -95,7 +100,8 @@ class EditClientCommandHandler:
 
         current_user = await self._idp.current_user()
         logger.debug(
-            "Current user retrieved", extra={"user_id": current_user.user_id}
+            "Current user retrieved",
+            extra={"user_id": current_user.user_id},
         )
 
         if not can_shop_manage_policy.is_satisfied_by(current_user):
@@ -108,13 +114,16 @@ class EditClientCommandHandler:
 
         client = await self._client_gateway.load(client_id=command.client_id)
         if not client:
-            logger.warning("Client not found: client_id=%s", command.client_id)
+            logger.warning(
+                "Client not found: client_id=%s",
+                command.client_id,
+            )
             raise EntityNotFoundError(entity="Client")
 
         if not IsRelatedToShop(client.shop_id).is_satisfied_by(current_user):
             logger.warning(
-                "Access denied: user %s (shop_id=%s) attempted to edit "
-                "client %s (shop_id=%s)",
+                "Access denied: user %s (shop_id=%s) attempted "
+                "to edit client %s (shop_id=%s)",
                 current_user,
                 current_user.shop_id,
                 command.client_id,
@@ -125,17 +134,17 @@ class EditClientCommandHandler:
         updates = []
 
         if command.full_name is not None:
-            client.full_name = command.full_name
+            update_client(client, full_name=command.full_name)
             updates.append(f"full_name={command.full_name}")
 
         if command.phones is not None:
             normalized_phones = [
-                PhoneDTO(
-                    number=normalize_ukraine_phone(phone.number),
-                    is_primary=phone.is_primary,
-                    id=phone.id,
+                Phone(
+                    number=normalize_ukraine_phone(p.number),
+                    is_primary=p.is_primary,
+                    id=p.id,
                 )
-                for phone in command.phones
+                for p in command.phones
             ]
 
             if not command.confirm_duplicate_phones and normalized_phones:
@@ -152,41 +161,82 @@ class EditClientCommandHandler:
                                 phone_number=dup.phone_number,
                                 existing_clients=[
                                     ExistingClientInfo(
-                                        client_id=owner.client_id,
-                                        full_name=owner.full_name,
+                                        client_id=o.client_id,
+                                        full_name=o.full_name,
                                     )
-                                    for owner in dup.owners
+                                    for o in dup.owners
                                 ],
                             )
                             for dup in duplicates
                         ]
                     )
 
-            client.phones = normalized_phones
+            existing_phones = {p.id: p for p in client.phones}
+            updated_phone_ids = {p.id for p in normalized_phones if p.id}
+
+            for phone_data in normalized_phones:
+                if phone_data.id and phone_data.id in existing_phones:
+                    update_phone(
+                        existing_phones[phone_data.id],
+                        number=phone_data.number,
+                        is_primary=phone_data.is_primary,
+                    )
+                else:
+                    new_phone = create_phone(
+                        number=phone_data.number,
+                        is_primary=phone_data.is_primary,
+                        shop_id=client.shop_id,
+                    )
+                    client.phones.append(new_phone)
+
+            for phone_id, phone in existing_phones.items():
+                if phone_id not in updated_phone_ids:
+                    client.phones.remove(phone)
+
             updates.append(f"phones={len(command.phones)}")
 
         if command.addresses is not None:
-            client.addresses = [
-                AddressDTO(
-                    street=address.street,
-                    house=address.house,
-                    apartment=address.apartment,
-                    entrance=address.entrance,
-                    floor=address.floor,
-                    intercom=address.intercom,
-                    comment=address.comment,
-                    is_primary=address.is_primary,
-                    id=address.id,
-                )
-                for address in command.addresses
-            ]
+            existing_addresses = {a.id: a for a in client.addresses}
+            updated_addr_ids = {a.id for a in command.addresses if a.id}
+
+            for addr_data in command.addresses:
+                if addr_data.id and addr_data.id in existing_addresses:
+                    update_address(
+                        existing_addresses[addr_data.id],
+                        street=addr_data.street,
+                        house=addr_data.house,
+                        apartment=addr_data.apartment,
+                        entrance=addr_data.entrance,
+                        floor=addr_data.floor,
+                        intercom=addr_data.intercom,
+                        comment=addr_data.comment,
+                        is_primary=addr_data.is_primary,
+                    )
+                else:
+                    new_address = create_address(
+                        street=addr_data.street,
+                        house=addr_data.house,
+                        apartment=addr_data.apartment,
+                        entrance=addr_data.entrance,
+                        floor=addr_data.floor,
+                        intercom=addr_data.intercom,
+                        comment=addr_data.comment,
+                        is_primary=addr_data.is_primary,
+                    )
+                    client.addresses.append(new_address)
+
+            for addr_id, addr in existing_addresses.items():
+                if addr_id not in updated_addr_ids:
+                    client.addresses.remove(addr)
+
             updates.append(f"addresses={len(command.addresses)}")
 
         logger.debug(
-            "Updating client %s: %s", command.client_id, ", ".join(updates)
+            "Updating client %s: %s",
+            command.client_id,
+            ", ".join(updates),
         )
 
-        await self._client_gateway.update(client)
         await self._tr_manager.commit()
 
         logger.info(

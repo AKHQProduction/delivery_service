@@ -4,22 +4,6 @@ from backend.application.vars import ShopId, ShopRole, UserId
 
 
 @dataclass(frozen=True)
-class CreateNewShopDTO:
-    shop_id: ShopId
-    shop_name: str
-    owner_name: str
-    user_id: UserId
-
-
-@dataclass
-class ShopEmployee:
-    user_id: UserId
-    shop_id: ShopId
-    full_name: str
-    role: ShopRole
-
-
-@dataclass(frozen=True)
 class EmployeeReadModel:
     user_id: UserId
     full_name: str

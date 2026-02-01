@@ -7,11 +7,6 @@ from backend.application.errors import (
     DateMustBeGreaterThanError,
     EntityNotFoundError,
 )
-from backend.application.interfaces.gateways.order_gateway import (
-    CreateOrderDTO,
-    DeliveryAddressDTO,
-    OrderItemDTO,
-)
 from backend.application.policies.access import (
     IsRelatedToShop,
     can_shop_manage_policy,
@@ -24,6 +19,10 @@ from backend.application.vars import (
     PhoneId,
     ProductId,
     TimeSlotId,
+)
+from backend.domain.services.order import (
+    create_order,
+    create_order_item,
 )
 from backend.infrastructure.idp import TelegramIdentityProvider
 from backend.infrastructure.persistence.gateways import (
@@ -160,37 +159,38 @@ class CreateOrderCommandHandler:
         ]
 
         order_id = self._order_gateway.next_id()
-        new_order = CreateOrderDTO(
+        order = create_order(
             order_id=order_id,
             shop_id=current_user.shop_id,
-            client_id=client.client_id,
+            client_id=client.id,
             delivery_date=command.delivery_date,
             delivery_start_time=time_slot.start_time,
             delivery_end_time=time_slot.end_time,
             delivery_phone=phone.number,
-            delivery_address=DeliveryAddressDTO(
-                street=address.street,
-                house=address.house,
-                apartment=address.apartment,
-                entrance=address.entrance,
-                floor=address.floor,
-                intercom=address.intercom,
-                comment=address.comment,
-            ),
-            order_items=[
-                OrderItemDTO(
-                    name=product[0].name,
-                    quantity=product[1],
-                    price_per_item=product[0].price,
-                    product_id=product[0].id,
-                )
-                for product in products
-            ],
-            comment=command.comment,
+            delivery_address={
+                "street": address.street,
+                "house": address.house,
+                "apartment": address.apartment,
+                "entrance": address.entrance,
+                "floor": address.floor,
+                "intercom": address.intercom,
+                "comment": address.comment,
+            },
             payment_method=command.payment_method,
+            comment=command.comment,
         )
 
-        await self._order_gateway.create_order(new_order)
+        order.items = [
+            create_order_item(
+                name=product[0].name,
+                quantity=product[1],
+                price_per_item=product[0].price,
+                product_id=product[0].id,
+            )
+            for product in products
+        ]
+
+        self._order_gateway.save(order)
         await self._tr_manager.commit()
 
         return order_id

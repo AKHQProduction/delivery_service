@@ -68,7 +68,7 @@ class DeleteTimeSlotCommandHandler:
             )
             raise LastTimeSlotError
 
-        await self._time_slot_gateway.delete(command.time_slot_id)
+        await self._time_slot_gateway.delete(time_slot)
 
         await self._tx.commit()
 

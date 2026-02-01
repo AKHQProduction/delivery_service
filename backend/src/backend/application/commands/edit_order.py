@@ -9,10 +9,8 @@ from backend.application.errors import (
     EntityNotFoundError,
     ProductIdRequiredForNewItemError,
 )
-from backend.application.interfaces.gateways.client_gateway import ClientDM
 from backend.application.interfaces.gateways.order_gateway import (
     DeliveryAddressDTO,
-    Order,
     OrderItemDTO,
     UpdateOrderDTO,
 )
@@ -38,6 +36,10 @@ from backend.infrastructure.persistence.gateways import (
     SQLAlchemyOrderGateway,
     SQLAlchemyProductGateway,
     SQLAlchemyTimeSlotGateway,
+)
+from backend.infrastructure.persistence.tables.clients import Client
+from backend.infrastructure.persistence.tables.orders import (
+    Order as OrderORM,
 )
 from backend.infrastructure.transaction_manager import TransactionManager
 
@@ -136,7 +138,7 @@ class UpdateOrderCommandHandler:
     async def _build_update_dto(
         self,
         command: UpdateOrderCommand,
-        order: Order,
+        order: OrderORM,
         current_user: CurrentUserDTO,
     ) -> UpdateOrderDTO:
         # Handle client/phone/address changes
@@ -191,7 +193,7 @@ class UpdateOrderCommandHandler:
     async def _process_client_changes(
         self,
         command: UpdateOrderCommand,
-        order: Order,
+        order: OrderORM,
         current_user: CurrentUserDTO,
     ) -> tuple[ClientId | None, str | None, DeliveryAddressDTO | None]:
         client_id: ClientId | None = None
@@ -236,7 +238,7 @@ class UpdateOrderCommandHandler:
         return client_id, delivery_phone, delivery_address
 
     @staticmethod
-    def _get_phone_number(client: ClientDM, phone_id: PhoneId) -> str:
+    def _get_phone_number(client: Client, phone_id: PhoneId) -> str:
         phone = next(
             (p for p in client.phones if p.id == phone_id),
             None,
@@ -248,7 +250,7 @@ class UpdateOrderCommandHandler:
 
     @staticmethod
     def _get_delivery_address(
-        client: ClientDM, address_id: AddressId
+        client: Client, address_id: AddressId
     ) -> DeliveryAddressDTO:
         address = next(
             (a for a in client.addresses if a.id == address_id),
