@@ -1,6 +1,6 @@
 import logging
 from functools import partial
-from typing import TYPE_CHECKING, ClassVar, cast
+from typing import ClassVar, cast
 
 from fastapi import (
     FastAPI,
@@ -19,10 +19,9 @@ from backend.application.errors import (
     ValidationError,
 )
 
-if TYPE_CHECKING:
 
-    class StubError(Exception):
-        message: ClassVar[str]
+class StubError(Exception):
+    message: ClassVar[str]
 
 
 logger = logging.getLogger(__name__)
