@@ -8,13 +8,11 @@ from uuid_utils import uuid7
 
 from backend.application.interfaces.gateways import Pagination, SortOrder
 from backend.application.interfaces.gateways.product_gateway import (
-    CreateProductDTO,
     GetProductsFilters,
-    Product,
     ProductReadModel,
 )
 from backend.application.vars import CategoryId, ProductId, ShopId
-from backend.infrastructure.persistence.tables import Product as ProductDB
+from backend.infrastructure.persistence.tables import Product
 from backend.infrastructure.persistence.utils.escape import escape_like
 
 
@@ -25,66 +23,30 @@ class SQLAlchemyProductGateway:
     def next_id(self) -> ProductId:
         return ProductId(UUID(str(uuid7())))
 
-    async def create_product(self, dto: CreateProductDTO) -> None:
-        self._session.add(
-            ProductDB(
-                id=dto.product_id,
-                shop_id=dto.shop_id,
-                name=dto.name,
-                price=dto.price,
-                category_id=dto.category_id,
-            )
-        )
+    def save(self, product: Product) -> None:
+        self._session.add(product)
 
     async def load(self, product_id: ProductId) -> Product | None:
-        row = await self._session.get(ProductDB, product_id)
-        if row:
-            return self._to_entity(row)
-        return None
+        return await self._session.get(Product, product_id)
 
     async def load_many(self, product_ids: list[ProductId]) -> list[Product]:
         if not product_ids:
             return []
 
-        query = select(ProductDB).where(ProductDB.id.in_(product_ids))
+        query = select(Product).where(Product.id.in_(product_ids))
         result = await self._session.execute(query)
-        rows = result.scalars().all()
+        return list(result.scalars().all())
 
-        return [self._to_entity(row) for row in rows]
-
-    @staticmethod
-    def _to_entity(row: ProductDB) -> Product:
-        return Product(
-            product_id=ProductId(cast("UUID", cast("object", row.id))),
-            shop_id=ShopId(cast("UUID", cast("object", row.shop_id))),
-            name=cast("str", cast("object", row.name)),
-            category_id=CategoryId(row.category_id)
-            if row.category_id
-            else None,
-            price=row.price,
-        )
-
-    async def update(self, updated_product: Product) -> None:
-        product_db = await self._session.get(
-            ProductDB, updated_product.product_id
-        )
-        if product_db:
-            product_db.name = updated_product.name
-            product_db.price = updated_product.price
-            product_db.category_id = updated_product.category_id
-
-    async def delete(self, product_id: ProductId) -> None:
-        product_db = await self._session.get(ProductDB, product_id)
-        if product_db:
-            await self._session.delete(product_db)
+    async def delete(self, product: Product) -> None:
+        await self._session.delete(product)
 
     async def read(
         self, product_id: ProductId, shop_id: ShopId
     ) -> ProductReadModel | None:
         query = (
-            select(ProductDB)
-            .where(ProductDB.id == product_id)
-            .options(selectinload(ProductDB.category))
+            select(Product)
+            .where(Product.id == product_id)
+            .options(selectinload(Product.category))
         )
         result = await self._session.execute(query)
         row = result.scalar_one_or_none()
@@ -101,21 +63,23 @@ class SQLAlchemyProductGateway:
         return None
 
     async def read_all(
-        self, filters: GetProductsFilters, pagination: Pagination
+        self,
+        filters: GetProductsFilters,
+        pagination: Pagination,
     ) -> list[ProductReadModel]:
-        query = select(ProductDB).options(selectinload(ProductDB.category))
+        query = select(Product).options(selectinload(Product.category))
 
         if filters.shop_id:
-            query = query.where(ProductDB.shop_id == filters.shop_id)
+            query = query.where(Product.shop_id == filters.shop_id)
         if filters.name:
             query = query.where(
-                ProductDB.name.ilike(f"%{escape_like(filters.name)}%")
+                Product.name.ilike(f"%{escape_like(filters.name)}%")
             )
 
         if pagination.order == SortOrder.ASC:
-            query = query.order_by(asc(ProductDB.name), asc(ProductDB.id))
+            query = query.order_by(asc(Product.name), asc(Product.id))
         else:
-            query = query.order_by(desc(ProductDB.name), asc(ProductDB.id))
+            query = query.order_by(desc(Product.name), asc(Product.id))
 
         query = query.offset(pagination.offset).limit(pagination.limit)
 

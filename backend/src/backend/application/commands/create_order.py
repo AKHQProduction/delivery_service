@@ -12,7 +12,6 @@ from backend.application.interfaces.gateways.order_gateway import (
     DeliveryAddressDTO,
     OrderItemDTO,
 )
-from backend.application.interfaces.gateways.product_gateway import Product
 from backend.application.policies.access import (
     IsRelatedToShop,
     can_shop_manage_policy,
@@ -33,6 +32,7 @@ from backend.infrastructure.persistence.gateways import (
     SQLAlchemyProductGateway,
     SQLAlchemyTimeSlotGateway,
 )
+from backend.infrastructure.persistence.tables import Product
 from backend.infrastructure.transaction_manager import TransactionManager
 
 logger = logging.getLogger(__name__)
@@ -148,7 +148,7 @@ class CreateOrderCommandHandler:
 
         product_ids = [p.product_id for p in command.products]
         loaded_products = await self._product_gateway.load_many(product_ids)
-        products_map = {p.product_id: p for p in loaded_products}
+        products_map = {p.id: p for p in loaded_products}
 
         for pid in product_ids:
             if pid not in products_map:
@@ -182,7 +182,7 @@ class CreateOrderCommandHandler:
                     name=product[0].name,
                     quantity=product[1],
                     price_per_item=product[0].price,
-                    product_id=product[0].product_id,
+                    product_id=product[0].id,
                 )
                 for product in products
             ],

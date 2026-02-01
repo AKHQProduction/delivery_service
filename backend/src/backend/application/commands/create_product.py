@@ -4,11 +4,9 @@ from decimal import Decimal
 from uuid import UUID
 
 from backend.application.errors import AccessDeniedError
-from backend.application.interfaces.gateways.product_gateway import (
-    CreateProductDTO,
-)
 from backend.application.policies.access import can_shop_manage_policy
 from backend.application.vars import CategoryId, Empty, ProductId
+from backend.domain.services.product import create_product
 from backend.infrastructure.idp import TelegramIdentityProvider
 from backend.infrastructure.persistence.gateways import (
     SQLAlchemyProductGateway,
@@ -66,15 +64,14 @@ class CreateProductCommandHandler:
             else None
         )
 
-        await self._gateway.create_product(
-            CreateProductDTO(
-                product_id=product_id,
-                shop_id=current_user.shop_id,
-                name=command.name,
-                price=command.price,
-                category_id=category_id,
-            )
+        product = create_product(
+            product_id=product_id,
+            shop_id=current_user.shop_id,
+            name=command.name,
+            price=command.price,
+            category_id=category_id,
         )
+        self._gateway.save(product)
         await self._tr_manager.commit()
 
         logger.info(

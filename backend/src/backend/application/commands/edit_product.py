@@ -9,6 +9,7 @@ from backend.application.policies.access import (
     can_shop_manage_policy,
 )
 from backend.application.vars import CategoryId, Empty, ProductId
+from backend.domain.services.product import update_product
 from backend.infrastructure.idp import TelegramIdentityProvider
 from backend.infrastructure.persistence.gateways import (
     SQLAlchemyProductGateway,
@@ -78,28 +79,32 @@ class EditProductCommandHandler:
             )
             raise AccessDeniedError
 
+        new_category_id: CategoryId | Empty | None = Empty.EMPTY
         updates = []
         if command.new_name:
-            product.name = command.new_name
             updates.append(f"name={command.new_name}")
         if command.new_price is not None:
-            product.price = command.new_price
             updates.append(f"price={command.new_price}")
         if command.new_category_id is not None:
             if command.new_category_id == Empty.EMPTY:
-                product.category_id = None
+                new_category_id = None
                 updates.append("category_id=None")
             else:
-                product.category_id = cast(
-                    "CategoryId", command.new_category_id
-                )
+                new_category_id = cast("CategoryId", command.new_category_id)
                 updates.append(f"category_id={command.new_category_id}")
 
         logger.debug(
-            "Updating product %s: %s", command.product_id, ", ".join(updates)
+            "Updating product %s: %s",
+            command.product_id,
+            ", ".join(updates),
         )
 
-        await self._product_gateway.update(product)
+        update_product(
+            product,
+            name=command.new_name,
+            price=command.new_price,
+            category_id=new_category_id,
+        )
         await self._tr_manager.commit()
 
         logger.info(

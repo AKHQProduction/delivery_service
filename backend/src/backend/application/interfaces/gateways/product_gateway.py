@@ -1,25 +1,6 @@
 from dataclasses import dataclass
-from decimal import Decimal
 
 from backend.application.vars import CategoryId, ProductId, ShopId
-
-
-@dataclass
-class Product:
-    product_id: ProductId
-    shop_id: ShopId
-    name: str
-    price: Decimal
-    category_id: CategoryId | None
-
-
-@dataclass(frozen=True)
-class CreateProductDTO:
-    product_id: ProductId
-    shop_id: ShopId
-    name: str
-    price: Decimal
-    category_id: CategoryId | None
 
 
 @dataclass(frozen=True)

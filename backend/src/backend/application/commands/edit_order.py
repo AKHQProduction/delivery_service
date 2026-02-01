@@ -298,7 +298,7 @@ class UpdateOrderCommandHandler:
             products = await self._product_gateway.load_many(
                 list(product_ids_to_load)
             )
-            products_map = {p.product_id: (p.name, p.price) for p in products}
+            products_map = {p.id: (p.name, p.price) for p in products}
 
             # Validate all products exist
             for product_id in product_ids_to_load:

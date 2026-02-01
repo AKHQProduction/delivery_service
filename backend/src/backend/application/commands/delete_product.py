@@ -69,7 +69,7 @@ class DeleteProductCommandHandler:
             )
             raise AccessDeniedError
 
-        await self._product_gateway.delete(command.product_id)
+        await self._product_gateway.delete(product)
         await self._tr_manager.commit()
 
         logger.info(
