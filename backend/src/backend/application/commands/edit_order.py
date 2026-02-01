@@ -9,24 +9,12 @@ from backend.application.errors import (
     EntityNotFoundError,
     ProductIdRequiredForNewItemError,
 )
-from backend.application.interfaces import (
-    ClientGateway,
-    IdentityProvider,
-    TransactionManager,
-)
 from backend.application.interfaces.gateways.client_gateway import ClientDM
 from backend.application.interfaces.gateways.order_gateway import (
     DeliveryAddressDTO,
     Order,
-    OrderGateway,
     OrderItemDTO,
     UpdateOrderDTO,
-)
-from backend.application.interfaces.gateways.product_gateway import (
-    ProductGateway,
-)
-from backend.application.interfaces.gateways.time_slot_gateway import (
-    TimeSlotGateway,
 )
 from backend.application.interfaces.idp import CurrentUserDTO
 from backend.application.policies.access import (
@@ -44,6 +32,14 @@ from backend.application.vars import (
     ProductId,
     TimeSlotId,
 )
+from backend.infrastructure.idp import TelegramIdentityProvider
+from backend.infrastructure.persistence.gateways import (
+    SQLAlchemyClientGateway,
+    SQLAlchemyOrderGateway,
+    SQLAlchemyProductGateway,
+    SQLAlchemyTimeSlotGateway,
+)
+from backend.infrastructure.transaction_manager import TransactionManager
 
 logger = logging.getLogger(__name__)
 
@@ -82,11 +78,11 @@ class UpdateOrderCommand:
 class UpdateOrderCommandHandler:
     def __init__(
         self,
-        idp: IdentityProvider,
-        client_gateway: ClientGateway,
-        product_gateway: ProductGateway,
-        order_gateway: OrderGateway,
-        time_slot_gateway: TimeSlotGateway,
+        idp: TelegramIdentityProvider,
+        client_gateway: SQLAlchemyClientGateway,
+        product_gateway: SQLAlchemyProductGateway,
+        order_gateway: SQLAlchemyOrderGateway,
+        time_slot_gateway: SQLAlchemyTimeSlotGateway,
         tr_manager: TransactionManager,
     ) -> None:
         self._idp = idp

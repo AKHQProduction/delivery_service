@@ -13,8 +13,7 @@ from backend.application.commands import (
     BotStartCommandHandler,
     CreateNewShopCommandHandler,
 )
-from backend.application.interfaces import IdentityProvider
-from backend.application.usecases.invite_employee import (
+from backend.application.usecases.invite_employee.accept_invite import (
     AcceptInviteCommandHandler,
 )
 from backend.infrastructure.idp import TelegramIdentityProvider
@@ -47,7 +46,7 @@ class TelegramProvider(Provider):
         user: "User",
         user_gateway: SQLAlchemyUserGateway,
         shop_gateway: SQLAlchemyShopGateway,
-    ) -> IdentityProvider:
+    ) -> TelegramIdentityProvider:
         return TelegramIdentityProvider(
             telegram_id=user.id,
             user_gateway=user_gateway,

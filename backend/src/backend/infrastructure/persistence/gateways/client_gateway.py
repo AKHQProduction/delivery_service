@@ -9,7 +9,6 @@ from backend.application.interfaces.gateways import Pagination, SortOrder
 from backend.application.interfaces.gateways.client_gateway import (
     AddressDTO,
     ClientDM,
-    ClientGateway,
     ClientReadModel,
     CreateClientDTO,
     DuplicatePhoneEntry,
@@ -31,7 +30,7 @@ from backend.infrastructure.persistence.tables.clients import (
 from backend.infrastructure.persistence.utils.escape import escape_like
 
 
-class SQLAlchemyClientGateway(ClientGateway):
+class SQLAlchemyClientGateway:
     def __init__(self, session: AsyncSession) -> None:
         self._session = session
 

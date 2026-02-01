@@ -18,22 +18,8 @@ class InviteLinkGenerator(Protocol):
 
 
 @dataclass(frozen=True)
-class Link:  # Like entity
+class Link:
     payload: str
     full_name: str
     role: ShopRole
     shop_id: ShopId
-
-
-class LinkGateway(Protocol):
-    @abstractmethod
-    async def add(self, link: Link) -> None:
-        raise NotImplementedError
-
-    @abstractmethod
-    async def load_by_payload(self, payload: str) -> Link | None:
-        raise NotImplementedError
-
-    @abstractmethod
-    async def delete(self, payload: str) -> None:
-        raise NotImplementedError

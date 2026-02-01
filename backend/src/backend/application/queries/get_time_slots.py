@@ -1,9 +1,11 @@
 import logging
 
-from backend.application.interfaces import IdentityProvider
 from backend.application.interfaces.gateways.time_slot_gateway import (
-    TimeSlotGateway,
     TimeSlotReadModel,
+)
+from backend.infrastructure.idp import TelegramIdentityProvider
+from backend.infrastructure.persistence.gateways import (
+    SQLAlchemyTimeSlotGateway,
 )
 
 logger = logging.getLogger(__name__)
@@ -12,8 +14,8 @@ logger = logging.getLogger(__name__)
 class GetTimeSlotsQueryHandler:
     def __init__(
         self,
-        idp: IdentityProvider,
-        time_slot_gateway: TimeSlotGateway,
+        idp: TelegramIdentityProvider,
+        time_slot_gateway: SQLAlchemyTimeSlotGateway,
     ) -> None:
         self._idp = idp
         self._time_slot_gateway = time_slot_gateway

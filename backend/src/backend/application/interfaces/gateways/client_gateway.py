@@ -1,8 +1,5 @@
-from abc import abstractmethod
 from dataclasses import dataclass
-from typing import Protocol
 
-from backend.application.interfaces.gateways import Pagination
 from backend.application.vars import (
     AddressId,
     ClientId,
@@ -74,44 +71,3 @@ class GetClientsFilters:
     shop_id: ShopId | None = None
     full_name: str | None = None
     phone: str | None = None
-
-
-class ClientGateway(Protocol):
-    @abstractmethod
-    async def create_client(self, dto: CreateClientDTO) -> None:
-        raise NotImplementedError
-
-    @abstractmethod
-    async def load(self, client_id: ClientId) -> ClientDM | None:
-        raise NotImplementedError
-
-    @abstractmethod
-    async def delete(self, client_id: ClientId) -> None:
-        raise NotImplementedError
-
-    @abstractmethod
-    async def update(self, updated_client: ClientDM) -> None:
-        raise NotImplementedError
-
-    @abstractmethod
-    async def find_duplicate_phones(
-        self,
-        shop_id: ShopId,
-        phone_numbers: list[str],
-        exclude_client_id: ClientId | None = None,
-    ) -> list[DuplicatePhoneEntry]:
-        raise NotImplementedError
-
-    @abstractmethod
-    async def read(self, client_id: ClientId) -> ClientReadModel | None:
-        raise NotImplementedError
-
-    @abstractmethod
-    async def read_all(
-        self, filters: GetClientsFilters, pagination: Pagination
-    ) -> list[ClientReadModel]:
-        raise NotImplementedError
-
-    @abstractmethod
-    def next_id(self) -> ClientId:
-        raise NotImplementedError

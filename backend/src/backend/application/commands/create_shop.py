@@ -5,11 +5,12 @@ from backend.application.errors import (
     AuthorizationError,
     UserAlreadyRelatedToShopError,
 )
-from backend.application.interfaces import ShopGateway, TransactionManager
 from backend.application.interfaces.gateways.shop_gateway import (
     CreateNewShopDTO,
 )
-from backend.application.interfaces.idp import IdentityProvider
+from backend.infrastructure.idp import TelegramIdentityProvider
+from backend.infrastructure.persistence.gateways import SQLAlchemyShopGateway
+from backend.infrastructure.transaction_manager import TransactionManager
 
 logger = logging.getLogger(__name__)
 
@@ -23,8 +24,8 @@ class CreateNewShopCommand:
 class CreateNewShopCommandHandler:
     def __init__(
         self,
-        shop_gateway: ShopGateway,
-        identity_provider: IdentityProvider,
+        shop_gateway: SQLAlchemyShopGateway,
+        identity_provider: TelegramIdentityProvider,
         tr_manager: TransactionManager,
     ) -> None:
         self._shop_gateway = shop_gateway

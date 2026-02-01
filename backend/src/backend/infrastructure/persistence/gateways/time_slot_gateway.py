@@ -9,7 +9,6 @@ from uuid_utils import uuid7
 from backend.application.interfaces.gateways.time_slot_gateway import (
     CreateTimeSlotDTO,
     TimeSlot,
-    TimeSlotGateway,
     TimeSlotReadModel,
 )
 from backend.application.vars import ShopId, TimeSlotId
@@ -18,7 +17,7 @@ from backend.infrastructure.persistence.tables.shops import (
 )
 
 
-class SQLAlchemyTimeSlotGateway(TimeSlotGateway):
+class SQLAlchemyTimeSlotGateway:
     def __init__(self, session: AsyncSession) -> None:
         self._session = session
 

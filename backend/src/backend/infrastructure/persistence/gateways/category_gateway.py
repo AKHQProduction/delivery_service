@@ -8,7 +8,6 @@ from uuid_utils import uuid7
 from backend.application.interfaces.gateways import Pagination, SortOrder
 from backend.application.interfaces.gateways.category_gateway import (
     Category,
-    CategoryGateway,
     CategoryReadModel,
     CreateCategoryDTO,
     GetCategoriesFilters,
@@ -18,7 +17,7 @@ from backend.infrastructure.persistence.tables import Category as CategoryDB
 from backend.infrastructure.persistence.utils.escape import escape_like
 
 
-class SQLAlchemyCategoryGateway(CategoryGateway):
+class SQLAlchemyCategoryGateway:
     def __init__(self, session: AsyncSession) -> None:
         self._session = session
 

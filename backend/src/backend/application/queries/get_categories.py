@@ -1,11 +1,13 @@
 from dataclasses import dataclass
 
-from backend.application.interfaces import IdentityProvider
 from backend.application.interfaces.gateways import Pagination
 from backend.application.interfaces.gateways.category_gateway import (
-    CategoryGateway,
     CategoryReadModel,
     GetCategoriesFilters,
+)
+from backend.infrastructure.idp import TelegramIdentityProvider
+from backend.infrastructure.persistence.gateways import (
+    SQLAlchemyCategoryGateway,
 )
 
 
@@ -17,7 +19,9 @@ class GetCategoriesQuery:
 
 class GetCategoriesQueryHandler:
     def __init__(
-        self, idp: IdentityProvider, category_gateway: CategoryGateway
+        self,
+        idp: TelegramIdentityProvider,
+        category_gateway: SQLAlchemyCategoryGateway,
     ) -> None:
         self._idp = idp
         self._category_gateway = category_gateway

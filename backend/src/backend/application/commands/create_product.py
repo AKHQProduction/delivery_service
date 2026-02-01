@@ -4,16 +4,16 @@ from decimal import Decimal
 from uuid import UUID
 
 from backend.application.errors import AccessDeniedError
-from backend.application.interfaces import (
-    IdentityProvider,
-    TransactionManager,
-)
 from backend.application.interfaces.gateways.product_gateway import (
     CreateProductDTO,
-    ProductGateway,
 )
 from backend.application.policies.access import can_shop_manage_policy
 from backend.application.vars import CategoryId, Empty, ProductId
+from backend.infrastructure.idp import TelegramIdentityProvider
+from backend.infrastructure.persistence.gateways import (
+    SQLAlchemyProductGateway,
+)
+from backend.infrastructure.transaction_manager import TransactionManager
 
 logger = logging.getLogger(__name__)
 
@@ -28,8 +28,8 @@ class CreateProductCommand:
 class CreateProductCommandHandler:
     def __init__(
         self,
-        idp: IdentityProvider,
-        gateway: ProductGateway,
+        idp: TelegramIdentityProvider,
+        gateway: SQLAlchemyProductGateway,
         tr_manager: TransactionManager,
     ) -> None:
         self._idp = idp

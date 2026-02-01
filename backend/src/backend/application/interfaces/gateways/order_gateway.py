@@ -1,10 +1,7 @@
-from abc import abstractmethod
 from dataclasses import dataclass
 from datetime import date, time
 from decimal import Decimal
-from typing import Protocol
 
-from backend.application.interfaces.gateways import Pagination
 from backend.application.vars import (
     ClientId,
     Empty,
@@ -141,49 +138,3 @@ class UpdateOrderDTO:
     comment: str | Empty | None = None
     items: list[OrderItemDTO] | None = None
     payment_method: PaymentMethod | None = None
-
-
-class OrderGateway(Protocol):
-    @abstractmethod
-    def next_id(self) -> OrderId:
-        raise NotImplementedError
-
-    @abstractmethod
-    async def create_order(self, dto: CreateOrderDTO) -> None:
-        raise NotImplementedError
-
-    @abstractmethod
-    async def load(self, order_id: OrderId) -> Order | None:
-        raise NotImplementedError
-
-    @abstractmethod
-    async def delete(self, order_id: OrderId) -> None:
-        raise NotImplementedError
-
-    @abstractmethod
-    async def read(
-        self, order_id: OrderId, shop_id: ShopId
-    ) -> OrderReadModel | None:
-        raise NotImplementedError
-
-    @abstractmethod
-    async def read_all(
-        self, filters: GetOrdersFilters, pagination: Pagination
-    ) -> list[OrderReadModel]:
-        raise NotImplementedError
-
-    @abstractmethod
-    async def update(self, dto: UpdateOrderDTO) -> None:
-        raise NotImplementedError
-
-    @abstractmethod
-    async def load_items(self, order_id: OrderId) -> list[OrderItemReadModel]:
-        raise NotImplementedError
-
-    @abstractmethod
-    async def get_stats(
-        self,
-        filters: GetOrdersFilters,
-        time_slots_filter: list[TimeSlotFilter],
-    ) -> OrderStatsReadModel:
-        raise NotImplementedError

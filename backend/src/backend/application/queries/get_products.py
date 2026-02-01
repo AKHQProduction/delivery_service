@@ -1,11 +1,13 @@
 from dataclasses import dataclass
 
-from backend.application.interfaces import IdentityProvider
 from backend.application.interfaces.gateways import Pagination
 from backend.application.interfaces.gateways.product_gateway import (
     GetProductsFilters,
-    ProductGateway,
     ProductReadModel,
+)
+from backend.infrastructure.idp import TelegramIdentityProvider
+from backend.infrastructure.persistence.gateways import (
+    SQLAlchemyProductGateway,
 )
 
 
@@ -17,7 +19,9 @@ class GetProductQuery:
 
 class GetProductsQueryHandler:
     def __init__(
-        self, idp: IdentityProvider, product_gateway: ProductGateway
+        self,
+        idp: TelegramIdentityProvider,
+        product_gateway: SQLAlchemyProductGateway,
     ) -> None:
         self._idp = idp
         self._product_gateway = product_gateway

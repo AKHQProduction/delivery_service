@@ -22,13 +22,12 @@ from reportlab.platypus import (
 from backend.application.interfaces.gateways.order_gateway import (
     OrderReadModel,
 )
-from backend.application.interfaces.pdf_generator import OrdersPDFGenerator
 from backend.application.vars import PaymentMethod
 
 FONT_DIR = Path(__file__).parent / "fonts"
 
 
-class ReportLabOrdersPDFGenerator(OrdersPDFGenerator):
+class ReportLabOrdersPDFGenerator:
     def __init__(self) -> None:
         self._register_fonts()
         self._styles = self._create_styles()

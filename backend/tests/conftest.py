@@ -9,7 +9,6 @@ from unittest.mock import AsyncMock
 import pytest
 import pytest_asyncio
 from dishka import (
-    AnyOf,
     AsyncContainer,
     Provider,
     Scope,
@@ -25,7 +24,6 @@ from sqlalchemy.ext.asyncio import (
     create_async_engine,
 )
 
-from backend.application.interfaces import TransactionManager
 from backend.application.vars import (
     CategoryId,
     ClientId,
@@ -139,10 +137,7 @@ async def session(
 @pytest.fixture()
 def mock_session_provider(session: AsyncSession) -> Provider:
     class MockPersistenceProvider(PersistenceProvider):
-        @provide(
-            scope=Scope.REQUEST,
-            provides=AnyOf[AsyncSession, TransactionManager],
-        )
+        @provide(scope=Scope.REQUEST)
         async def get_session(self) -> AsyncSession:
             return session
 

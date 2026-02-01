@@ -3,14 +3,17 @@ from dataclasses import dataclass
 from datetime import time
 
 from backend.application.errors import AccessDeniedError, AlreadyExistsError
-from backend.application.interfaces import IdentityProvider, TransactionManager
 from backend.application.interfaces.gateways.time_slot_gateway import (
     CreateTimeSlotDTO,
-    TimeSlotGateway,
 )
 from backend.application.policies.access import IsOwner
 from backend.application.validators.time import validate_time_slot_range
 from backend.application.vars import TimeSlotId
+from backend.infrastructure.idp import TelegramIdentityProvider
+from backend.infrastructure.persistence.gateways import (
+    SQLAlchemyTimeSlotGateway,
+)
+from backend.infrastructure.transaction_manager import TransactionManager
 
 logger = logging.getLogger(__name__)
 
@@ -28,8 +31,8 @@ class CreateTimeSlotCommand:
 class CreateTimeSlotCommandHandler:
     def __init__(
         self,
-        idp: IdentityProvider,
-        time_slot_gateway: TimeSlotGateway,
+        idp: TelegramIdentityProvider,
+        time_slot_gateway: SQLAlchemyTimeSlotGateway,
         tx: TransactionManager,
     ) -> None:
         self._idp = idp

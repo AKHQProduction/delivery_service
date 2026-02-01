@@ -1,14 +1,17 @@
 from backend.application.errors import EntityNotFoundError
-from backend.application.interfaces import ClientGateway, IdentityProvider
 from backend.application.interfaces.gateways.client_gateway import (
     ClientReadModel,
 )
 from backend.application.vars import ClientId
+from backend.infrastructure.idp import TelegramIdentityProvider
+from backend.infrastructure.persistence.gateways import SQLAlchemyClientGateway
 
 
 class GetClientQueryHandler:
     def __init__(
-        self, idp: IdentityProvider, client_gateway: ClientGateway
+        self,
+        idp: TelegramIdentityProvider,
+        client_gateway: SQLAlchemyClientGateway,
     ) -> None:
         self._idp = idp
         self._client_gateway = client_gateway

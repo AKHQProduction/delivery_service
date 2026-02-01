@@ -6,12 +6,11 @@ from redis.asyncio import Redis
 
 from backend.application.usecases.invite_employee.interfaces import (
     Link,
-    LinkGateway,
 )
 from backend.application.vars import ShopId, ShopRole
 
 
-class RedisLinkGateway(LinkGateway):
+class RedisLinkGateway:
     def __init__(self, redis: Redis) -> None:
         self._redis = redis
 

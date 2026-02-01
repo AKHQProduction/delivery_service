@@ -2,16 +2,16 @@ import datetime
 import logging
 from dataclasses import dataclass
 
-from backend.application.interfaces import IdentityProvider
 from backend.application.interfaces.gateways.order_gateway import (
     GetOrdersFilters,
-    OrderGateway,
     TimeSlotFilter,
 )
-from backend.application.interfaces.gateways.time_slot_gateway import (
-    TimeSlotGateway,
-)
 from backend.application.vars import PaymentMethod
+from backend.infrastructure.idp import TelegramIdentityProvider
+from backend.infrastructure.persistence.gateways import (
+    SQLAlchemyOrderGateway,
+    SQLAlchemyTimeSlotGateway,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -52,9 +52,9 @@ class GetOrderStatsResponse:
 class GetOrderStatsQueryHandler:
     def __init__(
         self,
-        idp: IdentityProvider,
-        order_gateway: OrderGateway,
-        time_slot_gateway: TimeSlotGateway,
+        idp: TelegramIdentityProvider,
+        order_gateway: SQLAlchemyOrderGateway,
+        time_slot_gateway: SQLAlchemyTimeSlotGateway,
     ) -> None:
         self._idp = idp
         self._order_gateway = order_gateway

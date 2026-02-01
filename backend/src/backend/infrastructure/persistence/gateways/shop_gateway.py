@@ -5,7 +5,6 @@ from sqlalchemy import asc, delete, desc, exists, select, update
 from sqlalchemy.ext.asyncio import AsyncSession
 from uuid_utils import uuid7
 
-from backend.application.interfaces import ShopGateway
 from backend.application.interfaces.gateways import Pagination, SortOrder
 from backend.application.interfaces.gateways.shop_gateway import (
     CreateNewShopDTO,
@@ -22,7 +21,7 @@ from backend.infrastructure.persistence.tables import (
 from backend.infrastructure.persistence.utils.escape import escape_like
 
 
-class SQLAlchemyShopGateway(ShopGateway):
+class SQLAlchemyShopGateway:
     def __init__(self, session: AsyncSession) -> None:
         self._session = session
 

@@ -6,15 +6,15 @@ from backend.application.errors import (
     EntityNotFoundError,
     UserAlreadyRelatedToShopError,
 )
-from backend.application.interfaces import (
-    CreateUserViaTgDTO,
-    IdentityProvider,
-    ShopGateway,
-    TransactionManager,
-    UserGateway,
-)
+from backend.application.interfaces import CreateUserViaTgDTO
 from backend.application.interfaces.gateways.shop_gateway import ShopEmployee
-from backend.application.usecases.invite_employee.interfaces import LinkGateway
+from backend.infrastructure.idp import TelegramIdentityProvider
+from backend.infrastructure.persistence.gateways import (
+    RedisLinkGateway,
+    SQLAlchemyShopGateway,
+    SQLAlchemyUserGateway,
+)
+from backend.infrastructure.transaction_manager import TransactionManager
 
 logger = logging.getLogger(__name__)
 
@@ -29,10 +29,10 @@ class AcceptInviteCommand:
 class AcceptInviteCommandHandler:
     def __init__(
         self,
-        idp: IdentityProvider,
-        shop_gateway: ShopGateway,
-        user_gateway: UserGateway,
-        link_gateway: LinkGateway,
+        idp: TelegramIdentityProvider,
+        shop_gateway: SQLAlchemyShopGateway,
+        user_gateway: SQLAlchemyUserGateway,
+        link_gateway: RedisLinkGateway,
         tr_manager: TransactionManager,
     ) -> None:
         self._idp = idp

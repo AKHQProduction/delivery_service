@@ -1,5 +1,4 @@
 from backend.application.errors import AuthorizationError
-from backend.application.interfaces import IdentityProvider
 from backend.application.interfaces.idp import CurrentUserDTO
 from backend.application.vars import UserId
 from backend.infrastructure.persistence.gateways import (
@@ -8,7 +7,7 @@ from backend.infrastructure.persistence.gateways import (
 )
 
 
-class TelegramIdentityProvider(IdentityProvider):
+class TelegramIdentityProvider:
     def __init__(
         self,
         telegram_id: int,

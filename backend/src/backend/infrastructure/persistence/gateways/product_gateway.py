@@ -11,7 +11,6 @@ from backend.application.interfaces.gateways.product_gateway import (
     CreateProductDTO,
     GetProductsFilters,
     Product,
-    ProductGateway,
     ProductReadModel,
 )
 from backend.application.vars import CategoryId, ProductId, ShopId
@@ -19,7 +18,7 @@ from backend.infrastructure.persistence.tables import Product as ProductDB
 from backend.infrastructure.persistence.utils.escape import escape_like
 
 
-class SQLAlchemyProductGateway(ProductGateway):
+class SQLAlchemyProductGateway:
     def __init__(self, session: AsyncSession) -> None:
         self._session = session
 

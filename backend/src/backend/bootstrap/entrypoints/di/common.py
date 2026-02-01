@@ -2,7 +2,6 @@ import logging
 from collections.abc import AsyncIterable, AsyncIterator
 
 from dishka import (
-    AnyOf,
     Provider,
     Scope,
     WithParents,
@@ -18,7 +17,6 @@ from sqlalchemy.ext.asyncio import (
     create_async_engine,
 )
 
-from backend.application.interfaces import TransactionManager
 from backend.bootstrap.config import (
     AppConfig,
     Config,
@@ -39,6 +37,7 @@ from backend.infrastructure.persistence.gateways import (
     SQLAlchemyTimeSlotGateway,
     SQLAlchemyUserGateway,
 )
+from backend.infrastructure.transaction_manager import TransactionManager
 
 logger = logging.getLogger(__name__)
 
@@ -104,18 +103,22 @@ class PersistenceProvider(Provider):
     @provide
     async def get_session(
         self, factory: async_sessionmaker[AsyncSession]
-    ) -> AsyncIterable[AnyOf[AsyncSession, TransactionManager]]:
+    ) -> AsyncIterable[AsyncSession]:
         async with factory() as session:
             yield session
 
+    @provide
+    def transaction_manager(self, session: AsyncSession) -> TransactionManager:
+        return TransactionManager(session)
+
     gateways = provide_all(
-        WithParents[SQLAlchemyUserGateway],
-        WithParents[SQLAlchemyShopGateway],
-        WithParents[SQLAlchemyProductGateway],
-        WithParents[SQLAlchemyCategoryGateway],
-        WithParents[SQLAlchemyClientGateway],
-        WithParents[SQLAlchemyOrderGateway],
-        WithParents[SQLAlchemyTimeSlotGateway],
+        SQLAlchemyUserGateway,
+        SQLAlchemyShopGateway,
+        SQLAlchemyProductGateway,
+        SQLAlchemyCategoryGateway,
+        SQLAlchemyClientGateway,
+        SQLAlchemyOrderGateway,
+        SQLAlchemyTimeSlotGateway,
     )
 
 
@@ -130,4 +133,4 @@ class RedisProvider(Provider):
             yield redis
 
     gateway = provide(WithParents[RedisLinkGateway])
-    pdf_storage = provide(WithParents[RedisPDFStorage])
+    pdf_storage = provide(RedisPDFStorage)

@@ -2,13 +2,11 @@ import logging
 from dataclasses import dataclass
 
 from backend.application.errors import AccessDeniedError, EntityNotFoundError
-from backend.application.interfaces import (
-    IdentityProvider,
-    ShopGateway,
-    TransactionManager,
-)
 from backend.application.policies.access import IsOwner, IsRelatedToShop
 from backend.application.vars import UserId
+from backend.infrastructure.idp import TelegramIdentityProvider
+from backend.infrastructure.persistence.gateways import SQLAlchemyShopGateway
+from backend.infrastructure.transaction_manager import TransactionManager
 
 logger = logging.getLogger(__name__)
 
@@ -21,8 +19,8 @@ class DeleteEmployeeCommand:
 class DeleteEmployeeCommandHandler:
     def __init__(
         self,
-        idp: IdentityProvider,
-        shop_gateway: ShopGateway,
+        idp: TelegramIdentityProvider,
+        shop_gateway: SQLAlchemyShopGateway,
         tr_manager: TransactionManager,
     ) -> None:
         self._idp = idp

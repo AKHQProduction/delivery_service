@@ -26,7 +26,6 @@ from backend.application.commands.generate_order_export_pdf import (
     GenerateOrderExportPDFCommandHandler,
     GenerateOrderExportPDFResult,
 )
-from backend.application.interfaces import PDFStorage
 from backend.application.interfaces.gateways import Pagination, SortOrder
 from backend.application.interfaces.gateways.order_gateway import (
     OrderReadModel,
@@ -47,6 +46,7 @@ from backend.application.vars import (
     PaymentMethod,
     today,
 )
+from backend.infrastructure.persistence.gateways import RedisPDFStorage
 from backend.presentation.http.v1.schemas.error import ErrorSchema
 from backend.presentation.http.v1.schemas.order import UpdateOrderSchema
 
@@ -435,7 +435,7 @@ async def generate_orders_pdf(
 )
 async def download_orders_pdf(
     file_id: str,
-    pdf_storage: FromDishka[PDFStorage],
+    pdf_storage: FromDishka[RedisPDFStorage],
 ) -> Response:
     result = await pdf_storage.get(file_id)
     if not result:

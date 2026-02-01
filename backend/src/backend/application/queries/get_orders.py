@@ -1,13 +1,13 @@
 from dataclasses import dataclass
 from datetime import date, time
 
-from backend.application.interfaces import IdentityProvider
 from backend.application.interfaces.gateways import Pagination
 from backend.application.interfaces.gateways.order_gateway import (
     GetOrdersFilters,
-    OrderGateway,
     OrderReadModel,
 )
+from backend.infrastructure.idp import TelegramIdentityProvider
+from backend.infrastructure.persistence.gateways import SQLAlchemyOrderGateway
 
 
 @dataclass(frozen=True)
@@ -21,7 +21,9 @@ class GetOrdersQuery:
 
 class GetOrdersQueryHandler:
     def __init__(
-        self, idp: IdentityProvider, order_gateway: OrderGateway
+        self,
+        idp: TelegramIdentityProvider,
+        order_gateway: SQLAlchemyOrderGateway,
     ) -> None:
         self._idp = idp
         self._order_gateway = order_gateway

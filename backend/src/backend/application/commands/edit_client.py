@@ -9,11 +9,6 @@ from backend.application.errors import (
     PhoneDuplicate,
     PhoneNumberAlreadyExistsError,
 )
-from backend.application.interfaces import (
-    ClientGateway,
-    IdentityProvider,
-    TransactionManager,
-)
 from backend.application.interfaces.gateways.client_gateway import (
     AddressDTO,
     PhoneDTO,
@@ -24,6 +19,9 @@ from backend.application.policies.access import (
 )
 from backend.application.validators import normalize_ukraine_phone
 from backend.application.vars import AddressId, ClientId, PhoneId
+from backend.infrastructure.idp import TelegramIdentityProvider
+from backend.infrastructure.persistence.gateways import SQLAlchemyClientGateway
+from backend.infrastructure.transaction_manager import TransactionManager
 
 logger = logging.getLogger(__name__)
 
@@ -77,8 +75,8 @@ class EditClientCommand:
 class EditClientCommandHandler:
     def __init__(
         self,
-        idp: IdentityProvider,
-        client_gateway: ClientGateway,
+        idp: TelegramIdentityProvider,
+        client_gateway: SQLAlchemyClientGateway,
         tr_manager: TransactionManager,
     ) -> None:
         self._idp = idp

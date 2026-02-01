@@ -1,11 +1,12 @@
 from dataclasses import dataclass
 
-from backend.application.interfaces import ClientGateway, IdentityProvider
 from backend.application.interfaces.gateways import Pagination
 from backend.application.interfaces.gateways.client_gateway import (
     ClientReadModel,
     GetClientsFilters,
 )
+from backend.infrastructure.idp import TelegramIdentityProvider
+from backend.infrastructure.persistence.gateways import SQLAlchemyClientGateway
 
 
 @dataclass(frozen=True)
@@ -17,7 +18,9 @@ class GetClientsQuery:
 
 class GetClientsQueryHandler:
     def __init__(
-        self, idp: IdentityProvider, client_gateway: ClientGateway
+        self,
+        idp: TelegramIdentityProvider,
+        client_gateway: SQLAlchemyClientGateway,
     ) -> None:
         self._idp = idp
         self._client_gateway = client_gateway

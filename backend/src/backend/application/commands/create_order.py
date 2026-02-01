@@ -7,24 +7,12 @@ from backend.application.errors import (
     DateMustBeGreaterThanError,
     EntityNotFoundError,
 )
-from backend.application.interfaces import (
-    ClientGateway,
-    IdentityProvider,
-    TransactionManager,
-)
 from backend.application.interfaces.gateways.order_gateway import (
     CreateOrderDTO,
     DeliveryAddressDTO,
-    OrderGateway,
     OrderItemDTO,
 )
-from backend.application.interfaces.gateways.product_gateway import (
-    Product,
-    ProductGateway,
-)
-from backend.application.interfaces.gateways.time_slot_gateway import (
-    TimeSlotGateway,
-)
+from backend.application.interfaces.gateways.product_gateway import Product
 from backend.application.policies.access import (
     IsRelatedToShop,
     can_shop_manage_policy,
@@ -38,6 +26,14 @@ from backend.application.vars import (
     ProductId,
     TimeSlotId,
 )
+from backend.infrastructure.idp import TelegramIdentityProvider
+from backend.infrastructure.persistence.gateways import (
+    SQLAlchemyClientGateway,
+    SQLAlchemyOrderGateway,
+    SQLAlchemyProductGateway,
+    SQLAlchemyTimeSlotGateway,
+)
+from backend.infrastructure.transaction_manager import TransactionManager
 
 logger = logging.getLogger(__name__)
 
@@ -70,11 +66,11 @@ class CreateOrderCommand:
 class CreateOrderCommandHandler:
     def __init__(
         self,
-        idp: IdentityProvider,
-        client_gateway: ClientGateway,
-        product_gateway: ProductGateway,
-        order_gateway: OrderGateway,
-        time_slot_gateway: TimeSlotGateway,
+        idp: TelegramIdentityProvider,
+        client_gateway: SQLAlchemyClientGateway,
+        product_gateway: SQLAlchemyProductGateway,
+        order_gateway: SQLAlchemyOrderGateway,
+        time_slot_gateway: SQLAlchemyTimeSlotGateway,
         tr_manager: TransactionManager,
     ) -> None:
         self._idp = idp

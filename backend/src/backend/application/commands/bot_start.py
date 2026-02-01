@@ -1,13 +1,13 @@
 import logging
 from dataclasses import dataclass
 
-from backend.application.interfaces import (
-    CreateUserViaTgDTO,
-    IdentityProvider,
-    ShopGateway,
-    TransactionManager,
-    UserGateway,
+from backend.application.interfaces import CreateUserViaTgDTO
+from backend.infrastructure.idp import TelegramIdentityProvider
+from backend.infrastructure.persistence.gateways import (
+    SQLAlchemyShopGateway,
+    SQLAlchemyUserGateway,
 )
+from backend.infrastructure.transaction_manager import TransactionManager
 
 logger = logging.getLogger(__name__)
 
@@ -21,9 +21,9 @@ class BotStartCommand:
 class BotStartCommandHandler:
     def __init__(
         self,
-        identity_provider: IdentityProvider,
-        user_gateway: UserGateway,
-        shop_gateway: ShopGateway,
+        identity_provider: TelegramIdentityProvider,
+        user_gateway: SQLAlchemyUserGateway,
+        shop_gateway: SQLAlchemyShopGateway,
         tr_manager: TransactionManager,
     ) -> None:
         self._idp = identity_provider

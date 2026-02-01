@@ -3,18 +3,18 @@ from dataclasses import dataclass
 from datetime import date
 
 from backend.application.errors import AccessDeniedError, EntityNotFoundError
-from backend.application.interfaces import (
-    IdentityProvider,
-    PDFStorage,
-    ShopGateway,
-)
 from backend.application.interfaces.gateways import Pagination
 from backend.application.interfaces.gateways.order_gateway import (
     GetOrdersFilters,
-    OrderGateway,
     OrderReadModel,
 )
-from backend.application.interfaces.pdf_generator import OrdersPDFGenerator
+from backend.infrastructure.idp import TelegramIdentityProvider
+from backend.infrastructure.pdf import ReportLabOrdersPDFGenerator
+from backend.infrastructure.persistence.gateways import (
+    RedisPDFStorage,
+    SQLAlchemyOrderGateway,
+    SQLAlchemyShopGateway,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -33,11 +33,11 @@ class GenerateOrderExportPDFResult:
 class GenerateOrderExportPDFCommandHandler:
     def __init__(
         self,
-        idp: IdentityProvider,
-        order_gateway: OrderGateway,
-        shop_gateway: ShopGateway,
-        pdf_generator: OrdersPDFGenerator,
-        pdf_storage: PDFStorage,
+        idp: TelegramIdentityProvider,
+        order_gateway: SQLAlchemyOrderGateway,
+        shop_gateway: SQLAlchemyShopGateway,
+        pdf_generator: ReportLabOrdersPDFGenerator,
+        pdf_storage: RedisPDFStorage,
     ) -> None:
         self._idp = idp
         self._order_gateway = order_gateway

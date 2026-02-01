@@ -6,15 +6,16 @@ from backend.application.errors import (
     AlreadyExistsError,
     EntityNotFoundError,
 )
-from backend.application.interfaces import IdentityProvider, TransactionManager
-from backend.application.interfaces.gateways.category_gateway import (
-    CategoryGateway,
-)
 from backend.application.policies.access import (
     IsRelatedToShop,
     can_shop_manage_policy,
 )
 from backend.application.vars import CategoryId
+from backend.infrastructure.idp import TelegramIdentityProvider
+from backend.infrastructure.persistence.gateways import (
+    SQLAlchemyCategoryGateway,
+)
+from backend.infrastructure.transaction_manager import TransactionManager
 
 logger = logging.getLogger(__name__)
 
@@ -28,8 +29,8 @@ class EditCategoryCommand:
 class EditCategoryCommandHandler:
     def __init__(
         self,
-        idp: IdentityProvider,
-        category_gateway: CategoryGateway,
+        idp: TelegramIdentityProvider,
+        category_gateway: SQLAlchemyCategoryGateway,
         tr_manager: TransactionManager,
     ) -> None:
         self._idp = idp

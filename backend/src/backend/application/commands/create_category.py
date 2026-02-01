@@ -2,16 +2,16 @@ import logging
 from dataclasses import dataclass
 
 from backend.application.errors import AccessDeniedError, AlreadyExistsError
-from backend.application.interfaces import (
-    IdentityProvider,
-    TransactionManager,
-)
 from backend.application.interfaces.gateways.category_gateway import (
-    CategoryGateway,
     CreateCategoryDTO,
 )
 from backend.application.policies.access import can_shop_manage_policy
 from backend.application.vars import CategoryId
+from backend.infrastructure.idp import TelegramIdentityProvider
+from backend.infrastructure.persistence.gateways import (
+    SQLAlchemyCategoryGateway,
+)
+from backend.infrastructure.transaction_manager import TransactionManager
 
 logger = logging.getLogger(__name__)
 
@@ -24,8 +24,8 @@ class CreateCategoryCommand:
 class CreateCategoryCommandHandler:
     def __init__(
         self,
-        idp: IdentityProvider,
-        gateway: CategoryGateway,
+        idp: TelegramIdentityProvider,
+        gateway: SQLAlchemyCategoryGateway,
         tr_manager: TransactionManager,
     ) -> None:
         self._idp = idp

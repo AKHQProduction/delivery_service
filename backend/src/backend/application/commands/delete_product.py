@@ -2,15 +2,16 @@ import logging
 from dataclasses import dataclass
 
 from backend.application.errors import AccessDeniedError
-from backend.application.interfaces import IdentityProvider, TransactionManager
-from backend.application.interfaces.gateways.product_gateway import (
-    ProductGateway,
-)
 from backend.application.policies.access import (
     IsRelatedToShop,
     can_shop_manage_policy,
 )
 from backend.application.vars import ProductId
+from backend.infrastructure.idp import TelegramIdentityProvider
+from backend.infrastructure.persistence.gateways import (
+    SQLAlchemyProductGateway,
+)
+from backend.infrastructure.transaction_manager import TransactionManager
 
 logger = logging.getLogger(__name__)
 
@@ -23,8 +24,8 @@ class DeleteProductCommand:
 class DeleteProductCommandHandler:
     def __init__(
         self,
-        idp: IdentityProvider,
-        product_gateway: ProductGateway,
+        idp: TelegramIdentityProvider,
+        product_gateway: SQLAlchemyProductGateway,
         tr_manager: TransactionManager,
     ) -> None:
         self._idp = idp

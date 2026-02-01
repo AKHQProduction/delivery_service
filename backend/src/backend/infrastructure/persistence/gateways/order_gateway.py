@@ -14,7 +14,6 @@ from backend.application.interfaces.gateways.order_gateway import (
     DeliveryAddressDTO,
     GetOrdersFilters,
     Order as OrderEntity,
-    OrderGateway,
     OrderItemReadModel,
     OrderReadModel,
     OrderStatsReadModel,
@@ -38,7 +37,7 @@ from backend.infrastructure.persistence.tables.products import Product
 from backend.infrastructure.persistence.utils.escape import escape_like
 
 
-class SQLAlchemyOrderGateway(OrderGateway):
+class SQLAlchemyOrderGateway:
     def __init__(self, session: AsyncSession) -> None:
         self._session = session
 
