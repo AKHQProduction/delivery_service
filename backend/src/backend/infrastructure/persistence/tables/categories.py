@@ -1,10 +1,10 @@
 from typing import TYPE_CHECKING
-from uuid import UUID
 
 import sqlalchemy as sa
 from sqlalchemy import UniqueConstraint
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
+from backend.application.vars import CategoryId, ShopId
 from backend.infrastructure.persistence.tables.base import (
     Base,
     CreatedAt,
@@ -19,10 +19,10 @@ if TYPE_CHECKING:
 class Category(Base, CreatedAt, UpdatedAt):
     __tablename__ = "categories"
 
-    id: Mapped[UUID] = mapped_column(sa.UUID, primary_key=True)
+    id: Mapped[CategoryId] = mapped_column(sa.UUID, primary_key=True)
     name: Mapped[str] = mapped_column(sa.String, nullable=False)
 
-    shop_id: Mapped[UUID] = mapped_column(
+    shop_id: Mapped[ShopId] = mapped_column(
         sa.ForeignKey("shops.id", ondelete="CASCADE")
     )
 

@@ -69,7 +69,7 @@ class DeleteCategoryCommandHandler:
             )
             raise AccessDeniedError
 
-        await self._category_gateway.delete(command.category_id)
+        await self._category_gateway.delete(category)
         await self._tr_manager.commit()
 
         logger.info(

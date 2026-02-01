@@ -11,6 +11,7 @@ from backend.application.policies.access import (
     can_shop_manage_policy,
 )
 from backend.application.vars import CategoryId
+from backend.domain.services.category import update_category
 from backend.infrastructure.idp import TelegramIdentityProvider
 from backend.infrastructure.persistence.gateways import (
     SQLAlchemyCategoryGateway,
@@ -85,9 +86,8 @@ class EditCategoryCommandHandler:
                     current_user.shop_id,
                 )
                 raise AlreadyExistsError(entity="Category")
-            category.name = command.new_name
+            update_category(category, name=command.new_name)
 
-        await self._category_gateway.update(category)
         await self._tr_manager.commit()
 
         logger.info(

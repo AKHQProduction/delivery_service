@@ -1,11 +1,11 @@
 import datetime
 from typing import TYPE_CHECKING
-from uuid import UUID
 
 import sqlalchemy as sa
 from sqlalchemy import UniqueConstraint
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
+from backend.application.vars import ShopId, TimeSlotId, UserId
 from backend.infrastructure.persistence.tables.base import (
     Base,
     CreatedAt,
@@ -23,7 +23,7 @@ if TYPE_CHECKING:
 class Shop(Base, CreatedAt, UpdatedAt):
     __tablename__ = "shops"
 
-    id: Mapped[UUID] = mapped_column(sa.UUID, primary_key=True)
+    id: Mapped[ShopId] = mapped_column(sa.UUID, primary_key=True)
     name: Mapped[str] = mapped_column(sa.String, nullable=False)
 
     memberships: Mapped[list["ShopMembership"]] = relationship(
@@ -61,10 +61,10 @@ class ShopMembership(Base, CreatedAt, UpdatedAt):
     id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True)
     name: Mapped[str] = mapped_column(sa.String, nullable=False)
 
-    user_id: Mapped[UUID] = mapped_column(
+    user_id: Mapped[UserId] = mapped_column(
         sa.ForeignKey("users.id", ondelete="CASCADE")
     )
-    shop_id: Mapped[UUID] = mapped_column(
+    shop_id: Mapped[ShopId] = mapped_column(
         sa.ForeignKey("shops.id", ondelete="CASCADE")
     )
     role_id: Mapped[int] = mapped_column(sa.ForeignKey("roles.id"))
@@ -87,8 +87,8 @@ class ShopMembership(Base, CreatedAt, UpdatedAt):
 class ShopDeliveryTimeSlot(Base, CreatedAt, UpdatedAt):
     __tablename__ = "shop_delivery_time_slots"
 
-    id: Mapped[UUID] = mapped_column(sa.UUID, primary_key=True)
-    shop_id: Mapped[UUID] = mapped_column(
+    id: Mapped[TimeSlotId] = mapped_column(sa.UUID, primary_key=True)
+    shop_id: Mapped[ShopId] = mapped_column(
         sa.ForeignKey("shops.id", ondelete="CASCADE"), nullable=False
     )
     start_time: Mapped[datetime.time] = mapped_column(sa.Time, nullable=False)

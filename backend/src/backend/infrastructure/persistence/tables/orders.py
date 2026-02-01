@@ -1,11 +1,17 @@
 import datetime
-import uuid
 from decimal import Decimal
 from typing import TYPE_CHECKING
 
 import sqlalchemy as sa
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
+from backend.application.vars import (
+    ClientId,
+    OrderId,
+    OrderItemId,
+    ProductId,
+    ShopId,
+)
 from backend.infrastructure.persistence.tables.base import (
     Base,
     CreatedAt,
@@ -20,7 +26,7 @@ if TYPE_CHECKING:
 class Order(Base, CreatedAt, UpdatedAt):
     __tablename__ = "orders"
 
-    id: Mapped[uuid.UUID] = mapped_column(sa.UUID, primary_key=True)
+    id: Mapped[OrderId] = mapped_column(sa.UUID, primary_key=True)
     date: Mapped[datetime.date] = mapped_column(sa.Date, nullable=False)
     delivery_address: Mapped[dict] = mapped_column(sa.JSON, nullable=False)
     delivery_phone: Mapped[str] = mapped_column(sa.String, nullable=False)
@@ -38,10 +44,10 @@ class Order(Base, CreatedAt, UpdatedAt):
         sa.String, nullable=False, default="OTHER", server_default="OTHER"
     )
 
-    shop_id: Mapped[uuid.UUID] = mapped_column(
+    shop_id: Mapped[ShopId] = mapped_column(
         sa.ForeignKey("shops.id", ondelete="CASCADE"), nullable=False
     )
-    client_id: Mapped[uuid.UUID] = mapped_column(
+    client_id: Mapped[ClientId] = mapped_column(
         sa.ForeignKey("clients.id", ondelete="CASCADE"), nullable=False
     )
 
@@ -63,7 +69,7 @@ class Order(Base, CreatedAt, UpdatedAt):
 class OrderItem(Base, CreatedAt, UpdatedAt):
     __tablename__ = "order_items"
 
-    id: Mapped[int] = mapped_column(
+    id: Mapped[OrderItemId] = mapped_column(
         sa.BIGINT, primary_key=True, autoincrement=True
     )
     name: Mapped[str] = mapped_column(sa.String, nullable=False)
@@ -72,10 +78,10 @@ class OrderItem(Base, CreatedAt, UpdatedAt):
         sa.Numeric(precision=10, scale=2), nullable=False
     )
 
-    order_id: Mapped[uuid.UUID] = mapped_column(
+    order_id: Mapped[OrderId] = mapped_column(
         sa.ForeignKey("orders.id", ondelete="CASCADE"), nullable=False
     )
-    product_id: Mapped[uuid.UUID | None] = mapped_column(
+    product_id: Mapped[ProductId | None] = mapped_column(
         sa.ForeignKey("products.id", ondelete="SET NULL"), nullable=True
     )
 
