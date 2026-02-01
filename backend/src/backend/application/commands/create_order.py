@@ -2,14 +2,10 @@ import logging
 from dataclasses import dataclass
 from datetime import UTC, date, datetime, timedelta
 
-from backend.application.errors import (
-    AccessDeniedError,
-    DateMustBeGreaterThanError,
-    EntityNotFoundError,
-)
+from backend.application.errors import DateMustBeGreaterThanError
 from backend.application.policies.access import (
-    IsRelatedToShop,
-    can_shop_manage_policy,
+    ensure_can_manage,
+    ensure_related_to_shop,
 )
 from backend.application.vars import (
     AddressId,
@@ -20,6 +16,7 @@ from backend.application.vars import (
     ProductId,
     TimeSlotId,
 )
+from backend.domain.services.common import ensure_exists
 from backend.domain.services.order import (
     create_order,
     create_order_item,
@@ -81,13 +78,7 @@ class CreateOrderCommandHandler:
 
     async def handle(self, command: CreateOrderCommand) -> OrderId:
         current_user = await self._idp.current_user()
-
-        if not can_shop_manage_policy.is_satisfied_by(current_user):
-            logger.warning(
-                "Access denied for user %s trying to create order",
-                current_user.user_id,
-            )
-            raise AccessDeniedError
+        ensure_can_manage(current_user)
 
         logger.info(
             "Creating new order for shop %s with client %s",
@@ -95,27 +86,17 @@ class CreateOrderCommandHandler:
             command.client_id,
         )
 
-        client = await self._client_gateway.load(command.client_id)
-        if not client:
-            logger.warning("Client not found: client_id=%s", command.client_id)
-            raise EntityNotFoundError(entity="Client")
-        if not IsRelatedToShop(client.shop_id).is_satisfied_by(current_user):
-            logger.warning(
-                "Access denied: user %s (shop_id=%s) attempted to "
-                "create order for client %s",
-                current_user,
-                current_user.shop_id,
-                command.client_id,
-            )
-            raise AccessDeniedError
+        client = ensure_exists(
+            await self._client_gateway.load(command.client_id),
+            "Client",
+        )
+        ensure_related_to_shop(current_user, client.shop_id)
 
         phone = next(
             (phone for phone in client.phones if phone.id == command.phone_id),
             None,
         )
-        if not phone:
-            logger.warning("Phone not found: phone_id=%s", command.phone_id)
-            raise EntityNotFoundError(entity="Phone")
+        phone = ensure_exists(phone, "Phone")
         address = next(
             (
                 address
@@ -124,35 +105,23 @@ class CreateOrderCommandHandler:
             ),
             None,
         )
-        if not address:
-            logger.warning(
-                "Address not found: address_id=%s", command.address_id
-            )
-            raise EntityNotFoundError(entity="Address")
+        address = ensure_exists(address, "Address")
 
-        time_slot = await self._time_slot_gateway.load(command.time_slot_id)
-        if not time_slot:
-            logger.warning(
-                "TimeSlot not found: time_slot_id=%s", command.time_slot_id
-            )
-            raise EntityNotFoundError(entity="TimeSlot")
-        if not IsRelatedToShop(time_slot.shop_id).is_satisfied_by(
-            current_user
-        ):
-            logger.warning(
-                "Access denied: time slot %s belongs to different shop",
-                command.time_slot_id,
-            )
-            raise AccessDeniedError
+        time_slot = ensure_exists(
+            await self._time_slot_gateway.load(command.time_slot_id),
+            "TimeSlot",
+        )
+        ensure_related_to_shop(current_user, time_slot.shop_id)
 
         product_ids = [p.product_id for p in command.products]
         loaded_products = await self._product_gateway.load_many(product_ids)
         products_map = {p.id: p for p in loaded_products}
 
         for pid in product_ids:
-            if pid not in products_map:
-                logger.warning("Product not found: product_id=%s", pid)
-                raise EntityNotFoundError(entity="Product", entity_id=pid)
+            ensure_exists(
+                products_map.get(pid),
+                "Product",
+            )
 
         products: list[tuple[Product, int]] = [
             (products_map[p.product_id], p.quantity) for p in command.products

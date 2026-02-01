@@ -2,12 +2,11 @@ import logging
 from dataclasses import dataclass, field
 
 from backend.application.errors import (
-    AccessDeniedError,
     ExistingClientInfo,
     PhoneDuplicate,
     PhoneNumberAlreadyExistsError,
 )
-from backend.application.policies.access import can_shop_manage_policy
+from backend.application.policies.access import ensure_can_manage
 from backend.application.validators import normalize_ukraine_phone
 from backend.application.vars import ClientId
 from backend.domain.services.client import (
@@ -61,13 +60,7 @@ class CreateClientCommandHandler:
 
     async def handle(self, command: CreateClientCommand) -> ClientId:
         current_user = await self._idp.current_user()
-
-        if not can_shop_manage_policy.is_satisfied_by(current_user):
-            logger.warning(
-                "Access denied for user %s trying to create client",
-                current_user.user_id,
-            )
-            raise AccessDeniedError
+        ensure_can_manage(current_user)
 
         logger.info(
             "Creating new client '%s' for shop %s",

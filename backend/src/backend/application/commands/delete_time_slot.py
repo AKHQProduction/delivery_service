@@ -1,13 +1,13 @@
 import logging
 from dataclasses import dataclass
 
-from backend.application.errors import (
-    AccessDeniedError,
-    EntityNotFoundError,
-    LastTimeSlotError,
+from backend.application.errors import LastTimeSlotError
+from backend.application.policies.access import (
+    ensure_is_owner,
+    ensure_related_to_shop,
 )
-from backend.application.policies.access import IsOwner
 from backend.application.vars import TimeSlotId
+from backend.domain.services.common import ensure_exists
 from backend.infrastructure.idp import TelegramIdentityProvider
 from backend.infrastructure.persistence.gateways import (
     SQLAlchemyTimeSlotGateway,
@@ -35,37 +35,18 @@ class DeleteTimeSlotCommandHandler:
 
     async def handle(self, command: DeleteTimeSlotCommand) -> None:
         current_user = await self._idp.current_user()
+        ensure_is_owner(current_user)
 
-        if not IsOwner().is_satisfied_by(current_user):
-            logger.warning(
-                "Access denied for user %s trying to delete time slot",
-                current_user.user_id,
-            )
-            raise AccessDeniedError
-
-        time_slot = await self._time_slot_gateway.load(command.time_slot_id)
-        if time_slot is None:
-            logger.warning("Time slot %s not found", command.time_slot_id)
-            raise EntityNotFoundError(entity="TimeSlot")
-
-        if time_slot.shop_id != current_user.shop_id:
-            logger.warning(
-                "Access denied for user %s trying to delete "
-                "time slot %s from another shop",
-                current_user.user_id,
-                command.time_slot_id,
-            )
-            raise AccessDeniedError
+        time_slot = ensure_exists(
+            await self._time_slot_gateway.load(command.time_slot_id),
+            "TimeSlot",
+        )
+        ensure_related_to_shop(current_user, time_slot.shop_id)
 
         time_slots_count = await self._time_slot_gateway.count_by_shop(
             time_slot.shop_id
         )
         if time_slots_count <= 1:
-            logger.warning(
-                "Cannot delete the last time slot %s for shop %s",
-                command.time_slot_id,
-                time_slot.shop_id,
-            )
             raise LastTimeSlotError
 
         await self._time_slot_gateway.delete(time_slot)

@@ -1,10 +1,9 @@
 import logging
 from dataclasses import dataclass
 
-from backend.application.errors import AccessDeniedError
 from backend.application.policies.access import (
-    IsRelatedToShop,
-    can_shop_manage_policy,
+    ensure_can_manage,
+    ensure_related_to_shop,
 )
 from backend.application.vars import OrderId
 from backend.infrastructure.idp import TelegramIdentityProvider
@@ -37,33 +36,13 @@ class DeleteOrderCommandHandler:
         )
 
         current_user = await self._idp.current_user()
-        logger.debug(
-            "Current user: %s, shop_id=%s", current_user, current_user.shop_id
-        )
-
-        if not can_shop_manage_policy.is_satisfied_by(current_user):
-            logger.warning(
-                "Access denied for user %s when deleting order %s",
-                current_user,
-                command.order_id,
-            )
-            raise AccessDeniedError
+        ensure_can_manage(current_user)
 
         order = await self._order_gateway.load(command.order_id)
         if not order:
-            logger.warning("Order not found: order_id=%s", command.order_id)
             return
 
-        if not IsRelatedToShop(order.shop_id).is_satisfied_by(current_user):
-            logger.warning(
-                "Access denied: user %s (shop_id=%s) attempted to delete "
-                "order %s (shop_id=%s)",
-                current_user,
-                current_user.shop_id,
-                command.order_id,
-                order.shop_id,
-            )
-            raise AccessDeniedError
+        ensure_related_to_shop(current_user, order.shop_id)
 
         await self._order_gateway.delete(order)
         await self._tr_manager.commit()

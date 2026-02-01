@@ -3,12 +3,12 @@ from dataclasses import dataclass
 from decimal import Decimal
 from typing import cast
 
-from backend.application.errors import AccessDeniedError, EntityNotFoundError
 from backend.application.policies.access import (
-    IsRelatedToShop,
-    can_shop_manage_policy,
+    ensure_can_manage,
+    ensure_related_to_shop,
 )
 from backend.application.vars import CategoryId, Empty, ProductId
+from backend.domain.services.common import ensure_exists
 from backend.domain.services.product import update_product
 from backend.infrastructure.idp import TelegramIdentityProvider
 from backend.infrastructure.persistence.gateways import (
@@ -49,35 +49,13 @@ class EditProductCommandHandler:
         )
 
         current_user = await self._idp.current_user()
-        logger.debug(
-            "Current user: %s, shop_id=%s", current_user, current_user.shop_id
+        ensure_can_manage(current_user)
+
+        product = ensure_exists(
+            await self._product_gateway.load(command.product_id),
+            "Product",
         )
-
-        if not can_shop_manage_policy.is_satisfied_by(current_user):
-            logger.warning(
-                "Access denied for user %s when editing product %s",
-                current_user,
-                command.product_id,
-            )
-            raise AccessDeniedError
-
-        product = await self._product_gateway.load(command.product_id)
-        if not product:
-            logger.warning(
-                "Product not found: product_id=%s", command.product_id
-            )
-            raise EntityNotFoundError(entity="Product")
-
-        if not IsRelatedToShop(product.shop_id).is_satisfied_by(current_user):
-            logger.warning(
-                "Access denied: user %s (shop_id=%s) attempted to edit "
-                "product %s (shop_id=%s)",
-                current_user,
-                current_user.shop_id,
-                command.product_id,
-                product.shop_id,
-            )
-            raise AccessDeniedError
+        ensure_related_to_shop(current_user, product.shop_id)
 
         new_category_id: CategoryId | Empty | None = Empty.EMPTY
         updates = []
@@ -92,12 +70,6 @@ class EditProductCommandHandler:
             else:
                 new_category_id = cast("CategoryId", command.new_category_id)
                 updates.append(f"category_id={command.new_category_id}")
-
-        logger.debug(
-            "Updating product %s: %s",
-            command.product_id,
-            ", ".join(updates),
-        )
 
         update_product(
             product,

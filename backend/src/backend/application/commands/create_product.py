@@ -3,8 +3,7 @@ from dataclasses import dataclass
 from decimal import Decimal
 from uuid import UUID
 
-from backend.application.errors import AccessDeniedError
-from backend.application.policies.access import can_shop_manage_policy
+from backend.application.policies.access import ensure_can_manage
 from backend.application.vars import CategoryId, Empty, ProductId
 from backend.domain.services.product import create_product
 from backend.infrastructure.idp import TelegramIdentityProvider
@@ -43,20 +42,9 @@ class CreateProductCommandHandler:
         )
 
         current_user = await self._idp.current_user()
-        logger.debug(
-            "Current user: %s, shop_id=%s", current_user, current_user.shop_id
-        )
-
-        if not can_shop_manage_policy.is_satisfied_by(current_user):
-            logger.warning(
-                "Access denied for user %s when creating product %s",
-                current_user,
-                command.name,
-            )
-            raise AccessDeniedError
+        ensure_can_manage(current_user)
 
         product_id = self._gateway.next_id()
-        logger.debug("Generated product_id: %s", product_id)
 
         category_id: CategoryId | None = (
             CategoryId(command.category_id)

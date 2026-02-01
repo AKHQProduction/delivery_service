@@ -2,14 +2,14 @@ import logging
 from dataclasses import dataclass
 from datetime import time
 
-from backend.application.errors import (
-    AccessDeniedError,
-    AlreadyExistsError,
-    EntityNotFoundError,
+from backend.application.errors import AlreadyExistsError
+from backend.application.policies.access import (
+    ensure_is_owner,
+    ensure_related_to_shop,
 )
-from backend.application.policies.access import IsOwner
 from backend.application.validators.time import validate_time_slot_range
 from backend.application.vars import TimeSlotId
+from backend.domain.services.common import ensure_exists
 from backend.domain.services.time_slot import update_time_slot
 from backend.infrastructure.idp import TelegramIdentityProvider
 from backend.infrastructure.persistence.gateways import (
@@ -41,27 +41,13 @@ class EditTimeSlotCommandHandler:
 
     async def handle(self, command: EditTimeSlotCommand) -> None:
         current_user = await self._idp.current_user()
+        ensure_is_owner(current_user)
 
-        if not IsOwner().is_satisfied_by(current_user):
-            logger.warning(
-                "Access denied for user %s trying to edit time slot",
-                current_user.user_id,
-            )
-            raise AccessDeniedError
-
-        time_slot = await self._time_slot_gateway.load(command.time_slot_id)
-        if time_slot is None:
-            logger.warning("Time slot %s not found", command.time_slot_id)
-            raise EntityNotFoundError(entity="TimeSlot")
-
-        if time_slot.shop_id != current_user.shop_id:
-            logger.warning(
-                "Access denied for user %s trying to edit "
-                "time slot %s from another shop",
-                current_user.user_id,
-                command.time_slot_id,
-            )
-            raise AccessDeniedError
+        time_slot = ensure_exists(
+            await self._time_slot_gateway.load(command.time_slot_id),
+            "TimeSlot",
+        )
+        ensure_related_to_shop(current_user, time_slot.shop_id)
 
         new_start_time = command.start_time or time_slot.start_time
         new_end_time = command.end_time or time_slot.end_time
@@ -78,12 +64,6 @@ class EditTimeSlotCommandHandler:
                 current_user.shop_id, new_start_time, new_end_time
             )
         ):
-            logger.warning(
-                "Time slot already exists for shop %s with times %s-%s",
-                current_user.shop_id,
-                new_start_time,
-                new_end_time,
-            )
             raise AlreadyExistsError(entity="TimeSlot")
 
         update_time_slot(

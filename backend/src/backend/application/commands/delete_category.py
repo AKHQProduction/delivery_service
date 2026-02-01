@@ -1,10 +1,9 @@
 import logging
 from dataclasses import dataclass
 
-from backend.application.errors import AccessDeniedError
 from backend.application.policies.access import (
-    IsRelatedToShop,
-    can_shop_manage_policy,
+    ensure_can_manage,
+    ensure_related_to_shop,
 )
 from backend.application.vars import CategoryId
 from backend.infrastructure.idp import TelegramIdentityProvider
@@ -39,35 +38,13 @@ class DeleteCategoryCommandHandler:
         )
 
         current_user = await self._idp.current_user()
-        logger.debug(
-            "Current user: %s, shop_id=%s", current_user, current_user.shop_id
-        )
-
-        if not can_shop_manage_policy.is_satisfied_by(current_user):
-            logger.warning(
-                "Access denied for user %s when deleting category %s",
-                current_user,
-                command.category_id,
-            )
-            raise AccessDeniedError
+        ensure_can_manage(current_user)
 
         category = await self._category_gateway.load(command.category_id)
         if not category:
-            logger.warning(
-                "Category not found: category_id=%s", command.category_id
-            )
             return
 
-        if not IsRelatedToShop(category.shop_id).is_satisfied_by(current_user):
-            logger.warning(
-                "Access denied: user %s (shop_id=%s) attempted to delete "
-                "category %s (shop_id=%s)",
-                current_user,
-                current_user.shop_id,
-                command.category_id,
-                category.shop_id,
-            )
-            raise AccessDeniedError
+        ensure_related_to_shop(current_user, category.shop_id)
 
         await self._category_gateway.delete(category)
         await self._tr_manager.commit()

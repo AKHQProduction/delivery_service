@@ -1,8 +1,8 @@
 import logging
 from dataclasses import dataclass
 
-from backend.application.errors import AccessDeniedError, AlreadyExistsError
-from backend.application.policies.access import can_shop_manage_policy
+from backend.application.errors import AlreadyExistsError
+from backend.application.policies.access import ensure_can_manage
 from backend.application.vars import CategoryId
 from backend.domain.services.category import create_category
 from backend.infrastructure.idp import TelegramIdentityProvider
@@ -34,30 +34,14 @@ class CreateCategoryCommandHandler:
         logger.info("Creating category: name=%s", command.name)
 
         current_user = await self._idp.current_user()
-        logger.debug(
-            "Current user: %s, shop_id=%s", current_user, current_user.shop_id
-        )
-
-        if not can_shop_manage_policy.is_satisfied_by(current_user):
-            logger.warning(
-                "Access denied for user %s when creating category %s",
-                current_user,
-                command.name,
-            )
-            raise AccessDeniedError
+        ensure_can_manage(current_user)
 
         if await self._gateway.exists_by_name_in_shop(
             command.name, current_user.shop_id
         ):
-            logger.warning(
-                "Category with name '%s' already exists in shop %s",
-                command.name,
-                current_user.shop_id,
-            )
             raise AlreadyExistsError(entity="Category")
 
         category_id = self._gateway.next_id()
-        logger.debug("Generated category_id: %s", category_id)
 
         category = create_category(
             category_id=category_id,

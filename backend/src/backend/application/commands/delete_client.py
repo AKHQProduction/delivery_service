@@ -1,10 +1,9 @@
 import logging
 from dataclasses import dataclass
 
-from backend.application.errors import AccessDeniedError
 from backend.application.policies.access import (
-    IsRelatedToShop,
-    can_shop_manage_policy,
+    ensure_can_manage,
+    ensure_related_to_shop,
 )
 from backend.application.vars import ClientId
 from backend.infrastructure.idp import TelegramIdentityProvider
@@ -39,38 +38,13 @@ class DeleteClientCommandHandler:
         )
 
         current_user = await self._idp.current_user()
-        logger.debug(
-            "Current user: %s, shop_id=%s",
-            current_user,
-            current_user.shop_id,
-        )
-
-        if not can_shop_manage_policy.is_satisfied_by(current_user):
-            logger.warning(
-                "Access denied for user %s when deleting client %s",
-                current_user,
-                command.client_id,
-            )
-            raise AccessDeniedError
+        ensure_can_manage(current_user)
 
         client = await self._client_gateway.load(command.client_id)
         if not client:
-            logger.warning(
-                "Client not found: client_id=%s",
-                command.client_id,
-            )
             return
 
-        if not IsRelatedToShop(client.shop_id).is_satisfied_by(current_user):
-            logger.warning(
-                "Access denied: user %s (shop_id=%s) attempted "
-                "to delete client %s (shop_id=%s)",
-                current_user,
-                current_user.shop_id,
-                command.client_id,
-                client.shop_id,
-            )
-            raise AccessDeniedError
+        ensure_related_to_shop(current_user, client.shop_id)
 
         await self._client_gateway.delete(client)
         await self._tr_manager.commit()

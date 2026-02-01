@@ -38,31 +38,13 @@ class CreateNewShopCommandHandler:
         user_id = await self._identity_provider.current_user_id()
 
         if not user_id:
-            logger.warning("Unauthorized attempt to create shop")
             raise AuthorizationError
 
-        logger.debug(
-            "Checking if user already has a shop",
-            extra={"user_id": str(user_id)},
-        )
         if await self._shop_gateway.relate_to_shop(user_id):
-            logger.warning(
-                "User already related to a shop",
-                extra={"user_id": str(user_id)},
-            )
             raise UserAlreadyRelatedToShopError
 
         shop_id = self._shop_gateway.next_id()
         owner_role_id = await self._shop_gateway.get_role_id(ShopRole.OWNER)
-
-        logger.info(
-            "Creating new shop",
-            extra={
-                "shop_id": str(shop_id),
-                "shop_name": command.name,
-                "user_id": str(user_id),
-            },
-        )
 
         shop = create_shop(
             shop_id=shop_id,

@@ -4,7 +4,6 @@ from datetime import UTC, date, datetime, timedelta
 from decimal import Decimal
 
 from backend.application.errors import (
-    AccessDeniedError,
     DateMustBeGreaterThanError,
     EntityNotFoundError,
     ProductIdRequiredForNewItemError,
@@ -16,8 +15,8 @@ from backend.application.interfaces.gateways.order_gateway import (
 )
 from backend.application.interfaces.idp import CurrentUserDTO
 from backend.application.policies.access import (
-    IsRelatedToShop,
-    can_shop_manage_policy,
+    ensure_can_manage,
+    ensure_related_to_shop,
 )
 from backend.application.vars import (
     AddressId,
@@ -30,6 +29,7 @@ from backend.application.vars import (
     ProductId,
     TimeSlotId,
 )
+from backend.domain.services.common import ensure_exists
 from backend.infrastructure.idp import TelegramIdentityProvider
 from backend.infrastructure.persistence.gateways import (
     SQLAlchemyClientGateway,
@@ -96,27 +96,13 @@ class UpdateOrderCommandHandler:
 
     async def handle(self, command: UpdateOrderCommand) -> None:
         current_user = await self._idp.current_user()
+        ensure_can_manage(current_user)
 
-        if not can_shop_manage_policy.is_satisfied_by(current_user):
-            logger.warning(
-                "Access denied for user %s trying to update order %s",
-                current_user.user_id,
-                command.order_id,
-            )
-            raise AccessDeniedError
-
-        order = await self._order_gateway.load(command.order_id)
-        if not order:
-            logger.warning("Order not found: order_id=%s", command.order_id)
-            raise EntityNotFoundError(entity="Order")
-
-        if not IsRelatedToShop(order.shop_id).is_satisfied_by(current_user):
-            logger.warning(
-                "Access denied: user %s attempted to update order %s",
-                current_user.user_id,
-                command.order_id,
-            )
-            raise AccessDeniedError
+        order = ensure_exists(
+            await self._order_gateway.load(command.order_id),
+            "Order",
+        )
+        ensure_related_to_shop(current_user, order.shop_id)
 
         logger.info(
             "Updating order %s for shop %s",
@@ -141,7 +127,6 @@ class UpdateOrderCommandHandler:
         order: OrderORM,
         current_user: CurrentUserDTO,
     ) -> UpdateOrderDTO:
-        # Handle client/phone/address changes
         (
             client_id,
             delivery_phone,
@@ -151,26 +136,14 @@ class UpdateOrderCommandHandler:
         delivery_start_time = None
         delivery_end_time = None
         if command.time_slot_id is not None:
-            time_slot = await self._time_slot_gateway.load(
-                command.time_slot_id
+            time_slot = ensure_exists(
+                await self._time_slot_gateway.load(command.time_slot_id),
+                "TimeSlot",
             )
-            if not time_slot:
-                logger.warning(
-                    "TimeSlot not found: time_slot_id=%s", command.time_slot_id
-                )
-                raise EntityNotFoundError(entity="TimeSlot")
-            if not IsRelatedToShop(time_slot.shop_id).is_satisfied_by(
-                current_user
-            ):
-                logger.warning(
-                    "Access denied: time slot %s belongs to different shop",
-                    command.time_slot_id,
-                )
-                raise AccessDeniedError
+            ensure_related_to_shop(current_user, time_slot.shop_id)
             delivery_start_time = time_slot.start_time
             delivery_end_time = time_slot.end_time
 
-        # Handle items replacement
         items: list[OrderItemDTO] | None = None
         if command.items is not None:
             items = await self._process_items(
@@ -210,21 +183,13 @@ class UpdateOrderCommandHandler:
             return client_id, delivery_phone, delivery_address
 
         client_id_to_use = command.client_id or order.client_id
-        client = await self._client_gateway.load(client_id_to_use)
-        if not client:
-            logger.warning("Client not found: client_id=%s", client_id_to_use)
-            raise EntityNotFoundError(entity="Client")
+        client = ensure_exists(
+            await self._client_gateway.load(client_id_to_use),
+            "Client",
+        )
 
         if command.client_id is not None:
-            is_related = IsRelatedToShop(client.shop_id).is_satisfied_by(
-                current_user
-            )
-            if not is_related:
-                logger.warning(
-                    "Access denied: client %s belongs to different shop",
-                    command.client_id,
-                )
-                raise AccessDeniedError
+            ensure_related_to_shop(current_user, client.shop_id)
             client_id = command.client_id
 
         if command.phone_id is not None:
@@ -244,7 +209,6 @@ class UpdateOrderCommandHandler:
             None,
         )
         if not phone:
-            logger.warning("Phone not found: phone_id=%s", phone_id)
             raise EntityNotFoundError(entity="Phone")
         return phone.number
 
@@ -257,7 +221,6 @@ class UpdateOrderCommandHandler:
             None,
         )
         if not address:
-            logger.warning("Address not found: address_id=%s", address_id)
             raise EntityNotFoundError(entity="Address")
         return DeliveryAddressDTO(
             street=address.street,
@@ -272,11 +235,9 @@ class UpdateOrderCommandHandler:
     async def _process_items(
         self, order_id: OrderId, items: list[OrderItem]
     ) -> list[OrderItemDTO]:
-        # Load existing items to get their product_id from DB
         existing_items = await self._order_gateway.load_items(order_id)
         existing_items_map = {item.id: item for item in existing_items}
 
-        # Collect all product IDs that need to be loaded
         product_ids_to_load: set[ProductId] = set()
         item_product_map: dict[int, ProductId] = {}
 
@@ -294,7 +255,6 @@ class UpdateOrderCommandHandler:
                 product_ids_to_load.add(product_id_to_use)
                 item_product_map[idx] = product_id_to_use
 
-        # Batch load all products at once
         products_map: dict[ProductId, tuple[str, Decimal]] = {}
         if product_ids_to_load:
             products = await self._product_gateway.load_many(
@@ -302,18 +262,12 @@ class UpdateOrderCommandHandler:
             )
             products_map = {p.id: (p.name, p.price) for p in products}
 
-            # Validate all products exist
             for product_id in product_ids_to_load:
-                if product_id not in products_map:
-                    logger.warning(
-                        "Product not found: product_id=%s",
-                        product_id,
-                    )
-                    raise EntityNotFoundError(
-                        entity="Product", entity_id=product_id
-                    )
+                ensure_exists(
+                    products_map.get(product_id),
+                    "Product",
+                )
 
-        # Build result using preloaded products
         result: list[OrderItemDTO] = []
         for idx, item in enumerate(items):
             product_id_to_use = item_product_map.get(idx)

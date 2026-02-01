@@ -2,8 +2,8 @@ import logging
 from dataclasses import dataclass
 from datetime import time
 
-from backend.application.errors import AccessDeniedError, AlreadyExistsError
-from backend.application.policies.access import IsOwner
+from backend.application.errors import AlreadyExistsError
+from backend.application.policies.access import ensure_is_owner
 from backend.application.validators.time import validate_time_slot_range
 from backend.application.vars import TimeSlotId
 from backend.domain.services.time_slot import create_time_slot
@@ -39,23 +39,11 @@ class CreateTimeSlotCommandHandler:
 
     async def handle(self, command: CreateTimeSlotCommand) -> TimeSlotId:
         current_user = await self._idp.current_user()
-
-        if not IsOwner().is_satisfied_by(current_user):
-            logger.warning(
-                "Access denied for user %s trying to create time slot",
-                current_user.user_id,
-            )
-            raise AccessDeniedError
+        ensure_is_owner(current_user)
 
         if await self._time_slot_gateway.exists_by_times_in_shop(
             current_user.shop_id, command.start_time, command.end_time
         ):
-            logger.warning(
-                "Time slot already exists for shop %s with times %s-%s",
-                current_user.shop_id,
-                command.start_time,
-                command.end_time,
-            )
             raise AlreadyExistsError(entity="TimeSlot")
 
         time_slot_id = self._time_slot_gateway.next_id()

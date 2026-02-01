@@ -2,16 +2,14 @@ import logging
 from dataclasses import dataclass
 
 from backend.application.errors import (
-    AccessDeniedError,
-    EntityNotFoundError,
     ExistingClientInfo,
     InvalidPrimaryFlagError,
     PhoneDuplicate,
     PhoneNumberAlreadyExistsError,
 )
 from backend.application.policies.access import (
-    IsRelatedToShop,
-    can_shop_manage_policy,
+    ensure_can_manage,
+    ensure_related_to_shop,
 )
 from backend.application.validators import normalize_ukraine_phone
 from backend.application.vars import AddressId, ClientId, PhoneId
@@ -22,6 +20,7 @@ from backend.domain.services.client import (
     update_client,
     update_phone,
 )
+from backend.domain.services.common import ensure_exists
 from backend.infrastructure.idp import TelegramIdentityProvider
 from backend.infrastructure.persistence.gateways import (
     SQLAlchemyClientGateway,
@@ -99,37 +98,13 @@ class EditClientCommandHandler:
         )
 
         current_user = await self._idp.current_user()
-        logger.debug(
-            "Current user retrieved",
-            extra={"user_id": current_user.user_id},
+        ensure_can_manage(current_user)
+
+        client = ensure_exists(
+            await self._client_gateway.load(client_id=command.client_id),
+            "Client",
         )
-
-        if not can_shop_manage_policy.is_satisfied_by(current_user):
-            logger.warning(
-                "Access denied for user %s when editing client %s",
-                current_user,
-                command.client_id,
-            )
-            raise AccessDeniedError
-
-        client = await self._client_gateway.load(client_id=command.client_id)
-        if not client:
-            logger.warning(
-                "Client not found: client_id=%s",
-                command.client_id,
-            )
-            raise EntityNotFoundError(entity="Client")
-
-        if not IsRelatedToShop(client.shop_id).is_satisfied_by(current_user):
-            logger.warning(
-                "Access denied: user %s (shop_id=%s) attempted "
-                "to edit client %s (shop_id=%s)",
-                current_user,
-                current_user.shop_id,
-                command.client_id,
-                client.shop_id,
-            )
-            raise AccessDeniedError
+        ensure_related_to_shop(current_user, client.shop_id)
 
         updates = []
 
@@ -230,12 +205,6 @@ class EditClientCommandHandler:
                     client.addresses.remove(addr)
 
             updates.append(f"addresses={len(command.addresses)}")
-
-        logger.debug(
-            "Updating client %s: %s",
-            command.client_id,
-            ", ".join(updates),
-        )
 
         await self._tr_manager.commit()
 

@@ -1,17 +1,14 @@
 import logging
 from dataclasses import dataclass
 
-from backend.application.errors import (
-    AccessDeniedError,
-    AlreadyExistsError,
-    EntityNotFoundError,
-)
+from backend.application.errors import AlreadyExistsError
 from backend.application.policies.access import (
-    IsRelatedToShop,
-    can_shop_manage_policy,
+    ensure_can_manage,
+    ensure_related_to_shop,
 )
 from backend.application.vars import CategoryId
 from backend.domain.services.category import update_category
+from backend.domain.services.common import ensure_exists
 from backend.infrastructure.idp import TelegramIdentityProvider
 from backend.infrastructure.persistence.gateways import (
     SQLAlchemyCategoryGateway,
@@ -46,45 +43,18 @@ class EditCategoryCommandHandler:
         )
 
         current_user = await self._idp.current_user()
-        logger.debug(
-            "Current user: %s, shop_id=%s", current_user, current_user.shop_id
+        ensure_can_manage(current_user)
+
+        category = ensure_exists(
+            await self._category_gateway.load(command.category_id),
+            "Category",
         )
-
-        if not can_shop_manage_policy.is_satisfied_by(current_user):
-            logger.warning(
-                "Access denied for user %s when editing category %s",
-                current_user,
-                command.category_id,
-            )
-            raise AccessDeniedError
-
-        category = await self._category_gateway.load(command.category_id)
-        if not category:
-            logger.warning(
-                "Category not found: category_id=%s", command.category_id
-            )
-            raise EntityNotFoundError(entity="Category")
-
-        if not IsRelatedToShop(category.shop_id).is_satisfied_by(current_user):
-            logger.warning(
-                "Access denied: user %s (shop_id=%s) attempted to edit "
-                "category %s (shop_id=%s)",
-                current_user,
-                current_user.shop_id,
-                command.category_id,
-                category.shop_id,
-            )
-            raise AccessDeniedError
+        ensure_related_to_shop(current_user, category.shop_id)
 
         if command.new_name:
             if await self._category_gateway.exists_by_name_in_shop(
                 command.new_name, current_user.shop_id
             ):
-                logger.warning(
-                    "Category with name '%s' already exists in shop %s",
-                    command.new_name,
-                    current_user.shop_id,
-                )
                 raise AlreadyExistsError(entity="Category")
             update_category(category, name=command.new_name)
 

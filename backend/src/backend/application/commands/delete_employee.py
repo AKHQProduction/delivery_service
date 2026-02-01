@@ -1,9 +1,12 @@
 import logging
 from dataclasses import dataclass
 
-from backend.application.errors import AccessDeniedError, EntityNotFoundError
-from backend.application.policies.access import IsOwner, IsRelatedToShop
+from backend.application.policies.access import (
+    ensure_is_owner,
+    ensure_related_to_shop,
+)
 from backend.application.vars import UserId
+from backend.domain.services.common import ensure_exists
 from backend.infrastructure.idp import TelegramIdentityProvider
 from backend.infrastructure.persistence.gateways import SQLAlchemyShopGateway
 from backend.infrastructure.transaction_manager import TransactionManager
@@ -34,58 +37,13 @@ class DeleteEmployeeCommandHandler:
         )
 
         current_user = await self._idp.current_user()
-        logger.debug(
-            "Current user retrieved", extra={"user_id": current_user.user_id}
+        ensure_is_owner(current_user)
+
+        membership = ensure_exists(
+            await self._shop_gateway.load_membership(command.user_id),
+            "Employee",
         )
-
-        if not IsOwner().is_satisfied_by(current_user):
-            logger.warning(
-                "Access denied: user is not owner",
-                extra={
-                    "user_id": current_user.user_id,
-                    "user_role": current_user.role,
-                },
-            )
-            raise AccessDeniedError
-
-        membership = await self._shop_gateway.load_membership(command.user_id)
-        if not membership:
-            logger.warning(
-                "Employee not found",
-                extra={"employee_user_id": command.user_id},
-            )
-            raise EntityNotFoundError(entity="Employee")
-
-        logger.debug(
-            "Employee found",
-            extra={
-                "employee_user_id": membership.user_id,
-                "shop_id": membership.shop_id,
-                "role": membership.role.name,
-                "full_name": membership.name,
-            },
-        )
-
-        if not IsRelatedToShop(shop_id=membership.shop_id).is_satisfied_by(
-            current_user
-        ):
-            logger.warning(
-                "Access denied: user not related to employee's shop",
-                extra={
-                    "user_id": current_user.user_id,
-                    "user_shop_id": current_user.shop_id,
-                    "employee_shop_id": membership.shop_id,
-                },
-            )
-            raise AccessDeniedError
-
-        logger.info(
-            "Deleting employee from shop",
-            extra={
-                "employee_user_id": command.user_id,
-                "shop_id": membership.shop_id,
-            },
-        )
+        ensure_related_to_shop(current_user, membership.shop_id)
 
         await self._shop_gateway.delete_membership(membership)
         await self._tr_manager.commit()
