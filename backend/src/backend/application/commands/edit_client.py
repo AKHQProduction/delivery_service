@@ -124,7 +124,11 @@ class EditClientCommandHandler:
             ]
 
             normalized_numbers = [p.number for p in normalized_phones]
-            validate_no_duplicate_phones(normalized_numbers)
+            validate_no_duplicate_phones(
+                normalized_numbers,
+                client_id=client.id,
+                full_name=client.full_name,
+            )
 
             if not command.confirm_duplicate_phones and normalized_phones:
                 normalized_numbers = [p.number for p in normalized_phones]

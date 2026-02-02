@@ -93,6 +93,21 @@ class TestValidateNoDuplicatePhones:
         with pytest.raises(PhoneNumberAlreadyExistsError):
             validate_no_duplicate_phones(["+380991234567", "+380991234567"])
 
+    def test_duplicate_includes_client_info(self):
+        from uuid import uuid4
+
+        client_id = uuid4()
+        with pytest.raises(PhoneNumberAlreadyExistsError) as exc_info:
+            validate_no_duplicate_phones(
+                ["+380991234567", "+380991234567"],
+                client_id=client_id,
+                full_name="Тест Клієнт",
+            )
+        dup = exc_info.value.duplicates[0]
+        assert len(dup.existing_clients) == 1
+        assert dup.existing_clients[0].client_id == client_id
+        assert dup.existing_clients[0].full_name == "Тест Клієнт"
+
     def test_multiple_duplicates(self):
         with pytest.raises(PhoneNumberAlreadyExistsError) as exc_info:
             validate_no_duplicate_phones([

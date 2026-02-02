@@ -74,7 +74,9 @@ class CreateClientCommandHandler:
         ]
 
         if normalized_numbers:
-            validate_no_duplicate_phones(normalized_numbers)
+            validate_no_duplicate_phones(
+                normalized_numbers, full_name=command.full_name
+            )
 
         if not command.confirm_duplicate_phones and normalized_numbers:
             duplicates = await self._client_gateway.find_duplicate_phones(

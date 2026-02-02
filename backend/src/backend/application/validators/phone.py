@@ -2,19 +2,33 @@ import re
 from collections import Counter
 
 from backend.application.errors import (
+    ExistingClientInfo,
     InvalidPhoneNumberError,
     PhoneDuplicate,
     PhoneNumberAlreadyExistsError,
 )
+from backend.application.vars import ClientId
 
 
-def validate_no_duplicate_phones(phones: list[str]) -> None:
+def validate_no_duplicate_phones(
+    phones: list[str],
+    client_id: ClientId | None = None,
+    full_name: str | None = None,
+) -> None:
     counts = Counter(phones)
     duplicates = [phone for phone, count in counts.items() if count > 1]
     if duplicates:
+        existing_clients = []
+        if client_id and full_name:
+            existing_clients = [
+                ExistingClientInfo(client_id=client_id, full_name=full_name)
+            ]
         raise PhoneNumberAlreadyExistsError(
             duplicates=[
-                PhoneDuplicate(phone_number=phone, existing_clients=[])
+                PhoneDuplicate(
+                    phone_number=phone,
+                    existing_clients=existing_clients,
+                )
                 for phone in duplicates
             ]
         )
