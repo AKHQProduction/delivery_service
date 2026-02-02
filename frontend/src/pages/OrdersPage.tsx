@@ -2,7 +2,7 @@ import { useEffect, useState, useRef, useCallback } from "react";
 import { PageHeader } from "../components/ui/pageHeader";
 import { SearchBar } from "../components/ui/searchBar";
 import { useOrders } from "../hooks/orders/useOrders";
-import { timeMap, paymentMap } from "../utils/dataMap";
+import { paymentMap } from "../utils/dataMap";
 import { OrderDetailModal } from "../components/modals/detailsModals/OrderDetailModal";
 import { RightModal } from "../components/modals/RightModal";
 import { generateOrdersPdfLink, getOrderById } from "../services/api/ordersApi";
@@ -34,7 +34,7 @@ export interface Order {
   delivery_address?: DeliveryAddress;
 
   date: string;
-  time_preference: keyof typeof timeMap;
+  time_slot: string;
   payment_method: keyof typeof paymentMap;
 
   note?: string;
@@ -208,14 +208,14 @@ export const OrdersPage = () => {
         <SearchFiltersPopup
           title="Фільтри замовлень"
           buttonTitle="Фільтри замовлень"
-           onApply={() => getOrders(searchTerm)}
+          onApply={() => getOrders(searchTerm)}
         >
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">
               Від
             </label>
             <input
-            title="start date"
+              title="start date"
               type="date"
               value={startDate}
               onChange={(e) => setStartDate(e.target.value)}
@@ -235,7 +235,6 @@ export const OrdersPage = () => {
             />
           </div>
         </SearchFiltersPopup>
-
       </div>
 
       <div className="px-6 pb-4">
@@ -361,7 +360,7 @@ export const OrdersPage = () => {
                       </svg>
                     </div>
                     <span className="text-gray-700">
-                      {order.date} - {timeMap[order.time_preference]}
+                      {order.date} - {order.time_slot}
                     </span>
                   </div>
 

@@ -1,4 +1,3 @@
-// context/ErrorContext.tsx
 import React, {
   createContext,
   useContext,
