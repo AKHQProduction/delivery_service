@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef, useCallback } from "react";
 import { useOrders } from "../../../hooks/orders/useOrders";
 import { useClient } from "../../../hooks/clients/useClients";
 import { useProducts } from "../../../hooks/products/useProducts";
+import { useTimeSlotsSettings } from "../../../hooks/settings/useTimeSlotsSettings";
 import { getOrderById } from "../../../services/api/ordersApi";
 import { getClientById } from "../../../services/api/clientApi";
 import { type Client } from "../../../types/entities/Client";
@@ -45,16 +46,17 @@ export const EditOrderForm: React.FC<EditOrderFormProps> = ({
     loadingMore: productsLoadingMore,
     hasMore: productsHasMore,
   } = useProducts();
+  const { timeSlots } = useTimeSlotsSettings();
 
   // Form state
   const [selectedClient, setSelectedClient] = useState<Client | null>(null);
   const [selectedPhoneId, setSelectedPhoneId] = useState<number | null>(null);
   const [selectedAddressId, setSelectedAddressId] = useState<number | null>(
-    null
+    null,
   );
   const [orderItems, setOrderItems] = useState<OrderItem[]>([]);
   const [deliveryDate, setDeliveryDate] = useState("");
-  const [deliveryTime, setDeliveryTime] = useState("");
+  const [timeSlot, setTimeSlot] = useState("");
   const [paymentMethod, setPaymentMethod] = useState("");
   const [note, setNote] = useState("");
 
@@ -85,21 +87,29 @@ export const EditOrderForm: React.FC<EditOrderFormProps> = ({
           setSelectedClient(orderClient);
 
           const matchedPhone = orderClient?.phones?.find(
-            (p: any) => p.number === orderData.delivery_phone
+            (p: any) => p.id === orderData.phone_id,
           );
-          const primaryPhone = orderClient?.phones?.find((p: any) => p.is_primary);
+          const primaryPhone = orderClient?.phones?.find(
+            (p: any) => p.is_primary,
+          );
           setSelectedPhoneId(
-            matchedPhone?.id || primaryPhone?.id || orderClient?.phones?.[0]?.id || null
+            matchedPhone?.id ||
+              primaryPhone?.id ||
+              orderClient?.phones?.[0]?.id ||
+              null,
           );
 
           const matchedAddress = orderClient?.addresses?.find(
-            (a: any) =>
-              a.street === orderData.delivery_address?.street &&
-              a.house === orderData.delivery_address?.house
+            (a: any) => a.id === orderData.address_id,
           );
-          const primaryAddress = orderClient?.addresses?.find((a: any) => a.is_primary);
+          const primaryAddress = orderClient?.addresses?.find(
+            (a: any) => a.is_primary,
+          );
           setSelectedAddressId(
-            matchedAddress?.id || primaryAddress?.id || orderClient?.addresses?.[0]?.id || null
+            matchedAddress?.id ||
+              primaryAddress?.id ||
+              orderClient?.addresses?.[0]?.id ||
+              null,
           );
         }
 
@@ -109,27 +119,45 @@ export const EditOrderForm: React.FC<EditOrderFormProps> = ({
             product_id: item.product_id,
             name:
               item.name ||
-              fetchedProducts?.find((p: any) => p.product_id === item.product_id)?.name ||
+              fetchedProducts?.find(
+                (p: any) => p.product_id === item.product_id,
+              )?.name ||
               "",
             price:
               item.price_per_item ||
               item.price ||
-              fetchedProducts?.find((p: any) => p.product_id === item.product_id)?.price ||
+              fetchedProducts?.find(
+                (p: any) => p.product_id === item.product_id,
+              )?.price ||
               0,
             quantity: item.quantity,
           })) || [];
 
         setOrderItems(items);
-        setDeliveryDate(orderData.date || "");
-        setDeliveryTime(orderData.time_preference || "");
+        setDeliveryDate(orderData.delivery_date || orderData.date || "");
+        
+        // Find matching time slot ID from the formatted time_slot string
+        if (orderData.time_slot_id) {
+          setTimeSlot(orderData.time_slot_id);
+        } else if (orderData.time_slot) {
+          // Match the formatted string like "13:33-23:12" with timeSlots
+          const matchingSlot = timeSlots.find(slot => {
+            const formatTime = (timeStr: string) => timeStr ? timeStr.slice(0, 5) : "";
+            const slotFormatted = `${formatTime(slot.start_time)}-${formatTime(slot.end_time)}`;
+            return slotFormatted === orderData.time_slot;
+          });
+          setTimeSlot(matchingSlot?.time_slot_id || "");
+        }
+        
         setPaymentMethod(orderData.payment_method || "");
         setNote(orderData.note || orderData.comment || "");
+        console.log("Loaded order data:", orderData);
       } catch (error) {
         console.error("Error loading order:", error);
       }
     };
     loadData();
-  }, [order.order_id]);
+  }, [order.order_id, timeSlots]);
 
   const productDebounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   useEffect(() => {
@@ -194,8 +222,8 @@ export const EditOrderForm: React.FC<EditOrderFormProps> = ({
       prev.map((item, i) =>
         i === index
           ? { ...item, quantity: Math.max(1, item.quantity + delta) }
-          : item
-      )
+          : item,
+      ),
     );
   };
 
@@ -205,7 +233,7 @@ export const EditOrderForm: React.FC<EditOrderFormProps> = ({
 
   const handleAddProduct = (product: Product) => {
     const existingIndex = orderItems.findIndex(
-      (item) => item.product_id === product.product_id
+      (item) => item.product_id === product.product_id,
     );
     if (existingIndex >= 0) {
       handleQuantityChange(existingIndex, 1);
@@ -228,13 +256,29 @@ export const EditOrderForm: React.FC<EditOrderFormProps> = ({
   const totalItems = orderItems.reduce((sum, item) => sum + item.quantity, 0);
   const totalAmount = orderItems.reduce(
     (sum, item) => sum + item.price * item.quantity,
-    0
+    0,
   );
 
   // Filter products for search (exclude already added)
   const availableProducts = products.filter(
-    (p) => !orderItems.some((item) => item.product_id === p.product_id)
+    (p) => !orderItems.some((item) => item.product_id === p.product_id),
   );
+
+  const formatTimeSlotLabel = (slot: any) => {
+    const formatTime = (timeStr: string) => {
+      if (!timeStr) return "";
+      // Handle both HH:MM:SS and HH:MM formats
+      return timeStr.slice(0, 5);
+    };
+
+    const start = formatTime(slot.start_time);
+    const end = formatTime(slot.end_time);
+    
+    if (slot.label) {
+      return `${slot.label} (${start} - ${end})`;
+    }
+    return `${start} - ${end}`;
+  };
 
   const handleSubmit = async () => {
     if (
@@ -256,15 +300,15 @@ export const EditOrderForm: React.FC<EditOrderFormProps> = ({
         payload.client_id = selectedClient.client_id;
       }
 
-      // Always send phone_id and address_id since we match them by value
+      // Always send phone_id and address_id
       payload.phone_id = selectedPhoneId;
       payload.address_id = selectedAddressId;
 
-      if (deliveryDate !== loadedOrder.date) {
+      if (deliveryDate !== loadedOrder.delivery_date && deliveryDate !== loadedOrder.date) {
         payload.delivery_date = deliveryDate;
       }
-      if (deliveryTime !== loadedOrder.time_preference) {
-        payload.time_preference = deliveryTime;
+      if (timeSlot !== loadedOrder.time_slot_id) {
+        payload.time_slot_id = timeSlot;
       }
       if (paymentMethod !== loadedOrder.payment_method) {
         payload.payment_method = paymentMethod;
@@ -281,6 +325,7 @@ export const EditOrderForm: React.FC<EditOrderFormProps> = ({
         }
       });
 
+      console.log("Submitting payload:", payload);
       await updateCurrentOrder(order.order_id, payload);
       onSave ? onSave() : onClose();
     } catch (error) {
@@ -812,8 +857,8 @@ export const EditOrderForm: React.FC<EditOrderFormProps> = ({
 
         {/* Delivery Date Section */}
         <div className="space-y-3">
-
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4 pb-3">
+            
             <DateSelectInput
               value={deliveryDate}
               onChange={setDeliveryDate}
@@ -838,13 +883,15 @@ export const EditOrderForm: React.FC<EditOrderFormProps> = ({
 
             <FormSelect
               label="Час"
-              name="deliveryTime"
-              value={deliveryTime}
+              name="timeSlot"
+              value={timeSlot}
               required={true}
-              onChange={setDeliveryTime}
+              onChange={setTimeSlot}
               options={[
-                { value: "FIRST_HALF", label: "Перша половина" },
-                { value: "SECOND_HALF", label: "Друга половина" },
+                ...timeSlots.map((slot) => ({
+                  value: slot.time_slot_id,
+                  label: formatTimeSlotLabel(slot),
+                })),
               ]}
             />
 

@@ -9,8 +9,10 @@ interface OrderStats {
     method: string;
     orders_sum: number;
   }[];
-  total_orders_in_first_half: number;
-  total_orders_in_second_half: number;
+  time_slot_stats: {
+    time_slot: string;
+    total: number;
+  }[];
   total_orders_sum: number;
   category_stats: {
     name: string;
@@ -213,31 +215,45 @@ export const OrdersStatsPage = () => {
             </h3>
 
             <div className="space-y-3">
-              <div className="flex items-center justify-between p-4 bg-gradient-to-r from-yellow-50 to-amber-50 rounded-xl border border-yellow-200">
-                <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-full bg-yellow-400 flex items-center justify-center">
-                    <span className="text-xl">☀️</span>
-                  </div>
-                  <span className="font-semibold text-gray-900">До обіду</span>
-                </div>
-                <span className="text-2xl font-bold text-gray-900">
-                  {stats.total_orders_in_first_half}
-                </span>
-              </div>
+              {stats.time_slot_stats?.map(
+                (slot: { time_slot: string; total: number }) => {
+                  // Extract start time from time_slot (e.g., "09:00" from "09:00-14:00")
+                  const startTime = slot.time_slot.split("-")[0];
+                  const [hours] = startTime.split(":").map(Number);
 
-              <div className="flex items-center justify-between p-4 bg-gradient-to-r from-orange-50 to-red-50 rounded-xl border border-orange-200">
-                <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-full bg-orange-400 flex items-center justify-center">
-                    <span className="text-xl">🏙️</span>
-                  </div>
-                  <span className="font-semibold text-gray-900">
-                    Після обіду
-                  </span>
-                </div>
-                <span className="text-2xl font-bold text-gray-900">
-                  {stats.total_orders_in_second_half}
-                </span>
-              </div>
+                  // Determine if it's before or after 18:00
+                  const isBeforeEvening = hours < 18;
+
+                  return (
+                    <div
+                      key={slot.time_slot}
+                      className={`flex items-center justify-between p-4 rounded-xl border ${
+                        isBeforeEvening
+                          ? "bg-gradient-to-r from-yellow-50 to-amber-50 border-yellow-200"
+                          : "bg-gradient-to-r from-orange-50 to-red-50 border-orange-200"
+                      }`}
+                    >
+                      <div className="flex items-center gap-3">
+                        <div
+                          className={`w-10 h-10 rounded-full flex items-center justify-center ${
+                            isBeforeEvening ? "bg-yellow-400" : "bg-orange-400"
+                          }`}
+                        >
+                          <span className="text-xl">
+                            {isBeforeEvening ? "☀️" : "🏙️"}
+                          </span>
+                        </div>
+                        <span className="font-semibold text-gray-900">
+                          {slot.time_slot}
+                        </span>
+                      </div>
+                      <span className="text-2xl font-bold text-gray-900">
+                        {slot.total}
+                      </span>
+                    </div>
+                  );
+                },
+              )}
             </div>
           </div>
 
