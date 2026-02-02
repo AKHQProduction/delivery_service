@@ -47,7 +47,7 @@ export const TimeInput = ({
     setLocalValue(input);
   };
 
-  const handleBlur = (e: FocusEvent<HTMLInputElement>) => {
+  const handleBlur = (_e: FocusEvent<HTMLInputElement>) => {
     const formatted = formatAndValidate(localValue);
     setLocalValue(formatted);
     if (formatted && formatted !== value) {
