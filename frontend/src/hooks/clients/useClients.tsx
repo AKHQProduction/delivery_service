@@ -28,7 +28,14 @@ export const useClient = () => {
     setCurrentSearch(search);
     setOffset(0);
     try {
-      const fetchedClients = await getAllClients(search, search, search, PAGE_SIZE, 0, "ASC");
+      const fetchedClients = await getAllClients(
+        search,
+        search,
+        search,
+        PAGE_SIZE,
+        0,
+        "ASC",
+      );
       setClients(fetchedClients);
       setHasMore(fetchedClients.length >= PAGE_SIZE);
       setOffset(PAGE_SIZE);
@@ -46,7 +53,14 @@ export const useClient = () => {
 
     setLoadingMore(true);
     try {
-      const fetchedClients = await getAllClients(currentSearch, currentSearch, currentSearch, PAGE_SIZE, offset, "ASC");
+      const fetchedClients = await getAllClients(
+        currentSearch,
+        currentSearch,
+        currentSearch,
+        PAGE_SIZE,
+        offset,
+        "ASC",
+      );
       setClients((prev) => [...prev, ...fetchedClients]);
       setHasMore(fetchedClients.length >= PAGE_SIZE);
       setOffset((prev) => prev + PAGE_SIZE);
@@ -68,29 +82,42 @@ export const useClient = () => {
     setLoading(false);
   };
 
-  const createClient = async (clientData: {
-    full_name: string;
-    phones: Phone[];
-    addresses: Address[];
-    custom_id?: string;
-  }) => {
+  const createClient = async (
+    clientData: {
+      full_name: string;
+      phones: Phone[];
+      addresses: Address[];
+      custom_id?: string;
+    },
+    confirmDuplicate: boolean = false,
+  ) => {
     setLoading(true);
     setError(null);
     try {
-      const newClient = await createNewClient({
-        full_name: clientData.full_name,
-        phones: clientData.phones.filter((p) => p.number.trim() !== ""),
-        addresses: clientData.addresses.filter((a) => a.street.trim() !== ""),
-        custom_id: clientData?.custom_id,
-      });
+      const newClient = await createNewClient(
+        {
+          full_name: clientData.full_name,
+          phones: clientData.phones.filter((p) => p.number.trim() !== ""),
+          addresses: clientData.addresses.filter((a) => a.street.trim() !== ""),
+          custom_id: clientData?.custom_id,
+        },
+        confirmDuplicate,
+      );
 
       setClients((prev) => [...prev, newClient]);
       return newClient;
     } catch (err: any) {
+      if (
+        err?.response?.status === 409 &&
+        err?.response?.data?.code === "duplicate_phones"
+      ) {
+        throw err;
+      }
+
       const errorMessage =
         err?.response?.data?.detail || "Не вдалося додати клієнта.";
       setError(errorMessage);
-      throw new Error(errorMessage);
+      throw err;
     } finally {
       setLoading(false);
     }
@@ -103,23 +130,34 @@ export const useClient = () => {
       phones: Phone[];
       addresses: Address[];
       custom_id?: string;
-    }
+    },
+    confirmDuplicate: boolean = false,
   ) => {
     setLoading(true);
     setError(null);
     try {
-      const updatedClient = await updateExistingClientById(clientId, {
-        full_name: clientData.full_name,
-        phones: clientData.phones.filter((p) => p.number.trim() !== ""),
-        addresses: clientData.addresses.filter((a) => a.street.trim() !== ""),
-        custom_id: clientData?.custom_id,
-      });
+      const updatedClient = await updateExistingClientById(
+        clientId,
+        {
+          full_name: clientData.full_name,
+          phones: clientData.phones.filter((p) => p.number.trim() !== ""),
+          addresses: clientData.addresses.filter((a) => a.street.trim() !== ""),
+          custom_id: clientData?.custom_id,
+        },
+        confirmDuplicate,
+      );
 
       setClients((prev) =>
-        prev.map((c) => (c.client_id === clientId ? updatedClient : c))
+        prev.map((c) => (c.client_id === clientId ? updatedClient : c)),
       );
       return updatedClient;
     } catch (err: any) {
+      if (
+        err?.response?.status === 409 &&
+        err?.response?.data?.code === "duplicate_phones"
+      ) {
+        throw err;
+      }
       const errorMessage =
         err?.response?.data?.detail || "Не вдалося оновити клієнта.";
       setError(errorMessage);

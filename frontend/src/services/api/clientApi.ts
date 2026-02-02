@@ -15,21 +15,27 @@ interface CreateClientPayload {
   custom_id?: string;
 }
 
-export const createNewClient = async (body: CreateClientPayload) => {
-  try {
-    const response = await api.post(`v1/clients`, body);
-    return response.data;
-  } catch (error) {
-    throw error;
-  }
+export const createNewClient = async (
+  body: CreateClientPayload,
+  confirmDuplicate: boolean = false,
+) => {
+  const response = await api.post(`v1/clients`, {
+    ...body,
+    ...(confirmDuplicate && { confirm_duplicate_phones: true }),
+  });
+  return response.data;
 };
 
 export const updateExistingClientById = async (
   clientId: string,
-  payload: UpdateClientPayload
+  payload: UpdateClientPayload,
+  confirmDuplicate: boolean = false,
 ) => {
   try {
-    const response = await api.patch(`v1/clients/${clientId}`, payload);
+    const response = await api.patch(`v1/clients/${clientId}`, {
+      ...payload,
+      ...(confirmDuplicate && { confirm_duplicate_phones: true }),
+    });
     return response.data;
   } catch (error) {
     throw error;
@@ -60,7 +66,7 @@ export const getAllClients = async (
   phone: string,
   clientsLimit: number,
   offset: number,
-  order: string
+  order: string,
 ) => {
   try {
     const params: Record<string, string | number> = {
