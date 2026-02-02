@@ -4,7 +4,7 @@ from uuid import UUID
 from sqlalchemy import asc, desc, exists, select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import joinedload
-from uuid_utils import uuid7
+from uuid_utils.compat import uuid7
 
 from backend.application.interfaces.gateways import Pagination, SortOrder
 from backend.application.interfaces.gateways.shop_gateway import (
@@ -106,7 +106,7 @@ class SQLAlchemyShopGateway:
         ]
 
     def next_id(self) -> ShopId:
-        return ShopId(UUID(str(uuid7())))
+        return ShopId(uuid7())
 
     async def get_shop_name(self, shop_id: ShopId) -> str | None:
         query = select(Shop.name).where(Shop.id == shop_id)

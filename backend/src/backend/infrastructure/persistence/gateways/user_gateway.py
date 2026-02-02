@@ -1,8 +1,6 @@
-from uuid import UUID
-
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
-from uuid_utils import uuid7
+from uuid_utils.compat import uuid7
 
 from backend.application.vars import UserId
 from backend.infrastructure.persistence.tables import TelegramAccount, User
@@ -27,4 +25,4 @@ class SQLAlchemyUserGateway:
         return UserId(user_id) if user_id else None
 
     def next_id(self) -> UserId:
-        return UserId(UUID(str(uuid7())))
+        return UserId(uuid7())

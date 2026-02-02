@@ -224,7 +224,7 @@ async def test_delete_product(
     url = BASE_URL + f"/{product_id}"
     response = await http_client.delete(url=url, headers=headers)
 
-    assert response.status_code == status.HTTP_200_OK
+    assert response.status_code == status.HTTP_204_NO_CONTENT
     await session.flush()
 
     deleted_entity = await session.execute(
@@ -621,7 +621,7 @@ async def test_delete_product_not_found_returns_ok(
     url = BASE_URL + f"/{uuid.uuid4()}"
     response = await http_client.delete(url=url, headers=headers)
 
-    assert response.status_code == status.HTTP_200_OK
+    assert response.status_code == status.HTTP_204_NO_CONTENT
 
 
 @pytest.mark.asyncio()

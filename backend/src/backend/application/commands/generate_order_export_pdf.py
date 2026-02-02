@@ -1,3 +1,4 @@
+import asyncio
 import logging
 from dataclasses import dataclass
 from datetime import date
@@ -89,10 +90,13 @@ class GenerateOrderExportPDFCommandHandler:
             shop_id,
         )
 
-        pdf_bytes = self._pdf_generator.handle(
-            orders=orders,
-            delivery_date=command.delivery_date,
-            shop_name=shop_name,
+        loop = asyncio.get_running_loop()
+        pdf_bytes = await loop.run_in_executor(
+            None,
+            self._pdf_generator.handle,
+            orders,
+            command.delivery_date,
+            shop_name,
         )
 
         filename = f"orders_{command.delivery_date.isoformat()}.pdf"

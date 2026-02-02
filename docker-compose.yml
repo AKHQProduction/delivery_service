@@ -42,7 +42,7 @@ services:
       - .env
     command: [ "redis-server", "--port", "${REDIS_PORT}", "--requirepass", "${REDIS_PASSWORD}" ]
     healthcheck:
-      test: [ "CMD-SHELL", "redis-cli", "-a", "$${REDIS_PASSWORD}", "ping" ]
+      test: [ "CMD-SHELL", "redis-cli -a $${REDIS_PASSWORD} ping" ]
       interval: 10s
       timeout: 5s
       retries: 5

@@ -293,7 +293,7 @@ async def test_delete_time_slot(
         url=f"{BASE_URL}/{time_slot_id}", headers=headers
     )
 
-    assert response.status_code == status.HTTP_200_OK
+    assert response.status_code == status.HTTP_204_NO_CONTENT
 
     await session.flush()
 

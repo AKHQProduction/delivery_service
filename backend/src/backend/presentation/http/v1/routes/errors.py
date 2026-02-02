@@ -67,6 +67,7 @@ async def internal_trouble(request: Request, exc: Exception) -> ORJSONResponse:
     logger.error(
         "Internal server error",
         extra={"path": request.url.path, "method": request.method},
+        exc_info=exc,
     )
     return ORJSONResponse(
         content={"detail": "Internal server error"},

@@ -5,6 +5,9 @@ from typing import TYPE_CHECKING
 import sqlalchemy as sa
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
+from backend.application.interfaces.gateways.order_gateway import (
+    DeliveryAddressDTO,
+)
 from backend.application.vars import (
     ClientId,
     OrderId,
@@ -15,6 +18,7 @@ from backend.application.vars import (
 from backend.infrastructure.persistence.tables.base import (
     Base,
     CreatedAt,
+    DeliveryAddressType,
     UpdatedAt,
 )
 
@@ -28,7 +32,9 @@ class Order(Base, CreatedAt, UpdatedAt):
 
     id: Mapped[OrderId] = mapped_column(sa.UUID, primary_key=True)
     date: Mapped[datetime.date] = mapped_column(sa.Date, nullable=False)
-    delivery_address: Mapped[dict] = mapped_column(sa.JSON, nullable=False)
+    delivery_address: Mapped[DeliveryAddressDTO] = mapped_column(
+        DeliveryAddressType, nullable=False
+    )
     delivery_phone: Mapped[str] = mapped_column(sa.String, nullable=False)
     delivery_start_time: Mapped[datetime.time] = mapped_column(
         sa.Time, nullable=False
@@ -36,7 +42,7 @@ class Order(Base, CreatedAt, UpdatedAt):
     delivery_end_time: Mapped[datetime.time] = mapped_column(
         sa.Time, nullable=False
     )
-    comment: Mapped[str] = mapped_column(sa.String, nullable=True)
+    comment: Mapped[str | None] = mapped_column(sa.String, nullable=True)
     is_paid: Mapped[bool] = mapped_column(
         sa.Boolean, nullable=False, default=False, server_default=sa.false()
     )

@@ -1,19 +1,11 @@
 import logging
 from dataclasses import dataclass
-from datetime import UTC, date, datetime, timedelta
-from decimal import Decimal
+from datetime import date, timedelta
 
 from backend.application.errors import (
     DateMustBeGreaterThanError,
-    EntityNotFoundError,
     ProductIdRequiredForNewItemError,
 )
-from backend.application.interfaces.gateways.order_gateway import (
-    DeliveryAddressDTO,
-    OrderItemDTO,
-    UpdateOrderDTO,
-)
-from backend.application.interfaces.idp import CurrentUserDTO
 from backend.application.policies.access import (
     ensure_can_manage,
     ensure_related_to_shop,
@@ -28,8 +20,16 @@ from backend.application.vars import (
     PhoneId,
     ProductId,
     TimeSlotId,
+    today,
 )
 from backend.domain.services.common import ensure_exists
+from backend.domain.services.order import (
+    resolve_address,
+    resolve_order_items,
+    resolve_phone,
+    update_order,
+    update_order_items,
+)
 from backend.infrastructure.idp import TelegramIdentityProvider
 from backend.infrastructure.persistence.gateways import (
     SQLAlchemyClientGateway,
@@ -37,10 +37,7 @@ from backend.infrastructure.persistence.gateways import (
     SQLAlchemyProductGateway,
     SQLAlchemyTimeSlotGateway,
 )
-from backend.infrastructure.persistence.tables.clients import Client
-from backend.infrastructure.persistence.tables.orders import (
-    Order as OrderORM,
-)
+from backend.infrastructure.persistence.tables.orders import Order
 from backend.infrastructure.transaction_manager import TransactionManager
 
 logger = logging.getLogger(__name__)
@@ -71,9 +68,9 @@ class UpdateOrderCommand:
 
     def __post_init__(self) -> None:
         if self.delivery_date is not None:
-            today = datetime.now(UTC).date()
-            if today > self.delivery_date:
-                previous_date = today - timedelta(days=1)
+            current_date = today()
+            if current_date > self.delivery_date:
+                previous_date = current_date - timedelta(days=1)
                 raise DateMustBeGreaterThanError(greater_than=previous_date)
 
 
@@ -99,7 +96,7 @@ class UpdateOrderCommandHandler:
         ensure_can_manage(current_user)
 
         order = ensure_exists(
-            await self._order_gateway.load(command.order_id),
+            await self._order_gateway.load_with_items(command.order_id),
             "Order",
         )
         ensure_related_to_shop(current_user, order.shop_id)
@@ -110,28 +107,27 @@ class UpdateOrderCommandHandler:
             current_user.shop_id,
         )
 
-        update_dto = await self._build_update_dto(command, order, current_user)
+        client_id = None
+        delivery_phone = None
+        delivery_address = None
 
-        await self._order_gateway.update(update_dto)
-        await self._tr_manager.commit()
-
-        logger.info(
-            "Successfully updated order: id=%s, shop_id=%s",
-            command.order_id,
-            order.shop_id,
-        )
-
-    async def _build_update_dto(
-        self,
-        command: UpdateOrderCommand,
-        order: OrderORM,
-        current_user: CurrentUserDTO,
-    ) -> UpdateOrderDTO:
-        (
-            client_id,
-            delivery_phone,
-            delivery_address,
-        ) = await self._process_client_changes(command, order, current_user)
+        if (
+            command.client_id is not None
+            or command.phone_id is not None
+            or command.address_id is not None
+        ):
+            client_id_to_use = command.client_id or order.client_id
+            client = ensure_exists(
+                await self._client_gateway.load(client_id_to_use),
+                "Client",
+            )
+            if command.client_id is not None:
+                ensure_related_to_shop(current_user, client.shop_id)
+                client_id = command.client_id
+            if command.phone_id is not None:
+                delivery_phone = resolve_phone(client, command.phone_id)
+            if command.address_id is not None:
+                delivery_address = resolve_address(client, command.address_id)
 
         delivery_start_time = None
         delivery_end_time = None
@@ -144,14 +140,8 @@ class UpdateOrderCommandHandler:
             delivery_start_time = time_slot.start_time
             delivery_end_time = time_slot.end_time
 
-        items: list[OrderItemDTO] | None = None
-        if command.items is not None:
-            items = await self._process_items(
-                command.order_id,
-                command.items,  # type: ignore[arg-type]
-            )
-        return UpdateOrderDTO(
-            order_id=command.order_id,
+        update_order(
+            order,
             client_id=client_id,
             delivery_date=command.delivery_date,
             delivery_start_time=delivery_start_time,
@@ -159,132 +149,55 @@ class UpdateOrderCommandHandler:
             delivery_phone=delivery_phone,
             delivery_address=delivery_address,
             comment=command.comment,
-            items=items,
             payment_method=command.payment_method,
         )
 
-    async def _process_client_changes(
-        self,
-        command: UpdateOrderCommand,
-        order: OrderORM,
-        current_user: CurrentUserDTO,
-    ) -> tuple[ClientId | None, str | None, DeliveryAddressDTO | None]:
-        client_id: ClientId | None = None
-        delivery_phone: str | None = None
-        delivery_address: DeliveryAddressDTO | None = None
+        if command.items is not None:
+            await self._process_items(command, order)
 
-        need_client_load = (
-            command.client_id is not None
-            or command.phone_id is not None
-            or command.address_id is not None
-        )
+        await self._tr_manager.commit()
 
-        if not need_client_load:
-            return client_id, delivery_phone, delivery_address
-
-        client_id_to_use = command.client_id or order.client_id
-        client = ensure_exists(
-            await self._client_gateway.load(client_id_to_use),
-            "Client",
-        )
-
-        if command.client_id is not None:
-            ensure_related_to_shop(current_user, client.shop_id)
-            client_id = command.client_id
-
-        if command.phone_id is not None:
-            delivery_phone = self._get_phone_number(client, command.phone_id)
-
-        if command.address_id is not None:
-            delivery_address = self._get_delivery_address(
-                client, command.address_id
-            )
-
-        return client_id, delivery_phone, delivery_address
-
-    @staticmethod
-    def _get_phone_number(client: Client, phone_id: PhoneId) -> str:
-        phone = next(
-            (p for p in client.phones if p.id == phone_id),
-            None,
-        )
-        if not phone:
-            raise EntityNotFoundError(entity="Phone")
-        return phone.number
-
-    @staticmethod
-    def _get_delivery_address(
-        client: Client, address_id: AddressId
-    ) -> DeliveryAddressDTO:
-        address = next(
-            (a for a in client.addresses if a.id == address_id),
-            None,
-        )
-        if not address:
-            raise EntityNotFoundError(entity="Address")
-        return DeliveryAddressDTO(
-            street=address.street,
-            house=address.house,
-            apartment=address.apartment,
-            entrance=address.entrance,
-            floor=address.floor,
-            intercom=address.intercom,
-            comment=address.comment,
+        logger.info(
+            "Successfully updated order: id=%s, shop_id=%s",
+            command.order_id,
+            order.shop_id,
         )
 
     async def _process_items(
-        self, order_id: OrderId, items: list[OrderItem]
-    ) -> list[OrderItemDTO]:
-        existing_items = await self._order_gateway.load_items(order_id)
-        existing_items_map = {item.id: item for item in existing_items}
+        self,
+        command: UpdateOrderCommand,
+        order: Order,
+    ) -> None:
+        product_ids = {
+            item.product_id
+            for item in command.items  # type: ignore[union-attr]
+            if item.product_id is not None
+        }
+        existing_product_ids = {
+            item.product_id
+            for item in order.items
+            if item.product_id is not None
+        }
+        all_product_ids = list(product_ids | existing_product_ids)
 
-        product_ids_to_load: set[ProductId] = set()
-        item_product_map: dict[int, ProductId] = {}
-
-        for idx, item in enumerate(items):
-            product_id_to_use: ProductId | None = None
-
-            if item.product_id is not None:
-                product_id_to_use = item.product_id
-            elif item.id is not None:
-                existing_item = existing_items_map.get(item.id)
-                if existing_item and existing_item.product_id:
-                    product_id_to_use = existing_item.product_id
-
-            if product_id_to_use is not None:
-                product_ids_to_load.add(product_id_to_use)
-                item_product_map[idx] = product_id_to_use
-
-        products_map: dict[ProductId, tuple[str, Decimal]] = {}
-        if product_ids_to_load:
-            products = await self._product_gateway.load_many(
-                list(product_ids_to_load)
-            )
-            products_map = {p.id: (p.name, p.price) for p in products}
-
-            for product_id in product_ids_to_load:
-                ensure_exists(
-                    products_map.get(product_id),
-                    "Product",
-                )
-
-        result: list[OrderItemDTO] = []
-        for idx, item in enumerate(items):
-            product_id_to_use = item_product_map.get(idx)
-            name: str | None = None
-            price_per_item: Decimal | None = None
-
-            if product_id_to_use is not None:
-                name, price_per_item = products_map[product_id_to_use]
-
-            result.append(
-                OrderItemDTO(
-                    quantity=item.quantity,
-                    name=name,
-                    price_per_item=price_per_item,
-                    id=item.id,
-                    product_id=product_id_to_use,
-                )
+        products = (
+            await self._product_gateway.load_many(all_product_ids)
+            if all_product_ids
+            else []
+        )
+        for pid in product_ids:
+            ensure_exists(
+                next((p for p in products if p.id == pid), None),
+                "Product",
             )
 
-        return result
+        item_dtos = resolve_order_items(
+            items=[
+                (item.id, item.quantity, item.product_id)
+                for item in command.items  # type: ignore[union-attr]
+            ],
+            existing_items=order.items,
+            products=products,
+        )
+        removed = update_order_items(order, item_dtos)
+        await self._order_gateway.delete_items(removed)

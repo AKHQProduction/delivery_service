@@ -1,9 +1,7 @@
-from uuid import UUID
-
 from sqlalchemy import ColumnElement, asc, desc, exists, or_, select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
-from uuid_utils import uuid7
+from uuid_utils.compat import uuid7
 
 from backend.application.interfaces.gateways import Pagination, SortOrder
 from backend.application.interfaces.gateways.client_gateway import (
@@ -66,36 +64,7 @@ class SQLAlchemyClientGateway:
         if client is None:
             return None
 
-        phones = [
-            PhoneDTO(
-                number=phone.number,
-                is_primary=phone.is_primary,
-                id=PhoneId(phone.id),
-            )
-            for phone in client.phones
-        ]
-
-        addresses = [
-            AddressDTO(
-                street=address.street,
-                house=address.house,
-                comment=address.comment,
-                apartment=address.apartment,
-                entrance=address.entrance,
-                floor=address.floor,
-                intercom=address.intercom,
-                is_primary=address.is_primary,
-                id=AddressId(address.id),
-            )
-            for address in client.addresses
-        ]
-
-        return ClientReadModel(
-            client_id=ClientId(client.id),
-            full_name=client.full_name,
-            phones=phones,
-            addresses=addresses,
-        )
+        return self._to_read_model(client)
 
     async def read_all(
         self,
@@ -139,38 +108,39 @@ class SQLAlchemyClientGateway:
         result = await self._session.execute(query)
         clients = result.scalars().all()
 
-        return [
-            ClientReadModel(
-                client_id=ClientId(client.id),
-                full_name=client.full_name,
-                phones=[
-                    PhoneDTO(
-                        number=phone.number,
-                        is_primary=phone.is_primary,
-                        id=PhoneId(phone.id),
-                    )
-                    for phone in client.phones
-                ],
-                addresses=[
-                    AddressDTO(
-                        street=address.street,
-                        house=address.house,
-                        comment=address.comment,
-                        apartment=address.apartment,
-                        entrance=address.entrance,
-                        floor=address.floor,
-                        intercom=address.intercom,
-                        is_primary=address.is_primary,
-                        id=AddressId(address.id),
-                    )
-                    for address in client.addresses
-                ],
-            )
-            for client in clients
-        ]
+        return [self._to_read_model(client) for client in clients]
+
+    @staticmethod
+    def _to_read_model(client: Client) -> ClientReadModel:
+        return ClientReadModel(
+            client_id=ClientId(client.id),
+            full_name=client.full_name,
+            phones=[
+                PhoneDTO(
+                    number=phone.number,
+                    is_primary=phone.is_primary,
+                    id=PhoneId(phone.id),
+                )
+                for phone in client.phones
+            ],
+            addresses=[
+                AddressDTO(
+                    street=address.street,
+                    house=address.house,
+                    comment=address.comment,
+                    apartment=address.apartment,
+                    entrance=address.entrance,
+                    floor=address.floor,
+                    intercom=address.intercom,
+                    is_primary=address.is_primary,
+                    id=AddressId(address.id),
+                )
+                for address in client.addresses
+            ],
+        )
 
     def next_id(self) -> ClientId:
-        return ClientId(UUID(str(uuid7())))
+        return ClientId(uuid7())
 
     async def find_duplicate_phones(
         self,

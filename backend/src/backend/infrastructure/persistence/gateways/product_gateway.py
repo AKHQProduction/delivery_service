@@ -4,7 +4,7 @@ from uuid import UUID
 from sqlalchemy import asc, desc, select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
-from uuid_utils import uuid7
+from uuid_utils.compat import uuid7
 
 from backend.application.interfaces.gateways import Pagination, SortOrder
 from backend.application.interfaces.gateways.product_gateway import (
@@ -21,7 +21,7 @@ class SQLAlchemyProductGateway:
         self._session = session
 
     def next_id(self) -> ProductId:
-        return ProductId(UUID(str(uuid7())))
+        return ProductId(uuid7())
 
     def save(self, product: Product) -> None:
         self._session.add(product)

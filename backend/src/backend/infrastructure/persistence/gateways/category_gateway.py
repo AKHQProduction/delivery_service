@@ -3,7 +3,7 @@ from uuid import UUID
 
 from sqlalchemy import asc, desc, select
 from sqlalchemy.ext.asyncio import AsyncSession
-from uuid_utils import uuid7
+from uuid_utils.compat import uuid7
 
 from backend.application.interfaces.gateways import Pagination, SortOrder
 from backend.application.interfaces.gateways.category_gateway import (
@@ -20,7 +20,7 @@ class SQLAlchemyCategoryGateway:
         self._session = session
 
     def next_id(self) -> CategoryId:
-        return CategoryId(UUID(str(uuid7())))
+        return CategoryId(uuid7())
 
     def save(self, category: Category) -> None:
         self._session.add(category)
@@ -62,9 +62,10 @@ class SQLAlchemyCategoryGateway:
         ]
 
     async def exists_by_name_in_shop(self, name: str, shop_id: ShopId) -> bool:
-        query = select(Category).where(
-            Category.name == name,
-            Category.shop_id == shop_id,
+        query = select(
+            select(Category.id)
+            .where(Category.name == name, Category.shop_id == shop_id)
+            .exists()
         )
         result = await self._session.execute(query)
-        return result.scalar_one_or_none() is not None
+        return result.scalar_one()

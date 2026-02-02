@@ -80,8 +80,8 @@ class PersistenceProvider(Provider):
     ) -> AsyncIterator[AsyncEngine]:
         engine = create_async_engine(
             config.uri,
-            pool_size=30,
-            max_overflow=0,
+            pool_size=config.pool_size,
+            max_overflow=config.max_overflow,
         )
 
         yield engine

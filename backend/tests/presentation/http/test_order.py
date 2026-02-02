@@ -107,9 +107,9 @@ async def test_create_order_with_single_product(
     assert order.comment == "Доставити до 12:00"
 
     # Verify delivery address
-    assert order.delivery_address["street"] == "Хрещатик"
-    assert order.delivery_address["house"] == "10"
-    assert order.delivery_address["apartment"] == "5"
+    assert order.delivery_address.street == "Хрещатик"
+    assert order.delivery_address.house == "10"
+    assert order.delivery_address.apartment == "5"
 
     # Verify order items
     items_result = await session.execute(
@@ -973,7 +973,7 @@ async def test_update_order_phone_and_address(
     result = await session.execute(select(Order).where(Order.id == order_id))
     order = result.scalar_one()
     assert order.delivery_phone == "+380502222222"
-    assert order.delivery_address["street"] == "Друга"
+    assert order.delivery_address.street == "Друга"
 
 
 @pytest.mark.asyncio()
@@ -1241,7 +1241,7 @@ async def test_update_order_change_client(
     order = result.scalar_one()
     assert order.client_id == client_id_2
     assert order.delivery_phone == "+380502222222"
-    assert order.delivery_address["street"] == "Друга"
+    assert order.delivery_address.street == "Друга"
 
 
 @pytest.mark.asyncio()
@@ -1334,7 +1334,7 @@ async def test_delete_order(
         url=f"{BASE_URL}/{order_id}", headers=headers
     )
 
-    assert delete_response.status_code == status.HTTP_200_OK
+    assert delete_response.status_code == status.HTTP_204_NO_CONTENT
 
     await session.flush()
 
@@ -2288,7 +2288,7 @@ async def test_delete_order_not_found_returns_ok(
         url=f"{BASE_URL}/{uuid.uuid4()}", headers=headers
     )
 
-    assert response.status_code == status.HTTP_200_OK
+    assert response.status_code == status.HTTP_204_NO_CONTENT
 
 
 @pytest.mark.asyncio()

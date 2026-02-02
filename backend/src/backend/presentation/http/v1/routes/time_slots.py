@@ -75,7 +75,7 @@ async def update_time_slot(
 
 @router.delete(
     "/{time_slot_id}",
-    status_code=status.HTTP_200_OK,
+    status_code=status.HTTP_204_NO_CONTENT,
     responses={
         status.HTTP_401_UNAUTHORIZED: {"model": ErrorSchema},
         status.HTTP_403_FORBIDDEN: {"model": ErrorSchema},

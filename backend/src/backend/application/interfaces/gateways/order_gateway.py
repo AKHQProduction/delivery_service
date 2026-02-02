@@ -4,7 +4,6 @@ from decimal import Decimal
 
 from backend.application.vars import (
     ClientId,
-    Empty,
     OrderId,
     OrderItemId,
     PaymentMethod,
@@ -96,17 +95,3 @@ class OrderStatsReadModel:
     time_slot_stats: list[TimeSlotStatsReadModel]
     category_stats: list[CategoryStatsReadModel]
     payment_method_stats: list[PaymentMethodStatsReadModel]
-
-
-@dataclass(frozen=True)
-class UpdateOrderDTO:
-    order_id: OrderId
-    client_id: ClientId | None = None
-    delivery_date: date | None = None
-    delivery_start_time: time | None = None
-    delivery_end_time: time | None = None
-    delivery_phone: str | None = None
-    delivery_address: DeliveryAddressDTO | None = None
-    comment: str | Empty | None = None
-    items: list[OrderItemDTO] | None = None
-    payment_method: PaymentMethod | None = None

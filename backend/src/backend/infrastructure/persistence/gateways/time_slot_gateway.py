@@ -4,7 +4,7 @@ from uuid import UUID
 
 from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
-from uuid_utils import uuid7
+from uuid_utils.compat import uuid7
 
 from backend.application.interfaces.gateways.time_slot_gateway import (
     TimeSlotReadModel,
@@ -20,7 +20,7 @@ class SQLAlchemyTimeSlotGateway:
         self._session = session
 
     def next_id(self) -> TimeSlotId:
-        return TimeSlotId(UUID(str(uuid7())))
+        return TimeSlotId(uuid7())
 
     def save(self, time_slot: ShopDeliveryTimeSlot) -> None:
         self._session.add(time_slot)

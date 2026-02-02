@@ -1,8 +1,11 @@
 import logging
 from dataclasses import dataclass
-from datetime import UTC, date, datetime, timedelta
+from datetime import date, timedelta
 
 from backend.application.errors import DateMustBeGreaterThanError
+from backend.application.interfaces.gateways.order_gateway import (
+    DeliveryAddressDTO,
+)
 from backend.application.policies.access import (
     ensure_can_manage,
     ensure_related_to_shop,
@@ -15,6 +18,7 @@ from backend.application.vars import (
     PhoneId,
     ProductId,
     TimeSlotId,
+    today,
 )
 from backend.domain.services.common import ensure_exists
 from backend.domain.services.order import (
@@ -52,9 +56,9 @@ class CreateOrderCommand:
     comment: str | None = None
 
     def __post_init__(self) -> None:
-        today = datetime.now(UTC).date()
-        if today > self.delivery_date:
-            previous_date = today - timedelta(days=1)
+        current_date = today()
+        if current_date > self.delivery_date:
+            previous_date = current_date - timedelta(days=1)
 
             raise DateMustBeGreaterThanError(greater_than=previous_date)
 
@@ -136,15 +140,15 @@ class CreateOrderCommandHandler:
             delivery_start_time=time_slot.start_time,
             delivery_end_time=time_slot.end_time,
             delivery_phone=phone.number,
-            delivery_address={
-                "street": address.street,
-                "house": address.house,
-                "apartment": address.apartment,
-                "entrance": address.entrance,
-                "floor": address.floor,
-                "intercom": address.intercom,
-                "comment": address.comment,
-            },
+            delivery_address=DeliveryAddressDTO(
+                street=address.street,
+                house=address.house,
+                apartment=address.apartment,
+                entrance=address.entrance,
+                floor=address.floor,
+                intercom=address.intercom,
+                comment=address.comment,
+            ),
             payment_method=command.payment_method,
             comment=command.comment,
         )

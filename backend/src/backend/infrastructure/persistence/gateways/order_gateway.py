@@ -5,12 +5,11 @@ from sqlalchemy import asc, case, desc, func, literal, or_, select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 from sqlalchemy.sql import Select
-from uuid_utils import uuid7
+from uuid_utils.compat import uuid7
 
 from backend.application.interfaces.gateways import Pagination, SortOrder
 from backend.application.interfaces.gateways.order_gateway import (
     CategoryStatsReadModel,
-    DeliveryAddressDTO,
     GetOrdersFilters,
     OrderItemReadModel,
     OrderReadModel,
@@ -18,11 +17,9 @@ from backend.application.interfaces.gateways.order_gateway import (
     PaymentMethodStatsReadModel,
     TimeSlotFilter,
     TimeSlotStatsReadModel,
-    UpdateOrderDTO,
 )
 from backend.application.vars import (
     ClientId,
-    Empty,
     OrderId,
     PaymentMethod,
     ProductId,
@@ -43,7 +40,7 @@ class SQLAlchemyOrderGateway:
         self._session = session
 
     def next_id(self) -> OrderId:
-        return OrderId(UUID(str(uuid7())))
+        return OrderId(uuid7())
 
     def save(self, order: Order) -> None:
         self._session.add(order)
@@ -51,8 +48,21 @@ class SQLAlchemyOrderGateway:
     async def load(self, order_id: OrderId) -> Order | None:
         return await self._session.get(Order, order_id)
 
+    async def load_with_items(self, order_id: OrderId) -> Order | None:
+        query = (
+            select(Order)
+            .options(selectinload(Order.items))
+            .where(Order.id == order_id)
+        )
+        result = await self._session.execute(query)
+        return result.scalar_one_or_none()
+
     async def delete(self, order: Order) -> None:
         await self._session.delete(order)
+
+    async def delete_items(self, items: list[OrderItem]) -> None:
+        for item in items:
+            await self._session.delete(item)
 
     async def read(
         self, order_id: OrderId, shop_id: ShopId
@@ -110,10 +120,6 @@ class SQLAlchemyOrderGateway:
         return [self._to_read_model(row) for row in rows]
 
     def _to_read_model(self, row: Order) -> OrderReadModel:
-        delivery_address_dict = cast(
-            "dict[str, object]",
-            cast("object", row.delivery_address),
-        )
         time_slot = (
             f"{row.delivery_start_time.strftime('%H:%M')}-"
             f"{row.delivery_end_time.strftime('%H:%M')}"
@@ -123,30 +129,7 @@ class SQLAlchemyOrderGateway:
             date=row.date.strftime("%d.%m.%Y"),
             time_slot=time_slot,
             delivery_phone=cast("str", cast("object", row.delivery_phone)),
-            delivery_address=DeliveryAddressDTO(
-                street=cast("str", delivery_address_dict.get("street")),
-                house=cast("str", delivery_address_dict.get("house")),
-                apartment=cast(
-                    "str | None",
-                    delivery_address_dict.get("apartment"),
-                ),
-                entrance=cast(
-                    "str | None",
-                    delivery_address_dict.get("entrance"),
-                ),
-                floor=cast(
-                    "str | None",
-                    delivery_address_dict.get("floor"),
-                ),
-                intercom=cast(
-                    "str | None",
-                    delivery_address_dict.get("intercom"),
-                ),
-                comment=cast(
-                    "str | None",
-                    delivery_address_dict.get("comment"),
-                ),
-            ),
+            delivery_address=row.delivery_address,
             comment=cast("str | None", cast("object", row.comment)),
             client_id=ClientId(cast("UUID", cast("object", row.client_id))),
             client_name=cast("str", cast("object", row.client.full_name)),
@@ -173,84 +156,6 @@ class SQLAlchemyOrderGateway:
                 cast("str", cast("object", row.payment_method))
             ),
         )
-
-    async def update(self, dto: UpdateOrderDTO) -> None:
-        query = (
-            select(Order)
-            .options(selectinload(Order.items))
-            .where(Order.id == dto.order_id)
-        )
-        result = await self._session.execute(query)
-        order_db = result.scalar_one_or_none()
-
-        if not order_db:
-            return
-
-        if dto.client_id is not None:
-            order_db.client_id = dto.client_id
-
-        if dto.delivery_date is not None:
-            order_db.date = dto.delivery_date
-
-        if dto.delivery_start_time is not None:
-            order_db.delivery_start_time = dto.delivery_start_time
-
-        if dto.delivery_end_time is not None:
-            order_db.delivery_end_time = dto.delivery_end_time
-
-        if dto.delivery_phone is not None:
-            order_db.delivery_phone = dto.delivery_phone
-
-        if dto.delivery_address is not None:
-            order_db.delivery_address = {
-                "street": dto.delivery_address.street,
-                "house": dto.delivery_address.house,
-                "apartment": dto.delivery_address.apartment,
-                "entrance": dto.delivery_address.entrance,
-                "floor": dto.delivery_address.floor,
-                "intercom": dto.delivery_address.intercom,
-                "comment": dto.delivery_address.comment,
-            }
-
-        if dto.comment is not None:
-            if dto.comment == Empty.EMPTY:
-                order_db.comment = cast("str", None)
-            else:
-                order_db.comment = dto.comment
-
-        if dto.payment_method is not None:
-            order_db.payment_method = dto.payment_method.value
-
-        if dto.items is not None:
-            existing_items_map = {item.id: item for item in order_db.items}
-            new_ids = {item.id for item in dto.items if item.id is not None}
-
-            for item in order_db.items:
-                if item.id not in new_ids:
-                    await self._session.delete(item)
-
-            for item_dto in dto.items:
-                if (
-                    item_dto.id is not None
-                    and item_dto.id in existing_items_map
-                ):
-                    item = existing_items_map[item_dto.id]
-                    item.quantity = item_dto.quantity
-                    if item_dto.name is not None:
-                        item.name = item_dto.name
-                    if item_dto.price_per_item is not None:
-                        item.price_per_item = item_dto.price_per_item
-                    if item_dto.product_id is not None:
-                        item.product_id = item_dto.product_id
-                else:
-                    new_item = OrderItem(
-                        name=item_dto.name or "",
-                        quantity=item_dto.quantity,
-                        price_per_item=item_dto.price_per_item or 0,
-                        order_id=dto.order_id,
-                        product_id=item_dto.product_id,
-                    )
-                    self._session.add(new_item)
 
     async def load_items(self, order_id: OrderId) -> list[OrderItemReadModel]:
         query = select(OrderItem).where(OrderItem.order_id == order_id)
@@ -282,32 +187,27 @@ class SQLAlchemyOrderGateway:
         filters: GetOrdersFilters,
         time_slots_filter: list[TimeSlotFilter],
     ) -> OrderStatsReadModel:
-        main_query = (
-            select(
-                func.count(func.distinct(Order.id)).label("total_orders"),
-                func.coalesce(
-                    func.sum(OrderItem.quantity * OrderItem.price_per_item),
-                    0,
-                ).label("total_orders_sum"),
-            )
-            .select_from(Order)
-            .outerjoin(OrderItem, Order.id == OrderItem.order_id)
-        )
-        main_query = self._apply_order_filters(main_query, filters)
+        payment_method_stats = await self._get_payment_method_stats(filters)
 
-        main_result = await self._session.execute(main_query)
-        main_row = main_result.one()
+        total_orders_sum = sum(pm.orders_sum for pm in payment_method_stats)
+
+        total_orders_query = select(
+            func.count(Order.id).label("total_orders"),
+        ).select_from(Order)
+        total_orders_query = self._apply_order_filters(
+            total_orders_query, filters
+        )
+        total_orders_result = await self._session.execute(total_orders_query)
+        total_orders = total_orders_result.scalar_one() or 0
 
         return OrderStatsReadModel(
-            total_orders=main_row.total_orders or 0,
-            total_orders_sum=int(main_row.total_orders_sum or 0),
+            total_orders=total_orders,
+            total_orders_sum=int(total_orders_sum),
             time_slot_stats=await self._get_time_slot_stats(
                 filters, time_slots_filter
             ),
             category_stats=await self._get_category_stats(filters),
-            payment_method_stats=(
-                await self._get_payment_method_stats(filters)
-            ),
+            payment_method_stats=payment_method_stats,
         )
 
     async def _get_time_slot_stats(

@@ -93,10 +93,10 @@ def do_run_migrations(connection: Connection) -> None:
         connection=connection,
         target_metadata=target_metadata,
         process_revision_directives=process_revision_directives,
+        transaction_per_migration=True,
     )
 
-    with context.begin_transaction():
-        context.run_migrations()
+    context.run_migrations()
 
 
 async def run_async_migrations() -> None:
@@ -111,6 +111,7 @@ async def run_async_migrations() -> None:
         )
 
         async with connectable.connect() as connection:
+            await connection.execution_options(isolation_level="AUTOCOMMIT")
             await connection.run_sync(do_run_migrations)
 
         await connectable.dispose()
