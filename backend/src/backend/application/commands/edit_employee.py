@@ -1,14 +1,14 @@
 import logging
 from dataclasses import dataclass
 
+from backend.application.common import ensure_exists
 from backend.application.errors import FieldError
 from backend.application.policies.access import (
     ensure_is_owner,
     ensure_related_to_shop,
 )
+from backend.application.services.shop import update_membership
 from backend.application.vars import ShopRole, UserId
-from backend.domain.services.common import ensure_exists
-from backend.domain.services.shop import update_membership
 from backend.infrastructure.idp import TelegramIdentityProvider
 from backend.infrastructure.persistence.gateways import SQLAlchemyShopGateway
 from backend.infrastructure.transaction_manager import TransactionManager

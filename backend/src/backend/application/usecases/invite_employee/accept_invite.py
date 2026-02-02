@@ -6,8 +6,8 @@ from backend.application.errors import (
     EntityNotFoundError,
     UserAlreadyRelatedToShopError,
 )
-from backend.domain.services.shop import create_membership
-from backend.domain.services.user import create_user_via_tg
+from backend.application.services.shop import create_membership
+from backend.application.services.user import create_user_via_tg
 from backend.infrastructure.idp import TelegramIdentityProvider
 from backend.infrastructure.persistence.gateways import (
     RedisLinkGateway,

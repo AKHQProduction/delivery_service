@@ -4,8 +4,8 @@ from decimal import Decimal
 from uuid import UUID
 
 from backend.application.policies.access import ensure_can_manage
+from backend.application.services.product import create_product
 from backend.application.vars import CategoryId, Empty, ProductId
-from backend.domain.services.product import create_product
 from backend.infrastructure.idp import TelegramIdentityProvider
 from backend.infrastructure.persistence.gateways import (
     SQLAlchemyProductGateway,

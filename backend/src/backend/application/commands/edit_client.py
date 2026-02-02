@@ -1,6 +1,7 @@
 import logging
 from dataclasses import dataclass
 
+from backend.application.common import ensure_exists
 from backend.application.errors import (
     ExistingClientInfo,
     InvalidPrimaryFlagError,
@@ -11,16 +12,15 @@ from backend.application.policies.access import (
     ensure_can_manage,
     ensure_related_to_shop,
 )
-from backend.application.validators import normalize_ukraine_phone
-from backend.application.vars import AddressId, ClientId, PhoneId
-from backend.domain.services.client import (
+from backend.application.services.client import (
     create_address,
     create_phone,
     update_address,
     update_client,
     update_phone,
 )
-from backend.domain.services.common import ensure_exists
+from backend.application.validators import normalize_ukraine_phone
+from backend.application.vars import AddressId, ClientId, PhoneId
 from backend.infrastructure.idp import TelegramIdentityProvider
 from backend.infrastructure.persistence.gateways import (
     SQLAlchemyClientGateway,

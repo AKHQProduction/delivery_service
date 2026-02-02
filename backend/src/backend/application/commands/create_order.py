@@ -2,6 +2,7 @@ import logging
 from dataclasses import dataclass
 from datetime import date, timedelta
 
+from backend.application.common import ensure_exists
 from backend.application.errors import DateMustBeGreaterThanError
 from backend.application.interfaces.gateways.order_gateway import (
     DeliveryAddressDTO,
@@ -9,6 +10,10 @@ from backend.application.interfaces.gateways.order_gateway import (
 from backend.application.policies.access import (
     ensure_can_manage,
     ensure_related_to_shop,
+)
+from backend.application.services.order import (
+    create_order,
+    create_order_item,
 )
 from backend.application.vars import (
     AddressId,
@@ -19,11 +24,6 @@ from backend.application.vars import (
     ProductId,
     TimeSlotId,
     today,
-)
-from backend.domain.services.common import ensure_exists
-from backend.domain.services.order import (
-    create_order,
-    create_order_item,
 )
 from backend.infrastructure.idp import TelegramIdentityProvider
 from backend.infrastructure.persistence.gateways import (

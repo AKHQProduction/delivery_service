@@ -3,8 +3,8 @@ from dataclasses import dataclass
 
 from backend.application.errors import AlreadyExistsError
 from backend.application.policies.access import ensure_can_manage
+from backend.application.services.category import create_category
 from backend.application.vars import CategoryId
-from backend.domain.services.category import create_category
 from backend.infrastructure.idp import TelegramIdentityProvider
 from backend.infrastructure.persistence.gateways import (
     SQLAlchemyCategoryGateway,

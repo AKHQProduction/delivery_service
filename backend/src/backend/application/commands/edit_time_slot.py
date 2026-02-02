@@ -2,15 +2,15 @@ import logging
 from dataclasses import dataclass
 from datetime import time
 
+from backend.application.common import ensure_exists
 from backend.application.errors import AlreadyExistsError
 from backend.application.policies.access import (
     ensure_is_owner,
     ensure_related_to_shop,
 )
+from backend.application.services.time_slot import update_time_slot
 from backend.application.validators.time import validate_time_slot_range
 from backend.application.vars import TimeSlotId
-from backend.domain.services.common import ensure_exists
-from backend.domain.services.time_slot import update_time_slot
 from backend.infrastructure.idp import TelegramIdentityProvider
 from backend.infrastructure.persistence.gateways import (
     SQLAlchemyTimeSlotGateway,

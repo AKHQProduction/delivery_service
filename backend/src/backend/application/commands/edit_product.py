@@ -3,13 +3,13 @@ from dataclasses import dataclass
 from decimal import Decimal
 from typing import cast
 
+from backend.application.common import ensure_exists
 from backend.application.policies.access import (
     ensure_can_manage,
     ensure_related_to_shop,
 )
+from backend.application.services.product import update_product
 from backend.application.vars import CategoryId, Empty, ProductId
-from backend.domain.services.common import ensure_exists
-from backend.domain.services.product import update_product
 from backend.infrastructure.idp import TelegramIdentityProvider
 from backend.infrastructure.persistence.gateways import (
     SQLAlchemyProductGateway,

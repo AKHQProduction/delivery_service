@@ -7,13 +7,13 @@ from backend.application.errors import (
     PhoneNumberAlreadyExistsError,
 )
 from backend.application.policies.access import ensure_can_manage
-from backend.application.validators import normalize_ukraine_phone
-from backend.application.vars import ClientId
-from backend.domain.services.client import (
+from backend.application.services.client import (
     create_address,
     create_client,
     create_phone,
 )
+from backend.application.validators import normalize_ukraine_phone
+from backend.application.vars import ClientId
 from backend.infrastructure.idp import TelegramIdentityProvider
 from backend.infrastructure.persistence.gateways import (
     SQLAlchemyClientGateway,

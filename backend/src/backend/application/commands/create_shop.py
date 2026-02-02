@@ -5,8 +5,8 @@ from backend.application.errors import (
     AuthorizationError,
     UserAlreadyRelatedToShopError,
 )
+from backend.application.services.shop import create_shop
 from backend.application.vars import ShopRole
-from backend.domain.services.shop import create_shop
 from backend.infrastructure.idp import TelegramIdentityProvider
 from backend.infrastructure.persistence.gateways import SQLAlchemyShopGateway
 from backend.infrastructure.transaction_manager import TransactionManager
