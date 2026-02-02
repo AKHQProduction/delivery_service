@@ -216,19 +216,13 @@ export const TimeSlotsComponent = () => {
               <TimeInput
                 value={startTimeValue}
                 onChange={(value) => {
-                  const [hours, minutes] = value.split(":");
-                  const newStart = new Date();
-                  newStart.setHours(parseInt(hours), parseInt(minutes), 0, 0);
-                  handleFieldChange(slot.time_slot_id, "start_time", newStart);
+                  handleFieldChange(slot.time_slot_id, "start_time", value);
                 }}
               />
               <TimeInput
                 value={endTimeValue}
                 onChange={(value) => {
-                  const [hours, minutes] = value.split(":");
-                  const newEnd = new Date();
-                  newEnd.setHours(parseInt(hours), parseInt(minutes), 0, 0);
-                  handleFieldChange(slot.time_slot_id, "end_time", newEnd);
+                  handleFieldChange(slot.time_slot_id, "end_time", value);
                 }}
               />
 
