@@ -29,7 +29,12 @@ api.interceptors.response.use(
     if (error.response) {
       // Server responded with error status
       const data = error.response.data;
-      
+
+      //TODO:
+      //MOVE THIS TO A SEPARATE FILE WITH ALL EXEPTIONS
+       if (error.response.status === 409 && data?.code === "duplicate_phones") {
+        return Promise.reject(error);
+      }
       // Extract error message from backend response
       // Adjust these fields based on your backend's error response structure
       const errorMessage = 
