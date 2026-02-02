@@ -1,7 +1,13 @@
 import pytest
 
-from backend.application.errors import InvalidPhoneNumberError
-from backend.application.validators.phone import normalize_ukraine_phone
+from backend.application.errors import (
+    InvalidPhoneNumberError,
+    PhoneNumberAlreadyExistsError,
+)
+from backend.application.validators.phone import (
+    normalize_ukraine_phone,
+    validate_no_duplicate_phones,
+)
 
 
 class TestNormalizeUkrainePhone:
@@ -71,3 +77,28 @@ class TestNormalizeUkrainePhone:
 
         for input_phone, expected in test_cases:
             assert normalize_ukraine_phone(input_phone) == expected
+
+
+class TestValidateNoDuplicatePhones:
+    def test_no_duplicates(self):
+        validate_no_duplicate_phones(["+380991234567", "+380997654321"])
+
+    def test_empty_list(self):
+        validate_no_duplicate_phones([])
+
+    def test_single_phone(self):
+        validate_no_duplicate_phones(["+380991234567"])
+
+    def test_duplicate_raises_error(self):
+        with pytest.raises(PhoneNumberAlreadyExistsError):
+            validate_no_duplicate_phones(["+380991234567", "+380991234567"])
+
+    def test_multiple_duplicates(self):
+        with pytest.raises(PhoneNumberAlreadyExistsError) as exc_info:
+            validate_no_duplicate_phones([
+                "+380991234567",
+                "+380997654321",
+                "+380991234567",
+                "+380997654321",
+            ])
+        assert len(exc_info.value.duplicates) == 2

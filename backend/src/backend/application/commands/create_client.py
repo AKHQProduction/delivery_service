@@ -13,6 +13,7 @@ from backend.application.services.client import (
     create_phone,
 )
 from backend.application.validators import normalize_ukraine_phone
+from backend.application.validators.phone import validate_no_duplicate_phones
 from backend.application.vars import ClientId
 from backend.infrastructure.idp import TelegramIdentityProvider
 from backend.infrastructure.persistence.gateways import (
@@ -71,6 +72,9 @@ class CreateClientCommandHandler:
         normalized_numbers = [
             normalize_ukraine_phone(phone.number) for phone in command.phones
         ]
+
+        if normalized_numbers:
+            validate_no_duplicate_phones(normalized_numbers)
 
         if not command.confirm_duplicate_phones and normalized_numbers:
             duplicates = await self._client_gateway.find_duplicate_phones(

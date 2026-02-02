@@ -20,6 +20,7 @@ from backend.application.services.client import (
     update_phone,
 )
 from backend.application.validators import normalize_ukraine_phone
+from backend.application.validators.phone import validate_no_duplicate_phones
 from backend.application.vars import AddressId, ClientId, PhoneId
 from backend.infrastructure.idp import TelegramIdentityProvider
 from backend.infrastructure.persistence.gateways import (
@@ -121,6 +122,9 @@ class EditClientCommandHandler:
                 )
                 for p in command.phones
             ]
+
+            normalized_numbers = [p.number for p in normalized_phones]
+            validate_no_duplicate_phones(normalized_numbers)
 
             if not command.confirm_duplicate_phones and normalized_phones:
                 normalized_numbers = [p.number for p in normalized_phones]

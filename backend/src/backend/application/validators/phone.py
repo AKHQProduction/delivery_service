@@ -1,6 +1,23 @@
 import re
+from collections import Counter
 
-from backend.application.errors import InvalidPhoneNumberError
+from backend.application.errors import (
+    InvalidPhoneNumberError,
+    PhoneDuplicate,
+    PhoneNumberAlreadyExistsError,
+)
+
+
+def validate_no_duplicate_phones(phones: list[str]) -> None:
+    counts = Counter(phones)
+    duplicates = [phone for phone, count in counts.items() if count > 1]
+    if duplicates:
+        raise PhoneNumberAlreadyExistsError(
+            duplicates=[
+                PhoneDuplicate(phone_number=phone, existing_clients=[])
+                for phone in duplicates
+            ]
+        )
 
 
 def normalize_ukraine_phone(phone: str) -> str:
