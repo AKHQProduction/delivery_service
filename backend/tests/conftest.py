@@ -1,14 +1,14 @@
 import os
 import uuid
 from collections.abc import AsyncGenerator, Callable
-from datetime import UTC, datetime, timedelta
+from datetime import UTC, datetime, time, timedelta
+from decimal import Decimal
 from typing import Any, cast
 from unittest.mock import AsyncMock
 
 import pytest
 import pytest_asyncio
 from dishka import (
-    AnyOf,
     AsyncContainer,
     Provider,
     Scope,
@@ -24,7 +24,6 @@ from sqlalchemy.ext.asyncio import (
     create_async_engine,
 )
 
-from backend.application.interfaces import TransactionManager
 from backend.application.vars import (
     CategoryId,
     ClientId,
@@ -32,7 +31,7 @@ from backend.application.vars import (
     ProductId,
     ShopId,
     ShopRole,
-    TimePreference,
+    TimeSlotId,
     UserId,
 )
 from backend.bootstrap.config import Config, PostgresConfig, RedisConfig
@@ -62,6 +61,9 @@ from backend.infrastructure.persistence.tables.clients import (
     ClientPhone,
 )
 from backend.infrastructure.persistence.tables.orders import Order, OrderItem
+from backend.infrastructure.persistence.tables.shops import (
+    ShopDeliveryTimeSlot,
+)
 
 
 @pytest.fixture(scope="session")
@@ -135,10 +137,7 @@ async def session(
 @pytest.fixture()
 def mock_session_provider(session: AsyncSession) -> Provider:
     class MockPersistenceProvider(PersistenceProvider):
-        @provide(
-            scope=Scope.REQUEST,
-            provides=AnyOf[AsyncSession, TransactionManager],
-        )
+        @provide(scope=Scope.REQUEST)
         async def get_session(self) -> AsyncSession:
             return session
 
@@ -294,10 +293,10 @@ def setup_test_product(session: AsyncSession):
     async def _setup_test_product(
         shop_id: ShopId,
         category_id: CategoryId | None = None,
-    ) -> tuple[ProductId, str, int, CategoryId | None]:
+    ) -> tuple[ProductId, str, Decimal, CategoryId | None]:
         product_id = ProductId(uuid.uuid4())
         name = "Test Product"
-        price = 100
+        price = Decimal(100)
 
         await session.execute(
             insert(Product).values(
@@ -319,7 +318,6 @@ def setup_test_client(session: AsyncSession):
     async def _setup_test_client(
         shop_id: ShopId,
         full_name: str = "Test Client",
-        custom_id: str | None = None,
         phones: list[str] | None = None,
         addresses: list[dict[str, Any]] | None = None,
     ) -> ClientId:
@@ -329,7 +327,6 @@ def setup_test_client(session: AsyncSession):
             insert(Client).values(
                 id=client_id,
                 full_name=full_name,
-                custom_id=custom_id,
                 shop_id=shop_id,
             )
         )
@@ -367,13 +364,41 @@ def setup_test_client(session: AsyncSession):
 
 
 @pytest.fixture()
+def setup_test_time_slot(session: AsyncSession):
+    async def _setup_test_time_slot(
+        shop_id: ShopId,
+        time_slot_id: TimeSlotId | None = None,
+        start_time: time = time(9, 0),
+        end_time: time = time(14, 0),
+        label: str | None = "Перша половина дня",
+    ) -> TimeSlotId:
+        if time_slot_id is None:
+            time_slot_id = TimeSlotId(uuid.uuid4())
+
+        await session.execute(
+            insert(ShopDeliveryTimeSlot).values(
+                id=time_slot_id,
+                shop_id=shop_id,
+                start_time=start_time,
+                end_time=end_time,
+                label=label,
+            )
+        )
+
+        return time_slot_id
+
+    return _setup_test_time_slot
+
+
+@pytest.fixture()
 def setup_test_order(session: AsyncSession):
     async def _setup_test_order(
         shop_id: ShopId,
         client_id: ClientId,
         order_id: OrderId | None = None,
         delivery_date: datetime | None = None,
-        time_preference: TimePreference = TimePreference.FIRST_HALF,
+        delivery_start_time: time = time(9, 0),
+        delivery_end_time: time = time(14, 0),
         delivery_phone: str = "+380501234567",
         delivery_address: dict[str, Any] | None = None,
         comment: str | None = None,
@@ -398,7 +423,8 @@ def setup_test_order(session: AsyncSession):
                 date=delivery_date,
                 delivery_address=delivery_address,
                 delivery_phone=delivery_phone,
-                time_preference=time_preference.value,
+                delivery_start_time=delivery_start_time,
+                delivery_end_time=delivery_end_time,
                 comment=comment,
                 shop_id=shop_id,
                 client_id=client_id,
@@ -409,7 +435,11 @@ def setup_test_order(session: AsyncSession):
 
         if items is None:
             items = [
-                {"name": "Test Product", "quantity": 1, "price_per_item": 100}
+                {
+                    "name": "Test Product",
+                    "quantity": 1,
+                    "price_per_item": Decimal(100),
+                }
             ]
 
         for item in items:

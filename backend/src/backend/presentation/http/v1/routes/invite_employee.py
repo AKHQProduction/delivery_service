@@ -3,7 +3,7 @@ from dishka.integrations.fastapi import DishkaRoute
 from fastapi import APIRouter, Depends, status
 from fastapi.security import HTTPBearer
 
-from backend.application.usecases.invite_employee import (
+from backend.application.usecases.invite_employee.generate_invite_link import (
     GenerateInviteLinkCommand,
     GenerateInviteLinkCommandHandler,
 )

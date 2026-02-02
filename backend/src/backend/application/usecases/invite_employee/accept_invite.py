@@ -6,15 +6,15 @@ from backend.application.errors import (
     EntityNotFoundError,
     UserAlreadyRelatedToShopError,
 )
-from backend.application.interfaces import (
-    CreateUserViaTgDTO,
-    IdentityProvider,
-    ShopGateway,
-    TransactionManager,
-    UserGateway,
+from backend.application.services.shop import create_membership
+from backend.application.services.user import create_user_via_tg
+from backend.infrastructure.idp import TelegramIdentityProvider
+from backend.infrastructure.persistence.gateways import (
+    RedisLinkGateway,
+    SQLAlchemyShopGateway,
+    SQLAlchemyUserGateway,
 )
-from backend.application.interfaces.gateways.shop_gateway import ShopEmployee
-from backend.application.usecases.invite_employee.interfaces import LinkGateway
+from backend.infrastructure.transaction_manager import TransactionManager
 
 logger = logging.getLogger(__name__)
 
@@ -29,10 +29,10 @@ class AcceptInviteCommand:
 class AcceptInviteCommandHandler:
     def __init__(
         self,
-        idp: IdentityProvider,
-        shop_gateway: ShopGateway,
-        user_gateway: UserGateway,
-        link_gateway: LinkGateway,
+        idp: TelegramIdentityProvider,
+        shop_gateway: SQLAlchemyShopGateway,
+        user_gateway: SQLAlchemyUserGateway,
+        link_gateway: RedisLinkGateway,
         tr_manager: TransactionManager,
     ) -> None:
         self._idp = idp
@@ -70,13 +70,12 @@ class AcceptInviteCommandHandler:
         if not current_user_id:
             logger.info("Creating new user via Telegram")
             new_user_id = self._user_gateway.next_id()
-            await self._user_gateway.create_user_via_tg(
-                CreateUserViaTgDTO(
-                    user_id=new_user_id,
-                    tg_id=command.tg_id,
-                    full_name=command.full_name,
-                )
+            user = create_user_via_tg(
+                user_id=new_user_id,
+                tg_id=command.tg_id,
+                full_name=command.full_name,
             )
+            self._user_gateway.save(user)
             logger.info(
                 "New user created",
                 extra={"user_id": new_user_id, "tg_id": command.tg_id},
@@ -97,14 +96,15 @@ class AcceptInviteCommandHandler:
             )
             user_id = current_user_id
 
-        await self._shop_gateway.add_employee(
-            ShopEmployee(
-                user_id=user_id,
-                shop_id=link.shop_id,
-                full_name=link.full_name,
-                role=link.role,
-            )
+        role_id = await self._shop_gateway.get_role_id(link.role)
+        membership = create_membership(
+            user_id=user_id,
+            shop_id=link.shop_id,
+            role_id=role_id,
+            name=link.full_name,
         )
+        self._shop_gateway.save(membership)
+
         logger.info(
             "Employee added to shop",
             extra={

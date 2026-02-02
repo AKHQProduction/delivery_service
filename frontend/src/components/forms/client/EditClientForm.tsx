@@ -6,7 +6,7 @@ import { PhoneInputList } from "../../shared/PhoneInputList";
 import { type Client } from "../../../types/entities/Client";
 import { useClient } from "../../../hooks/clients/useClients";
 import { useClientForm } from "../../../hooks/clients/useClientForm";
-
+import { DuplicatePhoneToast } from "../../ui/phoneDublicateErrorPopup";
 interface EditClientFormProps {
   client: Client;
   onClose: () => void;
@@ -33,7 +33,8 @@ export const EditClientForm: React.FC<EditClientFormProps> = ({
   } = useClientForm();
   const { updateClient } = useClient();
   const [phoneErrors, setPhoneErrors] = useState<Record<string, string>>({});
-
+  const [duplicateError, setDuplicateError] = useState<any>(null);
+  const [pendingClientData, setPendingClientData] = useState<any>(null);
   useEffect(() => {
     if (client) {
       initializeForm(client);
@@ -41,7 +42,7 @@ export const EditClientForm: React.FC<EditClientFormProps> = ({
   }, [client]);
 
   const handleChange = (
-    e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>
+    e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>,
   ) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
   };
@@ -58,11 +59,6 @@ export const EditClientForm: React.FC<EditClientFormProps> = ({
     originalHandlePhoneChange(index, value);
   };
 
-  const extractPhoneFromError = (errorMessage: string): string | null => {
-    const match = errorMessage.match(/Phone number (\+?\d+)/);
-    return match ? match[1] : null;
-  };
-
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setPhoneErrors({});
@@ -71,55 +67,78 @@ export const EditClientForm: React.FC<EditClientFormProps> = ({
       await updateClient(client.client_id, formData);
       await onSave?.();
     } catch (err: any) {
-      const errorMessage = err?.message || "";
-      const phoneNumber = extractPhoneFromError(errorMessage);
-
-      if (phoneNumber) {
-        setPhoneErrors({
-          [phoneNumber]: "Цей номер вже використовується іншим клієнтом",
-        });
+      if (
+        err?.response?.status === 409 &&
+        err?.response?.data?.code === "duplicate_phones"
+      ) {
+        console.log("Duplicate phone detected:", err.response.data);
+        setDuplicateError(err.response.data);
+        setPendingClientData(formData);
       }
     }
   };
+  const handleConfirmDuplicate = async () => {
+    if (!pendingClientData) return;
 
+    try {
+      await updateClient(client.client_id, formData, true);
+      await onSave?.();
+
+      setDuplicateError(null);
+      setPendingClientData(null);
+
+      onClose();
+    } catch (err) {
+      console.error("Error confirming duplicate:", err);
+      setDuplicateError(null);
+      setPendingClientData(null);
+    }
+  };
+
+  const handleCancelDuplicate = () => {
+    setDuplicateError(null);
+    setPendingClientData(null);
+  };
   return (
-    <FormWrapper
-      onSubmit={handleSubmit}
-      onClose={onClose}
-      submitLabel="Зберегти зміни"
-    >
-      <FormInput
-        label="Ім'я клієнта"
-        name="full_name"
-        value={formData.full_name}
-        onChange={handleChange}
-        placeholder="Введіть повне ім'я..."
-        required
-      />
-      <FormInput
-        label="Тег клієнта"
-        name="custom_id"
-        value={formData.custom_id || ""}
-        onChange={handleChange}
-        placeholder="Наприклад: VIP-001"
-      />
+    <>
+      <FormWrapper
+        onSubmit={handleSubmit}
+        onClose={onClose}
+        submitLabel="Зберегти зміни"
+      >
+        <FormInput
+          label="Ім'я клієнта"
+          name="full_name"
+          value={formData.full_name}
+          onChange={handleChange}
+          placeholder="Введіть повне ім'я..."
+          required
+        />
 
-      <PhoneInputList
-        phones={formData.phones}
-        onPhoneChange={handlePhoneChange}
-        onSetPrimary={setPrimaryPhone}
-        onRemove={removePhone}
-        onAdd={addPhone}
-        errors={phoneErrors}
-      />
+        <PhoneInputList
+          phones={formData.phones}
+          onPhoneChange={handlePhoneChange}
+          onSetPrimary={setPrimaryPhone}
+          onRemove={removePhone}
+          onAdd={addPhone}
+          errors={phoneErrors}
+        />
 
-      <AddressInputList
-        addresses={formData.addresses}
-        onAddressChange={handleAddressChange}
-        onSetPrimary={setPrimaryAddress}
-        onRemove={removeAddress}
-        onAdd={addAddress}
-      />
-    </FormWrapper>
+        <AddressInputList
+          addresses={formData.addresses}
+          onAddressChange={handleAddressChange}
+          onSetPrimary={setPrimaryAddress}
+          onRemove={removeAddress}
+          onAdd={addAddress}
+        />
+      </FormWrapper>
+      {duplicateError && duplicateError.duplicates && (
+        <DuplicatePhoneToast
+          duplicates={duplicateError.duplicates}
+          onConfirm={handleConfirmDuplicate}
+          onCancel={handleCancelDuplicate}
+        />
+      )}
+    </>
   );
 };

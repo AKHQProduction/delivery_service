@@ -1,30 +1,19 @@
 import logging
 from dataclasses import dataclass
-from datetime import UTC, date, datetime, timedelta
+from datetime import date, timedelta
 
-from backend.application.errors import (
-    AccessDeniedError,
-    DateMustBeGreaterThanError,
-    EntityNotFoundError,
-)
-from backend.application.interfaces import (
-    ClientGateway,
-    IdentityProvider,
-    TransactionManager,
-)
+from backend.application.common import ensure_exists
+from backend.application.errors import DateMustBeGreaterThanError
 from backend.application.interfaces.gateways.order_gateway import (
-    CreateOrderDTO,
     DeliveryAddressDTO,
-    OrderGateway,
-    OrderItemDTO,
-)
-from backend.application.interfaces.gateways.product_gateway import (
-    Product,
-    ProductGateway,
 )
 from backend.application.policies.access import (
-    IsRelatedToShop,
-    can_shop_manage_policy,
+    ensure_can_manage,
+    ensure_related_to_shop,
+)
+from backend.application.services.order import (
+    create_order,
+    create_order_item,
 )
 from backend.application.vars import (
     AddressId,
@@ -33,8 +22,18 @@ from backend.application.vars import (
     PaymentMethod,
     PhoneId,
     ProductId,
-    TimePreference,
+    TimeSlotId,
+    today,
 )
+from backend.infrastructure.idp import TelegramIdentityProvider
+from backend.infrastructure.persistence.gateways import (
+    SQLAlchemyClientGateway,
+    SQLAlchemyOrderGateway,
+    SQLAlchemyProductGateway,
+    SQLAlchemyTimeSlotGateway,
+)
+from backend.infrastructure.persistence.tables import Product
+from backend.infrastructure.transaction_manager import TransactionManager
 
 logger = logging.getLogger(__name__)
 
@@ -49,7 +48,7 @@ class ProductDTO:
 class CreateOrderCommand:
     client_id: ClientId
     delivery_date: date
-    time_preference: TimePreference
+    time_slot_id: TimeSlotId
     address_id: AddressId
     phone_id: PhoneId
     products: list[ProductDTO]
@@ -57,9 +56,9 @@ class CreateOrderCommand:
     comment: str | None = None
 
     def __post_init__(self) -> None:
-        today = datetime.now(UTC).date()
-        if today > self.delivery_date:
-            previous_date = today - timedelta(days=1)
+        current_date = today()
+        if current_date > self.delivery_date:
+            previous_date = current_date - timedelta(days=1)
 
             raise DateMustBeGreaterThanError(greater_than=previous_date)
 
@@ -67,27 +66,23 @@ class CreateOrderCommand:
 class CreateOrderCommandHandler:
     def __init__(
         self,
-        idp: IdentityProvider,
-        client_gateway: ClientGateway,
-        product_gateway: ProductGateway,
-        order_gateway: OrderGateway,
+        idp: TelegramIdentityProvider,
+        client_gateway: SQLAlchemyClientGateway,
+        product_gateway: SQLAlchemyProductGateway,
+        order_gateway: SQLAlchemyOrderGateway,
+        time_slot_gateway: SQLAlchemyTimeSlotGateway,
         tr_manager: TransactionManager,
     ) -> None:
         self._idp = idp
         self._client_gateway = client_gateway
         self._product_gateway = product_gateway
         self._order_gateway = order_gateway
+        self._time_slot_gateway = time_slot_gateway
         self._tr_manager = tr_manager
 
     async def handle(self, command: CreateOrderCommand) -> OrderId:
         current_user = await self._idp.current_user()
-
-        if not can_shop_manage_policy.is_satisfied_by(current_user):
-            logger.warning(
-                "Access denied for user %s trying to create order",
-                current_user.user_id,
-            )
-            raise AccessDeniedError
+        ensure_can_manage(current_user)
 
         logger.info(
             "Creating new order for shop %s with client %s",
@@ -95,27 +90,17 @@ class CreateOrderCommandHandler:
             command.client_id,
         )
 
-        client = await self._client_gateway.load(command.client_id)
-        if not client:
-            logger.warning("Client not found: client_id=%s", command.client_id)
-            raise EntityNotFoundError(entity="Client")
-        if not IsRelatedToShop(client.shop_id).is_satisfied_by(current_user):
-            logger.warning(
-                "Access denied: user %s (shop_id=%s) attempted to "
-                "create order for client %s",
-                current_user,
-                current_user.shop_id,
-                command.client_id,
-            )
-            raise AccessDeniedError
+        client = ensure_exists(
+            await self._client_gateway.load(command.client_id),
+            "Client",
+        )
+        ensure_related_to_shop(current_user, client.shop_id)
 
         phone = next(
             (phone for phone in client.phones if phone.id == command.phone_id),
             None,
         )
-        if not phone:
-            logger.warning("Phone not found: phone_id=%s", command.phone_id)
-            raise EntityNotFoundError(entity="Phone")
+        phone = ensure_exists(phone, "Phone")
         address = next(
             (
                 address
@@ -124,32 +109,36 @@ class CreateOrderCommandHandler:
             ),
             None,
         )
-        if not address:
-            logger.warning(
-                "Address not found: address_id=%s", command.address_id
-            )
-            raise EntityNotFoundError(entity="Address")
+        address = ensure_exists(address, "Address")
+
+        time_slot = ensure_exists(
+            await self._time_slot_gateway.load(command.time_slot_id),
+            "TimeSlot",
+        )
+        ensure_related_to_shop(current_user, time_slot.shop_id)
 
         product_ids = [p.product_id for p in command.products]
         loaded_products = await self._product_gateway.load_many(product_ids)
-        products_map = {p.product_id: p for p in loaded_products}
+        products_map = {p.id: p for p in loaded_products}
 
         for pid in product_ids:
-            if pid not in products_map:
-                logger.warning("Product not found: product_id=%s", pid)
-                raise EntityNotFoundError(entity="Product", entity_id=pid)
+            ensure_exists(
+                products_map.get(pid),
+                "Product",
+            )
 
         products: list[tuple[Product, int]] = [
             (products_map[p.product_id], p.quantity) for p in command.products
         ]
 
         order_id = self._order_gateway.next_id()
-        new_order = CreateOrderDTO(
+        order = create_order(
             order_id=order_id,
             shop_id=current_user.shop_id,
-            client_id=client.client_id,
+            client_id=client.id,
             delivery_date=command.delivery_date,
-            time_preference=command.time_preference,
+            delivery_start_time=time_slot.start_time,
+            delivery_end_time=time_slot.end_time,
             delivery_phone=phone.number,
             delivery_address=DeliveryAddressDTO(
                 street=address.street,
@@ -160,20 +149,21 @@ class CreateOrderCommandHandler:
                 intercom=address.intercom,
                 comment=address.comment,
             ),
-            order_items=[
-                OrderItemDTO(
-                    name=product[0].name,
-                    quantity=product[1],
-                    price_per_item=product[0].price,
-                    product_id=product[0].product_id,
-                )
-                for product in products
-            ],
-            comment=command.comment,
             payment_method=command.payment_method,
+            comment=command.comment,
         )
 
-        await self._order_gateway.create_order(new_order)
+        order.items = [
+            create_order_item(
+                name=product[0].name,
+                quantity=product[1],
+                price_per_item=product[0].price,
+                product_id=product[0].id,
+            )
+            for product in products
+        ]
+
+        self._order_gateway.save(order)
         await self._tr_manager.commit()
 
         return order_id

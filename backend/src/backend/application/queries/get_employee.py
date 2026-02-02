@@ -1,15 +1,17 @@
 from backend.application.errors import EntityNotFoundError
-from backend.application.interfaces import IdentityProvider
 from backend.application.interfaces.gateways.shop_gateway import (
     EmployeeReadModel,
-    ShopGateway,
 )
 from backend.application.vars import UserId
+from backend.infrastructure.idp import TelegramIdentityProvider
+from backend.infrastructure.persistence.gateways import SQLAlchemyShopGateway
 
 
 class GetEmployeeQueryHandler:
     def __init__(
-        self, idp: IdentityProvider, shop_gateway: ShopGateway
+        self,
+        idp: TelegramIdentityProvider,
+        shop_gateway: SQLAlchemyShopGateway,
     ) -> None:
         self._idp = idp
         self._shop_gateway = shop_gateway

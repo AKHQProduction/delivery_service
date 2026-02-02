@@ -19,7 +19,6 @@ export interface Address {
 export interface Client {
   client_id: string;
   full_name?: string;
-  custom_id?: string;
   phones?: Phone[];
   addresses?: Address[];
 }

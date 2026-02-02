@@ -1,8 +1,8 @@
 from dataclasses import dataclass
-from enum import Enum
+from enum import StrEnum
 
 
-class SortOrder(Enum):
+class SortOrder(StrEnum):
     ASC = "ASC"
     DESC = "DESC"
 

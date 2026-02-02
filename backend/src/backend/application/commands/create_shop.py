@@ -5,11 +5,11 @@ from backend.application.errors import (
     AuthorizationError,
     UserAlreadyRelatedToShopError,
 )
-from backend.application.interfaces import ShopGateway, TransactionManager
-from backend.application.interfaces.gateways.shop_gateway import (
-    CreateNewShopDTO,
-)
-from backend.application.interfaces.idp import IdentityProvider
+from backend.application.services.shop import create_shop
+from backend.application.vars import ShopRole
+from backend.infrastructure.idp import TelegramIdentityProvider
+from backend.infrastructure.persistence.gateways import SQLAlchemyShopGateway
+from backend.infrastructure.transaction_manager import TransactionManager
 
 logger = logging.getLogger(__name__)
 
@@ -23,8 +23,8 @@ class CreateNewShopCommand:
 class CreateNewShopCommandHandler:
     def __init__(
         self,
-        shop_gateway: ShopGateway,
-        identity_provider: IdentityProvider,
+        shop_gateway: SQLAlchemyShopGateway,
+        identity_provider: TelegramIdentityProvider,
         tr_manager: TransactionManager,
     ) -> None:
         self._shop_gateway = shop_gateway
@@ -38,37 +38,22 @@ class CreateNewShopCommandHandler:
         user_id = await self._identity_provider.current_user_id()
 
         if not user_id:
-            logger.warning("Unauthorized attempt to create shop")
             raise AuthorizationError
 
-        logger.debug(
-            "Checking if user already has a shop",
-            extra={"user_id": str(user_id)},
-        )
         if await self._shop_gateway.relate_to_shop(user_id):
-            logger.warning(
-                "User already related to a shop",
-                extra={"user_id": str(user_id)},
-            )
             raise UserAlreadyRelatedToShopError
 
         shop_id = self._shop_gateway.next_id()
-        logger.info(
-            "Creating new shop",
-            extra={
-                "shop_id": str(shop_id),
-                "shop_name": command.name,
-                "user_id": str(user_id),
-            },
+        owner_role_id = await self._shop_gateway.get_role_id(ShopRole.OWNER)
+
+        shop = create_shop(
+            shop_id=shop_id,
+            name=command.name,
+            owner_user_id=user_id,
+            owner_name=command.owner_full_name,
+            owner_role_id=owner_role_id,
         )
-        await self._shop_gateway.create_shop(
-            CreateNewShopDTO(
-                shop_id=shop_id,
-                shop_name=command.name,
-                user_id=user_id,
-                owner_name=command.owner_full_name,
-            )
-        )
+        self._shop_gateway.save(shop)
 
         await self._tr_manager.commit()
         logger.info(

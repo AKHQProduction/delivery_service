@@ -1,12 +1,12 @@
 from dataclasses import dataclass
 
-from backend.application.interfaces import IdentityProvider
 from backend.application.interfaces.gateways import Pagination
 from backend.application.interfaces.gateways.shop_gateway import (
     EmployeeFilters,
     EmployeeReadModel,
-    ShopGateway,
 )
+from backend.infrastructure.idp import TelegramIdentityProvider
+from backend.infrastructure.persistence.gateways import SQLAlchemyShopGateway
 
 
 @dataclass(frozen=True)
@@ -17,7 +17,9 @@ class GetEmployeesQuery:
 
 class GetEmployeesQueryHandler:
     def __init__(
-        self, idp: IdentityProvider, shop_gateway: ShopGateway
+        self,
+        idp: TelegramIdentityProvider,
+        shop_gateway: SQLAlchemyShopGateway,
     ) -> None:
         self._idp = idp
         self._shop_gateway = shop_gateway

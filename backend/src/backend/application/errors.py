@@ -1,5 +1,8 @@
+from dataclasses import dataclass
 from datetime import date
 from typing import Any
+
+from backend.application.vars import ClientId
 
 
 class ApplicationError(Exception):
@@ -9,7 +12,7 @@ class ApplicationError(Exception):
 class AuthorizationError(ApplicationError):
     @property
     def message(self) -> str:
-        return "User not authorization"
+        return "User not authorized"
 
 
 class UserAlreadyRelatedToShopError(ApplicationError):
@@ -36,7 +39,11 @@ class EntityNotFoundError(ApplicationError):
         return f"{self._entity} with id {self._id} not found"
 
 
-class AlreadyExistsError(ApplicationError):
+class ConflictError(ApplicationError):
+    pass
+
+
+class AlreadyExistsError(ConflictError):
     def __init__(self, entity: str) -> None:
         self._entity = entity
 
@@ -59,20 +66,33 @@ class FieldError(ValidationError):
 
     @property
     def message(self) -> str:
-        acceptable_values = " ,".join(self._acceptable_values)
+        acceptable_values = ", ".join(self._acceptable_values)
         return f"{self._field} cant be {self._value}, use: {acceptable_values}"
 
 
-class PhoneNumberAlreadyExistsError(ApplicationError):
-    def __init__(self, phone_number: str) -> None:
-        self._phone_number = phone_number
+@dataclass(frozen=True)
+class ExistingClientInfo:
+    client_id: ClientId
+    full_name: str
+
+
+@dataclass(frozen=True)
+class PhoneDuplicate:
+    phone_number: str
+    existing_clients: list[ExistingClientInfo]
+
+
+class PhoneNumberAlreadyExistsError(ConflictError):
+    def __init__(self, duplicates: list[PhoneDuplicate]) -> None:
+        self._duplicates = duplicates
 
     @property
     def message(self) -> str:
-        return (
-            f"Phone number {self._phone_number} is already used "
-            "by another client"
-        )
+        return "Phone number duplicates found"
+
+    @property
+    def duplicates(self) -> list[PhoneDuplicate]:
+        return self._duplicates
 
 
 class InvalidPrimaryFlagError(ValidationError):
@@ -103,3 +123,28 @@ class ProductIdRequiredForNewItemError(ValidationError):
     @property
     def message(self) -> str:
         return "product_id is required for new items (items without id)"
+
+
+class LastTimeSlotError(ConflictError):
+    @property
+    def message(self) -> str:
+        return (
+            "Cannot delete the last time slot. "
+            "Shop must have at least one time slot"
+        )
+
+
+class InvalidTimeSlotRangeError(ValidationError):
+    @property
+    def message(self) -> str:
+        return "end_time must be greater than start_time"
+
+
+class InvalidPhoneNumberError(ValidationError):
+    def __init__(self, phone: str, reason: str) -> None:
+        self._phone = phone
+        self._reason = reason
+
+    @property
+    def message(self) -> str:
+        return f"Invalid phone number '{self._phone}': {self._reason}"

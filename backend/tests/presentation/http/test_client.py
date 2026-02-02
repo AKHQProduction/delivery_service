@@ -33,7 +33,6 @@ async def test_create_client_with_apartment(
 
     json = {
         "full_name": "Іван Іванов",
-        "custom_id": "ABCD",
         "phones": [{"number": "+380501234567"}],
         "addresses": [
             {
@@ -60,7 +59,6 @@ async def test_create_client_with_apartment(
     )
     client = result.scalar_one()
     assert client.full_name == "Іван Іванов"
-    assert client.custom_id == "ABCD"
 
     phone_result = await session.execute(
         select(ClientPhone).where(
@@ -109,7 +107,6 @@ async def test_create_client_with_private_house(
                 "comment": "Private house",
             }
         ],
-        "custom_id": "HOUSE-001",
     }
 
     response = await http_client.post(url=BASE_URL, headers=headers, json=json)
@@ -313,7 +310,6 @@ async def test_get_client_by_id(
     client_id = await setup_test_client(
         shop_id=shop_id,
         full_name="Тестовий Клієнт",
-        custom_id="TEST-001",
         phones=["+380501234567", "+380507654321"],
         addresses=[
             {
@@ -336,7 +332,6 @@ async def test_get_client_by_id(
     data = response.json()
     assert data["client_id"] == str(client_id)
     assert data["full_name"] == "Тестовий Клієнт"
-    assert data["custom_id"] == "TEST-001"
     assert len(data["phones"]) == 2
     assert data["phones"][0]["number"] == "+380501234567"
     assert data["phones"][0]["is_primary"] is True
@@ -395,13 +390,11 @@ async def test_get_all_clients(
     await setup_test_client(
         shop_id=shop_id,
         full_name="Анна Антоненко",
-        custom_id="VIP-001",
         phones=["+380501111111"],
     )
     await setup_test_client(
         shop_id=shop_id,
         full_name="Борис Борисенко",
-        custom_id="VIP-002",
         phones=["+380502222222"],
     )
     await setup_test_client(
@@ -496,44 +489,6 @@ async def test_get_all_clients_filter_by_phone(
     data = response.json()
     assert len(data) == 1
     assert data[0]["full_name"] == "Анна Антоненко"
-
-
-@pytest.mark.asyncio()
-async def test_get_all_clients_filter_by_custom_id(
-    http_client: AsyncClient,
-    session: AsyncSession,
-    customer_headers: Callable[[int], dict[str, Any]],
-    setup_full_test_user_with_shop,
-    setup_test_client,
-) -> None:
-    telegram_id = 2103
-    _, shop_id = await setup_full_test_user_with_shop(telegram_id=telegram_id)
-
-    # Create clients directly in DB
-    await setup_test_client(
-        shop_id=shop_id,
-        full_name="Анна Антоненко",
-        custom_id="VIP-001",
-    )
-    await setup_test_client(
-        shop_id=shop_id,
-        full_name="Борис Борисенко",
-        custom_id="VIP-002",
-    )
-    await session.commit()
-
-    headers = customer_headers(telegram_id)
-
-    # Filter by custom_id
-    response = await http_client.get(
-        url=f"{BASE_URL}/all", headers=headers, params={"custom_id": "VIP-001"}
-    )
-
-    assert response.status_code == status.HTTP_200_OK
-    data = response.json()
-    assert len(data) == 1
-    assert data[0]["full_name"] == "Анна Антоненко"
-    assert data[0]["custom_id"] == "VIP-001"
 
 
 @pytest.mark.asyncio()
@@ -649,7 +604,7 @@ async def test_delete_product(
     url = BASE_URL + f"/{client_id}"
     response = await http_client.delete(url=url, headers=headers)
 
-    assert response.status_code == status.HTTP_200_OK
+    assert response.status_code == status.HTTP_204_NO_CONTENT
     await session.flush()
 
     deleted_entity = await session.execute(
@@ -672,7 +627,6 @@ async def test_edit_client_full_name(
     client_id = await setup_test_client(
         shop_id=shop_id,
         full_name="Оригінальне Ім'я",
-        custom_id="ORIG-001",
         phones=["+380501111111", "+380502222222"],
         addresses=[
             {
@@ -701,45 +655,6 @@ async def test_edit_client_full_name(
     )
     client = result.scalar_one()
     assert client.full_name == "Оновлене Ім'я"
-    assert client.custom_id == "ORIG-001"
-
-
-@pytest.mark.asyncio()
-async def test_edit_client_custom_id(
-    http_client: AsyncClient,
-    session: AsyncSession,
-    customer_headers: Callable[[int], dict[str, Any]],
-    setup_full_test_user_with_shop,
-    setup_test_client,
-) -> None:
-    telegram_id = 3001
-    _, shop_id = await setup_full_test_user_with_shop(telegram_id=telegram_id)
-
-    client_id = await setup_test_client(
-        shop_id=shop_id,
-        full_name="Ім'я Клієнта",
-        custom_id="OLD-ID",
-    )
-    await session.commit()
-
-    headers = customer_headers(telegram_id)
-
-    json = {"custom_id": "NEW-ID-123"}
-
-    response = await http_client.patch(
-        url=f"{BASE_URL}/{client_id}", headers=headers, json=json
-    )
-
-    assert response.status_code == status.HTTP_200_OK
-
-    await session.flush()
-
-    result = await session.execute(
-        select(Client).where(Client.id == client_id)
-    )
-    client = result.scalar_one()
-    assert client.custom_id == "NEW-ID-123"
-    assert client.full_name == "Ім'я Клієнта"
 
 
 @pytest.mark.asyncio()
@@ -872,7 +787,6 @@ async def test_edit_client_all_fields(
     client_id = await setup_test_client(
         shop_id=shop_id,
         full_name="Старе Ім'я",
-        custom_id="OLD-ID",
         phones=["+380501111111"],
         addresses=[
             {
@@ -888,7 +802,6 @@ async def test_edit_client_all_fields(
 
     json = {
         "full_name": "Повністю Нове Ім'я",
-        "custom_id": "ALL-NEW-999",
         "phones": [{"number": "+380501234567", "is_primary": True}],
         "addresses": [
             {
@@ -913,7 +826,6 @@ async def test_edit_client_all_fields(
     )
     client = result.scalar_one()
     assert client.full_name == "Повністю Нове Ім'я"
-    assert client.custom_id == "ALL-NEW-999"
 
     phone_result = await session.execute(
         select(ClientPhone).where(ClientPhone.client_id == client_id)
@@ -1080,7 +992,7 @@ async def test_edit_client_as_courier_forbidden(
 
 
 @pytest.mark.asyncio()
-async def test_create_client_with_duplicate_phone_number_allowed(
+async def test_create_client_with_duplicate_phone_returns_409(
     http_client: AsyncClient,
     session: AsyncSession,
     customer_headers: Callable[[int], dict[str, Any]],
@@ -1107,7 +1019,7 @@ async def test_create_client_with_duplicate_phone_number_allowed(
 
     json2 = {
         "full_name": "Другий Клієнт",
-        "phones": [{"number": "+380991234567"}],  # Same phone - allowed
+        "phones": [{"number": "+380991234567"}],
         "addresses": [],
     }
 
@@ -1115,12 +1027,60 @@ async def test_create_client_with_duplicate_phone_number_allowed(
         url=BASE_URL, headers=headers, json=json2
     )
 
-    assert response2.status_code == status.HTTP_201_CREATED
-    assert response2.json() is not None  # Returns ClientId (UUID)
+    assert response2.status_code == status.HTTP_409_CONFLICT
+    data = response2.json()
+    assert data["code"] == "duplicate_phones"
+    assert len(data["duplicates"]) == 1
+    assert data["duplicates"][0]["phone_number"] == "+380991234567"
+    assert (
+        data["duplicates"][0]["existing_clients"][0]["full_name"]
+        == "Перший Клієнт"
+    )
 
 
 @pytest.mark.asyncio()
-async def test_edit_client_with_duplicate_phone_number_allowed(
+async def test_create_client_with_duplicate_phone_confirmed(
+    http_client: AsyncClient,
+    session: AsyncSession,
+    customer_headers: Callable[[int], dict[str, Any]],
+    setup_full_test_user_with_shop,
+) -> None:
+    telegram_id = 3103
+    await setup_full_test_user_with_shop(telegram_id=telegram_id)
+    await session.commit()
+
+    headers = customer_headers(telegram_id)
+
+    json1 = {
+        "full_name": "Перший Клієнт",
+        "phones": [{"number": "+380991234567"}],
+        "addresses": [],
+    }
+
+    response1 = await http_client.post(
+        url=BASE_URL, headers=headers, json=json1
+    )
+    assert response1.status_code == status.HTTP_201_CREATED
+
+    await session.flush()
+
+    json2 = {
+        "full_name": "Другий Клієнт",
+        "phones": [{"number": "+380991234567"}],
+        "addresses": [],
+        "confirm_duplicate_phones": True,
+    }
+
+    response2 = await http_client.post(
+        url=BASE_URL, headers=headers, json=json2
+    )
+
+    assert response2.status_code == status.HTTP_201_CREATED
+    assert response2.json() is not None
+
+
+@pytest.mark.asyncio()
+async def test_edit_client_with_duplicate_phone_returns_409(
     http_client: AsyncClient,
     session: AsyncSession,
     customer_headers: Callable[[int], dict[str, Any]],
@@ -1145,9 +1105,52 @@ async def test_edit_client_with_duplicate_phone_number_allowed(
 
     headers = customer_headers(telegram_id)
 
+    json = {"phones": [{"number": "+380509999999", "is_primary": True}]}
+
+    response = await http_client.patch(
+        url=f"{BASE_URL}/{client2_id}", headers=headers, json=json
+    )
+
+    assert response.status_code == status.HTTP_409_CONFLICT
+    data = response.json()
+    assert data["code"] == "duplicate_phones"
+    assert data["duplicates"][0]["phone_number"] == "+380509999999"
+    assert (
+        data["duplicates"][0]["existing_clients"][0]["full_name"]
+        == "Перший Клієнт"
+    )
+
+
+@pytest.mark.asyncio()
+async def test_edit_client_with_duplicate_phone_confirmed(
+    http_client: AsyncClient,
+    session: AsyncSession,
+    customer_headers: Callable[[int], dict[str, Any]],
+    setup_full_test_user_with_shop,
+    setup_test_client,
+) -> None:
+    telegram_id = 3104
+    _, shop_id = await setup_full_test_user_with_shop(telegram_id=telegram_id)
+
+    await setup_test_client(
+        shop_id=shop_id,
+        full_name="Перший Клієнт",
+        phones=["+380509999999"],
+    )
+
+    client2_id = await setup_test_client(
+        shop_id=shop_id,
+        full_name="Другий Клієнт",
+        phones=["+380508888888"],
+    )
+    await session.commit()
+
+    headers = customer_headers(telegram_id)
+
     json = {
-        "phones": [{"number": "+380509999999", "is_primary": True}]
-    }  # Same as client1 - allowed
+        "phones": [{"number": "+380509999999", "is_primary": True}],
+        "confirm_duplicate_phones": True,
+    }
 
     response = await http_client.patch(
         url=f"{BASE_URL}/{client2_id}", headers=headers, json=json
@@ -1271,11 +1274,10 @@ async def test_get_all_clients_pagination_no_duplicates_same_name(
     telegram_id = 2160
     _, shop_id = await setup_full_test_user_with_shop(telegram_id=telegram_id)
 
-    for i in range(10):
+    for _i in range(10):
         await setup_test_client(
             shop_id=shop_id,
             full_name="Однакове Ім'я",
-            custom_id=f"ID-{i:03d}",
         )
     await session.commit()
 
@@ -1294,3 +1296,256 @@ async def test_get_all_clients_pagination_no_duplicates_same_name(
 
     assert len(all_client_ids) == 10
     assert len(all_client_ids) == len(set(all_client_ids))
+
+
+@pytest.mark.asyncio()
+async def test_create_client_with_phone_normalization_leading_zero(
+    http_client: AsyncClient,
+    session: AsyncSession,
+    customer_headers: Callable[[int], dict[str, Any]],
+    setup_full_test_user_with_shop,
+) -> None:
+    telegram_id = 4000
+    await setup_full_test_user_with_shop(telegram_id=telegram_id)
+    await session.commit()
+
+    headers = customer_headers(telegram_id)
+
+    json = {
+        "full_name": "Тест Нормалізації",
+        "phones": [{"number": "0980074978"}],
+        "addresses": [],
+    }
+
+    response = await http_client.post(url=BASE_URL, headers=headers, json=json)
+
+    assert response.status_code == status.HTTP_201_CREATED
+    client_id = response.json()
+
+    await session.flush()
+
+    phone_result = await session.execute(
+        select(ClientPhone).where(
+            ClientPhone.client_id == uuid.UUID(client_id)
+        )
+    )
+    phones = phone_result.scalars().all()
+    assert len(phones) == 1
+    assert phones[0].number == "+380980074978"
+
+
+@pytest.mark.asyncio()
+async def test_create_client_with_phone_normalization_with_spaces(
+    http_client: AsyncClient,
+    session: AsyncSession,
+    customer_headers: Callable[[int], dict[str, Any]],
+    setup_full_test_user_with_shop,
+) -> None:
+    telegram_id = 4001
+    await setup_full_test_user_with_shop(telegram_id=telegram_id)
+    await session.commit()
+
+    headers = customer_headers(telegram_id)
+
+    json = {
+        "full_name": "Тест Нормалізації з Пробілами",
+        "phones": [{"number": "098 007 49 78"}],
+        "addresses": [],
+    }
+
+    response = await http_client.post(url=BASE_URL, headers=headers, json=json)
+
+    assert response.status_code == status.HTTP_201_CREATED
+    client_id = response.json()
+
+    await session.flush()
+
+    phone_result = await session.execute(
+        select(ClientPhone).where(
+            ClientPhone.client_id == uuid.UUID(client_id)
+        )
+    )
+    phones = phone_result.scalars().all()
+    assert len(phones) == 1
+    assert phones[0].number == "+380980074978"
+
+
+@pytest.mark.asyncio()
+async def test_create_client_with_phone_normalization_with_formatting(
+    http_client: AsyncClient,
+    session: AsyncSession,
+    customer_headers: Callable[[int], dict[str, Any]],
+    setup_full_test_user_with_shop,
+) -> None:
+    telegram_id = 4002
+    await setup_full_test_user_with_shop(telegram_id=telegram_id)
+    await session.commit()
+
+    headers = customer_headers(telegram_id)
+
+    json = {
+        "full_name": "Тест Нормалізації з Форматуванням",
+        "phones": [{"number": "+38(098)007-49-78"}],
+        "addresses": [],
+    }
+
+    response = await http_client.post(url=BASE_URL, headers=headers, json=json)
+
+    assert response.status_code == status.HTTP_201_CREATED
+    client_id = response.json()
+
+    await session.flush()
+
+    phone_result = await session.execute(
+        select(ClientPhone).where(
+            ClientPhone.client_id == uuid.UUID(client_id)
+        )
+    )
+    phones = phone_result.scalars().all()
+    assert len(phones) == 1
+    assert phones[0].number == "+380980074978"
+
+
+@pytest.mark.asyncio()
+async def test_create_client_with_invalid_phone_too_short(
+    http_client: AsyncClient,
+    session: AsyncSession,
+    customer_headers: Callable[[int], dict[str, Any]],
+    setup_full_test_user_with_shop,
+) -> None:
+    telegram_id = 4003
+    await setup_full_test_user_with_shop(telegram_id=telegram_id)
+    await session.commit()
+
+    headers = customer_headers(telegram_id)
+
+    json = {
+        "full_name": "Тест Невалідного Номеру",
+        "phones": [{"number": "098007497"}],
+        "addresses": [],
+    }
+
+    response = await http_client.post(url=BASE_URL, headers=headers, json=json)
+
+    assert response.status_code == status.HTTP_422_UNPROCESSABLE_CONTENT
+    assert "phone" in response.json()["detail"].lower()
+
+
+@pytest.mark.asyncio()
+async def test_edit_client_with_phone_normalization(
+    http_client: AsyncClient,
+    session: AsyncSession,
+    customer_headers: Callable[[int], dict[str, Any]],
+    setup_full_test_user_with_shop,
+    setup_test_client,
+) -> None:
+    telegram_id = 4004
+    _, shop_id = await setup_full_test_user_with_shop(telegram_id=telegram_id)
+
+    client_id = await setup_test_client(
+        shop_id=shop_id,
+        full_name="Клієнт",
+        phones=["+380501111111"],
+    )
+    await session.commit()
+
+    headers = customer_headers(telegram_id)
+
+    json = {"phones": [{"number": "0502222222", "is_primary": True}]}
+
+    response = await http_client.patch(
+        url=f"{BASE_URL}/{client_id}", headers=headers, json=json
+    )
+
+    assert response.status_code == status.HTTP_200_OK
+
+    await session.flush()
+
+    phone_result = await session.execute(
+        select(ClientPhone).where(ClientPhone.client_id == client_id)
+    )
+    phones = phone_result.scalars().all()
+    assert len(phones) == 1
+    assert phones[0].number == "+380502222222"
+
+
+@pytest.mark.asyncio()
+async def test_edit_client_with_invalid_phone(
+    http_client: AsyncClient,
+    session: AsyncSession,
+    customer_headers: Callable[[int], dict[str, Any]],
+    setup_full_test_user_with_shop,
+    setup_test_client,
+) -> None:
+    telegram_id = 4005
+    _, shop_id = await setup_full_test_user_with_shop(telegram_id=telegram_id)
+
+    client_id = await setup_test_client(
+        shop_id=shop_id,
+        full_name="Клієнт",
+        phones=["+380501111111"],
+    )
+    await session.commit()
+
+    headers = customer_headers(telegram_id)
+
+    json = {"phones": [{"number": "123", "is_primary": True}]}
+
+    response = await http_client.patch(
+        url=f"{BASE_URL}/{client_id}", headers=headers, json=json
+    )
+
+    assert response.status_code == status.HTTP_422_UNPROCESSABLE_CONTENT
+    assert "phone" in response.json()["detail"].lower()
+
+
+@pytest.mark.asyncio()
+async def test_delete_client_unauthorized(
+    http_client: AsyncClient,
+) -> None:
+    client_id = str(uuid.uuid4())
+    response = await http_client.delete(url=f"{BASE_URL}/{client_id}")
+
+    assert response.status_code == status.HTTP_403_FORBIDDEN
+
+
+@pytest.mark.asyncio()
+async def test_delete_client_as_courier_forbidden(
+    http_client: AsyncClient,
+    session: AsyncSession,
+    customer_headers: Callable[[int], dict[str, Any]],
+    setup_full_test_user_with_shop,
+    setup_test_client,
+) -> None:
+    telegram_id = 1050
+    _, shop_id = await setup_full_test_user_with_shop(
+        telegram_id=telegram_id, role=ShopRole.COURIER
+    )
+    client_id = await setup_test_client(shop_id=shop_id)
+    await session.commit()
+
+    headers = customer_headers(telegram_id)
+
+    url = BASE_URL + f"/{client_id}"
+    response = await http_client.delete(url=url, headers=headers)
+
+    assert response.status_code == status.HTTP_403_FORBIDDEN
+
+
+@pytest.mark.asyncio()
+async def test_delete_client_not_found_returns_ok(
+    http_client: AsyncClient,
+    session: AsyncSession,
+    customer_headers: Callable[[int], dict[str, Any]],
+    setup_full_test_user_with_shop,
+) -> None:
+    telegram_id = 1051
+    await setup_full_test_user_with_shop(telegram_id=telegram_id)
+    await session.commit()
+
+    headers = customer_headers(telegram_id)
+
+    url = BASE_URL + f"/{uuid.uuid4()}"
+    response = await http_client.delete(url=url, headers=headers)
+
+    assert response.status_code == status.HTTP_204_NO_CONTENT

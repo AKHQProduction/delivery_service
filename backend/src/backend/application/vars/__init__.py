@@ -20,17 +20,13 @@ OrderId = NewType("OrderId", UUID)
 OrderItemId = NewType("OrderItemId", int)
 AddressId = NewType("AddressId", int)
 PhoneId = NewType("PhoneId", int)
+TimeSlotId = NewType("TimeSlotId", UUID)
 
 
 class ShopRole(StrEnum):
     OWNER = "OWNER"
     MANAGER = "MANAGER"
     COURIER = "COURIER"
-
-
-class TimePreference(StrEnum):
-    FIRST_HALF = "FIRST_HALF"
-    SECOND_HALF = "SECOND_HALF"
 
 
 class PaymentMethod(StrEnum):

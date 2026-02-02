@@ -1,8 +1,9 @@
-import uuid
 from typing import TYPE_CHECKING
 
 import sqlalchemy as sa
 from sqlalchemy.orm import Mapped, mapped_column, relationship
+
+from backend.application.vars import UserId
 
 from .base import Base, CreatedAt, UpdatedAt
 
@@ -13,7 +14,7 @@ if TYPE_CHECKING:
 class User(Base, CreatedAt, UpdatedAt):
     __tablename__ = "users"
 
-    id: Mapped[uuid.UUID] = mapped_column(sa.UUID, primary_key=True)
+    id: Mapped[UserId] = mapped_column(sa.UUID, primary_key=True)
 
     telegram_account: Mapped["TelegramAccount"] = relationship(
         back_populates="user", uselist=False
@@ -32,10 +33,12 @@ class TelegramAccount(Base, CreatedAt, UpdatedAt):
     id: Mapped[int] = mapped_column(
         sa.BIGINT, primary_key=True, autoincrement=True
     )
-    user_id: Mapped[uuid.UUID] = mapped_column(
+    user_id: Mapped[UserId] = mapped_column(
         sa.ForeignKey("users.id", ondelete="CASCADE"), unique=True
     )
-    telegram_id: Mapped[int] = mapped_column(sa.BigInteger, nullable=False)
+    telegram_id: Mapped[int] = mapped_column(
+        sa.BigInteger, nullable=False, unique=True
+    )
     full_name: Mapped[str] = mapped_column(sa.String, nullable=False)
 
     user: Mapped["User"] = relationship(back_populates="telegram_account")

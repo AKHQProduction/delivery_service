@@ -1,16 +1,16 @@
 import logging
 from dataclasses import dataclass
 
-from backend.application.errors import AccessDeniedError
-from backend.application.interfaces import IdentityProvider, TransactionManager
-from backend.application.interfaces.gateways.product_gateway import (
-    ProductGateway,
-)
 from backend.application.policies.access import (
-    IsRelatedToShop,
-    can_shop_manage_policy,
+    ensure_can_manage,
+    ensure_related_to_shop,
 )
 from backend.application.vars import ProductId
+from backend.infrastructure.idp import TelegramIdentityProvider
+from backend.infrastructure.persistence.gateways import (
+    SQLAlchemyProductGateway,
+)
+from backend.infrastructure.transaction_manager import TransactionManager
 
 logger = logging.getLogger(__name__)
 
@@ -23,8 +23,8 @@ class DeleteProductCommand:
 class DeleteProductCommandHandler:
     def __init__(
         self,
-        idp: IdentityProvider,
-        product_gateway: ProductGateway,
+        idp: TelegramIdentityProvider,
+        product_gateway: SQLAlchemyProductGateway,
         tr_manager: TransactionManager,
     ) -> None:
         self._idp = idp
@@ -38,37 +38,15 @@ class DeleteProductCommandHandler:
         )
 
         current_user = await self._idp.current_user()
-        logger.debug(
-            "Current user: %s, shop_id=%s", current_user, current_user.shop_id
-        )
-
-        if not can_shop_manage_policy.is_satisfied_by(current_user):
-            logger.warning(
-                "Access denied for user %s when deleting product %s",
-                current_user,
-                command.product_id,
-            )
-            raise AccessDeniedError
+        ensure_can_manage(current_user)
 
         product = await self._product_gateway.load(command.product_id)
         if not product:
-            logger.warning(
-                "Product not found: product_id=%s", command.product_id
-            )
             return
 
-        if not IsRelatedToShop(product.shop_id).is_satisfied_by(current_user):
-            logger.warning(
-                "Access denied: user %s (shop_id=%s) attempted to delete "
-                "product %s (shop_id=%s)",
-                current_user,
-                current_user.shop_id,
-                command.product_id,
-                product.shop_id,
-            )
-            raise AccessDeniedError
+        ensure_related_to_shop(current_user, product.shop_id)
 
-        await self._product_gateway.delete(command.product_id)
+        await self._product_gateway.delete(product)
         await self._tr_manager.commit()
 
         logger.info(

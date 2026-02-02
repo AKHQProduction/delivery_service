@@ -92,7 +92,7 @@ class WebAppAuth:
             secret_key, data_check_string.encode(), hashlib.sha256
         ).hexdigest()
 
-        if received_hash != computed_hash:
+        if not hmac.compare_digest(received_hash, computed_hash):
             raise AUTH_ERROR
 
         if "user" in parsed_init_data:

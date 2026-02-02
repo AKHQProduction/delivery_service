@@ -1,19 +1,21 @@
+import asyncio
 import logging
 from dataclasses import dataclass
 from datetime import date
 
 from backend.application.errors import AccessDeniedError, EntityNotFoundError
-from backend.application.interfaces import (
-    IdentityProvider,
-    PDFStorage,
-    ShopGateway,
-)
 from backend.application.interfaces.gateways import Pagination
 from backend.application.interfaces.gateways.order_gateway import (
     GetOrdersFilters,
-    OrderGateway,
+    OrderReadModel,
 )
-from backend.application.interfaces.pdf_generator import OrdersPDFGenerator
+from backend.infrastructure.idp import TelegramIdentityProvider
+from backend.infrastructure.pdf import ReportLabOrdersPDFGenerator
+from backend.infrastructure.persistence.gateways import (
+    RedisPDFStorage,
+    SQLAlchemyOrderGateway,
+    SQLAlchemyShopGateway,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -32,11 +34,11 @@ class GenerateOrderExportPDFResult:
 class GenerateOrderExportPDFCommandHandler:
     def __init__(
         self,
-        idp: IdentityProvider,
-        order_gateway: OrderGateway,
-        shop_gateway: ShopGateway,
-        pdf_generator: OrdersPDFGenerator,
-        pdf_storage: PDFStorage,
+        idp: TelegramIdentityProvider,
+        order_gateway: SQLAlchemyOrderGateway,
+        shop_gateway: SQLAlchemyShopGateway,
+        pdf_generator: ReportLabOrdersPDFGenerator,
+        pdf_storage: RedisPDFStorage,
     ) -> None:
         self._idp = idp
         self._order_gateway = order_gateway
@@ -68,9 +70,18 @@ class GenerateOrderExportPDFCommandHandler:
             start_date=command.delivery_date,
             end_date=command.delivery_date,
         )
-        pagination = Pagination(limit=1000, offset=0)
 
-        orders = await self._order_gateway.read_all(filters, pagination)
+        batch_size = 200
+        offset = 0
+        orders: list[OrderReadModel] = []
+
+        while True:
+            pagination = Pagination(limit=batch_size, offset=offset)
+            batch = await self._order_gateway.read_all(filters, pagination)
+            orders.extend(batch)
+            if len(batch) < batch_size:
+                break
+            offset += batch_size
 
         logger.info(
             "Found %d orders for date %s, shop %s",
@@ -79,10 +90,13 @@ class GenerateOrderExportPDFCommandHandler:
             shop_id,
         )
 
-        pdf_bytes = self._pdf_generator.handle(
-            orders=orders,
-            delivery_date=command.delivery_date,
-            shop_name=shop_name,
+        loop = asyncio.get_running_loop()
+        pdf_bytes = await loop.run_in_executor(
+            None,
+            self._pdf_generator.handle,
+            orders,
+            command.delivery_date,
+            shop_name,
         )
 
         filename = f"orders_{command.delivery_date.isoformat()}.pdf"

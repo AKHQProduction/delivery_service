@@ -1,16 +1,25 @@
 import logging
 from dataclasses import dataclass, field
 
-from backend.application.errors import AccessDeniedError
-from backend.application.interfaces import IdentityProvider, TransactionManager
-from backend.application.interfaces.gateways.client_gateway import (
-    AddressDTO,
-    ClientGateway,
-    CreateClientDTO,
-    PhoneDTO,
+from backend.application.errors import (
+    ExistingClientInfo,
+    PhoneDuplicate,
+    PhoneNumberAlreadyExistsError,
 )
-from backend.application.policies.access import can_shop_manage_policy
+from backend.application.policies.access import ensure_can_manage
+from backend.application.services.client import (
+    create_address,
+    create_client,
+    create_phone,
+)
+from backend.application.validators import normalize_ukraine_phone
+from backend.application.validators.phone import validate_no_duplicate_phones
 from backend.application.vars import ClientId
+from backend.infrastructure.idp import TelegramIdentityProvider
+from backend.infrastructure.persistence.gateways import (
+    SQLAlchemyClientGateway,
+)
+from backend.infrastructure.transaction_manager import TransactionManager
 
 logger = logging.getLogger(__name__)
 
@@ -36,14 +45,14 @@ class CreateClientCommand:
     full_name: str
     phones: list[Phone] = field(default_factory=list)
     addresses: list[Address] = field(default_factory=list)
-    custom_id: str | None = None
+    confirm_duplicate_phones: bool = False
 
 
 class CreateClientCommandHandler:
     def __init__(
         self,
-        idp: IdentityProvider,
-        client_gateway: ClientGateway,
+        idp: TelegramIdentityProvider,
+        client_gateway: SQLAlchemyClientGateway,
         tr_manager: TransactionManager,
     ) -> None:
         self._idp = idp
@@ -52,13 +61,7 @@ class CreateClientCommandHandler:
 
     async def handle(self, command: CreateClientCommand) -> ClientId:
         current_user = await self._idp.current_user()
-
-        if not can_shop_manage_policy.is_satisfied_by(current_user):
-            logger.warning(
-                "Access denied for user %s trying to create client",
-                current_user.user_id,
-            )
-            raise AccessDeniedError
+        ensure_can_manage(current_user)
 
         logger.info(
             "Creating new client '%s' for shop %s",
@@ -66,36 +69,68 @@ class CreateClientCommandHandler:
             current_user.shop_id,
         )
 
-        phones_dto = [
-            PhoneDTO(number=phone.number, is_primary=(idx == 0))
-            for idx, phone in enumerate(command.phones)
+        normalized_numbers = [
+            normalize_ukraine_phone(phone.number) for phone in command.phones
         ]
 
-        addresses_dto = [
-            AddressDTO(
-                street=address.street,
-                house=address.house,
-                apartment=address.apartment,
-                entrance=address.entrance,
-                floor=address.floor,
-                intercom=address.intercom,
-                comment=address.comment,
-                is_primary=(idx == 0),
+        if normalized_numbers:
+            validate_no_duplicate_phones(
+                normalized_numbers, full_name=command.full_name
             )
-            for idx, address in enumerate(command.addresses)
-        ]
+
+        if not command.confirm_duplicate_phones and normalized_numbers:
+            duplicates = await self._client_gateway.find_duplicate_phones(
+                shop_id=current_user.shop_id,
+                phone_numbers=normalized_numbers,
+            )
+            if duplicates:
+                raise PhoneNumberAlreadyExistsError(
+                    duplicates=[
+                        PhoneDuplicate(
+                            phone_number=dup.phone_number,
+                            existing_clients=[
+                                ExistingClientInfo(
+                                    client_id=owner.client_id,
+                                    full_name=owner.full_name,
+                                )
+                                for owner in dup.owners
+                            ],
+                        )
+                        for dup in duplicates
+                    ]
+                )
 
         client_id = self._client_gateway.next_id()
-        create_dto = CreateClientDTO(
+        client = create_client(
             client_id=client_id,
             shop_id=current_user.shop_id,
             full_name=command.full_name,
-            phones=phones_dto,
-            addresses=addresses_dto,
-            custom_id=command.custom_id,
         )
 
-        await self._client_gateway.create_client(create_dto)
+        client.phones = [
+            create_phone(
+                number=normalized_numbers[idx],
+                is_primary=(idx == 0),
+                shop_id=current_user.shop_id,
+            )
+            for idx in range(len(command.phones))
+        ]
+
+        client.addresses = [
+            create_address(
+                street=addr.street,
+                house=addr.house,
+                apartment=addr.apartment,
+                entrance=addr.entrance,
+                floor=addr.floor,
+                intercom=addr.intercom,
+                comment=addr.comment,
+                is_primary=(idx == 0),
+            )
+            for idx, addr in enumerate(command.addresses)
+        ]
+
+        self._client_gateway.save(client)
         await self._tr_manager.commit()
 
         logger.info(

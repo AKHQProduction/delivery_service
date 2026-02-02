@@ -50,6 +50,8 @@ ignore = [
     "G004",
     "RUF001",
     "TC003",
+    "TC001",
+    "TC002",
 
     "C901",     # too complex
 

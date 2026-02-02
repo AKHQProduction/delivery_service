@@ -1,15 +1,17 @@
 from backend.application.errors import EntityNotFoundError
-from backend.application.interfaces import IdentityProvider
 from backend.application.interfaces.gateways.order_gateway import (
-    OrderGateway,
     OrderReadModel,
 )
 from backend.application.vars import OrderId
+from backend.infrastructure.idp import TelegramIdentityProvider
+from backend.infrastructure.persistence.gateways import SQLAlchemyOrderGateway
 
 
 class GetOrderQueryHandler:
     def __init__(
-        self, idp: IdentityProvider, order_gateway: OrderGateway
+        self,
+        idp: TelegramIdentityProvider,
+        order_gateway: SQLAlchemyOrderGateway,
     ) -> None:
         self._idp = idp
         self._order_gateway = order_gateway

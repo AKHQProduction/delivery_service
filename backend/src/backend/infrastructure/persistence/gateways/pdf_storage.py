@@ -3,12 +3,10 @@ from uuid import uuid4
 
 from redis.asyncio import Redis
 
-from backend.application.interfaces import PDFStorage
-
 PDF_TTL_SECONDS = 300
 
 
-class RedisPDFStorage(PDFStorage):
+class RedisPDFStorage:
     def __init__(self, redis: Redis) -> None:
         self._redis = redis
 

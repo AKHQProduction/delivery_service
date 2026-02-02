@@ -22,13 +22,12 @@ from reportlab.platypus import (
 from backend.application.interfaces.gateways.order_gateway import (
     OrderReadModel,
 )
-from backend.application.interfaces.pdf_generator import OrdersPDFGenerator
-from backend.application.vars import PaymentMethod, TimePreference
+from backend.application.vars import PaymentMethod
 
 FONT_DIR = Path(__file__).parent / "fonts"
 
 
-class ReportLabOrdersPDFGenerator(OrdersPDFGenerator):
+class ReportLabOrdersPDFGenerator:
     def __init__(self) -> None:
         self._register_fonts()
         self._styles = self._create_styles()
@@ -122,29 +121,14 @@ class ReportLabOrdersPDFGenerator(OrdersPDFGenerator):
             )
             elements.append(no_orders)
         else:
-            # Group by time preference
-            first_half = [
-                o
-                for o in orders
-                if o.time_preference == TimePreference.FIRST_HALF
-            ]
-            second_half = [
-                o
-                for o in orders
-                if o.time_preference == TimePreference.SECOND_HALF
-            ]
+            orders_by_slot: dict[str, list[OrderReadModel]] = defaultdict(list)
+            for order in orders:
+                orders_by_slot[order.time_slot].append(order)
 
-            if first_half:
-                elements.append(
-                    Paragraph("Перша половина дня", self._styles["heading"])
-                )
-                elements.extend(self._build_orders_section(first_half))
-
-            if second_half:
-                elements.append(
-                    Paragraph("Друга половина дня", self._styles["heading"])
-                )
-                elements.extend(self._build_orders_section(second_half))
+            for time_slot in sorted(orders_by_slot.keys()):
+                slot_orders = orders_by_slot[time_slot]
+                elements.append(Paragraph(time_slot, self._styles["heading"]))
+                elements.extend(self._build_orders_section(slot_orders))
 
             # Summary on new page at the end
             elements.append(PageBreak())
@@ -183,15 +167,7 @@ class ReportLabOrdersPDFGenerator(OrdersPDFGenerator):
         table_data: list = [["Клієнт", "Деталі", "Товари", "Сума", "Оплата"]]
 
         for order in orders:
-            # Column 1: Client (custom_id with # or name)
-            if order.client_custom_id:
-                client_cell = Paragraph(
-                    f"<b>#{order.client_custom_id}</b>", cell_style
-                )
-            else:
-                client_cell = Paragraph(
-                    f"<b>{order.client_name}</b>", cell_style
-                )
+            client_cell = Paragraph(f"<b>{order.client_name}</b>", cell_style)
 
             # Column 2: Details (address + phone + comments)
             addr = order.delivery_address

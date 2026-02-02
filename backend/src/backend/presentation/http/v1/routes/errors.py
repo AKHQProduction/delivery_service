@@ -1,6 +1,6 @@
 import logging
 from functools import partial
-from typing import TYPE_CHECKING, ClassVar, cast
+from typing import ClassVar, cast
 
 from fastapi import (
     FastAPI,
@@ -12,17 +12,16 @@ from starlette.exceptions import HTTPException as StarletteHTTPException
 
 from backend.application.errors import (
     AccessDeniedError,
-    AlreadyExistsError,
     AuthorizationError,
+    ConflictError,
     EntityNotFoundError,
     PhoneNumberAlreadyExistsError,
     ValidationError,
 )
 
-if TYPE_CHECKING:
 
-    class StubError(Exception):
-        message: ClassVar[str]
+class StubError(Exception):
+    message: ClassVar[str]
 
 
 logger = logging.getLogger(__name__)
@@ -46,8 +45,9 @@ async def validate(
 
 
 async def http_exception_handler(
-    request: Request, exc: StarletteHTTPException
+    request: Request, exc: Exception
 ) -> ORJSONResponse:
+    exc = cast("StarletteHTTPException", exc)
     if exc.status_code == code.HTTP_404_NOT_FOUND:
         logger.warning(
             "Route not found",
@@ -67,10 +67,37 @@ async def internal_trouble(request: Request, exc: Exception) -> ORJSONResponse:
     logger.error(
         "Internal server error",
         extra={"path": request.url.path, "method": request.method},
+        exc_info=exc,
     )
     return ORJSONResponse(
         content={"detail": "Internal server error"},
         status_code=code.HTTP_500_INTERNAL_SERVER_ERROR,
+    )
+
+
+async def handle_phone_duplicate(
+    request: Request, exc: Exception
+) -> ORJSONResponse:
+    exc = cast("PhoneNumberAlreadyExistsError", exc)
+    return ORJSONResponse(
+        content={
+            "code": "duplicate_phones",
+            "detail": exc.message,
+            "duplicates": [
+                {
+                    "phone_number": dup.phone_number,
+                    "existing_clients": [
+                        {
+                            "id": str(client.client_id),
+                            "full_name": client.full_name,
+                        }
+                        for client in dup.existing_clients
+                    ],
+                }
+                for dup in exc.duplicates
+            ],
+        },
+        status_code=code.HTTP_409_CONFLICT,
     )
 
 
@@ -91,11 +118,10 @@ def setup_exc_handlers(app: FastAPI) -> None:
         partial(validate, status=code.HTTP_422_UNPROCESSABLE_CONTENT),
     )
     app.add_exception_handler(
-        PhoneNumberAlreadyExistsError,
-        partial(validate, status=code.HTTP_409_CONFLICT),
+        PhoneNumberAlreadyExistsError, handle_phone_duplicate
     )
     app.add_exception_handler(
-        AlreadyExistsError,
+        ConflictError,
         partial(validate, status=code.HTTP_409_CONFLICT),
     )
     app.exception_handler(Exception)(internal_trouble)

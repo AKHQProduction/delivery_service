@@ -16,7 +16,7 @@ from backend.application.errors import (
     EntityNotFoundError,
     UserAlreadyRelatedToShopError,
 )
-from backend.application.usecases.invite_employee import (
+from backend.application.usecases.invite_employee.accept_invite import (
     AcceptInviteCommand,
     AcceptInviteCommandHandler,
 )

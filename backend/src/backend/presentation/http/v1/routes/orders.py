@@ -1,4 +1,4 @@
-from datetime import date, datetime, timedelta
+from datetime import date, datetime, time, timedelta
 from typing import Annotated
 
 from dishka import FromDishka
@@ -26,7 +26,6 @@ from backend.application.commands.generate_order_export_pdf import (
     GenerateOrderExportPDFCommandHandler,
     GenerateOrderExportPDFResult,
 )
-from backend.application.interfaces import PDFStorage
 from backend.application.interfaces.gateways import Pagination, SortOrder
 from backend.application.interfaces.gateways.order_gateway import (
     OrderReadModel,
@@ -45,9 +44,9 @@ from backend.application.vars import (
     KYIV_TZ,
     OrderId,
     PaymentMethod,
-    TimePreference,
     today,
 )
+from backend.infrastructure.persistence.gateways import RedisPDFStorage
 from backend.presentation.http.v1.schemas.error import ErrorSchema
 from backend.presentation.http.v1.schemas.order import UpdateOrderSchema
 
@@ -76,7 +75,7 @@ async def create_new_order(
                         "delivery_date": (
                             datetime.now(KYIV_TZ).date() + timedelta(days=1)
                         ).isoformat(),
-                        "time_preference": TimePreference.FIRST_HALF,
+                        "time_slot_id": "950e8400-e29b-41d4-a716-446655440000",
                         "address_id": 1,
                         "phone_id": 1,
                         "products": [
@@ -100,7 +99,7 @@ async def create_new_order(
                         "delivery_date": (
                             datetime.now(KYIV_TZ).date() + timedelta(days=2)
                         ).isoformat(),
-                        "time_preference": TimePreference.SECOND_HALF,
+                        "time_slot_id": "a50e8400-e29b-41d4-a716-446655440000",
                         "address_id": 2,
                         "phone_id": 1,
                         "products": [
@@ -134,7 +133,7 @@ async def create_new_order(
                         "delivery_date": (
                             datetime.now(KYIV_TZ).date() + timedelta(days=1)
                         ).isoformat(),
-                        "time_preference": TimePreference.FIRST_HALF,
+                        "time_slot_id": "950e8400-e29b-41d4-a716-446655440000",
                         "address_id": 1,
                         "phone_id": 2,
                         "products": [
@@ -173,12 +172,12 @@ async def update_order(
         Body(
             openapi_examples={
                 "change_delivery_date": Example(
-                    description="Change delivery date and time preference",
+                    description="Change delivery date and time slot",
                     value={
                         "delivery_date": (
                             datetime.now(KYIV_TZ).date() + timedelta(days=2)
                         ).isoformat(),
-                        "time_preference": TimePreference.SECOND_HALF,
+                        "time_slot_id": "a50e8400-e29b-41d4-a716-446655440000",
                     },
                 ),
                 "change_client": Example(
@@ -296,7 +295,7 @@ async def update_order(
                         "delivery_date": (
                             datetime.now(KYIV_TZ).date() + timedelta(days=3)
                         ).isoformat(),
-                        "time_preference": TimePreference.FIRST_HALF,
+                        "time_slot_id": "950e8400-e29b-41d4-a716-446655440000",
                         "phone_id": 1,
                         "address_id": 2,
                         "comment": "Терміново",
@@ -333,7 +332,7 @@ async def update_order(
         order_id=order_id,
         client_id=body.client_id,
         delivery_date=body.delivery_date,
-        time_preference=body.time_preference,
+        time_slot_id=body.time_slot_id,
         address_id=body.address_id,
         phone_id=body.phone_id,
         comment=body.comment,
@@ -345,7 +344,7 @@ async def update_order(
 
 @router.delete(
     "/{order_id}",
-    status_code=status.HTTP_200_OK,
+    status_code=status.HTTP_204_NO_CONTENT,
     responses={
         status.HTTP_401_UNAUTHORIZED: {"model": ErrorSchema},
         status.HTTP_403_FORBIDDEN: {"model": ErrorSchema},
@@ -370,9 +369,8 @@ async def get_all_orders(
     handler: FromDishka[GetOrdersQueryHandler],
     start_date: date | None = None,
     end_date: date | None = None,
-    time_preference: TimePreference | None = None,
+    delivery_start_time: time | None = None,
     client_name: str | None = None,
-    custom_id: str | None = None,
     limit: int = 100,
     offset: int = 0,
     order: SortOrder = SortOrder.ASC,
@@ -381,9 +379,8 @@ async def get_all_orders(
         GetOrdersQuery(
             start_date=start_date,
             end_date=end_date,
-            time_preference=time_preference,
+            delivery_start_time=delivery_start_time,
             client_name=client_name,
-            custom_id=custom_id,
             pagination=Pagination(limit=limit, offset=offset, order=order),
         )
     )
@@ -438,7 +435,7 @@ async def generate_orders_pdf(
 )
 async def download_orders_pdf(
     file_id: str,
-    pdf_storage: FromDishka[PDFStorage],
+    pdf_storage: FromDishka[RedisPDFStorage],
 ) -> Response:
     result = await pdf_storage.get(file_id)
     if not result:

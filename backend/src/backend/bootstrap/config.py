@@ -51,6 +51,8 @@ class PostgresConfig(BaseModel):
     user: str = Field(alias="POSTGRES_USER")
     port: int = Field(alias="POSTGRES_PORT")
     password: str = Field(alias="POSTGRES_PASSWORD")
+    pool_size: int = Field(alias="DB_POOL_SIZE", default=10)
+    max_overflow: int = Field(alias="DB_MAX_OVERFLOW", default=5)
 
     @property
     def uri(self) -> str:

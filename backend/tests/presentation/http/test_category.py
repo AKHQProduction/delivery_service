@@ -8,7 +8,7 @@ from httpx import AsyncClient
 from sqlalchemy import insert, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from backend.application.vars import CategoryId
+from backend.application.vars import CategoryId, ShopRole
 from backend.infrastructure.persistence.tables import Category
 
 BASE_URL = "/api/v1/categories"
@@ -139,7 +139,7 @@ async def test_delete_category(
     url = BASE_URL + f"/{category_id}"
     response = await http_client.delete(url=url, headers=headers)
 
-    assert response.status_code == status.HTTP_200_OK
+    assert response.status_code == status.HTTP_204_NO_CONTENT
     await session.flush()
 
     deleted_entity = await session.execute(
@@ -356,3 +356,141 @@ async def test_get_all_categories_filters_by_shop_id(
     # Should only return categories from shop 1
     assert len(result) == 3
     assert all("Shop1" in c["name"] for c in result)
+
+
+@pytest.mark.asyncio()
+async def test_create_category_unauthorized(
+    http_client: AsyncClient,
+) -> None:
+    json = {"name": "Water"}
+    response = await http_client.post(url=BASE_URL, json=json)
+
+    assert response.status_code == status.HTTP_403_FORBIDDEN
+
+
+@pytest.mark.asyncio()
+async def test_create_category_as_courier_forbidden(
+    http_client: AsyncClient,
+    session: AsyncSession,
+    customer_headers: Callable[[int], dict[str, Any]],
+    setup_full_test_user_with_shop,
+) -> None:
+    telegram_id = 1100
+    await setup_full_test_user_with_shop(
+        telegram_id=telegram_id, role=ShopRole.COURIER
+    )
+    await session.commit()
+
+    headers = customer_headers(telegram_id)
+
+    json = {"name": "Water"}
+    response = await http_client.post(url=BASE_URL, headers=headers, json=json)
+
+    assert response.status_code == status.HTTP_403_FORBIDDEN
+
+
+@pytest.mark.asyncio()
+async def test_edit_category_unauthorized(
+    http_client: AsyncClient,
+) -> None:
+    json = {"name": "NewName"}
+    url = BASE_URL + f"/{uuid.uuid4()}"
+    response = await http_client.patch(url=url, json=json)
+
+    assert response.status_code == status.HTTP_403_FORBIDDEN
+
+
+@pytest.mark.asyncio()
+async def test_edit_category_as_courier_forbidden(
+    http_client: AsyncClient,
+    session: AsyncSession,
+    customer_headers: Callable[[int], dict[str, Any]],
+    setup_full_test_user_with_shop,
+    setup_test_category,
+) -> None:
+    telegram_id = 1101
+    _, shop_id = await setup_full_test_user_with_shop(
+        telegram_id=telegram_id, role=ShopRole.COURIER
+    )
+    category_id = await setup_test_category(shop_id=shop_id, name="Water")
+    await session.commit()
+
+    headers = customer_headers(telegram_id)
+
+    json = {"name": "NewName"}
+    url = BASE_URL + f"/{category_id}"
+    response = await http_client.patch(url=url, headers=headers, json=json)
+
+    assert response.status_code == status.HTTP_403_FORBIDDEN
+
+
+@pytest.mark.asyncio()
+async def test_edit_category_not_found(
+    http_client: AsyncClient,
+    session: AsyncSession,
+    customer_headers: Callable[[int], dict[str, Any]],
+    setup_full_test_user_with_shop,
+) -> None:
+    telegram_id = 1102
+    await setup_full_test_user_with_shop(telegram_id=telegram_id)
+    await session.commit()
+
+    headers = customer_headers(telegram_id)
+
+    json = {"name": "NewName"}
+    url = BASE_URL + f"/{uuid.uuid4()}"
+    response = await http_client.patch(url=url, headers=headers, json=json)
+
+    assert response.status_code == status.HTTP_404_NOT_FOUND
+
+
+@pytest.mark.asyncio()
+async def test_delete_category_unauthorized(
+    http_client: AsyncClient,
+) -> None:
+    url = BASE_URL + f"/{uuid.uuid4()}"
+    response = await http_client.delete(url=url)
+
+    assert response.status_code == status.HTTP_403_FORBIDDEN
+
+
+@pytest.mark.asyncio()
+async def test_delete_category_as_courier_forbidden(
+    http_client: AsyncClient,
+    session: AsyncSession,
+    customer_headers: Callable[[int], dict[str, Any]],
+    setup_full_test_user_with_shop,
+    setup_test_category,
+) -> None:
+    telegram_id = 1103
+    _, shop_id = await setup_full_test_user_with_shop(
+        telegram_id=telegram_id, role=ShopRole.COURIER
+    )
+    category_id = await setup_test_category(shop_id=shop_id)
+    await session.commit()
+
+    headers = customer_headers(telegram_id)
+
+    url = BASE_URL + f"/{category_id}"
+    response = await http_client.delete(url=url, headers=headers)
+
+    assert response.status_code == status.HTTP_403_FORBIDDEN
+
+
+@pytest.mark.asyncio()
+async def test_delete_category_not_found_returns_ok(
+    http_client: AsyncClient,
+    session: AsyncSession,
+    customer_headers: Callable[[int], dict[str, Any]],
+    setup_full_test_user_with_shop,
+) -> None:
+    telegram_id = 1104
+    await setup_full_test_user_with_shop(telegram_id=telegram_id)
+    await session.commit()
+
+    headers = customer_headers(telegram_id)
+
+    url = BASE_URL + f"/{uuid.uuid4()}"
+    response = await http_client.delete(url=url, headers=headers)
+
+    assert response.status_code == status.HTTP_204_NO_CONTENT

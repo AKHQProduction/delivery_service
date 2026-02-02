@@ -22,6 +22,9 @@ from backend.application.commands.create_order import CreateOrderCommandHandler
 from backend.application.commands.create_product import (
     CreateProductCommandHandler,
 )
+from backend.application.commands.create_time_slot import (
+    CreateTimeSlotCommandHandler,
+)
 from backend.application.commands.delete_category import (
     DeleteCategoryCommandHandler,
 )
@@ -32,17 +35,21 @@ from backend.application.commands.delete_order import DeleteOrderCommandHandler
 from backend.application.commands.delete_product import (
     DeleteProductCommandHandler,
 )
+from backend.application.commands.delete_time_slot import (
+    DeleteTimeSlotCommandHandler,
+)
 from backend.application.commands.edit_category import (
     EditCategoryCommandHandler,
 )
 from backend.application.commands.edit_client import EditClientCommandHandler
 from backend.application.commands.edit_order import UpdateOrderCommandHandler
 from backend.application.commands.edit_product import EditProductCommandHandler
+from backend.application.commands.edit_time_slot import (
+    EditTimeSlotCommandHandler,
+)
 from backend.application.commands.generate_order_export_pdf import (
     GenerateOrderExportPDFCommandHandler,
 )
-from backend.application.interfaces import IdentityProvider
-from backend.application.interfaces.pdf_generator import OrdersPDFGenerator
 from backend.application.queries.get_categories import (
     GetCategoriesQueryHandler,
 )
@@ -57,7 +64,8 @@ from backend.application.queries.get_order_stats import (
 from backend.application.queries.get_orders import GetOrdersQueryHandler
 from backend.application.queries.get_product import GetProductQueryHandler
 from backend.application.queries.get_products import GetProductsQueryHandler
-from backend.application.usecases.invite_employee import (
+from backend.application.queries.get_time_slots import GetTimeSlotsQueryHandler
+from backend.application.usecases.invite_employee.generate_invite_link import (
     GenerateInviteLinkCommandHandler,
 )
 from backend.infrastructure.idp import TelegramIdentityProvider
@@ -78,7 +86,7 @@ class AdaptersProvider(Provider):
     link_generator = provide(WithParents[TelegramInviteLinkGenerator])
 
     @provide
-    def pdf_generator(self) -> OrdersPDFGenerator:
+    def pdf_generator(self) -> ReportLabOrdersPDFGenerator:
         return ReportLabOrdersPDFGenerator()
 
 
@@ -111,6 +119,10 @@ class APIInteractorsProvider(Provider):
         GetOrdersQueryHandler,
         GetOrderStatsQueryHandler,
         GenerateOrderExportPDFCommandHandler,
+        CreateTimeSlotCommandHandler,
+        EditTimeSlotCommandHandler,
+        DeleteTimeSlotCommandHandler,
+        GetTimeSlotsQueryHandler,
     )
 
     add_employee = provide_all(GenerateInviteLinkCommandHandler)
@@ -140,7 +152,7 @@ class WebAppProvider(Provider):
         current_user_id: int,
         user_gateway: SQLAlchemyUserGateway,
         shop_gateway: SQLAlchemyShopGateway,
-    ) -> IdentityProvider:
+    ) -> TelegramIdentityProvider:
         return TelegramIdentityProvider(
             telegram_id=current_user_id,
             user_gateway=user_gateway,

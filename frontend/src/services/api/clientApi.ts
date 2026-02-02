@@ -3,7 +3,6 @@ import { type Phone, type Address } from "../../types/entities/Client";
 
 interface UpdateClientPayload {
   full_name?: string;
-  custom_id?: string;
   phones?: Phone[];
   addresses?: Address[];
 }
@@ -12,24 +11,29 @@ interface CreateClientPayload {
   full_name: string;
   phones: Phone[];
   addresses: Address[];
-  custom_id?: string;
 }
 
-export const createNewClient = async (body: CreateClientPayload) => {
-  try {
-    const response = await api.post(`v1/clients`, body);
-    return response.data;
-  } catch (error) {
-    throw error;
-  }
+export const createNewClient = async (
+  body: CreateClientPayload,
+  confirmDuplicate: boolean = false,
+) => {
+  const response = await api.post(`v1/clients`, {
+    ...body,
+    ...(confirmDuplicate && { confirm_duplicate_phones: true }),
+  });
+  return response.data;
 };
 
 export const updateExistingClientById = async (
   clientId: string,
-  payload: UpdateClientPayload
+  payload: UpdateClientPayload,
+  confirmDuplicate: boolean = false,
 ) => {
   try {
-    const response = await api.patch(`v1/clients/${clientId}`, payload);
+    const response = await api.patch(`v1/clients/${clientId}`, {
+      ...payload,
+      ...(confirmDuplicate && { confirm_duplicate_phones: true }),
+    });
     return response.data;
   } catch (error) {
     throw error;
@@ -56,11 +60,10 @@ export const getClientById = async (clientId: string) => {
 
 export const getAllClients = async (
   full_name: string,
-  custom_id: string,
   phone: string,
   clientsLimit: number,
   offset: number,
-  order: string
+  order: string,
 ) => {
   try {
     const params: Record<string, string | number> = {
@@ -70,7 +73,6 @@ export const getAllClients = async (
     };
 
     if (full_name) params.full_name = full_name;
-    if (custom_id) params.custom_id = custom_id;
     if (phone) params.phone = phone;
 
     const response = await api.get(`v1/clients/all`, { params });

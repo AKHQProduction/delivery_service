@@ -35,7 +35,6 @@ export const useOrders = () => {
     try {
       const fetchedOrders = await getAllOrders(
         search,
-        search,
         startDate,
         endDate,
         "",
@@ -61,7 +60,6 @@ export const useOrders = () => {
     try {
       const fetchedOrders = await getAllOrders(
         currentSearch,
-        currentSearch,
         startDate,
         endDate,
         "",
@@ -83,7 +81,6 @@ export const useOrders = () => {
     setError(null);
     try {
       const newOrder = await createOrder(orderData);
-      // Add new order to the beginning of the list
       setOrders((prev) => [newOrder, ...(prev || [])]);
       return newOrder;
     } catch {

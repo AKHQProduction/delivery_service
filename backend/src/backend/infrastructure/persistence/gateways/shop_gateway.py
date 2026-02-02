@@ -1,17 +1,15 @@
 from typing import cast
 from uuid import UUID
 
-from sqlalchemy import asc, delete, desc, exists, select, update
+from sqlalchemy import asc, desc, exists, select
 from sqlalchemy.ext.asyncio import AsyncSession
-from uuid_utils import uuid7
+from sqlalchemy.orm import joinedload
+from uuid_utils.compat import uuid7
 
-from backend.application.interfaces import ShopGateway
 from backend.application.interfaces.gateways import Pagination, SortOrder
 from backend.application.interfaces.gateways.shop_gateway import (
-    CreateNewShopDTO,
     EmployeeFilters,
     EmployeeReadModel,
-    ShopEmployee,
 )
 from backend.application.vars import ShopId, ShopRole, UserId
 from backend.infrastructure.persistence.tables import (
@@ -19,86 +17,37 @@ from backend.infrastructure.persistence.tables import (
     Shop,
     ShopMembership,
 )
+from backend.infrastructure.persistence.utils.escape import escape_like
 
 
-class SQLAlchemyShopGateway(ShopGateway):
+class SQLAlchemyShopGateway:
     def __init__(self, session: AsyncSession) -> None:
         self._session = session
 
-    async def relate_to_shop(self, user_id: UserId) -> bool:
-        query = select(exists().where(ShopMembership.user_id == user_id))
+    def save(self, entity: Shop | ShopMembership) -> None:
+        self._session.add(entity)
 
-        result = await self._session.execute(query)
-        return bool(result.scalar())
-
-    async def create_shop(self, dto: CreateNewShopDTO) -> None:
-        role_query = select(Role.id).where(Role.name == ShopRole.OWNER)
-        role_result = await self._session.execute(role_query)
-        role_id = role_result.scalar_one()
-
-        new_shop = Shop(
-            id=dto.shop_id,
-            name=dto.shop_name,
-            memberships=[
-                ShopMembership(
-                    user_id=dto.user_id, role_id=role_id, name=dto.owner_name
-                )
-            ],
-        )
-
-        self._session.add(new_shop)
-
-    async def get_shop_employee(self, user_id: UserId) -> ShopEmployee | None:
+    async def load_membership(self, user_id: UserId) -> ShopMembership | None:
         query = (
-            select(Shop.id, Role.name, ShopMembership.name)
-            .join(ShopMembership, ShopMembership.shop_id == Shop.id)
-            .join(Role, Role.id == ShopMembership.role_id)
+            select(ShopMembership)
+            .options(joinedload(ShopMembership.role))
             .where(ShopMembership.user_id == user_id)
         )
-
         result = await self._session.execute(query)
-        row = result.first()
+        return result.scalar_one_or_none()
 
-        if row:
-            shop_id, role_name, full_name = row
-            return ShopEmployee(
-                user_id=user_id,
-                shop_id=ShopId(shop_id),
-                role=ShopRole(role_name),
-                full_name=full_name,
-            )
-        return None
+    async def delete_membership(self, membership: ShopMembership) -> None:
+        await self._session.delete(membership)
 
-    async def add_employee(self, employee: ShopEmployee) -> None:
-        role_query = select(Role.id).where(Role.name == employee.role)
-        role_result = await self._session.execute(role_query)
-        role_id = role_result.scalar_one()
+    async def get_role_id(self, role: ShopRole) -> int:
+        query = select(Role.id).where(Role.name == role)
+        result = await self._session.execute(query)
+        return result.scalar_one()
 
-        self._session.add(
-            ShopMembership(
-                name=employee.full_name,
-                user_id=employee.user_id,
-                shop_id=employee.shop_id,
-                role_id=role_id,
-            )
-        )
-
-    async def update_employee(self, updated_employee: ShopEmployee) -> None:
-        role_query = select(Role.id).where(Role.name == updated_employee.role)
-        role_result = await self._session.execute(role_query)
-        role_id = role_result.scalar_one()
-
-        query = (
-            update(ShopMembership)
-            .where(ShopMembership.user_id == updated_employee.user_id)
-            .values(name=updated_employee.full_name, role_id=role_id)
-        )
-
-        await self._session.execute(query)
-
-    async def delete_employee(self, user_id: UserId) -> None:
-        query = delete(ShopMembership).where(ShopMembership.user_id == user_id)
-        await self._session.execute(query)
+    async def relate_to_shop(self, user_id: UserId) -> bool:
+        query = select(exists().where(ShopMembership.user_id == user_id))
+        result = await self._session.execute(query)
+        return bool(result.scalar())
 
     async def read_employee(self, user_id: UserId) -> EmployeeReadModel | None:
         query = (
@@ -129,7 +78,9 @@ class SQLAlchemyShopGateway(ShopGateway):
         if filters.shop_id:
             query = query.where(ShopMembership.shop_id == filters.shop_id)
         if filters.name:
-            query = query.where(ShopMembership.name.ilike(f"%{filters.name}%"))
+            query = query.where(
+                ShopMembership.name.ilike(f"%{escape_like(filters.name)}%")
+            )
 
         if pagination.order == SortOrder.ASC:
             query = query.order_by(
@@ -155,7 +106,7 @@ class SQLAlchemyShopGateway(ShopGateway):
         ]
 
     def next_id(self) -> ShopId:
-        return ShopId(UUID(str(uuid7())))
+        return ShopId(uuid7())
 
     async def get_shop_name(self, shop_id: ShopId) -> str | None:
         query = select(Shop.name).where(Shop.id == shop_id)

@@ -1,6 +1,7 @@
-from typing import TYPE_CHECKING, Any, cast
+from typing import Any, cast
 
-from aiogram.types import Message
+from aiogram import Bot
+from aiogram.types import Message, User
 from aiogram_dialog import Dialog, DialogManager, Window
 from aiogram_dialog.widgets.input import TextInput
 from aiogram_dialog.widgets.text import Const
@@ -13,10 +14,6 @@ from backend.application.commands import (
 )
 from backend.presentation.admin_bot import states
 from backend.presentation.admin_bot.keyboards.inline import shop_kb
-
-if TYPE_CHECKING:
-    from aiogram import Bot
-    from aiogram.types import User
 
 
 @inject

@@ -1,9 +1,15 @@
-import uuid
 from typing import TYPE_CHECKING
 
 import sqlalchemy as sa
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
+from backend.application.vars import (
+    AddressId,
+    ClientId,
+    PhoneId,
+    ShopId,
+    UserId,
+)
 from backend.infrastructure.persistence.tables.base import (
     Base,
     CreatedAt,
@@ -19,14 +25,13 @@ if TYPE_CHECKING:
 class Client(Base, CreatedAt, UpdatedAt):
     __tablename__ = "clients"
 
-    id: Mapped[uuid.UUID] = mapped_column(sa.UUID, primary_key=True)
-    custom_id: Mapped[str | None] = mapped_column(sa.String, nullable=True)
+    id: Mapped[ClientId] = mapped_column(sa.UUID, primary_key=True)
     full_name: Mapped[str] = mapped_column(sa.String, nullable=False)
 
-    shop_id: Mapped[uuid.UUID] = mapped_column(
+    shop_id: Mapped[ShopId] = mapped_column(
         sa.ForeignKey("shops.id", ondelete="CASCADE"), nullable=False
     )
-    user_id: Mapped[uuid.UUID | None] = mapped_column(
+    user_id: Mapped[UserId | None] = mapped_column(
         sa.ForeignKey("users.id", ondelete="SET NULL"), nullable=True
     )
 
@@ -49,7 +54,7 @@ class Client(Base, CreatedAt, UpdatedAt):
 class ClientPhone(Base, CreatedAt, UpdatedAt):
     __tablename__ = "client_phones"
 
-    id: Mapped[int] = mapped_column(
+    id: Mapped[PhoneId] = mapped_column(
         sa.Integer, primary_key=True, autoincrement=True
     )
     number: Mapped[str] = mapped_column(sa.String, nullable=False)
@@ -57,10 +62,10 @@ class ClientPhone(Base, CreatedAt, UpdatedAt):
         sa.Boolean, default=False, nullable=False
     )
 
-    client_id: Mapped[uuid.UUID] = mapped_column(
+    client_id: Mapped[ClientId] = mapped_column(
         sa.ForeignKey("clients.id", ondelete="CASCADE"), nullable=False
     )
-    shop_id: Mapped[uuid.UUID] = mapped_column(
+    shop_id: Mapped[ShopId] = mapped_column(
         sa.ForeignKey("shops.id", ondelete="CASCADE"), nullable=False
     )
 
@@ -77,7 +82,7 @@ class ClientPhone(Base, CreatedAt, UpdatedAt):
 class ClientAddress(Base, CreatedAt, UpdatedAt):
     __tablename__ = "client_addresses"
 
-    id: Mapped[int] = mapped_column(
+    id: Mapped[AddressId] = mapped_column(
         sa.Integer, primary_key=True, autoincrement=True
     )
 
@@ -103,7 +108,7 @@ class ClientAddress(Base, CreatedAt, UpdatedAt):
         sa.Boolean, default=False, nullable=False
     )
 
-    client_id: Mapped[uuid.UUID] = mapped_column(
+    client_id: Mapped[ClientId] = mapped_column(
         sa.ForeignKey("clients.id", ondelete="CASCADE"), nullable=False
     )
 

@@ -2,14 +2,14 @@ import logging
 from dataclasses import dataclass
 
 from backend.application.errors import AccessDeniedError, FieldError
-from backend.application.interfaces import IdentityProvider
 from backend.application.policies.access import IsOwner
 from backend.application.usecases.invite_employee.interfaces import (
     InviteLinkGenerator,
     Link,
-    LinkGateway,
 )
 from backend.application.vars import ShopRole
+from backend.infrastructure.idp import TelegramIdentityProvider
+from backend.infrastructure.persistence.gateways import RedisLinkGateway
 
 logger = logging.getLogger(__name__)
 
@@ -31,9 +31,9 @@ class GenerateInviteLinkCommand:
 class GenerateInviteLinkCommandHandler:
     def __init__(
         self,
-        idp: IdentityProvider,
+        idp: TelegramIdentityProvider,
         link_generator: InviteLinkGenerator,
-        link_gateway: LinkGateway,
+        link_gateway: RedisLinkGateway,
     ) -> None:
         self._idp = idp
         self._link_generator = link_generator
