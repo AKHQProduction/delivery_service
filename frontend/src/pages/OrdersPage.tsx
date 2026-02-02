@@ -360,7 +360,7 @@ export const OrdersPage = () => {
                       </svg>
                     </div>
                     <span className="text-gray-700">
-                      {order.date} - {order.time_slot}
+                      {order.date} | {order.time_slot}
                     </span>
                   </div>
 
