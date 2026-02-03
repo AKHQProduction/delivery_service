@@ -181,28 +181,6 @@ services:
         reservations:
           memory: 32M
 
-  cadvisor:
-    container_name: "water_delivery-cadvisor"
-    image: gcr.io/cadvisor/cadvisor:v0.51.0
-    privileged: true
-    command:
-      - --store_container_labels=true
-      - --containerd=/run/containerd/containerd.sock
-      - --containerd-namespace=moby
-    volumes:
-      - /:/rootfs:ro
-      - /var/run:/var/run:rw
-      - /sys:/sys:ro
-      - /dev/disk/:/dev/disk:ro
-      - /run/containerd/containerd.sock:/run/containerd/containerd.sock:ro
-    restart: unless-stopped
-    deploy:
-      resources:
-        limits:
-          cpus: '0.25'
-          memory: 256M
-        reservations:
-          memory: 64M
 
   loki:
     container_name: "water_delivery-loki"
@@ -253,7 +231,6 @@ services:
     depends_on:
       - postgres_exporter
       - redis_exporter
-      - cadvisor
     deploy:
       resources:
         limits:

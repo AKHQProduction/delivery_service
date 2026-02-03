@@ -68,7 +68,7 @@
           "editorMode": "code",
           "format": "table",
           "rawQuery": true,
-          "rawSql": "SELECT \n  c.full_name as client,\n  o.date,\n  o.time_preference,\n  o.delivery_phone,\n  o.payment_method,\n  o.is_paid,\n  o.comment,\n  o.created_at\nFROM orders o\nJOIN clients c ON c.id = o.client_id\nORDER BY o.created_at DESC\nLIMIT 20;",
+          "rawSql": "SELECT \n  c.full_name as client,\n  o.date,\n  o.delivery_start_time,\n  o.delivery_end_time,\n  o.delivery_phone,\n  o.payment_method,\n  o.is_paid,\n  o.comment,\n  o.created_at\nFROM orders o\nJOIN clients c ON c.id = o.client_id\nORDER BY o.created_at DESC\nLIMIT 20;",
           "refId": "A"
         }
       ],
@@ -120,7 +120,7 @@
           "editorMode": "code",
           "format": "table",
           "rawQuery": true,
-          "rawSql": "SELECT \n  c.custom_id,\n  c.full_name,\n  p.number as phone,\n  a.address,\n  c.created_at\nFROM clients c\nLEFT JOIN LATERAL (\n  SELECT number FROM client_phones WHERE client_id = c.id LIMIT 1\n) p ON true\nLEFT JOIN LATERAL (\n  SELECT street || ', ' || house || COALESCE(', кв.' || apartment, '') as address FROM client_addresses WHERE client_id = c.id LIMIT 1\n) a ON true\nORDER BY c.created_at DESC\nLIMIT 20;",
+          "rawSql": "SELECT \n  c.full_name,\n  p.number as phone,\n  a.address,\n  c.created_at\nFROM clients c\nLEFT JOIN LATERAL (\n  SELECT number FROM client_phones WHERE client_id = c.id LIMIT 1\n) p ON true\nLEFT JOIN LATERAL (\n  SELECT street || ', ' || house || COALESCE(', кв.' || apartment, '') as address FROM client_addresses WHERE client_id = c.id LIMIT 1\n) a ON true\nORDER BY c.created_at DESC\nLIMIT 20;",
           "refId": "A"
         }
       ],
