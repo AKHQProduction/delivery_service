@@ -156,19 +156,6 @@ services:
         condition: service_healthy
     profiles: ["monitoring"]
 
-  cadvisor:
-    container_name: "water_delivery-cadvisor"
-    image: gcr.io/cadvisor/cadvisor:v0.49.1
-    privileged: true
-    volumes:
-      - /:/rootfs:ro
-      - /var/run:/var/run:ro
-      - /var/run/docker.sock:/var/run/docker.sock:ro
-      - /sys:/sys:ro
-      - /var/lib/docker/:/var/lib/docker:ro
-      - /dev/disk/:/dev/disk:ro
-    restart: unless-stopped
-    profiles: ["monitoring"]
 
   loki:
     container_name: "water_delivery-loki"
@@ -213,7 +200,6 @@ services:
     depends_on:
       - postgres_exporter
       - redis_exporter
-      - cadvisor
     profiles: ["monitoring"]
 
   grafana:
