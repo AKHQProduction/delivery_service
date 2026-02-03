@@ -1,7 +1,6 @@
 import { PageHeader } from "../components/ui/PageHeader";
 import { MenuCard } from "../components/ui/MenuCard";
 import { WelcomeSection } from "../components/ui/WelcomeSection";
-import { EmptyState } from "../components/ui/EmptyState";
 import { useNavigate } from "react-router-dom";
 import { useUserStore } from "../context/useUserStore";
 import { UserRole } from "../constants/roles";
@@ -45,9 +44,9 @@ export const MainPage = () => {
   const navigate = useNavigate();
   const user = useUserStore((s) => s.user);
 
-  const availableCards = menuCards.filter((card) =>
-    user ? card.allowedRoles.includes(user.role) : false
-  );
+  const hasPermission = (card: MenuCardData): boolean => {
+    return user ? card.allowedRoles.includes(user.role) : false;
+  };
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-gray-50 to-gray-100">
@@ -60,23 +59,17 @@ export const MainPage = () => {
         />
 
         <div className="grid grid-cols-1 gap-4">
-          {availableCards.map((card) => (
+          {menuCards.map((card) => (
             <MenuCard
               key={card.path}
               label={card.label}
               description={card.description}
               icon={card.icon}
               onClick={() => navigate(card.path)}
+              disabled={!hasPermission(card)}
             />
           ))}
         </div>
-
-        {availableCards.length === 0 && (
-          <EmptyState
-            title="Немає доступних розділів"
-            description="Зверніться до адміністратора для надання доступу"
-          />
-        )}
 
         <div className="h-4" />
       </div>
