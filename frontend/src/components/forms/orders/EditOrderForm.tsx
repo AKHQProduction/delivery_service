@@ -146,7 +146,7 @@ export const EditOrderForm: React.FC<EditOrderFormProps> = ({
             const slotFormatted = `${formatTime(slot.start_time)}-${formatTime(slot.end_time)}`;
             return slotFormatted === orderData.time_slot;
           });
-          setTimeSlot(matchingSlot?.time_slot_id || "");
+          setTimeSlot(matchingSlot?.time_slot_id || "" );
         }
         
         setPaymentMethod(orderData.payment_method || "");
@@ -286,7 +286,8 @@ export const EditOrderForm: React.FC<EditOrderFormProps> = ({
       !selectedPhoneId ||
       !selectedAddressId ||
       orderItems.length === 0 ||
-      !loadedOrder
+      !loadedOrder ||
+      !timeSlot
     ) {
       alert("Будь ласка, заповніть всі обов'язкові поля");
       return;
