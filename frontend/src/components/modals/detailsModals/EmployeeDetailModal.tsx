@@ -30,6 +30,10 @@ export const EmployeeDetailModal: React.FC<EmployeeDetailModalProps> = ({
   };
 
   const handleSaveEdit = (updatedEmployee: Employee) => {
+    if (!updatedEmployee?.user_id) {
+      console.error("Cannot save: invalid employee data");
+      return;
+    }
     onSave(updatedEmployee);
     setIsEditing(false);
   };

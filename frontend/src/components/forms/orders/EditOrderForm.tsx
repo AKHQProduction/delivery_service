@@ -887,7 +887,7 @@ export const EditOrderForm: React.FC<EditOrderFormProps> = ({
               name="timeSlot"
               value={timeSlot}
               required={true}
-              onChange={setTimeSlot}
+              onChange={(e) => setTimeSlot(e.target.value)}
               options={[
                 ...timeSlots.map((slot) => ({
                   value: slot.time_slot_id,
@@ -901,7 +901,7 @@ export const EditOrderForm: React.FC<EditOrderFormProps> = ({
               name="paymentMethod"
               value={paymentMethod}
               required={true}
-              onChange={setPaymentMethod}
+              onChange={(e) => setPaymentMethod(e.target.value)}
               options={[
                 { value: "CASH", label: "Готівка" },
                 { value: "BANK_TRANSFER", label: "На рахунок" },

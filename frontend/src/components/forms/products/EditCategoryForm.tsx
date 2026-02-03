@@ -46,9 +46,7 @@ export const CategoriesForm = () => {
     console.error("Failed to add category:", error);
   }
 };
-  console.log("EditCategoryForm - transformedCategories:", transformedCategories);
   const handleUpdateCategory = async (id: string, name: string) => {
-    console.log("handleUpdateCategory called with:", id, name);
     try {
       await updateCategory(id, name);
     } catch (error) {
@@ -77,7 +75,7 @@ export const CategoriesForm = () => {
           label="Категорія"
           name="category"
           value={selectedCategory}
-          onChange={setSelectedCategory}
+          onChange={(e) => setSelectedCategory(e.target.value)}
           options={categoryOptions}
           required
           onAddCategory={() => setIsCategoryModalOpen(true)}

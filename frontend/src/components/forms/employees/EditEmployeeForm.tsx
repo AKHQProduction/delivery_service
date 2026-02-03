@@ -22,7 +22,7 @@ export const EditEmployeeForm: React.FC<EditEmployeeFormProps> = ({
   });
 
   const handleChange = (
-    e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>
+    e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>,
   ) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
   };
@@ -30,13 +30,18 @@ export const EditEmployeeForm: React.FC<EditEmployeeFormProps> = ({
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
 
-    const updatedProduct = {
+    if (!employee?.user_id) {
+      console.error("Cannot save: employee or user_id is missing");
+      return;
+    }
+
+    const updatedEmployee: Employee = {
       user_id: employee.user_id,
       full_name: formData.full_name,
       role: formData.role,
     };
 
-    onSave(updatedProduct);
+    onSave(updatedEmployee);
     onClose();
   };
 

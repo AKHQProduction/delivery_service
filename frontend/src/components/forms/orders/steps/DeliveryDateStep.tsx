@@ -99,7 +99,7 @@ export const DeliveryDateStep: React.FC<DeliveryDateStepProps> = ({
         name="deliveryTime"
         value={timeSlotId}
         required={true}
-        onChange={onTimeChange}
+        onChange={(e) => onTimeChange(e.target.value)}
         options={timeSlots.map((slot) => ({
           value: slot.time_slot_id,
           label: slot.label
@@ -113,7 +113,7 @@ export const DeliveryDateStep: React.FC<DeliveryDateStepProps> = ({
         name="paymentMethod"
         value={paymentMethod}
         required={true}
-        onChange={onPaymentMethodChange}
+        onChange={(e) => onPaymentMethodChange(e.target.value)}
         options={[
           { value: "CASH", label: "Готівка" },
           { value: "BANK_TRANSFER", label: "На рахунок" },

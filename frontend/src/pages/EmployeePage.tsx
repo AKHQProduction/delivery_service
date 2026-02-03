@@ -56,13 +56,24 @@ export const EmployeePage = () => {
   };
 
   const handleSave = async (updatedEmployee: Employee) => {
+    if (!updatedEmployee?.user_id) return;
+
     const reverseRole = reverseRoleMap[updatedEmployee.role];
     await updateEmployee(
       updatedEmployee.user_id,
       updatedEmployee.full_name,
       reverseRole
     );
-    await getEmployees(searchTerm);
+    const refreshedEmployees = await getEmployees(searchTerm);
+
+    if (refreshedEmployees) {
+      const updatedSelectedEmployee = refreshedEmployees.find(
+        (emp: Employee) => emp?.user_id === updatedEmployee.user_id
+      );
+      if (updatedSelectedEmployee) {
+        setSelectedEmployee(updatedSelectedEmployee);
+      }
+    }
   };
 
   const handleDelete = async () => {
