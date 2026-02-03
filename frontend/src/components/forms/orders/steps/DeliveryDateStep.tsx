@@ -1,7 +1,7 @@
 import React from "react";
 import { type Client } from "../../../../types/entities/Client";
 import { type Product } from "../../../../types/entities/Product";
-import { Tooltip } from "../../../ui/tooltip";
+import { Tooltip } from "../../../ui/Tooltip";
 import { DateSelectInput } from "../../../shared/DateSelectInput";
 import { FormSelect } from "../../../shared/FormSelect";
 

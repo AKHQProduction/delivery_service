@@ -7,7 +7,7 @@ import { getOrderById } from "../../../services/api/ordersApi";
 import { getClientById } from "../../../services/api/clientApi";
 import { type Client } from "../../../types/entities/Client";
 import { type Product } from "../../../types/entities/Product";
-import { SearchBar } from "../../ui/searchBar";
+import { SearchBar } from "../../ui/SearchBar";
 import { DateSelectInput } from "../../shared/DateSelectInput";
 import { FormSelect } from "../../shared/FormSelect";
 

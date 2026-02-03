@@ -4,11 +4,15 @@ import { ClientsPage } from "../pages/ClientsPage";
 import { OrdersPage } from "../pages/OrdersPage";
 import { EmployeePage } from "../pages/EmployeePage";
 import { OrdersStatsPage } from "../pages/OrderStatsPage";
+import { MainPage } from "../pages/MainPage";
+import { SettingsPage } from "../pages/SettingsPage";
 import goodsIcon from "../assets/icons/goods.svg";
 import clientsIcon from "../assets/icons/client.svg";
 import ordersIcon from "../assets/icons/order.svg";
 import usersIcon from "../assets/icons/users.svg";
 import statisticIcon from "../assets/icons/statistic-board-com.svg";
+import menuIcon from "../assets/icons/menu.svg";
+import settingsIcon from "../assets/icons/settings.svg";
 
 export interface RouteConfig {
   path: string;
@@ -16,15 +20,25 @@ export interface RouteConfig {
   icon: string;
   component: React.ComponentType;
   allowedRoles: UserRole[];
+  showInNav?: boolean;
 }
 
 export const routeConfig: RouteConfig[] = [
   {
     path: "/",
+    label: "Головна",
+    icon: menuIcon,
+    component: MainPage,
+    allowedRoles: [UserRole.COURIER, UserRole.MANAGER, UserRole.OWNER],
+  },
+
+  {
+    path: "/stats",
     label: "Статистика",
     icon: statisticIcon,
     component: OrdersStatsPage,
     allowedRoles: [UserRole.MANAGER, UserRole.OWNER],
+    showInNav: false,
   },
   {
     path: "/products",
@@ -53,6 +67,15 @@ export const routeConfig: RouteConfig[] = [
     icon: usersIcon,
     component: EmployeePage,
     allowedRoles: [UserRole.OWNER],
+    showInNav: false,
+  },
+  {
+    path: "/settings",
+    label: "Налаштування",
+    icon: settingsIcon,
+    component: SettingsPage,
+    allowedRoles: [UserRole.MANAGER, UserRole.OWNER],
+    showInNav: false,
   },
 ];
 

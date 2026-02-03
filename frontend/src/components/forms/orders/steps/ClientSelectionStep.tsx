@@ -1,6 +1,6 @@
 import React, { useRef, useEffect, useCallback } from "react";
 import { type Client } from "../../../../types/entities/Client";
-import { SearchBar } from "../../../ui/searchBar";
+import { SearchBar } from "../../../ui/SearchBar";
 
 interface ClientSelectionStepProps {
   clients: Client[];

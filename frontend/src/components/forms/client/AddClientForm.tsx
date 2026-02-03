@@ -6,7 +6,7 @@ import { AddressInputList } from "../../shared/AddressInputList";
 import { useClient } from "../../../hooks/clients/useClients";
 import { useClientForm } from "../../../hooks/clients/useClientForm";
 import { type Client } from "../../../types/entities/Client";
-import { DuplicatePhoneToast } from "../../ui/phoneDublicateErrorPopup";
+import { DuplicatePhoneToast } from "../../ui/PhoneDuplicateErrorPopup";
 
 interface AddClientFormProps {
   onClose: () => void;

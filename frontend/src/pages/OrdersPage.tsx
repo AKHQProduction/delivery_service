@@ -1,12 +1,13 @@
-import { useEffect, useState, useRef, useCallback } from "react";
-import { PageHeader } from "../components/ui/pageHeader";
-import { SearchBar } from "../components/ui/searchBar";
+import { useEffect, useState, useRef } from "react";
+import { PageHeader } from "../components/ui/PageHeader";
+import { SearchBar } from "../components/ui/SearchBar";
 import { useOrders } from "../hooks/orders/useOrders";
 import { paymentMap } from "../utils/dataMap";
 import { OrderDetailModal } from "../components/modals/detailsModals/OrderDetailModal";
 import { RightModal } from "../components/modals/RightModal";
 import { generateOrdersPdfLink, getOrderById } from "../services/api/ordersApi";
 import { SearchFiltersPopup } from "../components/shared/SearchFiltersPopup";
+import { useInfiniteScroll } from "../hooks/useInfiniteScroll";
 
 const getDownloadUrl = (fileId: string): string => {
   const baseUrl = import.meta.env.VITE_API_URL;
@@ -60,8 +61,12 @@ export const OrdersPage = () => {
     hasMore,
   } = useOrders();
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const observerRef = useRef<IntersectionObserver | null>(null);
-  const loadMoreRef = useRef<HTMLDivElement | null>(null);
+
+  const { sentinelRef } = useInfiniteScroll({
+    onLoadMore: loadMoreOrders,
+    hasMore,
+    isLoading: loadingMore,
+  });
 
   useEffect(() => {
     const initOrders = async () => {
@@ -97,38 +102,6 @@ export const OrdersPage = () => {
       }
     };
   }, [searchTerm]);
-
-  const handleObserver = useCallback(
-    (entries: IntersectionObserverEntry[]) => {
-      const [entry] = entries;
-      if (entry.isIntersecting && hasMore && !loadingMore) {
-        loadMoreOrders();
-      }
-    },
-    [hasMore, loadingMore, loadMoreOrders],
-  );
-
-  useEffect(() => {
-    if (observerRef.current) {
-      observerRef.current.disconnect();
-    }
-
-    observerRef.current = new IntersectionObserver(handleObserver, {
-      root: null,
-      rootMargin: "100px",
-      threshold: 0,
-    });
-
-    if (loadMoreRef.current) {
-      observerRef.current.observe(loadMoreRef.current);
-    }
-
-    return () => {
-      if (observerRef.current) {
-        observerRef.current.disconnect();
-      }
-    };
-  }, [handleObserver]);
 
   const getOrderTotal = (order: Order) => {
     return (order.items ?? []).reduce((sum, item) => {
@@ -393,7 +366,7 @@ export const OrdersPage = () => {
               </div>
             ))}
 
-            <div ref={loadMoreRef} className="py-4 flex justify-center">
+            <div ref={sentinelRef} className="py-4 flex justify-center">
               {loadingMore && (
                 <div className="flex items-center gap-2 text-gray-500">
                   <svg className="animate-spin h-5 w-5" viewBox="0 0 24 24">

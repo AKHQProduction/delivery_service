@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { PageHeader } from "../components/ui/pageHeader";
+import { PageHeader } from "../components/ui/PageHeader";
 import { getOrderStats } from "../services/api/ordersApi";
 import { paymentMap } from "../utils/dataMap";
 

@@ -1,6 +1,6 @@
 import React from "react";
 import { type Client } from "../../../../types/entities/Client";
-import { Tooltip } from "../../../ui/tooltip";
+import { Tooltip } from "../../../ui/Tooltip";
 
 interface ContactInfoStepProps {
   client: Client | null;

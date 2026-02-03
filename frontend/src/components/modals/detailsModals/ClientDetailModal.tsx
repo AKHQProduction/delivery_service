@@ -1,6 +1,6 @@
 import React, { useState } from "react";
-import { ItemElement } from "../../ui/itemElement";
-import { ModalButtons } from "../../ui/modalButtons";
+import { ItemElement } from "../../ui/ItemElement";
+import { ModalButtons } from "../../ui/ModalButtons";
 import leftArrowIcon from "../../../assets/icons/left_arrow.svg";
 import { EditClientForm } from "../../forms/client/EditClientForm";
 import { type Client } from "../../../types/entities/Client";

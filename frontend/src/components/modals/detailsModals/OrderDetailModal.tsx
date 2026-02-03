@@ -1,4 +1,4 @@
-import { ModalButtons } from "../../ui/modalButtons";
+import { ModalButtons } from "../../ui/ModalButtons";
 import leftArrowIcon from "../../../assets/icons/left_arrow.svg";
 import { paymentMap } from "../../../utils/dataMap";
 import { useState } from "react";

@@ -6,7 +6,7 @@ import { PhoneInputList } from "../../shared/PhoneInputList";
 import { type Client } from "../../../types/entities/Client";
 import { useClient } from "../../../hooks/clients/useClients";
 import { useClientForm } from "../../../hooks/clients/useClientForm";
-import { DuplicatePhoneToast } from "../../ui/phoneDublicateErrorPopup";
+import { DuplicatePhoneToast } from "../../ui/PhoneDuplicateErrorPopup";
 interface EditClientFormProps {
   client: Client;
   onClose: () => void;

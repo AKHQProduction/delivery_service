@@ -1,12 +1,13 @@
-import { useEffect, useState, useRef, useCallback } from "react";
-import { PageHeader } from "../components/ui/pageHeader";
-import { SearchBar } from "../components/ui/searchBar";
-import { EmployeeCard } from "../components/ui/employeeCard";
+import { useEffect, useState, useRef } from "react";
+import { PageHeader } from "../components/ui/PageHeader";
+import { SearchBar } from "../components/ui/SearchBar";
+import { EmployeeCard } from "../components/ui/EmployeeCard";
 import { EmployeeDetailModal } from "../components/modals/detailsModals/EmployeeDetailModal";
 import { RightModal } from "../components/modals/RightModal";
 import { useEmployees } from "../hooks/useEmployees";
 import { reverseRoleMap } from "../utils/dataMap";
 import { type Employee } from "../types/entities/Employee";
+import { useInfiniteScroll } from "../hooks/useInfiniteScroll";
 
 export const EmployeePage = () => {
   const [searchTerm, setSearchTerm] = useState("");
@@ -17,8 +18,12 @@ export const EmployeePage = () => {
   const { getEmployees, deleteEmployees, updateEmployee, employees, loadMoreEmployees, loadingMore, hasMore } =
     useEmployees();
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const observerRef = useRef<IntersectionObserver | null>(null);
-  const loadMoreRef = useRef<HTMLDivElement | null>(null);
+
+  const { sentinelRef } = useInfiniteScroll({
+    onLoadMore: loadMoreEmployees,
+    hasMore,
+    isLoading: loadingMore,
+  });
 
   useEffect(() => {
     getEmployees();
@@ -39,38 +44,6 @@ export const EmployeePage = () => {
       }
     };
   }, [searchTerm]);
-
-  const handleObserver = useCallback(
-    (entries: IntersectionObserverEntry[]) => {
-      const [entry] = entries;
-      if (entry.isIntersecting && hasMore && !loadingMore) {
-        loadMoreEmployees();
-      }
-    },
-    [hasMore, loadingMore, loadMoreEmployees]
-  );
-
-  useEffect(() => {
-    if (observerRef.current) {
-      observerRef.current.disconnect();
-    }
-
-    observerRef.current = new IntersectionObserver(handleObserver, {
-      root: null,
-      rootMargin: "100px",
-      threshold: 0,
-    });
-
-    if (loadMoreRef.current) {
-      observerRef.current.observe(loadMoreRef.current);
-    }
-
-    return () => {
-      if (observerRef.current) {
-        observerRef.current.disconnect();
-      }
-    };
-  }, [handleObserver]);
 
   const handleEmployeeClick = (employee: Employee) => {
     setSelectedEmployee(employee);
@@ -148,7 +121,7 @@ export const EmployeePage = () => {
             ))}
           </div>
 
-          <div ref={loadMoreRef} className="py-4 flex justify-center">
+          <div ref={sentinelRef} className="py-4 flex justify-center">
             {loadingMore && (
               <div className="flex items-center gap-2 text-gray-500">
                 <svg className="animate-spin h-5 w-5" viewBox="0 0 24 24">

@@ -8,7 +8,9 @@ export const BottomNavPanel = () => {
   const location = useLocation();
 
   if (!user) return null;
-  const userRoutes = getRoutesForRole(user.role);
+  const userRoutes = getRoutesForRole(user.role).filter(
+    (route) => route.showInNav !== false
+  );
 
   return (
     <div className="flex items-center justify-center fixed bottom-0 w-full">

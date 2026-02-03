@@ -1,12 +1,13 @@
-import { useEffect, useState, useRef, useCallback } from "react";
-import { PageHeader } from "../components/ui/pageHeader";
-import { SearchBar } from "../components/ui/searchBar";
-import { ClientCard } from "../components/ui/clientsCard";
+import { useEffect, useState, useRef } from "react";
+import { PageHeader } from "../components/ui/PageHeader";
+import { SearchBar } from "../components/ui/SearchBar";
+import { ClientCard } from "../components/ui/ClientsCard";
 import { ClientDetailModal } from "../components/modals/detailsModals/ClientDetailModal";
 import { RightModal } from "../components/modals/RightModal";
 import { type Client } from "../types/entities/Client";
 import { useClient } from "../hooks/clients/useClients";
 import { getClientById } from "../services/api/clientApi";
+import { useInfiniteScroll } from "../hooks/useInfiniteScroll";
 
 export const ClientsPage = () => {
   const [searchTerm, setSearchTerm] = useState("");
@@ -14,8 +15,12 @@ export const ClientsPage = () => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const { clients, getClients, deleteClient, loadMoreClients, loadingMore, hasMore } = useClient();
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const observerRef = useRef<IntersectionObserver | null>(null);
-  const loadMoreRef = useRef<HTMLDivElement | null>(null);
+
+  const { sentinelRef } = useInfiniteScroll({
+    onLoadMore: loadMoreClients,
+    hasMore,
+    isLoading: loadingMore,
+  });
 
   useEffect(() => {
     const initClients = async () => {
@@ -51,38 +56,6 @@ export const ClientsPage = () => {
       }
     };
   }, [searchTerm]);
-
-  const handleObserver = useCallback(
-    (entries: IntersectionObserverEntry[]) => {
-      const [entry] = entries;
-      if (entry.isIntersecting && hasMore && !loadingMore) {
-        loadMoreClients();
-      }
-    },
-    [hasMore, loadingMore, loadMoreClients]
-  );
-
-  useEffect(() => {
-    if (observerRef.current) {
-      observerRef.current.disconnect();
-    }
-
-    observerRef.current = new IntersectionObserver(handleObserver, {
-      root: null,
-      rootMargin: "100px",
-      threshold: 0,
-    });
-
-    if (loadMoreRef.current) {
-      observerRef.current.observe(loadMoreRef.current);
-    }
-
-    return () => {
-      if (observerRef.current) {
-        observerRef.current.disconnect();
-      }
-    };
-  }, [handleObserver]);
 
   const handleClientClick = (client: Client) => {
     setSelectedClient(client);
@@ -162,7 +135,7 @@ export const ClientsPage = () => {
             ))}
           </div>
 
-          <div ref={loadMoreRef} className="py-4 flex justify-center">
+          <div ref={sentinelRef} className="py-4 flex justify-center">
             {loadingMore && (
               <div className="flex items-center gap-2 text-gray-500">
                 <svg className="animate-spin h-5 w-5" viewBox="0 0 24 24">

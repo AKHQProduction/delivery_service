@@ -1,6 +1,6 @@
 import React, { useRef, useEffect, useCallback } from "react";
 import { type Product } from "../../../../types/entities/Product";
-import { SearchBar } from "../../../ui/searchBar";
+import { SearchBar } from "../../../ui/SearchBar";
 
 interface SelectedProduct {
   product: Product;

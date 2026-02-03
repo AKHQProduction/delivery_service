@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
-import { DynamicFormSelect } from "../../shared/DyncamicFormSelect";
-import { CategoryManagementModal } from "../../features/addCategoryComponent";
+import { DynamicFormSelect } from "../../shared/DynamicFormSelect";
+import { CategoryManagementModal } from "../../features/AddCategoryComponent";
 import { useCategories } from "../../../hooks/products/useCategories";
 
 export const CategoriesForm = () => {
