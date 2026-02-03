@@ -2,7 +2,7 @@ import React from "react";
 import { type Client } from "../../../../types/entities/Client";
 import { type Product } from "../../../../types/entities/Product";
 import { Tooltip } from "../../../ui/Tooltip";
-import { DateSelectInput } from "../../../shared/DateSelectInput";
+import { DateInput } from "../../../shared/DateInput";
 import { FormSelect } from "../../../shared/FormSelect";
 
 interface SelectedProduct {
@@ -72,7 +72,8 @@ export const DeliveryDateStep: React.FC<DeliveryDateStepProps> = ({
         Дата доставки та підсумок
       </h3>
 
-      <DateSelectInput
+      <DateInput
+        label="Дата доставки"
         value={deliveryDate}
         onChange={onDateChange}
         required

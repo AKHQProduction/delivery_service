@@ -8,8 +8,9 @@ import { getClientById } from "../../../services/api/clientApi";
 import { type Client } from "../../../types/entities/Client";
 import { type Product } from "../../../types/entities/Product";
 import { SearchBar } from "../../ui/SearchBar";
-import { DateSelectInput } from "../../shared/DateSelectInput";
+import { DateInput } from "../../shared/DateInput";
 import { FormSelect } from "../../shared/FormSelect";
+import { convertDateToISO } from "../../../utils/dateUtils";
 
 interface OrderItem {
   id?: number;
@@ -134,24 +135,26 @@ export const EditOrderForm: React.FC<EditOrderFormProps> = ({
           })) || [];
 
         setOrderItems(items);
-        setDeliveryDate(orderData.delivery_date || orderData.date || "");
-        
+        const dateValue = orderData.delivery_date || orderData.date || "";
+        const isoDate = convertDateToISO(dateValue);
+        setDeliveryDate(isoDate);
+
         // Find matching time slot ID from the formatted time_slot string
         if (orderData.time_slot_id) {
           setTimeSlot(orderData.time_slot_id);
         } else if (orderData.time_slot) {
           // Match the formatted string like "13:33-23:12" with timeSlots
-          const matchingSlot = timeSlots.find(slot => {
-            const formatTime = (timeStr: string) => timeStr ? timeStr.slice(0, 5) : "";
+          const matchingSlot = timeSlots.find((slot) => {
+            const formatTime = (timeStr: string) =>
+              timeStr ? timeStr.slice(0, 5) : "";
             const slotFormatted = `${formatTime(slot.start_time)}-${formatTime(slot.end_time)}`;
             return slotFormatted === orderData.time_slot;
           });
-          setTimeSlot(matchingSlot?.time_slot_id || "" );
+          setTimeSlot(matchingSlot?.time_slot_id || "");
         }
-        
+
         setPaymentMethod(orderData.payment_method || "");
         setNote(orderData.note || orderData.comment || "");
-        console.log("Loaded order data:", orderData);
       } catch (error) {
         console.error("Error loading order:", error);
       }
@@ -273,7 +276,7 @@ export const EditOrderForm: React.FC<EditOrderFormProps> = ({
 
     const start = formatTime(slot.start_time);
     const end = formatTime(slot.end_time);
-    
+
     if (slot.label) {
       return `${slot.label} (${start} - ${end})`;
     }
@@ -305,7 +308,10 @@ export const EditOrderForm: React.FC<EditOrderFormProps> = ({
       payload.phone_id = selectedPhoneId;
       payload.address_id = selectedAddressId;
 
-      if (deliveryDate !== loadedOrder.delivery_date && deliveryDate !== loadedOrder.date) {
+      if (
+        deliveryDate !== loadedOrder.delivery_date &&
+        deliveryDate !== loadedOrder.date
+      ) {
         payload.delivery_date = deliveryDate;
       }
       if (timeSlot !== loadedOrder.time_slot_id) {
@@ -859,8 +865,8 @@ export const EditOrderForm: React.FC<EditOrderFormProps> = ({
         {/* Delivery Date Section */}
         <div className="space-y-3">
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4 pb-3">
-            
-            <DateSelectInput
+            <DateInput
+              label="Дата доставки"
               value={deliveryDate}
               onChange={setDeliveryDate}
               required

@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { PageHeader } from "../components/ui/PageHeader";
 import { getOrderStats } from "../services/api/ordersApi";
 import { paymentMap } from "../utils/dataMap";
+import { DateInput } from "../components/shared/DateInput";
 
 interface OrderStats {
   total_orders: number;
@@ -54,40 +55,26 @@ export const OrdersStatsPage = () => {
     <div className="min-h-screen bg-gray-50 pb-24">
       <PageHeader title="Статистика" />
 
-      <div className="px-6 pt-6 pb-4">
-        <div className="bg-white rounded-2xl p-4 shadow-sm border border-gray-200">
+      <div className="px-4 sm:px-6 pt-6 pb-4">
+        <div className="bg-white rounded-2xl p-3 sm:p-4 shadow-sm border border-gray-200 overflow-hidden">
           <label className="block text-sm font-semibold text-gray-700 mb-2">
             Оберіть період
           </label>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-            <div>
-              <label className="block text-xs font-medium text-gray-600 mb-1.5">
-                Від
-              </label>
-              <input
-                title="start date selector"
-                type="date"
-                value={startDate}
-                onChange={(e) => setStartDate(e.target.value)}
-                className="w-full px-4 py-3 border-2 border-indigo-200 rounded-xl bg-white
-                         focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent
-                         text-gray-900 font-medium transition-all"
-              />
-            </div>
-            <div>
-              <label className="block text-xs font-medium text-gray-600 mb-1.5">
-                До
-              </label>
-              <input
-                title="end date selector"
-                type="date"
-                value={endDate}
-                onChange={(e) => setEndDate(e.target.value)}
-                className="w-full px-4 py-3 border-2 border-indigo-200 rounded-xl bg-white
-                         focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent
-                         text-gray-900 font-medium transition-all"
-              />
-            </div>
+            <DateInput
+              label="Від"
+              value={startDate}
+              onChange={setStartDate}
+              title="start date selector"
+              className="min-w-0 w-full"
+            />
+            <DateInput
+              label="До"
+              value={endDate}
+              onChange={setEndDate}
+              title="end date selector"
+              className="min-w-0 w-full"
+            />
           </div>
         </div>
       </div>
