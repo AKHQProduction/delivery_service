@@ -31,8 +31,10 @@ async def test_update_shop_address(
             "city": "Moscow",
             "street": "Lenina",
             "house": "10",
-            "latitude": 55.7558,
-            "longitude": 37.6173,
+            "coordinates": {
+                "latitude": 55.7558,
+                "longitude": 37.6173,
+            },
         }
     }
 
@@ -71,8 +73,10 @@ async def test_update_shop_address_overwrites_previous(
             "city": "Moscow",
             "street": "Lenina",
             "house": "10",
-            "latitude": 55.7558,
-            "longitude": 37.6173,
+            "coordinates": {
+                "latitude": 55.7558,
+                "longitude": 37.6173,
+            },
         }
     }
     await http_client.patch(url=BASE_URL, headers=headers, json=first_address)
@@ -82,8 +86,10 @@ async def test_update_shop_address_overwrites_previous(
             "city": "SPb",
             "street": "Nevsky",
             "house": "1",
-            "latitude": 59.9343,
-            "longitude": 30.3351,
+            "coordinates": {
+                "latitude": 59.9343,
+                "longitude": 30.3351,
+            },
         }
     }
     response = await http_client.patch(
@@ -149,8 +155,10 @@ async def test_update_shop_as_manager_forbidden(
             "city": "Moscow",
             "street": "Lenina",
             "house": "10",
-            "latitude": 55.7558,
-            "longitude": 37.6173,
+            "coordinates": {
+                "latitude": 55.7558,
+                "longitude": 37.6173,
+            },
         }
     }
 
@@ -170,8 +178,10 @@ async def test_update_shop_unauthorized(
             "city": "Moscow",
             "street": "Lenina",
             "house": "10",
-            "latitude": 55.7558,
-            "longitude": 37.6173,
+            "coordinates": {
+                "latitude": 55.7558,
+                "longitude": 37.6173,
+            },
         }
     }
 

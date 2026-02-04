@@ -1,5 +1,6 @@
 from dataclasses import dataclass
 
+from backend.application.dto.coordinates import CoordinatesDTO
 from backend.application.vars import ShopId, UserId
 from backend.infrastructure.persistence.tables import Shop, ShopMembership
 
@@ -9,8 +10,7 @@ class NewShopAddressDTO:
     city: str
     street: str
     house: str
-    latitude: float
-    longitude: float
+    coordinates: CoordinatesDTO
 
 
 def create_shop(
@@ -58,8 +58,8 @@ def update_shop(
         shop.city = address.city
         shop.street = address.street
         shop.house = address.house
-        shop.latitude = address.latitude
-        shop.longitude = address.longitude
+        shop.latitude = address.coordinates.latitude
+        shop.longitude = address.coordinates.longitude
 
 
 def update_membership(

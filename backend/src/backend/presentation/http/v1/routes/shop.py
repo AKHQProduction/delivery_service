@@ -31,8 +31,10 @@ _EDIT_SHOP_EXAMPLES: dict[str, Example] = {
                 "city": "Moscow",
                 "street": "Lenina",
                 "house": "10",
-                "latitude": 55.7558,
-                "longitude": 37.6173,
+                "coordinates": {
+                    "latitude": 55.7558,
+                    "longitude": 37.6173,
+                },
             }
         },
     ),
