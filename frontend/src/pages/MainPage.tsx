@@ -7,6 +7,7 @@ import { UserRole } from "../constants/roles";
 import statisticIcon from "../assets/icons/statistic-board-com.svg";
 import usersIcon from "../assets/icons/users.svg";
 import settingsIcon from "../assets/icons/settings.svg";
+import shopIcon from "../assets/icons/shop.svg";
 
 interface MenuCardData {
   path: string;
@@ -29,6 +30,13 @@ const menuCards: MenuCardData[] = [
     label: "Персонал",
     description: "Управління співробітниками",
     icon: usersIcon,
+    allowedRoles: [UserRole.OWNER],
+  },
+  {
+    path: "/shop-settings",
+    label: "Налаштування магазину",
+    description: "Адреса магазину та райони доставки",
+    icon: shopIcon,
     allowedRoles: [UserRole.OWNER],
   },
   {

@@ -3,6 +3,7 @@ import { useState, useCallback } from "react";
 export interface MapPickerResult {
   street: string;
   house: string;
+  city: string;
   fullAddress: string;
 }
 
@@ -102,6 +103,12 @@ export const useMapPicker = () => {
           address.path ||
           "";
         const house = address.house_number || "";
+        const city =
+          address.city ||
+          address.town ||
+          address.village ||
+          address.municipality ||
+          "";
 
         // Build full address for display
         const fullAddress = data.display_name || "";
@@ -109,6 +116,7 @@ export const useMapPicker = () => {
         return {
           street,
           house,
+          city,
           fullAddress,
         };
       } catch (err) {

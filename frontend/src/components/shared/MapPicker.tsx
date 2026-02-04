@@ -116,7 +116,7 @@ export const MapPicker: React.FC<MapPickerProps> = ({
 
   return createPortal(
     <div className="fixed inset-0 z-9999 flex items-center justify-center bg-black/50 p-4">
-      <div className="bg-white rounded-xl shadow-xl w-full max-w-4xl max-h-[90vh] overflow-hidden flex flex-col">
+      <div className="bg-white rounded-xl shadow-xl w-full max-w-4xl max-h-full overflow-hidden flex flex-col">
         {/* Header */}
         <div className="px-6 py-4 border-b border-gray-200 flex items-center justify-between">
           <div>
@@ -151,7 +151,7 @@ export const MapPicker: React.FC<MapPickerProps> = ({
         </div>
 
         {/* Map */}
-        <div className="relative h-[500px] w-full">
+        <div className="relative h-[60vh] sm:h-[500px] shrink w-full">
           <MapContainer
             center={[mapCenter.lat, mapCenter.lng]}
             zoom={13}
