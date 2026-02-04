@@ -1,11 +1,11 @@
 from datetime import date, time
 from decimal import Decimal
 
-from backend.application.errors import EntityNotFoundError
-from backend.application.interfaces.gateways.order_gateway import (
+from backend.application.dto.gateways.order_gateway import (
     DeliveryAddressDTO,
     OrderItemDTO,
 )
+from backend.application.errors import EntityNotFoundError
 from backend.application.vars import (
     AddressId,
     ClientId,

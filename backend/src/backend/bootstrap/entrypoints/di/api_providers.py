@@ -44,6 +44,7 @@ from backend.application.commands.edit_category import (
 from backend.application.commands.edit_client import EditClientCommandHandler
 from backend.application.commands.edit_order import UpdateOrderCommandHandler
 from backend.application.commands.edit_product import EditProductCommandHandler
+from backend.application.commands.edit_shop import EditShopCommandHandler
 from backend.application.commands.edit_time_slot import (
     EditTimeSlotCommandHandler,
 )
@@ -123,6 +124,7 @@ class APIInteractorsProvider(Provider):
         EditTimeSlotCommandHandler,
         DeleteTimeSlotCommandHandler,
         GetTimeSlotsQueryHandler,
+        EditShopCommandHandler,
     )
 
     add_employee = provide_all(GenerateInviteLinkCommandHandler)

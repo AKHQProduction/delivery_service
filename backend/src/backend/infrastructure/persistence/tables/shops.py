@@ -2,7 +2,7 @@ import datetime
 from typing import TYPE_CHECKING
 
 import sqlalchemy as sa
-from sqlalchemy import UniqueConstraint
+from sqlalchemy import CheckConstraint, UniqueConstraint
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from backend.application.vars import ShopId, TimeSlotId, UserId
@@ -26,6 +26,12 @@ class Shop(Base, CreatedAt, UpdatedAt):
     id: Mapped[ShopId] = mapped_column(sa.UUID, primary_key=True)
     name: Mapped[str] = mapped_column(sa.String, nullable=False)
 
+    city: Mapped[str | None] = mapped_column(sa.String, nullable=True)
+    street: Mapped[str | None] = mapped_column(sa.String, nullable=True)
+    house: Mapped[str | None] = mapped_column(sa.String, nullable=True)
+    latitude: Mapped[float | None] = mapped_column(sa.Double, nullable=True)
+    longitude: Mapped[float | None] = mapped_column(sa.Double, nullable=True)
+
     memberships: Mapped[list["ShopMembership"]] = relationship(
         back_populates="shop"
     )
@@ -35,6 +41,13 @@ class Shop(Base, CreatedAt, UpdatedAt):
     orders: Mapped[list["Order"]] = relationship(back_populates="shop")
     delivery_time_slots: Mapped[list["ShopDeliveryTimeSlot"]] = relationship(
         back_populates="shop"
+    )
+
+    __table_args__ = (
+        CheckConstraint(
+            "(latitude IS NULL) = (longitude IS NULL)",
+            name="ck_shops_coords_both_or_none",
+        ),
     )
 
     def __repr__(self) -> str:

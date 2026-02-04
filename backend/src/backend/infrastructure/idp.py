@@ -1,5 +1,5 @@
+from backend.application.dto.idp import CurrentUserDTO
 from backend.application.errors import AuthorizationError
-from backend.application.interfaces.idp import CurrentUserDTO
 from backend.application.vars import ShopRole, UserId
 from backend.infrastructure.persistence.gateways import (
     SQLAlchemyShopGateway,

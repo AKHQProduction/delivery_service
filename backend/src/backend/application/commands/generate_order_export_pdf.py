@@ -3,12 +3,12 @@ import logging
 from dataclasses import dataclass
 from datetime import date
 
-from backend.application.errors import AccessDeniedError, EntityNotFoundError
-from backend.application.interfaces.gateways import Pagination
-from backend.application.interfaces.gateways.order_gateway import (
+from backend.application.dto.gateways import Pagination
+from backend.application.dto.gateways.order_gateway import (
     GetOrdersFilters,
     OrderReadModel,
 )
+from backend.application.errors import AccessDeniedError, EntityNotFoundError
 from backend.infrastructure.idp import TelegramIdentityProvider
 from backend.infrastructure.pdf import ReportLabOrdersPDFGenerator
 from backend.infrastructure.persistence.gateways import (

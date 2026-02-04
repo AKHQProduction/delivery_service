@@ -1,7 +1,7 @@
-from backend.application.errors import EntityNotFoundError
-from backend.application.interfaces.gateways.shop_gateway import (
+from backend.application.dto.gateways.shop_gateway import (
     EmployeeReadModel,
 )
+from backend.application.errors import EntityNotFoundError
 from backend.application.vars import UserId
 from backend.infrastructure.idp import TelegramIdentityProvider
 from backend.infrastructure.persistence.gateways import SQLAlchemyShopGateway

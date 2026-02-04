@@ -1,7 +1,7 @@
-from backend.application.errors import EntityNotFoundError
-from backend.application.interfaces.gateways.client_gateway import (
+from backend.application.dto.gateways.client_gateway import (
     ClientReadModel,
 )
+from backend.application.errors import EntityNotFoundError
 from backend.application.vars import ClientId
 from backend.infrastructure.idp import TelegramIdentityProvider
 from backend.infrastructure.persistence.gateways import SQLAlchemyClientGateway

@@ -17,8 +17,8 @@ from backend.application.commands.edit_category import (
     EditCategoryCommand,
     EditCategoryCommandHandler,
 )
-from backend.application.interfaces.gateways import Pagination, SortOrder
-from backend.application.interfaces.gateways.category_gateway import (
+from backend.application.dto.gateways import Pagination, SortOrder
+from backend.application.dto.gateways.category_gateway import (
     CategoryReadModel,
 )
 from backend.application.queries.get_categories import (

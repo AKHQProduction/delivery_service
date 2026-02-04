@@ -3,7 +3,7 @@ from dishka.integrations.fastapi import DishkaRoute
 from fastapi import APIRouter, Depends, status
 from fastapi.security import HTTPBearer
 
-from backend.application.interfaces.idp import CurrentUserDTO
+from backend.application.dto.idp import CurrentUserDTO
 from backend.infrastructure.idp import TelegramIdentityProvider
 from backend.presentation.http.v1.schemas.error import ErrorSchema
 
