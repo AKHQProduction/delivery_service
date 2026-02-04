@@ -27,6 +27,7 @@ from sqlalchemy.ext.asyncio import (
 from backend.application.vars import (
     CategoryId,
     ClientId,
+    DistrictId,
     OrderId,
     ProductId,
     ShopId,
@@ -48,6 +49,7 @@ from backend.bootstrap.entrypoints.di.tests_providers import (
 from backend.infrastructure.persistence.tables import (
     Base,
     Category,
+    District,
     Product,
     Role,
     Shop,
@@ -299,6 +301,29 @@ def setup_test_category(session: AsyncSession):
         return category_id
 
     return _setup_test_category
+
+
+@pytest.fixture()
+def setup_test_district(session: AsyncSession):
+    async def _setup_test_district(
+        shop_id: ShopId,
+        name: str = "Test District",
+        district_id: DistrictId | None = None,
+    ) -> DistrictId:
+        if district_id is None:
+            district_id = DistrictId(uuid.uuid4())
+
+        await session.execute(
+            insert(District).values(
+                id=district_id,
+                name=name,
+                shop_id=shop_id,
+            )
+        )
+
+        return district_id
+
+    return _setup_test_district
 
 
 @pytest.fixture()

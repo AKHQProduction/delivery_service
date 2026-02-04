@@ -15,6 +15,7 @@ from backend.infrastructure.persistence.tables.base import (
 if TYPE_CHECKING:
     from backend.infrastructure.persistence.tables.categories import Category
     from backend.infrastructure.persistence.tables.clients import Client
+    from backend.infrastructure.persistence.tables.districts import District
     from backend.infrastructure.persistence.tables.orders import Order
     from backend.infrastructure.persistence.tables.products import Product
     from backend.infrastructure.persistence.tables.users import User
@@ -37,6 +38,7 @@ class Shop(Base, CreatedAt, UpdatedAt):
     )
     products: Mapped[list["Product"]] = relationship(back_populates="shop")
     categories: Mapped[list["Category"]] = relationship(back_populates="shop")
+    districts: Mapped[list["District"]] = relationship(back_populates="shop")
     clients: Mapped[list["Client"]] = relationship(back_populates="shop")
     orders: Mapped[list["Order"]] = relationship(back_populates="shop")
     delivery_time_slots: Mapped[list["ShopDeliveryTimeSlot"]] = relationship(

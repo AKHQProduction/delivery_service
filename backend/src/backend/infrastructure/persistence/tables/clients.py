@@ -6,6 +6,7 @@ from sqlalchemy.orm import Mapped, mapped_column, relationship
 from backend.application.vars import (
     AddressId,
     ClientId,
+    DistrictId,
     PhoneId,
     ShopId,
     UserId,
@@ -17,6 +18,7 @@ from backend.infrastructure.persistence.tables.base import (
 )
 
 if TYPE_CHECKING:
+    from backend.infrastructure.persistence.tables.districts import District
     from backend.infrastructure.persistence.tables.orders import Order
     from backend.infrastructure.persistence.tables.shops import Shop
     from backend.infrastructure.persistence.tables.users import User
@@ -117,8 +119,12 @@ class ClientAddress(Base, CreatedAt, UpdatedAt):
     client_id: Mapped[ClientId] = mapped_column(
         sa.ForeignKey("clients.id", ondelete="CASCADE"), nullable=False
     )
+    district_id: Mapped[DistrictId | None] = mapped_column(
+        sa.ForeignKey("districts.id", ondelete="SET NULL"), nullable=True
+    )
 
     client: Mapped["Client"] = relationship(back_populates="addresses")
+    district: Mapped["District | None"] = relationship()
 
     __table_args__ = (
         sa.CheckConstraint(

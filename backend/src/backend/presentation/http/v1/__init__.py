@@ -6,6 +6,9 @@ from backend.presentation.http.v1.routes.categories import (
 from backend.presentation.http.v1.routes.clients import (
     router as client_router,
 )
+from backend.presentation.http.v1.routes.districts import (
+    router as district_router,
+)
 from backend.presentation.http.v1.routes.employee import (
     router as employee_router,
 )
@@ -29,6 +32,7 @@ def setup_v1_router(app: FastAPI) -> None:
     v1_router.include_router(user_router)
     v1_router.include_router(product_router)
     v1_router.include_router(category_router)
+    v1_router.include_router(district_router)
     v1_router.include_router(link_router)
     v1_router.include_router(employee_router)
     v1_router.include_router(client_router)

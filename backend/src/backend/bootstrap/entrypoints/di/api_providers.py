@@ -18,6 +18,9 @@ from backend.application.commands.create_category import (
 from backend.application.commands.create_client import (
     CreateClientCommandHandler,
 )
+from backend.application.commands.create_district import (
+    CreateDistrictCommandHandler,
+)
 from backend.application.commands.create_order import CreateOrderCommandHandler
 from backend.application.commands.create_product import (
     CreateProductCommandHandler,
@@ -31,6 +34,9 @@ from backend.application.commands.delete_category import (
 from backend.application.commands.delete_client import (
     DeleteClientCommandHandler,
 )
+from backend.application.commands.delete_district import (
+    DeleteDistrictCommandHandler,
+)
 from backend.application.commands.delete_order import DeleteOrderCommandHandler
 from backend.application.commands.delete_product import (
     DeleteProductCommandHandler,
@@ -42,6 +48,9 @@ from backend.application.commands.edit_category import (
     EditCategoryCommandHandler,
 )
 from backend.application.commands.edit_client import EditClientCommandHandler
+from backend.application.commands.edit_district import (
+    EditDistrictCommandHandler,
+)
 from backend.application.commands.edit_order import UpdateOrderCommandHandler
 from backend.application.commands.edit_product import EditProductCommandHandler
 from backend.application.commands.edit_shop import EditShopCommandHandler
@@ -56,6 +65,9 @@ from backend.application.queries.get_categories import (
 )
 from backend.application.queries.get_client import GetClientQueryHandler
 from backend.application.queries.get_clients import GetClientsQueryHandler
+from backend.application.queries.get_districts import (
+    GetDistrictsQueryHandler,
+)
 from backend.application.queries.get_employee import GetEmployeeQueryHandler
 from backend.application.queries.get_employees import GetEmployeesQueryHandler
 from backend.application.queries.get_me import GetMeQueryHandler
@@ -105,6 +117,10 @@ class APIInteractorsProvider(Provider):
         EditCategoryCommandHandler,
         DeleteCategoryCommandHandler,
         GetCategoriesQueryHandler,
+        CreateDistrictCommandHandler,
+        EditDistrictCommandHandler,
+        DeleteDistrictCommandHandler,
+        GetDistrictsQueryHandler,
         DeleteEmployeeCommandHandler,
         EditEmployeeCommandHandler,
         GetEmployeeQueryHandler,
