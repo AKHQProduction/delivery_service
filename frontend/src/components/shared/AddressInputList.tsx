@@ -1,3 +1,8 @@
+import React, { useState } from "react";
+import { MapPicker } from "./MapPicker";
+import { MapButton } from "./MapButton";
+import { useMapPicker } from "../../hooks/useMapPicker";
+
 interface Address {
   street: string;
   house: string;
@@ -24,6 +29,40 @@ export const AddressInputList: React.FC<AddressInputListProps> = ({
   onRemove,
   onAdd,
 }) => {
+  const {
+    isMapOpen,
+    isLoading,
+    openMap,
+    closeMap,
+    reverseGeocode,
+    forwardGeocode,
+  } = useMapPicker();
+  const [currentEditingIndex, setCurrentEditingIndex] = useState<number | null>(
+    null,
+  );
+
+  const handleOpenMap = (index: number) => {
+    setCurrentEditingIndex(index);
+    openMap();
+  };
+
+  const handleMapConfirm = async (coordinates: {
+    lat: number;
+    lng: number;
+  }) => {
+    if (currentEditingIndex === null) return;
+
+    const result = await reverseGeocode(coordinates);
+
+    if (result) {
+      // Update street and house fields with geocoded data
+      onAddressChange(currentEditingIndex, "street", result.street);
+      onAddressChange(currentEditingIndex, "house", result.house);
+      closeMap();
+      setCurrentEditingIndex(null);
+    }
+  };
+
   return (
     <div className="space-y-3">
       <label className="block text-sm font-medium text-gray-700">Адреси</label>
@@ -46,6 +85,7 @@ export const AddressInputList: React.FC<AddressInputListProps> = ({
                   Зробити основною
                 </button>
               )}
+              <MapButton onClick={() => handleOpenMap(index)} />
               {address.is_primary && (
                 <span className="text-xs bg-indigo-100 text-indigo-700 px-2 py-1 rounded-full font-medium">
                   Основна
@@ -64,27 +104,29 @@ export const AddressInputList: React.FC<AddressInputListProps> = ({
           </div>
 
           <div className="space-y-2">
-            <div className="grid grid-cols-2 gap-2">
-              <input
-                type="text"
-                value={address.street}
-                onChange={(e) =>
-                  onAddressChange(index, "street", e.target.value)
-                }
-                placeholder="Вулиця *"
-                required
-                className="px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500"
-              />
-              <input
-                type="text"
-                value={address.house}
-                onChange={(e) =>
-                  onAddressChange(index, "house", e.target.value)
-                }
-                placeholder="Будинок *"
-                required
-                className="px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500"
-              />
+            <div className="flex items-start gap-2">
+              <div className="grid grid-cols-2 gap-2 flex-1">
+                <input
+                  type="text"
+                  value={address.street}
+                  onChange={(e) =>
+                    onAddressChange(index, "street", e.target.value)
+                  }
+                  placeholder="Вулиця *"
+                  required
+                  className="px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                />
+                <input
+                  type="text"
+                  value={address.house}
+                  onChange={(e) =>
+                    onAddressChange(index, "house", e.target.value)
+                  }
+                  placeholder="Будинок *"
+                  required
+                  className="px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                />
+              </div>
             </div>
 
             <div className="grid grid-cols-2 gap-2">
@@ -164,6 +206,24 @@ export const AddressInputList: React.FC<AddressInputListProps> = ({
       >
         + Додати адресу
       </button>
+
+      <MapPicker
+        isOpen={isMapOpen}
+        onClose={closeMap}
+        onConfirm={handleMapConfirm}
+        isLoading={isLoading}
+        initialStreet={
+          currentEditingIndex !== null
+            ? addresses[currentEditingIndex]?.street
+            : ""
+        }
+        initialHouse={
+          currentEditingIndex !== null
+            ? addresses[currentEditingIndex]?.house
+            : ""
+        }
+        onGeocode={forwardGeocode}
+      />
     </div>
   );
 };
