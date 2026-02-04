@@ -58,6 +58,7 @@ from backend.application.queries.get_client import GetClientQueryHandler
 from backend.application.queries.get_clients import GetClientsQueryHandler
 from backend.application.queries.get_employee import GetEmployeeQueryHandler
 from backend.application.queries.get_employees import GetEmployeesQueryHandler
+from backend.application.queries.get_me import GetMeQueryHandler
 from backend.application.queries.get_order import GetOrderQueryHandler
 from backend.application.queries.get_order_stats import (
     GetOrderStatsQueryHandler,
@@ -108,6 +109,7 @@ class APIInteractorsProvider(Provider):
         EditEmployeeCommandHandler,
         GetEmployeeQueryHandler,
         GetEmployeesQueryHandler,
+        GetMeQueryHandler,
         CreateClientCommandHandler,
         GetClientQueryHandler,
         GetClientsQueryHandler,
