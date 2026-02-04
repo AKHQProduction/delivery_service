@@ -20,6 +20,7 @@ from backend.application.commands.edit_client import (
     EditClientCommandHandler,
     Phone,
 )
+from backend.application.dto.coordinates import CoordinatesDTO
 from backend.application.dto.gateways import Pagination, SortOrder
 from backend.application.dto.gateways.client_gateway import (
     ClientReadModel,
@@ -272,6 +273,12 @@ async def update_client(
                     floor=address.floor,
                     intercom=address.intercom,
                     comment=address.comment,
+                    coordinates=CoordinatesDTO(
+                        latitude=address.coordinates.latitude,
+                        longitude=address.coordinates.longitude,
+                    )
+                    if address.coordinates is not None
+                    else None,
                     is_primary=address.is_primary,
                     id=AddressId(address.id)
                     if address.id is not None

@@ -366,6 +366,8 @@ def setup_test_client(session: AsyncSession):
                         entrance=address.get("entrance"),
                         floor=address.get("floor"),
                         intercom=address.get("intercom"),
+                        latitude=address.get("latitude"),
+                        longitude=address.get("longitude"),
                         is_primary=(idx == 0),
                         client_id=client_id,
                     )

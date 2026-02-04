@@ -1,4 +1,4 @@
-"""Add shop address fields (city, street, house, latitude, longitude).
+"""Add shop address fields and client address coordinates.
 
 Revision ID: 00012
 Revises: 00011
@@ -29,8 +29,28 @@ def upgrade() -> None:
         "(latitude IS NULL) = (longitude IS NULL)",
     )
 
+    op.add_column(
+        "client_addresses", sa.Column("latitude", sa.Double(), nullable=True)
+    )
+    op.add_column(
+        "client_addresses", sa.Column("longitude", sa.Double(), nullable=True)
+    )
+    op.create_check_constraint(
+        "ck_client_addresses_coords_both_or_none",
+        "client_addresses",
+        "(latitude IS NULL) = (longitude IS NULL)",
+    )
+
 
 def downgrade() -> None:
+    op.drop_constraint(
+        "ck_client_addresses_coords_both_or_none",
+        "client_addresses",
+        type_="check",
+    )
+    op.drop_column("client_addresses", "longitude")
+    op.drop_column("client_addresses", "latitude")
+
     op.drop_constraint("ck_shops_coords_both_or_none", "shops", type_="check")
     op.drop_column("shops", "longitude")
     op.drop_column("shops", "latitude")

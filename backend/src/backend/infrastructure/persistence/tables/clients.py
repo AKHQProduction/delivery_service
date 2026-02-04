@@ -104,6 +104,12 @@ class ClientAddress(Base, CreatedAt, UpdatedAt):
     comment: Mapped[str | None] = mapped_column(
         sa.String, nullable=True, default=None
     )
+    latitude: Mapped[float | None] = mapped_column(
+        sa.Double, nullable=True, default=None
+    )
+    longitude: Mapped[float | None] = mapped_column(
+        sa.Double, nullable=True, default=None
+    )
     is_primary: Mapped[bool] = mapped_column(
         sa.Boolean, default=False, nullable=False
     )
@@ -113,6 +119,13 @@ class ClientAddress(Base, CreatedAt, UpdatedAt):
     )
 
     client: Mapped["Client"] = relationship(back_populates="addresses")
+
+    __table_args__ = (
+        sa.CheckConstraint(
+            "(latitude IS NULL) = (longitude IS NULL)",
+            name="ck_client_addresses_coords_both_or_none",
+        ),
+    )
 
     def __repr__(self) -> str:
         return f"<ClientAddress {self.street} {self.house}>"

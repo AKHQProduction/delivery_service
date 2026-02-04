@@ -1,3 +1,4 @@
+from backend.application.dto.coordinates import CoordinatesDTO
 from backend.application.vars import ClientId, ShopId
 from backend.infrastructure.persistence.tables.clients import (
     Client,
@@ -58,6 +59,7 @@ def create_address(
     floor: str | None = None,
     intercom: str | None = None,
     comment: str | None = None,
+    coordinates: CoordinatesDTO | None = None,
     is_primary: bool = False,
 ) -> ClientAddress:
     return ClientAddress(
@@ -68,6 +70,8 @@ def create_address(
         floor=floor,
         intercom=intercom,
         comment=comment,
+        latitude=coordinates.latitude if coordinates else None,
+        longitude=coordinates.longitude if coordinates else None,
         is_primary=is_primary,
     )
 
@@ -82,6 +86,7 @@ def update_address(
     floor: str | None = None,
     intercom: str | None = None,
     comment: str | None = None,
+    coordinates: CoordinatesDTO | None = None,
     is_primary: bool | None = None,
 ) -> None:
     if street is not None:
@@ -98,5 +103,8 @@ def update_address(
         address.intercom = intercom
     if comment is not None:
         address.comment = comment
+    if coordinates is not None:
+        address.latitude = coordinates.latitude
+        address.longitude = coordinates.longitude
     if is_primary is not None:
         address.is_primary = is_primary
