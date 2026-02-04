@@ -1,14 +1,19 @@
 import logging
 from dataclasses import dataclass
+from datetime import time
 
 from backend.application.errors import (
     AuthorizationError,
     UserAlreadyRelatedToShopError,
 )
 from backend.application.services.shop import create_shop
+from backend.application.services.time_slot import create_time_slot
 from backend.application.vars import ShopRole
 from backend.infrastructure.idp import TelegramIdentityProvider
 from backend.infrastructure.persistence.gateways import SQLAlchemyShopGateway
+from backend.infrastructure.persistence.gateways.time_slot_gateway import (
+    SQLAlchemyTimeSlotGateway,
+)
 from backend.infrastructure.transaction_manager import TransactionManager
 
 logger = logging.getLogger(__name__)
@@ -20,16 +25,24 @@ class CreateNewShopCommand:
     owner_full_name: str
 
 
+DEFAULT_TIME_SLOTS: list[tuple[str, time, time]] = [
+    ("Перша половина дня", time(9, 0), time(14, 0)),
+    ("Друга половина дня", time(14, 0), time(21, 0)),
+]
+
+
 class CreateNewShopCommandHandler:
     def __init__(
         self,
         shop_gateway: SQLAlchemyShopGateway,
         identity_provider: TelegramIdentityProvider,
         tr_manager: TransactionManager,
+        time_slot_gateway: SQLAlchemyTimeSlotGateway,
     ) -> None:
         self._shop_gateway = shop_gateway
         self._identity_provider = identity_provider
         self._tr_manager = tr_manager
+        self._time_slot_gateway = time_slot_gateway
 
     async def handle(self, command: CreateNewShopCommand) -> None:
         logger.info(
@@ -54,6 +67,16 @@ class CreateNewShopCommandHandler:
             owner_role_id=owner_role_id,
         )
         self._shop_gateway.save(shop)
+
+        for label, start, end in DEFAULT_TIME_SLOTS:
+            ts = create_time_slot(
+                time_slot_id=self._time_slot_gateway.next_id(),
+                shop_id=shop_id,
+                start_time=start,
+                end_time=end,
+                label=label,
+            )
+            self._time_slot_gateway.save(ts)
 
         await self._tr_manager.commit()
         logger.info(

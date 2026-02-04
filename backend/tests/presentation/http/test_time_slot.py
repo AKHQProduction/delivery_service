@@ -31,9 +31,9 @@ async def test_create_time_slot(
     headers = customer_headers(telegram_id)
 
     json = {
-        "start_time": "09:00:00",
-        "end_time": "14:00:00",
-        "label": "Перша половина дня",
+        "start_time": "06:00:00",
+        "end_time": "09:00:00",
+        "label": "Ранкова доставка",
     }
 
     response = await http_client.post(url=BASE_URL, headers=headers, json=json)
@@ -51,9 +51,9 @@ async def test_create_time_slot(
     )
     time_slot = result.scalar_one()
     assert time_slot.shop_id == shop_id
-    assert time_slot.start_time == time(9, 0)
-    assert time_slot.end_time == time(14, 0)
-    assert time_slot.label == "Перша половина дня"
+    assert time_slot.start_time == time(6, 0)
+    assert time_slot.end_time == time(9, 0)
+    assert time_slot.label == "Ранкова доставка"
 
 
 @pytest.mark.asyncio()
@@ -96,15 +96,9 @@ async def test_create_time_slot_duplicate_conflict(
     session: AsyncSession,
     customer_headers: Callable[[int], dict[str, Any]],
     setup_full_test_user_with_shop,
-    setup_test_time_slot,
 ) -> None:
     telegram_id = 7002
-    _, shop_id = await setup_full_test_user_with_shop(telegram_id=telegram_id)
-    await setup_test_time_slot(
-        shop_id=shop_id,
-        start_time=time(9, 0),
-        end_time=time(14, 0),
-    )
+    await setup_full_test_user_with_shop(telegram_id=telegram_id)
     await session.commit()
 
     headers = customer_headers(telegram_id)
@@ -171,8 +165,8 @@ async def test_update_time_slot(
     _, shop_id = await setup_full_test_user_with_shop(telegram_id=telegram_id)
     time_slot_id = await setup_test_time_slot(
         shop_id=shop_id,
-        start_time=time(9, 0),
-        end_time=time(14, 0),
+        start_time=time(6, 0),
+        end_time=time(9, 0),
         label="Original label",
     )
     await session.commit()
@@ -180,8 +174,8 @@ async def test_update_time_slot(
     headers = customer_headers(telegram_id)
 
     json = {
-        "start_time": "10:00:00",
-        "end_time": "15:00:00",
+        "start_time": "07:00:00",
+        "end_time": "10:00:00",
         "label": "Updated label",
     }
 
@@ -199,8 +193,8 @@ async def test_update_time_slot(
         )
     )
     time_slot = result.scalar_one()
-    assert time_slot.start_time == time(10, 0)
-    assert time_slot.end_time == time(15, 0)
+    assert time_slot.start_time == time(7, 0)
+    assert time_slot.end_time == time(10, 0)
     assert time_slot.label == "Updated label"
 
 
@@ -216,8 +210,8 @@ async def test_update_time_slot_partial(
     _, shop_id = await setup_full_test_user_with_shop(telegram_id=telegram_id)
     time_slot_id = await setup_test_time_slot(
         shop_id=shop_id,
-        start_time=time(9, 0),
-        end_time=time(14, 0),
+        start_time=time(6, 0),
+        end_time=time(9, 0),
         label="Original label",
     )
     await session.commit()
@@ -242,8 +236,8 @@ async def test_update_time_slot_partial(
         )
     )
     time_slot = result.scalar_one()
-    assert time_slot.start_time == time(9, 0)
-    assert time_slot.end_time == time(14, 0)
+    assert time_slot.start_time == time(6, 0)
+    assert time_slot.end_time == time(9, 0)
     assert time_slot.label == "Only label updated"
 
 
@@ -281,9 +275,8 @@ async def test_delete_time_slot(
 ) -> None:
     telegram_id = 7200
     _, shop_id = await setup_full_test_user_with_shop(telegram_id=telegram_id)
-    time_slot_id = await setup_test_time_slot(shop_id=shop_id)
-    await setup_test_time_slot(
-        shop_id=shop_id, start_time=time(14, 0), end_time=time(20, 0)
+    time_slot_id = await setup_test_time_slot(
+        shop_id=shop_id, start_time=time(6, 0), end_time=time(9, 0)
     )
     await session.commit()
 
@@ -310,11 +303,23 @@ async def test_delete_last_time_slot_conflict(
     http_client: AsyncClient,
     session: AsyncSession,
     customer_headers: Callable[[int], dict[str, Any]],
-    setup_full_test_user_with_shop,
+    create_user,
+    create_telegram_account,
+    create_shop,
+    create_role,
+    create_shop_membership,
     setup_test_time_slot,
 ) -> None:
     telegram_id = 7202
-    _, shop_id = await setup_full_test_user_with_shop(telegram_id=telegram_id)
+    user_id = await create_user()
+    await create_telegram_account(
+        user_id=user_id, telegram_id=telegram_id, full_name="Test User"
+    )
+    role_id = await create_role(name=ShopRole.OWNER)
+    shop_id = await create_shop()
+    await create_shop_membership(
+        user_id=user_id, shop_id=shop_id, role_id=role_id
+    )
     time_slot_id = await setup_test_time_slot(shop_id=shop_id)
     await session.commit()
 
@@ -354,24 +359,9 @@ async def test_get_all_time_slots(
     session: AsyncSession,
     customer_headers: Callable[[int], dict[str, Any]],
     setup_full_test_user_with_shop,
-    setup_test_time_slot,
 ) -> None:
     telegram_id = 7300
-    _, shop_id = await setup_full_test_user_with_shop(telegram_id=telegram_id)
-
-    await setup_test_time_slot(
-        shop_id=shop_id,
-        start_time=time(9, 0),
-        end_time=time(14, 0),
-        label="Перша половина",
-    )
-    await setup_test_time_slot(
-        shop_id=shop_id,
-        start_time=time(14, 0),
-        end_time=time(20, 0),
-        label="Друга половина",
-    )
-
+    await setup_full_test_user_with_shop(telegram_id=telegram_id)
     await session.commit()
 
     headers = customer_headers(telegram_id)
@@ -457,7 +447,9 @@ async def test_update_time_slot_as_manager_forbidden(
     _, shop_id = await setup_full_test_user_with_shop(
         telegram_id=telegram_id, role=ShopRole.MANAGER
     )
-    time_slot_id = await setup_test_time_slot(shop_id=shop_id)
+    time_slot_id = await setup_test_time_slot(
+        shop_id=shop_id, start_time=time(6, 0), end_time=time(9, 0)
+    )
     await session.commit()
 
     headers = customer_headers(telegram_id)
@@ -492,15 +484,10 @@ async def test_update_time_slot_duplicate_conflict(
 ) -> None:
     telegram_id = 7104
     _, shop_id = await setup_full_test_user_with_shop(telegram_id=telegram_id)
-    await setup_test_time_slot(
-        shop_id=shop_id,
-        start_time=time(9, 0),
-        end_time=time(14, 0),
-    )
     time_slot_id = await setup_test_time_slot(
         shop_id=shop_id,
-        start_time=time(14, 0),
-        end_time=time(20, 0),
+        start_time=time(6, 0),
+        end_time=time(9, 0),
     )
     await session.commit()
 
@@ -529,7 +516,9 @@ async def test_delete_time_slot_as_manager_forbidden(
     _, shop_id = await setup_full_test_user_with_shop(
         telegram_id=telegram_id, role=ShopRole.MANAGER
     )
-    time_slot_id = await setup_test_time_slot(shop_id=shop_id)
+    time_slot_id = await setup_test_time_slot(
+        shop_id=shop_id, start_time=time(6, 0), end_time=time(9, 0)
+    )
     await session.commit()
 
     headers = customer_headers(telegram_id)
