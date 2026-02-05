@@ -99,7 +99,7 @@ export const Toast: React.FC<ToastProps> = ({
   }, [duration, onClose]);
 
   return createPortal(
-    <div className="fixed top-4 right-4 z-50 animate-slide-in">
+    <div className="fixed top-4 right-4 z-9999 animate-slide-in">
       <div
         className={`flex items-center gap-3 px-4 py-3 rounded-xl border shadow-lg ${styles[type]}`}
       >

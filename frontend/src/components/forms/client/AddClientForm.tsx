@@ -25,6 +25,7 @@ export const AddClientForm: React.FC<AddClientFormProps> = ({
     removePhone,
     setPrimaryPhone,
     handleAddressChange,
+    setAddressCoordinates,
     addAddress,
     removeAddress,
     setPrimaryAddress,
@@ -147,6 +148,7 @@ export const AddClientForm: React.FC<AddClientFormProps> = ({
         <AddressInputList
           addresses={formData.addresses}
           onAddressChange={handleAddressChange}
+          onCoordinatesChange={setAddressCoordinates}
           onSetPrimary={setPrimaryAddress}
           onRemove={removeAddress}
           onAdd={addAddress}

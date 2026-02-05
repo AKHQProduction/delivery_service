@@ -60,19 +60,32 @@ const MapCenterController: React.FC<{ center: Coordinates }> = ({ center }) => {
 /**
  * Map picker component with marker placement
  */
+const DEFAULT_CENTER: Coordinates = { lat: 50.4501, lng: 30.5234 }; // Kyiv, Ukraine
+
 export const MapPicker: React.FC<MapPickerProps> = ({
   isOpen,
   onClose,
   onConfirm,
   isLoading = false,
-  defaultCenter = { lat: 50.4501, lng: 30.5234 }, // Kyiv, Ukraine
+  defaultCenter,
   initialStreet = "",
   initialHouse = "",
   onGeocode,
 }) => {
+  const center = defaultCenter ?? DEFAULT_CENTER;
   const [markerPosition, setMarkerPosition] = useState<LatLng | null>(null);
-  const [mapCenter, setMapCenter] = useState<Coordinates>(defaultCenter);
+  const [mapCenter, setMapCenter] = useState<Coordinates>(center);
   const hasGeocodedRef = useRef(false);
+  const prevIsOpenRef = useRef(isOpen);
+
+  // Update map center when defaultCenter changes and map opens
+  useEffect(() => {
+    if (isOpen && defaultCenter) {
+      setMapCenter(defaultCenter);
+      const latLng = L.latLng(defaultCenter.lat, defaultCenter.lng);
+      setMarkerPosition(latLng);
+    }
+  }, [isOpen, defaultCenter?.lat, defaultCenter?.lng]);
 
   // Geocode initial address when map opens (only once)
   useEffect(() => {
@@ -80,8 +93,8 @@ export const MapPicker: React.FC<MapPickerProps> = ({
       isOpen &&
       !hasGeocodedRef.current &&
       initialStreet &&
-      initialHouse &&
-      onGeocode
+      onGeocode &&
+      !defaultCenter
     ) {
       hasGeocodedRef.current = true;
       onGeocode(initialStreet, initialHouse).then((coords) => {
@@ -92,16 +105,17 @@ export const MapPicker: React.FC<MapPickerProps> = ({
         }
       });
     }
-  }, [isOpen, initialStreet, initialHouse, onGeocode]);
+  }, [isOpen, initialStreet, initialHouse, onGeocode, defaultCenter]);
 
-  // Reset geocoded flag when map closes
+  // Reset when map closes
   useEffect(() => {
-    if (!isOpen) {
+    if (prevIsOpenRef.current && !isOpen) {
       hasGeocodedRef.current = false;
       setMarkerPosition(null);
-      setMapCenter(defaultCenter);
+      setMapCenter(DEFAULT_CENTER);
     }
-  }, [isOpen, defaultCenter]);
+    prevIsOpenRef.current = isOpen;
+  }, [isOpen]);
 
   if (!isOpen) return null;
 

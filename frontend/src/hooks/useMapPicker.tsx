@@ -22,16 +22,24 @@ export const useMapPicker = () => {
 
   /**
    * Converts address to coordinates using OpenStreetMap Nominatim API (forward geocoding)
+   * @param street - Street name
+   * @param house - House number (optional)
+   * @param city - City name (optional, defaults to Ukraine-wide search)
    */
   const forwardGeocode = useCallback(
-    async (street: string, house: string): Promise<Coordinates | null> => {
-      if (!street || !house) return null;
+    async (
+      street: string,
+      house?: string,
+      city?: string,
+    ): Promise<Coordinates | null> => {
+      if (!street) return null;
 
       setIsLoading(true);
       setError(null);
 
       try {
-        const query = `${house} ${street}, Ukraine`;
+        const addressParts = [house, street, city, "Ukraine"].filter(Boolean);
+        const query = addressParts.join(", ");
         const response = await fetch(
           `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(query)}&addressdetails=1&limit=1`,
           {
