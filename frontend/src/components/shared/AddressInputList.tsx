@@ -334,6 +334,7 @@ export const AddressInputList: React.FC<AddressInputListProps> = ({
             ? addresses[currentEditingIndex]?.house
             : ""
         }
+        city={shop?.city ?? undefined}
         onGeocode={forwardGeocode}
       />
 

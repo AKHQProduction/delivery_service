@@ -309,6 +309,7 @@ export const ShopAddressForm: React.FC<ShopAddressFormProps> = ({
           isLoading={isLoading}
           initialStreet={shopAddress.street}
           initialHouse={shopAddress.house}
+          city={shopAddress.city}
           onGeocode={forwardGeocode}
           defaultCenter={pendingCoordinates ?? undefined}
         />

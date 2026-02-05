@@ -27,7 +27,12 @@ interface MapPickerProps {
   defaultCenter?: Coordinates;
   initialStreet?: string;
   initialHouse?: string;
-  onGeocode?: (street: string, house: string) => Promise<Coordinates | null>;
+  city?: string;
+  onGeocode?: (
+    street: string,
+    house?: string,
+    city?: string
+  ) => Promise<Coordinates | null>;
 }
 
 /**
@@ -70,6 +75,7 @@ export const MapPicker: React.FC<MapPickerProps> = ({
   defaultCenter,
   initialStreet = "",
   initialHouse = "",
+  city,
   onGeocode,
 }) => {
   const center = defaultCenter ?? DEFAULT_CENTER;
@@ -87,25 +93,37 @@ export const MapPicker: React.FC<MapPickerProps> = ({
     }
   }, [isOpen, defaultCenter?.lat, defaultCenter?.lng]);
 
-  // Geocode initial address when map opens (only once)
+  // Geocode initial address or city when map opens (only once)
   useEffect(() => {
-    if (
-      isOpen &&
-      !hasGeocodedRef.current &&
-      initialStreet &&
-      onGeocode &&
-      !defaultCenter
-    ) {
+    if (isOpen && !hasGeocodedRef.current && onGeocode && !defaultCenter) {
       hasGeocodedRef.current = true;
-      onGeocode(initialStreet, initialHouse).then((coords) => {
-        if (coords) {
-          const latLng = L.latLng(coords.lat, coords.lng);
-          setMarkerPosition(latLng);
-          setMapCenter(coords);
-        }
-      });
+
+      if (initialStreet) {
+        // Geocode the full address with city
+        onGeocode(initialStreet, initialHouse, city).then((coords) => {
+          if (coords) {
+            const latLng = L.latLng(coords.lat, coords.lng);
+            setMarkerPosition(latLng);
+            setMapCenter(coords);
+          } else if (city) {
+            // If address not found, at least center on the city
+            onGeocode(city).then((cityCoords) => {
+              if (cityCoords) {
+                setMapCenter(cityCoords);
+              }
+            });
+          }
+        });
+      } else if (city) {
+        // No address, just center on the city
+        onGeocode(city).then((coords) => {
+          if (coords) {
+            setMapCenter(coords);
+          }
+        });
+      }
     }
-  }, [isOpen, initialStreet, initialHouse, onGeocode, defaultCenter]);
+  }, [isOpen, initialStreet, initialHouse, city, onGeocode, defaultCenter]);
 
   // Reset when map closes
   useEffect(() => {
