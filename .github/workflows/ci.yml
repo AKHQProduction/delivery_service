@@ -57,7 +57,7 @@ jobs:
       TEST_REDIS_HOST: localhost
       TEST_REDIS_PORT: 6379
       TEST_REDIS_PASSWORD: test_password
-      ADMIN_BOT_TOKEN: test_token
+      ADMIN_BOT_TOKEN: "123456789:ABCdefGHIjklMNOpqrsTUVwxyz123456"
       REDIS_HOST: localhost
       REDIS_PORT: 6379
       REDIS_PASSWORD: test_password
