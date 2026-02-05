@@ -60,3 +60,25 @@ export const getAllTimeSlots = async () => {
     throw error;
   }
 };
+
+// Shop settings API calls
+export interface ShopAddressPayload {
+  address: {
+    city: string;
+    street: string;
+    house: string;
+    coordinates?: {
+      latitude: number;
+      longitude: number;
+    };
+  };
+}
+
+export const updateShopAddress = async (payload: ShopAddressPayload) => {
+  try {
+    const response = await api.patch(`v1/shop`, payload);
+    return response.data;
+  } catch (error) {
+    throw error;
+  }
+};

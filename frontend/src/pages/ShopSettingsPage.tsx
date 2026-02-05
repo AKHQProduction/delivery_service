@@ -1,14 +1,8 @@
 import React, { useState } from "react";
 import { PageHeader } from "../components/ui/PageHeader";
-import { MapPicker } from "../components/shared/MapPicker";
-import { MapButton } from "../components/shared/MapButton";
-import { useMapPicker } from "../hooks/useMapPicker";
-
-interface ShopAddress {
-  street: string;
-  house: string;
-  city: string;
-}
+import { Toast } from "../components/ui/Toast";
+import { ShopAddressForm } from "../components/settings/ShopAddressForm";
+import { useToast } from "../hooks/useToast";
 
 interface DeliveryDistrict {
   id: string;
@@ -16,30 +10,13 @@ interface DeliveryDistrict {
 }
 
 export const ShopSettingsPage: React.FC = () => {
-  const [shopAddress, setShopAddress] = useState<ShopAddress>({
-    street: "",
-    house: "",
-    city: "Київ",
-  });
+  const { toast, showToast, hideToast } = useToast();
 
   const [districts, setDistricts] = useState<DeliveryDistrict[]>([]);
   const [showAddDistrict, setShowAddDistrict] = useState(false);
   const [newDistrict, setNewDistrict] = useState<Omit<DeliveryDistrict, "id">>({
     name: "",
   });
-
-  const {
-    isMapOpen,
-    isLoading,
-    openMap,
-    closeMap,
-    reverseGeocode,
-    forwardGeocode,
-  } = useMapPicker();
-
-  const handleAddressChange = (field: keyof ShopAddress, value: string) => {
-    setShopAddress((prev) => ({ ...prev, [field]: value }));
-  };
 
   const handleAddDistrict = () => {
     if (!newDistrict.name.trim()) return;
@@ -58,26 +35,8 @@ export const ShopSettingsPage: React.FC = () => {
     setDistricts((prev) => prev.filter((d) => d.id !== id));
   };
 
-  const handleSaveShopAddress = () => {
-    // TODO: Save shop address to backend
-    console.log("Saving shop address:", shopAddress);
-  };
-
-  const handleMapConfirm = async (coordinates: {
-    lat: number;
-    lng: number;
-  }) => {
-    const result = await reverseGeocode(coordinates);
-
-    if (result) {
-      setShopAddress((prev) => ({
-        ...prev,
-        street: result.street,
-        house: result.house,
-        city: result.city,
-      }));
-      closeMap();
-    }
+  const handleAddressSaveSuccess = () => {
+    showToast("Адресу збережено", "success");
   };
 
   return (
@@ -85,75 +44,7 @@ export const ShopSettingsPage: React.FC = () => {
       <PageHeader title="Налаштування магазину" />
 
       <div className="px-4 sm:px-6 py-6 space-y-6">
-        {/* Shop Address Section */}
-        <div className="bg-white rounded-xl shadow-sm p-6">
-          <div className="flex items-center justify-between mb-4">
-            <h2 className="text-lg font-semibold text-gray-900">
-              Адреса магазину
-            </h2>
-          </div>
-
-          <div className="space-y-4">
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Місто
-              </label>
-              <div className="flex items-center gap-2">
-                <input
-                  type="text"
-                  value={shopAddress.city}
-                  onChange={(e) => handleAddressChange("city", e.target.value)}
-                  className="flex-1 px-4 py-3 border-2 border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
-                  placeholder="Київ"
-                />
-                <MapButton onClick={openMap} />
-              </div>
-            </div>
-
-            <div className="flex items-start gap-2">
-              <div className="grid grid-cols-2 gap-4 flex-1">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Вулиця *
-                  </label>
-                  <input
-                    type="text"
-                    value={shopAddress.street}
-                    onChange={(e) =>
-                      handleAddressChange("street", e.target.value)
-                    }
-                    className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
-                    placeholder="Хрещатик"
-                    required
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Будинок *
-                  </label>
-                  <input
-                    type="text"
-                    value={shopAddress.house}
-                    onChange={(e) =>
-                      handleAddressChange("house", e.target.value)
-                    }
-                    className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
-                    placeholder="1"
-                    required
-                  />
-                </div>
-              </div>
-            </div>
-
-            <button
-              onClick={handleSaveShopAddress}
-              className="w-full px-6 py-3 bg-indigo-600 text-white rounded-xl font-medium hover:bg-indigo-700 transition-colors"
-            >
-              Зберегти адресу
-            </button>
-          </div>
-        </div>
+        <ShopAddressForm onSuccess={handleAddressSaveSuccess} />
 
         {/* Delivery Districts Section */}
         <div className="bg-white rounded-xl shadow-sm p-6">
@@ -250,16 +141,9 @@ export const ShopSettingsPage: React.FC = () => {
           </div>
         </div>
       </div>
-      {isMapOpen && (
-        <MapPicker
-          isOpen={isMapOpen}
-          onClose={closeMap}
-          onConfirm={handleMapConfirm}
-          isLoading={isLoading}
-          initialStreet={shopAddress.street}
-          initialHouse={shopAddress.house}
-          onGeocode={forwardGeocode}
-        />
+
+      {toast.isVisible && (
+        <Toast message={toast.message} type={toast.type} onClose={hideToast} />
       )}
     </div>
   );

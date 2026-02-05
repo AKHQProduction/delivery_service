@@ -1,6 +1,6 @@
 import { PageHeader } from "../components/ui/PageHeader";
 import { useTGSettings } from "../hooks/settings/useTGSettings";
-import { TimeSlotsComponent } from "../components/features/settings/TimeSlotsComponent";
+import { TimeSlotsComponent } from "../components/settings/TimeSlotsComponent";
 
 export const SettingsPage = () => {
   const { settings, updateSetting } = useTGSettings();

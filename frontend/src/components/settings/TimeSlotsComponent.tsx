@@ -1,6 +1,6 @@
 import { useState } from "react";
-import { useTimeSlotsSettings } from "../../../hooks/settings/useTimeSlotsSettings";
-import { TimeInput } from "../../ui/TimeInput";
+import { useTimeSlotsSettings } from "../../hooks/settings/useTimeSlotsSettings";
+import { TimeInput } from "../ui/TimeInput";
 
 interface NewSlot {
   id: string;
