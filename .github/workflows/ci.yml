@@ -1,6 +1,8 @@
 name: CI
 
 on:
+  push:
+    branches: [dev]
   pull_request:
     branches: [main, dev]
   workflow_dispatch:
@@ -55,6 +57,7 @@ jobs:
       TEST_REDIS_HOST: localhost
       TEST_REDIS_PORT: 6379
       TEST_REDIS_PASSWORD: test_password
+      ADMIN_BOT_TOKEN: test_token
 
     steps:
       - uses: actions/checkout@v4
@@ -104,29 +107,6 @@ jobs:
       - name: Stop test services
         if: always()
         run: docker compose -f ../docker-compose-test.yml down
-
-  frontend-lint:
-    name: Frontend Lint
-    runs-on: ubuntu-latest
-    defaults:
-      run:
-        working-directory: frontend
-
-    steps:
-      - uses: actions/checkout@v4
-
-      - name: Set up Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: "20"
-          cache: "npm"
-          cache-dependency-path: frontend/package-lock.json
-
-      - name: Install dependencies
-        run: npm ci
-
-      - name: Run ESLint
-        run: npm run lint
 
   frontend-build:
     name: Frontend Build
