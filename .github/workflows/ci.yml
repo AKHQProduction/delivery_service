@@ -58,6 +58,18 @@ jobs:
       TEST_REDIS_PORT: 6379
       TEST_REDIS_PASSWORD: test_password
       ADMIN_BOT_TOKEN: test_token
+      REDIS_HOST: localhost
+      REDIS_PORT: 6379
+      REDIS_PASSWORD: test_password
+      DB_HOST: localhost
+      POSTGRES_DB: test
+      POSTGRES_USER: test
+      POSTGRES_PASSWORD: test
+      POSTGRES_PORT: 5432
+      WEBHOOK_URL: http://localhost
+      WEBHOOK_PATH: /webhook
+      WEBHOOK_HOST: localhost
+      WEBHOOK_PORT: 8080
 
     steps:
       - uses: actions/checkout@v4
