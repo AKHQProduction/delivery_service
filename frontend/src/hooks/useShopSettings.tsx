@@ -46,6 +46,8 @@ export const useShopSettings = () => {
         useUserShopStore.getState().setShop({
           shop_id: currentShop?.shop_id ?? "",
           city: address.city,
+          street: address.street,
+          house: address.house,
         });
 
         return true;

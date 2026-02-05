@@ -9,4 +9,6 @@ export interface User {
 export interface Shop {
   shop_id: string;
   city: string | null;
+  street: string | null;
+  house: string | null;
 }

@@ -22,8 +22,8 @@ export const ShopAddressForm: React.FC<ShopAddressFormProps> = ({
   const { loading, error, saveShopAddress } = useShopSettings();
 
   const [shopAddress, setShopAddress] = useState<ShopAddress>({
-    street: "",
-    house: "",
+    street: shop?.street ?? "",
+    house: shop?.house ?? "",
     city: shop?.city ?? "Київ",
     coordinates: null,
   });
@@ -68,7 +68,7 @@ export const ShopAddressForm: React.FC<ShopAddressFormProps> = ({
       return;
     }
 
-    const coords = await forwardGeocode(shopAddress.street, shopAddress.house);
+    const coords = await forwardGeocode(shopAddress.street, shopAddress.house, shopAddress.city);
 
     if (coords) {
       setPendingCoordinates(coords);
@@ -272,7 +272,7 @@ export const ShopAddressForm: React.FC<ShopAddressFormProps> = ({
 
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Будинок 
+                  Будинок
                 </label>
                 <input
                   type="text"
