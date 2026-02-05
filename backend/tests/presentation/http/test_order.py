@@ -2309,3 +2309,205 @@ async def test_generate_orders_pdf_as_courier_allowed(
     )
 
     assert response.status_code == status.HTTP_200_OK
+
+
+@pytest.mark.asyncio()
+async def test_create_order_with_district_in_address(
+    http_client: AsyncClient,
+    session: AsyncSession,
+    customer_headers: Callable[[int], dict[str, Any]],
+    setup_full_test_user_with_shop,
+    setup_test_client,
+    setup_test_product,
+    setup_test_time_slot,
+    setup_test_district,
+) -> None:
+    telegram_id = 6200
+    _, shop_id = await setup_full_test_user_with_shop(telegram_id=telegram_id)
+
+    district_id = await setup_test_district(
+        shop_id=shop_id, name="Шевченківський"
+    )
+
+    client_id = await setup_test_client(
+        shop_id=shop_id,
+        full_name="Клієнт з Районом",
+        phones=["+380501234567"],
+        addresses=[
+            {
+                "street": "Хрещатик",
+                "house": "10",
+                "apartment": "5",
+                "district_id": district_id,
+            }
+        ],
+    )
+
+    product_id, _, _, _ = await setup_test_product(shop_id)
+    time_slot_id = await setup_test_time_slot(shop_id=shop_id)
+    await session.commit()
+
+    headers = customer_headers(telegram_id)
+
+    client_response = await http_client.get(
+        url=f"/api/v1/clients/{client_id}", headers=headers
+    )
+    client_data = client_response.json()
+    phone_id = client_data["phones"][0]["id"]
+    address_id = client_data["addresses"][0]["id"]
+
+    delivery_date = (datetime.now(UTC).date() + timedelta(days=1)).isoformat()
+
+    json = {
+        "client_id": str(client_id),
+        "delivery_date": delivery_date,
+        "time_slot_id": str(time_slot_id),
+        "address_id": address_id,
+        "phone_id": phone_id,
+        "payment_method": PaymentMethod.CASH,
+        "products": [{"product_id": str(product_id), "quantity": 1}],
+    }
+
+    response = await http_client.post(url=BASE_URL, headers=headers, json=json)
+
+    assert response.status_code == status.HTTP_201_CREATED
+    order_id = response.json()
+
+    await session.flush()
+
+    result = await session.execute(
+        select(Order).where(Order.id == uuid.UUID(order_id))
+    )
+    order = result.scalar_one()
+
+    assert order.delivery_address.street == "Хрещатик"
+    assert order.delivery_address.district == "Шевченківський"
+
+
+@pytest.mark.asyncio()
+async def test_create_order_without_district_in_address(
+    http_client: AsyncClient,
+    session: AsyncSession,
+    customer_headers: Callable[[int], dict[str, Any]],
+    setup_full_test_user_with_shop,
+    setup_test_client,
+    setup_test_product,
+    setup_test_time_slot,
+) -> None:
+    telegram_id = 6201
+    _, shop_id = await setup_full_test_user_with_shop(telegram_id=telegram_id)
+
+    client_id = await setup_test_client(
+        shop_id=shop_id,
+        full_name="Клієнт без Району",
+        phones=["+380501234567"],
+        addresses=[
+            {
+                "street": "Хрещатик",
+                "house": "10",
+                "apartment": "5",
+            }
+        ],
+    )
+
+    product_id, _, _, _ = await setup_test_product(shop_id)
+    time_slot_id = await setup_test_time_slot(shop_id=shop_id)
+    await session.commit()
+
+    headers = customer_headers(telegram_id)
+
+    client_response = await http_client.get(
+        url=f"/api/v1/clients/{client_id}", headers=headers
+    )
+    client_data = client_response.json()
+    phone_id = client_data["phones"][0]["id"]
+    address_id = client_data["addresses"][0]["id"]
+
+    delivery_date = (datetime.now(UTC).date() + timedelta(days=1)).isoformat()
+
+    json = {
+        "client_id": str(client_id),
+        "delivery_date": delivery_date,
+        "time_slot_id": str(time_slot_id),
+        "address_id": address_id,
+        "phone_id": phone_id,
+        "payment_method": PaymentMethod.CASH,
+        "products": [{"product_id": str(product_id), "quantity": 1}],
+    }
+
+    response = await http_client.post(url=BASE_URL, headers=headers, json=json)
+
+    assert response.status_code == status.HTTP_201_CREATED
+    order_id = response.json()
+
+    await session.flush()
+
+    result = await session.execute(
+        select(Order).where(Order.id == uuid.UUID(order_id))
+    )
+    order = result.scalar_one()
+
+    assert order.delivery_address.street == "Хрещатик"
+    assert order.delivery_address.district is None
+
+
+@pytest.mark.asyncio()
+async def test_update_order_address_with_district(
+    http_client: AsyncClient,
+    session: AsyncSession,
+    customer_headers: Callable[[int], dict[str, Any]],
+    setup_full_test_user_with_shop,
+    setup_test_client,
+    setup_test_order,
+    setup_test_district,
+) -> None:
+    telegram_id = 6202
+    _, shop_id = await setup_full_test_user_with_shop(telegram_id=telegram_id)
+
+    district_id = await setup_test_district(
+        shop_id=shop_id, name="Подільський"
+    )
+
+    client_id = await setup_test_client(
+        shop_id=shop_id,
+        phones=["+380501111111", "+380502222222"],
+        addresses=[
+            {"street": "Перша", "house": "1", "apartment": "1"},
+            {
+                "street": "Друга",
+                "house": "2",
+                "apartment": "2",
+                "district_id": district_id,
+            },
+        ],
+    )
+    order_id = await setup_test_order(
+        shop_id=shop_id,
+        client_id=client_id,
+        delivery_phone="+380501111111",
+        delivery_address={"street": "Перша", "house": "1", "apartment": "1"},
+    )
+    await session.commit()
+
+    headers = customer_headers(telegram_id)
+
+    client_response = await http_client.get(
+        url=f"/api/v1/clients/{client_id}", headers=headers
+    )
+    client_data = client_response.json()
+    second_address_id = client_data["addresses"][1]["id"]
+
+    response = await http_client.patch(
+        url=f"{BASE_URL}/{order_id}",
+        headers=headers,
+        json={"address_id": second_address_id},
+    )
+
+    assert response.status_code == status.HTTP_200_OK
+
+    await session.flush()
+
+    result = await session.execute(select(Order).where(Order.id == order_id))
+    order = result.scalar_one()
+    assert order.delivery_address.street == "Друга"
+    assert order.delivery_address.district == "Подільський"

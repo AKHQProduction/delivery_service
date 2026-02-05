@@ -15,7 +15,7 @@ from backend.application.services.client import (
 )
 from backend.application.validators import normalize_ukraine_phone
 from backend.application.validators.phone import validate_no_duplicate_phones
-from backend.application.vars import ClientId
+from backend.application.vars import ClientId, DistrictId
 from backend.infrastructure.idp import TelegramIdentityProvider
 from backend.infrastructure.persistence.gateways import (
     SQLAlchemyClientGateway,
@@ -35,6 +35,7 @@ class Address:
     intercom: str | None = None
     comment: str | None = None
     coordinates: CoordinatesDTO | None = None
+    district_id: DistrictId | None = None
 
 
 @dataclass(frozen=True)
@@ -129,6 +130,7 @@ class CreateClientCommandHandler:
                 comment=addr.comment,
                 coordinates=addr.coordinates,
                 is_primary=(idx == 0),
+                district_id=addr.district_id,
             )
             for idx, addr in enumerate(command.addresses)
         ]

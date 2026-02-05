@@ -48,6 +48,7 @@ def resolve_address(
         floor=address.floor,
         intercom=address.intercom,
         comment=address.comment,
+        district=address.district.name if address.district else None,
     )
 
 

@@ -213,10 +213,17 @@ def create_shop(session: AsyncSession):
     async def _create_shop(
         shop_id: ShopId | None = None,
         name: str = "Test Shop",
+        city: str | None = None,
+        street: str | None = None,
+        house: str | None = None,
     ) -> ShopId:
         if shop_id is None:
             shop_id = ShopId(uuid.uuid4())
-        await session.execute(insert(Shop).values(id=shop_id, name=name))
+        await session.execute(
+            insert(Shop).values(
+                id=shop_id, name=name, city=city, street=street, house=house
+            )
+        )
         return shop_id
 
     return _create_shop
@@ -253,13 +260,18 @@ def setup_full_test_user_with_shop(
         full_name: str = "Test User",
         user_id: UserId | None = None,
         role: ShopRole = ShopRole.OWNER,
+        shop_city: str | None = None,
+        shop_street: str | None = None,
+        shop_house: str | None = None,
     ) -> tuple[UserId, ShopId]:
         user_id = await create_user(user_id=user_id)
         await create_telegram_account(
             user_id=user_id, telegram_id=telegram_id, full_name=full_name
         )
         role_id = await create_role(name=role)
-        shop_id = await create_shop()
+        shop_id = await create_shop(
+            city=shop_city, street=shop_street, house=shop_house
+        )
         await create_shop_membership(
             user_id=user_id, shop_id=shop_id, role_id=role_id
         )
@@ -393,6 +405,7 @@ def setup_test_client(session: AsyncSession):
                         intercom=address.get("intercom"),
                         latitude=address.get("latitude"),
                         longitude=address.get("longitude"),
+                        district_id=address.get("district_id"),
                         is_primary=(idx == 0),
                         client_id=client_id,
                     )
