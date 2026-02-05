@@ -40,7 +40,9 @@ class SQLAlchemyClientGateway:
             .where(Client.id == client_id)
             .options(
                 selectinload(Client.phones),
-                selectinload(Client.addresses),
+                selectinload(Client.addresses).selectinload(
+                    ClientAddress.district
+                ),
             )
         )
         result = await self._session.execute(query)
@@ -142,6 +144,7 @@ class SQLAlchemyClientGateway:
                     else None,
                     is_primary=address.is_primary,
                     id=AddressId(address.id),
+                    district_id=address.district_id,
                 )
                 for address in client.addresses
             ],

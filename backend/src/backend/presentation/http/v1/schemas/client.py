@@ -1,3 +1,5 @@
+from uuid import UUID
+
 from pydantic import BaseModel
 
 
@@ -23,6 +25,7 @@ class AddressSchema(BaseModel):
     coordinates: CoordinatesSchema | None = None
     is_primary: bool = False
     id: int | None = None
+    district_id: UUID | None = None
 
 
 class EditClientSchema(BaseModel):

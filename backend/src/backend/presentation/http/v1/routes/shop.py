@@ -28,12 +28,12 @@ _EDIT_SHOP_EXAMPLES: dict[str, Example] = {
         ),
         value={
             "address": {
-                "city": "Moscow",
-                "street": "Lenina",
-                "house": "10",
+                "city": "Київ",
+                "street": "Хрещатик",
+                "house": "1",
                 "coordinates": {
-                    "latitude": 55.7558,
-                    "longitude": 37.6173,
+                    "latitude": 50.4501,
+                    "longitude": 30.5234,
                 },
             }
         },

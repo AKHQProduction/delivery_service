@@ -30,7 +30,7 @@ from backend.application.queries.get_clients import (
     GetClientsQuery,
     GetClientsQueryHandler,
 )
-from backend.application.vars import AddressId, ClientId, PhoneId
+from backend.application.vars import AddressId, ClientId, DistrictId, PhoneId
 from backend.presentation.http.v1.schemas.client import EditClientSchema
 from backend.presentation.http.v1.schemas.error import ErrorSchema
 
@@ -282,6 +282,9 @@ async def update_client(
                     is_primary=address.is_primary,
                     id=AddressId(address.id)
                     if address.id is not None
+                    else None,
+                    district_id=DistrictId(address.district_id)
+                    if address.district_id is not None
                     else None,
                 )
                 for address in body.addresses

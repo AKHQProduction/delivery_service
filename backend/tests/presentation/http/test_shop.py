@@ -28,12 +28,12 @@ async def test_update_shop_address(
 
     json_data = {
         "address": {
-            "city": "Moscow",
-            "street": "Lenina",
-            "house": "10",
+            "city": "Київ",
+            "street": "Хрещатик",
+            "house": "1",
             "coordinates": {
-                "latitude": 55.7558,
-                "longitude": 37.6173,
+                "latitude": 50.4501,
+                "longitude": 30.5234,
             },
         }
     }
@@ -48,11 +48,11 @@ async def test_update_shop_address(
 
     result = await session.execute(select(Shop).where(Shop.id == shop_id))
     shop = result.scalar_one()
-    assert shop.city == "Moscow"
-    assert shop.street == "Lenina"
-    assert shop.house == "10"
-    assert shop.latitude == pytest.approx(55.7558)
-    assert shop.longitude == pytest.approx(37.6173)
+    assert shop.city == "Київ"
+    assert shop.street == "Хрещатик"
+    assert shop.house == "1"
+    assert shop.latitude == pytest.approx(50.4501)
+    assert shop.longitude == pytest.approx(30.5234)
 
 
 @pytest.mark.asyncio()
@@ -70,12 +70,12 @@ async def test_update_shop_address_overwrites_previous(
 
     first_address = {
         "address": {
-            "city": "Moscow",
-            "street": "Lenina",
-            "house": "10",
+            "city": "Київ",
+            "street": "Хрещатик",
+            "house": "1",
             "coordinates": {
-                "latitude": 55.7558,
-                "longitude": 37.6173,
+                "latitude": 50.4501,
+                "longitude": 30.5234,
             },
         }
     }
@@ -83,12 +83,12 @@ async def test_update_shop_address_overwrites_previous(
 
     second_address = {
         "address": {
-            "city": "SPb",
-            "street": "Nevsky",
-            "house": "1",
+            "city": "Одеса",
+            "street": "Дерибасівська",
+            "house": "5",
             "coordinates": {
-                "latitude": 59.9343,
-                "longitude": 30.3351,
+                "latitude": 46.4825,
+                "longitude": 30.7233,
             },
         }
     }
@@ -102,9 +102,9 @@ async def test_update_shop_address_overwrites_previous(
 
     result = await session.execute(select(Shop).where(Shop.id == shop_id))
     shop = result.scalar_one()
-    assert shop.city == "SPb"
-    assert shop.street == "Nevsky"
-    assert shop.house == "1"
+    assert shop.city == "Одеса"
+    assert shop.street == "Дерибасівська"
+    assert shop.house == "5"
 
 
 @pytest.mark.asyncio()
@@ -152,12 +152,12 @@ async def test_update_shop_as_manager_forbidden(
 
     json_data = {
         "address": {
-            "city": "Moscow",
-            "street": "Lenina",
-            "house": "10",
+            "city": "Київ",
+            "street": "Хрещатик",
+            "house": "1",
             "coordinates": {
-                "latitude": 55.7558,
-                "longitude": 37.6173,
+                "latitude": 50.4501,
+                "longitude": 30.5234,
             },
         }
     }
@@ -175,12 +175,12 @@ async def test_update_shop_unauthorized(
 ) -> None:
     json_data = {
         "address": {
-            "city": "Moscow",
-            "street": "Lenina",
-            "house": "10",
+            "city": "Київ",
+            "street": "Хрещатик",
+            "house": "1",
             "coordinates": {
-                "latitude": 55.7558,
-                "longitude": 37.6173,
+                "latitude": 50.4501,
+                "longitude": 30.5234,
             },
         }
     }

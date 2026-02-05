@@ -4,6 +4,7 @@ from backend.application.dto.coordinates import CoordinatesDTO
 from backend.application.vars import (
     AddressId,
     ClientId,
+    DistrictId,
     PhoneId,
     ShopId,
 )
@@ -28,6 +29,7 @@ class AddressDTO:
     coordinates: CoordinatesDTO | None = None
     is_primary: bool = False
     id: AddressId | None = None
+    district_id: DistrictId | None = None
 
 
 @dataclass(frozen=True)

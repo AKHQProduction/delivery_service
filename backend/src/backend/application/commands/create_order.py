@@ -148,6 +148,7 @@ class CreateOrderCommandHandler:
                 floor=address.floor,
                 intercom=address.intercom,
                 comment=address.comment,
+                district=address.district.name if address.district else None,
             ),
             payment_method=command.payment_method,
             comment=command.comment,
