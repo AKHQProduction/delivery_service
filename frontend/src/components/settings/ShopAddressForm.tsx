@@ -100,7 +100,7 @@ export const ShopAddressForm: React.FC<ShopAddressFormProps> = ({
     }
   };
 
-  const getInputClassName = (field: "city" | "street" | "house") => {
+  const getInputClassName = (field: "city" | "street") => {
     const baseClass =
       "w-full px-4 py-3 border-2 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent";
     const isEmpty = !shopAddress[field].trim();
@@ -242,10 +242,10 @@ export const ShopAddressForm: React.FC<ShopAddressFormProps> = ({
                 </svg>
                 <div>
                   <p className="text-sm font-medium text-red-800">
-                    Заповніть всі поля
+                    Заповніть поля
                   </p>
                   <p className="text-xs text-red-600 mt-0.5">
-                    Місто, вулиця та будинок є обов'язковими полями
+                    Місто та вулиця є обов'язковими полями
                   </p>
                 </div>
               </div>
@@ -272,15 +272,14 @@ export const ShopAddressForm: React.FC<ShopAddressFormProps> = ({
 
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Будинок *
+                  Будинок 
                 </label>
                 <input
                   type="text"
                   value={shopAddress.house}
                   onChange={(e) => handleAddressChange("house", e.target.value)}
-                  className={getInputClassName("house")}
+                  className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
                   placeholder="1"
-                  required
                 />
               </div>
             </div>
