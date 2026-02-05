@@ -4,9 +4,9 @@ import { routeConfig } from "./config/roles.config";
 import { ProtectedRoute } from "./components/ProtectedRoute";
 import { DevPage } from "./pages/DevPage";
 import { AddItemComponent } from "./components/features/AddItemComponent";
-import { getUser } from "./services/api/userApi";
+import { getUserShopData } from "./services/api/userApi";
 import { useEffect } from "react";
-import { useUserStore } from "./context/useUserStore";
+import { useUserShopStore } from "./context/useUserShopStore";
 import { MenuModal } from "./components/modals/MenuModal";
 import { ErrorProvider } from "./context/ErrorContext";
 import { ErrorBoundary } from "./components/ErrorBoundary";
@@ -17,11 +17,8 @@ function App() {
   useEffect(() => {
     const fetchUser = async () => {
       try {
-        const data = await getUser();
-        useUserStore.getState().setUser({
-          user_id: data.user_id,
-          role: data.role,
-        });
+        const data = await getUserShopData();
+        useUserShopStore.getState().setUserAndShop(data.user, data.shop);
       } catch (error) {
         console.error("Failed to fetch user:", error);
       }

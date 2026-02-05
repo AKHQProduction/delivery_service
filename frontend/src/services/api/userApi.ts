@@ -1,6 +1,6 @@
 import api from "../../config/api.config";
 
-export const getUser = async () => {
+export const getUserShopData = async () => {
   try {
     const response = await api.get(`v1/users/me`);
     return response.data;

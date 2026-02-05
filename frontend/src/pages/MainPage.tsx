@@ -2,7 +2,7 @@ import { PageHeader } from "../components/ui/PageHeader";
 import { MenuCard } from "../components/ui/MenuCard";
 import { WelcomeSection } from "../components/ui/WelcomeSection";
 import { useNavigate } from "react-router-dom";
-import { useUserStore } from "../context/useUserStore";
+import { useUserShopStore } from "../context/useUserShopStore";
 import { UserRole } from "../constants/roles";
 import statisticIcon from "../assets/icons/statistic-board-com.svg";
 import usersIcon from "../assets/icons/users.svg";
@@ -50,7 +50,7 @@ const menuCards: MenuCardData[] = [
 
 export const MainPage = () => {
   const navigate = useNavigate();
-  const user = useUserStore((s) => s.user);
+  const user = useUserShopStore((s) => s.user);
 
   const hasPermission = (card: MenuCardData): boolean => {
     return user ? card.allowedRoles.includes(user.role) : false;
