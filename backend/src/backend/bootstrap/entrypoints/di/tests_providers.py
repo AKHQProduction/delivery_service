@@ -25,7 +25,7 @@ class FakeInviteLinkGenerator(InviteLinkGenerator):
 
 
 class MockAdaptersProvider(AdaptersProvider):
-    pass
+    link_generator = provide(FakeInviteLinkGenerator)
 
 
 class MockAPIInteractorsProvider(APIInteractorsProvider):
