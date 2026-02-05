@@ -6,7 +6,7 @@ from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 from uuid_utils.compat import uuid7
 
-from backend.application.interfaces.gateways.time_slot_gateway import (
+from backend.application.dto.gateways.time_slot_gateway import (
     TimeSlotReadModel,
 )
 from backend.application.vars import ShopId, TimeSlotId

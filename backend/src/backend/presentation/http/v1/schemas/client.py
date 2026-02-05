@@ -7,6 +7,11 @@ class PhoneSchema(BaseModel):
     id: int | None = None
 
 
+class CoordinatesSchema(BaseModel):
+    latitude: float
+    longitude: float
+
+
 class AddressSchema(BaseModel):
     street: str
     house: str
@@ -15,6 +20,7 @@ class AddressSchema(BaseModel):
     floor: str | None = None
     intercom: str | None = None
     comment: str | None = None
+    coordinates: CoordinatesSchema | None = None
     is_primary: bool = False
     id: int | None = None
 

@@ -19,8 +19,8 @@ from backend.application.commands.edit_product import (
     EditProductCommand,
     EditProductCommandHandler,
 )
-from backend.application.interfaces.gateways import Pagination, SortOrder
-from backend.application.interfaces.gateways.product_gateway import (
+from backend.application.dto.gateways import Pagination, SortOrder
+from backend.application.dto.gateways.product_gateway import (
     ProductReadModel,
 )
 from backend.application.queries.get_product import GetProductQueryHandler

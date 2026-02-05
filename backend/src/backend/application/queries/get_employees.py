@@ -1,7 +1,7 @@
 from dataclasses import dataclass
 
-from backend.application.interfaces.gateways import Pagination
-from backend.application.interfaces.gateways.shop_gateway import (
+from backend.application.dto.gateways import Pagination
+from backend.application.dto.gateways.shop_gateway import (
     EmployeeFilters,
     EmployeeReadModel,
 )

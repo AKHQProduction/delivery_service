@@ -1,5 +1,5 @@
+from backend.application.dto.idp import CurrentUserDTO
 from backend.application.errors import AccessDeniedError
-from backend.application.interfaces.idp import CurrentUserDTO
 from backend.application.policies import Specification
 from backend.application.vars import ShopId, ShopRole
 

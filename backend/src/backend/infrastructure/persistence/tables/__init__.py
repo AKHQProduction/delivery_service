@@ -1,6 +1,7 @@
 from .base import Base
 from .categories import Category
 from .clients import Client
+from .districts import District
 from .orders import Order, OrderItem
 from .products import Product
 from .shops import Role, Shop, ShopMembership
@@ -10,6 +11,7 @@ __all__ = [
     "Base",
     "Category",
     "Client",
+    "District",
     "Order",
     "OrderItem",
     "Product",

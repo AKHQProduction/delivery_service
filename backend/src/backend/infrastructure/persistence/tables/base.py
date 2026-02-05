@@ -7,7 +7,7 @@ from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column
 from sqlalchemy.types import TypeDecorator
 
-from backend.application.interfaces.gateways.order_gateway import (
+from backend.application.dto.gateways.order_gateway import (
     DeliveryAddressDTO,
 )
 

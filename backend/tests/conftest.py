@@ -27,6 +27,7 @@ from sqlalchemy.ext.asyncio import (
 from backend.application.vars import (
     CategoryId,
     ClientId,
+    DistrictId,
     OrderId,
     ProductId,
     ShopId,
@@ -48,6 +49,7 @@ from backend.bootstrap.entrypoints.di.tests_providers import (
 from backend.infrastructure.persistence.tables import (
     Base,
     Category,
+    District,
     Product,
     Role,
     Shop,
@@ -244,6 +246,7 @@ def setup_full_test_user_with_shop(
     create_shop,
     create_role,
     create_shop_membership,
+    setup_test_time_slot,
 ):
     async def _setup_user(
         telegram_id: int,
@@ -259,6 +262,18 @@ def setup_full_test_user_with_shop(
         shop_id = await create_shop()
         await create_shop_membership(
             user_id=user_id, shop_id=shop_id, role_id=role_id
+        )
+        await setup_test_time_slot(
+            shop_id=shop_id,
+            start_time=time(9, 0),
+            end_time=time(14, 0),
+            label="Перша половина дня",
+        )
+        await setup_test_time_slot(
+            shop_id=shop_id,
+            start_time=time(14, 0),
+            end_time=time(21, 0),
+            label="Друга половина дня",
         )
         return user_id, shop_id
 
@@ -286,6 +301,29 @@ def setup_test_category(session: AsyncSession):
         return category_id
 
     return _setup_test_category
+
+
+@pytest.fixture()
+def setup_test_district(session: AsyncSession):
+    async def _setup_test_district(
+        shop_id: ShopId,
+        name: str = "Test District",
+        district_id: DistrictId | None = None,
+    ) -> DistrictId:
+        if district_id is None:
+            district_id = DistrictId(uuid.uuid4())
+
+        await session.execute(
+            insert(District).values(
+                id=district_id,
+                name=name,
+                shop_id=shop_id,
+            )
+        )
+
+        return district_id
+
+    return _setup_test_district
 
 
 @pytest.fixture()
@@ -353,6 +391,8 @@ def setup_test_client(session: AsyncSession):
                         entrance=address.get("entrance"),
                         floor=address.get("floor"),
                         intercom=address.get("intercom"),
+                        latitude=address.get("latitude"),
+                        longitude=address.get("longitude"),
                         is_primary=(idx == 0),
                         client_id=client_id,
                     )
@@ -368,9 +408,9 @@ def setup_test_time_slot(session: AsyncSession):
     async def _setup_test_time_slot(
         shop_id: ShopId,
         time_slot_id: TimeSlotId | None = None,
-        start_time: time = time(9, 0),
-        end_time: time = time(14, 0),
-        label: str | None = "Перша половина дня",
+        start_time: time = time(6, 0),
+        end_time: time = time(9, 0),
+        label: str | None = "Тестовий слот",
     ) -> TimeSlotId:
         if time_slot_id is None:
             time_slot_id = TimeSlotId(uuid.uuid4())

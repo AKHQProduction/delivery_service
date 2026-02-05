@@ -5,8 +5,8 @@ from sqlalchemy import asc, desc, select
 from sqlalchemy.ext.asyncio import AsyncSession
 from uuid_utils.compat import uuid7
 
-from backend.application.interfaces.gateways import Pagination, SortOrder
-from backend.application.interfaces.gateways.category_gateway import (
+from backend.application.dto.gateways import Pagination, SortOrder
+from backend.application.dto.gateways.category_gateway import (
     CategoryReadModel,
     GetCategoriesFilters,
 )

@@ -3,8 +3,9 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 from uuid_utils.compat import uuid7
 
-from backend.application.interfaces.gateways import Pagination, SortOrder
-from backend.application.interfaces.gateways.client_gateway import (
+from backend.application.dto.coordinates import CoordinatesDTO
+from backend.application.dto.gateways import Pagination, SortOrder
+from backend.application.dto.gateways.client_gateway import (
     AddressDTO,
     ClientReadModel,
     DuplicatePhoneEntry,
@@ -132,6 +133,13 @@ class SQLAlchemyClientGateway:
                     entrance=address.entrance,
                     floor=address.floor,
                     intercom=address.intercom,
+                    coordinates=CoordinatesDTO(
+                        latitude=address.latitude,
+                        longitude=address.longitude,
+                    )
+                    if address.latitude is not None
+                    and address.longitude is not None
+                    else None,
                     is_primary=address.is_primary,
                     id=AddressId(address.id),
                 )

@@ -2,6 +2,7 @@ import logging
 from dataclasses import dataclass
 
 from backend.application.common import ensure_exists
+from backend.application.dto.coordinates import CoordinatesDTO
 from backend.application.errors import (
     ExistingClientInfo,
     InvalidPrimaryFlagError,
@@ -47,6 +48,7 @@ class Address:
     floor: str | None = None
     intercom: str | None = None
     comment: str | None = None
+    coordinates: CoordinatesDTO | None = None
     is_primary: bool = False
     id: AddressId | None = None
 
@@ -193,6 +195,7 @@ class EditClientCommandHandler:
                         floor=addr_data.floor,
                         intercom=addr_data.intercom,
                         comment=addr_data.comment,
+                        coordinates=addr_data.coordinates,
                         is_primary=addr_data.is_primary,
                     )
                 else:
@@ -204,6 +207,7 @@ class EditClientCommandHandler:
                         floor=addr_data.floor,
                         intercom=addr_data.intercom,
                         comment=addr_data.comment,
+                        coordinates=addr_data.coordinates,
                         is_primary=addr_data.is_primary,
                     )
                     client.addresses.append(new_address)

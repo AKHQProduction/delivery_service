@@ -1,6 +1,7 @@
 import logging
 from dataclasses import dataclass, field
 
+from backend.application.dto.coordinates import CoordinatesDTO
 from backend.application.errors import (
     ExistingClientInfo,
     PhoneDuplicate,
@@ -33,6 +34,7 @@ class Address:
     floor: str | None = None
     intercom: str | None = None
     comment: str | None = None
+    coordinates: CoordinatesDTO | None = None
 
 
 @dataclass(frozen=True)
@@ -125,6 +127,7 @@ class CreateClientCommandHandler:
                 floor=addr.floor,
                 intercom=addr.intercom,
                 comment=addr.comment,
+                coordinates=addr.coordinates,
                 is_primary=(idx == 0),
             )
             for idx, addr in enumerate(command.addresses)

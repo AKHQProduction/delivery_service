@@ -5,7 +5,7 @@ from typing import TYPE_CHECKING
 import sqlalchemy as sa
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
-from backend.application.interfaces.gateways.order_gateway import (
+from backend.application.dto.gateways.order_gateway import (
     DeliveryAddressDTO,
 )
 from backend.application.vars import (

@@ -2,7 +2,7 @@ import datetime
 import logging
 from dataclasses import dataclass
 
-from backend.application.interfaces.gateways.order_gateway import (
+from backend.application.dto.gateways.order_gateway import (
     GetOrdersFilters,
     TimeSlotFilter,
 )

@@ -5,32 +5,32 @@ from dishka.integrations.fastapi import DishkaRoute
 from fastapi import APIRouter, Body, Depends, status
 from fastapi.security import HTTPBearer
 
-from backend.application.commands.create_category import (
-    CreateCategoryCommand,
-    CreateCategoryCommandHandler,
+from backend.application.commands.create_district import (
+    CreateDistrictCommand,
+    CreateDistrictCommandHandler,
 )
-from backend.application.commands.delete_category import (
-    DeleteCategoryCommand,
-    DeleteCategoryCommandHandler,
+from backend.application.commands.delete_district import (
+    DeleteDistrictCommand,
+    DeleteDistrictCommandHandler,
 )
-from backend.application.commands.edit_category import (
-    EditCategoryCommand,
-    EditCategoryCommandHandler,
+from backend.application.commands.edit_district import (
+    EditDistrictCommand,
+    EditDistrictCommandHandler,
 )
 from backend.application.dto.gateways import Pagination, SortOrder
-from backend.application.dto.gateways.category_gateway import (
-    CategoryReadModel,
+from backend.application.dto.gateways.district_gateway import (
+    DistrictReadModel,
 )
-from backend.application.queries.get_categories import (
-    GetCategoriesQuery,
-    GetCategoriesQueryHandler,
+from backend.application.queries.get_districts import (
+    GetDistrictsQuery,
+    GetDistrictsQueryHandler,
 )
-from backend.application.vars import CategoryId
-from backend.presentation.http.v1.schemas.category import EditCategorySchema
+from backend.application.vars import DistrictId
+from backend.presentation.http.v1.schemas.district import EditDistrictSchema
 from backend.presentation.http.v1.schemas.error import ErrorSchema
 
 router = APIRouter(
-    prefix="/categories", tags=["Categories"], route_class=DishkaRoute
+    prefix="/districts", tags=["Districts"], route_class=DishkaRoute
 )
 
 
@@ -43,15 +43,15 @@ router = APIRouter(
     },
     dependencies=[Depends(HTTPBearer())],
 )
-async def create_category(
-    body: Annotated[CreateCategoryCommand, Body()],
-    handler: FromDishka[CreateCategoryCommandHandler],
-) -> CategoryId:
+async def create_district(
+    body: Annotated[CreateDistrictCommand, Body()],
+    handler: FromDishka[CreateDistrictCommandHandler],
+) -> DistrictId:
     return await handler.handle(body)
 
 
 @router.patch(
-    "/{category_id}",
+    "/{district_id}",
     status_code=status.HTTP_200_OK,
     responses={
         status.HTTP_401_UNAUTHORIZED: {"model": ErrorSchema},
@@ -61,21 +61,21 @@ async def create_category(
     },
     dependencies=[Depends(HTTPBearer())],
 )
-async def update_category(
-    category_id: CategoryId,
-    body: EditCategorySchema,
-    handler: FromDishka[EditCategoryCommandHandler],
+async def update_district(
+    district_id: DistrictId,
+    body: EditDistrictSchema,
+    handler: FromDishka[EditDistrictCommandHandler],
 ) -> None:
     await handler.handle(
-        EditCategoryCommand(
-            category_id=category_id,
+        EditDistrictCommand(
+            district_id=district_id,
             new_name=body.name,
         )
     )
 
 
 @router.delete(
-    "/{category_id}",
+    "/{district_id}",
     status_code=status.HTTP_204_NO_CONTENT,
     responses={
         status.HTTP_401_UNAUTHORIZED: {"model": ErrorSchema},
@@ -83,11 +83,11 @@ async def update_category(
     },
     dependencies=[Depends(HTTPBearer())],
 )
-async def delete_category(
-    category_id: CategoryId,
-    handler: FromDishka[DeleteCategoryCommandHandler],
+async def delete_district(
+    district_id: DistrictId,
+    handler: FromDishka[DeleteDistrictCommandHandler],
 ) -> None:
-    await handler.handle(DeleteCategoryCommand(category_id=category_id))
+    await handler.handle(DeleteDistrictCommand(district_id=district_id))
 
 
 @router.get(
@@ -98,15 +98,15 @@ async def delete_category(
     },
     dependencies=[Depends(HTTPBearer())],
 )
-async def get_all_categories(
-    handler: FromDishka[GetCategoriesQueryHandler],
+async def get_all_districts(
+    handler: FromDishka[GetDistrictsQueryHandler],
     name: str | None = None,
     limit: int = 100,
     offset: int = 0,
     order: SortOrder = SortOrder.ASC,
-) -> list[CategoryReadModel]:
+) -> list[DistrictReadModel]:
     return await handler.handle(
-        GetCategoriesQuery(
+        GetDistrictsQuery(
             name=name,
             pagination=Pagination(limit=limit, offset=offset, order=order),
         )

@@ -85,6 +85,95 @@ async def test_create_client_with_apartment(
 
 
 @pytest.mark.asyncio()
+async def test_create_client_with_coordinates(
+    http_client: AsyncClient,
+    session: AsyncSession,
+    customer_headers: Callable[[int], dict[str, Any]],
+    setup_full_test_user_with_shop,
+) -> None:
+    telegram_id = 1010
+    await setup_full_test_user_with_shop(telegram_id=telegram_id)
+    await session.commit()
+
+    headers = customer_headers(telegram_id)
+
+    json = {
+        "full_name": "Клієнт з Координатами",
+        "phones": [{"number": "+380501234567"}],
+        "addresses": [
+            {
+                "street": "Хрещатик",
+                "house": "10",
+                "apartment": "5",
+                "coordinates": {
+                    "latitude": 50.4501,
+                    "longitude": 30.5234,
+                },
+            }
+        ],
+    }
+
+    response = await http_client.post(url=BASE_URL, headers=headers, json=json)
+
+    assert response.status_code == status.HTTP_201_CREATED
+    client_id = response.json()
+
+    await session.flush()
+
+    address_result = await session.execute(
+        select(ClientAddress).where(
+            ClientAddress.client_id == uuid.UUID(client_id)
+        )
+    )
+    addresses = address_result.scalars().all()
+    assert len(addresses) == 1
+    assert addresses[0].latitude == 50.4501
+    assert addresses[0].longitude == 30.5234
+
+
+@pytest.mark.asyncio()
+async def test_create_client_without_coordinates(
+    http_client: AsyncClient,
+    session: AsyncSession,
+    customer_headers: Callable[[int], dict[str, Any]],
+    setup_full_test_user_with_shop,
+) -> None:
+    telegram_id = 1011
+    await setup_full_test_user_with_shop(telegram_id=telegram_id)
+    await session.commit()
+
+    headers = customer_headers(telegram_id)
+
+    json = {
+        "full_name": "Клієнт без Координат",
+        "phones": [{"number": "+380501234567"}],
+        "addresses": [
+            {
+                "street": "Хрещатик",
+                "house": "10",
+            }
+        ],
+    }
+
+    response = await http_client.post(url=BASE_URL, headers=headers, json=json)
+
+    assert response.status_code == status.HTTP_201_CREATED
+    client_id = response.json()
+
+    await session.flush()
+
+    address_result = await session.execute(
+        select(ClientAddress).where(
+            ClientAddress.client_id == uuid.UUID(client_id)
+        )
+    )
+    addresses = address_result.scalars().all()
+    assert len(addresses) == 1
+    assert addresses[0].latitude is None
+    assert addresses[0].longitude is None
+
+
+@pytest.mark.asyncio()
 async def test_create_client_with_private_house(
     http_client: AsyncClient,
     session: AsyncSession,
@@ -771,6 +860,155 @@ async def test_edit_client_addresses(
     assert addresses[0].is_primary is True
     assert addresses[1].street == "Ще одна вулиця"
     assert addresses[1].is_primary is False
+
+
+@pytest.mark.asyncio()
+async def test_edit_client_add_coordinates(
+    http_client: AsyncClient,
+    session: AsyncSession,
+    customer_headers: Callable[[int], dict[str, Any]],
+    setup_full_test_user_with_shop,
+    setup_test_client,
+) -> None:
+    telegram_id = 3009
+    _, shop_id = await setup_full_test_user_with_shop(telegram_id=telegram_id)
+
+    client_id = await setup_test_client(
+        shop_id=shop_id,
+        full_name="Клієнт",
+        addresses=[
+            {
+                "street": "Вулиця",
+                "house": "1",
+            }
+        ],
+    )
+    await session.commit()
+
+    headers = customer_headers(telegram_id)
+
+    json = {
+        "addresses": [
+            {
+                "street": "Вулиця",
+                "house": "1",
+                "coordinates": {
+                    "latitude": 50.4501,
+                    "longitude": 30.5234,
+                },
+                "is_primary": True,
+            }
+        ]
+    }
+
+    response = await http_client.patch(
+        url=f"{BASE_URL}/{client_id}", headers=headers, json=json
+    )
+
+    assert response.status_code == status.HTTP_200_OK
+
+    await session.flush()
+
+    address_result = await session.execute(
+        select(ClientAddress).where(ClientAddress.client_id == client_id)
+    )
+    addresses = address_result.scalars().all()
+    assert len(addresses) == 1
+    assert addresses[0].latitude == 50.4501
+    assert addresses[0].longitude == 30.5234
+
+
+@pytest.mark.asyncio()
+async def test_edit_client_remove_coordinates(
+    http_client: AsyncClient,
+    session: AsyncSession,
+    customer_headers: Callable[[int], dict[str, Any]],
+    setup_full_test_user_with_shop,
+    setup_test_client,
+) -> None:
+    telegram_id = 3010
+    _, shop_id = await setup_full_test_user_with_shop(telegram_id=telegram_id)
+
+    client_id = await setup_test_client(
+        shop_id=shop_id,
+        full_name="Клієнт",
+        addresses=[
+            {
+                "street": "Вулиця",
+                "house": "1",
+                "latitude": 50.4501,
+                "longitude": 30.5234,
+            }
+        ],
+    )
+    await session.commit()
+
+    headers = customer_headers(telegram_id)
+
+    json = {
+        "addresses": [
+            {
+                "street": "Вулиця",
+                "house": "1",
+                "is_primary": True,
+            }
+        ]
+    }
+
+    response = await http_client.patch(
+        url=f"{BASE_URL}/{client_id}", headers=headers, json=json
+    )
+
+    assert response.status_code == status.HTTP_200_OK
+
+    await session.flush()
+
+    address_result = await session.execute(
+        select(ClientAddress).where(ClientAddress.client_id == client_id)
+    )
+    addresses = address_result.scalars().all()
+    assert len(addresses) == 1
+    assert addresses[0].latitude is None
+    assert addresses[0].longitude is None
+
+
+@pytest.mark.asyncio()
+async def test_get_client_coordinates_in_response(
+    http_client: AsyncClient,
+    session: AsyncSession,
+    customer_headers: Callable[[int], dict[str, Any]],
+    setup_full_test_user_with_shop,
+    setup_test_client,
+) -> None:
+    telegram_id = 3011
+    _, shop_id = await setup_full_test_user_with_shop(telegram_id=telegram_id)
+
+    client_id = await setup_test_client(
+        shop_id=shop_id,
+        full_name="Клієнт з Координатами",
+        phones=["+380501234567"],
+        addresses=[
+            {
+                "street": "Хрещатик",
+                "house": "10",
+                "latitude": 50.4501,
+                "longitude": 30.5234,
+            }
+        ],
+    )
+    await session.commit()
+
+    headers = customer_headers(telegram_id)
+
+    response = await http_client.get(
+        url=f"{BASE_URL}/{client_id}", headers=headers
+    )
+
+    assert response.status_code == status.HTTP_200_OK
+    data = response.json()
+    assert len(data["addresses"]) == 1
+    assert data["addresses"][0]["coordinates"]["latitude"] == 50.4501
+    assert data["addresses"][0]["coordinates"]["longitude"] == 30.5234
 
 
 @pytest.mark.asyncio()

@@ -1,8 +1,8 @@
 from dataclasses import dataclass
 from datetime import date, time
 
-from backend.application.interfaces.gateways import Pagination
-from backend.application.interfaces.gateways.order_gateway import (
+from backend.application.dto.gateways import Pagination
+from backend.application.dto.gateways.order_gateway import (
     GetOrdersFilters,
     OrderReadModel,
 )
