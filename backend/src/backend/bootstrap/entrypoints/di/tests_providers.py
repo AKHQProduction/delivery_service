@@ -1,6 +1,6 @@
 import uuid
 
-from dishka import provide
+from dishka import WithParents, provide
 
 from backend.application.usecases.invite_employee.interfaces import (
     GeneratedLink,
@@ -25,7 +25,7 @@ class FakeInviteLinkGenerator(InviteLinkGenerator):
 
 
 class MockAdaptersProvider(AdaptersProvider):
-    link_generator = provide(FakeInviteLinkGenerator)
+    link_generator = provide(WithParents[FakeInviteLinkGenerator])
 
 
 class MockAPIInteractorsProvider(APIInteractorsProvider):
