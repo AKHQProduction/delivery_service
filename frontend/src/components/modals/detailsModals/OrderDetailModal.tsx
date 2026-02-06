@@ -13,6 +13,7 @@ export interface OrderItem {
 export interface DeliveryAddress {
   street?: string;
   house?: string;
+  district?: string | null;
 }
 
 export interface Order {
@@ -215,9 +216,17 @@ export const OrderDetailModal = ({
                   />
                 </svg>
               </div>
-              <span className="text-gray-700 flex-1 leading-relaxed">
-                {order.delivery_address?.street} {order.delivery_address?.house}
-              </span>
+              <div className="flex-1">
+                <span className="text-gray-700 leading-relaxed">
+                  {order.delivery_address?.street}{" "}
+                  {order.delivery_address?.house}
+                </span>
+                {order.delivery_address?.district && (
+                  <p className="text-xs text-gray-500 mt-1">
+                    Район: {order.delivery_address?.district}
+                  </p>
+                )}
+              </div>
             </div>
           </div>
         </div>

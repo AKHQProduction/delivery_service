@@ -20,6 +20,7 @@ export interface Address {
   is_primary: boolean;
   comment?: string;
   coordinates?: AddressCoordinates | null;
+  district_id?: string | null;
 }
 
 export interface Client {

@@ -21,7 +21,7 @@ export const DistrictsComponent = () => {
   const handleFieldChange = (districtId: string, value: string) => {
     setEditedDistricts((prev) => {
       const originalDistrict = districts?.find(
-        (d) => d?.district_id === districtId
+        (d) => d?.district_id === districtId,
       );
       return {
         ...prev,
@@ -37,8 +37,8 @@ export const DistrictsComponent = () => {
   const handleNewDistrictChange = (tempId: string, value: string) => {
     setNewDistricts((prev) =>
       prev.map((district) =>
-        district.id === tempId ? { ...district, name: value } : district
-      )
+        district.id === tempId ? { ...district, name: value } : district,
+      ),
     );
   };
 
@@ -98,7 +98,9 @@ export const DistrictsComponent = () => {
     const edited = editedDistricts[districtId];
     if (!edited) return false;
 
-    const originalDistrict = districts?.find((d) => d?.district_id === districtId);
+    const originalDistrict = districts?.find(
+      (d) => d?.district_id === districtId,
+    );
     const originalName = originalDistrict?.name || "";
     const editedName = edited.name || "";
 
@@ -114,7 +116,7 @@ export const DistrictsComponent = () => {
     (district): district is District =>
       district !== null &&
       district !== undefined &&
-      district.district_id !== null
+      district.district_id !== null,
   );
 
   return (

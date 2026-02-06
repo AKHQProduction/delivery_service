@@ -6,6 +6,7 @@ import { PhoneInputList } from "../../shared/PhoneInputList";
 import { type Client } from "../../../types/entities/Client";
 import { useClient } from "../../../hooks/clients/useClients";
 import { useClientForm } from "../../../hooks/clients/useClientForm";
+import { useDistrictsSettings } from "../../../hooks/settings/useDistrictsSettings";
 import { DuplicatePhoneToast } from "../../ui/PhoneDuplicateErrorPopup";
 interface EditClientFormProps {
   client: Client;
@@ -33,6 +34,7 @@ export const EditClientForm: React.FC<EditClientFormProps> = ({
     initializeForm,
   } = useClientForm();
   const { updateClient } = useClient();
+  const { districts } = useDistrictsSettings();
   const [phoneErrors, setPhoneErrors] = useState<Record<string, string>>({});
   const [duplicateError, setDuplicateError] = useState<any>(null);
   const [pendingClientData, setPendingClientData] = useState<any>(null);
@@ -132,6 +134,7 @@ export const EditClientForm: React.FC<EditClientFormProps> = ({
           onSetPrimary={setPrimaryAddress}
           onRemove={removeAddress}
           onAdd={addAddress}
+          districts={districts}
         />
       </FormWrapper>
       {duplicateError && duplicateError.duplicates && (

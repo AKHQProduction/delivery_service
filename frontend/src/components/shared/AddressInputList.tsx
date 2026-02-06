@@ -10,6 +10,11 @@ import {
   type AddressCoordinates,
 } from "../../types/entities/Client";
 
+export interface District {
+  district_id: string;
+  name: string;
+}
+
 interface AddressInputListProps {
   addresses: Address[];
   onSetPrimary: (index: number) => void;
@@ -20,6 +25,7 @@ interface AddressInputListProps {
   ) => void;
   onRemove: (index: number) => void;
   onAdd: () => void;
+  districts?: District[];
 }
 
 export const AddressInputList: React.FC<AddressInputListProps> = ({
@@ -29,6 +35,7 @@ export const AddressInputList: React.FC<AddressInputListProps> = ({
   onCoordinatesChange,
   onRemove,
   onAdd,
+  districts = [],
 }) => {
   const shop = useUserShopStore((state) => state.shop);
   const { toast, showToast, hideToast } = useToast();
@@ -279,6 +286,29 @@ export const AddressInputList: React.FC<AddressInputListProps> = ({
                 className="px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500"
               />
             </div>
+            {districts.length > 0 && (
+              <div>
+                <label className="block text-xs font-medium text-gray-600 mb-1">
+                  Район
+                </label>
+                <select
+                  value={address.district_id || ""}
+                  onChange={(e) =>
+                    onAddressChange(index, "district_id", e.target.value || "")
+                  }
+                  title="Район доставки"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500 bg-white"
+                >
+                  <option value="">Не вказано</option>
+                  {districts.map((district) => (
+                    <option key={district.district_id} value={district.district_id}>
+                      {district.name}
+                    </option>
+                  ))}
+                </select>
+              </div>
+            )}
+
             <div className="pt-2">
               <label className="flex items-center gap-2 text-xs font-medium text-gray-600 mb-2">
                 <svg

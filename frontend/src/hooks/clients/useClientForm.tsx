@@ -21,6 +21,7 @@ export const useClientForm = (initialData?: Partial<Client>) => {
         is_primary: true,
         comment: "",
         coordinates: null,
+        district_id: null,
       },
     ] as Address[],
   });
@@ -54,6 +55,7 @@ export const useClientForm = (initialData?: Partial<Client>) => {
               is_primary: address.is_primary || false,
               comment: address.comment || "",
               coordinates: address.coordinates || null,
+              district_id: address.district_id || null,
             }))
           : [
               {
@@ -66,6 +68,7 @@ export const useClientForm = (initialData?: Partial<Client>) => {
                 is_primary: true,
                 comment: "",
                 coordinates: null,
+                district_id: null,
               },
             ],
     });
@@ -86,6 +89,7 @@ export const useClientForm = (initialData?: Partial<Client>) => {
           is_primary: true,
           comment: "",
           coordinates: null,
+          district_id: null,
         },
       ],
     });
@@ -172,6 +176,7 @@ export const useClientForm = (initialData?: Partial<Client>) => {
           is_primary: false,
           comment: "",
           coordinates: null,
+          district_id: null,
         },
       ],
     }));
