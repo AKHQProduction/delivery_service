@@ -1,0 +1,142 @@
+name: CI
+
+on:
+  pull_request:
+    branches: [main, dev]
+  workflow_dispatch:
+
+jobs:
+  backend-lint:
+    name: Backend Lint
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: backend
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v4
+
+      - name: Install dependencies
+        run: uv sync --group lint
+
+      - name: Run ruff format check
+        run: uv run ruff format --check
+
+      - name: Run ruff check
+        run: uv run ruff check
+
+      - name: Run mypy
+        run: uv run mypy src/ --check-untyped-defs
+
+      - name: Run codespell
+        run: uv run codespell src/
+
+  backend-tests:
+    name: Backend Tests
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: backend
+
+    env:
+      TEST_DB_HOST: localhost
+      TEST_POSTGRES_DB: test
+      TEST_POSTGRES_USER: test
+      TEST_POSTGRES_PASSWORD: test
+      TEST_POSTGRES_PORT: 5432
+      TEST_REDIS_HOST: localhost
+      TEST_REDIS_PORT: 6379
+      TEST_REDIS_PASSWORD: test_password
+      ADMIN_BOT_TOKEN: "123456789:ABCdefGHIjklMNOpqrsTUVwxyz123456"
+      REDIS_HOST: localhost
+      REDIS_PORT: 6379
+      REDIS_PASSWORD: test_password
+      DB_HOST: localhost
+      POSTGRES_DB: test
+      POSTGRES_USER: test
+      POSTGRES_PASSWORD: test
+      POSTGRES_PORT: 5432
+      WEBHOOK_URL: http://localhost
+      WEBHOOK_PATH: /webhook
+      WEBHOOK_HOST: localhost
+      WEBHOOK_PORT: 8080
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v4
+
+      - name: Start test services
+        run: docker compose -f ../docker-compose-test.yml up -d
+        env:
+          TEST_POSTGRES_PORT: 5432
+          TEST_REDIS_PORT: 6379
+
+      - name: Wait for PostgreSQL
+        run: |
+          for i in {1..30}; do
+            if pg_isready -h localhost -p 5432 -U test; then
+              echo "PostgreSQL is ready"
+              break
+            fi
+            echo "Waiting for PostgreSQL..."
+            sleep 1
+          done
+
+      - name: Wait for Redis
+        run: |
+          for i in {1..30}; do
+            if redis-cli -h localhost -p 6379 -a test_password ping | grep -q PONG; then
+              echo "Redis is ready"
+              break
+            fi
+            echo "Waiting for Redis..."
+            sleep 1
+          done
+
+      - name: Install dependencies
+        run: uv sync --group dev
+
+      - name: Run tests
+        run: uv run pytest
+
+      - name: Stop test services
+        if: always()
+        run: docker compose -f ../docker-compose-test.yml down
+
+  frontend-build:
+    name: Frontend Build
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: frontend
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: "npm"
+          cache-dependency-path: frontend/package-lock.json
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build
+        run: npm run build
