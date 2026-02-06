@@ -2,8 +2,8 @@ import { useState, useCallback } from "react";
 import {
   updateShopAddress,
   type ShopAddressPayload,
-} from "../services/api/settingsApi";
-import { useUserShopStore } from "../context/useUserShopStore";
+} from "../../services/api/settingsApi";
+import { useUserShopStore } from "../../context/useUserShopStore";
 
 export interface ShopAddress {
   city: string;

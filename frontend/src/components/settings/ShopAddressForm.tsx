@@ -2,7 +2,10 @@ import React, { useState } from "react";
 import { MapPicker } from "../shared/MapPicker";
 import { MapButton } from "../shared/MapButton";
 import { useMapPicker } from "../../hooks/useMapPicker";
-import { useShopSettings, type ShopAddress } from "../../hooks/useShopSettings";
+import {
+  useShopSettings,
+  type ShopAddress,
+} from "../../hooks/settings/useShopSettings";
 import { useUserShopStore } from "../../context/useUserShopStore";
 
 interface ShopAddressFormProps {
@@ -68,7 +71,11 @@ export const ShopAddressForm: React.FC<ShopAddressFormProps> = ({
       return;
     }
 
-    const coords = await forwardGeocode(shopAddress.street, shopAddress.house, shopAddress.city);
+    const coords = await forwardGeocode(
+      shopAddress.street,
+      shopAddress.house,
+      shopAddress.city,
+    );
 
     if (coords) {
       setPendingCoordinates(coords);

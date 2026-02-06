@@ -82,3 +82,39 @@ export const updateShopAddress = async (payload: ShopAddressPayload) => {
     throw error;
   }
 };
+
+export const createDistrict = async (name: string) => {
+  try {
+    const response = await api.post(`v1/districts`, { name });
+    return response.data;
+  } catch (error) {
+    throw error;
+  }
+}
+
+export const updateDistrict = async (district_id: string, name: string) => {
+  try {
+    const response = await api.patch(`v1/districts/${district_id}`, { name });
+    return response.data;
+  } catch (error) {
+    throw error;
+  }
+}
+
+export const deleteDistrict = async (district_id: string) => {
+  try {
+    const response = await api.delete(`v1/districts/${district_id}`);
+    return response.data;
+  } catch (error) {
+    throw error;
+  }
+}
+
+export const getAllDistricts = async () => {
+  try {
+    const response = await api.get(`v1/districts/all`);
+    return response.data;
+  } catch (error) {
+    throw error;
+  }
+}
