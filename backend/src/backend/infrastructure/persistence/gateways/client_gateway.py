@@ -1,4 +1,4 @@
-from sqlalchemy import ColumnElement, asc, desc, exists, or_, select
+from sqlalchemy import ColumnElement, asc, case, desc, exists, or_, select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 from uuid_utils.compat import uuid7
@@ -101,10 +101,25 @@ class SQLAlchemyClientGateway:
         if search_conditions:
             query = query.where(or_(*search_conditions))
 
+        ordering = []
+        if filters.full_name and len(search_conditions) > 1:
+            name_match_priority = case(
+                (
+                    Client.full_name.ilike(
+                        f"%{escape_like(filters.full_name)}%"
+                    ),
+                    0,
+                ),
+                else_=1,
+            )
+            ordering.append(asc(name_match_priority))
+
         if pagination.order == SortOrder.ASC:
-            query = query.order_by(asc(Client.full_name), asc(Client.id))
+            ordering.extend([asc(Client.full_name), asc(Client.id)])
         else:
-            query = query.order_by(desc(Client.full_name), asc(Client.id))
+            ordering.extend([desc(Client.full_name), asc(Client.id)])
+
+        query = query.order_by(*ordering)
 
         query = query.offset(pagination.offset).limit(pagination.limit)
 
