@@ -1,10 +1,11 @@
-from sqlalchemy import ColumnElement, asc, desc, exists, or_, select
+from sqlalchemy import ColumnElement, asc, case, desc, exists, or_, select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 from uuid_utils.compat import uuid7
 
-from backend.application.interfaces.gateways import Pagination, SortOrder
-from backend.application.interfaces.gateways.client_gateway import (
+from backend.application.dto.coordinates import CoordinatesDTO
+from backend.application.dto.gateways import Pagination, SortOrder
+from backend.application.dto.gateways.client_gateway import (
     AddressDTO,
     ClientReadModel,
     DuplicatePhoneEntry,
@@ -39,7 +40,9 @@ class SQLAlchemyClientGateway:
             .where(Client.id == client_id)
             .options(
                 selectinload(Client.phones),
-                selectinload(Client.addresses),
+                selectinload(Client.addresses).selectinload(
+                    ClientAddress.district
+                ),
             )
         )
         result = await self._session.execute(query)
@@ -98,10 +101,25 @@ class SQLAlchemyClientGateway:
         if search_conditions:
             query = query.where(or_(*search_conditions))
 
+        ordering = []
+        if filters.full_name and len(search_conditions) > 1:
+            name_match_priority = case(
+                (
+                    Client.full_name.ilike(
+                        f"%{escape_like(filters.full_name)}%"
+                    ),
+                    0,
+                ),
+                else_=1,
+            )
+            ordering.append(asc(name_match_priority))
+
         if pagination.order == SortOrder.ASC:
-            query = query.order_by(asc(Client.full_name), asc(Client.id))
+            ordering.extend([asc(Client.full_name), asc(Client.id)])
         else:
-            query = query.order_by(desc(Client.full_name), asc(Client.id))
+            ordering.extend([desc(Client.full_name), asc(Client.id)])
+
+        query = query.order_by(*ordering)
 
         query = query.offset(pagination.offset).limit(pagination.limit)
 
@@ -132,8 +150,16 @@ class SQLAlchemyClientGateway:
                     entrance=address.entrance,
                     floor=address.floor,
                     intercom=address.intercom,
+                    coordinates=CoordinatesDTO(
+                        latitude=address.latitude,
+                        longitude=address.longitude,
+                    )
+                    if address.latitude is not None
+                    and address.longitude is not None
+                    else None,
                     is_primary=address.is_primary,
                     id=AddressId(address.id),
+                    district_id=address.district_id,
                 )
                 for address in client.addresses
             ],

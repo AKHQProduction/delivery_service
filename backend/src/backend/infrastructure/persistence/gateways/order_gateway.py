@@ -7,8 +7,8 @@ from sqlalchemy.orm import selectinload
 from sqlalchemy.sql import Select
 from uuid_utils.compat import uuid7
 
-from backend.application.interfaces.gateways import Pagination, SortOrder
-from backend.application.interfaces.gateways.order_gateway import (
+from backend.application.dto.gateways import Pagination, SortOrder
+from backend.application.dto.gateways.order_gateway import (
     CategoryStatsReadModel,
     GetOrdersFilters,
     OrderItemReadModel,

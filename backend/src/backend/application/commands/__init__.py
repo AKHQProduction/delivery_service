@@ -5,6 +5,7 @@ from .delete_employee import (
     DeleteEmployeeCommandHandler,
 )
 from .edit_employee import EditEmployeeCommand, EditEmployeeCommandHandler
+from .edit_shop import EditShopCommand, EditShopCommandHandler
 
 __all__ = [
     "BotStartCommand",
@@ -15,4 +16,6 @@ __all__ = [
     "DeleteEmployeeCommandHandler",
     "EditEmployeeCommand",
     "EditEmployeeCommandHandler",
+    "EditShopCommand",
+    "EditShopCommandHandler",
 ]

@@ -54,7 +54,7 @@ export const InviteUserForm: React.FC<{
         label="Посада"
         name="role"
         value={formData.role}
-        onChange={(value) => setFormData((prev) => ({ ...prev, role: value }))}
+        onChange={(e) => setFormData((prev) => ({ ...prev, role: e.target.value }))}
         options={roleOptions}
         required
       />

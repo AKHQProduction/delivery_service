@@ -1,47 +1,26 @@
-import { useEffect, useState } from "react";
+import { useEffect } from "react";
 import { createPortal } from "react-dom";
 import { useTelegram } from "../../hooks/useTelegram";
 import { useTGSettings } from "../../hooks/settings/useTGSettings";
-import { TimeSlotsComponent } from "../features/settings/TimeSlotsComponent";
+import { TimeSlotsComponent } from "../settings/TimeSlotsComponent";
+import { useModal } from "../../hooks/useModal";
 
 export const MenuModal = () => {
   const { isTGWebApp, initDataTG } = useTelegram();
   const { settings, updateSetting } = useTGSettings();
-  const [isOpen, setIsOpen] = useState(false);
-  const [isVisible, setIsVisible] = useState(false);
+  const { isOpen, isVisible, open, close } = useModal();
 
   useEffect(() => {
     if (!isTGWebApp || !initDataTG) return;
 
-    const handleSettingsClick = () => {
-      setIsOpen(true);
-    };
-
-    initDataTG.SettingsButton.onClick(handleSettingsClick);
+    initDataTG.SettingsButton.onClick(open);
     initDataTG.SettingsButton.show();
 
     return () => {
-      initDataTG.SettingsButton.offClick(handleSettingsClick);
+      initDataTG.SettingsButton.offClick(open);
       initDataTG.SettingsButton.hide();
     };
-  }, [isTGWebApp, initDataTG]);
-
-  useEffect(() => {
-    if (isOpen) {
-      setIsVisible(true);
-      document.body.style.overflow = "hidden";
-    } else {
-      document.body.style.overflow = "unset";
-    }
-    return () => {
-      document.body.style.overflow = "unset";
-    };
-  }, [isOpen]);
-
-  const handleClose = () => {
-    setIsVisible(false);
-    setTimeout(() => setIsOpen(false), 300);
-  };
+  }, [isTGWebApp, initDataTG, open]);
 
   if (!isOpen) return null;
 
@@ -51,7 +30,7 @@ export const MenuModal = () => {
         className={`fixed inset-0 bg-black transition-opacity duration-300 z-9998 ${
           isVisible ? "opacity-50" : "opacity-0"
         }`}
-        onClick={handleClose}
+        onClick={close}
       />
 
       <div
@@ -62,7 +41,7 @@ export const MenuModal = () => {
         <div className="flex items-center justify-between px-6 py-4 border-b border-gray-200 shrink-0">
           <h2 className="text-xl font-bold">Налаштування</h2>
           <button
-            onClick={handleClose}
+            onClick={close}
             className="w-8 h-8 flex items-center justify-center rounded-full hover:bg-gray-100 transition-colors"
             aria-label="Close modal"
           >

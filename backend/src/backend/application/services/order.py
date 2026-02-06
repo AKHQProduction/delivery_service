@@ -1,11 +1,11 @@
 from datetime import date, time
 from decimal import Decimal
 
-from backend.application.errors import EntityNotFoundError
-from backend.application.interfaces.gateways.order_gateway import (
+from backend.application.dto.gateways.order_gateway import (
     DeliveryAddressDTO,
     OrderItemDTO,
 )
+from backend.application.errors import EntityNotFoundError
 from backend.application.vars import (
     AddressId,
     ClientId,
@@ -48,6 +48,7 @@ def resolve_address(
         floor=address.floor,
         intercom=address.intercom,
         comment=address.comment,
+        district=address.district.name if address.district else None,
     )
 
 

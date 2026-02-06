@@ -40,10 +40,48 @@ async def test_me_return_correct_id_and_role(
 
     assert response.status_code == status.HTTP_200_OK
     assert response.json() == {
-        "user_id": str(user_id),
-        "full_name": "Test User",
-        "role": role.value,
+        "user": {
+            "user_id": str(user_id),
+            "full_name": "Test User",
+            "role": role.value,
+        },
+        "shop": {
+            "shop_id": str(shop_id),
+            "city": None,
+            "street": None,
+            "house": None,
+        },
+    }
+
+
+@pytest.mark.asyncio()
+async def test_me_returns_shop_address(
+    http_client: AsyncClient,
+    session: AsyncSession,
+    customer_headers: Callable[[int], dict[str, Any]],
+    setup_full_test_user_with_shop,
+) -> None:
+    telegram_id = 4000
+    _, shop_id = await setup_full_test_user_with_shop(
+        telegram_id=telegram_id,
+        role=ShopRole.OWNER,
+        shop_city="Київ",
+        shop_street="Хрещатик",
+        shop_house="1",
+    )
+    await session.commit()
+
+    headers = customer_headers(telegram_id)
+
+    url = BASE_URL + "/me"
+    response = await http_client.get(url=url, headers=headers)
+
+    assert response.status_code == status.HTTP_200_OK
+    assert response.json()["shop"] == {
         "shop_id": str(shop_id),
+        "city": "Київ",
+        "street": "Хрещатик",
+        "house": "1",
     }
 
 

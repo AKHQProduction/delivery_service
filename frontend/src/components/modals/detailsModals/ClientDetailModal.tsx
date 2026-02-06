@@ -1,9 +1,10 @@
 import React, { useState } from "react";
-import { ItemElement } from "../../ui/itemElement";
-import { ModalButtons } from "../../ui/modalButtons";
+import { ItemElement } from "../../ui/ItemElement";
+import { ModalButtons } from "../../ui/ModalButtons";
 import leftArrowIcon from "../../../assets/icons/left_arrow.svg";
 import { EditClientForm } from "../../forms/client/EditClientForm";
 import { type Client } from "../../../types/entities/Client";
+import { useDistrictsSettings } from "../../../hooks/settings/useDistrictsSettings";
 
 interface ClientDetailModalProps {
   client: Client;
@@ -19,6 +20,13 @@ export const ClientDetailModal: React.FC<ClientDetailModalProps> = ({
   onSave,
 }) => {
   const [isEditing, setIsEditing] = useState(false);
+  const { districts } = useDistrictsSettings();
+
+  const getDistrictName = (districtId: string | null | undefined) => {
+    if (!districtId) return null;
+    const district = districts.find((d) => d.district_id === districtId);
+    return district?.name || null;
+  };
 
   const handleEditClick = () => {
     setIsEditing(true);
@@ -95,16 +103,19 @@ export const ClientDetailModal: React.FC<ClientDetailModalProps> = ({
             />
           ))}
 
-          {client.addresses?.map((address, index) => (
-            <ItemElement
-              key={index}
-              descriptionText={`Адреса ${index + 1}`}
-              elementText={`${address.street} ${address.house}${
-                address.apartment ? `, кв. ${address.apartment}` : ""
-              }`}
-              comment={address.comment}
-            />
-          ))}
+          {client.addresses?.map((address, index) => {
+            const districtName = getDistrictName(address.district_id);
+            return (
+              <ItemElement
+                key={index}
+                descriptionText={`Адреса ${index + 1}${districtName ? ` (${districtName})` : ""}`}
+                elementText={`${address.street} ${address.house}${
+                  address.apartment ? `, кв. ${address.apartment}` : ""
+                }`}
+                comment={address.comment}
+              />
+            );
+          })}
         </div>
 
         <ModalButtons

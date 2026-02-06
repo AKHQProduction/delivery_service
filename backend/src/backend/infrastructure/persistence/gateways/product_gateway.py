@@ -6,8 +6,8 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 from uuid_utils.compat import uuid7
 
-from backend.application.interfaces.gateways import Pagination, SortOrder
-from backend.application.interfaces.gateways.product_gateway import (
+from backend.application.dto.gateways import Pagination, SortOrder
+from backend.application.dto.gateways.product_gateway import (
     GetProductsFilters,
     ProductReadModel,
 )

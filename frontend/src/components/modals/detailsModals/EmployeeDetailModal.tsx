@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import { EditEmployeeForm } from "../../forms/employees/EditEmployeeForm";
-import { ItemElement } from "../../ui/itemElement";
-import { ModalButtons } from "../../ui/modalButtons";
+import { ItemElement } from "../../ui/ItemElement";
+import { ModalButtons } from "../../ui/ModalButtons";
 import leftArrowIcon from "../../../assets/icons/left_arrow.svg";
 import { roleMap } from "../../../utils/dataMap";
 import { type Employee } from "../../../types/entities/Employee";
@@ -30,6 +30,10 @@ export const EmployeeDetailModal: React.FC<EmployeeDetailModalProps> = ({
   };
 
   const handleSaveEdit = (updatedEmployee: Employee) => {
+    if (!updatedEmployee?.user_id) {
+      console.error("Cannot save: invalid employee data");
+      return;
+    }
     onSave(updatedEmployee);
     setIsEditing(false);
   };

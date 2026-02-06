@@ -6,7 +6,7 @@ import { AddProductForm } from "../forms/products/AddProductForm";
 import { AddClientForm } from "../forms/client/AddClientForm";
 import { AddOrderForm } from "../forms/orders/AddOrderForm";
 import { InviteUserForm } from "../forms/employees/InviteUserForm";
-import { useUserStore } from "../../context/useUserStore";
+import { useUserShopStore } from "../../context/useUserShopStore";
 import { InviteLinkModal } from "../modals/InviteLinkModal";
 
 export const AddItemComponent = () => {
@@ -14,7 +14,7 @@ export const AddItemComponent = () => {
   const [inviteLink, setInviteLink] = useState<string | null>(null);
 
   const location = useLocation();
-  const user = useUserStore((s) => s.user);
+  const user = useUserShopStore((s) => s.user);
 
   const handleAddClick = () => setIsModalOpen(true);
 
@@ -40,7 +40,7 @@ export const AddItemComponent = () => {
               const id =
                 typeof productId === "string"
                   ? productId
-                  : productId?.product_id ?? productId?.id;
+                  : (productId?.product_id ?? productId?.id);
               sessionStorage.setItem("openProductId", id);
               window.location.reload();
             }}
@@ -54,7 +54,7 @@ export const AddItemComponent = () => {
               const id =
                 typeof clientData === "string"
                   ? clientData
-                  : clientData?.client_id ?? clientData?.id;
+                  : (clientData?.client_id ?? clientData?.id);
               sessionStorage.setItem("openClientId", id);
               window.location.reload();
             }}
@@ -68,7 +68,7 @@ export const AddItemComponent = () => {
               const id =
                 typeof orderData === "string"
                   ? orderData
-                  : orderData?.order_id ?? orderData?.id;
+                  : (orderData?.order_id ?? orderData?.id);
               if (id) {
                 sessionStorage.setItem("openOrderId", id);
               }

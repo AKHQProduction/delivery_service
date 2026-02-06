@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import { EditProductForm } from "../../forms/products/EditProductForm";
-import { ItemElement } from "../../ui/itemElement";
-import { ModalButtons } from "../../ui/modalButtons";
+import { ItemElement } from "../../ui/ItemElement";
+import { ModalButtons } from "../../ui/ModalButtons";
 import leftArrowIcon from "../../../assets/icons/left_arrow.svg";
 import { type Product, type transformedCategories } from "../../../types/entities/Product";
 

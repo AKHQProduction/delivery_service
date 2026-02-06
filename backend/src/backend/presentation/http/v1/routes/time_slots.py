@@ -17,7 +17,7 @@ from backend.application.commands.edit_time_slot import (
     EditTimeSlotCommand,
     EditTimeSlotCommandHandler,
 )
-from backend.application.interfaces.gateways.time_slot_gateway import (
+from backend.application.dto.gateways.time_slot_gateway import (
     TimeSlotReadModel,
 )
 from backend.application.queries.get_time_slots import GetTimeSlotsQueryHandler

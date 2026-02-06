@@ -1,5 +1,6 @@
 from .category_gateway import SQLAlchemyCategoryGateway
 from .client_gateway import SQLAlchemyClientGateway
+from .district_gateway import SQLAlchemyDistrictGateway
 from .link_gateway import RedisLinkGateway
 from .order_gateway import SQLAlchemyOrderGateway
 from .pdf_storage import RedisPDFStorage
@@ -13,6 +14,7 @@ __all__ = [
     "RedisPDFStorage",
     "SQLAlchemyCategoryGateway",
     "SQLAlchemyClientGateway",
+    "SQLAlchemyDistrictGateway",
     "SQLAlchemyOrderGateway",
     "SQLAlchemyProductGateway",
     "SQLAlchemyShopGateway",

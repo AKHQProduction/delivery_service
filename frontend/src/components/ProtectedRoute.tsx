@@ -1,5 +1,5 @@
 import { Navigate } from "react-router-dom";
-import { useUserStore } from "../context/useUserStore";
+import { useUserShopStore } from "../context/useUserShopStore";
 import { UserRole } from "../constants/roles";
 import { getDefaultRouteForRole } from "../config/roles.config";
 
@@ -12,7 +12,7 @@ export const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
   children,
   allowedRoles,
 }) => {
-  const user = useUserStore((s) => s.user);
+  const user = useUserShopStore((s) => s.user);
 
   if (!user) {
     return <Navigate to="/" replace />;

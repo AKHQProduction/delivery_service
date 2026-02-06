@@ -1,17 +1,14 @@
 import { useState } from "react";
-import { useUserStore } from "../context/useUserStore";
-import { getUser } from "../services/api/userApi";
+import { useUserShopStore } from "../context/useUserShopStore";
+import { getUserShopData } from "../services/api/userApi";
 
 export const DevPage = () => {
   const [userID, setUserID] = useState<string>("");
 
   const handleSetUserID = async () => {
     localStorage.setItem("userID", userID);
-    const data = await getUser();
-    useUserStore.getState().setUser({
-      user_id: data.user_id,
-      role: data.role,
-    });
+    const data = await getUserShopData();
+    useUserShopStore.getState().setUserAndShop(data.user, data.shop);
     window.location.reload(); //TEMPORARY SOLUTION
   };
 

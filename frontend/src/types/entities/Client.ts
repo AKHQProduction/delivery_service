@@ -4,6 +4,11 @@ export interface Phone {
   is_primary: boolean;
 }
 
+export interface AddressCoordinates {
+  latitude: number;
+  longitude: number;
+}
+
 export interface Address {
   id?: number;
   street: string;
@@ -14,6 +19,8 @@ export interface Address {
   intercom?: string;
   is_primary: boolean;
   comment?: string;
+  coordinates?: AddressCoordinates | null;
+  district_id?: string | null;
 }
 
 export interface Client {

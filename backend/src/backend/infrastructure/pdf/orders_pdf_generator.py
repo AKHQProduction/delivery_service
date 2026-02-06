@@ -19,7 +19,7 @@ from reportlab.platypus import (
     TableStyle,
 )
 
-from backend.application.interfaces.gateways.order_gateway import (
+from backend.application.dto.gateways.order_gateway import (
     OrderReadModel,
 )
 from backend.application.vars import PaymentMethod

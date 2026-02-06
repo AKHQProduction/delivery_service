@@ -71,15 +71,21 @@ export const useEmployees = () => {
     setLoading(true);
     setError(null);
     try {
-      const updatedProduct = await updateEmployeeById(user_id, name, role);
+      const updatedEmployee = await updateEmployeeById(user_id, name, role);
 
-      setEmployees((prevEmployee) =>
-        prevEmployee.map((employee) =>
-          employee.id === user_id ? updatedProduct : employee
-        )
-      );
+      if (updatedEmployee) {
+        setEmployees((prevEmployee) =>
+          prevEmployee.map((employee) =>
+            employee?.user_id === user_id ? updatedEmployee : employee
+          )
+        );
+      }
+      return updatedEmployee;
     } catch (err) {
       setError("Не вдалося оновити працівника.");
+      return null;
+    } finally {
+      setLoading(false);
     }
   };
 

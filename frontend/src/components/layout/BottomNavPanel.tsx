@@ -1,14 +1,16 @@
-import { useUserStore } from "../../context/useUserStore";
+import { useUserShopStore } from "../../context/useUserShopStore";
 import { useNavigate, useLocation } from "react-router-dom";
 import { getRoutesForRole } from "../../config/roles.config";
 
 export const BottomNavPanel = () => {
-  const user = useUserStore((s) => s.user);
+  const user = useUserShopStore((s) => s.user);
   const navigate = useNavigate();
   const location = useLocation();
 
   if (!user) return null;
-  const userRoutes = getRoutesForRole(user.role);
+  const userRoutes = getRoutesForRole(user.role).filter(
+    (route) => route.showInNav !== false,
+  );
 
   return (
     <div className="flex items-center justify-center fixed bottom-0 w-full">

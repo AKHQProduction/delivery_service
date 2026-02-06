@@ -1,4 +1,5 @@
-from backend.application.vars import ClientId, ShopId
+from backend.application.dto.coordinates import CoordinatesDTO
+from backend.application.vars import ClientId, DistrictId, ShopId
 from backend.infrastructure.persistence.tables.clients import (
     Client,
     ClientAddress,
@@ -58,7 +59,9 @@ def create_address(
     floor: str | None = None,
     intercom: str | None = None,
     comment: str | None = None,
+    coordinates: CoordinatesDTO | None = None,
     is_primary: bool = False,
+    district_id: DistrictId | None = None,
 ) -> ClientAddress:
     return ClientAddress(
         street=street,
@@ -68,7 +71,10 @@ def create_address(
         floor=floor,
         intercom=intercom,
         comment=comment,
+        latitude=coordinates.latitude if coordinates else None,
+        longitude=coordinates.longitude if coordinates else None,
         is_primary=is_primary,
+        district_id=district_id,
     )
 
 
@@ -82,7 +88,9 @@ def update_address(
     floor: str | None = None,
     intercom: str | None = None,
     comment: str | None = None,
+    coordinates: CoordinatesDTO | None = None,
     is_primary: bool | None = None,
+    district_id: DistrictId | None = None,
 ) -> None:
     if street is not None:
         address.street = street
@@ -98,5 +106,10 @@ def update_address(
         address.intercom = intercom
     if comment is not None:
         address.comment = comment
+    if coordinates is not None:
+        address.latitude = coordinates.latitude
+        address.longitude = coordinates.longitude
     if is_primary is not None:
         address.is_primary = is_primary
+    if district_id is not None:
+        address.district_id = district_id

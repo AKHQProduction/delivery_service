@@ -20,8 +20,9 @@ from backend.application.commands.edit_client import (
     EditClientCommandHandler,
     Phone,
 )
-from backend.application.interfaces.gateways import Pagination, SortOrder
-from backend.application.interfaces.gateways.client_gateway import (
+from backend.application.dto.coordinates import CoordinatesDTO
+from backend.application.dto.gateways import Pagination, SortOrder
+from backend.application.dto.gateways.client_gateway import (
     ClientReadModel,
 )
 from backend.application.queries.get_client import GetClientQueryHandler
@@ -29,7 +30,7 @@ from backend.application.queries.get_clients import (
     GetClientsQuery,
     GetClientsQueryHandler,
 )
-from backend.application.vars import AddressId, ClientId, PhoneId
+from backend.application.vars import AddressId, ClientId, DistrictId, PhoneId
 from backend.presentation.http.v1.schemas.client import EditClientSchema
 from backend.presentation.http.v1.schemas.error import ErrorSchema
 
@@ -272,9 +273,18 @@ async def update_client(
                     floor=address.floor,
                     intercom=address.intercom,
                     comment=address.comment,
+                    coordinates=CoordinatesDTO(
+                        latitude=address.coordinates.latitude,
+                        longitude=address.coordinates.longitude,
+                    )
+                    if address.coordinates is not None
+                    else None,
                     is_primary=address.is_primary,
                     id=AddressId(address.id)
                     if address.id is not None
+                    else None,
+                    district_id=DistrictId(address.district_id)
+                    if address.district_id is not None
                     else None,
                 )
                 for address in body.addresses

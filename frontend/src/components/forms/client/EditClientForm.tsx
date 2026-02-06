@@ -6,7 +6,8 @@ import { PhoneInputList } from "../../shared/PhoneInputList";
 import { type Client } from "../../../types/entities/Client";
 import { useClient } from "../../../hooks/clients/useClients";
 import { useClientForm } from "../../../hooks/clients/useClientForm";
-import { DuplicatePhoneToast } from "../../ui/phoneDublicateErrorPopup";
+import { useDistrictsSettings } from "../../../hooks/settings/useDistrictsSettings";
+import { DuplicatePhoneToast } from "../../ui/PhoneDuplicateErrorPopup";
 interface EditClientFormProps {
   client: Client;
   onClose: () => void;
@@ -26,12 +27,14 @@ export const EditClientForm: React.FC<EditClientFormProps> = ({
     removePhone,
     setPrimaryPhone,
     handleAddressChange,
+    setAddressCoordinates,
     addAddress,
     removeAddress,
     setPrimaryAddress,
     initializeForm,
   } = useClientForm();
   const { updateClient } = useClient();
+  const { districts } = useDistrictsSettings();
   const [phoneErrors, setPhoneErrors] = useState<Record<string, string>>({});
   const [duplicateError, setDuplicateError] = useState<any>(null);
   const [pendingClientData, setPendingClientData] = useState<any>(null);
@@ -127,9 +130,11 @@ export const EditClientForm: React.FC<EditClientFormProps> = ({
         <AddressInputList
           addresses={formData.addresses}
           onAddressChange={handleAddressChange}
+          onCoordinatesChange={setAddressCoordinates}
           onSetPrimary={setPrimaryAddress}
           onRemove={removeAddress}
           onAdd={addAddress}
+          districts={districts}
         />
       </FormWrapper>
       {duplicateError && duplicateError.duplicates && (

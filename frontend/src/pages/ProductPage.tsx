@@ -1,14 +1,15 @@
-import { useEffect, useState, useRef, useCallback } from "react";
-import { PageHeader } from "../components/ui/pageHeader";
-import { SearchBar } from "../components/ui/searchBar";
-import { ProductCard } from "../components/ui/productCard";
+import { useEffect, useState, useRef } from "react";
+import { PageHeader } from "../components/ui/PageHeader";
+import { SearchBar } from "../components/ui/SearchBar";
+import { ProductCard } from "../components/ui/ProductCard";
 import { ProductDetailModal } from "../components/modals/detailsModals/ProductDetailModal";
 import { RightModal } from "../components/modals/RightModal";
-import { CategoryManagementModal } from "../components/features/addCategoryComponent";
+import { CategoryManagementModal } from "../components/features/AddCategoryComponent";
 import { useProducts } from "../hooks/products/useProducts";
 import { useCategories } from "../hooks/products/useCategories";
 import { getProductById } from "../services/api/productApi";
 import { type Product } from "../types/entities/Product";
+import { useInfiniteScroll } from "../hooks/useInfiniteScroll";
 
 export const ProductPage = () => {
   const [searchTerm, setSearchTerm] = useState("");
@@ -33,9 +34,13 @@ export const ProductPage = () => {
     deleteCategory,
   } = useCategories();
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const observerRef = useRef<IntersectionObserver | null>(null);
-  const loadMoreRef = useRef<HTMLDivElement | null>(null);
   const initialLoadRef = useRef(false);
+
+  const { sentinelRef } = useInfiniteScroll({
+    onLoadMore: loadMoreProducts,
+    hasMore,
+    isLoading: loadingMore,
+  });
 
   // Initial load - runs only once
   useEffect(() => {
@@ -78,38 +83,6 @@ export const ProductPage = () => {
       }
     };
   }, [searchTerm]);
-
-  const handleObserver = useCallback(
-    (entries: IntersectionObserverEntry[]) => {
-      const [entry] = entries;
-      if (entry.isIntersecting && hasMore && !loadingMore) {
-        loadMoreProducts();
-      }
-    },
-    [hasMore, loadingMore, loadMoreProducts]
-  );
-
-  useEffect(() => {
-    if (observerRef.current) {
-      observerRef.current.disconnect();
-    }
-
-    observerRef.current = new IntersectionObserver(handleObserver, {
-      root: null,
-      rootMargin: "100px",
-      threshold: 0,
-    });
-
-    if (loadMoreRef.current) {
-      observerRef.current.observe(loadMoreRef.current);
-    }
-
-    return () => {
-      if (observerRef.current) {
-        observerRef.current.disconnect();
-      }
-    };
-  }, [handleObserver]);
 
   const handleProductClick = (product: Product) => {
     setSelectedProduct(product);
@@ -255,7 +228,7 @@ export const ProductPage = () => {
             ))}
           </div>
 
-          <div ref={loadMoreRef} className="py-4 flex justify-center">
+          <div ref={sentinelRef} className="py-4 flex justify-center">
             {loadingMore && (
               <div className="flex items-center gap-2 text-gray-500">
                 <svg className="animate-spin h-5 w-5" viewBox="0 0 24 24">

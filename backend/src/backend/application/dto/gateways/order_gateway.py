@@ -27,6 +27,7 @@ class DeliveryAddressDTO:
     floor: str | None = None
     intercom: str | None = None
     comment: str | None = None
+    district: str | None = None
 
 
 @dataclass(frozen=True)

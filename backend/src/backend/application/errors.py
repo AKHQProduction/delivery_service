@@ -67,7 +67,9 @@ class FieldError(ValidationError):
     @property
     def message(self) -> str:
         acceptable_values = ", ".join(self._acceptable_values)
-        return f"{self._field} cant be {self._value}, use: {acceptable_values}"
+        return (
+            f"{self._field} cannot be {self._value}, use: {acceptable_values}"
+        )
 
 
 @dataclass(frozen=True)

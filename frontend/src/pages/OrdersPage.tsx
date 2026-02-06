@@ -1,12 +1,14 @@
-import { useEffect, useState, useRef, useCallback } from "react";
-import { PageHeader } from "../components/ui/pageHeader";
-import { SearchBar } from "../components/ui/searchBar";
+import { useEffect, useState, useRef } from "react";
+import { PageHeader } from "../components/ui/PageHeader";
+import { SearchBar } from "../components/ui/SearchBar";
 import { useOrders } from "../hooks/orders/useOrders";
 import { paymentMap } from "../utils/dataMap";
 import { OrderDetailModal } from "../components/modals/detailsModals/OrderDetailModal";
 import { RightModal } from "../components/modals/RightModal";
 import { generateOrdersPdfLink, getOrderById } from "../services/api/ordersApi";
 import { SearchFiltersPopup } from "../components/shared/SearchFiltersPopup";
+import { useInfiniteScroll } from "../hooks/useInfiniteScroll";
+import { DateInput } from "../components/shared/DateInput";
 
 const getDownloadUrl = (fileId: string): string => {
   const baseUrl = import.meta.env.VITE_API_URL;
@@ -45,7 +47,10 @@ export const OrdersPage = () => {
   const [searchTerm, setSearchTerm] = useState("");
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
-  const [exportDate, setExportDate] = useState<string>("");
+  const [exportDate, setExportDate] = useState(() => {
+    const today = new Date();
+    return today.toISOString().split("T")[0];
+  });
   const [exportError, setExportError] = useState<boolean>(false);
   const {
     getOrders,
@@ -60,8 +65,12 @@ export const OrdersPage = () => {
     hasMore,
   } = useOrders();
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const observerRef = useRef<IntersectionObserver | null>(null);
-  const loadMoreRef = useRef<HTMLDivElement | null>(null);
+
+  const { sentinelRef } = useInfiniteScroll({
+    onLoadMore: loadMoreOrders,
+    hasMore,
+    isLoading: loadingMore,
+  });
 
   useEffect(() => {
     const initOrders = async () => {
@@ -97,38 +106,6 @@ export const OrdersPage = () => {
       }
     };
   }, [searchTerm]);
-
-  const handleObserver = useCallback(
-    (entries: IntersectionObserverEntry[]) => {
-      const [entry] = entries;
-      if (entry.isIntersecting && hasMore && !loadingMore) {
-        loadMoreOrders();
-      }
-    },
-    [hasMore, loadingMore, loadMoreOrders],
-  );
-
-  useEffect(() => {
-    if (observerRef.current) {
-      observerRef.current.disconnect();
-    }
-
-    observerRef.current = new IntersectionObserver(handleObserver, {
-      root: null,
-      rootMargin: "100px",
-      threshold: 0,
-    });
-
-    if (loadMoreRef.current) {
-      observerRef.current.observe(loadMoreRef.current);
-    }
-
-    return () => {
-      if (observerRef.current) {
-        observerRef.current.disconnect();
-      }
-    };
-  }, [handleObserver]);
 
   const getOrderTotal = (order: Order) => {
     return (order.items ?? []).reduce((sum, item) => {
@@ -210,30 +187,18 @@ export const OrdersPage = () => {
           buttonTitle="Фільтри замовлень"
           onApply={() => getOrders(searchTerm)}
         >
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              Від
-            </label>
-            <input
-              title="start date"
-              type="date"
-              value={startDate}
-              onChange={(e) => setStartDate(e.target.value)}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
-            />
-          </div>
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              До
-            </label>
-            <input
-              title="end date"
-              type="date"
-              value={endDate}
-              onChange={(e) => setEndDate(e.target.value)}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
-            />
-          </div>
+          <DateInput
+            label="Від"
+            value={startDate}
+            onChange={setStartDate}
+            title="start date"
+          />
+          <DateInput
+            label="До"
+            value={endDate}
+            onChange={setEndDate}
+            title="end date"
+          />
         </SearchFiltersPopup>
       </div>
 
@@ -244,19 +209,15 @@ export const OrdersPage = () => {
           </h3>
           <div className="flex flex-col items-center gap-2">
             <div className="flex items-center justify-center gap-3">
-              <input
+              <DateInput
                 title="export date"
-                type="date"
                 value={exportDate}
-                onChange={(e) => {
-                  setExportDate(e.target.value);
+                onChange={(value) => {
+                  setExportDate(value);
                   setExportError(false);
                 }}
-                className={`px-3 py-2 border rounded-lg bg-white focus:outline-none focus:ring-2 ${
-                  exportError
-                    ? "border-red-500 focus:ring-red-400"
-                    : "border-amber-300 focus:ring-amber-400"
-                }`}
+                error={exportError}
+                variant="amber"
               />
               <button
                 onClick={handleExportPdf}
@@ -393,7 +354,7 @@ export const OrdersPage = () => {
               </div>
             ))}
 
-            <div ref={loadMoreRef} className="py-4 flex justify-center">
+            <div ref={sentinelRef} className="py-4 flex justify-center">
               {loadingMore && (
                 <div className="flex items-center gap-2 text-gray-500">
                   <svg className="animate-spin h-5 w-5" viewBox="0 0 24 24">

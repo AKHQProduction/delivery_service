@@ -3,6 +3,7 @@ import {
   type Client,
   type Address,
   type Phone,
+  type AddressCoordinates,
 } from "../../types/entities/Client";
 
 export const useClientForm = (initialData?: Partial<Client>) => {
@@ -19,6 +20,8 @@ export const useClientForm = (initialData?: Partial<Client>) => {
         intercom: "",
         is_primary: true,
         comment: "",
+        coordinates: null,
+        district_id: null,
       },
     ] as Address[],
   });
@@ -51,6 +54,8 @@ export const useClientForm = (initialData?: Partial<Client>) => {
               intercom: address.intercom || "",
               is_primary: address.is_primary || false,
               comment: address.comment || "",
+              coordinates: address.coordinates || null,
+              district_id: address.district_id || null,
             }))
           : [
               {
@@ -62,6 +67,8 @@ export const useClientForm = (initialData?: Partial<Client>) => {
                 intercom: "",
                 is_primary: true,
                 comment: "",
+                coordinates: null,
+                district_id: null,
               },
             ],
     });
@@ -81,6 +88,8 @@ export const useClientForm = (initialData?: Partial<Client>) => {
           intercom: "",
           is_primary: true,
           comment: "",
+          coordinates: null,
+          district_id: null,
         },
       ],
     });
@@ -129,7 +138,25 @@ export const useClientForm = (initialData?: Partial<Client>) => {
   ) => {
     setFormData((prev) => {
       const addresses = [...prev.addresses];
-      addresses[index] = { ...addresses[index], [field]: value };
+      addresses[index] = {
+        ...addresses[index],
+        [field]: value,
+        // Clear coordinates when street or house changes
+        ...(field === "street" || field === "house"
+          ? { coordinates: null }
+          : {}),
+      };
+      return { ...prev, addresses };
+    });
+  };
+
+  const setAddressCoordinates = (
+    index: number,
+    coordinates: AddressCoordinates | null
+  ) => {
+    setFormData((prev) => {
+      const addresses = [...prev.addresses];
+      addresses[index] = { ...addresses[index], coordinates };
       return { ...prev, addresses };
     });
   };
@@ -148,6 +175,8 @@ export const useClientForm = (initialData?: Partial<Client>) => {
           intercom: "",
           is_primary: false,
           comment: "",
+          coordinates: null,
+          district_id: null,
         },
       ],
     }));
@@ -185,6 +214,7 @@ export const useClientForm = (initialData?: Partial<Client>) => {
     removePhone,
     setPrimaryPhone,
     handleAddressChange,
+    setAddressCoordinates,
     addAddress,
     removeAddress,
     setPrimaryAddress,

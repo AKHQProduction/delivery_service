@@ -9,8 +9,8 @@ from backend.application.commands import (
     EditEmployeeCommand,
     EditEmployeeCommandHandler,
 )
-from backend.application.interfaces.gateways import Pagination, SortOrder
-from backend.application.interfaces.gateways.shop_gateway import (
+from backend.application.dto.gateways import Pagination, SortOrder
+from backend.application.dto.gateways.shop_gateway import (
     EmployeeReadModel,
 )
 from backend.application.queries.get_employee import GetEmployeeQueryHandler

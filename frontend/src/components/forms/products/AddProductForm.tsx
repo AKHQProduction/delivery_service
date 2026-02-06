@@ -2,9 +2,9 @@ import React, { useState } from "react";
 import { FormWrapper } from "../../shared/FormWrapper";
 import { FormInput } from "../../shared/FormInput";
 import { useProducts } from "../../../hooks/products/useProducts";
-import { DynamicFormSelect } from "../../shared/DyncamicFormSelect";
+import { DynamicFormSelect } from "../../shared/DynamicFormSelect";
 import { useCategoriesForm } from "../../../hooks/products/useCategoriesForm";
-import { CategoryManagementModal } from "../../features/addCategoryComponent";
+import { CategoryManagementModal } from "../../features/AddCategoryComponent";
 import { type transformedCategories } from "../../../types/entities/Product";
 
 interface AddProductFormProps {

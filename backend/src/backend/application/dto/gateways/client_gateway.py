@@ -1,8 +1,10 @@
 from dataclasses import dataclass
 
+from backend.application.dto.coordinates import CoordinatesDTO
 from backend.application.vars import (
     AddressId,
     ClientId,
+    DistrictId,
     PhoneId,
     ShopId,
 )
@@ -24,8 +26,10 @@ class AddressDTO:
     floor: str | None = None
     intercom: str | None = None
     comment: str | None = None
+    coordinates: CoordinatesDTO | None = None
     is_primary: bool = False
     id: AddressId | None = None
+    district_id: DistrictId | None = None
 
 
 @dataclass(frozen=True)

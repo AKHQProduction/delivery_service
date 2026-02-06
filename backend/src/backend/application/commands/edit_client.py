@@ -2,6 +2,7 @@ import logging
 from dataclasses import dataclass
 
 from backend.application.common import ensure_exists
+from backend.application.dto.coordinates import CoordinatesDTO
 from backend.application.errors import (
     ExistingClientInfo,
     InvalidPrimaryFlagError,
@@ -21,7 +22,7 @@ from backend.application.services.client import (
 )
 from backend.application.validators import normalize_ukraine_phone
 from backend.application.validators.phone import validate_no_duplicate_phones
-from backend.application.vars import AddressId, ClientId, PhoneId
+from backend.application.vars import AddressId, ClientId, DistrictId, PhoneId
 from backend.infrastructure.idp import TelegramIdentityProvider
 from backend.infrastructure.persistence.gateways import (
     SQLAlchemyClientGateway,
@@ -47,8 +48,10 @@ class Address:
     floor: str | None = None
     intercom: str | None = None
     comment: str | None = None
+    coordinates: CoordinatesDTO | None = None
     is_primary: bool = False
     id: AddressId | None = None
+    district_id: DistrictId | None = None
 
 
 @dataclass(frozen=True)
@@ -193,7 +196,9 @@ class EditClientCommandHandler:
                         floor=addr_data.floor,
                         intercom=addr_data.intercom,
                         comment=addr_data.comment,
+                        coordinates=addr_data.coordinates,
                         is_primary=addr_data.is_primary,
+                        district_id=addr_data.district_id,
                     )
                 else:
                     new_address = create_address(
@@ -204,7 +209,9 @@ class EditClientCommandHandler:
                         floor=addr_data.floor,
                         intercom=addr_data.intercom,
                         comment=addr_data.comment,
+                        coordinates=addr_data.coordinates,
                         is_primary=addr_data.is_primary,
+                        district_id=addr_data.district_id,
                     )
                     client.addresses.append(new_address)
 
