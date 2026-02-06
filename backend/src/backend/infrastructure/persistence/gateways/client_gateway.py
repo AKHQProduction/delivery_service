@@ -1,4 +1,13 @@
-from sqlalchemy import ColumnElement, asc, case, desc, exists, or_, select
+from sqlalchemy import (
+    ColumnElement,
+    asc,
+    case,
+    desc,
+    exists,
+    func,
+    or_,
+    select,
+)
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 from uuid_utils.compat import uuid7
@@ -102,17 +111,14 @@ class SQLAlchemyClientGateway:
             query = query.where(or_(*search_conditions))
 
         ordering = []
-        if filters.full_name and len(search_conditions) > 1:
-            name_match_priority = case(
-                (
-                    Client.full_name.ilike(
-                        f"%{escape_like(filters.full_name)}%"
-                    ),
-                    0,
-                ),
-                else_=1,
+        if filters.full_name:
+            escaped = escape_like(filters.full_name)
+            name_relevance = case(
+                (func.lower(Client.full_name) == filters.full_name.lower(), 0),
+                (Client.full_name.ilike(f"{escaped}%"), 1),
+                else_=2,
             )
-            ordering.append(asc(name_match_priority))
+            ordering.append(asc(name_relevance))
 
         if pagination.order == SortOrder.ASC:
             ordering.extend([asc(Client.full_name), asc(Client.id)])
