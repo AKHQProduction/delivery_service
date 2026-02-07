@@ -119,7 +119,9 @@ export const AddressInputList: React.FC<AddressInputListProps> = ({
 
     if (result) {
       onAddressChange(currentEditingIndex, "street", result.street);
-      onAddressChange(currentEditingIndex, "house", result.house);
+      if (result.house) {
+        onAddressChange(currentEditingIndex, "house", result.house);
+      }
       onCoordinatesChange(currentEditingIndex, {
         latitude: coordinates.lat,
         longitude: coordinates.lng,
@@ -308,6 +310,14 @@ export const AddressInputList: React.FC<AddressInputListProps> = ({
         initialHouse={currentEditingIndex !== null ? addresses[currentEditingIndex]?.house : ""}
         city={shop?.city ?? undefined}
         onGeocode={forwardGeocode}
+        defaultCenter={
+          currentEditingIndex !== null && addresses[currentEditingIndex]?.coordinates
+            ? {
+                lat: addresses[currentEditingIndex].coordinates!.latitude,
+                lng: addresses[currentEditingIndex].coordinates!.longitude,
+              }
+            : undefined
+        }
       />
 
       {toast.isVisible && <Toast message={toast.message} type={toast.type} onClose={hideToast} />}

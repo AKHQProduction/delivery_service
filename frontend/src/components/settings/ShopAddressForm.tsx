@@ -70,15 +70,15 @@ export const ShopAddressForm: React.FC<ShopAddressFormProps> = ({ onSuccess }) =
     const result = await reverseGeocode(coordinates);
 
     if (result) {
-      setShopAddress({
+      setShopAddress((prev) => ({
         street: result.street,
-        house: result.house,
+        house: result.house || prev.house,
         city: result.city,
         coordinates: {
           latitude: coordinates.lat,
           longitude: coordinates.lng,
         },
-      });
+      }));
       setAddressError(null);
       setPendingCoordinates(null);
       closeMap();
@@ -268,7 +268,12 @@ export const ShopAddressForm: React.FC<ShopAddressFormProps> = ({ onSuccess }) =
           initialHouse={shopAddress.house}
           city={shopAddress.city}
           onGeocode={forwardGeocode}
-          defaultCenter={pendingCoordinates ?? undefined}
+          defaultCenter={
+            pendingCoordinates ??
+            (shopAddress.coordinates
+              ? { lat: shopAddress.coordinates.latitude, lng: shopAddress.coordinates.longitude }
+              : undefined)
+          }
         />
       )}
     </>

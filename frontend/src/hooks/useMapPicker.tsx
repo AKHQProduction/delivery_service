@@ -34,7 +34,7 @@ export const useMapPicker = () => {
       setError(null);
 
       try {
-        const addressParts = [house, street, city, "Ukraine"].filter(Boolean);
+        const addressParts = [`${street} ${house || ""}`, city, "Ukraine"].filter(Boolean);
         const query = addressParts.join(", ");
         const response = await fetch(
           `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(query)}&addressdetails=1&limit=1`,
