@@ -157,7 +157,7 @@ export const AddressInputList: React.FC<AddressInputListProps> = ({
                   Зробити основною
                 </button>
               )}
-              <MapButton onClick={() => handleOpenMap(index)} />
+              {shop?.city && <MapButton onClick={() => handleOpenMap(index)} />}
               {address.is_primary && (
                 <span className="text-xs bg-indigo-100 text-indigo-700 px-2 py-1 rounded-full font-medium">
                   Основна

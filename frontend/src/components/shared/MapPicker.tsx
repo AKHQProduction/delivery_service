@@ -52,7 +52,7 @@ const MapCenterController: React.FC<{ center: Coordinates }> = ({ center }) => {
   const map = useMapEvents({});
 
   useEffect(() => {
-    map.setView([center.lat, center.lng], 19);
+    map.setView([center.lat, center.lng], 17.5);
   }, [center, map]);
 
   return null;
@@ -174,7 +174,7 @@ export const MapPicker: React.FC<MapPickerProps> = ({
         <div className="relative h-[60vh] sm:h-[500px] shrink w-full">
           <MapContainer
             center={[mapCenter.lat, mapCenter.lng]}
-            zoom={19}
+            zoom={17.5}
             style={{ height: "100%", width: "100%" }}
             scrollWheelZoom={true}
           >
