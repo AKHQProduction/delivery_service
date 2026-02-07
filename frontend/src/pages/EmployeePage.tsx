@@ -8,6 +8,7 @@ import { useEmployees } from "../hooks/useEmployees";
 import { reverseRoleMap } from "../utils/dataMap";
 import { type Employee } from "../types/entities/Employee";
 import { useInfiniteScroll } from "../hooks/useInfiniteScroll";
+import { EmployeeCardSkeleton } from "../components/ui/Skeleton";
 
 export const EmployeePage = () => {
   const [searchTerm, setSearchTerm] = useState("");
@@ -19,6 +20,7 @@ export const EmployeePage = () => {
     updateEmployee,
     employees,
     loadMoreEmployees,
+    loading,
     loadingMore,
     hasMore,
   } = useEmployees();
@@ -99,7 +101,15 @@ export const EmployeePage = () => {
         />
       </div>
 
-      {employees.length === 0 ? (
+      {loading && employees.length === 0 ? (
+        <div className="px-6 pb-24">
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+            {Array.from({ length: 8 }).map((_, i) => (
+              <EmployeeCardSkeleton key={i} />
+            ))}
+          </div>
+        </div>
+      ) : employees.length === 0 ? (
         <div className="flex flex-col items-center justify-center mt-20">
           <svg
             className="w-16 h-16 mx-auto mb-4 text-gray-300"

@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { useDistrictsSettings, type District } from "../../hooks/settings/useDistrictsSettings";
+import { SettingsItemSkeleton } from "../ui/Skeleton";
 
 interface NewDistrict {
   id: string;
@@ -8,7 +9,8 @@ interface NewDistrict {
 }
 
 export const DistrictsComponent = () => {
-  const { districts, addDistrict, updateDistrictById, deleteDistrictById } = useDistrictsSettings();
+  const { districts, addDistrict, updateDistrictById, deleteDistrictById, isLoading } =
+    useDistrictsSettings();
   const [editedDistricts, setEditedDistricts] = useState<Record<string, Partial<District>>>({});
   const [newDistricts, setNewDistricts] = useState<NewDistrict[]>([]);
 
@@ -112,6 +114,14 @@ export const DistrictsComponent = () => {
       </div>
 
       <div className="space-y-3">
+        {isLoading && validDistricts.length === 0 && (
+          <>
+            {Array.from({ length: 3 }).map((_, i) => (
+              <SettingsItemSkeleton key={i} />
+            ))}
+          </>
+        )}
+
         {validDistricts.map((district) => {
           const currentName = getDistrictValue(district) || "";
 

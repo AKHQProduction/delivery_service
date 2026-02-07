@@ -10,6 +10,7 @@ import { useCategories } from "../hooks/products/useCategories";
 import { getProductById } from "../services/api/productApi";
 import { type Product } from "../types/entities/Product";
 import { useInfiniteScroll } from "../hooks/useInfiniteScroll";
+import { ProductCardSkeleton } from "../components/ui/Skeleton";
 
 export const ProductPage = () => {
   const [searchTerm, setSearchTerm] = useState("");
@@ -23,6 +24,7 @@ export const ProductPage = () => {
     updateProduct,
     products,
     loadMoreProducts,
+    loading,
     loadingMore,
     hasMore,
   } = useProducts();
@@ -191,7 +193,15 @@ export const ProductPage = () => {
         />
       </div>
 
-      {products.length === 0 ? (
+      {loading && products.length === 0 ? (
+        <div className="px-6 pb-24">
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+            {Array.from({ length: 8 }).map((_, i) => (
+              <ProductCardSkeleton key={i} />
+            ))}
+          </div>
+        </div>
+      ) : products.length === 0 ? (
         <div className="flex flex-col items-center justify-center mt-20">
           <svg
             className="w-16 h-16 mx-auto mb-4 text-gray-300"

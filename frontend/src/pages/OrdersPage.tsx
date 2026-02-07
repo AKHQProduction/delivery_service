@@ -9,6 +9,7 @@ import { generateOrdersPdfLink, getOrderById } from "../services/api/ordersApi";
 import { SearchFiltersPopup } from "../components/shared/SearchFiltersPopup";
 import { useInfiniteScroll } from "../hooks/useInfiniteScroll";
 import { DateInput } from "../components/shared/DateInput";
+import { OrderCardSkeleton } from "../components/ui/Skeleton";
 
 const getDownloadUrl = (fileId: string): string => {
   const baseUrl = import.meta.env.VITE_API_URL;
@@ -61,6 +62,7 @@ export const OrdersPage = () => {
     setEndDate,
     startDate,
     endDate,
+    loading,
     loadingMore,
     hasMore,
   } = useOrders();
@@ -230,7 +232,13 @@ export const OrdersPage = () => {
       </div>
 
       <div className="px-6 space-y-3">
-        {(orders ?? []).length === 0 ? (
+        {loading && (orders ?? []).length === 0 ? (
+          <>
+            {Array.from({ length: 6 }).map((_, i) => (
+              <OrderCardSkeleton key={i} />
+            ))}
+          </>
+        ) : (orders ?? []).length === 0 ? (
           <div className="text-center py-12">
             <svg
               className="w-16 h-16 mx-auto mb-4 text-gray-300"

@@ -8,12 +8,14 @@ import { type Client } from "../types/entities/Client";
 import { useClient } from "../hooks/clients/useClients";
 import { getClientById } from "../services/api/clientApi";
 import { useInfiniteScroll } from "../hooks/useInfiniteScroll";
+import { ClientCardSkeleton } from "../components/ui/Skeleton";
 
 export const ClientsPage = () => {
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedClient, setSelectedClient] = useState<Client | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const { clients, getClients, deleteClient, loadMoreClients, loadingMore, hasMore } = useClient();
+  const { clients, getClients, deleteClient, loadMoreClients, loading, loadingMore, hasMore } =
+    useClient();
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const { sentinelRef } = useInfiniteScroll({
@@ -99,7 +101,15 @@ export const ClientsPage = () => {
         />
       </div>
 
-      {clients.length === 0 ? (
+      {loading && clients.length === 0 ? (
+        <div className="px-6 pb-24">
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+            {Array.from({ length: 8 }).map((_, i) => (
+              <ClientCardSkeleton key={i} />
+            ))}
+          </div>
+        </div>
+      ) : clients.length === 0 ? (
         <div className="flex flex-col items-center justify-center mt-20">
           <svg
             className="w-16 h-16 mx-auto mb-4 text-gray-300"

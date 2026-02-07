@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useTimeSlotsSettings } from "../../hooks/settings/useTimeSlotsSettings";
 import { TimeInput } from "../ui/TimeInput";
+import { SettingsItemSkeleton } from "../ui/Skeleton";
 
 interface NewSlot {
   id: string;
@@ -18,7 +19,8 @@ interface TimeSlot {
 }
 
 export const TimeSlotsComponent = () => {
-  const { timeSlots, updateTimeSlotById, addTimeSlot, deleteTimeSlotById } = useTimeSlotsSettings();
+  const { timeSlots, updateTimeSlotById, addTimeSlot, deleteTimeSlotById, isLoading } =
+    useTimeSlotsSettings();
   const [editedSlots, setEditedSlots] = useState<Record<string, Partial<TimeSlot>>>({});
   const [newSlots, setNewSlots] = useState<NewSlot[]>([]);
 
@@ -197,6 +199,14 @@ export const TimeSlotsComponent = () => {
       </div>
 
       <div className="space-y-3">
+        {isLoading && validTimeSlots.length === 0 && (
+          <>
+            {Array.from({ length: 3 }).map((_, i) => (
+              <SettingsItemSkeleton key={i} />
+            ))}
+          </>
+        )}
+
         {validTimeSlots.map((slot) => {
           const currentLabel = (getSlotValue(slot, "label") || "") as string;
           const startTimeValue = formatTimeValue(getSlotValue(slot, "start_time") as string);
