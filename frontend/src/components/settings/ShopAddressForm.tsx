@@ -47,41 +47,40 @@ export const ShopAddressForm: React.FC<ShopAddressFormProps> = ({ onSuccess }) =
       return;
     }
 
-    if (shopAddress.coordinates) {
-      setAddressError(null);
-      const success = await saveShopAddress(shopAddress);
-      if (success) {
-        onSuccess?.();
-      }
-      return;
-    }
-
+    // Forward geocode to place marker, then open map for verification
     const coords = await forwardGeocode(shopAddress.street, shopAddress.house, shopAddress.city);
-
     if (coords) {
       setPendingCoordinates(coords);
-      setAddressError("needs_verification");
-    } else {
-      setAddressError("not_found");
     }
+    setAddressError(null);
+    openMap();
   };
 
   const handleMapConfirm = async (coordinates: { lat: number; lng: number }) => {
     const result = await reverseGeocode(coordinates);
 
     if (result) {
-      setShopAddress((prev) => ({
+      const updatedAddress: ShopAddress = {
         street: result.street,
-        house: result.house || prev.house,
+        house: result.house || shopAddress.house,
         city: result.city,
         coordinates: {
           latitude: coordinates.lat,
           longitude: coordinates.lng,
         },
-      }));
+      };
+      setShopAddress(updatedAddress);
       setAddressError(null);
       setPendingCoordinates(null);
       closeMap();
+
+      // Auto-save after map selection
+      if (updatedAddress.street.trim()) {
+        const success = await saveShopAddress(updatedAddress);
+        if (success) {
+          onSuccess?.();
+        }
+      }
     }
   };
 
