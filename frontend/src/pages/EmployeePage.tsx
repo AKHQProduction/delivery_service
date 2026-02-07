@@ -90,10 +90,10 @@ export const EmployeePage = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-gray-50 lg:bg-white">
       <PageHeader title="Персонал" />
 
-      <div className="px-6 pb-4">
+      <div className="px-6 pb-4 lg:px-8">
         <SearchBar
           placeholder="Пошук працівників"
           searchTerm={searchTerm}
@@ -102,8 +102,8 @@ export const EmployeePage = () => {
       </div>
 
       {loading && employees.length === 0 ? (
-        <div className="px-6 pb-24">
-          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+        <div className="px-6 pb-24 lg:pb-8 lg:px-8">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
             {Array.from({ length: 8 }).map((_, i) => (
               <EmployeeCardSkeleton key={i} />
             ))}
@@ -132,8 +132,8 @@ export const EmployeePage = () => {
           )}
         </div>
       ) : (
-        <div className="px-6 pb-24">
-          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+        <div className="px-6 pb-24 lg:pb-8 lg:px-8">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
             {employees.map((employee) => (
               <EmployeeCard
                 key={employee.user_id}

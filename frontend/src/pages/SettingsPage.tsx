@@ -5,10 +5,10 @@ export const SettingsPage = () => {
   const { settings, updateSetting } = useTGSettings();
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-gray-50 lg:bg-white">
       <PageHeader title="Налаштування" />
 
-      <div className="px-6 pb-24">
+      <div className="px-6 pb-24 lg:pb-8 lg:px-8">
         <div className="space-y-6 mt-4">
           {/* Fullscreen Section */}
           <div className="bg-white rounded-lg shadow-sm p-6 border border-gray-200">

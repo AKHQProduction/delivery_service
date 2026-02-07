@@ -174,10 +174,10 @@ export const OrdersPage = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 pb-24">
+    <div className="min-h-screen bg-gray-50 pb-24 lg:bg-white lg:pb-8">
       <PageHeader title="Замовлення" />
 
-      <div className="px-6 pb-4 flex items-center gap-3 relative">
+      <div className="px-6 pb-4 flex items-center gap-3 relative lg:px-8">
         <div className="flex-1">
           <SearchBar
             searchTerm={searchTerm}
@@ -196,7 +196,7 @@ export const OrdersPage = () => {
         </SearchFiltersPopup>
       </div>
 
-      <div className="px-6 pb-4">
+      <div className="px-6 pb-4 lg:px-8">
         <div className="bg-gradient-to-r from-yellow-50 to-amber-50 border-2 border-yellow-200 rounded-2xl p-4">
           <h3 className="font-bold text-amber-900 mb-3 text-center">Сформувати документ</h3>
           <div className="flex flex-col items-center gap-2">
@@ -231,13 +231,13 @@ export const OrdersPage = () => {
         </div>
       </div>
 
-      <div className="px-6 space-y-3">
+      <div className="px-6 pb-24 lg:pb-8 lg:px-8">
         {loading && (orders ?? []).length === 0 ? (
-          <>
-            {Array.from({ length: 6 }).map((_, i) => (
+          <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4">
+            {Array.from({ length: 8 }).map((_, i) => (
               <OrderCardSkeleton key={i} />
             ))}
-          </>
+          </div>
         ) : (orders ?? []).length === 0 ? (
           <div className="text-center py-12">
             <svg
@@ -258,13 +258,14 @@ export const OrdersPage = () => {
           </div>
         ) : (
           <>
+            <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4">
             {(orders ?? []).map((order) => {
               const typedOrder = order as unknown as Order;
               return (
                 <div
                   key={order.order_id}
                   onClick={() => handleOrderClick(typedOrder)}
-                  className="bg-white rounded-2xl p-5 shadow-sm border border-gray-100 hover:shadow-md hover:-translate-y-0.5 transition-all cursor-pointer"
+                  className="bg-white rounded-2xl p-5 shadow-sm border border-gray-100 hover:shadow-2xl hover:-translate-y-2 transition-all duration-300 cursor-pointer"
                 >
                   <div className="space-y-2.5">
                     <div className="flex items-center justify-between w-full gap-3">
@@ -344,6 +345,7 @@ export const OrdersPage = () => {
                 </div>
               );
             })}
+            </div>
 
             <div ref={sentinelRef} className="py-4 flex justify-center">
               {loadingMore && (

@@ -11,7 +11,7 @@ export const BottomNavPanel = () => {
   const userRoutes = getRoutesForRole(user.role).filter((route) => route.showInNav !== false);
 
   return (
-    <div className="flex items-center justify-center fixed bottom-0 w-full">
+    <div className="flex items-center justify-center fixed bottom-0 w-full lg:hidden">
       <div className="w-full max-w-md">
         <nav className="bg-white shadow-lg px-4 py-4 border border-gray-200 rounded-lg">
           <div className="flex items-center justify-around w-full">
