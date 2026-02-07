@@ -52,7 +52,7 @@ export const useOrders = () => {
   };
 
   const loadMoreOrders = useCallback(async () => {
-    if (loadingMore || !hasMore) return;
+    if (loadingMore || loading || !hasMore) return;
 
     setLoadingMore(true);
     try {
@@ -72,7 +72,7 @@ export const useOrders = () => {
     } finally {
       setLoadingMore(false);
     }
-  }, [loadingMore, hasMore, offset, currentSearch, startDate, endDate]);
+  }, [loadingMore, loading, hasMore, offset, currentSearch, startDate, endDate]);
 
   const createNewOrder = async (orderData: Record<string, unknown>) => {
     setLoading(true);

@@ -53,7 +53,7 @@ export const useProducts = () => {
   };
 
   const loadMoreProducts = useCallback(async () => {
-    if (loadingMore || !hasMore) return;
+    if (loadingMore || loading || !hasMore) return;
 
     setLoadingMore(true);
     try {
@@ -66,7 +66,7 @@ export const useProducts = () => {
     } finally {
       setLoadingMore(false);
     }
-  }, [loadingMore, hasMore, offset, currentSearch]);
+  }, [loadingMore, loading, hasMore, offset, currentSearch]);
 
   const deleteProduct = async (productId: string) => {
     setLoading(true);

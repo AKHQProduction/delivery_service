@@ -38,7 +38,7 @@ export const useClient = () => {
   };
 
   const loadMoreClients = useCallback(async () => {
-    if (loadingMore || !hasMore) return;
+    if (loadingMore || loading || !hasMore) return;
 
     setLoadingMore(true);
     try {
@@ -57,7 +57,7 @@ export const useClient = () => {
     } finally {
       setLoadingMore(false);
     }
-  }, [loadingMore, hasMore, offset, currentSearch]);
+  }, [loadingMore, loading, hasMore, offset, currentSearch]);
 
   const deleteClient = async (clientId: string) => {
     setLoading(true);

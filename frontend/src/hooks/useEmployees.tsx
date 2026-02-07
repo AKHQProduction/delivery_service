@@ -38,7 +38,7 @@ export const useEmployees = () => {
   };
 
   const loadMoreEmployees = useCallback(async () => {
-    if (loadingMore || !hasMore) return;
+    if (loadingMore || loading || !hasMore) return;
 
     setLoadingMore(true);
     try {
@@ -51,7 +51,7 @@ export const useEmployees = () => {
     } finally {
       setLoadingMore(false);
     }
-  }, [loadingMore, hasMore, offset, currentSearch]);
+  }, [loadingMore, loading, hasMore, offset, currentSearch]);
 
   const deleteEmployees = async (productId: string) => {
     setLoading(true);
