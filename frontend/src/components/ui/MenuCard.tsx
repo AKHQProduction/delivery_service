@@ -41,27 +41,19 @@ export const MenuCard: React.FC<MenuCardProps> = ({
               : "bg-gradient-to-br from-indigo-500 to-purple-600 group-hover:scale-110 group-hover:rotate-3"
           }`}
         >
-          <img
-            src={icon}
-            alt={label}
-            className="w-8 h-8 object-contain brightness-0 invert"
-          />
+          <img src={icon} alt={label} className="w-8 h-8 object-contain brightness-0 invert" />
         </div>
 
         {/* Text Content */}
         <div className="flex-1 min-w-0">
           <h3
             className={`text-xl font-bold mb-1.5 transition-colors ${
-              disabled
-                ? "text-gray-500"
-                : "text-gray-900 group-hover:text-indigo-600"
+              disabled ? "text-gray-500" : "text-gray-900 group-hover:text-indigo-600"
             }`}
           >
             {label}
           </h3>
-          <p className="text-sm text-gray-600 leading-relaxed">
-            {description}
-          </p>
+          <p className="text-sm text-gray-600 leading-relaxed">{description}</p>
         </div>
 
         {/* Arrow Icon or Lock Icon */}

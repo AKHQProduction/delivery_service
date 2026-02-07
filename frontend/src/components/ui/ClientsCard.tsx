@@ -7,10 +7,8 @@ interface ClientCardProps {
 }
 
 export const ClientCard: React.FC<ClientCardProps> = ({ client, onClick }) => {
-  const primaryPhone =
-    client.phones?.find((p) => p.is_primary) ?? client.phones?.[0];
-  const primaryAddress =
-    client.addresses?.find((a) => a.is_primary) ?? client.addresses?.[0];
+  const primaryPhone = client.phones?.find((p) => p.is_primary) ?? client.phones?.[0];
+  const primaryAddress = client.addresses?.find((a) => a.is_primary) ?? client.addresses?.[0];
 
   return (
     <div

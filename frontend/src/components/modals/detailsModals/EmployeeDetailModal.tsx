@@ -78,9 +78,7 @@ export const EmployeeDetailModal: React.FC<EmployeeDetailModalProps> = ({
           <img src={leftArrowIcon} alt="Back" className="w-8 h-8" />
         </button>
 
-        <h1 className="text-3xl font-bold text-white mb-2">
-          {employee.full_name}
-        </h1>
+        <h1 className="text-3xl font-bold text-white mb-2">{employee.full_name}</h1>
         <p className="text-indigo-100">{roleMap[employee.role]}</p>
       </div>
 
@@ -89,14 +87,8 @@ export const EmployeeDetailModal: React.FC<EmployeeDetailModalProps> = ({
           <h2 className="text-sm font-semibold text-gray-500 uppercase tracking-wide mb-4">
             Основна інформація
           </h2>
-          <ItemElement
-            descriptionText={"Ім'я працівника"}
-            elementText={employee.full_name}
-          />
-          <ItemElement
-            descriptionText={"Роль працівника"}
-            elementText={roleMap[employee.role]}
-          />
+          <ItemElement descriptionText={"Ім'я працівника"} elementText={employee.full_name} />
+          <ItemElement descriptionText={"Роль працівника"} elementText={roleMap[employee.role]} />
         </div>
         <ModalButtons
           firstButtonText={"Редагувати"}

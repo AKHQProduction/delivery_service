@@ -1,9 +1,5 @@
 import { useState, useCallback } from "react";
-import {
-  type Client,
-  type Address,
-  type Phone,
-} from "../../types/entities/Client";
+import { type Client, type Address, type Phone } from "../../types/entities/Client";
 import {
   getAllClients,
   createNewClient,
@@ -46,7 +42,13 @@ export const useClient = () => {
 
     setLoadingMore(true);
     try {
-      const fetchedClients = await getAllClients(currentSearch, currentSearch, PAGE_SIZE, offset, "ASC");
+      const fetchedClients = await getAllClients(
+        currentSearch,
+        currentSearch,
+        PAGE_SIZE,
+        offset,
+        "ASC",
+      );
       setClients((prev) => [...prev, ...fetchedClients]);
       setHasMore(fetchedClients.length >= PAGE_SIZE);
       setOffset((prev) => prev + PAGE_SIZE);
@@ -62,7 +64,7 @@ export const useClient = () => {
     setError(null);
     try {
       await deleteClientById(clientId);
-    } catch (err) {
+    } catch {
       setError("Не вдалося видалити працівника.");
     }
     setLoading(false);
@@ -90,16 +92,15 @@ export const useClient = () => {
 
       setClients((prev) => [...prev, newClient]);
       return newClient;
-    } catch (err: any) {
-      if (
-        err?.response?.status === 409 &&
-        err?.response?.data?.code === "duplicate_phones"
-      ) {
+    } catch (err: unknown) {
+      const error = err as {
+        response?: { status?: number; data?: { code?: string; detail?: string } };
+      };
+      if (error?.response?.status === 409 && error?.response?.data?.code === "duplicate_phones") {
         throw err;
       }
 
-      const errorMessage =
-        err?.response?.data?.detail || "Не вдалося додати клієнта.";
+      const errorMessage = error?.response?.data?.detail || "Не вдалося додати клієнта.";
       setError(errorMessage);
       throw err;
     } finally {
@@ -129,19 +130,16 @@ export const useClient = () => {
         confirmDuplicate,
       );
 
-      setClients((prev) =>
-        prev.map((c) => (c.client_id === clientId ? updatedClient : c)),
-      );
+      setClients((prev) => prev.map((c) => (c.client_id === clientId ? updatedClient : c)));
       return updatedClient;
-    } catch (err: any) {
-      if (
-        err?.response?.status === 409 &&
-        err?.response?.data?.code === "duplicate_phones"
-      ) {
+    } catch (err: unknown) {
+      const error = err as {
+        response?: { status?: number; data?: { code?: string; detail?: string } };
+      };
+      if (error?.response?.status === 409 && error?.response?.data?.code === "duplicate_phones") {
         throw err;
       }
-      const errorMessage =
-        err?.response?.data?.detail || "Не вдалося оновити клієнта.";
+      const errorMessage = error?.response?.data?.detail || "Не вдалося оновити клієнта.";
       setError(errorMessage);
       throw new Error(errorMessage);
     } finally {

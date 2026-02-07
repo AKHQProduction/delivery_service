@@ -21,7 +21,7 @@ interface DeliveryDateStepProps {
     time_slot_id: string;
     start_time: string;
     end_time: string;
-    label: string;
+    label?: string;
   }[];
   paymentMethod: string;
   note: string;
@@ -46,10 +46,7 @@ export const DeliveryDateStep: React.FC<DeliveryDateStepProps> = ({
   onPaymentMethodChange,
   onNoteChange,
 }) => {
-  const totalAmount = selectedProducts.reduce(
-    (sum, p) => sum + p.product.price * p.quantity,
-    0,
-  );
+  const totalAmount = selectedProducts.reduce((sum, p) => sum + p.product.price * p.quantity, 0);
 
   const totalItems = selectedProducts.reduce((sum, p) => sum + p.quantity, 0);
 
@@ -63,14 +60,10 @@ export const DeliveryDateStep: React.FC<DeliveryDateStepProps> = ({
     });
   };
 
-  const selectedSlot = timeSlots.find(
-    (slot) => slot.time_slot_id === timeSlotId,
-  );
+  const selectedSlot = timeSlots.find((slot) => slot.time_slot_id === timeSlotId);
   return (
     <div className="space-y-6">
-      <h3 className="text-xl font-bold text-gray-900">
-        Дата доставки та підсумок
-      </h3>
+      <h3 className="text-xl font-bold text-gray-900">Дата доставки та підсумок</h3>
 
       <DateInput
         label="Дата доставки"
@@ -173,9 +166,7 @@ export const DeliveryDateStep: React.FC<DeliveryDateStepProps> = ({
               </div>
               <div className="flex-1">
                 <div className="text-xs text-gray-600 mb-0.5">Клієнт</div>
-                <div className="font-semibold text-gray-900">
-                  {client?.full_name}
-                </div>
+                <div className="font-semibold text-gray-900">{client?.full_name}</div>
               </div>
             </div>
 
@@ -231,9 +222,7 @@ export const DeliveryDateStep: React.FC<DeliveryDateStepProps> = ({
                 className="flex items-center justify-between p-3 bg-gray-50 rounded-lg border border-gray-200"
               >
                 <div className="flex-1">
-                  <div className="font-medium text-gray-900">
-                    {item.product.name}
-                  </div>
+                  <div className="font-medium text-gray-900">{item.product.name}</div>
                   <div className="text-sm text-gray-600">
                     {item.product.price} ₴ × {item.quantity} шт.
                   </div>

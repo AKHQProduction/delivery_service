@@ -33,7 +33,7 @@ export const useDistrictsSettings = () => {
 
   const addDistrict = async (name: string) => {
     try {
-      const newDistrict = await createDistrict(name);
+      const newDistrict = (await createDistrict(name)) as District;
       setDistricts((prev) => [...prev, newDistrict]);
       await fetchDistricts();
     } catch (error) {
@@ -44,11 +44,9 @@ export const useDistrictsSettings = () => {
 
   const updateDistrictById = async (id: string, name: string) => {
     try {
-      const updatedDistrict = await updateDistrict(id, name);
+      const updatedDistrict = (await updateDistrict(id, name)) as District;
       setDistricts((prev) =>
-        prev.map((district) =>
-          district.district_id === id ? updatedDistrict : district
-        )
+        prev.map((district) => (district.district_id === id ? updatedDistrict : district)),
       );
       await fetchDistricts();
     } catch (error) {
@@ -60,9 +58,7 @@ export const useDistrictsSettings = () => {
   const deleteDistrictById = async (id: string) => {
     try {
       await deleteDistrict(id);
-      setDistricts((prev) =>
-        prev.filter((district) => district.district_id !== id)
-      );
+      setDistricts((prev) => prev.filter((district) => district.district_id !== id));
       await fetchDistricts();
     } catch (error) {
       console.error("Error deleting district:", error);

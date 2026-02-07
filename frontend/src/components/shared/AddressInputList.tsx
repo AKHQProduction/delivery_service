@@ -5,10 +5,7 @@ import { Toast } from "../ui/Toast";
 import { useMapPicker } from "../../hooks/useMapPicker";
 import { useUserShopStore } from "../../context/useUserShopStore";
 import { useToast } from "../../hooks/useToast";
-import {
-  type Address,
-  type AddressCoordinates,
-} from "../../types/entities/Client";
+import { type Address, type AddressCoordinates } from "../../types/entities/Client";
 
 export interface District {
   district_id: string;
@@ -19,10 +16,7 @@ interface AddressInputListProps {
   addresses: Address[];
   onSetPrimary: (index: number) => void;
   onAddressChange: (index: number, field: keyof Address, value: string) => void;
-  onCoordinatesChange: (
-    index: number,
-    coordinates: AddressCoordinates | null
-  ) => void;
+  onCoordinatesChange: (index: number, coordinates: AddressCoordinates | null) => void;
   onRemove: (index: number) => void;
   onAdd: () => void;
   districts?: District[];
@@ -39,29 +33,20 @@ export const AddressInputList: React.FC<AddressInputListProps> = ({
 }) => {
   const shop = useUserShopStore((state) => state.shop);
   const { toast, showToast, hideToast } = useToast();
-  const {
-    isMapOpen,
-    isLoading,
-    openMap,
-    closeMap,
-    reverseGeocode,
-    forwardGeocode,
-  } = useMapPicker();
+  const { isMapOpen, isLoading, openMap, closeMap, reverseGeocode, forwardGeocode } =
+    useMapPicker();
 
-  const [currentEditingIndex, setCurrentEditingIndex] = useState<number | null>(
-    null,
-  );
-  const [addressStatus, setAddressStatus] = useState<
-    Record<number, "found" | "not_found" | null>
-  >({});
-  const debounceTimers = useRef<Record<number, ReturnType<typeof setTimeout>>>(
+  const [currentEditingIndex, setCurrentEditingIndex] = useState<number | null>(null);
+  const [addressStatus, setAddressStatus] = useState<Record<number, "found" | "not_found" | null>>(
     {},
   );
+  const debounceTimers = useRef<Record<number, ReturnType<typeof setTimeout>>>({});
 
   // Cleanup timers on unmount
   useEffect(() => {
+    const timers = debounceTimers.current;
     return () => {
-      Object.values(debounceTimers.current).forEach(clearTimeout);
+      Object.values(timers).forEach(clearTimeout);
     };
   }, []);
 
@@ -95,11 +80,7 @@ export const AddressInputList: React.FC<AddressInputListProps> = ({
     }
   };
 
-  const handleAddressFieldChange = (
-    index: number,
-    field: keyof Address,
-    value: string,
-  ) => {
+  const handleAddressFieldChange = (index: number, field: keyof Address, value: string) => {
     onAddressChange(index, field, value);
 
     // Only trigger geocode check for street or house changes
@@ -131,10 +112,7 @@ export const AddressInputList: React.FC<AddressInputListProps> = ({
     openMap();
   };
 
-  const handleMapConfirm = async (coordinates: {
-    lat: number;
-    lng: number;
-  }) => {
+  const handleMapConfirm = async (coordinates: { lat: number; lng: number }) => {
     if (currentEditingIndex === null) return;
 
     const result = await reverseGeocode(coordinates);
@@ -164,14 +142,9 @@ export const AddressInputList: React.FC<AddressInputListProps> = ({
     <div className="space-y-3">
       <label className="block text-sm font-medium text-gray-700">Адреси</label>
       {addresses.map((address, index) => (
-        <div
-          key={index}
-          className="p-4 border-2 border-gray-200 rounded-xl space-y-3"
-        >
+        <div key={index} className="p-4 border-2 border-gray-200 rounded-xl space-y-3">
           <div className="flex items-center justify-between">
-            <label className="text-xs font-medium text-gray-600">
-              Адреса #{index + 1}
-            </label>
+            <label className="text-xs font-medium text-gray-600">Адреса #{index + 1}</label>
             <div className="flex items-center gap-2">
               {!address.is_primary && addresses.length > 1 && (
                 <button
@@ -207,9 +180,7 @@ export const AddressInputList: React.FC<AddressInputListProps> = ({
                   <input
                     type="text"
                     value={address.street}
-                    onChange={(e) =>
-                      handleAddressFieldChange(index, "street", e.target.value)
-                    }
+                    onChange={(e) => handleAddressFieldChange(index, "street", e.target.value)}
                     placeholder="Вулиця *"
                     required
                     className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500 ${getInputBorderClass(index)}`}
@@ -219,9 +190,7 @@ export const AddressInputList: React.FC<AddressInputListProps> = ({
                 <input
                   type="text"
                   value={address.house}
-                  onChange={(e) =>
-                    handleAddressFieldChange(index, "house", e.target.value)
-                  }
+                  onChange={(e) => handleAddressFieldChange(index, "house", e.target.value)}
                   placeholder="Будинок *"
                   required
                   className={`px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500 ${getInputBorderClass(index)}`}
@@ -231,12 +200,7 @@ export const AddressInputList: React.FC<AddressInputListProps> = ({
 
             {addressStatus[index] === "not_found" && (
               <p className="text-xs text-amber-600 flex items-center gap-1">
-                <svg
-                  className="w-3 h-3"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
+                <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path
                     strokeLinecap="round"
                     strokeLinejoin="round"
@@ -252,50 +216,38 @@ export const AddressInputList: React.FC<AddressInputListProps> = ({
               <input
                 type="text"
                 value={address.apartment || ""}
-                onChange={(e) =>
-                  onAddressChange(index, "apartment", e.target.value)
-                }
+                onChange={(e) => onAddressChange(index, "apartment", e.target.value)}
                 placeholder="Квартира"
                 className="px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500"
               />
               <input
                 type="text"
                 value={address.entrance || ""}
-                onChange={(e) =>
-                  onAddressChange(index, "entrance", e.target.value)
-                }
+                onChange={(e) => onAddressChange(index, "entrance", e.target.value)}
                 placeholder="Під'їзд"
                 className="px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500"
               />
               <input
                 type="text"
                 value={address.floor || ""}
-                onChange={(e) =>
-                  onAddressChange(index, "floor", e.target.value)
-                }
+                onChange={(e) => onAddressChange(index, "floor", e.target.value)}
                 placeholder="Поверх"
                 className="px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500"
               />
               <input
                 type="text"
                 value={address.intercom || ""}
-                onChange={(e) =>
-                  onAddressChange(index, "intercom", e.target.value)
-                }
+                onChange={(e) => onAddressChange(index, "intercom", e.target.value)}
                 placeholder="Домофон"
                 className="px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500"
               />
             </div>
             {districts.length > 0 && (
               <div>
-                <label className="block text-xs font-medium text-gray-600 mb-1">
-                  Район
-                </label>
+                <label className="block text-xs font-medium text-gray-600 mb-1">Район</label>
                 <select
                   value={address.district_id || ""}
-                  onChange={(e) =>
-                    onAddressChange(index, "district_id", e.target.value || "")
-                  }
+                  onChange={(e) => onAddressChange(index, "district_id", e.target.value || "")}
                   title="Район доставки"
                   className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500 bg-white"
                 >
@@ -329,9 +281,7 @@ export const AddressInputList: React.FC<AddressInputListProps> = ({
               <div className="relative">
                 <textarea
                   value={address.comment || ""}
-                  onChange={(e) =>
-                    onAddressChange(index, "comment", e.target.value)
-                  }
+                  onChange={(e) => onAddressChange(index, "comment", e.target.value)}
                   placeholder="Додайте важливі деталі для доставки..."
                   rows={3}
                   className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all text-gray-900 resize-none bg-gradient-to-br from-white to-gray-50 placeholder:text-gray-400"
@@ -354,23 +304,13 @@ export const AddressInputList: React.FC<AddressInputListProps> = ({
         onClose={closeMap}
         onConfirm={handleMapConfirm}
         isLoading={isLoading}
-        initialStreet={
-          currentEditingIndex !== null
-            ? addresses[currentEditingIndex]?.street
-            : ""
-        }
-        initialHouse={
-          currentEditingIndex !== null
-            ? addresses[currentEditingIndex]?.house
-            : ""
-        }
+        initialStreet={currentEditingIndex !== null ? addresses[currentEditingIndex]?.street : ""}
+        initialHouse={currentEditingIndex !== null ? addresses[currentEditingIndex]?.house : ""}
         city={shop?.city ?? undefined}
         onGeocode={forwardGeocode}
       />
 
-      {toast.isVisible && (
-        <Toast message={toast.message} type={toast.type} onClose={hideToast} />
-      )}
+      {toast.isVisible && <Toast message={toast.message} type={toast.type} onClose={hideToast} />}
     </div>
   );
 };

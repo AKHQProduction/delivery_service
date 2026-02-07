@@ -21,9 +21,7 @@ export const EditEmployeeForm: React.FC<EditEmployeeFormProps> = ({
     role: roleMap[employee.role] || employee.role,
   });
 
-  const handleChange = (
-    e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>,
-  ) => {
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
   };
 
@@ -42,7 +40,6 @@ export const EditEmployeeForm: React.FC<EditEmployeeFormProps> = ({
     };
 
     onSave(updatedEmployee);
-    onClose();
   };
 
   const categoryOptions = [
@@ -51,11 +48,7 @@ export const EditEmployeeForm: React.FC<EditEmployeeFormProps> = ({
   ];
 
   return (
-    <FormWrapper
-      onSubmit={handleSubmit}
-      onClose={onClose}
-      submitLabel="Зберегти зміни"
-    >
+    <FormWrapper onSubmit={handleSubmit} onClose={onClose} submitLabel="Зберегти зміни">
       <FormInput
         label="Ім'я працівника"
         name="full_name"

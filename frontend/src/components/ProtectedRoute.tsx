@@ -8,10 +8,7 @@ interface ProtectedRouteProps {
   allowedRoles: UserRole[];
 }
 
-export const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
-  children,
-  allowedRoles,
-}) => {
+export const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children, allowedRoles }) => {
   const user = useUserShopStore((s) => s.user);
 
   if (!user) {

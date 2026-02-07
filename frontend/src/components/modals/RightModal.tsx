@@ -7,16 +7,13 @@ interface RightModalProps {
   children: React.ReactNode;
 }
 
-export const RightModal: React.FC<RightModalProps> = ({
-  isOpen,
-  onClose,
-  children,
-}) => {
+export const RightModal: React.FC<RightModalProps> = ({ isOpen, onClose, children }) => {
   const [isVisible, setIsVisible] = useState(false);
   const [shouldRender, setShouldRender] = useState(false);
 
   useEffect(() => {
     if (isOpen) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect -- Required for animation timing
       setShouldRender(true);
       requestAnimationFrame(() => {
         requestAnimationFrame(() => {

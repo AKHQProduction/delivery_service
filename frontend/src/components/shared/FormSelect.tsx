@@ -1,11 +1,16 @@
 import React from "react";
 
+interface SelectOption {
+  value: string;
+  label: string;
+}
+
 interface FormSelectProps {
   label: string;
   name: string;
   value: string;
-  onChange: (value: any) => void;
-  options: any[];
+  onChange: (e: React.ChangeEvent<HTMLSelectElement>) => void;
+  options: SelectOption[];
   required?: boolean;
 }
 
@@ -19,10 +24,7 @@ export const FormSelect: React.FC<FormSelectProps> = ({
 }) => {
   return (
     <div>
-      <label
-        htmlFor={name}
-        className="block text-sm font-medium text-gray-700 mb-2"
-      >
+      <label htmlFor={name} className="block text-sm font-medium text-gray-700 mb-2">
         {label}
       </label>
       <select

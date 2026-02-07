@@ -40,9 +40,7 @@ export const PhoneInputList: React.FC<PhoneInputListProps> = ({
             }`}
           >
             <div className="flex items-center justify-between">
-              <label className="text-xs font-medium text-gray-600">
-                Телефон #{index + 1}
-              </label>
+              <label className="text-xs font-medium text-gray-600">Телефон #{index + 1}</label>
               <div className="flex items-center gap-2">
                 {!phone.is_primary && phones.length > 1 && (
                   <button

@@ -45,17 +45,11 @@ export const ProductDetailModal: React.FC<ProductDetailModalProps> = ({
           >
             <img src={leftArrowIcon} alt="Back" className="w-8 h-8" />
           </button>
-          <h1 className="text-3xl font-bold text-white mb-2">
-            Редагувати товар
-          </h1>
+          <h1 className="text-3xl font-bold text-white mb-2">Редагувати товар</h1>
         </div>
 
         <div className="flex-1 overflow-y-auto px-6 py-6">
-          <EditProductForm
-            product={product}
-            onClose={handleCancelEdit}
-            onSave={handleSaveEdit}
-          />
+          <EditProductForm product={product} onClose={handleCancelEdit} onSave={handleSaveEdit} />
         </div>
       </div>
     );
@@ -74,9 +68,7 @@ export const ProductDetailModal: React.FC<ProductDetailModalProps> = ({
         </button>
 
         <h1 className="text-3xl font-bold text-white mb-2">{product.name}</h1>
-        <p className="text-indigo-100">
-          Категорія: {product.category_name || "Без категорії"}
-        </p>
+        <p className="text-indigo-100">Категорія: {product.category_name || "Без категорії"}</p>
       </div>
 
       <div className="flex-1 overflow-y-auto px-6 py-6 space-y-6 pb-24">
@@ -84,18 +76,12 @@ export const ProductDetailModal: React.FC<ProductDetailModalProps> = ({
           <h2 className="text-sm font-semibold text-gray-500 uppercase tracking-wide mb-4">
             Основна інформація
           </h2>
-          <ItemElement
-            descriptionText={"Назва товару"}
-            elementText={product.name}
-          />
+          <ItemElement descriptionText={"Назва товару"} elementText={product.name} />
           <ItemElement
             descriptionText={"Категорія"}
             elementText={product.category_name || "Без категорії"}
           />
-          <ItemElement
-            descriptionText={"Ціна"}
-            elementText={`₴${product.price}`}
-          />
+          <ItemElement descriptionText={"Ціна"} elementText={`₴${product.price}`} />
         </div>
         <ModalButtons
           firstButtonText={"Редагувати"}

@@ -6,14 +6,21 @@ import {
   deleteTimeSlot,
 } from "../../services/api/settingsApi";
 
+interface TimeSlot {
+  time_slot_id: string;
+  start_time: string;
+  end_time: string;
+  label?: string;
+}
+
 export const useTimeSlotsSettings = () => {
-  const [timeSlots, setTimeSlots] = useState<any[]>([]);
+  const [timeSlots, setTimeSlots] = useState<TimeSlot[]>([]);
   const [isLoading, setIsLoading] = useState(false);
 
   const fetchTimeSlots = async () => {
     try {
       setIsLoading(true);
-      const data = await getAllTimeSlots();
+      const data = (await getAllTimeSlots()) as TimeSlot[];
       setTimeSlots(data);
     } catch (error) {
       console.error("Error fetching time slots:", error);
@@ -26,13 +33,9 @@ export const useTimeSlotsSettings = () => {
     fetchTimeSlots();
   }, []);
 
-  const addTimeSlot = async (
-    start_time: Date,
-    end_time: Date,
-    label?: string,
-  ) => {
+  const addTimeSlot = async (start_time: Date, end_time: Date, label?: string) => {
     try {
-      const newSlot = await createNewTimeSlot(start_time, end_time, label);
+      const newSlot = (await createNewTimeSlot(start_time, end_time, label)) as TimeSlot;
       // Immediately update local state
       setTimeSlots((prev) => [...prev, newSlot]);
       // Optionally refetch to ensure sync
@@ -50,13 +53,9 @@ export const useTimeSlotsSettings = () => {
     label?: string,
   ) => {
     try {
-      const updatedSlot = await updateTimeSlot(id, start_time, end_time, label);
+      const updatedSlot = (await updateTimeSlot(id, start_time, end_time, label)) as TimeSlot;
       // Immediately update local state
-      setTimeSlots((prev) =>
-        prev.map((slot) => 
-          slot.time_slot_id === id ? updatedSlot : slot
-        ),
-      );
+      setTimeSlots((prev) => prev.map((slot) => (slot.time_slot_id === id ? updatedSlot : slot)));
       // Optionally refetch to ensure sync
       await fetchTimeSlots();
     } catch (error) {
@@ -78,12 +77,12 @@ export const useTimeSlotsSettings = () => {
     }
   };
 
-  return { 
-    timeSlots, 
-    addTimeSlot, 
-    updateTimeSlotById, 
+  return {
+    timeSlots,
+    addTimeSlot,
+    updateTimeSlotById,
     deleteTimeSlotById,
     isLoading,
-    refetch: fetchTimeSlots
+    refetch: fetchTimeSlots,
   };
 };

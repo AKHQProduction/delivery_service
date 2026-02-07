@@ -8,10 +8,7 @@ interface MapButtonProps {
 /**
  * Button component that opens the map picker
  */
-export const MapButton: React.FC<MapButtonProps> = ({
-  onClick,
-  disabled = false,
-}) => {
+export const MapButton: React.FC<MapButtonProps> = ({ onClick, disabled = false }) => {
   return (
     <button
       type="button"
@@ -20,12 +17,7 @@ export const MapButton: React.FC<MapButtonProps> = ({
       className="p-2 text-indigo-600 hover:bg-indigo-50 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
       title="Обрати на карті"
     >
-      <svg
-        className="w-6 h-6"
-        fill="none"
-        stroke="currentColor"
-        viewBox="0 0 24 24"
-      >
+      <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
         <path
           strokeLinecap="round"
           strokeLinejoin="round"

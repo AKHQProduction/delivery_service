@@ -12,13 +12,10 @@ import { type Client } from "../../../types/entities/Client";
 
 interface AddOrderFormProps {
   onClose: () => void;
-  onSave?: (order?: any) => void;
+  onSave?: (order?: unknown) => void;
 }
 
-export const AddOrderForm: React.FC<AddOrderFormProps> = ({
-  onClose,
-  onSave,
-}) => {
+export const AddOrderForm: React.FC<AddOrderFormProps> = ({ onClose, onSave }) => {
   const { createNewOrder } = useOrders();
   const [showAddClient, setShowAddClient] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -86,7 +83,11 @@ export const AddOrderForm: React.FC<AddOrderFormProps> = ({
         payment_method: formData.paymentMethod,
         comment: formData.note,
       });
-      onSave ? onSave(newOrder) : onClose();
+      if (onSave) {
+        onSave(newOrder);
+      } else {
+        onClose();
+      }
     } catch (error) {
       console.error("Error creating order:", error);
       alert("Помилка при створенні замовлення");
@@ -97,10 +98,7 @@ export const AddOrderForm: React.FC<AddOrderFormProps> = ({
 
   if (showAddClient) {
     return (
-      <AddClientForm
-        onClose={() => setShowAddClient(false)}
-        onSuccess={handleClientCreated}
-      />
+      <AddClientForm onClose={() => setShowAddClient(false)} onSuccess={handleClientCreated} />
     );
   }
 

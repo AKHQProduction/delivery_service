@@ -12,16 +12,8 @@ interface UseInfiniteScrollReturn {
   sentinelRef: React.RefObject<HTMLDivElement | null>;
 }
 
-export const useInfiniteScroll = (
-  options: UseInfiniteScrollOptions
-): UseInfiniteScrollReturn => {
-  const {
-    onLoadMore,
-    hasMore,
-    isLoading,
-    rootMargin = "100px",
-    threshold = 0,
-  } = options;
+export const useInfiniteScroll = (options: UseInfiniteScrollOptions): UseInfiniteScrollReturn => {
+  const { onLoadMore, hasMore, isLoading, rootMargin = "100px", threshold = 0 } = options;
 
   const sentinelRef = useRef<HTMLDivElement>(null);
   const observerRef = useRef<IntersectionObserver | null>(null);
@@ -33,7 +25,7 @@ export const useInfiniteScroll = (
         onLoadMore();
       }
     },
-    [hasMore, isLoading, onLoadMore]
+    [hasMore, isLoading, onLoadMore],
   );
 
   useEffect(() => {

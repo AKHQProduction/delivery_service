@@ -5,11 +5,12 @@ import {
   getAllEmployees,
 } from "../services/api/employeeApi";
 import { createInviteUserLink } from "../services/api/userApi";
+import { type Employee } from "../types/entities/Employee";
 
 const PAGE_SIZE = 20;
 
 export const useEmployees = () => {
-  const [employees, setEmployees] = useState<Array<any>>([]);
+  const [employees, setEmployees] = useState<Employee[]>([]);
   const [loading, setLoading] = useState<boolean>(false);
   const [loadingMore, setLoadingMore] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
@@ -23,12 +24,12 @@ export const useEmployees = () => {
     setCurrentSearch(search);
     setOffset(0);
     try {
-      const fetchedEmployees = await getAllEmployees(search, PAGE_SIZE, 0, "ASC");
+      const fetchedEmployees = (await getAllEmployees(search, PAGE_SIZE, 0, "ASC")) as Employee[];
       setEmployees(fetchedEmployees);
       setHasMore(fetchedEmployees.length >= PAGE_SIZE);
       setOffset(PAGE_SIZE);
       return fetchedEmployees;
-    } catch (err) {
+    } catch {
       setError("Не вдалося завантажити працівників.");
       return [];
     } finally {
@@ -45,7 +46,7 @@ export const useEmployees = () => {
       setEmployees((prev) => [...prev, ...fetchedEmployees]);
       setHasMore(fetchedEmployees.length >= PAGE_SIZE);
       setOffset((prev) => prev + PAGE_SIZE);
-    } catch (err) {
+    } catch {
       setError("Не вдалося завантажити більше працівників.");
     } finally {
       setLoadingMore(false);
@@ -57,31 +58,27 @@ export const useEmployees = () => {
     setError(null);
     try {
       await deleteEmployeeById(productId);
-    } catch (err) {
+    } catch {
       setError("Не вдалося видалити працівника.");
     }
     setLoading(false);
   };
 
-  const updateEmployee = async (
-    user_id: string,
-    name: string,
-    role: string
-  ) => {
+  const updateEmployee = async (user_id: string, name: string, role: string) => {
     setLoading(true);
     setError(null);
     try {
-      const updatedEmployee = await updateEmployeeById(user_id, name, role);
+      const updatedEmployee = (await updateEmployeeById(user_id, name, role)) as Employee;
 
       if (updatedEmployee) {
         setEmployees((prevEmployee) =>
           prevEmployee.map((employee) =>
-            employee?.user_id === user_id ? updatedEmployee : employee
-          )
+            employee?.user_id === user_id ? updatedEmployee : employee,
+          ),
         );
       }
       return updatedEmployee;
-    } catch (err) {
+    } catch {
       setError("Не вдалося оновити працівника.");
       return null;
     } finally {
@@ -93,10 +90,10 @@ export const useEmployees = () => {
     setLoading(true);
     setError(null);
     try {
-      const link = await createInviteUserLink(role, full_name);
+      const link = (await createInviteUserLink(role, full_name)) as string;
       setLoading(false);
       return link;
-    } catch (err) {
+    } catch {
       setError("Не вдалося створити запрошення для працівника.");
       setLoading(false);
     }

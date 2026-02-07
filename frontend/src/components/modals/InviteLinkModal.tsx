@@ -6,10 +6,7 @@ interface InviteLinkModalProps {
   onClose: () => void;
 }
 
-export const InviteLinkModal: React.FC<InviteLinkModalProps> = ({
-  link,
-  onClose,
-}) => {
+export const InviteLinkModal: React.FC<InviteLinkModalProps> = ({ link, onClose }) => {
   const [copied, setCopied] = useState(false);
 
   const handleCopy = () => {
@@ -19,11 +16,11 @@ export const InviteLinkModal: React.FC<InviteLinkModalProps> = ({
   };
 
   const handleTelegramShare = () => {
-    if (initDataTG?.platform !== "unknown") {
+    if (initDataTG?.platform !== "unknown" && initDataTG?.openTelegramLink) {
       const telegramShareUrl = `https://t.me/share/url?url=${encodeURIComponent(
-        link
+        link,
       )}&text=${encodeURIComponent("Запрошено до групи")}`;
-      initDataTG?.openTelegramLink(telegramShareUrl);
+      initDataTG.openTelegramLink(telegramShareUrl);
       onClose();
     }
   };
@@ -47,9 +44,7 @@ export const InviteLinkModal: React.FC<InviteLinkModalProps> = ({
           <button
             onClick={handleCopy}
             className={`flex-1 py-4 rounded-2xl border transition-all duration-300 ${
-              copied
-                ? "bg-gray-600 text-white scale-105"
-                : "bg-white text-black"
+              copied ? "bg-gray-600 text-white scale-105" : "bg-white text-black"
             }`}
           >
             {copied ? "Скопійовано!" : "Копіювати"}

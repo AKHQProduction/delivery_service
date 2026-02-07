@@ -4,20 +4,14 @@ type ItemElementProps = {
   comment?: string;
 };
 
-export const ItemElement = ({
-  descriptionText,
-  elementText,
-  comment,
-}: ItemElementProps) => {
+export const ItemElement = ({ descriptionText, elementText, comment }: ItemElementProps) => {
   return (
     <div className="mb-4">
       <div className="bg-gradient-to-br from-gray-50 to-white rounded-2xl p-5 border border-gray-200 shadow-sm">
         <p className="text-xs font-medium text-gray-500 uppercase tracking-wide mb-2">
           {descriptionText}
         </p>
-        <p className="text-base font-semibold text-gray-900 leading-relaxed">
-          {elementText}
-        </p>
+        <p className="text-base font-semibold text-gray-900 leading-relaxed">{elementText}</p>
 
         {comment && comment.trim() !== "" && (
           <div className="mt-4 relative">
@@ -29,9 +23,7 @@ export const ItemElement = ({
                       Примітка
                     </span>
                   </div>
-                  <p className="text-sm text-amber-950 leading-relaxed font-medium ">
-                    {comment}
-                  </p>
+                  <p className="text-sm text-amber-950 leading-relaxed font-medium ">{comment}</p>
                 </div>
               </div>
             </div>

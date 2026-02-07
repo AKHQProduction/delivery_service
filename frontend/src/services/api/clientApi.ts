@@ -29,33 +29,21 @@ export const updateExistingClientById = async (
   payload: UpdateClientPayload,
   confirmDuplicate: boolean = false,
 ) => {
-  try {
-    const response = await api.patch(`v1/clients/${clientId}`, {
-      ...payload,
-      ...(confirmDuplicate && { confirm_duplicate_phones: true }),
-    });
-    return response.data;
-  } catch (error) {
-    throw error;
-  }
+  const response = await api.patch(`v1/clients/${clientId}`, {
+    ...payload,
+    ...(confirmDuplicate && { confirm_duplicate_phones: true }),
+  });
+  return response.data;
 };
 
 export const deleteClientById = async (clientId: string) => {
-  try {
-    const response = await api.delete(`v1/clients/${clientId}`);
-    return response.data;
-  } catch (error) {
-    throw error;
-  }
+  const response = await api.delete(`v1/clients/${clientId}`);
+  return response.data;
 };
 
 export const getClientById = async (clientId: string) => {
-  try {
-    const response = await api.get(`v1/clients/${clientId}`);
-    return response.data;
-  } catch (error) {
-    throw error;
-  }
+  const response = await api.get(`v1/clients/${clientId}`);
+  return response.data;
 };
 
 export const getAllClients = async (
@@ -65,19 +53,15 @@ export const getAllClients = async (
   offset: number,
   order: string,
 ) => {
-  try {
-    const params: Record<string, string | number> = {
-      limit: clientsLimit,
-      offset: offset,
-      order: order,
-    };
+  const params: Record<string, string | number> = {
+    limit: clientsLimit,
+    offset: offset,
+    order: order,
+  };
 
-    if (full_name) params.full_name = full_name;
-    if (phone) params.phone = phone;
+  if (full_name) params.full_name = full_name;
+  if (phone) params.phone = phone;
 
-    const response = await api.get(`v1/clients/all`, { params });
-    return response.data;
-  } catch (error) {
-    throw error;
-  }
+  const response = await api.get(`v1/clients/all`, { params });
+  return response.data;
 };

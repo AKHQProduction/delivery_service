@@ -12,13 +12,8 @@ interface EditProductFormProps {
   onSave: (updatedProduct: Product) => Promise<void> | void;
 }
 
-export const EditProductForm: React.FC<EditProductFormProps> = ({
-  product,
-  onClose,
-  onSave,
-}) => {
+export const EditProductForm: React.FC<EditProductFormProps> = ({ product, onClose, onSave }) => {
   const {
-    loading,
     selectedCategory,
     setSelectedCategory,
     categoryOptions,
@@ -43,11 +38,10 @@ export const EditProductForm: React.FC<EditProductFormProps> = ({
     } else {
       setSelectedCategory("EMPTY");
     }
-  }, [product.category_id, setSelectedCategory]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [product.category_id]);
 
-  const handleChange = (
-    e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>
-  ) => {
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
   };
 
@@ -67,11 +61,7 @@ export const EditProductForm: React.FC<EditProductFormProps> = ({
   };
 
   return (
-    <FormWrapper
-      onSubmit={handleSubmit}
-      onClose={onClose}
-      submitLabel="Зберегти зміни"
-    >
+    <FormWrapper onSubmit={handleSubmit} onClose={onClose} submitLabel="Зберегти зміни">
       <FormInput
         label="Назва товару"
         name="name"
@@ -80,7 +70,7 @@ export const EditProductForm: React.FC<EditProductFormProps> = ({
         placeholder="Введіть назву..."
         required
       />
-      
+
       <DynamicFormSelect
         label="Категорія"
         name="category"
@@ -90,10 +80,6 @@ export const EditProductForm: React.FC<EditProductFormProps> = ({
         required={false}
         onAddCategory={() => setIsCategoryModalOpen(true)}
       />
-
-      {loading && (
-        <div className="text-sm text-gray-500">Завантаження категорій...</div>
-      )}
 
       <FormInput
         label="Ціна (₴)"

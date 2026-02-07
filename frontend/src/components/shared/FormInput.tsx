@@ -21,10 +21,7 @@ export const FormInput: React.FC<FormInputProps> = ({
 }) => {
   return (
     <div>
-      <label
-        htmlFor={name}
-        className="block text-sm font-medium text-gray-700 mb-2"
-      >
+      <label htmlFor={name} className="block text-sm font-medium text-gray-700 mb-2">
         {label}
       </label>
       <input

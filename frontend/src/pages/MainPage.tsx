@@ -61,10 +61,7 @@ export const MainPage = () => {
       <PageHeader title="Головна" />
 
       <div className="px-6 pb-24 pt-4">
-        <WelcomeSection
-          title="Вітаємо! 👋"
-          subtitle="Оберіть розділ для швидкого доступу"
-        />
+        <WelcomeSection title="Вітаємо! 👋" subtitle="Оберіть розділ для швидкого доступу" />
 
         <div className="grid grid-cols-1 gap-4">
           {menuCards.map((card) => (

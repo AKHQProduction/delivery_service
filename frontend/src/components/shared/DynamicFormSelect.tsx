@@ -1,11 +1,16 @@
 import React, { useState, useRef, useEffect } from "react";
 
+interface SelectOption {
+  value: string;
+  label: string;
+}
+
 interface FormSelectProps {
   label: string;
   name: string;
   value: string | null;
-  onChange: (value: any) => void;
-  options: any[];
+  onChange: (value: string) => void;
+  options: SelectOption[];
   required?: boolean;
   onAddCategory?: () => void;
 }
@@ -26,15 +31,12 @@ export const DynamicFormSelect: React.FC<FormSelectProps> = ({
   const selectedOption = options.find((opt) => opt.value === value);
 
   const filteredOptions = options.filter((option) =>
-    option?.label?.toLowerCase().includes(searchTerm.toLowerCase())
+    option?.label?.toLowerCase().includes(searchTerm.toLowerCase()),
   );
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
-      if (
-        dropdownRef.current &&
-        !dropdownRef.current.contains(event.target as Node)
-      ) {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
         setIsOpen(false);
         setSearchTerm("");
       }
@@ -52,10 +54,7 @@ export const DynamicFormSelect: React.FC<FormSelectProps> = ({
 
   return (
     <div>
-      <label
-        htmlFor={name}
-        className="block text-sm font-medium text-gray-700 mb-2"
-      >
+      <label htmlFor={name} className="block text-sm font-medium text-gray-700 mb-2">
         {label}
       </label>
       <div className="relative" ref={dropdownRef}>
@@ -69,19 +68,12 @@ export const DynamicFormSelect: React.FC<FormSelectProps> = ({
             {selectedOption ? selectedOption.label : "Оберіть..."}
           </span>
           <svg
-            className={`w-5 h-5 text-gray-400 transition-transform ${
-              isOpen ? "rotate-180" : ""
-            }`}
+            className={`w-5 h-5 text-gray-400 transition-transform ${isOpen ? "rotate-180" : ""}`}
             fill="none"
             stroke="currentColor"
             viewBox="0 0 24 24"
           >
-            <path
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              strokeWidth={2}
-              d="M19 9l-7 7-7-7"
-            />
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
           </svg>
         </button>
 
@@ -109,9 +101,7 @@ export const DynamicFormSelect: React.FC<FormSelectProps> = ({
                     type="button"
                     onClick={() => handleSelect(option.value)}
                     className={`w-full px-4 py-3 text-left hover:bg-gray-50 transition-colors ${
-                      value === option.value
-                        ? "bg-indigo-50 text-indigo-600"
-                        : "text-gray-700"
+                      value === option.value ? "bg-indigo-50 text-indigo-600" : "text-gray-700"
                     }`}
                   >
                     {option.label}
@@ -136,12 +126,7 @@ export const DynamicFormSelect: React.FC<FormSelectProps> = ({
                   }}
                   className="w-full px-4 py-3 text-left text-indigo-600 hover:bg-indigo-50 transition-colors flex items-center gap-2 font-medium"
                 >
-                  <svg
-                    className="w-5 h-5"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                  >
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path
                       strokeLinecap="round"
                       strokeLinejoin="round"

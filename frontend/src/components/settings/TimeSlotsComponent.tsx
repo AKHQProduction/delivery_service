@@ -18,11 +18,8 @@ interface TimeSlot {
 }
 
 export const TimeSlotsComponent = () => {
-  const { timeSlots, updateTimeSlotById, addTimeSlot, deleteTimeSlotById } =
-    useTimeSlotsSettings();
-  const [editedSlots, setEditedSlots] = useState<
-    Record<string, Partial<TimeSlot>>
-  >({});
+  const { timeSlots, updateTimeSlotById, addTimeSlot, deleteTimeSlotById } = useTimeSlotsSettings();
+  const [editedSlots, setEditedSlots] = useState<Record<string, Partial<TimeSlot>>>({});
   const [newSlots, setNewSlots] = useState<NewSlot[]>([]);
 
   const handleFieldChange = (
@@ -49,9 +46,7 @@ export const TimeSlotsComponent = () => {
     value: string,
   ) => {
     setNewSlots((prev) =>
-      prev.map((slot) =>
-        slot.id === tempId ? { ...slot, [field]: value } : slot,
-      ),
+      prev.map((slot) => (slot.id === tempId ? { ...slot, [field]: value } : slot)),
     );
   };
 
@@ -79,13 +74,9 @@ export const TimeSlotsComponent = () => {
       const originalSlot = timeSlots?.find((s) => s?.time_slot_id === slotId);
 
       if (originalSlot && changes) {
-        const startTime = parseTimeToDate(
-          changes.start_time || originalSlot.start_time,
-        );
+        const startTime = parseTimeToDate(changes.start_time || originalSlot.start_time);
 
-        const endTime = parseTimeToDate(
-          changes.end_time || originalSlot.end_time,
-        );
+        const endTime = parseTimeToDate(changes.end_time || originalSlot.end_time);
 
         await updateTimeSlotById(
           slotId,
@@ -182,8 +173,7 @@ export const TimeSlotsComponent = () => {
 
   // Filter out null/undefined slots and provide safe defaults
   const validTimeSlots = (timeSlots || []).filter(
-    (slot): slot is TimeSlot =>
-      slot !== null && slot !== undefined && slot.time_slot_id !== null,
+    (slot): slot is TimeSlot => slot !== null && slot !== undefined && slot.time_slot_id !== null,
   );
 
   return (
@@ -195,12 +185,8 @@ export const TimeSlotsComponent = () => {
       <div className="space-y-3">
         {validTimeSlots.map((slot) => {
           const currentLabel = (getSlotValue(slot, "label") || "") as string;
-          const startTimeValue = formatTimeValue(
-            getSlotValue(slot, "start_time") as string,
-          );
-          const endTimeValue = formatTimeValue(
-            getSlotValue(slot, "end_time") as string,
-          );
+          const startTimeValue = formatTimeValue(getSlotValue(slot, "start_time") as string);
+          const endTimeValue = formatTimeValue(getSlotValue(slot, "end_time") as string);
 
           return (
             <div key={slot.time_slot_id} className="flex items-center gap-2">
@@ -208,9 +194,7 @@ export const TimeSlotsComponent = () => {
                 type="text"
                 placeholder="Назва"
                 value={currentLabel}
-                onChange={(e) =>
-                  handleFieldChange(slot.time_slot_id, "label", e.target.value)
-                }
+                onChange={(e) => handleFieldChange(slot.time_slot_id, "label", e.target.value)}
                 className="flex-1 min-w-0 px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
               />
               <TimeInput
@@ -239,11 +223,7 @@ export const TimeSlotsComponent = () => {
                     viewBox="0 0 24 24"
                     strokeWidth={2}
                   >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      d="M5 13l4 4L19 7"
-                    />
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
                   </svg>
                 </button>
               ) : (
@@ -265,11 +245,7 @@ export const TimeSlotsComponent = () => {
                     viewBox="0 0 24 24"
                     strokeWidth={2}
                   >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      d="M6 18L18 6M6 6l12 12"
-                    />
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
                   </svg>
                 </button>
               )}
@@ -283,22 +259,16 @@ export const TimeSlotsComponent = () => {
               type="text"
               placeholder="Назва"
               value={slot.label}
-              onChange={(e) =>
-                handleNewSlotChange(slot.id, "label", e.target.value)
-              }
+              onChange={(e) => handleNewSlotChange(slot.id, "label", e.target.value)}
               className="flex-1 min-w-0 px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
             />
             <TimeInput
               value={slot.start_time}
-              onChange={(value) =>
-                handleNewSlotChange(slot.id, "start_time", value)
-              }
+              onChange={(value) => handleNewSlotChange(slot.id, "start_time", value)}
             />
             <TimeInput
               value={slot.end_time}
-              onChange={(value) =>
-                handleNewSlotChange(slot.id, "end_time", value)
-              }
+              onChange={(value) => handleNewSlotChange(slot.id, "end_time", value)}
             />
             {isNewSlotValid(slot) ? (
               <button
@@ -313,11 +283,7 @@ export const TimeSlotsComponent = () => {
                   viewBox="0 0 24 24"
                   strokeWidth={2}
                 >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    d="M5 13l4 4L19 7"
-                  />
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
                 </svg>
               </button>
             ) : (
@@ -333,11 +299,7 @@ export const TimeSlotsComponent = () => {
                   viewBox="0 0 24 24"
                   strokeWidth={2}
                 >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    d="M6 18L18 6M6 6l12 12"
-                  />
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
                 </svg>
               </button>
             )}

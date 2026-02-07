@@ -2,25 +2,16 @@ import React, { useState } from "react";
 import { MapPicker } from "../shared/MapPicker";
 import { MapButton } from "../shared/MapButton";
 import { useMapPicker } from "../../hooks/useMapPicker";
-import {
-  useShopSettings,
-  type ShopAddress,
-} from "../../hooks/settings/useShopSettings";
+import { useShopSettings, type ShopAddress } from "../../hooks/settings/useShopSettings";
 import { useUserShopStore } from "../../context/useUserShopStore";
 
 interface ShopAddressFormProps {
   onSuccess?: () => void;
 }
 
-type AddressError =
-  | "not_found"
-  | "needs_verification"
-  | "missing_fields"
-  | null;
+type AddressError = "not_found" | "needs_verification" | "missing_fields" | null;
 
-export const ShopAddressForm: React.FC<ShopAddressFormProps> = ({
-  onSuccess,
-}) => {
+export const ShopAddressForm: React.FC<ShopAddressFormProps> = ({ onSuccess }) => {
   const shop = useUserShopStore((state) => state.shop);
   const { loading, error, saveShopAddress } = useShopSettings();
 
@@ -37,14 +28,8 @@ export const ShopAddressForm: React.FC<ShopAddressFormProps> = ({
     lng: number;
   } | null>(null);
 
-  const {
-    isMapOpen,
-    isLoading,
-    openMap,
-    closeMap,
-    reverseGeocode,
-    forwardGeocode,
-  } = useMapPicker();
+  const { isMapOpen, isLoading, openMap, closeMap, reverseGeocode, forwardGeocode } =
+    useMapPicker();
 
   const handleAddressChange = (field: keyof ShopAddress, value: string) => {
     setShopAddress((prev) => ({
@@ -71,11 +56,7 @@ export const ShopAddressForm: React.FC<ShopAddressFormProps> = ({
       return;
     }
 
-    const coords = await forwardGeocode(
-      shopAddress.street,
-      shopAddress.house,
-      shopAddress.city,
-    );
+    const coords = await forwardGeocode(shopAddress.street, shopAddress.house, shopAddress.city);
 
     if (coords) {
       setPendingCoordinates(coords);
@@ -85,10 +66,7 @@ export const ShopAddressForm: React.FC<ShopAddressFormProps> = ({
     }
   };
 
-  const handleMapConfirm = async (coordinates: {
-    lat: number;
-    lng: number;
-  }) => {
+  const handleMapConfirm = async (coordinates: { lat: number; lng: number }) => {
     const result = await reverseGeocode(coordinates);
 
     if (result) {
@@ -119,16 +97,12 @@ export const ShopAddressForm: React.FC<ShopAddressFormProps> = ({
     <>
       <div className="bg-white rounded-xl shadow-sm p-6">
         <div className="flex items-center justify-between mb-4">
-          <h2 className="text-lg font-semibold text-gray-900">
-            Адреса магазину
-          </h2>
+          <h2 className="text-lg font-semibold text-gray-900">Адреса магазину</h2>
         </div>
 
         <div className="space-y-4">
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              Місто *
-            </label>
+            <label className="block text-sm font-medium text-gray-700 mb-2">Місто *</label>
             <div className="flex items-center gap-2">
               <input
                 type="text"
@@ -142,12 +116,7 @@ export const ShopAddressForm: React.FC<ShopAddressFormProps> = ({
             </div>
             {shopAddress.coordinates ? (
               <p className="text-xs text-green-600 mt-1 flex items-center gap-1">
-                <svg
-                  className="w-4 h-4"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path
                     strokeLinecap="round"
                     strokeLinejoin="round"
@@ -159,8 +128,7 @@ export const ShopAddressForm: React.FC<ShopAddressFormProps> = ({
               </p>
             ) : (
               <p className="text-xs text-gray-500 mt-1">
-                Виберіть точку на карті, щоб автоматично заповнити адресу та
-                зберегти координати
+                Виберіть точку на карті, щоб автоматично заповнити адресу та зберегти координати
               </p>
             )}
 
@@ -180,12 +148,9 @@ export const ShopAddressForm: React.FC<ShopAddressFormProps> = ({
                   />
                 </svg>
                 <div>
-                  <p className="text-sm font-medium text-red-800">
-                    Адресу не знайдено
-                  </p>
+                  <p className="text-sm font-medium text-red-800">Адресу не знайдено</p>
                   <p className="text-xs text-red-600 mt-0.5">
-                    Перевірте правильність адреси або виберіть місцезнаходження
-                    на карті
+                    Перевірте правильність адреси або виберіть місцезнаходження на карті
                   </p>
                   <button
                     type="button"
@@ -214,12 +179,9 @@ export const ShopAddressForm: React.FC<ShopAddressFormProps> = ({
                   />
                 </svg>
                 <div>
-                  <p className="text-sm font-medium text-amber-800">
-                    Підтвердіть місцезнаходження
-                  </p>
+                  <p className="text-sm font-medium text-amber-800">Підтвердіть місцезнаходження</p>
                   <p className="text-xs text-amber-700 mt-0.5">
-                    Адресу знайдено. Будь ласка, перевірте на карті, що мітка
-                    встановлена правильно
+                    Адресу знайдено. Будь ласка, перевірте на карті, що мітка встановлена правильно
                   </p>
                   <button
                     type="button"
@@ -248,9 +210,7 @@ export const ShopAddressForm: React.FC<ShopAddressFormProps> = ({
                   />
                 </svg>
                 <div>
-                  <p className="text-sm font-medium text-red-800">
-                    Заповніть поля
-                  </p>
+                  <p className="text-sm font-medium text-red-800">Заповніть поля</p>
                   <p className="text-xs text-red-600 mt-0.5">
                     Місто та вулиця є обов'язковими полями
                   </p>
@@ -262,15 +222,11 @@ export const ShopAddressForm: React.FC<ShopAddressFormProps> = ({
           <div className="flex items-start gap-2">
             <div className="grid grid-cols-2 gap-4 flex-1">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Вулиця *
-                </label>
+                <label className="block text-sm font-medium text-gray-700 mb-2">Вулиця *</label>
                 <input
                   type="text"
                   value={shopAddress.street}
-                  onChange={(e) =>
-                    handleAddressChange("street", e.target.value)
-                  }
+                  onChange={(e) => handleAddressChange("street", e.target.value)}
                   className={getInputClassName("street")}
                   placeholder="Хрещатик"
                   required
@@ -278,9 +234,7 @@ export const ShopAddressForm: React.FC<ShopAddressFormProps> = ({
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Будинок
-                </label>
+                <label className="block text-sm font-medium text-gray-700 mb-2">Будинок</label>
                 <input
                   type="text"
                   value={shopAddress.house}
@@ -299,11 +253,7 @@ export const ShopAddressForm: React.FC<ShopAddressFormProps> = ({
             disabled={loading || isLoading}
             className="w-full px-6 py-3 bg-indigo-600 text-white rounded-xl font-medium hover:bg-indigo-700 transition-colors disabled:bg-gray-400 disabled:cursor-not-allowed"
           >
-            {loading
-              ? "Зберігаємо..."
-              : isLoading
-                ? "Перевіряємо адресу..."
-                : "Зберегти адресу"}
+            {loading ? "Зберігаємо..." : isLoading ? "Перевіряємо адресу..." : "Зберегти адресу"}
           </button>
         </div>
       </div>

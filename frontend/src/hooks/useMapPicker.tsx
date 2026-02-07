@@ -27,11 +27,7 @@ export const useMapPicker = () => {
    * @param city - City name (optional, defaults to Ukraine-wide search)
    */
   const forwardGeocode = useCallback(
-    async (
-      street: string,
-      house?: string,
-      city?: string,
-    ): Promise<Coordinates | null> => {
+    async (street: string, house?: string, city?: string): Promise<Coordinates | null> => {
       if (!street) return null;
 
       setIsLoading(true);
@@ -53,7 +49,7 @@ export const useMapPicker = () => {
           throw new Error("Failed to geocode address");
         }
 
-        const data = await response.json();
+        const data = (await response.json()) as Array<{ lat: string; lon: string }>;
 
         if (!data || data.length === 0) {
           return null;
@@ -95,7 +91,21 @@ export const useMapPicker = () => {
           throw new Error("Failed to fetch address");
         }
 
-        const data = await response.json();
+        const data = (await response.json()) as {
+          display_name?: string;
+          address?: {
+            road?: string;
+            street?: string;
+            pedestrian?: string;
+            footway?: string;
+            path?: string;
+            house_number?: string;
+            city?: string;
+            town?: string;
+            village?: string;
+            municipality?: string;
+          };
+        };
 
         if (!data.address) {
           throw new Error("Address not found");
@@ -111,12 +121,7 @@ export const useMapPicker = () => {
           address.path ||
           "";
         const house = address.house_number || "";
-        const city =
-          address.city ||
-          address.town ||
-          address.village ||
-          address.municipality ||
-          "";
+        const city = address.city || address.town || address.village || address.municipality || "";
 
         // Build full address for display
         const fullAddress = data.display_name || "";
@@ -128,8 +133,7 @@ export const useMapPicker = () => {
           fullAddress,
         };
       } catch (err) {
-        const errorMessage =
-          err instanceof Error ? err.message : "Failed to get address";
+        const errorMessage = err instanceof Error ? err.message : "Failed to get address";
         setError(errorMessage);
         console.error("Reverse geocoding error:", err);
         return null;

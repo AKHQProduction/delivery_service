@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import {
   type Client,
   type Address,
@@ -7,30 +7,26 @@ import {
 } from "../../types/entities/Client";
 
 export const useClientForm = (initialData?: Partial<Client>) => {
-  const [formData, setFormData] = useState({
-    full_name: "",
-    phones: [{ number: "", is_primary: true, id: 0 }] as Phone[],
-    addresses: [
-      {
-        street: "",
-        house: "",
-        apartment: "",
-        entrance: "",
-        floor: "",
-        intercom: "",
-        is_primary: true,
-        comment: "",
-        coordinates: null,
-        district_id: null,
-      },
-    ] as Address[],
-  });
-
-  useEffect(() => {
-    if (initialData) {
-      setFormData((prev) => ({ ...prev, ...initialData }));
-    }
-  }, [initialData]);
+  const [formData, setFormData] = useState(() => ({
+    full_name: initialData?.full_name || "",
+    phones: initialData?.phones || ([{ number: "", is_primary: true, id: 0 }] as Phone[]),
+    addresses:
+      initialData?.addresses ||
+      ([
+        {
+          street: "",
+          house: "",
+          apartment: "",
+          entrance: "",
+          floor: "",
+          intercom: "",
+          is_primary: true,
+          comment: "",
+          coordinates: null,
+          district_id: null,
+        },
+      ] as Address[]),
+  }));
 
   const initializeForm = (client: Client) => {
     setFormData({
@@ -131,29 +127,20 @@ export const useClientForm = (initialData?: Partial<Client>) => {
     }));
   };
 
-  const handleAddressChange = (
-    index: number,
-    field: keyof Address,
-    value: string
-  ) => {
+  const handleAddressChange = (index: number, field: keyof Address, value: string) => {
     setFormData((prev) => {
       const addresses = [...prev.addresses];
       addresses[index] = {
         ...addresses[index],
         [field]: value,
         // Clear coordinates when street or house changes
-        ...(field === "street" || field === "house"
-          ? { coordinates: null }
-          : {}),
+        ...(field === "street" || field === "house" ? { coordinates: null } : {}),
       };
       return { ...prev, addresses };
     });
   };
 
-  const setAddressCoordinates = (
-    index: number,
-    coordinates: AddressCoordinates | null
-  ) => {
+  const setAddressCoordinates = (index: number, coordinates: AddressCoordinates | null) => {
     setFormData((prev) => {
       const addresses = [...prev.addresses];
       addresses[index] = { ...addresses[index], coordinates };

@@ -5,18 +5,14 @@ import { useProducts } from "../../../hooks/products/useProducts";
 import { DynamicFormSelect } from "../../shared/DynamicFormSelect";
 import { useCategoriesForm } from "../../../hooks/products/useCategoriesForm";
 import { CategoryManagementModal } from "../../features/AddCategoryComponent";
-import { type transformedCategories } from "../../../types/entities/Product";
+import { type Product } from "../../../types/entities/Product";
 
 interface AddProductFormProps {
   onClose: () => void;
-  onSuccess?: (product: transformedCategories) => void;
+  onSuccess?: (product: Product) => void;
 }
 
-export const AddProductForm: React.FC<AddProductFormProps> = ({
-  onClose,
-  onSuccess,
-}) => {
-  // Pass initial category to the hook
+export const AddProductForm: React.FC<AddProductFormProps> = ({ onClose, onSuccess }) => {
   const {
     selectedCategory,
     setSelectedCategory,
@@ -37,13 +33,9 @@ export const AddProductForm: React.FC<AddProductFormProps> = ({
   });
 
   const category =
-    selectedCategory && selectedCategory.trim() !== ""
-      ? selectedCategory
-      : undefined;
+    selectedCategory && selectedCategory.trim() !== "" ? selectedCategory : undefined;
 
-  const handleChange = (
-    e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>
-  ) => {
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
   };
 
@@ -51,11 +43,7 @@ export const AddProductForm: React.FC<AddProductFormProps> = ({
     e.preventDefault();
 
     try {
-      const newProduct = await addProduct(
-        formData.name,
-        parseFloat(formData.price),
-        category
-      );
+      const newProduct = await addProduct(formData.name, parseFloat(formData.price), category);
       if (onSuccess && newProduct) {
         onSuccess(newProduct);
       }
@@ -67,11 +55,7 @@ export const AddProductForm: React.FC<AddProductFormProps> = ({
   };
 
   return (
-    <FormWrapper
-      onSubmit={handleSubmit}
-      onClose={onClose}
-      submitLabel="Додати товар"
-    >
+    <FormWrapper onSubmit={handleSubmit} onClose={onClose} submitLabel="Додати товар">
       <FormInput
         label="Назва товару"
         name="name"

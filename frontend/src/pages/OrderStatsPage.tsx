@@ -57,9 +57,7 @@ export const OrdersStatsPage = () => {
 
       <div className="px-4 sm:px-6 pt-6 pb-4">
         <div className="bg-white rounded-2xl p-3 sm:p-4 shadow-sm border border-gray-200 overflow-hidden">
-          <label className="block text-sm font-semibold text-gray-700 mb-2">
-            Оберіть період
-          </label>
+          <label className="block text-sm font-semibold text-gray-700 mb-2">Оберіть період</label>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <DateInput
               label="Від"
@@ -124,9 +122,7 @@ export const OrdersStatsPage = () => {
                 <p className="text-xs font-medium text-gray-500 uppercase tracking-wide mb-1">
                   Замовлень
                 </p>
-                <p className="text-3xl font-bold text-gray-900">
-                  {stats.total_orders}
-                </p>
+                <p className="text-3xl font-bold text-gray-900">{stats.total_orders}</p>
               </div>
 
               {/* Total Sum */}
@@ -149,38 +145,31 @@ export const OrdersStatsPage = () => {
                 <p className="text-xs font-medium text-gray-500 uppercase tracking-wide mb-1">
                   Сума
                 </p>
-                <p className="text-3xl font-bold text-emerald-600">
-                  {stats.total_orders_sum}₴
-                </p>
+                <p className="text-3xl font-bold text-emerald-600">{stats.total_orders_sum}₴</p>
               </div>
             </div>
 
             {/* Payment Methods */}
-            {stats.payment_method_stats &&
-              stats.payment_method_stats.length > 0 && (
-                <div className="mt-4 pt-4 border-t border-gray-100">
-                  <p className="text-xs font-semibold text-gray-600 uppercase tracking-wide mb-3">
-                    Методи оплати
-                  </p>
-                  <div className="grid grid-cols-2 gap-3">
-                    {stats.payment_method_stats.map((payment, index) => {
-                      return (
-                        <div
-                          key={`${payment.method}-${index}`}
-                          className="flex flex-col items-center p-3 bg-gray-50 rounded-lg border border-gray-100"
-                        >
-                          <p className="text-xs text-gray-600 mb-1">
-                            {paymentMap[payment.method]}
-                          </p>
-                          <p className="text-lg font-bold text-gray-900">
-                            {payment.orders_sum}₴
-                          </p>
-                        </div>
-                      );
-                    })}
-                  </div>
+            {stats.payment_method_stats && stats.payment_method_stats.length > 0 && (
+              <div className="mt-4 pt-4 border-t border-gray-100">
+                <p className="text-xs font-semibold text-gray-600 uppercase tracking-wide mb-3">
+                  Методи оплати
+                </p>
+                <div className="grid grid-cols-2 gap-3">
+                  {stats.payment_method_stats.map((payment, index) => {
+                    return (
+                      <div
+                        key={`${payment.method}-${index}`}
+                        className="flex flex-col items-center p-3 bg-gray-50 rounded-lg border border-gray-100"
+                      >
+                        <p className="text-xs text-gray-600 mb-1">{paymentMap[payment.method]}</p>
+                        <p className="text-lg font-bold text-gray-900">{payment.orders_sum}₴</p>
+                      </div>
+                    );
+                  })}
                 </div>
-              )}
+              </div>
+            )}
           </div>
 
           <div className="bg-white rounded-2xl p-5 shadow-sm border border-gray-200">
@@ -202,45 +191,37 @@ export const OrdersStatsPage = () => {
             </h3>
 
             <div className="space-y-3">
-              {stats.time_slot_stats?.map(
-                (slot: { time_slot: string; total: number }) => {
-                  // Extract start time from time_slot (e.g., "09:00" from "09:00-14:00")
-                  const startTime = slot.time_slot.split("-")[0];
-                  const [hours] = startTime.split(":").map(Number);
+              {stats.time_slot_stats?.map((slot: { time_slot: string; total: number }) => {
+                // Extract start time from time_slot (e.g., "09:00" from "09:00-14:00")
+                const startTime = slot.time_slot.split("-")[0];
+                const [hours] = startTime.split(":").map(Number);
 
-                  // Determine if it's before or after 18:00
-                  const isBeforeEvening = hours < 18;
+                // Determine if it's before or after 18:00
+                const isBeforeEvening = hours < 18;
 
-                  return (
-                    <div
-                      key={slot.time_slot}
-                      className={`flex items-center justify-between p-4 rounded-xl border ${
-                        isBeforeEvening
-                          ? "bg-gradient-to-r from-yellow-50 to-amber-50 border-yellow-200"
-                          : "bg-gradient-to-r from-orange-50 to-red-50 border-orange-200"
-                      }`}
-                    >
-                      <div className="flex items-center gap-3">
-                        <div
-                          className={`w-10 h-10 rounded-full flex items-center justify-center ${
-                            isBeforeEvening ? "bg-yellow-400" : "bg-orange-400"
-                          }`}
-                        >
-                          <span className="text-xl">
-                            {isBeforeEvening ? "☀️" : "🏙️"}
-                          </span>
-                        </div>
-                        <span className="font-semibold text-gray-900">
-                          {slot.time_slot}
-                        </span>
+                return (
+                  <div
+                    key={slot.time_slot}
+                    className={`flex items-center justify-between p-4 rounded-xl border ${
+                      isBeforeEvening
+                        ? "bg-gradient-to-r from-yellow-50 to-amber-50 border-yellow-200"
+                        : "bg-gradient-to-r from-orange-50 to-red-50 border-orange-200"
+                    }`}
+                  >
+                    <div className="flex items-center gap-3">
+                      <div
+                        className={`w-10 h-10 rounded-full flex items-center justify-center ${
+                          isBeforeEvening ? "bg-yellow-400" : "bg-orange-400"
+                        }`}
+                      >
+                        <span className="text-xl">{isBeforeEvening ? "☀️" : "🏙️"}</span>
                       </div>
-                      <span className="text-2xl font-bold text-gray-900">
-                        {slot.total}
-                      </span>
+                      <span className="font-semibold text-gray-900">{slot.time_slot}</span>
                     </div>
-                  );
-                },
-              )}
+                    <span className="text-2xl font-bold text-gray-900">{slot.total}</span>
+                  </div>
+                );
+              })}
             </div>
           </div>
 
@@ -272,20 +253,14 @@ export const OrdersStatsPage = () => {
                     <div className="w-10 h-10 rounded-full bg-purple-400 flex items-center justify-center">
                       <span className="text-xl">📦</span>
                     </div>
-                    <span className="font-semibold text-gray-900">
-                      {category.name}
-                    </span>
+                    <span className="font-semibold text-gray-900">{category.name}</span>
                   </div>
-                  <span className="text-2xl font-bold text-gray-900">
-                    {category.quantity}
-                  </span>
+                  <span className="text-2xl font-bold text-gray-900">{category.quantity}</span>
                 </div>
               ))
             ) : (
               <div className="flex items-center justify-center py-6">
-                <p className="text-gray-500 text-center">
-                  Немає даних по категоріям.
-                </p>
+                <p className="text-gray-500 text-center">Немає даних по категоріям.</p>
               </div>
             )}
           </div>

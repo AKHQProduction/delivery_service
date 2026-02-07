@@ -16,12 +16,7 @@ interface UseModalReturn {
 }
 
 export const useModal = (options: UseModalOptions = {}): UseModalReturn => {
-  const {
-    initialOpen = false,
-    onOpen,
-    onClose,
-    animationDelay = 300,
-  } = options;
+  const { initialOpen = false, onOpen, onClose, animationDelay = 300 } = options;
 
   const [isOpen, setIsOpen] = useState(initialOpen);
   const [isVisible, setIsVisible] = useState(false);
@@ -29,7 +24,7 @@ export const useModal = (options: UseModalOptions = {}): UseModalReturn => {
   // Handle body scroll lock when modal is open
   useEffect(() => {
     if (isOpen) {
-      setIsVisible(true);
+      setIsVisible(true); // eslint-disable-line react-hooks/set-state-in-effect -- animation
       document.body.style.overflow = "hidden";
       onOpen?.();
     } else {

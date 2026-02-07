@@ -41,7 +41,7 @@ export const ProductSelectionStep: React.FC<ProductSelectionStepProps> = ({
         loadMore();
       }
     },
-    [hasMore, loadingMore, loadMore]
+    [hasMore, loadingMore, loadMore],
   );
 
   useEffect(() => {
@@ -66,15 +66,9 @@ export const ProductSelectionStep: React.FC<ProductSelectionStepProps> = ({
     };
   }, [handleObserver]);
 
-  const totalSelectedItems = selectedProducts.reduce(
-    (sum, p) => sum + p.quantity,
-    0
-  );
+  const totalSelectedItems = selectedProducts.reduce((sum, p) => sum + p.quantity, 0);
 
-  const totalAmount = selectedProducts.reduce(
-    (sum, p) => sum + p.product.price * p.quantity,
-    0
-  );
+  const totalAmount = selectedProducts.reduce((sum, p) => sum + p.product.price * p.quantity, 0);
 
   return (
     <div className="space-y-4">
@@ -82,14 +76,10 @@ export const ProductSelectionStep: React.FC<ProductSelectionStepProps> = ({
         <h3 className="text-xl font-bold text-gray-900">Вибір товарів</h3>
         {selectedProducts.length > 0 && (
           <div className="text-sm">
-            <span className="font-semibold text-indigo-600">
-              {selectedProducts.length}
-            </span>
+            <span className="font-semibold text-indigo-600">{selectedProducts.length}</span>
             <span className="text-gray-600"> товарів</span>
             <span className="mx-1 text-gray-400">•</span>
-            <span className="font-semibold text-indigo-600">
-              {totalSelectedItems}
-            </span>
+            <span className="font-semibold text-indigo-600">{totalSelectedItems}</span>
             <span className="text-gray-600"> шт.</span>
           </div>
         )}
@@ -124,7 +114,7 @@ export const ProductSelectionStep: React.FC<ProductSelectionStepProps> = ({
           <>
             {products.map((product) => {
               const selected = selectedProducts.find(
-                (p) => p.product.product_id === product.product_id
+                (p) => p.product.product_id === product.product_id,
               );
               return (
                 <div
@@ -137,9 +127,7 @@ export const ProductSelectionStep: React.FC<ProductSelectionStepProps> = ({
                 >
                   <div className="flex items-center gap-3">
                     <div className="flex-1 min-w-0">
-                      <div className="font-semibold text-gray-900 truncate">
-                        {product.name}
-                      </div>
+                      <div className="font-semibold text-gray-900 truncate">{product.name}</div>
                       <div className="flex items-center gap-2 mt-1">
                         <span className="text-base font-bold text-indigo-600">
                           {product.price} ₴
@@ -154,10 +142,7 @@ export const ProductSelectionStep: React.FC<ProductSelectionStepProps> = ({
                             if (selected.quantity <= 1) {
                               onProductToggle(product);
                             } else {
-                              onQuantityChange(
-                                product.product_id,
-                                selected.quantity - 1
-                              );
+                              onQuantityChange(product.product_id, selected.quantity - 1);
                             }
                           }}
                           type="button"
@@ -172,10 +157,7 @@ export const ProductSelectionStep: React.FC<ProductSelectionStepProps> = ({
                         </div>
                         <button
                           onClick={() =>
-                            onQuantityChange(
-                              product.product_id,
-                              selected.quantity + 1
-                            )
+                            onQuantityChange(product.product_id, selected.quantity + 1)
                           }
                           type="button"
                           className="w-9 h-9 rounded-lg bg-indigo-600 hover:bg-indigo-700 text-white flex items-center justify-center transition-colors font-bold text-lg"
@@ -233,8 +215,20 @@ export const ProductSelectionStep: React.FC<ProductSelectionStepProps> = ({
               {loadingMore && (
                 <div className="flex items-center gap-2 text-gray-500">
                   <svg className="animate-spin h-5 w-5" viewBox="0 0 24 24">
-                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
-                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
+                    <circle
+                      className="opacity-25"
+                      cx="12"
+                      cy="12"
+                      r="10"
+                      stroke="currentColor"
+                      strokeWidth="4"
+                      fill="none"
+                    />
+                    <path
+                      className="opacity-75"
+                      fill="currentColor"
+                      d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                    />
                   </svg>
                   <span className="text-sm">Завантаження...</span>
                 </div>
@@ -249,15 +243,11 @@ export const ProductSelectionStep: React.FC<ProductSelectionStepProps> = ({
           <div className="flex items-center justify-between p-4 bg-indigo-50 rounded-xl">
             <div>
               <div className="text-sm text-gray-600">Всього до сплати</div>
-              <div className="text-2xl font-bold text-indigo-600">
-                {totalAmount} ₴
-              </div>
+              <div className="text-2xl font-bold text-indigo-600">{totalAmount} ₴</div>
             </div>
             <div className="text-right">
               <div className="text-sm text-gray-600">Обрано товарів</div>
-              <div className="text-xl font-bold text-gray-900">
-                {totalSelectedItems} шт.
-              </div>
+              <div className="text-xl font-bold text-gray-900">{totalSelectedItems} шт.</div>
             </div>
           </div>
         </div>

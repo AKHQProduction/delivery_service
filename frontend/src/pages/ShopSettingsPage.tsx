@@ -22,9 +22,7 @@ export const ShopSettingsPage: React.FC = () => {
         <DistrictsComponent />
       </div>
 
-      {toast.isVisible && (
-        <Toast message={toast.message} type={toast.type} onClose={hideToast} />
-      )}
+      {toast.isVisible && <Toast message={toast.message} type={toast.type} onClose={hideToast} />}
     </div>
   );
 };

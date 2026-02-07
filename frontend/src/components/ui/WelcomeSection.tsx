@@ -5,10 +5,7 @@ interface WelcomeSectionProps {
   subtitle: string;
 }
 
-export const WelcomeSection: React.FC<WelcomeSectionProps> = ({
-  title,
-  subtitle,
-}) => {
+export const WelcomeSection: React.FC<WelcomeSectionProps> = ({ title, subtitle }) => {
   return (
     <div className="mb-8">
       <h2 className="text-2xl font-bold text-gray-800 mb-2">{title}</h2>
