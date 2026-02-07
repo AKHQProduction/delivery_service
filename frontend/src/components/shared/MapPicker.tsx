@@ -191,8 +191,9 @@ export const MapPicker: React.FC<MapPickerProps> = ({
             scrollWheelZoom={true}
           >
             <TileLayer
-              attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
-              url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+              url="https://{s}.google.com/vt/lyrs=y&x={x}&y={y}&z={z}&hl=uk"
+              subdomains={['mt0', 'mt1', 'mt2', 'mt3']}
+              maxZoom={21}
             />
             <MapCenterController center={mapCenter} />
             <MapClickHandler onPositionChange={setMarkerPosition} />
