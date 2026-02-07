@@ -13,11 +13,11 @@ export const EmployeeCard: React.FC<EmployeeCardProps> = ({ employee, onClick })
       onClick={() => onClick(employee)}
       className="
     bg-white rounded-2xl p-5 shadow-sm cursor-pointer
-    hover:shadow-lg hover:-translate-y-1 transition-all
+    hover:shadow-2xl hover:-translate-y-2 transition-all duration-300
     border border-gray-100 flex items-center gap-4
   "
     >
-      <div className="w-12 h-12 rounded-full bg-linear-to-br from-blue-500 to-blue-600 flex items-center justify-center text-white font-bold text-lg">
+      <div className="w-12 h-12 shrink-0 rounded-full bg-linear-to-br from-blue-500 to-blue-600 flex items-center justify-center text-white font-bold text-lg">
         {employee.full_name[0]}
       </div>
 

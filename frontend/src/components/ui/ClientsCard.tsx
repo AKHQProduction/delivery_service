@@ -71,14 +71,12 @@ export const ClientCard: React.FC<ClientCardProps> = ({ client, onClick }) => {
                     d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"
                   />
                 </svg>
-                <div className="flex flex-wrap gap-1.5">
-                  <span
-                    className="text-sm text-gray-700 bg-purple-50 px-2.5 py-0.5 rounded-lg font-medium
-                        group-hover:bg-purple-100 transition-colors"
-                  >
-                    {primaryAddress.street} {primaryAddress.house}
-                  </span>
-                </div>
+                <span
+                  className="text-sm text-gray-700 bg-purple-50 px-2.5 py-0.5 rounded-lg font-medium
+                      group-hover:bg-purple-100 transition-colors"
+                >
+                  {primaryAddress.street} {primaryAddress.house}
+                </span>
               </div>
             )}
           </div>

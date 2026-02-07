@@ -60,10 +60,10 @@ export const MainPage = () => {
     <div className="min-h-screen bg-gradient-to-b from-gray-50 to-gray-100">
       <PageHeader title="Головна" />
 
-      <div className="px-6 pb-24 pt-4">
+      <div className="px-6 pb-24 pt-4 lg:pb-8 lg:px-8">
         <WelcomeSection title="Вітаємо! 👋" subtitle="Оберіть розділ для швидкого доступу" />
 
-        <div className="grid grid-cols-1 gap-4">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
           {menuCards.map((card) => (
             <MenuCard
               key={card.path}

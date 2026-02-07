@@ -23,7 +23,7 @@ export const MenuCard: React.FC<MenuCardProps> = ({
       className={`group relative bg-white rounded-2xl shadow-sm transition-all duration-300 p-6 text-left border overflow-hidden ${
         disabled
           ? "opacity-60 cursor-not-allowed border-gray-200"
-          : "hover:shadow-xl border-gray-100"
+          : "hover:shadow-2xl hover:-translate-y-2 border-gray-100"
       }`}
     >
       {/* Gradient Background on Hover */}

@@ -1,5 +1,6 @@
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { BottomNavPanel } from "./components/layout/BottomNavPanel";
+import { AppLayout } from "./components/layout/AppLayout";
 import { routeConfig } from "./config/roles.config";
 import { ProtectedRoute } from "./components/ProtectedRoute";
 import { DevPage } from "./pages/DevPage";
@@ -30,20 +31,22 @@ function App() {
     <ErrorBoundary>
       <BrowserRouter>
         <ErrorProvider>
-          <Routes>
-            {isDev && <Route path="/dev" element={<DevPage />} />}
-            {routeConfig.map((route) => (
-              <Route
-                key={route.path}
-                path={route.path}
-                element={
-                  <ProtectedRoute allowedRoles={route.allowedRoles}>
-                    <route.component />
-                  </ProtectedRoute>
-                }
-              />
-            ))}
-          </Routes>
+          <AppLayout>
+            <Routes>
+              {isDev && <Route path="/dev" element={<DevPage />} />}
+              {routeConfig.map((route) => (
+                <Route
+                  key={route.path}
+                  path={route.path}
+                  element={
+                    <ProtectedRoute allowedRoles={route.allowedRoles}>
+                      <route.component />
+                    </ProtectedRoute>
+                  }
+                />
+              ))}
+            </Routes>
+          </AppLayout>
           <MenuModal />
           <AddItemComponent />
           <BottomNavPanel />
