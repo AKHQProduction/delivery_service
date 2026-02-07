@@ -282,57 +282,60 @@ export const TimeSlotsComponent = () => {
         })}
 
         {newSlots.map((slot) => (
-          <div key={slot.id} className="flex items-center gap-2">
+          <div key={slot.id} className="space-y-2 border-2 border-dashed border-gray-200 rounded-xl p-3">
             <input
               type="text"
-              placeholder="Назва"
+              placeholder="Назва таймслоту"
               value={slot.label}
               onChange={(e) => handleNewSlotChange(slot.id, "label", e.target.value)}
-              className="flex-1 min-w-0 px-4 py-3 border-2 border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+              className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
             />
-            <TimeInput
-              value={slot.start_time}
-              onChange={(value) => handleNewSlotChange(slot.id, "start_time", value)}
-            />
-            <TimeInput
-              value={slot.end_time}
-              onChange={(value) => handleNewSlotChange(slot.id, "end_time", value)}
-            />
-            <button
-              onClick={() => handleSaveNew(slot.id)}
-              disabled={!isNewSlotValid(slot)}
-              className={`w-10 h-10 flex-shrink-0 flex items-center justify-center rounded-xl transition-colors ${
-                isNewSlotValid(slot)
-                  ? "bg-green-500 hover:bg-green-600 text-white"
-                  : "bg-gray-200 text-gray-400 cursor-not-allowed"
-              }`}
-              aria-label="Зберегти новий таймслот"
-            >
-              <svg
-                className="w-5 h-5"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-                strokeWidth={2}
+            <div className="flex items-center gap-2">
+              <TimeInput
+                value={slot.start_time}
+                onChange={(value) => handleNewSlotChange(slot.id, "start_time", value)}
+              />
+              <TimeInput
+                value={slot.end_time}
+                onChange={(value) => handleNewSlotChange(slot.id, "end_time", value)}
+              />
+              <div className="flex-1" />
+              <button
+                onClick={() => handleSaveNew(slot.id)}
+                disabled={!isNewSlotValid(slot)}
+                className={`w-10 h-10 flex-shrink-0 flex items-center justify-center rounded-xl transition-colors ${
+                  isNewSlotValid(slot)
+                    ? "bg-green-500 hover:bg-green-600 text-white"
+                    : "bg-gray-200 text-gray-400 cursor-not-allowed"
+                }`}
+                aria-label="Зберегти новий таймслот"
               >
-                <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
-              </svg>
-            </button>
-            <button
-              onClick={() => handleDeleteNew(slot.id)}
-              className="w-10 h-10 flex-shrink-0 flex items-center justify-center rounded-xl hover:bg-red-200 bg-red-100 text-red-500 transition-colors"
-              aria-label="Скасувати"
-            >
-              <svg
-                className="w-5 h-5"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-                strokeWidth={2}
+                <svg
+                  className="w-5 h-5"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                  strokeWidth={2}
+                >
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+                </svg>
+              </button>
+              <button
+                onClick={() => handleDeleteNew(slot.id)}
+                className="w-10 h-10 flex-shrink-0 flex items-center justify-center rounded-xl hover:bg-red-200 bg-red-100 text-red-500 transition-colors"
+                aria-label="Скасувати"
               >
-                <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
-              </svg>
-            </button>
+                <svg
+                  className="w-5 h-5"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                  strokeWidth={2}
+                >
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            </div>
           </div>
         ))}
 
