@@ -108,7 +108,7 @@ export const TimeInput = ({
       onFocus={handleFocus}
       onKeyDown={handleKeyDown}
       maxLength={5}
-      className={`w-20 px-2 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm text-center ${className}`}
+      className={`w-20 px-2 py-3 border-2 border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent text-center ${className}`}
     />
   );
 };

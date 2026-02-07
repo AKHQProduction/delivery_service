@@ -2,7 +2,6 @@ import { useEffect } from "react";
 import { createPortal } from "react-dom";
 import { useTelegram } from "../../hooks/useTelegram";
 import { useTGSettings } from "../../hooks/settings/useTGSettings";
-import { TimeSlotsComponent } from "../settings/TimeSlotsComponent";
 import { useModal } from "../../hooks/useModal";
 
 export const MenuModal = () => {
@@ -77,9 +76,6 @@ export const MenuModal = () => {
                 </div>
               </label>
             </div>
-
-            {/* Timeslots Section */}
-            <TimeSlotsComponent />
           </div>
         </div>
       </div>

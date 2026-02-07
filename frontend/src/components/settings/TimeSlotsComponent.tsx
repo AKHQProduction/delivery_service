@@ -164,7 +164,21 @@ export const TimeSlotsComponent = () => {
     return slot[field];
   };
   const isSlotEdited = (slotId: string) => {
-    return editedSlots[slotId] !== undefined;
+    const edited = editedSlots[slotId];
+    if (!edited) return false;
+
+    const originalSlot = timeSlots?.find((s) => s?.time_slot_id === slotId);
+    if (!originalSlot) return false;
+
+    const editedLabel = edited.label ?? originalSlot.label;
+    const editedStart = edited.start_time ?? originalSlot.start_time;
+    const editedEnd = edited.end_time ?? originalSlot.end_time;
+
+    return (
+      editedLabel !== originalSlot.label ||
+      editedStart !== originalSlot.start_time ||
+      editedEnd !== originalSlot.end_time
+    );
   };
 
   const isNewSlotValid = (slot: NewSlot) => {
@@ -177,9 +191,9 @@ export const TimeSlotsComponent = () => {
   );
 
   return (
-    <div className="pb-4">
+    <div className="bg-white rounded-xl shadow-sm p-6">
       <div className="flex items-center justify-between mb-4">
-        <h3 className="text-lg font-semibold text-gray-800">Часові проміжки</h3>
+        <h2 className="text-lg font-semibold text-gray-900">Часові проміжки</h2>
       </div>
 
       <div className="space-y-3">
@@ -195,7 +209,7 @@ export const TimeSlotsComponent = () => {
                 placeholder="Назва"
                 value={currentLabel}
                 onChange={(e) => handleFieldChange(slot.time_slot_id, "label", e.target.value)}
-                className="flex-1 min-w-0 px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
+                className="flex-1 min-w-0 px-4 py-3 border-2 border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
               />
               <TimeInput
                 value={startTimeValue}
@@ -213,8 +227,8 @@ export const TimeSlotsComponent = () => {
               {isSlotEdited(slot.time_slot_id) ? (
                 <button
                   onClick={() => handleSaveExisting(slot.time_slot_id)}
-                  className="w-8 h-8 flex-shrink-0 flex items-center justify-center rounded-lg bg-green-500 hover:bg-green-600 text-white transition-colors"
-                  aria-label="Save timeslot"
+                  className="w-10 h-10 flex-shrink-0 flex items-center justify-center rounded-xl bg-green-500 hover:bg-green-600 text-white transition-colors"
+                  aria-label="Зберегти таймслот"
                 >
                   <svg
                     className="w-5 h-5"
@@ -235,8 +249,8 @@ export const TimeSlotsComponent = () => {
                       console.error("Error deleting timeslot:", error);
                     }
                   }}
-                  className="w-8 h-8 flex-shrink-0 flex items-center justify-center rounded-lg hover:bg-red-50 text-red-500 transition-colors"
-                  aria-label="Delete timeslot"
+                  className="w-10 h-10 flex-shrink-0 flex items-center justify-center rounded-xl hover:bg-red-50 text-red-500 transition-colors"
+                  aria-label="Видалити таймслот"
                 >
                   <svg
                     className="w-5 h-5"
@@ -245,7 +259,11 @@ export const TimeSlotsComponent = () => {
                     viewBox="0 0 24 24"
                     strokeWidth={2}
                   >
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
+                    />
                   </svg>
                 </button>
               )}
@@ -260,7 +278,7 @@ export const TimeSlotsComponent = () => {
               placeholder="Назва"
               value={slot.label}
               onChange={(e) => handleNewSlotChange(slot.id, "label", e.target.value)}
-              className="flex-1 min-w-0 px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
+              className="flex-1 min-w-0 px-4 py-3 border-2 border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
             />
             <TimeInput
               value={slot.start_time}
@@ -270,51 +288,54 @@ export const TimeSlotsComponent = () => {
               value={slot.end_time}
               onChange={(value) => handleNewSlotChange(slot.id, "end_time", value)}
             />
-            {isNewSlotValid(slot) ? (
-              <button
-                onClick={() => handleSaveNew(slot.id)}
-                className="w-8 h-8 flex-shrink-0 flex items-center justify-center rounded-lg bg-green-500 hover:bg-green-600 text-white transition-colors"
-                aria-label="Save new timeslot"
+            <button
+              onClick={() => handleSaveNew(slot.id)}
+              disabled={!isNewSlotValid(slot)}
+              className={`w-10 h-10 flex-shrink-0 flex items-center justify-center rounded-xl transition-colors ${
+                isNewSlotValid(slot)
+                  ? "bg-green-500 hover:bg-green-600 text-white"
+                  : "bg-gray-200 text-gray-400 cursor-not-allowed"
+              }`}
+              aria-label="Зберегти новий таймслот"
+            >
+              <svg
+                className="w-5 h-5"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+                strokeWidth={2}
               >
-                <svg
-                  className="w-5 h-5"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                  strokeWidth={2}
-                >
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
-                </svg>
-              </button>
-            ) : (
-              <button
-                onClick={() => handleDeleteNew(slot.id)}
-                className="w-8 h-8 flex-shrink-0 flex items-center justify-center rounded-lg hover:bg-red-50 text-red-500 transition-colors"
-                aria-label="Cancel new timeslot"
+                <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+              </svg>
+            </button>
+            <button
+              onClick={() => handleDeleteNew(slot.id)}
+              className="w-10 h-10 flex-shrink-0 flex items-center justify-center rounded-xl hover:bg-red-200 bg-red-100 text-red-500 transition-colors"
+              aria-label="Скасувати"
+            >
+              <svg
+                className="w-5 h-5"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+                strokeWidth={2}
               >
-                <svg
-                  className="w-5 h-5"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                  strokeWidth={2}
-                >
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
-                </svg>
-              </button>
-            )}
+                <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+              </svg>
+            </button>
           </div>
         ))}
 
         {validTimeSlots.length === 0 && newSlots.length === 0 && (
-          <p className="text-gray-400 text-sm text-center py-4">
-            Немає таймслотів. Натісніть "Додати таймслот" щоб створити.
-          </p>
+          <div className="text-center py-8 text-gray-500">
+            <p>Часові проміжки не додані</p>
+            <p className="text-sm mt-1">Натисніть "+ Додати таймслот" щоб створити новий</p>
+          </div>
         )}
 
         <button
           onClick={handleAddNewSlot}
-          className="text-indigo-600 hover:text-indigo-700 text-sm font-medium transition-colors "
+          className="text-indigo-600 hover:text-indigo-700 text-sm font-medium transition-colors"
         >
           + Додати таймслот
         </button>
