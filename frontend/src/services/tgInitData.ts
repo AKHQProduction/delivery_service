@@ -21,7 +21,7 @@ const initData = (): TelegramWebAppData | null => {
     clearInterval(interval);
     data = null;
   }
-  console.log("DATA:", data)
+  console.log("DATA:", data);
   return data;
 };
 

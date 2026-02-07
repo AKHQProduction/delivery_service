@@ -8,15 +8,22 @@ import { useEmployees } from "../hooks/useEmployees";
 import { reverseRoleMap } from "../utils/dataMap";
 import { type Employee } from "../types/entities/Employee";
 import { useInfiniteScroll } from "../hooks/useInfiniteScroll";
+import { EmployeeCardSkeleton } from "../components/ui/Skeleton";
 
 export const EmployeePage = () => {
   const [searchTerm, setSearchTerm] = useState("");
-  const [selectedEmployee, setSelectedEmployee] = useState<Employee | null>(
-    null
-  );
+  const [selectedEmployee, setSelectedEmployee] = useState<Employee | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const { getEmployees, deleteEmployees, updateEmployee, employees, loadMoreEmployees, loadingMore, hasMore } =
-    useEmployees();
+  const {
+    getEmployees,
+    deleteEmployees,
+    updateEmployee,
+    employees,
+    loadMoreEmployees,
+    loading,
+    loadingMore,
+    hasMore,
+  } = useEmployees();
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const { sentinelRef } = useInfiniteScroll({
@@ -27,6 +34,7 @@ export const EmployeePage = () => {
 
   useEffect(() => {
     getEmployees();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   useEffect(() => {
@@ -43,6 +51,7 @@ export const EmployeePage = () => {
         clearTimeout(debounceRef.current);
       }
     };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [searchTerm]);
 
   const handleEmployeeClick = (employee: Employee) => {
@@ -59,16 +68,12 @@ export const EmployeePage = () => {
     if (!updatedEmployee?.user_id) return;
 
     const reverseRole = reverseRoleMap[updatedEmployee.role];
-    await updateEmployee(
-      updatedEmployee.user_id,
-      updatedEmployee.full_name,
-      reverseRole
-    );
+    await updateEmployee(updatedEmployee.user_id, updatedEmployee.full_name, reverseRole);
     const refreshedEmployees = await getEmployees(searchTerm);
 
     if (refreshedEmployees) {
       const updatedSelectedEmployee = refreshedEmployees.find(
-        (emp: Employee) => emp?.user_id === updatedEmployee.user_id
+        (emp: Employee) => emp?.user_id === updatedEmployee.user_id,
       );
       if (updatedSelectedEmployee) {
         setSelectedEmployee(updatedSelectedEmployee);
@@ -96,7 +101,15 @@ export const EmployeePage = () => {
         />
       </div>
 
-      {employees.length === 0 ? (
+      {loading && employees.length === 0 ? (
+        <div className="px-6 pb-24">
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+            {Array.from({ length: 8 }).map((_, i) => (
+              <EmployeeCardSkeleton key={i} />
+            ))}
+          </div>
+        </div>
+      ) : employees.length === 0 ? (
         <div className="flex flex-col items-center justify-center mt-20">
           <svg
             className="w-16 h-16 mx-auto mb-4 text-gray-300"
@@ -115,9 +128,7 @@ export const EmployeePage = () => {
             {searchTerm ? "Працівників не знайдено" : "Працівники відсутні"}
           </p>
           {searchTerm && (
-            <p className="text-gray-400 text-sm mt-2">
-              Спробуйте інший пошуковий запит
-            </p>
+            <p className="text-gray-400 text-sm mt-2">Спробуйте інший пошуковий запит</p>
           )}
         </div>
       ) : (
@@ -136,8 +147,20 @@ export const EmployeePage = () => {
             {loadingMore && (
               <div className="flex items-center gap-2 text-gray-500">
                 <svg className="animate-spin h-5 w-5" viewBox="0 0 24 24">
-                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
-                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
+                  <circle
+                    className="opacity-25"
+                    cx="12"
+                    cy="12"
+                    r="10"
+                    stroke="currentColor"
+                    strokeWidth="4"
+                    fill="none"
+                  />
+                  <path
+                    className="opacity-75"
+                    fill="currentColor"
+                    d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                  />
                 </svg>
                 <span>Завантаження...</span>
               </div>

@@ -32,25 +32,25 @@ api.interceptors.response.use(
 
       //TODO:
       //MOVE THIS TO A SEPARATE FILE WITH ALL EXEPTIONS
-       if (error.response.status === 409 && data?.code === "duplicate_phones") {
+      if (error.response.status === 409 && data?.code === "duplicate_phones") {
         return Promise.reject(error);
       }
       // Extract error message from backend response
       // Adjust these fields based on your backend's error response structure
-      const errorMessage = 
-        data?.error ||           // Common field
-        data?.message ||         // Common field
-        data?.msg ||             // Common field
-        data?.detail ||          // FastAPI/Django style
-        data?.error_message ||   // Custom field
+      const errorMessage =
+        data?.error || // Common field
+        data?.message || // Common field
+        data?.msg || // Common field
+        data?.detail || // FastAPI/Django style
+        data?.error_message || // Custom field
         `Error ${error.response.status}`;
-      
+
       // Extract additional details if available
-      const errorDetails = 
+      const errorDetails =
         data?.details ||
         data?.description ||
         data?.error_description ||
-        (typeof data === 'string' ? data : undefined);
+        (typeof data === "string" ? data : undefined);
 
       // Call the error handler if it's set
       if (errorHandler) {
@@ -68,7 +68,7 @@ api.interceptors.response.use(
       if (errorHandler) {
         errorHandler(
           "Network Error",
-          "Unable to connect to the server. Check your internet connection."
+          "Unable to connect to the server. Check your internet connection.",
         );
       }
     } else {
@@ -79,7 +79,7 @@ api.interceptors.response.use(
     }
 
     return Promise.reject(error);
-  }
+  },
 );
 
 // Function to set the error handler

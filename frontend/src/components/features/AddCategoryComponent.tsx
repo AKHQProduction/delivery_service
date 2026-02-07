@@ -3,7 +3,6 @@ import Edit from "../../assets/icons/edit.svg";
 import Delete from "../../assets/icons/delete.svg";
 import { type transformedCategories } from "../../types/entities/Product";
 
-
 interface CategoryManagementModalProps {
   isOpen: boolean;
   onClose: () => void;
@@ -13,9 +12,7 @@ interface CategoryManagementModalProps {
   onDeleteCategory: (id: string) => void;
 }
 
-export const CategoryManagementModal: React.FC<
-  CategoryManagementModalProps
-> = ({
+export const CategoryManagementModal: React.FC<CategoryManagementModalProps> = ({
   isOpen,
   onClose,
   categories,
@@ -78,12 +75,7 @@ export const CategoryManagementModal: React.FC<
             onClick={onClose}
             className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
           >
-            <svg
-              className="w-6 h-6"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
-            >
+            <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path
                 strokeLinecap="round"
                 strokeLinejoin="round"
@@ -100,16 +92,11 @@ export const CategoryManagementModal: React.FC<
             {categories.length === 0 ? (
               <div className="text-center text-gray-500 py-8">
                 <p className="text-sm">Категорій ще немає</p>
-                <p className="text-xs mt-1">
-                  Додайте першу категорію, щоб почати
-                </p>
+                <p className="text-xs mt-1">Додайте першу категорію, щоб почати</p>
               </div>
             ) : (
               categories.map((category) => (
-                <div
-                  key={category.id}
-                  className="p-4 bg-gray-50 rounded-xl"
-                >
+                <div key={category.id} className="p-4 bg-gray-50 rounded-xl">
                   <div className="flex items-center gap-3">
                     <div className="w-12 h-12 bg-white rounded-lg flex items-center justify-center text-2xl">
                       {category.emoji}

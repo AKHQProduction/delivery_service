@@ -3,14 +3,10 @@ import SearchIcon from "../../assets/icons/search.svg";
 type SearchBarProps = {
   placeholder: string;
   searchTerm: string;
-  setSearchTerm: (term: any) => void;
+  setSearchTerm: (term: string) => void;
 };
 
-export const SearchBar = ({
-  placeholder,
-  searchTerm,
-  setSearchTerm,
-}: SearchBarProps) => {
+export const SearchBar = ({ placeholder, searchTerm, setSearchTerm }: SearchBarProps) => {
   return (
     <>
       <div className="relative">

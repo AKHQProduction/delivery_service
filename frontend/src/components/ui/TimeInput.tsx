@@ -1,10 +1,4 @@
-import {
-  useState,
-  useRef,
-  type ChangeEvent,
-  type FocusEvent,
-  type KeyboardEvent,
-} from "react";
+import { useState, useRef, useEffect, type ChangeEvent, type KeyboardEvent } from "react";
 
 interface TimeInputProps {
   value: string;
@@ -31,11 +25,7 @@ export const TimeInput = ({
     input = input.replace(/[^\d:]/g, "");
 
     // Auto-add colon after 2 digits
-    if (
-      input.length === 2 &&
-      !input.includes(":") &&
-      localValue.length < input.length
-    ) {
+    if (input.length === 2 && !input.includes(":") && localValue.length < input.length) {
       input = input + ":";
     }
 
@@ -47,7 +37,7 @@ export const TimeInput = ({
     setLocalValue(input);
   };
 
-  const handleBlur = (_e: FocusEvent<HTMLInputElement>) => {
+  const handleBlur = () => {
     const formatted = formatAndValidate(localValue);
     setLocalValue(formatted);
     if (formatted && formatted !== value) {
@@ -97,9 +87,12 @@ export const TimeInput = ({
   };
 
   // Sync with external value changes
-  if (value !== localValue && !inputRef.current?.matches(":focus")) {
-    setLocalValue(value);
-  }
+  useEffect(() => {
+    if (value !== localValue && !inputRef.current?.matches(":focus")) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect -- Sync controlled value with local state
+      setLocalValue(value);
+    }
+  }, [value, localValue]);
 
   return (
     <input
@@ -115,7 +108,7 @@ export const TimeInput = ({
       onFocus={handleFocus}
       onKeyDown={handleKeyDown}
       maxLength={5}
-      className={`w-20 px-2 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm text-center ${className}`}
+      className={`w-20 px-2 py-3 border-2 border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent text-center ${className}`}
     />
   );
 };

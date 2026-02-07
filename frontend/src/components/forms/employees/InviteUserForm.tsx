@@ -15,9 +15,7 @@ export const InviteUserForm: React.FC<{
 
   const { createInviteLink } = useEmployees();
 
-  const handleChange = (
-    e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>
-  ) => {
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
   };
 
@@ -26,8 +24,9 @@ export const InviteUserForm: React.FC<{
 
     const link = await createInviteLink(formData.role, formData.name);
 
-    onInviteCreated(link);
-    onClose();
+    if (link) {
+      onInviteCreated(link);
+    }
   };
 
   const roleOptions = [
@@ -36,11 +35,7 @@ export const InviteUserForm: React.FC<{
   ];
 
   return (
-    <FormWrapper
-      onSubmit={handleSubmit}
-      onClose={onClose}
-      submitLabel="Запросити співробітника"
-    >
+    <FormWrapper onSubmit={handleSubmit} onClose={onClose} submitLabel="Запросити співробітника">
       <FormInput
         label="Ім'я співробітника"
         name="name"

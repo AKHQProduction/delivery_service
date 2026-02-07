@@ -59,11 +59,7 @@ export const ClientDetailModal: React.FC<ClientDetailModalProps> = ({
         </div>
 
         <div className="flex-1 overflow-y-auto px-6 py-6">
-          <EditClientForm
-            client={client}
-            onClose={handleCancelEdit}
-            onSave={handleSaveEdit}
-          />
+          <EditClientForm client={client} onClose={handleCancelEdit} onSave={handleSaveEdit} />
         </div>
       </div>
     );
@@ -81,9 +77,7 @@ export const ClientDetailModal: React.FC<ClientDetailModalProps> = ({
           <img src={leftArrowIcon} alt="Back" className="w-8 h-8" />
         </button>
 
-        <h1 className="text-3xl font-bold text-white mb-2">
-          {client.full_name}
-        </h1>
+        <h1 className="text-3xl font-bold text-white mb-2">{client.full_name}</h1>
       </div>
 
       <div className="flex-1 overflow-y-auto px-6 py-6 space-y-6 pb-24">

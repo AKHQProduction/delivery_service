@@ -20,18 +20,36 @@ interface OrderItem {
   quantity: number;
 }
 
+interface LoadedOrder {
+  order_id: string;
+  client_id?: string;
+  phone_id?: number;
+  address_id?: number;
+  delivery_date?: string;
+  date?: string;
+  time_slot_id?: string;
+  time_slot?: string;
+  payment_method?: string;
+  note?: string;
+  comment?: string;
+  items?: Array<{
+    id: number;
+    product_id: string;
+    name?: string;
+    price_per_item?: number;
+    price?: number;
+    quantity: number;
+  }>;
+}
+
 interface EditOrderFormProps {
-  order: any;
+  order: { order_id: string };
   onClose: () => void;
   onSave?: () => void;
   onDelete?: () => void;
 }
 
-export const EditOrderForm: React.FC<EditOrderFormProps> = ({
-  onClose,
-  onSave,
-  order,
-}) => {
+export const EditOrderForm: React.FC<EditOrderFormProps> = ({ onClose, onSave, order }) => {
   const { updateCurrentOrder } = useOrders();
   const {
     clients,
@@ -52,9 +70,7 @@ export const EditOrderForm: React.FC<EditOrderFormProps> = ({
   // Form state
   const [selectedClient, setSelectedClient] = useState<Client | null>(null);
   const [selectedPhoneId, setSelectedPhoneId] = useState<number | null>(null);
-  const [selectedAddressId, setSelectedAddressId] = useState<number | null>(
-    null,
-  );
+  const [selectedAddressId, setSelectedAddressId] = useState<number | null>(null);
   const [orderItems, setOrderItems] = useState<OrderItem[]>([]);
   const [deliveryDate, setDeliveryDate] = useState("");
   const [timeSlot, setTimeSlot] = useState("");
@@ -67,7 +83,7 @@ export const EditOrderForm: React.FC<EditOrderFormProps> = ({
   const [productSearch, setProductSearch] = useState("");
   const [clientSearch, setClientSearch] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [loadedOrder, setLoadedOrder] = useState<any>(null);
+  const [loadedOrder, setLoadedOrder] = useState<LoadedOrder | null>(null);
 
   // Refs for infinite scroll
   const productListRef = useRef<HTMLDivElement>(null);
@@ -77,59 +93,41 @@ export const EditOrderForm: React.FC<EditOrderFormProps> = ({
     const loadData = async () => {
       try {
         const [orderData, , fetchedProducts] = await Promise.all([
-          getOrderById(order.order_id),
+          getOrderById(order.order_id) as Promise<LoadedOrder>,
           getClients(),
           getProducts(),
         ]);
         setLoadedOrder(orderData);
 
         if (orderData.client_id) {
-          const orderClient = await getClientById(orderData.client_id);
+          const orderClient = (await getClientById(orderData.client_id)) as Client;
           setSelectedClient(orderClient);
 
-          const matchedPhone = orderClient?.phones?.find(
-            (p: any) => p.id === orderData.phone_id,
-          );
-          const primaryPhone = orderClient?.phones?.find(
-            (p: any) => p.is_primary,
-          );
+          const matchedPhone = orderClient?.phones?.find((p) => p.id === orderData.phone_id);
+          const primaryPhone = orderClient?.phones?.find((p) => p.is_primary);
           setSelectedPhoneId(
-            matchedPhone?.id ||
-              primaryPhone?.id ||
-              orderClient?.phones?.[0]?.id ||
-              null,
+            matchedPhone?.id || primaryPhone?.id || orderClient?.phones?.[0]?.id || null,
           );
 
-          const matchedAddress = orderClient?.addresses?.find(
-            (a: any) => a.id === orderData.address_id,
-          );
-          const primaryAddress = orderClient?.addresses?.find(
-            (a: any) => a.is_primary,
-          );
+          const matchedAddress = orderClient?.addresses?.find((a) => a.id === orderData.address_id);
+          const primaryAddress = orderClient?.addresses?.find((a) => a.is_primary);
           setSelectedAddressId(
-            matchedAddress?.id ||
-              primaryAddress?.id ||
-              orderClient?.addresses?.[0]?.id ||
-              null,
+            matchedAddress?.id || primaryAddress?.id || orderClient?.addresses?.[0]?.id || null,
           );
         }
 
         const items: OrderItem[] =
-          orderData.items?.map((item: any) => ({
+          orderData.items?.map((item) => ({
             id: item.id,
             product_id: item.product_id,
             name:
               item.name ||
-              fetchedProducts?.find(
-                (p: any) => p.product_id === item.product_id,
-              )?.name ||
+              fetchedProducts?.find((p) => p.product_id === item.product_id)?.name ||
               "",
             price:
               item.price_per_item ||
               item.price ||
-              fetchedProducts?.find(
-                (p: any) => p.product_id === item.product_id,
-              )?.price ||
+              fetchedProducts?.find((p) => p.product_id === item.product_id)?.price ||
               0,
             quantity: item.quantity,
           })) || [];
@@ -145,8 +143,7 @@ export const EditOrderForm: React.FC<EditOrderFormProps> = ({
         } else if (orderData.time_slot) {
           // Match the formatted string like "13:33-23:12" with timeSlots
           const matchingSlot = timeSlots.find((slot) => {
-            const formatTime = (timeStr: string) =>
-              timeStr ? timeStr.slice(0, 5) : "";
+            const formatTime = (timeStr: string) => (timeStr ? timeStr.slice(0, 5) : "");
             const slotFormatted = `${formatTime(slot.start_time)}-${formatTime(slot.end_time)}`;
             return slotFormatted === orderData.time_slot;
           });
@@ -160,6 +157,7 @@ export const EditOrderForm: React.FC<EditOrderFormProps> = ({
       }
     };
     loadData();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [order.order_id, timeSlots]);
 
   const productDebounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -171,6 +169,7 @@ export const EditOrderForm: React.FC<EditOrderFormProps> = ({
     return () => {
       if (productDebounceRef.current) clearTimeout(productDebounceRef.current);
     };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [productSearch]);
 
   const clientDebounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -182,17 +181,14 @@ export const EditOrderForm: React.FC<EditOrderFormProps> = ({
     return () => {
       if (clientDebounceRef.current) clearTimeout(clientDebounceRef.current);
     };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [clientSearch]);
 
   // Infinite scroll for products
   const handleProductScroll = useCallback(() => {
     if (!productListRef.current) return;
     const { scrollTop, scrollHeight, clientHeight } = productListRef.current;
-    if (
-      scrollHeight - scrollTop - clientHeight < 100 &&
-      productsHasMore &&
-      !productsLoadingMore
-    ) {
+    if (scrollHeight - scrollTop - clientHeight < 100 && productsHasMore && !productsLoadingMore) {
       loadMoreProducts();
     }
   }, [productsHasMore, productsLoadingMore, loadMoreProducts]);
@@ -201,11 +197,7 @@ export const EditOrderForm: React.FC<EditOrderFormProps> = ({
   const handleClientScroll = useCallback(() => {
     if (!clientListRef.current) return;
     const { scrollTop, scrollHeight, clientHeight } = clientListRef.current;
-    if (
-      scrollHeight - scrollTop - clientHeight < 100 &&
-      clientsHasMore &&
-      !clientsLoadingMore
-    ) {
+    if (scrollHeight - scrollTop - clientHeight < 100 && clientsHasMore && !clientsLoadingMore) {
       loadMoreClients();
     }
   }, [clientsHasMore, clientsLoadingMore, loadMoreClients]);
@@ -223,9 +215,7 @@ export const EditOrderForm: React.FC<EditOrderFormProps> = ({
   const handleQuantityChange = (index: number, delta: number) => {
     setOrderItems((prev) =>
       prev.map((item, i) =>
-        i === index
-          ? { ...item, quantity: Math.max(1, item.quantity + delta) }
-          : item,
+        i === index ? { ...item, quantity: Math.max(1, item.quantity + delta) } : item,
       ),
     );
   };
@@ -235,9 +225,7 @@ export const EditOrderForm: React.FC<EditOrderFormProps> = ({
   };
 
   const handleAddProduct = (product: Product) => {
-    const existingIndex = orderItems.findIndex(
-      (item) => item.product_id === product.product_id,
-    );
+    const existingIndex = orderItems.findIndex((item) => item.product_id === product.product_id);
     if (existingIndex >= 0) {
       handleQuantityChange(existingIndex, 1);
     } else {
@@ -257,17 +245,19 @@ export const EditOrderForm: React.FC<EditOrderFormProps> = ({
 
   // Calculate totals
   const totalItems = orderItems.reduce((sum, item) => sum + item.quantity, 0);
-  const totalAmount = orderItems.reduce(
-    (sum, item) => sum + item.price * item.quantity,
-    0,
-  );
+  const totalAmount = orderItems.reduce((sum, item) => sum + item.price * item.quantity, 0);
 
   // Filter products for search (exclude already added)
   const availableProducts = products.filter(
     (p) => !orderItems.some((item) => item.product_id === p.product_id),
   );
 
-  const formatTimeSlotLabel = (slot: any) => {
+  const formatTimeSlotLabel = (slot: {
+    time_slot_id: string;
+    start_time: string;
+    end_time: string;
+    label?: string;
+  }) => {
     const formatTime = (timeStr: string) => {
       if (!timeStr) return "";
       // Handle both HH:MM:SS and HH:MM formats
@@ -298,7 +288,7 @@ export const EditOrderForm: React.FC<EditOrderFormProps> = ({
 
     setIsSubmitting(true);
     try {
-      const payload: Record<string, any> = {};
+      const payload: Record<string, unknown> = {};
 
       if (selectedClient.client_id !== loadedOrder.client_id) {
         payload.client_id = selectedClient.client_id;
@@ -308,10 +298,7 @@ export const EditOrderForm: React.FC<EditOrderFormProps> = ({
       payload.phone_id = selectedPhoneId;
       payload.address_id = selectedAddressId;
 
-      if (
-        deliveryDate !== loadedOrder.delivery_date &&
-        deliveryDate !== loadedOrder.date
-      ) {
+      if (deliveryDate !== loadedOrder.delivery_date && deliveryDate !== loadedOrder.date) {
         payload.delivery_date = deliveryDate;
       }
       if (timeSlot !== loadedOrder.time_slot_id) {
@@ -334,7 +321,11 @@ export const EditOrderForm: React.FC<EditOrderFormProps> = ({
 
       console.log("Submitting payload:", payload);
       await updateCurrentOrder(order.order_id, payload);
-      onSave ? onSave() : onClose();
+      if (onSave) {
+        onSave();
+      } else {
+        onClose();
+      }
     } catch (error) {
       console.error("Error updating order:", error);
       alert("Помилка при оновленні замовлення");
@@ -375,13 +366,9 @@ export const EditOrderForm: React.FC<EditOrderFormProps> = ({
               >
                 <div className="flex items-center gap-3">
                   <div className="flex-1 min-w-0">
-                    <div className="font-semibold text-gray-900 truncate">
-                      {item.name}
-                    </div>
+                    <div className="font-semibold text-gray-900 truncate">{item.name}</div>
                     <div className="flex items-center gap-2 mt-1">
-                      <span className="text-base font-bold text-indigo-600">
-                        {item.price} ₴
-                      </span>
+                      <span className="text-base font-bold text-indigo-600">{item.price} ₴</span>
                     </div>
                   </div>
 
@@ -395,9 +382,7 @@ export const EditOrderForm: React.FC<EditOrderFormProps> = ({
                       −
                     </button>
                     <div className="w-14 text-center">
-                      <span className="text-lg font-bold text-gray-900">
-                        {item.quantity}
-                      </span>
+                      <span className="text-lg font-bold text-gray-900">{item.quantity}</span>
                     </div>
                     <button
                       onClick={() => handleQuantityChange(index, 1)}
@@ -435,15 +420,11 @@ export const EditOrderForm: React.FC<EditOrderFormProps> = ({
           {/* Add Product Button */}
           {!showAddProduct ? (
             <button
+              type="button"
               onClick={() => setShowAddProduct(true)}
               className="w-full py-3 border-2 border-dashed border-gray-300 rounded-xl text-gray-500 hover:border-indigo-400 hover:text-indigo-600 hover:bg-indigo-50 transition-colors flex items-center justify-center gap-2 font-medium"
             >
-              <svg
-                className="w-5 h-5"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path
                   strokeLinecap="round"
                   strokeLinejoin="round"
@@ -466,12 +447,7 @@ export const EditOrderForm: React.FC<EditOrderFormProps> = ({
                   }}
                   className="text-gray-400 hover:text-gray-600"
                 >
-                  <svg
-                    className="w-5 h-5"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                  >
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path
                       strokeLinecap="round"
                       strokeLinejoin="round"
@@ -494,9 +470,7 @@ export const EditOrderForm: React.FC<EditOrderFormProps> = ({
                 className="max-h-48 overflow-y-auto space-y-2"
               >
                 {availableProducts.length === 0 ? (
-                  <p className="text-center text-gray-500 py-4 text-sm">
-                    Товарів не знайдено
-                  </p>
+                  <p className="text-center text-gray-500 py-4 text-sm">Товарів не знайдено</p>
                 ) : (
                   availableProducts.map((product) => (
                     <div
@@ -505,9 +479,7 @@ export const EditOrderForm: React.FC<EditOrderFormProps> = ({
                       className="flex items-center justify-between p-3 bg-gray-50 rounded-lg hover:bg-indigo-50 cursor-pointer transition-colors"
                     >
                       <div>
-                        <div className="font-medium text-gray-900">
-                          {product.name}
-                        </div>
+                        <div className="font-medium text-gray-900">{product.name}</div>
                         <div className="text-sm text-indigo-600 font-semibold">
                           {product.price} ₴
                         </div>
@@ -530,10 +502,7 @@ export const EditOrderForm: React.FC<EditOrderFormProps> = ({
                 )}
                 {productsLoadingMore && (
                   <div className="flex justify-center py-2">
-                    <svg
-                      className="animate-spin h-5 w-5 text-indigo-600"
-                      viewBox="0 0 24 24"
-                    >
+                    <svg className="animate-spin h-5 w-5 text-indigo-600" viewBox="0 0 24 24">
                       <circle
                         className="opacity-25"
                         cx="12"
@@ -594,9 +563,7 @@ export const EditOrderForm: React.FC<EditOrderFormProps> = ({
                       .slice(0, 2)}
                   </div>
                   <div className="flex-1 min-w-0">
-                    <div className="font-semibold text-gray-900">
-                      {selectedClient.full_name}
-                    </div>
+                    <div className="font-semibold text-gray-900">{selectedClient.full_name}</div>
                     <div className="text-sm text-gray-500">
                       {selectedClient.phones?.[0]?.number || "—"}
                     </div>
@@ -618,12 +585,7 @@ export const EditOrderForm: React.FC<EditOrderFormProps> = ({
               ) : (
                 <div className="flex items-center justify-between text-gray-500">
                   <span>Оберіть клієнта...</span>
-                  <svg
-                    className="w-5 h-5"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                  >
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path
                       strokeLinecap="round"
                       strokeLinejoin="round"
@@ -637,9 +599,7 @@ export const EditOrderForm: React.FC<EditOrderFormProps> = ({
           ) : (
             <div className="bg-white rounded-xl border-2 border-indigo-200 p-4 space-y-3">
               <div className="flex items-center justify-between">
-                <span className="font-medium text-gray-900">
-                  Вибрати клієнта
-                </span>
+                <span className="font-medium text-gray-900">Вибрати клієнта</span>
                 <button
                   title="Client choose"
                   type="button"
@@ -649,12 +609,7 @@ export const EditOrderForm: React.FC<EditOrderFormProps> = ({
                   }}
                   className="text-gray-400 hover:text-gray-600"
                 >
-                  <svg
-                    className="w-5 h-5"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                  >
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path
                       strokeLinecap="round"
                       strokeLinejoin="round"
@@ -677,9 +632,7 @@ export const EditOrderForm: React.FC<EditOrderFormProps> = ({
                 className="max-h-48 overflow-y-auto space-y-2"
               >
                 {clients.length === 0 ? (
-                  <p className="text-center text-gray-500 py-4 text-sm">
-                    Клієнтів не знайдено
-                  </p>
+                  <p className="text-center text-gray-500 py-4 text-sm">Клієнтів не знайдено</p>
                 ) : (
                   clients.map((client) => (
                     <div
@@ -706,9 +659,7 @@ export const EditOrderForm: React.FC<EditOrderFormProps> = ({
                           .slice(0, 2)}
                       </div>
                       <div className="flex-1 min-w-0">
-                        <div className="font-medium text-gray-900 truncate">
-                          {client.full_name}
-                        </div>
+                        <div className="font-medium text-gray-900 truncate">{client.full_name}</div>
                         <div className="text-sm text-gray-500">
                           {client.phones?.[0]?.number || "—"}
                         </div>
@@ -731,10 +682,7 @@ export const EditOrderForm: React.FC<EditOrderFormProps> = ({
                 )}
                 {clientsLoadingMore && (
                   <div className="flex justify-center py-2">
-                    <svg
-                      className="animate-spin h-5 w-5 text-indigo-600"
-                      viewBox="0 0 24 24"
-                    >
+                    <svg className="animate-spin h-5 w-5 text-indigo-600" viewBox="0 0 24 24">
                       <circle
                         className="opacity-25"
                         cx="12"
@@ -791,11 +739,7 @@ export const EditOrderForm: React.FC<EditOrderFormProps> = ({
                 </div>
               ) : (
                 <div className="px-4 py-3 bg-indigo-50 border-2 border-indigo-200 rounded-xl font-medium text-gray-900 flex items-center gap-2">
-                  <svg
-                    className="w-5 h-5 text-indigo-600"
-                    fill="currentColor"
-                    viewBox="0 0 20 20"
-                  >
+                  <svg className="w-5 h-5 text-indigo-600" fill="currentColor" viewBox="0 0 20 20">
                     <path
                       fillRule="evenodd"
                       d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z"
@@ -807,22 +751,18 @@ export const EditOrderForm: React.FC<EditOrderFormProps> = ({
               )}
 
               {/* Address */}
-              {selectedClient.addresses &&
-              selectedClient.addresses.length > 1 ? (
+              {selectedClient.addresses && selectedClient.addresses.length > 1 ? (
                 <div className="relative">
                   <select
                     title="Address select"
                     value={selectedAddressId || ""}
-                    onChange={(e) =>
-                      setSelectedAddressId(Number(e.target.value))
-                    }
+                    onChange={(e) => setSelectedAddressId(Number(e.target.value))}
                     className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500 appearance-none bg-white pr-10 font-medium"
                   >
                     <option value="">Оберіть адресу...</option>
                     {selectedClient.addresses.map((addr) => (
                       <option key={addr.id} value={addr.id}>
-                        {addr.street} {addr.house}{" "}
-                        {addr.is_primary ? "(основна)" : ""}
+                        {addr.street} {addr.house} {addr.is_primary ? "(основна)" : ""}
                       </option>
                     ))}
                   </select>
@@ -842,11 +782,7 @@ export const EditOrderForm: React.FC<EditOrderFormProps> = ({
                 </div>
               ) : (
                 <div className="px-4 py-3 bg-indigo-50 border-2 border-indigo-200 rounded-xl font-medium text-gray-900 flex items-center gap-2">
-                  <svg
-                    className="w-5 h-5 text-indigo-600"
-                    fill="currentColor"
-                    viewBox="0 0 20 20"
-                  >
+                  <svg className="w-5 h-5 text-indigo-600" fill="currentColor" viewBox="0 0 20 20">
                     <path
                       fillRule="evenodd"
                       d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z"
@@ -931,6 +867,7 @@ export const EditOrderForm: React.FC<EditOrderFormProps> = ({
       <div className="pt-4 border-t border-gray-200 mt-4">
         <div className="flex gap-3">
           <button
+            type="button"
             onClick={onClose}
             className="flex-1 py-3 bg-gray-100 hover:bg-gray-200 text-gray-700 font-semibold rounded-xl transition-colors"
           >
@@ -938,10 +875,9 @@ export const EditOrderForm: React.FC<EditOrderFormProps> = ({
           </button>
 
           <button
+            type="button"
             onClick={handleSubmit}
-            disabled={
-              isSubmitting || !selectedClient || orderItems.length === 0
-            }
+            disabled={isSubmitting || !selectedClient || orderItems.length === 0}
             className="flex-1 py-3 bg-indigo-600 hover:bg-indigo-700 disabled:bg-gray-300 disabled:cursor-not-allowed text-white font-semibold rounded-xl transition-colors flex items-center justify-center gap-2"
           >
             {isSubmitting ? (

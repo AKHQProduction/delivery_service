@@ -20,7 +20,7 @@ export const ApiErrorCode = {
   INTERNAL_ERROR: "internal_error",
 } as const;
 
-export type ApiErrorCode = typeof ApiErrorCode[keyof typeof ApiErrorCode];
+export type ApiErrorCode = (typeof ApiErrorCode)[keyof typeof ApiErrorCode];
 
 /**
  * Duplicate phone error details
@@ -63,9 +63,7 @@ export function isApiError(error: unknown): error is ApiError {
 /**
  * Type guard for duplicate phone errors
  */
-export function isDuplicatePhoneError(
-  error: unknown
-): error is DuplicatePhoneError {
+export function isDuplicatePhoneError(error: unknown): error is DuplicatePhoneError {
   return (
     isApiError(error) &&
     error.code === ApiErrorCode.DUPLICATE_PHONES &&

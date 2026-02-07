@@ -28,11 +28,7 @@ interface MapPickerProps {
   initialStreet?: string;
   initialHouse?: string;
   city?: string;
-  onGeocode?: (
-    street: string,
-    house?: string,
-    city?: string
-  ) => Promise<Coordinates | null>;
+  onGeocode?: (street: string, house?: string, city?: string) => Promise<Coordinates | null>;
 }
 
 /**
@@ -56,7 +52,7 @@ const MapCenterController: React.FC<{ center: Coordinates }> = ({ center }) => {
   const map = useMapEvents({});
 
   useEffect(() => {
-    map.setView([center.lat, center.lng], 13);
+    map.setView([center.lat, center.lng], 17.5);
   }, [center, map]);
 
   return null;
@@ -91,6 +87,7 @@ export const MapPicker: React.FC<MapPickerProps> = ({
       const latLng = L.latLng(defaultCenter.lat, defaultCenter.lng);
       setMarkerPosition(latLng);
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isOpen, defaultCenter?.lat, defaultCenter?.lng]);
 
   // Geocode initial address or city when map opens (only once)
@@ -152,12 +149,8 @@ export const MapPicker: React.FC<MapPickerProps> = ({
         {/* Header */}
         <div className="px-6 py-4 border-b border-gray-200 flex items-center justify-between">
           <div>
-            <h2 className="text-xl font-semibold text-gray-900">
-              Виберіть адресу на карті
-            </h2>
-            <p className="text-sm text-gray-600 mt-1">
-              Натисніть на карту, щоб розмістити маркер
-            </p>
+            <h2 className="text-xl font-semibold text-gray-900">Виберіть адресу на карті</h2>
+            <p className="text-sm text-gray-600 mt-1">Натисніть на карту, щоб розмістити маркер</p>
           </div>
           <button
             type="button"
@@ -166,12 +159,7 @@ export const MapPicker: React.FC<MapPickerProps> = ({
             className="text-gray-400 hover:text-gray-600 transition-colors"
             disabled={isLoading}
           >
-            <svg
-              className="w-6 h-6"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
-            >
+            <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path
                 strokeLinecap="round"
                 strokeLinejoin="round"
@@ -186,13 +174,14 @@ export const MapPicker: React.FC<MapPickerProps> = ({
         <div className="relative h-[60vh] sm:h-[500px] shrink w-full">
           <MapContainer
             center={[mapCenter.lat, mapCenter.lng]}
-            zoom={13}
+            zoom={17.5}
             style={{ height: "100%", width: "100%" }}
             scrollWheelZoom={true}
           >
             <TileLayer
-              attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
-              url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+              url="https://{s}.google.com/vt/lyrs=y&x={x}&y={y}&z={z}&hl=uk"
+              subdomains={["mt0", "mt1", "mt2", "mt3"]}
+              maxZoom={21}
             />
             <MapCenterController center={mapCenter} />
             <MapClickHandler onPositionChange={setMarkerPosition} />
@@ -204,9 +193,7 @@ export const MapPicker: React.FC<MapPickerProps> = ({
             <div className="absolute inset-0 bg-white bg-opacity-80 flex items-center justify-center z-[1000]">
               <div className="text-center">
                 <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-600 mx-auto mb-3"></div>
-                <p className="text-gray-700 font-medium">
-                  Визначення адреси...
-                </p>
+                <p className="text-gray-700 font-medium">Визначення адреси...</p>
               </div>
             </div>
           )}

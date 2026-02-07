@@ -6,10 +6,7 @@ interface ProductCardProps {
   onClick: (product: Product) => void;
 }
 
-export const ProductCard: React.FC<ProductCardProps> = ({
-  product,
-  onClick,
-}) => {
+export const ProductCard: React.FC<ProductCardProps> = ({ product, onClick }) => {
   return (
     <div
       onClick={() => onClick(product)}

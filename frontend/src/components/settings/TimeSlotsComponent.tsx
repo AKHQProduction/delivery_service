@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useTimeSlotsSettings } from "../../hooks/settings/useTimeSlotsSettings";
 import { TimeInput } from "../ui/TimeInput";
+import { SettingsItemSkeleton } from "../ui/Skeleton";
 
 interface NewSlot {
   id: string;
@@ -18,11 +19,9 @@ interface TimeSlot {
 }
 
 export const TimeSlotsComponent = () => {
-  const { timeSlots, updateTimeSlotById, addTimeSlot, deleteTimeSlotById } =
+  const { timeSlots, updateTimeSlotById, addTimeSlot, deleteTimeSlotById, isLoading } =
     useTimeSlotsSettings();
-  const [editedSlots, setEditedSlots] = useState<
-    Record<string, Partial<TimeSlot>>
-  >({});
+  const [editedSlots, setEditedSlots] = useState<Record<string, Partial<TimeSlot>>>({});
   const [newSlots, setNewSlots] = useState<NewSlot[]>([]);
 
   const handleFieldChange = (
@@ -49,9 +48,7 @@ export const TimeSlotsComponent = () => {
     value: string,
   ) => {
     setNewSlots((prev) =>
-      prev.map((slot) =>
-        slot.id === tempId ? { ...slot, [field]: value } : slot,
-      ),
+      prev.map((slot) => (slot.id === tempId ? { ...slot, [field]: value } : slot)),
     );
   };
 
@@ -79,13 +76,9 @@ export const TimeSlotsComponent = () => {
       const originalSlot = timeSlots?.find((s) => s?.time_slot_id === slotId);
 
       if (originalSlot && changes) {
-        const startTime = parseTimeToDate(
-          changes.start_time || originalSlot.start_time,
-        );
+        const startTime = parseTimeToDate(changes.start_time || originalSlot.start_time);
 
-        const endTime = parseTimeToDate(
-          changes.end_time || originalSlot.end_time,
-        );
+        const endTime = parseTimeToDate(changes.end_time || originalSlot.end_time);
 
         await updateTimeSlotById(
           slotId,
@@ -173,7 +166,21 @@ export const TimeSlotsComponent = () => {
     return slot[field];
   };
   const isSlotEdited = (slotId: string) => {
-    return editedSlots[slotId] !== undefined;
+    const edited = editedSlots[slotId];
+    if (!edited) return false;
+
+    const originalSlot = timeSlots?.find((s) => s?.time_slot_id === slotId);
+    if (!originalSlot) return false;
+
+    const editedLabel = edited.label ?? originalSlot.label;
+    const editedStart = edited.start_time ?? originalSlot.start_time;
+    const editedEnd = edited.end_time ?? originalSlot.end_time;
+
+    return (
+      editedLabel !== originalSlot.label ||
+      editedStart !== originalSlot.start_time ||
+      editedEnd !== originalSlot.end_time
+    );
   };
 
   const isNewSlotValid = (slot: NewSlot) => {
@@ -182,25 +189,28 @@ export const TimeSlotsComponent = () => {
 
   // Filter out null/undefined slots and provide safe defaults
   const validTimeSlots = (timeSlots || []).filter(
-    (slot): slot is TimeSlot =>
-      slot !== null && slot !== undefined && slot.time_slot_id !== null,
+    (slot): slot is TimeSlot => slot !== null && slot !== undefined && slot.time_slot_id !== null,
   );
 
   return (
-    <div className="pb-4">
+    <div className="bg-white rounded-xl shadow-sm p-6">
       <div className="flex items-center justify-between mb-4">
-        <h3 className="text-lg font-semibold text-gray-800">Часові проміжки</h3>
+        <h2 className="text-lg font-semibold text-gray-900">Часові проміжки</h2>
       </div>
 
       <div className="space-y-3">
+        {isLoading && validTimeSlots.length === 0 && (
+          <>
+            {Array.from({ length: 3 }).map((_, i) => (
+              <SettingsItemSkeleton key={i} />
+            ))}
+          </>
+        )}
+
         {validTimeSlots.map((slot) => {
           const currentLabel = (getSlotValue(slot, "label") || "") as string;
-          const startTimeValue = formatTimeValue(
-            getSlotValue(slot, "start_time") as string,
-          );
-          const endTimeValue = formatTimeValue(
-            getSlotValue(slot, "end_time") as string,
-          );
+          const startTimeValue = formatTimeValue(getSlotValue(slot, "start_time") as string);
+          const endTimeValue = formatTimeValue(getSlotValue(slot, "end_time") as string);
 
           return (
             <div key={slot.time_slot_id} className="flex items-center gap-2">
@@ -208,10 +218,8 @@ export const TimeSlotsComponent = () => {
                 type="text"
                 placeholder="Назва"
                 value={currentLabel}
-                onChange={(e) =>
-                  handleFieldChange(slot.time_slot_id, "label", e.target.value)
-                }
-                className="flex-1 min-w-0 px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
+                onChange={(e) => handleFieldChange(slot.time_slot_id, "label", e.target.value)}
+                className="flex-1 min-w-0 px-4 py-3 border-2 border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
               />
               <TimeInput
                 value={startTimeValue}
@@ -229,8 +237,8 @@ export const TimeSlotsComponent = () => {
               {isSlotEdited(slot.time_slot_id) ? (
                 <button
                   onClick={() => handleSaveExisting(slot.time_slot_id)}
-                  className="w-8 h-8 flex-shrink-0 flex items-center justify-center rounded-lg bg-green-500 hover:bg-green-600 text-white transition-colors"
-                  aria-label="Save timeslot"
+                  className="w-10 h-10 flex-shrink-0 flex items-center justify-center rounded-xl bg-green-500 hover:bg-green-600 text-white transition-colors"
+                  aria-label="Зберегти таймслот"
                 >
                   <svg
                     className="w-5 h-5"
@@ -239,11 +247,7 @@ export const TimeSlotsComponent = () => {
                     viewBox="0 0 24 24"
                     strokeWidth={2}
                   >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      d="M5 13l4 4L19 7"
-                    />
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
                   </svg>
                 </button>
               ) : (
@@ -255,8 +259,8 @@ export const TimeSlotsComponent = () => {
                       console.error("Error deleting timeslot:", error);
                     }
                   }}
-                  className="w-8 h-8 flex-shrink-0 flex items-center justify-center rounded-lg hover:bg-red-50 text-red-500 transition-colors"
-                  aria-label="Delete timeslot"
+                  className="w-10 h-10 flex-shrink-0 flex items-center justify-center rounded-xl hover:bg-red-50 text-red-500 transition-colors"
+                  aria-label="Видалити таймслот"
                 >
                   <svg
                     className="w-5 h-5"
@@ -268,7 +272,7 @@ export const TimeSlotsComponent = () => {
                     <path
                       strokeLinecap="round"
                       strokeLinejoin="round"
-                      d="M6 18L18 6M6 6l12 12"
+                      d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
                     />
                   </svg>
                 </button>
@@ -278,33 +282,33 @@ export const TimeSlotsComponent = () => {
         })}
 
         {newSlots.map((slot) => (
-          <div key={slot.id} className="flex items-center gap-2">
+          <div key={slot.id} className="space-y-2 border-2 border-dashed border-gray-200 rounded-xl p-3">
             <input
               type="text"
-              placeholder="Назва"
+              placeholder="Назва таймслоту"
               value={slot.label}
-              onChange={(e) =>
-                handleNewSlotChange(slot.id, "label", e.target.value)
-              }
-              className="flex-1 min-w-0 px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
+              onChange={(e) => handleNewSlotChange(slot.id, "label", e.target.value)}
+              className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
             />
-            <TimeInput
-              value={slot.start_time}
-              onChange={(value) =>
-                handleNewSlotChange(slot.id, "start_time", value)
-              }
-            />
-            <TimeInput
-              value={slot.end_time}
-              onChange={(value) =>
-                handleNewSlotChange(slot.id, "end_time", value)
-              }
-            />
-            {isNewSlotValid(slot) ? (
+            <div className="flex items-center gap-2">
+              <TimeInput
+                value={slot.start_time}
+                onChange={(value) => handleNewSlotChange(slot.id, "start_time", value)}
+              />
+              <TimeInput
+                value={slot.end_time}
+                onChange={(value) => handleNewSlotChange(slot.id, "end_time", value)}
+              />
+              <div className="flex-1" />
               <button
                 onClick={() => handleSaveNew(slot.id)}
-                className="w-8 h-8 flex-shrink-0 flex items-center justify-center rounded-lg bg-green-500 hover:bg-green-600 text-white transition-colors"
-                aria-label="Save new timeslot"
+                disabled={!isNewSlotValid(slot)}
+                className={`w-10 h-10 flex-shrink-0 flex items-center justify-center rounded-xl transition-colors ${
+                  isNewSlotValid(slot)
+                    ? "bg-green-500 hover:bg-green-600 text-white"
+                    : "bg-gray-200 text-gray-400 cursor-not-allowed"
+                }`}
+                aria-label="Зберегти новий таймслот"
               >
                 <svg
                   className="w-5 h-5"
@@ -313,18 +317,13 @@ export const TimeSlotsComponent = () => {
                   viewBox="0 0 24 24"
                   strokeWidth={2}
                 >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    d="M5 13l4 4L19 7"
-                  />
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
                 </svg>
               </button>
-            ) : (
               <button
                 onClick={() => handleDeleteNew(slot.id)}
-                className="w-8 h-8 flex-shrink-0 flex items-center justify-center rounded-lg hover:bg-red-50 text-red-500 transition-colors"
-                aria-label="Cancel new timeslot"
+                className="w-10 h-10 flex-shrink-0 flex items-center justify-center rounded-xl hover:bg-red-200 bg-red-100 text-red-500 transition-colors"
+                aria-label="Скасувати"
               >
                 <svg
                   className="w-5 h-5"
@@ -333,26 +332,23 @@ export const TimeSlotsComponent = () => {
                   viewBox="0 0 24 24"
                   strokeWidth={2}
                 >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    d="M6 18L18 6M6 6l12 12"
-                  />
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
                 </svg>
               </button>
-            )}
+            </div>
           </div>
         ))}
 
         {validTimeSlots.length === 0 && newSlots.length === 0 && (
-          <p className="text-gray-400 text-sm text-center py-4">
-            Немає таймслотів. Натісніть "Додати таймслот" щоб створити.
-          </p>
+          <div className="text-center py-8 text-gray-500">
+            <p>Часові проміжки не додані</p>
+            <p className="text-sm mt-1">Натисніть "+ Додати таймслот" щоб створити новий</p>
+          </div>
         )}
 
         <button
           onClick={handleAddNewSlot}
-          className="text-indigo-600 hover:text-indigo-700 text-sm font-medium transition-colors "
+          className="text-indigo-600 hover:text-indigo-700 text-sm font-medium transition-colors"
         >
           + Додати таймслот
         </button>

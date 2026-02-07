@@ -7,8 +7,10 @@ export const useTelegram = () => {
   useEffect(() => {
     const tg = initDataTG;
     if (tg) {
-      setIsTGWebApp(true);
-      tg.ready();
+      setIsTGWebApp(true); // eslint-disable-line react-hooks/set-state-in-effect -- one-time init
+      if (tg.ready) {
+        tg.ready();
+      }
     }
   }, []);
 

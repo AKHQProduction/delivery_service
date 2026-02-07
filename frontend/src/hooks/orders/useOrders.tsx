@@ -8,8 +8,13 @@ import {
 
 const PAGE_SIZE = 20;
 
+interface Order {
+  order_id: string;
+  [key: string]: unknown;
+}
+
 export const useOrders = () => {
-  const [orders, setOrders] = useState<any[]>();
+  const [orders, setOrders] = useState<Order[]>();
   const [loading, setLoading] = useState(false);
   const [loadingMore, setLoadingMore] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -33,14 +38,7 @@ export const useOrders = () => {
     setCurrentSearch(search);
     setOffset(0);
     try {
-      const fetchedOrders = await getAllOrders(
-        search,
-        startDate,
-        endDate,
-        "",
-        PAGE_SIZE,
-        0,
-      );
+      const fetchedOrders = await getAllOrders(search, startDate, endDate, "", PAGE_SIZE, 0);
       setOrders(fetchedOrders);
       setHasMore(fetchedOrders.length >= PAGE_SIZE);
       setOffset(PAGE_SIZE);
@@ -74,13 +72,13 @@ export const useOrders = () => {
     } finally {
       setLoadingMore(false);
     }
-  }, [loadingMore, hasMore, offset, currentSearch]);
+  }, [loadingMore, hasMore, offset, currentSearch, startDate, endDate]);
 
-  const createNewOrder = async (orderData: any) => {
+  const createNewOrder = async (orderData: Record<string, unknown>) => {
     setLoading(true);
     setError(null);
     try {
-      const newOrder = await createOrder(orderData);
+      const newOrder = (await createOrder(orderData)) as Order;
       setOrders((prev) => [newOrder, ...(prev || [])]);
       return newOrder;
     } catch {
@@ -91,7 +89,7 @@ export const useOrders = () => {
     }
   };
 
-  const updateCurrentOrder = async (orderId: string, orderData: any) => {
+  const updateCurrentOrder = async (orderId: string, orderData: Record<string, unknown>) => {
     setLoading(true);
     setError(null);
     try {

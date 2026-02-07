@@ -3,6 +3,7 @@ import { PageHeader } from "../components/ui/PageHeader";
 import { Toast } from "../components/ui/Toast";
 import { ShopAddressForm } from "../components/settings/ShopAddressForm";
 import { DistrictsComponent } from "../components/settings/DistrictsComponent";
+import { TimeSlotsComponent } from "../components/settings/TimeSlotsComponent";
 import { useToast } from "../hooks/useToast";
 
 export const ShopSettingsPage: React.FC = () => {
@@ -20,11 +21,11 @@ export const ShopSettingsPage: React.FC = () => {
         <ShopAddressForm onSuccess={handleAddressSaveSuccess} />
 
         <DistrictsComponent />
+
+        <TimeSlotsComponent />
       </div>
 
-      {toast.isVisible && (
-        <Toast message={toast.message} type={toast.type} onClose={hideToast} />
-      )}
+      {toast.isVisible && <Toast message={toast.message} type={toast.type} onClose={hideToast} />}
     </div>
   );
 };

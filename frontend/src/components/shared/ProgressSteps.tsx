@@ -5,10 +5,7 @@ interface ProgressStepsProps {
   totalSteps: number;
 }
 
-export const ProgressSteps: React.FC<ProgressStepsProps> = ({
-  currentStep,
-  totalSteps,
-}) => {
+export const ProgressSteps: React.FC<ProgressStepsProps> = ({ currentStep, totalSteps }) => {
   return (
     <div className="px-6 py-6 shrink-0">
       <div className="flex items-center justify-between max-w-md mx-auto">
@@ -19,8 +16,8 @@ export const ProgressSteps: React.FC<ProgressStepsProps> = ({
                 step === currentStep
                   ? "bg-indigo-600 text-white scale-110"
                   : step < currentStep
-                  ? "bg-indigo-200 text-indigo-700"
-                  : "bg-gray-200 text-gray-500"
+                    ? "bg-indigo-200 text-indigo-700"
+                    : "bg-gray-200 text-gray-500"
               }`}
             >
               {step}

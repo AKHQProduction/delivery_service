@@ -2,7 +2,6 @@ import { useEffect } from "react";
 import { createPortal } from "react-dom";
 import { useTelegram } from "../../hooks/useTelegram";
 import { useTGSettings } from "../../hooks/settings/useTGSettings";
-import { TimeSlotsComponent } from "../settings/TimeSlotsComponent";
 import { useModal } from "../../hooks/useModal";
 
 export const MenuModal = () => {
@@ -11,14 +10,16 @@ export const MenuModal = () => {
   const { isOpen, isVisible, open, close } = useModal();
 
   useEffect(() => {
-    if (!isTGWebApp || !initDataTG) return;
+    if (!isTGWebApp || !initDataTG || !initDataTG.SettingsButton) return;
 
     initDataTG.SettingsButton.onClick(open);
     initDataTG.SettingsButton.show();
 
     return () => {
-      initDataTG.SettingsButton.offClick(open);
-      initDataTG.SettingsButton.hide();
+      if (initDataTG.SettingsButton) {
+        initDataTG.SettingsButton.offClick(open);
+        initDataTG.SettingsButton.hide();
+      }
     };
   }, [isTGWebApp, initDataTG, open]);
 
@@ -52,11 +53,7 @@ export const MenuModal = () => {
               viewBox="0 0 24 24"
               strokeWidth={2}
             >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                d="M6 18L18 6M6 6l12 12"
-              />
+              <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
             </svg>
           </button>
         </div>
@@ -65,9 +62,7 @@ export const MenuModal = () => {
           <div className="space-y-6">
             {/* Fullscreen Section */}
             <div className="pb-4 border-b border-gray-100">
-              <h3 className="text-lg font-semibold mb-4 text-gray-800">
-                Повноекранний режим
-              </h3>
+              <h3 className="text-lg font-semibold mb-4 text-gray-800">Повноекранний режим</h3>
               <label className="flex items-center justify-between cursor-pointer">
                 <span className="text-gray-700">На весь екран</span>
                 <div className="relative">
@@ -75,17 +70,12 @@ export const MenuModal = () => {
                     type="checkbox"
                     className="sr-only peer"
                     checked={settings.fullscreen}
-                    onChange={(e) =>
-                      updateSetting("fullscreen", e.target.checked)
-                    }
+                    onChange={(e) => updateSetting("fullscreen", e.target.checked)}
                   />
                   <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-500"></div>
                 </div>
               </label>
             </div>
-
-            {/* Timeslots Section */}
-            <TimeSlotsComponent />
           </div>
         </div>
       </div>

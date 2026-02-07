@@ -17,6 +17,7 @@ export interface DeliveryAddress {
 }
 
 export interface Order {
+  order_id: string;
   client_name: string;
   items?: OrderItem[];
 
@@ -37,12 +38,7 @@ export interface OrderDetailModalProps {
   onSave?: () => void;
 }
 
-export const OrderDetailModal = ({
-  order,
-  onClose,
-  onDelete,
-  onSave,
-}: OrderDetailModalProps) => {
+export const OrderDetailModal = ({ order, onClose, onDelete, onSave }: OrderDetailModalProps) => {
   const [isEditing, setIsEditing] = useState(false);
 
   const handleEditClick = () => {
@@ -67,10 +63,7 @@ export const OrderDetailModal = ({
   };
 
   const getTotalItems = () => {
-    return (order.items ?? []).reduce(
-      (sum, item) => sum + (Number(item.quantity) || 0),
-      0,
-    );
+    return (order.items ?? []).reduce((sum, item) => sum + (Number(item.quantity) || 0), 0);
   };
 
   if (isEditing) {
@@ -85,17 +78,11 @@ export const OrderDetailModal = ({
           >
             <img src={leftArrowIcon} alt="Back" className="w-8 h-8" />
           </button>
-          <h1 className="text-3xl font-bold text-white mb-2">
-            Редагувати замовлення
-          </h1>
+          <h1 className="text-3xl font-bold text-white mb-2">Редагувати замовлення</h1>
         </div>
 
         <div className="flex-1 overflow-y-auto px-6 py-6">
-          <EditOrderForm
-            order={order}
-            onClose={handleCancelEdit}
-            onSave={handleSaveEdit}
-          />
+          <EditOrderForm order={order} onClose={handleCancelEdit} onSave={handleSaveEdit} />
         </div>
       </div>
     );
@@ -112,34 +99,23 @@ export const OrderDetailModal = ({
         >
           <img src={leftArrowIcon} alt="Back" className="w-8 h-8" />
         </button>
-        <h1 className="text-3xl font-bold text-white mb-2">
-          Замовлення для {order.client_name}
-        </h1>
+        <h1 className="text-3xl font-bold text-white mb-2">Замовлення для {order.client_name}</h1>
       </div>
 
       <div className="flex-1 overflow-y-auto px-6 py-6 space-y-4 pb-24">
         {/* Items List */}
         <div>
-          <h2 className="text-xs font-bold text-gray-500 uppercase tracking-wide mb-3">
-            Товари
-          </h2>
+          <h2 className="text-xs font-bold text-gray-500 uppercase tracking-wide mb-3">Товари</h2>
           <div className="space-y-3">
             {order.items?.map((item, index) => (
-              <div
-                key={index}
-                className="bg-white rounded-xl p-4 border border-gray-200"
-              >
+              <div key={index} className="bg-white rounded-xl p-4 border border-gray-200">
                 <div className="flex items-start justify-between mb-2">
-                  <h3 className="font-medium text-gray-900 flex-1">
-                    {item.name}
-                  </h3>
+                  <h3 className="font-medium text-gray-900 flex-1">{item.name}</h3>
                   <span className="text-lg font-bold text-indigo-600 ml-3">
-                    ₴{item.price_per_item}
+                    ₴{Number(item.price_per_item) || 0}
                   </span>
                 </div>
-                <p className="text-sm text-gray-500">
-                  ₴{item.price_per_item} за шт
-                </p>
+                <p className="text-sm text-gray-500">₴{item.price_per_item} за шт</p>
               </div>
             ))}
           </div>
@@ -148,15 +124,11 @@ export const OrderDetailModal = ({
         <div className="bg-indigo-50 rounded-2xl p-4 border-2 border-indigo-200">
           <div className="flex items-center justify-between mb-3 pb-3 border-b border-indigo-200">
             <span className="text-gray-700">Кількість товарів:</span>
-            <span className="font-semibold text-gray-900">
-              {getTotalItems()}
-            </span>
+            <span className="font-semibold text-gray-900">{getTotalItems()}</span>
           </div>
           <div className="flex items-center justify-between">
             <span className="text-lg font-bold text-gray-900">Всього:</span>
-            <span className="text-2xl font-bold text-indigo-600">
-              ₴{getOrderTotal()}
-            </span>
+            <span className="text-2xl font-bold text-indigo-600">₴{getOrderTotal()}</span>
           </div>
         </div>
 
@@ -168,9 +140,7 @@ export const OrderDetailModal = ({
           <div className="bg-white rounded-2xl p-5 border border-gray-200 space-y-4">
             <div>
               <p className="text-xs text-gray-500 mb-1">Клієнт</p>
-              <p className="font-semibold text-gray-900 text-lg">
-                {order.client_name}
-              </p>
+              <p className="font-semibold text-gray-900 text-lg">{order.client_name}</p>
             </div>
 
             <div className="flex items-center gap-3">
@@ -189,9 +159,7 @@ export const OrderDetailModal = ({
                   />
                 </svg>
               </div>
-              <span className="text-gray-700">
-                {order.delivery_phone || ""}
-              </span>
+              <span className="text-gray-700">{order.delivery_phone || ""}</span>
             </div>
 
             <div className="flex items-start gap-3">
@@ -218,8 +186,7 @@ export const OrderDetailModal = ({
               </div>
               <div className="flex-1">
                 <span className="text-gray-700 leading-relaxed">
-                  {order.delivery_address?.street}{" "}
-                  {order.delivery_address?.house}
+                  {order.delivery_address?.street} {order.delivery_address?.house}
                 </span>
                 {order.delivery_address?.district && (
                   <p className="text-xs text-gray-500 mt-1">
@@ -249,9 +216,7 @@ export const OrderDetailModal = ({
 
             {(order.note || order.comment) && (
               <div>
-                <p className="text-xs text-gray-500 mb-1">
-                  Примітка до замовлення
-                </p>
+                <p className="text-xs text-gray-500 mb-1">Примітка до замовлення</p>
                 <p className="text-gray-700">{order.note || order.comment}</p>
               </div>
             )}
@@ -263,9 +228,7 @@ export const OrderDetailModal = ({
           </h2>
 
           <div className="bg-white rounded-2xl p-5 border border-gray-200">
-            <p className="font-semibold text-gray-900">
-              {paymentMap[order.payment_method]}
-            </p>
+            <p className="font-semibold text-gray-900">{paymentMap[order.payment_method]}</p>
           </div>
         </div>
 

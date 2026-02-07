@@ -8,17 +8,24 @@ import { useClient } from "../../../hooks/clients/useClients";
 import { useClientForm } from "../../../hooks/clients/useClientForm";
 import { useDistrictsSettings } from "../../../hooks/settings/useDistrictsSettings";
 import { DuplicatePhoneToast } from "../../ui/PhoneDuplicateErrorPopup";
+
+interface ExistingClient {
+  id: string;
+  full_name: string;
+}
+
+interface DuplicatePhone {
+  phone_number: string;
+  existing_clients: ExistingClient[];
+}
+
 interface EditClientFormProps {
   client: Client;
   onClose: () => void;
   onSave?: () => Promise<void> | void;
 }
 
-export const EditClientForm: React.FC<EditClientFormProps> = ({
-  client,
-  onClose,
-  onSave,
-}) => {
+export const EditClientForm: React.FC<EditClientFormProps> = ({ client, onClose, onSave }) => {
   const {
     formData,
     setFormData,
@@ -36,17 +43,19 @@ export const EditClientForm: React.FC<EditClientFormProps> = ({
   const { updateClient } = useClient();
   const { districts } = useDistrictsSettings();
   const [phoneErrors, setPhoneErrors] = useState<Record<string, string>>({});
-  const [duplicateError, setDuplicateError] = useState<any>(null);
-  const [pendingClientData, setPendingClientData] = useState<any>(null);
+  const [duplicateError, setDuplicateError] = useState<{
+    code: string;
+    duplicates: DuplicatePhone[];
+  } | null>(null);
+  const [pendingClientData, setPendingClientData] = useState<typeof formData | null>(null);
   useEffect(() => {
     if (client) {
       initializeForm(client);
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [client]);
 
-  const handleChange = (
-    e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>,
-  ) => {
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
   };
 
@@ -69,13 +78,26 @@ export const EditClientForm: React.FC<EditClientFormProps> = ({
     try {
       await updateClient(client.client_id, formData);
       await onSave?.();
-    } catch (err: any) {
+    } catch (err: unknown) {
       if (
-        err?.response?.status === 409 &&
-        err?.response?.data?.code === "duplicate_phones"
+        err &&
+        typeof err === "object" &&
+        "response" in err &&
+        err.response &&
+        typeof err.response === "object" &&
+        "status" in err.response &&
+        err.response.status === 409 &&
+        "data" in err.response &&
+        err.response.data &&
+        typeof err.response.data === "object" &&
+        "code" in err.response.data &&
+        err.response.data.code === "duplicate_phones" &&
+        "duplicates" in err.response.data &&
+        Array.isArray(err.response.data.duplicates)
       ) {
-        console.log("Duplicate phone detected:", err.response.data);
-        setDuplicateError(err.response.data);
+        const errorData = err.response.data as { code: string; duplicates: DuplicatePhone[] };
+        console.log("Duplicate phone detected:", errorData);
+        setDuplicateError(errorData);
         setPendingClientData(formData);
       }
     }
@@ -104,11 +126,7 @@ export const EditClientForm: React.FC<EditClientFormProps> = ({
   };
   return (
     <>
-      <FormWrapper
-        onSubmit={handleSubmit}
-        onClose={onClose}
-        submitLabel="Зберегти зміни"
-      >
+      <FormWrapper onSubmit={handleSubmit} onClose={onClose} submitLabel="Зберегти зміни">
         <FormInput
           label="Ім'я клієнта"
           name="full_name"

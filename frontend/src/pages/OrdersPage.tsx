@@ -9,6 +9,7 @@ import { generateOrdersPdfLink, getOrderById } from "../services/api/ordersApi";
 import { SearchFiltersPopup } from "../components/shared/SearchFiltersPopup";
 import { useInfiniteScroll } from "../hooks/useInfiniteScroll";
 import { DateInput } from "../components/shared/DateInput";
+import { OrderCardSkeleton } from "../components/ui/Skeleton";
 
 const getDownloadUrl = (fileId: string): string => {
   const baseUrl = import.meta.env.VITE_API_URL;
@@ -61,6 +62,7 @@ export const OrdersPage = () => {
     setEndDate,
     startDate,
     endDate,
+    loading,
     loadingMore,
     hasMore,
   } = useOrders();
@@ -79,16 +81,17 @@ export const OrdersPage = () => {
       const openOrderId = sessionStorage.getItem("openOrderId");
       if (openOrderId) {
         try {
-          const order = await getOrderById(openOrderId);
+          const order = (await getOrderById(openOrderId)) as Order;
           setSelectedOrder(order);
           setIsModalOpen(true);
-        } catch (e) {
+        } catch {
           console.error("Failed to fetch order by ID");
         }
         sessionStorage.removeItem("openOrderId");
       }
     };
     initOrders();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   useEffect(() => {
@@ -105,6 +108,7 @@ export const OrdersPage = () => {
         clearTimeout(debounceRef.current);
       }
     };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [searchTerm]);
 
   const getOrderTotal = (order: Order) => {
@@ -137,9 +141,9 @@ export const OrdersPage = () => {
     const orderId = selectedOrder?.order_id;
     const freshOrders = await getOrders(searchTerm);
     if (orderId && freshOrders) {
-      const updatedOrder = freshOrders.find((o: any) => o.order_id === orderId);
+      const updatedOrder = freshOrders.find((o: { order_id: string }) => o.order_id === orderId);
       if (updatedOrder) {
-        setSelectedOrder(updatedOrder);
+        setSelectedOrder(updatedOrder as Order);
       }
     }
   };
@@ -187,26 +191,14 @@ export const OrdersPage = () => {
           buttonTitle="Фільтри замовлень"
           onApply={() => getOrders(searchTerm)}
         >
-          <DateInput
-            label="Від"
-            value={startDate}
-            onChange={setStartDate}
-            title="start date"
-          />
-          <DateInput
-            label="До"
-            value={endDate}
-            onChange={setEndDate}
-            title="end date"
-          />
+          <DateInput label="Від" value={startDate} onChange={setStartDate} title="start date" />
+          <DateInput label="До" value={endDate} onChange={setEndDate} title="end date" />
         </SearchFiltersPopup>
       </div>
 
       <div className="px-6 pb-4">
         <div className="bg-gradient-to-r from-yellow-50 to-amber-50 border-2 border-yellow-200 rounded-2xl p-4">
-          <h3 className="font-bold text-amber-900 mb-3 text-center">
-            Сформувати документ
-          </h3>
+          <h3 className="font-bold text-amber-900 mb-3 text-center">Сформувати документ</h3>
           <div className="flex flex-col items-center gap-2">
             <div className="flex items-center justify-center gap-3">
               <DateInput
@@ -223,12 +215,7 @@ export const OrdersPage = () => {
                 onClick={handleExportPdf}
                 className="px-4 py-2 bg-gradient-to-r from-amber-500 to-orange-500 text-white rounded-lg font-semibold shadow-md transition-all hover:from-amber-600 hover:to-orange-600 flex items-center gap-2"
               >
-                <svg
-                  className="w-5 h-5"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path
                     strokeLinecap="round"
                     strokeLinejoin="round"
@@ -239,15 +226,19 @@ export const OrdersPage = () => {
                 Завантажити
               </button>
             </div>
-            {exportError && (
-              <p className="text-red-500 text-sm">Оберіть дату</p>
-            )}
+            {exportError && <p className="text-red-500 text-sm">Оберіть дату</p>}
           </div>
         </div>
       </div>
 
       <div className="px-6 space-y-3">
-        {(orders ?? []).length === 0 ? (
+        {loading && (orders ?? []).length === 0 ? (
+          <>
+            {Array.from({ length: 6 }).map((_, i) => (
+              <OrderCardSkeleton key={i} />
+            ))}
+          </>
+        ) : (orders ?? []).length === 0 ? (
           <div className="text-center py-12">
             <svg
               className="w-16 h-16 mx-auto mb-4 text-gray-300"
@@ -263,24 +254,51 @@ export const OrdersPage = () => {
               />
             </svg>
             <p className="text-gray-500 font-medium">Замовлень не знайдено</p>
-            <p className="text-sm text-gray-400 mt-1">
-              Спробуйте інший пошуковий запит
-            </p>
+            <p className="text-sm text-gray-400 mt-1">Спробуйте інший пошуковий запит</p>
           </div>
         ) : (
           <>
-            {(orders ?? []).map((order) => (
-              <div
-                key={order.order_id}
-                onClick={() => handleOrderClick(order)}
-                className="bg-white rounded-2xl p-5 shadow-sm border border-gray-100 hover:shadow-md hover:-translate-y-0.5 transition-all cursor-pointer"
-              >
-                <div className="space-y-2.5">
-                  <div className="flex items-center justify-between w-full gap-3">
-                    <div className="flex items-center gap-3 min-w-0">
-                      <div className="w-9 h-9 rounded-full bg-indigo-100 flex items-center justify-center shrink-0">
+            {(orders ?? []).map((order) => {
+              const typedOrder = order as unknown as Order;
+              return (
+                <div
+                  key={order.order_id}
+                  onClick={() => handleOrderClick(typedOrder)}
+                  className="bg-white rounded-2xl p-5 shadow-sm border border-gray-100 hover:shadow-md hover:-translate-y-0.5 transition-all cursor-pointer"
+                >
+                  <div className="space-y-2.5">
+                    <div className="flex items-center justify-between w-full gap-3">
+                      <div className="flex items-center gap-3 min-w-0">
+                        <div className="w-9 h-9 rounded-full bg-indigo-100 flex items-center justify-center shrink-0">
+                          <svg
+                            className="w-5 h-5 text-indigo-600"
+                            fill="none"
+                            stroke="currentColor"
+                            viewBox="0 0 24 24"
+                          >
+                            <path
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                              strokeWidth={2}
+                              d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"
+                            />
+                          </svg>
+                        </div>
+
+                        <span className="text-gray-700 font-medium truncate">
+                          {String(typedOrder.client_name)}
+                        </span>
+                      </div>
+
+                      <span className="text-2xl font-bold text-indigo-600 whitespace-nowrap">
+                        ₴{getOrderTotal(typedOrder)}
+                      </span>
+                    </div>
+
+                    <div className="flex items-center gap-3">
+                      <div className="w-9 h-9 rounded-full bg-purple-100 flex items-center justify-center shrink-0">
                         <svg
-                          className="w-5 h-5 text-indigo-600"
+                          className="w-5 h-5 text-purple-600"
                           fill="none"
                           stroke="currentColor"
                           viewBox="0 0 24 24"
@@ -289,70 +307,43 @@ export const OrdersPage = () => {
                             strokeLinecap="round"
                             strokeLinejoin="round"
                             strokeWidth={2}
-                            d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"
+                            d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"
                           />
                         </svg>
                       </div>
-
-                      <span className="text-gray-700 font-medium truncate">
-                        {order.client_name}
+                      <span className="text-gray-700">
+                        {String(typedOrder.date)} | {String(typedOrder.time_slot)}
                       </span>
                     </div>
 
-                    <span className="text-2xl font-bold text-indigo-600 whitespace-nowrap">
-                      ₴{getOrderTotal(order)}
-                    </span>
-                  </div>
-
-                  <div className="flex items-center gap-3">
-                    <div className="w-9 h-9 rounded-full bg-purple-100 flex items-center justify-center shrink-0">
-                      <svg
-                        className="w-5 h-5 text-purple-600"
-                        fill="none"
-                        stroke="currentColor"
-                        viewBox="0 0 24 24"
-                      >
-                        <path
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          strokeWidth={2}
-                          d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"
-                        />
-                      </svg>
+                    <div className="flex items-center gap-3">
+                      <div className="w-9 h-9 rounded-full bg-orange-100 flex items-center justify-center shrink-0">
+                        <svg
+                          className="w-5 h-5 text-orange-600"
+                          fill="none"
+                          stroke="currentColor"
+                          viewBox="0 0 24 24"
+                        >
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth={2}
+                            d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"
+                          />
+                        </svg>
+                      </div>
+                      <span className="text-gray-700">
+                        {(typedOrder.items ?? []).reduce(
+                          (sum: number, item: OrderItem) => sum + (Number(item.quantity) || 0),
+                          0,
+                        )}{" "}
+                        товарів
+                      </span>
                     </div>
-                    <span className="text-gray-700">
-                      {order.date} | {order.time_slot}
-                    </span>
-                  </div>
-
-                  <div className="flex items-center gap-3">
-                    <div className="w-9 h-9 rounded-full bg-orange-100 flex items-center justify-center shrink-0">
-                      <svg
-                        className="w-5 h-5 text-orange-600"
-                        fill="none"
-                        stroke="currentColor"
-                        viewBox="0 0 24 24"
-                      >
-                        <path
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          strokeWidth={2}
-                          d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"
-                        />
-                      </svg>
-                    </div>
-                    <span className="text-gray-700">
-                      {(order.items ?? []).reduce(
-                        (sum: number, item: OrderItem) =>
-                          sum + (Number(item.quantity) || 0),
-                        0,
-                      )}{" "}
-                      товарів
-                    </span>
                   </div>
                 </div>
-              </div>
-            ))}
+              );
+            })}
 
             <div ref={sentinelRef} className="py-4 flex justify-center">
               {loadingMore && (

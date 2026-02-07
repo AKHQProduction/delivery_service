@@ -34,9 +34,7 @@ export const ContactInfoStep: React.FC<ContactInfoStepProps> = ({
             </div>
             <div>
               <div className="text-sm text-gray-600">Клієнт</div>
-              <div className="font-semibold text-gray-900">
-                {client.full_name}
-              </div>
+              <div className="font-semibold text-gray-900">{client.full_name}</div>
             </div>
           </div>
         </div>
@@ -112,11 +110,7 @@ export const ContactInfoStep: React.FC<ContactInfoStepProps> = ({
                   {client.phones?.[0]?.number || "—"}
                 </span>
               </div>
-              <svg
-                className="w-6 h-6 text-indigo-600"
-                fill="currentColor"
-                viewBox="0 0 20 20"
-              >
+              <svg className="w-6 h-6 text-indigo-600" fill="currentColor" viewBox="0 0 20 20">
                 <path
                   fillRule="evenodd"
                   d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z"

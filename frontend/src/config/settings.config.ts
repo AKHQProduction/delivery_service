@@ -6,9 +6,7 @@ export const SettingsStorage = {
   load(): AppSettings {
     try {
       const raw = localStorage.getItem(STORAGE_KEY);
-      return raw
-        ? { ...DEFAULT_SETTINGS, ...JSON.parse(raw) }
-        : DEFAULT_SETTINGS;
+      return raw ? { ...DEFAULT_SETTINGS, ...JSON.parse(raw) } : DEFAULT_SETTINGS;
     } catch {
       return DEFAULT_SETTINGS;
     }

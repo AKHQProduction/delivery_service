@@ -6,22 +6,17 @@ import { type AppSettings } from "../../types/settings";
 export const useTGSettings = () => {
   const { initDataTG } = useTelegram();
 
-  const [settings, setSettings] = useState<AppSettings>(() =>
-    SettingsStorage.load(),
-  );
+  const [settings, setSettings] = useState<AppSettings>(() => SettingsStorage.load());
 
   useEffect(() => {
     if (!initDataTG) return;
 
-    if (settings.fullscreen) {
+    if (settings.fullscreen && initDataTG.requestFullscreen) {
       initDataTG.requestFullscreen();
     }
-  }, [initDataTG]);
+  }, [initDataTG, settings.fullscreen]);
 
-  const updateSetting = <K extends keyof AppSettings>(
-    key: K,
-    value: AppSettings[K],
-  ) => {
+  const updateSetting = <K extends keyof AppSettings>(key: K, value: AppSettings[K]) => {
     setSettings((prev) => {
       const updated = { ...prev, [key]: value };
       SettingsStorage.save(updated);
@@ -29,7 +24,11 @@ export const useTGSettings = () => {
     });
 
     if (key === "fullscreen" && initDataTG) {
-      value ? initDataTG.requestFullscreen() : initDataTG.exitFullscreen();
+      if (value && initDataTG.requestFullscreen) {
+        initDataTG.requestFullscreen();
+      } else if (!value && initDataTG.exitFullscreen) {
+        initDataTG.exitFullscreen();
+      }
     }
   };
 

@@ -5,11 +5,12 @@ import {
   deleteProductById,
   updateExistingProductById,
 } from "../../services/api/productApi";
+import { type Product } from "../../types/entities/Product";
 
 const PAGE_SIZE = 20;
 
 export const useProducts = () => {
-  const [products, setProducts] = useState<Array<any>>([]);
+  const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState<boolean>(false);
   const [loadingMore, setLoadingMore] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
@@ -21,12 +22,12 @@ export const useProducts = () => {
     setLoading(true);
     setError(null);
     try {
-      const newProduct = await createNewProduct(name, price, category);
+      const newProduct = (await createNewProduct(name, price, category)) as Product;
       setProducts((prevProducts) => [newProduct, ...prevProducts]);
       return newProduct;
-    } catch (err) {
+    } catch (error) {
       setError("Не вдалося додати товар.");
-      throw err;
+      throw error;
     } finally {
       setLoading(false);
     }
@@ -38,12 +39,12 @@ export const useProducts = () => {
     setCurrentSearch(search);
     setOffset(0);
     try {
-      const fetchedProducts = await getAllProducts(search, PAGE_SIZE, 0, "ASC");
+      const fetchedProducts = (await getAllProducts(search, PAGE_SIZE, 0, "ASC")) as Product[];
       setProducts(fetchedProducts);
       setHasMore(fetchedProducts.length >= PAGE_SIZE);
       setOffset(PAGE_SIZE);
       return fetchedProducts;
-    } catch (err) {
+    } catch {
       setError("Не вдалося завантажити товари.");
       return [];
     } finally {
@@ -60,7 +61,7 @@ export const useProducts = () => {
       setProducts((prev) => [...prev, ...fetchedProducts]);
       setHasMore(fetchedProducts.length >= PAGE_SIZE);
       setOffset((prev) => prev + PAGE_SIZE);
-    } catch (err) {
+    } catch {
       setError("Не вдалося завантажити більше товарів.");
     } finally {
       setLoadingMore(false);
@@ -72,7 +73,7 @@ export const useProducts = () => {
     setError(null);
     try {
       await deleteProductById(productId);
-    } catch (err) {
+    } catch {
       setError("Не вдалося видалити товар.");
     }
     setLoading(false);
@@ -82,24 +83,19 @@ export const useProducts = () => {
     productId: string,
     name: string,
     price: number,
-    category: string
+    category: string,
   ) => {
     setLoading(true);
     setError(null);
     try {
-      const updatedProduct = await updateExistingProductById(
-        productId,
-        name,
-        price,
-        category
-      );
+      const updatedProduct = await updateExistingProductById(productId, name, price, category);
 
       setProducts((prevProducts) =>
         prevProducts.map((product) =>
-          product.id === productId ? updatedProduct : product
-        )
+          product.product_id === productId ? updatedProduct : product,
+        ),
       );
-    } catch (err) {
+    } catch {
       setError("Не вдалося оновити товар.");
     }
   };

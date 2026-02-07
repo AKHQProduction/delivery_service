@@ -2,17 +2,12 @@ import { useState, useEffect } from "react";
 import { useCategories } from "./useCategories";
 
 export const useCategoriesForm = (initialCategoryId?: string | null) => {
-  const {
-    categories,
-    fetchCategories,
-    addCategory,
-    updateCategory,
-    deleteCategory,
-  } = useCategories();
+  const { categories, fetchCategories, addCategory, updateCategory, deleteCategory } =
+    useCategories();
 
   const [loading, setLoading] = useState(false);
   const [selectedCategory, setSelectedCategory] = useState<string | null>(
-    initialCategoryId || "EMPTY"
+    initialCategoryId || "EMPTY",
   );
   const [isCategoryModalOpen, setIsCategoryModalOpen] = useState(false);
 
@@ -23,6 +18,7 @@ export const useCategoriesForm = (initialCategoryId?: string | null) => {
       setLoading(false);
     };
     loadCategories();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   // Create category options with "No Category" as first option using "EMPTY" value

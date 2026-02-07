@@ -1,8 +1,6 @@
 import { useState } from "react";
-import {
-  useDistrictsSettings,
-  type District,
-} from "../../hooks/settings/useDistrictsSettings";
+import { useDistrictsSettings, type District } from "../../hooks/settings/useDistrictsSettings";
+import { SettingsItemSkeleton } from "../ui/Skeleton";
 
 interface NewDistrict {
   id: string;
@@ -11,18 +9,14 @@ interface NewDistrict {
 }
 
 export const DistrictsComponent = () => {
-  const { districts, addDistrict, updateDistrictById, deleteDistrictById } =
+  const { districts, addDistrict, updateDistrictById, deleteDistrictById, isLoading } =
     useDistrictsSettings();
-  const [editedDistricts, setEditedDistricts] = useState<
-    Record<string, Partial<District>>
-  >({});
+  const [editedDistricts, setEditedDistricts] = useState<Record<string, Partial<District>>>({});
   const [newDistricts, setNewDistricts] = useState<NewDistrict[]>([]);
 
   const handleFieldChange = (districtId: string, value: string) => {
     setEditedDistricts((prev) => {
-      const originalDistrict = districts?.find(
-        (d) => d?.district_id === districtId,
-      );
+      const originalDistrict = districts?.find((d) => d?.district_id === districtId);
       return {
         ...prev,
         [districtId]: {
@@ -36,9 +30,7 @@ export const DistrictsComponent = () => {
 
   const handleNewDistrictChange = (tempId: string, value: string) => {
     setNewDistricts((prev) =>
-      prev.map((district) =>
-        district.id === tempId ? { ...district, name: value } : district,
-      ),
+      prev.map((district) => (district.id === tempId ? { ...district, name: value } : district)),
     );
   };
 
@@ -98,9 +90,7 @@ export const DistrictsComponent = () => {
     const edited = editedDistricts[districtId];
     if (!edited) return false;
 
-    const originalDistrict = districts?.find(
-      (d) => d?.district_id === districtId,
-    );
+    const originalDistrict = districts?.find((d) => d?.district_id === districtId);
     const originalName = originalDistrict?.name || "";
     const editedName = edited.name || "";
 
@@ -114,9 +104,7 @@ export const DistrictsComponent = () => {
 
   const validDistricts = (districts || []).filter(
     (district): district is District =>
-      district !== null &&
-      district !== undefined &&
-      district.district_id !== null,
+      district !== null && district !== undefined && district.district_id !== null,
   );
 
   return (
@@ -126,6 +114,14 @@ export const DistrictsComponent = () => {
       </div>
 
       <div className="space-y-3">
+        {isLoading && validDistricts.length === 0 && (
+          <>
+            {Array.from({ length: 3 }).map((_, i) => (
+              <SettingsItemSkeleton key={i} />
+            ))}
+          </>
+        )}
+
         {validDistricts.map((district) => {
           const currentName = getDistrictValue(district) || "";
 
@@ -135,9 +131,7 @@ export const DistrictsComponent = () => {
                 type="text"
                 placeholder="Назва району"
                 value={currentName}
-                onChange={(e) =>
-                  handleFieldChange(district.district_id, e.target.value)
-                }
+                onChange={(e) => handleFieldChange(district.district_id, e.target.value)}
                 className="flex-1 min-w-0 px-4 py-3 border-2 border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
               />
 
@@ -154,11 +148,7 @@ export const DistrictsComponent = () => {
                     viewBox="0 0 24 24"
                     strokeWidth={2}
                   >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      d="M5 13l4 4L19 7"
-                    />
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
                   </svg>
                 </button>
               ) : (
@@ -198,9 +188,7 @@ export const DistrictsComponent = () => {
               type="text"
               placeholder="Назва району"
               value={district.name}
-              onChange={(e) =>
-                handleNewDistrictChange(district.id, e.target.value)
-              }
+              onChange={(e) => handleNewDistrictChange(district.id, e.target.value)}
               className="flex-1 min-w-0 px-4 py-3 border-2 border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
             />
             <button
@@ -220,11 +208,7 @@ export const DistrictsComponent = () => {
                 viewBox="0 0 24 24"
                 strokeWidth={2}
               >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  d="M5 13l4 4L19 7"
-                />
+                <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
               </svg>
             </button>
             <button
@@ -239,11 +223,7 @@ export const DistrictsComponent = () => {
                 viewBox="0 0 24 24"
                 strokeWidth={2}
               >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  d="M6 18L18 6M6 6l12 12"
-                />
+                <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
               </svg>
             </button>
           </div>
@@ -252,9 +232,7 @@ export const DistrictsComponent = () => {
         {validDistricts.length === 0 && newDistricts.length === 0 && (
           <div className="text-center py-8 text-gray-500">
             <p>Райони доставки не додані</p>
-            <p className="text-sm mt-1">
-              Натисніть "+ Додати район" щоб створити новий
-            </p>
+            <p className="text-sm mt-1">Натисніть "+ Додати район" щоб створити новий</p>
           </div>
         )}
 

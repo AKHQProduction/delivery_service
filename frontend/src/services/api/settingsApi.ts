@@ -8,21 +8,13 @@ const dateToTimeString = (date: Date): string => {
   return `${hours}:${minutes}:${seconds}`;
 };
 
-export const createNewTimeSlot = async (
-  start_time: Date,
-  end_time: Date,
-  label?: string,
-) => {
-  try {
-    const response = await api.post(`v1/time-slots`, {
-      start_time: dateToTimeString(start_time),
-      end_time: dateToTimeString(end_time),
-      label: label,
-    });
-    return response.data;
-  } catch (error) {
-    throw error;
-  }
+export const createNewTimeSlot = async (start_time: Date, end_time: Date, label?: string) => {
+  const response = await api.post(`v1/time-slots`, {
+    start_time: dateToTimeString(start_time),
+    end_time: dateToTimeString(end_time),
+    label: label,
+  });
+  return response.data;
 };
 
 export const updateTimeSlot = async (
@@ -31,34 +23,22 @@ export const updateTimeSlot = async (
   end_time: Date,
   label?: string,
 ) => {
-  try {
-    const response = await api.patch(`v1/time-slots/${time_slot_id}`, {
-      start_time: dateToTimeString(start_time),
-      end_time: dateToTimeString(end_time),
-      label: label,
-    });
-    return response.data;
-  } catch (error) {
-    throw error;
-  }
+  const response = await api.patch(`v1/time-slots/${time_slot_id}`, {
+    start_time: dateToTimeString(start_time),
+    end_time: dateToTimeString(end_time),
+    label: label,
+  });
+  return response.data;
 };
 
 export const deleteTimeSlot = async (time_slot_id: string) => {
-  try {
-    const response = await api.delete(`v1/time-slots/${time_slot_id}`);
-    return response.data;
-  } catch (error) {
-    throw error;
-  }
+  const response = await api.delete(`v1/time-slots/${time_slot_id}`);
+  return response.data;
 };
 
 export const getAllTimeSlots = async () => {
-  try {
-    const response = await api.get(`v1/time-slots/all`);
-    return response.data;
-  } catch (error) {
-    throw error;
-  }
+  const response = await api.get(`v1/time-slots/all`);
+  return response.data;
 };
 
 // Shop settings API calls
@@ -75,46 +55,26 @@ export interface ShopAddressPayload {
 }
 
 export const updateShopAddress = async (payload: ShopAddressPayload) => {
-  try {
-    const response = await api.patch(`v1/shop`, payload);
-    return response.data;
-  } catch (error) {
-    throw error;
-  }
+  const response = await api.patch(`v1/shop`, payload);
+  return response.data;
 };
 
 export const createDistrict = async (name: string) => {
-  try {
-    const response = await api.post(`v1/districts`, { name });
-    return response.data;
-  } catch (error) {
-    throw error;
-  }
-}
+  const response = await api.post(`v1/districts`, { name });
+  return response.data;
+};
 
 export const updateDistrict = async (district_id: string, name: string) => {
-  try {
-    const response = await api.patch(`v1/districts/${district_id}`, { name });
-    return response.data;
-  } catch (error) {
-    throw error;
-  }
-}
+  const response = await api.patch(`v1/districts/${district_id}`, { name });
+  return response.data;
+};
 
 export const deleteDistrict = async (district_id: string) => {
-  try {
-    const response = await api.delete(`v1/districts/${district_id}`);
-    return response.data;
-  } catch (error) {
-    throw error;
-  }
-}
+  const response = await api.delete(`v1/districts/${district_id}`);
+  return response.data;
+};
 
 export const getAllDistricts = async () => {
-  try {
-    const response = await api.get(`v1/districts/all`);
-    return response.data;
-  } catch (error) {
-    throw error;
-  }
-}
+  const response = await api.get(`v1/districts/all`);
+  return response.data;
+};

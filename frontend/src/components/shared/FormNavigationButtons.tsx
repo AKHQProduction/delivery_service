@@ -41,7 +41,7 @@ export const FormNavigationButtons: React.FC<FormNavigationButtonsProps> = ({
         onClick={isLastStep ? onSubmit : onNext}
         disabled={!canProceed}
         type="button"
-        className={`${isFirstStep ? 'w-full' : 'flex-1'} py-3 rounded-xl font-bold transition-all ${
+        className={`${isFirstStep ? "w-full" : "flex-1"} py-3 rounded-xl font-bold transition-all ${
           canProceed
             ? "bg-indigo-600 hover:bg-indigo-700 text-white"
             : "bg-gray-300 text-gray-500 cursor-not-allowed"

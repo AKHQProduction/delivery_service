@@ -8,7 +8,7 @@ interface DateInputProps {
   error?: boolean;
   required?: boolean;
   className?: string;
-  variant?: 'default' | 'amber';
+  variant?: "default" | "amber";
   minDate?: string;
   icon?: React.ReactNode;
 }
@@ -21,20 +21,20 @@ export const DateInput: React.FC<DateInputProps> = ({
   error = false,
   required = false,
   className = "",
-  variant = 'default',
+  variant = "default",
   minDate,
   icon,
 }) => {
   const getBorderColor = () => {
-    if (error) return 'border-red-500';
-    if (variant === 'amber') return 'border-amber-300';
-    return 'border-indigo-200';
+    if (error) return "border-red-500";
+    if (variant === "amber") return "border-amber-300";
+    return "border-indigo-200";
   };
 
   const getFocusRingColor = () => {
-    if (error) return 'focus:ring-red-400';
-    if (variant === 'amber') return 'focus:ring-amber-400';
-    return 'focus:ring-indigo-500';
+    if (error) return "focus:ring-red-400";
+    if (variant === "amber") return "focus:ring-amber-400";
+    return "focus:ring-indigo-500";
   };
 
   return (
@@ -57,8 +57,7 @@ export const DateInput: React.FC<DateInputProps> = ({
                    focus:outline-none focus:ring-2 focus:border-transparent
                    text-gray-900 font-medium transition-all text-sm sm:text-base
                    ${getBorderColor()} ${getFocusRingColor()}`}
-        // eslint-disable-next-line react/forbid-dom-props
-        style={{ WebkitAppearance: 'none', MozAppearance: 'textfield' }}
+        style={{ WebkitAppearance: "none", MozAppearance: "textfield" }}
       />
     </div>
   );

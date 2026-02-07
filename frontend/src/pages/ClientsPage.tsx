@@ -8,12 +8,14 @@ import { type Client } from "../types/entities/Client";
 import { useClient } from "../hooks/clients/useClients";
 import { getClientById } from "../services/api/clientApi";
 import { useInfiniteScroll } from "../hooks/useInfiniteScroll";
+import { ClientCardSkeleton } from "../components/ui/Skeleton";
 
 export const ClientsPage = () => {
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedClient, setSelectedClient] = useState<Client | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const { clients, getClients, deleteClient, loadMoreClients, loadingMore, hasMore } = useClient();
+  const { clients, getClients, deleteClient, loadMoreClients, loading, loadingMore, hasMore } =
+    useClient();
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const { sentinelRef } = useInfiniteScroll({
@@ -32,13 +34,14 @@ export const ClientsPage = () => {
           const client = await getClientById(openClientId);
           setSelectedClient(client);
           setIsModalOpen(true);
-        } catch (e) {
+        } catch {
           console.error("Failed to fetch client by ID");
         }
         sessionStorage.removeItem("openClientId");
       }
     };
     initClients();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   useEffect(() => {
@@ -55,6 +58,7 @@ export const ClientsPage = () => {
         clearTimeout(debounceRef.current);
       }
     };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [searchTerm]);
 
   const handleClientClick = (client: Client) => {
@@ -70,9 +74,7 @@ export const ClientsPage = () => {
   const handleSave = async () => {
     const updatedClients = await getClients(searchTerm);
     if (selectedClient) {
-      const updated = updatedClients.find(
-        (c: Client) => c.client_id === selectedClient.client_id
-      );
+      const updated = updatedClients.find((c: Client) => c.client_id === selectedClient.client_id);
       if (updated) {
         setSelectedClient(updated);
       }
@@ -99,7 +101,15 @@ export const ClientsPage = () => {
         />
       </div>
 
-      {clients.length === 0 ? (
+      {loading && clients.length === 0 ? (
+        <div className="px-6 pb-24">
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+            {Array.from({ length: 8 }).map((_, i) => (
+              <ClientCardSkeleton key={i} />
+            ))}
+          </div>
+        </div>
+      ) : clients.length === 0 ? (
         <div className="flex flex-col items-center justify-center mt-20">
           <svg
             className="w-16 h-16 mx-auto mb-4 text-gray-300"
@@ -118,9 +128,7 @@ export const ClientsPage = () => {
             {searchTerm ? "Клієнтів не знайдено" : "Клієнти відсутні"}
           </p>
           {searchTerm && (
-            <p className="text-gray-400 text-sm mt-2">
-              Спробуйте інший пошуковий запит
-            </p>
+            <p className="text-gray-400 text-sm mt-2">Спробуйте інший пошуковий запит</p>
           )}
         </div>
       ) : (
@@ -139,8 +147,20 @@ export const ClientsPage = () => {
             {loadingMore && (
               <div className="flex items-center gap-2 text-gray-500">
                 <svg className="animate-spin h-5 w-5" viewBox="0 0 24 24">
-                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
-                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
+                  <circle
+                    className="opacity-25"
+                    cx="12"
+                    cy="12"
+                    r="10"
+                    stroke="currentColor"
+                    strokeWidth="4"
+                    fill="none"
+                  />
+                  <path
+                    className="opacity-75"
+                    fill="currentColor"
+                    d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                  />
                 </svg>
                 <span>Завантаження...</span>
               </div>

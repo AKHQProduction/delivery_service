@@ -8,9 +8,7 @@ export const BottomNavPanel = () => {
   const location = useLocation();
 
   if (!user) return null;
-  const userRoutes = getRoutesForRole(user.role).filter(
-    (route) => route.showInNav !== false,
-  );
+  const userRoutes = getRoutesForRole(user.role).filter((route) => route.showInNav !== false);
 
   return (
     <div className="flex items-center justify-center fixed bottom-0 w-full">
@@ -33,9 +31,7 @@ export const BottomNavPanel = () => {
                   <img
                     src={route.icon}
                     alt={route.label}
-                    className={`w-6 h-6 object-contain ${
-                      isActive ? "opacity-100" : "opacity-70"
-                    }`}
+                    className={`w-6 h-6 object-contain ${isActive ? "opacity-100" : "opacity-70"}`}
                   />
                   <span
                     className={`text-xs ${

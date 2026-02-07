@@ -10,6 +10,7 @@ import { useCategories } from "../hooks/products/useCategories";
 import { getProductById } from "../services/api/productApi";
 import { type Product } from "../types/entities/Product";
 import { useInfiniteScroll } from "../hooks/useInfiniteScroll";
+import { ProductCardSkeleton } from "../components/ui/Skeleton";
 
 export const ProductPage = () => {
   const [searchTerm, setSearchTerm] = useState("");
@@ -23,16 +24,12 @@ export const ProductPage = () => {
     updateProduct,
     products,
     loadMoreProducts,
+    loading,
     loadingMore,
     hasMore,
   } = useProducts();
-  const {
-    categories,
-    fetchCategories,
-    addCategory,
-    updateCategory,
-    deleteCategory,
-  } = useCategories();
+  const { categories, fetchCategories, addCategory, updateCategory, deleteCategory } =
+    useCategories();
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const initialLoadRef = useRef(false);
 
@@ -54,17 +51,18 @@ export const ProductPage = () => {
       const openProductId = sessionStorage.getItem("openProductId");
       if (openProductId) {
         try {
-          const product = await getProductById(openProductId);
+          const product = (await getProductById(openProductId)) as Product;
           console.log("Fetched product for modal:", product);
           setSelectedProduct(product);
           setIsModalOpen(true);
-        } catch (e) {
+        } catch {
           console.error("Failed to fetch product by ID");
         }
         sessionStorage.removeItem("openProductId");
       }
     };
     initProducts();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   // Search effect - only runs when searchTerm changes
@@ -82,6 +80,7 @@ export const ProductPage = () => {
         clearTimeout(debounceRef.current);
       }
     };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [searchTerm]);
 
   const handleProductClick = (product: Product) => {
@@ -96,7 +95,11 @@ export const ProductPage = () => {
 
   const handleSave = async (updatedProduct: Product) => {
     // Only pass category_id if it exists
-    const updateData: any = {
+    const updateData: {
+      name: string;
+      price: number;
+      category_id?: string;
+    } = {
       name: updatedProduct.name,
       price: updatedProduct.price,
     };
@@ -109,7 +112,7 @@ export const ProductPage = () => {
       updatedProduct.product_id,
       updateData.name,
       updateData.price,
-      updateData.category_id
+      updateData.category_id ?? "",
     );
     await getProducts();
     await fetchCategories();
@@ -117,9 +120,7 @@ export const ProductPage = () => {
     // Handle null category
     let categoryName = "Без категорії";
     if (updatedProduct.category_id) {
-      const category = categories.find(
-        (cat) => cat.category_id === updatedProduct.category_id
-      );
+      const category = categories.find((cat) => cat.category_id === updatedProduct.category_id);
       categoryName = category?.name || "Без категорії";
     }
 
@@ -192,7 +193,15 @@ export const ProductPage = () => {
         />
       </div>
 
-      {products.length === 0 ? (
+      {loading && products.length === 0 ? (
+        <div className="px-6 pb-24">
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+            {Array.from({ length: 8 }).map((_, i) => (
+              <ProductCardSkeleton key={i} />
+            ))}
+          </div>
+        </div>
+      ) : products.length === 0 ? (
         <div className="flex flex-col items-center justify-center mt-20">
           <svg
             className="w-16 h-16 mx-auto mb-4 text-gray-300"
@@ -211,9 +220,7 @@ export const ProductPage = () => {
             {searchTerm ? "Товари не знайдено" : "Товари відсутні"}
           </p>
           {searchTerm && (
-            <p className="text-gray-400 text-sm mt-2">
-              Спробуйте інший пошуковий запит
-            </p>
+            <p className="text-gray-400 text-sm mt-2">Спробуйте інший пошуковий запит</p>
           )}
         </div>
       ) : (
@@ -221,7 +228,7 @@ export const ProductPage = () => {
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
             {products.map((product) => (
               <ProductCard
-                key={product.id}
+                key={product.product_id}
                 product={product}
                 onClick={() => handleProductClick(product)}
               />
@@ -262,12 +269,7 @@ export const ProductPage = () => {
           className="relative w-14 h-14 bg-gray-700 hover:bg-gray-800 active:bg-gray-900 rounded-full flex items-center justify-center shadow-lg transition-all duration-200 hover:shadow-xl transform hover:scale-105 active:scale-95"
           aria-label="Manage Categories"
         >
-          <svg
-            className="w-6 h-6 text-white"
-            fill="none"
-            stroke="currentColor"
-            viewBox="0 0 24 24"
-          >
+          <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path
               strokeLinecap="round"
               strokeLinejoin="round"
@@ -293,11 +295,7 @@ export const ProductPage = () => {
               viewBox="0 0 24 24"
               strokeWidth={2.5}
             >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                d="M12 4v16m8-8H4"
-              />
+              <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" />
             </svg>
           </button>
         </div>

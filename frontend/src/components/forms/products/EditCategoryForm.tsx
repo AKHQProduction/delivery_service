@@ -7,14 +7,8 @@ export const CategoriesForm = () => {
   const [selectedCategory, setSelectedCategory] = useState("");
   const [isCategoryModalOpen, setIsCategoryModalOpen] = useState(false);
 
-  const {
-    categories,
-    loading,
-    fetchCategories,
-    addCategory,
-    updateCategory,
-    deleteCategory,
-  } = useCategories();
+  const { categories, loading, fetchCategories, addCategory, updateCategory, deleteCategory } =
+    useCategories();
 
   // Fetch categories on mount
   useEffect(() => {
@@ -35,17 +29,17 @@ export const CategoriesForm = () => {
   }));
 
   const handleAddCategory = async (name: string) => {
-  try {
-    const newCategory = await addCategory(name);
-    // Automatically select the newly created category
-    if (newCategory && newCategory.category_id) {
-      setSelectedCategory(newCategory.category_id);
-      setIsCategoryModalOpen(false); // Close modal
+    try {
+      const newCategory = await addCategory(name);
+      // Automatically select the newly created category
+      if (newCategory && newCategory.category_id) {
+        setSelectedCategory(newCategory.category_id);
+        setIsCategoryModalOpen(false); // Close modal
+      }
+    } catch (error) {
+      console.error("Failed to add category:", error);
     }
-  } catch (error) {
-    console.error("Failed to add category:", error);
-  }
-};
+  };
   const handleUpdateCategory = async (id: string, name: string) => {
     try {
       await updateCategory(id, name);
@@ -70,20 +64,17 @@ export const CategoriesForm = () => {
       <h1 className="text-2xl font-bold mb-6">Додати товар</h1>
 
       <form className="space-y-4">
-
         <DynamicFormSelect
           label="Категорія"
           name="category"
           value={selectedCategory}
-          onChange={(e) => setSelectedCategory(e.target.value)}
+          onChange={(value) => setSelectedCategory(value)}
           options={categoryOptions}
           required
           onAddCategory={() => setIsCategoryModalOpen(true)}
         />
 
-        {loading && (
-          <div className="text-sm text-gray-500">Завантаження категорій...</div>
-        )}
+        {loading && <div className="text-sm text-gray-500">Завантаження категорій...</div>}
 
         <button
           type="submit"
