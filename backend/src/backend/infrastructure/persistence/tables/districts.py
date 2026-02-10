@@ -25,7 +25,9 @@ class District(Base, CreatedAt, UpdatedAt):
         sa.ForeignKey("shops.id", ondelete="CASCADE")
     )
 
-    shop: Mapped["Shop"] = relationship(back_populates="districts")
+    shop: Mapped["Shop"] = relationship(
+        back_populates="districts", lazy="raise"
+    )
 
     __table_args__ = (
         UniqueConstraint("shop_id", "name", name="uq_district_name_per_shop"),

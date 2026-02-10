@@ -34,15 +34,25 @@ class Shop(Base, CreatedAt, UpdatedAt):
     longitude: Mapped[float | None] = mapped_column(sa.Double, nullable=True)
 
     memberships: Mapped[list["ShopMembership"]] = relationship(
-        back_populates="shop"
+        back_populates="shop", lazy="raise"
     )
-    products: Mapped[list["Product"]] = relationship(back_populates="shop")
-    categories: Mapped[list["Category"]] = relationship(back_populates="shop")
-    districts: Mapped[list["District"]] = relationship(back_populates="shop")
-    clients: Mapped[list["Client"]] = relationship(back_populates="shop")
-    orders: Mapped[list["Order"]] = relationship(back_populates="shop")
+    products: Mapped[list["Product"]] = relationship(
+        back_populates="shop", lazy="raise"
+    )
+    categories: Mapped[list["Category"]] = relationship(
+        back_populates="shop", lazy="raise"
+    )
+    districts: Mapped[list["District"]] = relationship(
+        back_populates="shop", lazy="raise"
+    )
+    clients: Mapped[list["Client"]] = relationship(
+        back_populates="shop", lazy="raise"
+    )
+    orders: Mapped[list["Order"]] = relationship(
+        back_populates="shop", lazy="raise"
+    )
     delivery_time_slots: Mapped[list["ShopDeliveryTimeSlot"]] = relationship(
-        back_populates="shop"
+        back_populates="shop", lazy="raise"
     )
 
     __table_args__ = (
@@ -63,7 +73,7 @@ class Role(Base):
     name: Mapped[str] = mapped_column(sa.String, unique=True, nullable=False)
 
     memberships: Mapped[list["ShopMembership"]] = relationship(
-        back_populates="role"
+        back_populates="role", lazy="raise"
     )
 
     def __repr__(self) -> str:
@@ -84,9 +94,15 @@ class ShopMembership(Base, CreatedAt, UpdatedAt):
     )
     role_id: Mapped[int] = mapped_column(sa.ForeignKey("roles.id"))
 
-    user: Mapped["User"] = relationship(back_populates="membership")
-    shop: Mapped["Shop"] = relationship(back_populates="memberships")
-    role: Mapped["Role"] = relationship(back_populates="memberships")
+    user: Mapped["User"] = relationship(
+        back_populates="membership", lazy="raise"
+    )
+    shop: Mapped["Shop"] = relationship(
+        back_populates="memberships", lazy="raise"
+    )
+    role: Mapped["Role"] = relationship(
+        back_populates="memberships", lazy="raise"
+    )
 
     __table_args__ = (
         UniqueConstraint("user_id", name="uq_shop_membership_user"),
@@ -110,7 +126,9 @@ class ShopDeliveryTimeSlot(Base, CreatedAt, UpdatedAt):
     end_time: Mapped[datetime.time] = mapped_column(sa.Time, nullable=False)
     label: Mapped[str | None] = mapped_column(sa.String(100), nullable=True)
 
-    shop: Mapped["Shop"] = relationship(back_populates="delivery_time_slots")
+    shop: Mapped["Shop"] = relationship(
+        back_populates="delivery_time_slots", lazy="raise"
+    )
 
     __table_args__ = (
         UniqueConstraint(

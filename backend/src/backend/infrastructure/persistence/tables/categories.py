@@ -26,8 +26,12 @@ class Category(Base, CreatedAt, UpdatedAt):
         sa.ForeignKey("shops.id", ondelete="CASCADE")
     )
 
-    shop: Mapped["Shop"] = relationship(back_populates="categories")
-    products: Mapped[list["Product"]] = relationship(back_populates="category")
+    shop: Mapped["Shop"] = relationship(
+        back_populates="categories", lazy="raise"
+    )
+    products: Mapped[list["Product"]] = relationship(
+        back_populates="category", lazy="raise"
+    )
 
     __table_args__ = (
         UniqueConstraint("shop_id", "name", name="uq_category_name_per_shop"),

@@ -32,9 +32,11 @@ class Product(Base, CreatedAt, UpdatedAt):
         sa.ForeignKey("shops.id", ondelete="CASCADE")
     )
 
-    shop: Mapped["Shop"] = relationship(back_populates="products")
+    shop: Mapped["Shop"] = relationship(
+        back_populates="products", lazy="raise"
+    )
     category: Mapped["Category | None"] = relationship(
-        back_populates="products"
+        back_populates="products", lazy="raise"
     )
 
     def __repr__(self) -> str:
