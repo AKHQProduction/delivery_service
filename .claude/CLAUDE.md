@@ -36,3 +36,19 @@ Domain-сервисы создают и мутируют ORM-объекты. О�
 - **DI**: Dishka
 - **IDs**: UUID v7
 - **Transactions**: явный TransactionManager.commit()
+
+## Logging
+
+Логирование обязательно в `except`-блоках, но без избыточности:
+
+- **Известная ошибка** (конкретные исключения) — `logger.exception()` с контекстом данных:
+  ```python
+  except (KeyError, ValueError, TypeError):
+      logger.exception("Failed to parse response: %s", data)
+      return None
+  ```
+- **Неизвестная ошибка** (голый `Exception`) — `logger.exception()` с именем класса исключения:
+  ```python
+  except Exception as exc:
+      logger.exception("Request failed [%s]", exc.__class__.__name__)
+  ```
