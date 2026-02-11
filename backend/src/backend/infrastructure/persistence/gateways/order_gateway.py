@@ -1,3 +1,4 @@
+import datetime
 from typing import cast
 from uuid import UUID
 
@@ -156,6 +157,24 @@ class SQLAlchemyOrderGateway:
                 cast("str", cast("object", row.payment_method))
             ),
         )
+
+    async def load_by_date(
+        self, shop_id: ShopId, delivery_date: datetime.date
+    ) -> list[Order]:
+        query = (
+            select(Order)
+            .options(
+                selectinload(Order.items),
+                selectinload(Order.client),
+            )
+            .where(
+                Order.shop_id == shop_id,
+                Order.date == delivery_date,
+            )
+            .order_by(asc(Order.delivery_start_time), asc(Order.id))
+        )
+        result = await self._session.execute(query)
+        return list(result.scalars().all())
 
     async def load_items(self, order_id: OrderId) -> list[OrderItemReadModel]:
         query = select(OrderItem).where(OrderItem.order_id == order_id)

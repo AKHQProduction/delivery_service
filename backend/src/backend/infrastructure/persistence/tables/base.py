@@ -7,6 +7,7 @@ from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column
 from sqlalchemy.types import TypeDecorator
 
+from backend.application.dto.coordinates import CoordinatesDTO
 from backend.application.dto.gateways.order_gateway import (
     DeliveryAddressDTO,
 )
@@ -30,7 +31,10 @@ class DeliveryAddressType(TypeDecorator):
     ) -> DeliveryAddressDTO | None:
         if value is None:
             return None
-        return DeliveryAddressDTO(**value)
+        coords = value.pop("coordinates", None)
+        if coords is not None:
+            coords = CoordinatesDTO(**coords)
+        return DeliveryAddressDTO(**value, coordinates=coords)
 
 
 class Base(DeclarativeBase):

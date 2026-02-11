@@ -3,6 +3,7 @@ from dataclasses import dataclass
 from datetime import date, timedelta
 
 from backend.application.common import ensure_exists
+from backend.application.dto.coordinates import CoordinatesDTO
 from backend.application.dto.gateways.order_gateway import (
     DeliveryAddressDTO,
 )
@@ -149,6 +150,9 @@ class CreateOrderCommandHandler:
                 intercom=address.intercom,
                 comment=address.comment,
                 district=address.district.name if address.district else None,
+                coordinates=CoordinatesDTO.build(
+                    address.latitude, address.longitude
+                ),
             ),
             payment_method=command.payment_method,
             comment=command.comment,

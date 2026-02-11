@@ -1,6 +1,7 @@
 from datetime import date, time
 from decimal import Decimal
 
+from backend.application.dto.coordinates import CoordinatesDTO
 from backend.application.dto.gateways.order_gateway import (
     DeliveryAddressDTO,
     OrderItemDTO,
@@ -49,6 +50,7 @@ def resolve_address(
         intercom=address.intercom,
         comment=address.comment,
         district=address.district.name if address.district else None,
+        coordinates=CoordinatesDTO.build(address.latitude, address.longitude),
     )
 
 

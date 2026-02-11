@@ -2,6 +2,7 @@ from dataclasses import dataclass
 from datetime import date, time
 from decimal import Decimal
 
+from backend.application.dto.coordinates import CoordinatesDTO
 from backend.application.vars import (
     ClientId,
     OrderId,
@@ -28,6 +29,7 @@ class DeliveryAddressDTO:
     intercom: str | None = None
     comment: str | None = None
     district: str | None = None
+    coordinates: CoordinatesDTO | None = None
 
 
 @dataclass(frozen=True)

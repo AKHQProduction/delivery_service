@@ -80,6 +80,11 @@ class OTelConfig(BaseModel):
     )
 
 
+class OSRMConfig(BaseModel):
+    url: str = Field(alias="OSRM_URL", default="http://osrm:5050")
+    enabled: bool = Field(alias="OSRM_ENABLED", default=False)
+
+
 class Config(BaseModel):
     def __init__(self) -> None:
         load_dotenv(
@@ -110,4 +115,8 @@ class Config(BaseModel):
 
     otel_config: OTelConfig = Field(
         default_factory=lambda: OTelConfig.model_validate(env)
+    )
+
+    osrm_config: OSRMConfig = Field(
+        default_factory=lambda: OSRMConfig.model_validate(env)
     )

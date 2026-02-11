@@ -20,6 +20,7 @@ from sqlalchemy.ext.asyncio import (
 from backend.bootstrap.config import (
     AppConfig,
     Config,
+    OSRMConfig,
     OTelConfig,
     PostgresConfig,
     RedisConfig,
@@ -70,6 +71,10 @@ class ConfigProvider(Provider):
     @provide
     def otel_config(self, config: Config) -> OTelConfig:
         return config.otel_config
+
+    @provide
+    def osrm_config(self, config: Config) -> OSRMConfig:
+        return config.osrm_config
 
 
 class PersistenceProvider(Provider):
