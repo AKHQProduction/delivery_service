@@ -5,7 +5,7 @@ from dishka import FromDishka
 from dishka.integrations.fastapi import DishkaRoute
 from fastapi import APIRouter, Body, Depends, HTTPException, status
 from fastapi.openapi.models import Example
-from fastapi.responses import Response
+from fastapi.responses import HTMLResponse, Response
 from fastapi.security import HTTPBearer
 
 from backend.application.commands.create_order import (
@@ -42,6 +42,7 @@ from backend.application.queries.get_orders import (
 )
 from backend.application.vars import (
     KYIV_TZ,
+    ExportDocType,
     OrderId,
     PaymentMethod,
     today,
@@ -419,10 +420,14 @@ async def get_order_stats(
 )
 async def generate_orders_pdf(
     delivery_date: date,
+    doc_type: ExportDocType,
     handler: FromDishka[GenerateOrderExportPDFCommandHandler],
 ) -> GenerateOrderExportPDFResult:
     return await handler.handle(
-        GenerateOrderExportPDFCommand(delivery_date=delivery_date)
+        GenerateOrderExportPDFCommand(
+            delivery_date=delivery_date,
+            doc_type=doc_type,
+        )
     )
 
 
@@ -436,6 +441,7 @@ async def generate_orders_pdf(
 async def download_orders_pdf(
     file_id: str,
     pdf_storage: FromDishka[RedisPDFStorage],
+    inline: bool = False,
 ) -> Response:
     result = await pdf_storage.get(file_id)
     if not result:
@@ -445,11 +451,50 @@ async def download_orders_pdf(
         )
 
     pdf_bytes, filename = result
+    disposition = "inline" if inline else f'attachment; filename="{filename}"'
     return Response(
         content=pdf_bytes,
         media_type="application/pdf",
-        headers={"Content-Disposition": f'attachment; filename="{filename}"'},
+        headers={"Content-Disposition": disposition},
     )
+
+
+@router.get(
+    "/export/pdf/print/{file_id}",
+    status_code=status.HTTP_200_OK,
+    responses={
+        status.HTTP_404_NOT_FOUND: {"model": ErrorSchema},
+    },
+)
+async def print_orders_pdf(
+    file_id: str,
+    pdf_storage: FromDishka[RedisPDFStorage],
+) -> HTMLResponse:
+    result = await pdf_storage.get(file_id)
+    if not result:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="File not found or expired",
+        )
+
+    download_url = f"/v1/orders/export/pdf/download/{file_id}?inline=true"
+    html = (
+        "<!DOCTYPE html>"
+        "<html><head><title>Print</title>"
+        "<style>body,html{margin:0;padding:0;height:100%;overflow:hidden}"
+        "iframe{width:100%;height:100%;border:none}</style>"
+        "</head><body>"
+        f'<iframe src="{download_url}" '
+        'onload="window.print()"></iframe>'
+        "<script>"
+        "window.onafterprint=function(){"
+        "try{window.close()}catch(e){}"
+        "setTimeout(function(){location.href='https://t.me'},500)"
+        "};"
+        "</script>"
+        "</body></html>"
+    )
+    return HTMLResponse(content=html)
 
 
 @router.get(

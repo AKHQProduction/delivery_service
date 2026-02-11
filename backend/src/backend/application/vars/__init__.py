@@ -36,5 +36,10 @@ class PaymentMethod(StrEnum):
     OTHER = "OTHER"
 
 
+class ExportDocType(StrEnum):
+    ORDER_LIST = "ORDER_LIST"
+    STATISTICS = "STATISTICS"
+
+
 class Empty(StrEnum):
     EMPTY = "EMPTY"

@@ -11,7 +11,6 @@ from reportlab.lib.units import mm
 from reportlab.pdfbase import pdfmetrics
 from reportlab.pdfbase.ttfonts import TTFont
 from reportlab.platypus import (
-    PageBreak,
     Paragraph,
     SimpleDocTemplate,
     Spacer,
@@ -85,14 +84,8 @@ class ReportLabOrdersPDFGenerator:
             ),
         }
 
-    def handle(
-        self,
-        orders: list[Order],
-        delivery_date: date,
-        shop_name: str,
-    ) -> bytes:
+    def _build_doc(self, elements: list) -> bytes:
         buffer = io.BytesIO()
-
         doc = SimpleDocTemplate(
             buffer,
             pagesize=A4,
@@ -101,22 +94,26 @@ class ReportLabOrdersPDFGenerator:
             topMargin=15 * mm,
             bottomMargin=15 * mm,
         )
+        doc.build(elements)
+        buffer.seek(0)
+        return buffer.read()
 
+    def build_order_list(
+        self,
+        orders: list[Order],
+        delivery_date: date,
+    ) -> bytes:
         elements: list = []
 
         date_str = delivery_date.strftime("%d.%m.%Y")
-        title = Paragraph(
-            f"Замовлення на {date_str}",
-            self._styles["title"],
+        elements.append(
+            Paragraph(f"Замовлення на {date_str}", self._styles["title"])
         )
-        elements.append(title)
 
         if not orders:
-            no_orders = Paragraph(
-                "Немає замовлень на цю дату",
-                self._styles["normal"],
+            elements.append(
+                Paragraph("Немає замовлень на цю дату", self._styles["normal"])
             )
-            elements.append(no_orders)
         else:
             orders_by_slot: dict[str, list[Order]] = defaultdict(list)
             for order in orders:
@@ -128,14 +125,18 @@ class ReportLabOrdersPDFGenerator:
                 elements.append(Paragraph(time_slot, self._styles["heading"]))
                 elements.extend(self._build_orders_section(slot_orders))
 
-            elements.append(PageBreak())
-            elements.extend(
-                self._build_summary_section(orders, shop_name, delivery_date)
-            )
+        return self._build_doc(elements)
 
-        doc.build(elements)
-        buffer.seek(0)
-        return buffer.read()
+    def build_statistics(
+        self,
+        orders: list[Order],
+        delivery_date: date,
+        shop_name: str,
+    ) -> bytes:
+        elements: list = self._build_summary_section(
+            orders, shop_name, delivery_date
+        )
+        return self._build_doc(elements)
 
     @staticmethod
     def _format_time_slot(order: Order) -> str:
@@ -153,6 +154,11 @@ class ReportLabOrdersPDFGenerator:
             if "DejaVu" in pdfmetrics.getRegisteredFontNames()
             else "Helvetica"
         )
+        font_bold = (
+            "DejaVu-Bold"
+            if "DejaVu-Bold" in pdfmetrics.getRegisteredFontNames()
+            else "Helvetica-Bold"
+        )
 
         cell_style = ParagraphStyle(
             "CellStyle",
@@ -166,6 +172,44 @@ class ReportLabOrdersPDFGenerator:
             self._build_order_row(order, cell_style) for order in orders
         )
 
+        cash_total = Decimal(0)
+        bank_total = Decimal(0)
+        other_total = Decimal(0)
+        for order in orders:
+            payment = PaymentMethod(order.payment_method)
+            order_sum = sum(
+                item.quantity * item.price_per_item for item in order.items
+            )
+            if payment == PaymentMethod.CASH:
+                cash_total += order_sum
+            elif payment == PaymentMethod.BANK_TRANSFER:
+                bank_total += order_sum
+            else:
+                other_total += order_sum
+        grand = cash_total + bank_total + other_total
+
+        subtotal_style = ParagraphStyle(
+            "SubtotalStyle",
+            fontName=font_bold,
+            fontSize=8,
+            leading=10,
+            alignment=2,
+        )
+        subtotal_lines = [
+            f"Готівка: {cash_total} грн",
+            f"На рахунок: {bank_total} грн",
+            f"Інше: {other_total} грн",
+            f"<b>Всього: {grand} грн</b>",
+        ]
+        table_data.append([
+            "",
+            "",
+            "",
+            Paragraph("<br/>".join(subtotal_lines), subtotal_style),
+            "",
+        ])
+
+        last_row = len(table_data) - 1
         table = Table(
             table_data,
             colWidths=[30 * mm, 60 * mm, 45 * mm, 22 * mm, 23 * mm],
@@ -176,13 +220,21 @@ class ReportLabOrdersPDFGenerator:
                 ("FONTSIZE", (0, 0), (-1, 0), 9),
                 ("BACKGROUND", (0, 0), (-1, 0), colors.lightgrey),
                 ("ALIGN", (0, 0), (-1, 0), "CENTER"),
-                ("ALIGN", (3, 1), (4, -1), "CENTER"),
+                ("ALIGN", (3, 1), (4, -2), "CENTER"),
                 ("VALIGN", (0, 0), (-1, -1), "TOP"),
                 ("GRID", (0, 0), (-1, -1), 0.5, colors.grey),
                 ("TOPPADDING", (0, 0), (-1, -1), 3),
                 ("BOTTOMPADDING", (0, 0), (-1, -1), 3),
                 ("LEFTPADDING", (0, 0), (-1, -1), 3),
                 ("RIGHTPADDING", (0, 0), (-1, -1), 3),
+                ("SPAN", (3, last_row), (4, last_row)),
+                (
+                    "BACKGROUND",
+                    (0, last_row),
+                    (-1, last_row),
+                    colors.HexColor("#D9E2F3"),
+                ),
+                ("ALIGN", (3, last_row), (4, last_row), "RIGHT"),
             ])
         )
 
@@ -215,7 +267,7 @@ class ReportLabOrdersPDFGenerator:
         if addr.comment:
             details_lines.append(f"Нотатка: {addr.comment}")
 
-        details_lines.extend(["", f"Телефон: {order.delivery_phone}"])
+        details_lines.append(f"Тел: {order.delivery_phone}")
         if order.comment:
             details_lines.append(f"Коментар: {order.comment}")
 

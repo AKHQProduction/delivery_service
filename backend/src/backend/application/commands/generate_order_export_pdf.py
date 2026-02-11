@@ -7,7 +7,7 @@ from datetime import date, time
 from backend.application.dto.coordinates import CoordinatesDTO
 from backend.application.errors import AccessDeniedError, EntityNotFoundError
 from backend.application.services.route_optimizer import RouteOptimizer
-from backend.application.vars import OrderId
+from backend.application.vars import ExportDocType, OrderId
 from backend.infrastructure.idp import TelegramIdentityProvider
 from backend.infrastructure.pdf import ReportLabOrdersPDFGenerator
 from backend.infrastructure.persistence.gateways import (
@@ -23,6 +23,7 @@ logger = logging.getLogger(__name__)
 @dataclass(frozen=True)
 class GenerateOrderExportPDFCommand:
     delivery_date: date
+    doc_type: ExportDocType
 
 
 @dataclass(frozen=True)
@@ -78,20 +79,29 @@ class GenerateOrderExportPDFCommandHandler:
             shop_id,
         )
 
-        shop_coords = CoordinatesDTO.build(shop.latitude, shop.longitude)
-        if shop_coords:
-            orders = await self._optimize_orders(orders, shop_coords)
-
         loop = asyncio.get_running_loop()
-        pdf_bytes = await loop.run_in_executor(
-            None,
-            self._pdf_generator.handle,
-            orders,
-            command.delivery_date,
-            shop.name,
-        )
 
-        filename = f"orders_{command.delivery_date.isoformat()}.pdf"
+        if command.doc_type == ExportDocType.ORDER_LIST:
+            shop_coords = CoordinatesDTO.build(shop.latitude, shop.longitude)
+            if shop_coords:
+                orders = await self._optimize_orders(orders, shop_coords)
+
+            pdf_bytes = await loop.run_in_executor(
+                None,
+                self._pdf_generator.build_order_list,
+                orders,
+                command.delivery_date,
+            )
+            filename = f"orders_{command.delivery_date.isoformat()}.pdf"
+        else:
+            pdf_bytes = await loop.run_in_executor(
+                None,
+                self._pdf_generator.build_statistics,
+                orders,
+                command.delivery_date,
+                shop.name,
+            )
+            filename = f"statistics_{command.delivery_date.isoformat()}.pdf"
         file_id = await self._pdf_storage.save(pdf_bytes, filename)
 
         logger.info(
