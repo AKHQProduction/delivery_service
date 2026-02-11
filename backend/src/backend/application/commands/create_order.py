@@ -12,6 +12,7 @@ from backend.application.policies.access import (
     ensure_can_manage,
     ensure_related_to_shop,
 )
+from backend.application.services.geocoder import Geocoder
 from backend.application.services.order import (
     create_order,
     create_order_item,
@@ -31,6 +32,7 @@ from backend.infrastructure.persistence.gateways import (
     SQLAlchemyClientGateway,
     SQLAlchemyOrderGateway,
     SQLAlchemyProductGateway,
+    SQLAlchemyShopGateway,
     SQLAlchemyTimeSlotGateway,
 )
 from backend.infrastructure.persistence.tables import Product
@@ -72,6 +74,8 @@ class CreateOrderCommandHandler:
         product_gateway: SQLAlchemyProductGateway,
         order_gateway: SQLAlchemyOrderGateway,
         time_slot_gateway: SQLAlchemyTimeSlotGateway,
+        shop_gateway: SQLAlchemyShopGateway,
+        geocoder: Geocoder,
         tr_manager: TransactionManager,
     ) -> None:
         self._idp = idp
@@ -79,6 +83,8 @@ class CreateOrderCommandHandler:
         self._product_gateway = product_gateway
         self._order_gateway = order_gateway
         self._time_slot_gateway = time_slot_gateway
+        self._shop_gateway = shop_gateway
+        self._geocoder = geocoder
         self._tr_manager = tr_manager
 
     async def handle(self, command: CreateOrderCommand) -> OrderId:
@@ -132,6 +138,18 @@ class CreateOrderCommandHandler:
             (products_map[p.product_id], p.quantity) for p in command.products
         ]
 
+        coordinates = CoordinatesDTO.build(address.latitude, address.longitude)
+        if coordinates is None:
+            shop = await self._shop_gateway.load_shop(current_user.shop_id)
+            shop_city = shop.city if shop else None
+            if shop_city is not None:
+                coordinates = await self._geocoder.geocode(
+                    address.street, address.house, shop_city
+                )
+                if coordinates is not None:
+                    address.latitude = coordinates.latitude
+                    address.longitude = coordinates.longitude
+
         order_id = self._order_gateway.next_id()
         order = create_order(
             order_id=order_id,
@@ -150,9 +168,7 @@ class CreateOrderCommandHandler:
                 intercom=address.intercom,
                 comment=address.comment,
                 district=address.district.name if address.district else None,
-                coordinates=CoordinatesDTO.build(
-                    address.latitude, address.longitude
-                ),
+                coordinates=coordinates,
             ),
             payment_method=command.payment_method,
             comment=command.comment,

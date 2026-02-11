@@ -13,12 +13,14 @@ from backend.application.services.client import (
     create_client,
     create_phone,
 )
+from backend.application.services.geocoder import Geocoder
 from backend.application.validators import normalize_ukraine_phone
 from backend.application.validators.phone import validate_no_duplicate_phones
 from backend.application.vars import ClientId, DistrictId
 from backend.infrastructure.idp import TelegramIdentityProvider
 from backend.infrastructure.persistence.gateways import (
     SQLAlchemyClientGateway,
+    SQLAlchemyShopGateway,
 )
 from backend.infrastructure.transaction_manager import TransactionManager
 
@@ -56,10 +58,14 @@ class CreateClientCommandHandler:
         self,
         idp: TelegramIdentityProvider,
         client_gateway: SQLAlchemyClientGateway,
+        shop_gateway: SQLAlchemyShopGateway,
+        geocoder: Geocoder,
         tr_manager: TransactionManager,
     ) -> None:
         self._idp = idp
         self._client_gateway = client_gateway
+        self._shop_gateway = shop_gateway
+        self._geocoder = geocoder
         self._tr_manager = tr_manager
 
     async def handle(self, command: CreateClientCommand) -> ClientId:
@@ -119,21 +125,30 @@ class CreateClientCommandHandler:
             for idx in range(len(command.phones))
         ]
 
-        client.addresses = [
-            create_address(
-                street=addr.street,
-                house=addr.house,
-                apartment=addr.apartment,
-                entrance=addr.entrance,
-                floor=addr.floor,
-                intercom=addr.intercom,
-                comment=addr.comment,
-                coordinates=addr.coordinates,
-                is_primary=(idx == 0),
-                district_id=addr.district_id,
+        shop = await self._shop_gateway.load_shop(current_user.shop_id)
+        shop_city = shop.city if shop else None
+
+        for idx, addr in enumerate(command.addresses):
+            coordinates = addr.coordinates
+            if coordinates is None and shop_city is not None:
+                coordinates = await self._geocoder.geocode(
+                    addr.street, addr.house, shop_city
+                )
+
+            client.addresses.append(
+                create_address(
+                    street=addr.street,
+                    house=addr.house,
+                    apartment=addr.apartment,
+                    entrance=addr.entrance,
+                    floor=addr.floor,
+                    intercom=addr.intercom,
+                    comment=addr.comment,
+                    coordinates=coordinates,
+                    is_primary=(idx == 0),
+                    district_id=addr.district_id,
+                )
             )
-            for idx, addr in enumerate(command.addresses)
-        ]
 
         self._client_gateway.save(client)
         await self._tr_manager.commit()

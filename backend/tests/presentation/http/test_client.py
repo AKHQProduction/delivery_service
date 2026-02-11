@@ -1,6 +1,7 @@
 import uuid
 from collections.abc import Callable
 from typing import Any
+from unittest.mock import AsyncMock, patch
 
 import pytest
 from fastapi import status
@@ -8,6 +9,7 @@ from httpx import AsyncClient
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from backend.application.dto.coordinates import CoordinatesDTO
 from backend.application.vars import ShopRole
 from backend.infrastructure.persistence.tables.clients import (
     Client,
@@ -1787,3 +1789,234 @@ async def test_delete_client_not_found_returns_ok(
     response = await http_client.delete(url=url, headers=headers)
 
     assert response.status_code == status.HTTP_204_NO_CONTENT
+
+
+NOMINATIM_GEOCODE = "backend.infrastructure.nominatim.NominatimClient.geocode"
+
+
+@pytest.mark.asyncio()
+async def test_create_client_geocodes_address_when_shop_has_city(
+    http_client: AsyncClient,
+    session: AsyncSession,
+    customer_headers: Callable[[int], dict[str, Any]],
+    setup_full_test_user_with_shop,
+) -> None:
+    telegram_id = 1060
+    await setup_full_test_user_with_shop(
+        telegram_id=telegram_id, shop_city="Київ"
+    )
+    await session.commit()
+
+    headers = customer_headers(telegram_id)
+
+    json = {
+        "full_name": "Геокод Клієнт",
+        "phones": [{"number": "+380501234567"}],
+        "addresses": [
+            {
+                "street": "Хрещатик",
+                "house": "10",
+            }
+        ],
+    }
+
+    fake_coords = CoordinatesDTO(latitude=50.45, longitude=30.52)
+
+    with patch(
+        NOMINATIM_GEOCODE,
+        new_callable=AsyncMock,
+        return_value=fake_coords,
+    ) as mock_geocode:
+        response = await http_client.post(
+            url=BASE_URL, headers=headers, json=json
+        )
+
+        assert response.status_code == status.HTTP_201_CREATED
+        mock_geocode.assert_called_once_with("Хрещатик", "10", "Київ")
+
+    client_id = response.json()
+    await session.flush()
+
+    result = await session.execute(
+        select(ClientAddress).where(
+            ClientAddress.client_id == uuid.UUID(client_id)
+        )
+    )
+    addr = result.scalar_one()
+    assert addr.latitude == 50.45
+    assert addr.longitude == 30.52
+
+
+@pytest.mark.asyncio()
+async def test_create_client_skips_geocoding_when_coords_provided(
+    http_client: AsyncClient,
+    session: AsyncSession,
+    customer_headers: Callable[[int], dict[str, Any]],
+    setup_full_test_user_with_shop,
+) -> None:
+    telegram_id = 1061
+    await setup_full_test_user_with_shop(
+        telegram_id=telegram_id, shop_city="Київ"
+    )
+    await session.commit()
+
+    headers = customer_headers(telegram_id)
+
+    json = {
+        "full_name": "Клієнт з Координатами",
+        "phones": [{"number": "+380501234567"}],
+        "addresses": [
+            {
+                "street": "Хрещатик",
+                "house": "10",
+                "coordinates": {
+                    "latitude": 50.4501,
+                    "longitude": 30.5234,
+                },
+            }
+        ],
+    }
+
+    with patch(
+        NOMINATIM_GEOCODE,
+        new_callable=AsyncMock,
+    ) as mock_geocode:
+        response = await http_client.post(
+            url=BASE_URL, headers=headers, json=json
+        )
+
+        assert response.status_code == status.HTTP_201_CREATED
+        mock_geocode.assert_not_called()
+
+    client_id = response.json()
+    await session.flush()
+
+    result = await session.execute(
+        select(ClientAddress).where(
+            ClientAddress.client_id == uuid.UUID(client_id)
+        )
+    )
+    addr = result.scalar_one()
+    assert addr.latitude == 50.4501
+    assert addr.longitude == 30.5234
+
+
+@pytest.mark.asyncio()
+async def test_create_client_skips_geocoding_when_no_city(
+    http_client: AsyncClient,
+    session: AsyncSession,
+    customer_headers: Callable[[int], dict[str, Any]],
+    setup_full_test_user_with_shop,
+) -> None:
+    telegram_id = 1062
+    await setup_full_test_user_with_shop(telegram_id=telegram_id)
+    await session.commit()
+
+    headers = customer_headers(telegram_id)
+
+    json = {
+        "full_name": "Клієнт без Міста",
+        "phones": [{"number": "+380501234567"}],
+        "addresses": [
+            {
+                "street": "Хрещатик",
+                "house": "10",
+            }
+        ],
+    }
+
+    with patch(
+        NOMINATIM_GEOCODE,
+        new_callable=AsyncMock,
+    ) as mock_geocode:
+        response = await http_client.post(
+            url=BASE_URL, headers=headers, json=json
+        )
+
+        assert response.status_code == status.HTTP_201_CREATED
+        mock_geocode.assert_not_called()
+
+    client_id = response.json()
+    await session.flush()
+
+    result = await session.execute(
+        select(ClientAddress).where(
+            ClientAddress.client_id == uuid.UUID(client_id)
+        )
+    )
+    addr = result.scalar_one()
+    assert addr.latitude is None
+    assert addr.longitude is None
+
+
+@pytest.mark.asyncio()
+async def test_edit_client_geocodes_new_address(
+    http_client: AsyncClient,
+    session: AsyncSession,
+    customer_headers: Callable[[int], dict[str, Any]],
+    setup_full_test_user_with_shop,
+    setup_test_client,
+) -> None:
+    telegram_id = 1063
+    _, shop_id = await setup_full_test_user_with_shop(
+        telegram_id=telegram_id, shop_city="Київ"
+    )
+
+    client_id = await setup_test_client(
+        shop_id=shop_id,
+        full_name="Клієнт",
+        phones=["+380501234567"],
+        addresses=[{"street": "Стара", "house": "1"}],
+    )
+    await session.commit()
+
+    headers = customer_headers(telegram_id)
+
+    client_resp = await http_client.get(
+        url=f"{BASE_URL}/{client_id}", headers=headers
+    )
+    client_data = client_resp.json()
+    phone_id = client_data["phones"][0]["id"]
+
+    fake_coords = CoordinatesDTO(latitude=50.46, longitude=30.53)
+
+    json = {
+        "phones": [
+            {
+                "number": "+380501234567",
+                "is_primary": True,
+                "id": phone_id,
+            }
+        ],
+        "addresses": [
+            {
+                "street": "Нова вулиця",
+                "house": "5",
+                "is_primary": True,
+            }
+        ],
+    }
+
+    with patch(
+        NOMINATIM_GEOCODE,
+        new_callable=AsyncMock,
+        return_value=fake_coords,
+    ) as mock_geocode:
+        response = await http_client.patch(
+            url=f"{BASE_URL}/{client_id}",
+            headers=headers,
+            json=json,
+        )
+
+        assert response.status_code == status.HTTP_200_OK
+        mock_geocode.assert_called_once_with("Нова вулиця", "5", "Київ")
+
+    await session.flush()
+
+    result = await session.execute(
+        select(ClientAddress).where(ClientAddress.client_id == client_id)
+    )
+    addresses = result.scalars().all()
+    assert len(addresses) == 1
+    assert addresses[0].latitude == 50.46
+    assert addresses[0].longitude == 30.53

@@ -20,12 +20,14 @@ from backend.application.services.client import (
     update_client,
     update_phone,
 )
+from backend.application.services.geocoder import Geocoder
 from backend.application.validators import normalize_ukraine_phone
 from backend.application.validators.phone import validate_no_duplicate_phones
 from backend.application.vars import AddressId, ClientId, DistrictId, PhoneId
 from backend.infrastructure.idp import TelegramIdentityProvider
 from backend.infrastructure.persistence.gateways import (
     SQLAlchemyClientGateway,
+    SQLAlchemyShopGateway,
 )
 from backend.infrastructure.transaction_manager import TransactionManager
 
@@ -85,10 +87,14 @@ class EditClientCommandHandler:
         self,
         idp: TelegramIdentityProvider,
         client_gateway: SQLAlchemyClientGateway,
+        shop_gateway: SQLAlchemyShopGateway,
+        geocoder: Geocoder,
         tr_manager: TransactionManager,
     ) -> None:
         self._idp = idp
         self._client_gateway = client_gateway
+        self._shop_gateway = shop_gateway
+        self._geocoder = geocoder
         self._tr_manager = tr_manager
 
     async def handle(self, command: EditClientCommand) -> None:
@@ -182,10 +188,19 @@ class EditClientCommandHandler:
             updates.append(f"phones={len(command.phones)}")
 
         if command.addresses is not None:
+            shop = await self._shop_gateway.load_shop(client.shop_id)
+            shop_city = shop.city if shop else None
+
             existing_addresses = {a.id: a for a in client.addresses}
             updated_addr_ids = {a.id for a in command.addresses if a.id}
 
             for addr_data in command.addresses:
+                coordinates = addr_data.coordinates
+                if coordinates is None and shop_city is not None:
+                    coordinates = await self._geocoder.geocode(
+                        addr_data.street, addr_data.house, shop_city
+                    )
+
                 if addr_data.id and addr_data.id in existing_addresses:
                     update_address(
                         existing_addresses[addr_data.id],
@@ -196,7 +211,7 @@ class EditClientCommandHandler:
                         floor=addr_data.floor,
                         intercom=addr_data.intercom,
                         comment=addr_data.comment,
-                        coordinates=addr_data.coordinates,
+                        coordinates=coordinates,
                         is_primary=addr_data.is_primary,
                         district_id=addr_data.district_id,
                     )
@@ -209,7 +224,7 @@ class EditClientCommandHandler:
                         floor=addr_data.floor,
                         intercom=addr_data.intercom,
                         comment=addr_data.comment,
-                        coordinates=addr_data.coordinates,
+                        coordinates=coordinates,
                         is_primary=addr_data.is_primary,
                         district_id=addr_data.district_id,
                     )

@@ -82,11 +82,13 @@ from backend.application.queries.get_orders import GetOrdersQueryHandler
 from backend.application.queries.get_product import GetProductQueryHandler
 from backend.application.queries.get_products import GetProductsQueryHandler
 from backend.application.queries.get_time_slots import GetTimeSlotsQueryHandler
+from backend.application.services.geocoder import Geocoder
 from backend.application.services.route_optimizer import RouteOptimizer
 from backend.application.usecases.invite_employee.generate_invite_link import (
     GenerateInviteLinkCommandHandler,
 )
 from backend.infrastructure.idp import TelegramIdentityProvider
+from backend.infrastructure.nominatim import NominatimClient
 from backend.infrastructure.osrm import OSRMClient
 from backend.infrastructure.pdf import ReportLabOrdersPDFGenerator
 from backend.infrastructure.persistence.gateways import (
@@ -114,12 +116,14 @@ class AdaptersProvider(Provider):
             yield client
 
     osrm_client = provide(OSRMClient)
+    nominatim_client = provide(NominatimClient)
 
 
 class ServicesProvider(Provider):
     scope = Scope.APP
 
     route_optimizer = provide(RouteOptimizer)
+    geocoder = provide(Geocoder)
 
 
 class APIInteractorsProvider(Provider):

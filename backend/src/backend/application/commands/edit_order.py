@@ -1,5 +1,5 @@
 import logging
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
 from datetime import date, timedelta
 
 from backend.application.common import ensure_exists
@@ -11,6 +11,7 @@ from backend.application.policies.access import (
     ensure_can_manage,
     ensure_related_to_shop,
 )
+from backend.application.services.geocoder import Geocoder
 from backend.application.services.order import (
     resolve_address,
     resolve_order_items,
@@ -35,6 +36,7 @@ from backend.infrastructure.persistence.gateways import (
     SQLAlchemyClientGateway,
     SQLAlchemyOrderGateway,
     SQLAlchemyProductGateway,
+    SQLAlchemyShopGateway,
     SQLAlchemyTimeSlotGateway,
 )
 from backend.infrastructure.persistence.tables.orders import Order
@@ -82,6 +84,8 @@ class UpdateOrderCommandHandler:
         product_gateway: SQLAlchemyProductGateway,
         order_gateway: SQLAlchemyOrderGateway,
         time_slot_gateway: SQLAlchemyTimeSlotGateway,
+        shop_gateway: SQLAlchemyShopGateway,
+        geocoder: Geocoder,
         tr_manager: TransactionManager,
     ) -> None:
         self._idp = idp
@@ -89,6 +93,8 @@ class UpdateOrderCommandHandler:
         self._product_gateway = product_gateway
         self._order_gateway = order_gateway
         self._time_slot_gateway = time_slot_gateway
+        self._shop_gateway = shop_gateway
+        self._geocoder = geocoder
         self._tr_manager = tr_manager
 
     async def handle(self, command: UpdateOrderCommand) -> None:
@@ -128,6 +134,28 @@ class UpdateOrderCommandHandler:
                 delivery_phone = resolve_phone(client, command.phone_id)
             if command.address_id is not None:
                 delivery_address = resolve_address(client, command.address_id)
+                if delivery_address.coordinates is None:
+                    shop = await self._shop_gateway.load_shop(
+                        current_user.shop_id
+                    )
+                    shop_city = shop.city if shop else None
+                    if shop_city is not None:
+                        coords = await self._geocoder.geocode(
+                            delivery_address.street,
+                            delivery_address.house,
+                            shop_city,
+                        )
+                        if coords is not None:
+                            delivery_address = replace(
+                                delivery_address, coordinates=coords
+                            )
+                            addr_obj = next(
+                                a
+                                for a in client.addresses
+                                if a.id == command.address_id
+                            )
+                            addr_obj.latitude = coords.latitude
+                            addr_obj.longitude = coords.longitude
 
         delivery_start_time = None
         delivery_end_time = None
