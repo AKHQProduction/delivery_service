@@ -33,11 +33,11 @@ class EditTimeSlotCommandHandler:
         self,
         idp: TelegramIdentityProvider,
         time_slot_gateway: SQLAlchemyTimeSlotGateway,
-        tx: TransactionManager,
+        tr_manager: TransactionManager,
     ) -> None:
         self._idp = idp
         self._time_slot_gateway = time_slot_gateway
-        self._tx = tx
+        self._tr_manager = tr_manager
 
     async def handle(self, command: EditTimeSlotCommand) -> None:
         current_user = await self._idp.current_user()
@@ -73,6 +73,6 @@ class EditTimeSlotCommandHandler:
             label=command.label,
         )
 
-        await self._tx.commit()
+        await self._tr_manager.commit()
 
         logger.info("Time slot %s updated", command.time_slot_id)

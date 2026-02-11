@@ -3,10 +3,6 @@ from dataclasses import dataclass
 from datetime import date, timedelta
 
 from backend.application.common import ensure_exists
-from backend.application.dto.coordinates import CoordinatesDTO
-from backend.application.dto.gateways.order_gateway import (
-    DeliveryAddressDTO,
-)
 from backend.application.errors import DateMustBeGreaterThanError
 from backend.application.policies.access import (
     ensure_can_manage,
@@ -16,6 +12,8 @@ from backend.application.services.geocoder import Geocoder
 from backend.application.services.order import (
     create_order,
     create_order_item,
+    resolve_address,
+    resolve_phone,
 )
 from backend.application.vars import (
     AddressId,
@@ -103,20 +101,8 @@ class CreateOrderCommandHandler:
         )
         ensure_related_to_shop(current_user, client.shop_id)
 
-        phone = next(
-            (phone for phone in client.phones if phone.id == command.phone_id),
-            None,
-        )
-        phone = ensure_exists(phone, "Phone")
-        address = next(
-            (
-                address
-                for address in client.addresses
-                if address.id == command.address_id
-            ),
-            None,
-        )
-        address = ensure_exists(address, "Address")
+        delivery_phone = resolve_phone(client, command.phone_id)
+        delivery_address = resolve_address(client, command.address_id)
 
         time_slot = ensure_exists(
             await self._time_slot_gateway.load(command.time_slot_id),
@@ -138,17 +124,21 @@ class CreateOrderCommandHandler:
             (products_map[p.product_id], p.quantity) for p in command.products
         ]
 
-        coordinates = CoordinatesDTO.build(address.latitude, address.longitude)
-        if coordinates is None:
+        if delivery_address.coordinates is None:
             shop = await self._shop_gateway.load_shop(current_user.shop_id)
             shop_city = shop.city if shop else None
-            if shop_city is not None:
-                coordinates = await self._geocoder.geocode(
-                    address.street, address.house, shop_city
+            coords = await self._geocoder.geocode_if_missing(
+                street=delivery_address.street,
+                house=delivery_address.house,
+                coordinates=None,
+                shop_city=shop_city,
+            )
+            if coords is not None:
+                delivery_address.coordinates = coords
+                addr_obj = next(
+                    a for a in client.addresses if a.id == command.address_id
                 )
-                if coordinates is not None:
-                    address.latitude = coordinates.latitude
-                    address.longitude = coordinates.longitude
+                coords.apply_to(addr_obj)
 
         order_id = self._order_gateway.next_id()
         order = create_order(
@@ -158,18 +148,8 @@ class CreateOrderCommandHandler:
             delivery_date=command.delivery_date,
             delivery_start_time=time_slot.start_time,
             delivery_end_time=time_slot.end_time,
-            delivery_phone=phone.number,
-            delivery_address=DeliveryAddressDTO(
-                street=address.street,
-                house=address.house,
-                apartment=address.apartment,
-                entrance=address.entrance,
-                floor=address.floor,
-                intercom=address.intercom,
-                comment=address.comment,
-                district=address.district.name if address.district else None,
-                coordinates=coordinates,
-            ),
+            delivery_phone=delivery_phone,
+            delivery_address=delivery_address,
             payment_method=command.payment_method,
             comment=command.comment,
         )

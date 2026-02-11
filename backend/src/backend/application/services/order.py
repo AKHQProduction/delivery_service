@@ -2,10 +2,7 @@ from datetime import date, time
 from decimal import Decimal
 
 from backend.application.dto.coordinates import CoordinatesDTO
-from backend.application.dto.gateways.order_gateway import (
-    DeliveryAddressDTO,
-    OrderItemDTO,
-)
+from backend.application.dto.gateways.order_gateway import OrderItemDTO
 from backend.application.errors import EntityNotFoundError
 from backend.application.vars import (
     AddressId,
@@ -18,6 +15,7 @@ from backend.application.vars import (
     ProductId,
     ShopId,
 )
+from backend.infrastructure.persistence.tables.base import DeliveryAddressDTO
 from backend.infrastructure.persistence.tables.clients import (
     Client,
 )

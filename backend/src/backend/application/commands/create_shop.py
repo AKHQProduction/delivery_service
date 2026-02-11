@@ -45,9 +45,7 @@ class CreateNewShopCommandHandler:
         self._time_slot_gateway = time_slot_gateway
 
     async def handle(self, command: CreateNewShopCommand) -> None:
-        logger.info(
-            "Processing create shop command", extra={"shop_name": command.name}
-        )
+        logger.info("Creating shop: name=%s", command.name)
         user_id = await self._identity_provider.current_user_id()
 
         if not user_id:
@@ -80,6 +78,7 @@ class CreateNewShopCommandHandler:
 
         await self._tr_manager.commit()
         logger.info(
-            "Shop created successfully",
-            extra={"shop_id": str(shop_id), "shop_name": command.name},
+            "Successfully created shop: id=%s, name=%s",
+            shop_id,
+            command.name,
         )

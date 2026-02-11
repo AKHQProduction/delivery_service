@@ -3,22 +3,18 @@ from dataclasses import dataclass
 
 from backend.application.common import ensure_exists
 from backend.application.dto.coordinates import CoordinatesDTO
-from backend.application.errors import (
-    ExistingClientInfo,
-    InvalidPrimaryFlagError,
-    PhoneDuplicate,
-    PhoneNumberAlreadyExistsError,
-)
+from backend.application.errors import InvalidPrimaryFlagError
 from backend.application.policies.access import (
     ensure_can_manage,
     ensure_related_to_shop,
 )
 from backend.application.services.client import (
-    create_address,
-    create_phone,
-    update_address,
+    AddressSyncItem,
+    PhoneSyncItem,
+    check_phone_duplicates,
+    sync_addresses,
+    sync_phones,
     update_client,
-    update_phone,
 )
 from backend.application.services.geocoder import Geocoder
 from backend.application.validators import normalize_ukraine_phone
@@ -124,7 +120,7 @@ class EditClientCommandHandler:
 
         if command.phones is not None:
             normalized_phones = [
-                Phone(
+                PhoneSyncItem(
                     number=normalize_ukraine_phone(p.number),
                     is_primary=p.is_primary,
                     id=p.id,
@@ -139,101 +135,48 @@ class EditClientCommandHandler:
                 full_name=client.full_name,
             )
 
-            if not command.confirm_duplicate_phones and normalized_phones:
-                normalized_numbers = [p.number for p in normalized_phones]
-                duplicates = await self._client_gateway.find_duplicate_phones(
+            if not command.confirm_duplicate_phones and normalized_numbers:
+                await check_phone_duplicates(
+                    client_gateway=self._client_gateway,
                     shop_id=client.shop_id,
                     phone_numbers=normalized_numbers,
                     exclude_client_id=command.client_id,
                 )
-                if duplicates:
-                    raise PhoneNumberAlreadyExistsError(
-                        duplicates=[
-                            PhoneDuplicate(
-                                phone_number=dup.phone_number,
-                                existing_clients=[
-                                    ExistingClientInfo(
-                                        client_id=o.client_id,
-                                        full_name=o.full_name,
-                                    )
-                                    for o in dup.owners
-                                ],
-                            )
-                            for dup in duplicates
-                        ]
-                    )
 
-            existing_phones = {p.id: p for p in client.phones}
-            updated_phone_ids = {p.id for p in normalized_phones if p.id}
-
-            for phone_data in normalized_phones:
-                if phone_data.id and phone_data.id in existing_phones:
-                    update_phone(
-                        existing_phones[phone_data.id],
-                        number=phone_data.number,
-                        is_primary=phone_data.is_primary,
-                    )
-                else:
-                    new_phone = create_phone(
-                        number=phone_data.number,
-                        is_primary=phone_data.is_primary,
-                        shop_id=client.shop_id,
-                    )
-                    client.phones.append(new_phone)
-
-            for phone_id, phone in existing_phones.items():
-                if phone_id not in updated_phone_ids:
-                    client.phones.remove(phone)
-
+            sync_phones(
+                client, phones=normalized_phones, shop_id=client.shop_id
+            )
             updates.append(f"phones={len(command.phones)}")
 
         if command.addresses is not None:
             shop = await self._shop_gateway.load_shop(client.shop_id)
             shop_city = shop.city if shop else None
 
-            existing_addresses = {a.id: a for a in client.addresses}
-            updated_addr_ids = {a.id for a in command.addresses if a.id}
-
-            for addr_data in command.addresses:
-                coordinates = addr_data.coordinates
-                if coordinates is None and shop_city is not None:
-                    coordinates = await self._geocoder.geocode(
-                        addr_data.street, addr_data.house, shop_city
-                    )
-
-                if addr_data.id and addr_data.id in existing_addresses:
-                    update_address(
-                        existing_addresses[addr_data.id],
-                        street=addr_data.street,
-                        house=addr_data.house,
-                        apartment=addr_data.apartment,
-                        entrance=addr_data.entrance,
-                        floor=addr_data.floor,
-                        intercom=addr_data.intercom,
-                        comment=addr_data.comment,
+            address_items = []
+            for a in command.addresses:
+                coordinates = await self._geocoder.geocode_if_missing(
+                    street=a.street,
+                    house=a.house,
+                    coordinates=a.coordinates,
+                    shop_city=shop_city,
+                )
+                address_items.append(
+                    AddressSyncItem(
+                        street=a.street,
+                        house=a.house,
+                        apartment=a.apartment,
+                        entrance=a.entrance,
+                        floor=a.floor,
+                        intercom=a.intercom,
+                        comment=a.comment,
                         coordinates=coordinates,
-                        is_primary=addr_data.is_primary,
-                        district_id=addr_data.district_id,
+                        is_primary=a.is_primary,
+                        district_id=a.district_id,
+                        id=a.id,
                     )
-                else:
-                    new_address = create_address(
-                        street=addr_data.street,
-                        house=addr_data.house,
-                        apartment=addr_data.apartment,
-                        entrance=addr_data.entrance,
-                        floor=addr_data.floor,
-                        intercom=addr_data.intercom,
-                        comment=addr_data.comment,
-                        coordinates=coordinates,
-                        is_primary=addr_data.is_primary,
-                        district_id=addr_data.district_id,
-                    )
-                    client.addresses.append(new_address)
+                )
 
-            for addr_id, addr in existing_addresses.items():
-                if addr_id not in updated_addr_ids:
-                    client.addresses.remove(addr)
-
+            sync_addresses(client, addresses=address_items)
             updates.append(f"addresses={len(command.addresses)}")
 
         await self._tr_manager.commit()

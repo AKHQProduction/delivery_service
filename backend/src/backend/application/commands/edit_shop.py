@@ -28,10 +28,7 @@ class EditShopCommandHandler:
         self._tr_manager = tr_manager
 
     async def handle(self, command: EditShopCommand) -> None:
-        logger.info(
-            "Editing shop",
-            extra={"address": command.address},
-        )
+        logger.info("Editing shop: address=%s", command.address)
 
         current_user = await self._idp.current_user()
         ensure_is_owner(current_user)
@@ -46,6 +43,5 @@ class EditShopCommandHandler:
         await self._tr_manager.commit()
 
         logger.info(
-            "Shop updated successfully",
-            extra={"shop_id": str(current_user.shop_id)},
+            "Successfully edited shop: shop_id=%s", current_user.shop_id
         )

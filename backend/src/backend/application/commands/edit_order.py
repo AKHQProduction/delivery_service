@@ -1,5 +1,5 @@
 import logging
-from dataclasses import dataclass, replace
+from dataclasses import dataclass
 from datetime import date, timedelta
 
 from backend.application.common import ensure_exists
@@ -139,23 +139,20 @@ class UpdateOrderCommandHandler:
                         current_user.shop_id
                     )
                     shop_city = shop.city if shop else None
-                    if shop_city is not None:
-                        coords = await self._geocoder.geocode(
-                            delivery_address.street,
-                            delivery_address.house,
-                            shop_city,
+                    coords = await self._geocoder.geocode_if_missing(
+                        street=delivery_address.street,
+                        house=delivery_address.house,
+                        coordinates=None,
+                        shop_city=shop_city,
+                    )
+                    if coords is not None:
+                        delivery_address.coordinates = coords
+                        addr_obj = next(
+                            a
+                            for a in client.addresses
+                            if a.id == command.address_id
                         )
-                        if coords is not None:
-                            delivery_address = replace(
-                                delivery_address, coordinates=coords
-                            )
-                            addr_obj = next(
-                                a
-                                for a in client.addresses
-                                if a.id == command.address_id
-                            )
-                            addr_obj.latitude = coords.latitude
-                            addr_obj.longitude = coords.longitude
+                        coords.apply_to(addr_obj)
 
         delivery_start_time = None
         delivery_end_time = None

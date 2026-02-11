@@ -37,7 +37,7 @@ async def test_generate_pdf_returns_file_id_and_filename(
 
     response = await http_client.post(
         url=f"{BASE_URL}/generate",
-        params={"delivery_date": str(tomorrow)},
+        params={"delivery_date": str(tomorrow), "doc_type": "ORDER_LIST"},
         headers=customer_headers(telegram_id),
     )
 
@@ -69,7 +69,7 @@ async def test_generate_pdf_and_download(
 
     gen_response = await http_client.post(
         url=f"{BASE_URL}/generate",
-        params={"delivery_date": str(tomorrow)},
+        params={"delivery_date": str(tomorrow), "doc_type": "ORDER_LIST"},
         headers=customer_headers(telegram_id),
     )
     assert gen_response.status_code == status.HTTP_200_OK
@@ -96,7 +96,7 @@ async def test_generate_pdf_no_orders(
 
     response = await http_client.post(
         url=f"{BASE_URL}/generate",
-        params={"delivery_date": str(tomorrow)},
+        params={"delivery_date": str(tomorrow), "doc_type": "ORDER_LIST"},
         headers=customer_headers(telegram_id),
     )
 
@@ -112,7 +112,7 @@ async def test_generate_pdf_unauthorized(
 ) -> None:
     response = await http_client.post(
         url=f"{BASE_URL}/generate",
-        params={"delivery_date": str(tomorrow)},
+        params={"delivery_date": str(tomorrow), "doc_type": "ORDER_LIST"},
     )
     assert response.status_code == status.HTTP_403_FORBIDDEN
 
@@ -158,7 +158,7 @@ async def test_generate_pdf_multiple_time_slots(
 
     response = await http_client.post(
         url=f"{BASE_URL}/generate",
-        params={"delivery_date": str(tomorrow)},
+        params={"delivery_date": str(tomorrow), "doc_type": "ORDER_LIST"},
         headers=customer_headers(telegram_id),
     )
 
@@ -213,7 +213,7 @@ async def test_generate_pdf_with_coordinates_triggers_optimization(
     ) as mock_compute:
         response = await http_client.post(
             url=f"{BASE_URL}/generate",
-            params={"delivery_date": str(tomorrow)},
+            params={"delivery_date": str(tomorrow), "doc_type": "ORDER_LIST"},
             headers=customer_headers(telegram_id),
         )
 
@@ -253,7 +253,7 @@ async def test_generate_pdf_without_shop_coordinates_skips_optimization(
     ) as mock_compute:
         response = await http_client.post(
             url=f"{BASE_URL}/generate",
-            params={"delivery_date": str(tomorrow)},
+            params={"delivery_date": str(tomorrow), "doc_type": "ORDER_LIST"},
             headers=customer_headers(telegram_id),
         )
 

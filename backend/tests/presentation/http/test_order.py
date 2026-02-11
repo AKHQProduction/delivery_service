@@ -2139,7 +2139,7 @@ async def test_generate_orders_pdf(
     response = await http_client.post(
         url=f"{BASE_URL}/export/pdf/generate",
         headers=headers,
-        params={"delivery_date": tomorrow},
+        params={"delivery_date": tomorrow, "doc_type": "ORDER_LIST"},
     )
 
     assert response.status_code == status.HTTP_200_OK
@@ -2157,7 +2157,10 @@ async def test_generate_orders_pdf_unauthorized(
 
     response = await http_client.post(
         url=f"{BASE_URL}/export/pdf/generate",
-        params={"delivery_date": tomorrow.isoformat()},
+        params={
+            "delivery_date": tomorrow.isoformat(),
+            "doc_type": "ORDER_LIST",
+        },
     )
 
     assert response.status_code == status.HTTP_403_FORBIDDEN
@@ -2218,7 +2221,7 @@ async def test_download_orders_pdf(
     generate_response = await http_client.post(
         url=f"{BASE_URL}/export/pdf/generate",
         headers=headers,
-        params={"delivery_date": tomorrow},
+        params={"delivery_date": tomorrow, "doc_type": "ORDER_LIST"},
     )
     file_id = generate_response.json()["file_id"]
 
@@ -2308,7 +2311,7 @@ async def test_generate_orders_pdf_as_courier_allowed(
     response = await http_client.post(
         url=f"{BASE_URL}/export/pdf/generate",
         headers=headers,
-        params={"delivery_date": tomorrow},
+        params={"delivery_date": tomorrow, "doc_type": "ORDER_LIST"},
     )
 
     assert response.status_code == status.HTTP_200_OK
