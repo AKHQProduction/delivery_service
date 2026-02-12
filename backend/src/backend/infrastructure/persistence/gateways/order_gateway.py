@@ -153,7 +153,11 @@ class SQLAlchemyOrderGateway:
         )
 
     async def load_by_date(
-        self, shop_id: ShopId, delivery_date: datetime.date
+        self,
+        shop_id: ShopId,
+        delivery_date: datetime.date,
+        start_time: datetime.time | None = None,
+        end_time: datetime.time | None = None,
     ) -> list[Order]:
         query = (
             select(Order)
@@ -167,6 +171,13 @@ class SQLAlchemyOrderGateway:
             )
             .order_by(asc(Order.delivery_start_time), asc(Order.id))
         )
+
+        if start_time is not None and end_time is not None:
+            query = query.where(
+                Order.delivery_start_time == start_time,
+                Order.delivery_end_time == end_time,
+            )
+
         result = await self._session.execute(query)
         return list(result.scalars().all())
 

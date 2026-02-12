@@ -2150,6 +2150,86 @@ async def test_generate_orders_pdf(
 
 
 @pytest.mark.asyncio()
+async def test_generate_orders_pdf_with_time_slot_filter(
+    http_client: AsyncClient,
+    session: AsyncSession,
+    customer_headers: Callable[[int], dict[str, Any]],
+    setup_full_test_user_with_shop,
+    setup_test_client,
+    setup_test_product,
+    setup_test_time_slot,
+) -> None:
+    telegram_id = 6110
+    _, shop_id = await setup_full_test_user_with_shop(telegram_id=telegram_id)
+
+    client_id = await setup_test_client(
+        shop_id=shop_id,
+        full_name="Тест Клієнт",
+        phones=["+380501234567"],
+        addresses=[
+            {
+                "street": "Тестова",
+                "house": "1",
+                "apartment": "1",
+            }
+        ],
+    )
+    product_id, _, _, _ = await setup_test_product(shop_id)
+
+    time_slot_1 = await setup_test_time_slot(shop_id=shop_id)
+    time_slot_2 = await setup_test_time_slot(
+        shop_id=shop_id, start_time=time(12, 0), end_time=time(15, 0)
+    )
+    await session.commit()
+
+    headers = customer_headers(telegram_id)
+
+    client_response = await http_client.get(
+        url=f"/api/v1/clients/{client_id}", headers=headers
+    )
+    client_data = client_response.json()
+    phone_id = client_data["phones"][0]["id"]
+    address_id = client_data["addresses"][0]["id"]
+
+    tomorrow = (datetime.now(UTC).date() + timedelta(days=1)).isoformat()
+
+    for ts_id in [time_slot_1, time_slot_2]:
+        await http_client.post(
+            url=BASE_URL,
+            headers=headers,
+            json={
+                "client_id": str(client_id),
+                "delivery_date": tomorrow,
+                "time_slot_id": str(ts_id),
+                "address_id": address_id,
+                "phone_id": phone_id,
+                "payment_method": PaymentMethod.CASH,
+                "products": [{"product_id": str(product_id), "quantity": 1}],
+            },
+        )
+    await session.commit()
+
+    response_all = await http_client.post(
+        url=f"{BASE_URL}/export/pdf/generate",
+        headers=headers,
+        params={"delivery_date": tomorrow, "doc_type": "ORDER_LIST"},
+    )
+    assert response_all.status_code == status.HTTP_200_OK
+
+    response_filtered = await http_client.post(
+        url=f"{BASE_URL}/export/pdf/generate",
+        headers=headers,
+        params={
+            "delivery_date": tomorrow,
+            "doc_type": "ORDER_LIST",
+            "time_slot_id": str(time_slot_1),
+        },
+    )
+    assert response_filtered.status_code == status.HTTP_200_OK
+    assert "file_id" in response_filtered.json()
+
+
+@pytest.mark.asyncio()
 async def test_generate_orders_pdf_unauthorized(
     http_client: AsyncClient,
 ) -> None:

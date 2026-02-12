@@ -45,6 +45,7 @@ from backend.application.vars import (
     ExportDocType,
     OrderId,
     PaymentMethod,
+    TimeSlotId,
     today,
 )
 from backend.infrastructure.persistence.gateways import RedisPDFStorage
@@ -422,11 +423,13 @@ async def generate_orders_pdf(
     delivery_date: date,
     doc_type: ExportDocType,
     handler: FromDishka[GenerateOrderExportPDFCommandHandler],
+    time_slot_id: TimeSlotId | None = None,
 ) -> GenerateOrderExportPDFResult:
     return await handler.handle(
         GenerateOrderExportPDFCommand(
             delivery_date=delivery_date,
             doc_type=doc_type,
+            time_slot_id=time_slot_id,
         )
     )
 

@@ -7,13 +7,14 @@ from datetime import date, time
 from backend.application.dto.coordinates import CoordinatesDTO
 from backend.application.errors import AccessDeniedError, EntityNotFoundError
 from backend.application.services.route_optimizer import RouteOptimizer
-from backend.application.vars import ExportDocType, OrderId
+from backend.application.vars import ExportDocType, OrderId, TimeSlotId
 from backend.infrastructure.idp import TelegramIdentityProvider
 from backend.infrastructure.pdf import ReportLabOrdersPDFGenerator
 from backend.infrastructure.persistence.gateways import (
     RedisPDFStorage,
     SQLAlchemyOrderGateway,
     SQLAlchemyShopGateway,
+    SQLAlchemyTimeSlotGateway,
 )
 from backend.infrastructure.persistence.tables.orders import Order
 
@@ -24,6 +25,7 @@ logger = logging.getLogger(__name__)
 class GenerateOrderExportPDFCommand:
     delivery_date: date
     doc_type: ExportDocType
+    time_slot_id: TimeSlotId | None = None
 
 
 @dataclass(frozen=True)
@@ -38,6 +40,7 @@ class GenerateOrderExportPDFCommandHandler:
         idp: TelegramIdentityProvider,
         order_gateway: SQLAlchemyOrderGateway,
         shop_gateway: SQLAlchemyShopGateway,
+        time_slot_gateway: SQLAlchemyTimeSlotGateway,
         pdf_generator: ReportLabOrdersPDFGenerator,
         pdf_storage: RedisPDFStorage,
         route_optimizer: RouteOptimizer,
@@ -45,6 +48,7 @@ class GenerateOrderExportPDFCommandHandler:
         self._idp = idp
         self._order_gateway = order_gateway
         self._shop_gateway = shop_gateway
+        self._time_slot_gateway = time_slot_gateway
         self._pdf_generator = pdf_generator
         self._pdf_storage = pdf_storage
         self._route_optimizer = route_optimizer
@@ -68,8 +72,19 @@ class GenerateOrderExportPDFCommandHandler:
             logger.warning("Shop not found: shop_id=%s", shop_id)
             raise EntityNotFoundError(entity="Shop")
 
+        start_time = None
+        end_time = None
+        if command.time_slot_id:
+            time_slot = await self._time_slot_gateway.load(
+                command.time_slot_id
+            )
+            if not time_slot:
+                raise EntityNotFoundError(entity="TimeSlot")
+            start_time = time_slot.start_time
+            end_time = time_slot.end_time
+
         orders = await self._order_gateway.load_by_date(
-            shop_id, command.delivery_date
+            shop_id, command.delivery_date, start_time, end_time
         )
 
         logger.info(
