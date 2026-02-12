@@ -17,9 +17,9 @@ from backend.application.commands.delete_order import (
     DeleteOrderCommandHandler,
 )
 from backend.application.commands.edit_order import (
-    OrderItem,
-    UpdateOrderCommand,
-    UpdateOrderCommandHandler,
+    EditOrderCommand,
+    EditOrderCommandHandler,
+    EditOrderItem,
 )
 from backend.application.commands.generate_order_export_pdf import (
     GenerateOrderExportPDFCommand,
@@ -315,11 +315,11 @@ async def update_order(
             }
         ),
     ],
-    handler: FromDishka[UpdateOrderCommandHandler],
+    handler: FromDishka[EditOrderCommandHandler],
 ) -> None:
     items = (
         [
-            OrderItem(
+            EditOrderItem(
                 product_id=item.product_id,
                 quantity=item.quantity,
                 id=item.id,
@@ -329,7 +329,7 @@ async def update_order(
         if body.items
         else None
     )
-    command = UpdateOrderCommand(
+    command = EditOrderCommand(
         order_id=order_id,
         client_id=body.client_id,
         delivery_date=body.delivery_date,

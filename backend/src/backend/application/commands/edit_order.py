@@ -46,7 +46,7 @@ logger = logging.getLogger(__name__)
 
 
 @dataclass(frozen=True)
-class OrderItem:
+class EditOrderItem:
     quantity: int
     product_id: ProductId | None = None
     id: OrderItemId | None = None
@@ -57,7 +57,7 @@ class OrderItem:
 
 
 @dataclass(frozen=True)
-class UpdateOrderCommand:
+class EditOrderCommand:
     order_id: OrderId
     client_id: ClientId | None = None
     delivery_date: date | None = None
@@ -65,7 +65,7 @@ class UpdateOrderCommand:
     address_id: AddressId | None = None
     phone_id: PhoneId | None = None
     comment: str | Empty | None = None
-    items: list[OrderItem] | None = None
+    items: list[EditOrderItem] | None = None
     payment_method: PaymentMethod | None = None
 
     def __post_init__(self) -> None:
@@ -76,7 +76,7 @@ class UpdateOrderCommand:
                 raise DateMustBeGreaterThanError(greater_than=previous_date)
 
 
-class UpdateOrderCommandHandler:
+class EditOrderCommandHandler:
     def __init__(
         self,
         idp: TelegramIdentityProvider,
@@ -97,7 +97,7 @@ class UpdateOrderCommandHandler:
         self._geocoder = geocoder
         self._tr_manager = tr_manager
 
-    async def handle(self, command: UpdateOrderCommand) -> None:
+    async def handle(self, command: EditOrderCommand) -> None:
         current_user = await self._idp.current_user()
         ensure_can_manage(current_user)
 
@@ -190,7 +190,7 @@ class UpdateOrderCommandHandler:
 
     async def _process_items(
         self,
-        command: UpdateOrderCommand,
+        command: EditOrderCommand,
         order: Order,
     ) -> None:
         product_ids = {

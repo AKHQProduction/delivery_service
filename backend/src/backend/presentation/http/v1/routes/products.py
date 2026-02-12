@@ -25,7 +25,7 @@ from backend.application.dto.gateways.product_gateway import (
 )
 from backend.application.queries.get_product import GetProductQueryHandler
 from backend.application.queries.get_products import (
-    GetProductQuery,
+    GetProductsQuery,
     GetProductsQueryHandler,
 )
 from backend.application.vars import CategoryId, Empty, ProductId
@@ -162,7 +162,7 @@ async def get_all_products(
     order: SortOrder = SortOrder.ASC,
 ) -> list[ProductReadModel]:
     return await handler.handle(
-        GetProductQuery(
+        GetProductsQuery(
             name=name,
             pagination=Pagination(limit=limit, offset=offset, order=order),
         )

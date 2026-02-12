@@ -40,7 +40,7 @@ logger = logging.getLogger(__name__)
 
 
 @dataclass(frozen=True)
-class ProductDTO:
+class OrderProductInput:
     product_id: ProductId
     quantity: int
 
@@ -52,7 +52,7 @@ class CreateOrderCommand:
     time_slot_id: TimeSlotId
     address_id: AddressId
     phone_id: PhoneId
-    products: list[ProductDTO]
+    products: list[OrderProductInput]
     payment_method: PaymentMethod
     comment: str | None = None
 

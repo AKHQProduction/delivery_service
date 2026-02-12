@@ -54,7 +54,7 @@ from backend.application.commands.edit_client import EditClientCommandHandler
 from backend.application.commands.edit_district import (
     EditDistrictCommandHandler,
 )
-from backend.application.commands.edit_order import UpdateOrderCommandHandler
+from backend.application.commands.edit_order import EditOrderCommandHandler
 from backend.application.commands.edit_product import EditProductCommandHandler
 from backend.application.commands.edit_shop import EditShopCommandHandler
 from backend.application.commands.edit_time_slot import (
@@ -159,7 +159,7 @@ class APIInteractorsProvider(Provider):
         DeleteClientCommandHandler,
         EditClientCommandHandler,
         CreateOrderCommandHandler,
-        UpdateOrderCommandHandler,
+        EditOrderCommandHandler,
         DeleteOrderCommandHandler,
         GetOrderQueryHandler,
         GetOrdersQueryHandler,

@@ -20,7 +20,7 @@ logger = logging.getLogger(__name__)
 
 
 @dataclass(frozen=True)
-class CreateNewShopCommand:
+class CreateShopCommand:
     name: str
     owner_full_name: str
 
@@ -31,7 +31,7 @@ DEFAULT_TIME_SLOTS: list[tuple[str, time, time]] = [
 ]
 
 
-class CreateNewShopCommandHandler:
+class CreateShopCommandHandler:
     def __init__(
         self,
         shop_gateway: SQLAlchemyShopGateway,
@@ -44,7 +44,7 @@ class CreateNewShopCommandHandler:
         self._tr_manager = tr_manager
         self._time_slot_gateway = time_slot_gateway
 
-    async def handle(self, command: CreateNewShopCommand) -> None:
+    async def handle(self, command: CreateShopCommand) -> None:
         logger.info("Creating shop: name=%s", command.name)
         user_id = await self._identity_provider.current_user_id()
 

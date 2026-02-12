@@ -11,7 +11,7 @@ from dishka.integrations.aiogram import AiogramMiddlewareData
 
 from backend.application.commands import (
     BotStartCommandHandler,
-    CreateNewShopCommandHandler,
+    CreateShopCommandHandler,
 )
 from backend.application.usecases.invite_employee.accept_invite import (
     AcceptInviteCommandHandler,
@@ -28,7 +28,7 @@ class BotInteractorsProvider(Provider):
 
     handlers = provide_all(
         BotStartCommandHandler,
-        CreateNewShopCommandHandler,
+        CreateShopCommandHandler,
         AcceptInviteCommandHandler,
     )
 
