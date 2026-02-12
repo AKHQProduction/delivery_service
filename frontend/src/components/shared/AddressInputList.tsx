@@ -51,13 +51,13 @@ export const AddressInputList: React.FC<AddressInputListProps> = ({
   }, []);
 
   const checkAddress = async (index: number, street: string, house: string) => {
-    if (!street.trim() || !shop?.city) {
+    if (!street.trim()) {
       setAddressStatus((prev) => ({ ...prev, [index]: null }));
       onCoordinatesChange(index, null);
       return;
     }
 
-    const city = shop.city;
+    const city = shop?.city ?? undefined;
     const coords = await forwardGeocode(street, house || undefined, city);
 
     if (coords) {
