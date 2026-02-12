@@ -13,7 +13,8 @@ def apply_sorting(
 ) -> Select:
     order = asc if pagination.order == SortOrder.ASC else desc
     return (
-        query.order_by(order(sort_column), asc(id_column))
+        query
+        .order_by(order(sort_column), asc(id_column))
         .offset(pagination.offset)
         .limit(pagination.limit)
     )

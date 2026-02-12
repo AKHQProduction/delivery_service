@@ -1,6 +1,6 @@
 from uuid import UUID
 
-from sqlalchemy import select
+from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 from uuid_utils.compat import uuid7
 
@@ -56,6 +56,19 @@ class SQLAlchemyDistrictGateway:
             )
             for row in rows
         ]
+
+    async def find_by_names(
+        self, shop_id: ShopId, names: set[str]
+    ) -> list[District]:
+        if not names:
+            return []
+
+        query = select(District).where(
+            District.shop_id == shop_id,
+            func.lower(District.name).in_({n.lower() for n in names}),
+        )
+        result = await self._session.execute(query)
+        return list(result.scalars().all())
 
     async def exists_by_name_in_shop(self, name: str, shop_id: ShopId) -> bool:
         query = select(

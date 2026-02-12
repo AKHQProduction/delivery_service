@@ -44,6 +44,9 @@ class SQLAlchemyClientGateway:
     def save(self, entity: Client | ClientPhone | ClientAddress) -> None:
         self._session.add(entity)
 
+    def save_all(self, entities: list[Client]) -> None:
+        self._session.add_all(entities)
+
     async def load(self, client_id: ClientId) -> Client | None:
         query = (
             select(Client)

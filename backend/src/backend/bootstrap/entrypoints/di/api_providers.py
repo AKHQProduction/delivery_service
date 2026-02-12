@@ -63,6 +63,9 @@ from backend.application.commands.edit_time_slot import (
 from backend.application.commands.generate_order_export_pdf import (
     GenerateOrderExportPDFCommandHandler,
 )
+from backend.application.commands.import_clients import (
+    ImportClientsCommandHandler,
+)
 from backend.application.queries.get_categories import (
     GetCategoriesQueryHandler,
 )
@@ -99,6 +102,7 @@ from backend.infrastructure.telegram.auth import Headers, InitData, WebAppAuth
 from backend.infrastructure.telegram.invite_link_generator import (
     TelegramInviteLinkGenerator,
 )
+from backend.infrastructure.xlsx import ClientXlsxParser
 
 
 class AdaptersProvider(Provider):
@@ -117,6 +121,7 @@ class AdaptersProvider(Provider):
 
     osrm_client = provide(OSRMClient)
     nominatim_client = provide(NominatimClient)
+    xlsx_parser = provide(ClientXlsxParser)
 
 
 class ServicesProvider(Provider):
@@ -165,6 +170,7 @@ class APIInteractorsProvider(Provider):
         DeleteTimeSlotCommandHandler,
         GetTimeSlotsQueryHandler,
         EditShopCommandHandler,
+        ImportClientsCommandHandler,
     )
 
     add_employee = provide_all(GenerateInviteLinkCommandHandler)

@@ -2,7 +2,7 @@ from typing import Annotated
 
 from dishka import FromDishka
 from dishka.integrations.fastapi import DishkaRoute
-from fastapi import APIRouter, Body, Depends, status
+from fastapi import APIRouter, Body, Depends, HTTPException, UploadFile, status
 from fastapi.openapi.models import Example
 from fastapi.security import HTTPBearer
 
@@ -19,6 +19,11 @@ from backend.application.commands.edit_client import (
     EditClientCommand,
     EditClientCommandHandler,
     Phone,
+)
+from backend.application.commands.import_clients import (
+    ImportClientsCommand,
+    ImportClientsCommandHandler,
+    ImportClientsResult,
 )
 from backend.application.dto.coordinates import CoordinatesDTO
 from backend.application.dto.gateways import Pagination, SortOrder
@@ -293,6 +298,28 @@ async def update_client(
             else None,
         )
     )
+
+
+@router.post(
+    "/import",
+    status_code=status.HTTP_200_OK,
+    responses={
+        status.HTTP_401_UNAUTHORIZED: {"model": ErrorSchema},
+        status.HTTP_403_FORBIDDEN: {"model": ErrorSchema},
+    },
+    dependencies=[Depends(HTTPBearer())],
+)
+async def import_clients(
+    file: UploadFile,
+    handler: FromDishka[ImportClientsCommandHandler],
+) -> ImportClientsResult:
+    if not file.filename or not file.filename.endswith(".xlsx"):
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            detail="Only .xlsx files are supported",
+        )
+    file_bytes = await file.read()
+    return await handler.handle(ImportClientsCommand(file_bytes=file_bytes))
 
 
 @router.get(
