@@ -123,7 +123,7 @@ class ServicesProvider(Provider):
     scope = Scope.APP
 
     route_optimizer = provide(RouteOptimizer)
-    geocoder = provide(Geocoder)
+    geocoder = provide(Geocoder, scope=Scope.REQUEST)
 
 
 class APIInteractorsProvider(Provider):

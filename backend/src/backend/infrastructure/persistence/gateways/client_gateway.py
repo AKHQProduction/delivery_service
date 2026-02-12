@@ -33,6 +33,7 @@ from backend.infrastructure.persistence.tables.clients import (
     ClientAddress,
     ClientPhone,
 )
+from backend.infrastructure.persistence.tables.shops import Shop
 from backend.infrastructure.persistence.utils.escape import escape_like
 
 
@@ -170,6 +171,35 @@ class SQLAlchemyClientGateway:
                 for address in client.addresses
             ],
         )
+
+    async def find_coordinates_by_address(
+        self, street: str, house: str, city: str
+    ) -> CoordinatesDTO | None:
+        query = (
+            select(
+                ClientAddress.latitude,
+                ClientAddress.longitude,
+            )
+            .join(Client, ClientAddress.client_id == Client.id)
+            .join(Shop, Client.shop_id == Shop.id)
+            .where(
+                func.lower(func.btrim(ClientAddress.street))
+                == street.strip().lower(),
+                func.lower(func.btrim(ClientAddress.house))
+                == house.strip().lower(),
+                func.lower(func.btrim(Shop.city)) == city.strip().lower(),
+                ClientAddress.latitude.isnot(None),
+                ClientAddress.longitude.isnot(None),
+            )
+            .limit(1)
+        )
+        result = await self._session.execute(query)
+        row = result.one_or_none()
+
+        if row is None:
+            return None
+
+        return CoordinatesDTO(latitude=row.latitude, longitude=row.longitude)
 
     def next_id(self) -> ClientId:
         return ClientId(uuid7())
