@@ -12,6 +12,9 @@ from backend.presentation.http.v1.routes.districts import (
 from backend.presentation.http.v1.routes.employee import (
     router as employee_router,
 )
+from backend.presentation.http.v1.routes.geocoding import (
+    router as geocoding_router,
+)
 from backend.presentation.http.v1.routes.invite_employee import (
     router as link_router,
 )
@@ -39,5 +42,6 @@ def setup_v1_router(app: FastAPI) -> None:
     v1_router.include_router(order_router)
     v1_router.include_router(time_slot_router)
     v1_router.include_router(shop_router)
+    v1_router.include_router(geocoding_router)
 
     app.include_router(v1_router)

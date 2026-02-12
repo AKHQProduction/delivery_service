@@ -17,63 +17,35 @@ def nominatim():
 
 
 @pytest.fixture()
-def redis_cache():
-    return AsyncMock()
-
-
-@pytest.fixture()
-def geocoder(nominatim, redis_cache):
-    return Geocoder(
-        nominatim_client=nominatim,
-        redis_cache=redis_cache,
-    )
+def geocoder(nominatim):
+    return Geocoder(nominatim_client=nominatim)
 
 
 class TestGeocode:
     @pytest.mark.asyncio()
-    async def test_returns_from_redis_cache(
-        self, geocoder, redis_cache, nominatim, coords
-    ):
-        redis_cache.get.return_value = coords
-
-        result = await geocoder.geocode("Хрещатик", "1", "Київ")
-
-        assert result == coords
-        redis_cache.get.assert_awaited_once_with("Київ", "Хрещатик", "1")
-        nominatim.geocode.assert_not_awaited()
-
-    @pytest.mark.asyncio()
-    async def test_falls_back_to_nominatim_on_cache_miss(
-        self, geocoder, redis_cache, nominatim, coords
-    ):
-        redis_cache.get.return_value = None
+    async def test_delegates_to_nominatim(self, geocoder, nominatim, coords):
         nominatim.geocode.return_value = coords
 
         result = await geocoder.geocode("Хрещатик", "1", "Київ")
 
         assert result == coords
         nominatim.geocode.assert_awaited_once_with("Хрещатик", "1", "Київ")
-        redis_cache.set.assert_awaited_once_with(
-            "Київ", "Хрещатик", "1", coords
-        )
 
     @pytest.mark.asyncio()
-    async def test_returns_none_when_all_miss(
-        self, geocoder, redis_cache, nominatim
+    async def test_returns_none_when_nominatim_returns_none(
+        self, geocoder, nominatim
     ):
-        redis_cache.get.return_value = None
         nominatim.geocode.return_value = None
 
         result = await geocoder.geocode("Невідома", "999", "Місто")
 
         assert result is None
-        redis_cache.set.assert_not_awaited()
 
 
 class TestGeocodeIfMissing:
     @pytest.mark.asyncio()
     async def test_returns_existing_coordinates(
-        self, geocoder, redis_cache, coords
+        self, geocoder, nominatim, coords
     ):
         result = await geocoder.geocode_if_missing(
             street="Хрещатик",
@@ -83,10 +55,10 @@ class TestGeocodeIfMissing:
         )
 
         assert result == coords
-        redis_cache.get.assert_not_awaited()
+        nominatim.geocode.assert_not_awaited()
 
     @pytest.mark.asyncio()
-    async def test_returns_none_when_no_city(self, geocoder, redis_cache):
+    async def test_returns_none_when_no_city(self, geocoder, nominatim):
         result = await geocoder.geocode_if_missing(
             street="Хрещатик",
             house="1",
@@ -95,13 +67,10 @@ class TestGeocodeIfMissing:
         )
 
         assert result is None
-        redis_cache.get.assert_not_awaited()
+        nominatim.geocode.assert_not_awaited()
 
     @pytest.mark.asyncio()
-    async def test_delegates_to_geocode(
-        self, geocoder, redis_cache, nominatim, coords
-    ):
-        redis_cache.get.return_value = None
+    async def test_delegates_to_geocode(self, geocoder, nominatim, coords):
         nominatim.geocode.return_value = coords
 
         result = await geocoder.geocode_if_missing(

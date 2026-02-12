@@ -4,18 +4,38 @@ import httpx
 
 from backend.application.dto.coordinates import CoordinatesDTO
 from backend.bootstrap.config import NominatimConfig
+from backend.infrastructure.persistence.gateways.geocode_cache import (
+    RedisGeocodeCache,
+)
 
 logger = logging.getLogger(__name__)
 
 
 class NominatimClient:
     def __init__(
-        self, http_client: httpx.AsyncClient, config: NominatimConfig
+        self,
+        http_client: httpx.AsyncClient,
+        config: NominatimConfig,
+        cache: RedisGeocodeCache,
     ) -> None:
         self._http = http_client
         self._base_url = config.url.rstrip("/")
+        self._cache = cache
 
     async def geocode(
+        self, street: str, house: str, city: str
+    ) -> CoordinatesDTO | None:
+        cached = await self._cache.get(city, street, house)
+        if cached is not None:
+            return cached
+
+        result = await self._fetch(street, house, city)
+        if result is not None:
+            await self._cache.set(city, street, house, result)
+
+        return result
+
+    async def _fetch(
         self, street: str, house: str, city: str
     ) -> CoordinatesDTO | None:
         logger.debug(
@@ -122,4 +142,36 @@ class NominatimClient:
             )
         except (KeyError, ValueError, TypeError):
             logger.exception("Failed to parse Nominatim response: %s", first)
+            return None
+
+    async def reverse_raw(self, coordinates: CoordinatesDTO) -> dict | None:
+        url = f"{self._base_url}/reverse"
+        params = {
+            "format": "json",
+            "lat": str(coordinates.latitude),
+            "lon": str(coordinates.longitude),
+            "addressdetails": "1",
+            "accept-language": "uk",
+        }
+
+        try:
+            response = await self._http.get(
+                url,
+                params=params,
+                headers={"User-Agent": "WaterDelivery/1.0"},
+            )
+            response.raise_for_status()
+            return response.json()
+        except httpx.HTTPStatusError as exc:
+            logger.exception(
+                "Nominatim reverse HTTP error: status=%d, url=%s",
+                exc.response.status_code,
+                url,
+            )
+            return None
+        except Exception as exc:
+            logger.exception(
+                "Nominatim reverse request failed [%s]",
+                exc.__class__.__name__,
+            )
             return None

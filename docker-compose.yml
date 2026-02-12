@@ -54,8 +54,10 @@ services:
     container_name: "water_delivery-postgres"
     image: postgres:18-alpine
     restart: unless-stopped
+    environment:
+      PGDATA: /var/lib/postgresql/data
     volumes:
-      - postgres_data:/var/lib/postgresql/data/
+      - postgres_data:/var/lib/postgresql/data
       - ./scripts:/scripts
     env_file:
       - .env

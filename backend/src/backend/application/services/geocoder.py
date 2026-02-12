@@ -1,29 +1,15 @@
 from backend.application.dto.coordinates import CoordinatesDTO
 from backend.infrastructure.nominatim import NominatimClient
-from backend.infrastructure.persistence.gateways import RedisGeocodeCache
 
 
 class Geocoder:
-    def __init__(
-        self,
-        nominatim_client: NominatimClient,
-        redis_cache: RedisGeocodeCache,
-    ) -> None:
+    def __init__(self, nominatim_client: NominatimClient) -> None:
         self._nominatim = nominatim_client
-        self._redis_cache = redis_cache
 
     async def geocode(
         self, street: str, house: str, city: str
     ) -> CoordinatesDTO | None:
-        cached = await self._redis_cache.get(city, street, house)
-        if cached is not None:
-            return cached
-
-        result = await self._nominatim.geocode(street, house, city)
-        if result is not None:
-            await self._redis_cache.set(city, street, house, result)
-
-        return result
+        return await self._nominatim.geocode(street, house, city)
 
     async def geocode_if_missing(
         self,

@@ -136,7 +136,7 @@ class PersistenceProvider(Provider):
 
 
 class RedisProvider(Provider):
-    scope = Scope.REQUEST
+    scope = Scope.APP
 
     @provide(scope=Scope.APP)
     async def redis_session(self, config: RedisConfig) -> AsyncIterable[Redis]:
