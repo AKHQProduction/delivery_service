@@ -114,7 +114,7 @@ async def test_generate_pdf_unauthorized(
         url=f"{BASE_URL}/generate",
         params={"delivery_date": str(tomorrow), "doc_type": "ORDER_LIST"},
     )
-    assert response.status_code == status.HTTP_403_FORBIDDEN
+    assert response.status_code == status.HTTP_401_UNAUTHORIZED
 
 
 @pytest.mark.asyncio()

@@ -3,15 +3,17 @@ import logging
 import httpx
 
 from backend.application.dto.coordinates import CoordinatesDTO
+from backend.bootstrap.config import NominatimConfig
 
 logger = logging.getLogger(__name__)
 
-NOMINATIM_URL = "https://nominatim.openstreetmap.org"
-
 
 class NominatimClient:
-    def __init__(self, http_client: httpx.AsyncClient) -> None:
+    def __init__(
+        self, http_client: httpx.AsyncClient, config: NominatimConfig
+    ) -> None:
         self._http = http_client
+        self._base_url = config.url.rstrip("/")
 
     async def geocode(
         self, street: str, house: str, city: str
@@ -85,7 +87,7 @@ class NominatimClient:
         return await self._request(params)
 
     async def _request(self, params: dict[str, str]) -> CoordinatesDTO | None:
-        url = f"{NOMINATIM_URL}/search"
+        url = f"{self._base_url}/search"
 
         try:
             response = await self._http.get(

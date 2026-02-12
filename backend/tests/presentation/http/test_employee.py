@@ -368,7 +368,7 @@ async def test_update_employee_unauthorized_without_token(
         url=f"{BASE_URL}/{employee_user_id}", json=json_data
     )
 
-    assert response.status_code == status.HTTP_403_FORBIDDEN
+    assert response.status_code == status.HTTP_401_UNAUTHORIZED
 
 
 @pytest.mark.asyncio()
@@ -577,7 +577,7 @@ async def test_delete_employee_unauthorized_without_token(
 
     response = await http_client.delete(url=f"{BASE_URL}/{employee_user_id}")
 
-    assert response.status_code == status.HTTP_403_FORBIDDEN
+    assert response.status_code == status.HTTP_401_UNAUTHORIZED
 
 
 @pytest.mark.asyncio()
@@ -671,7 +671,7 @@ async def test_get_employee_unauthorized_without_token(
 
     response = await http_client.get(url=f"{BASE_URL}/{employee_user_id}")
 
-    assert response.status_code == status.HTTP_403_FORBIDDEN
+    assert response.status_code == status.HTTP_401_UNAUTHORIZED
 
 
 @pytest.mark.asyncio()
@@ -896,4 +896,4 @@ async def test_get_all_employees_unauthorized_without_token(
 
     response = await http_client.get(url=f"{BASE_URL}/all")
 
-    assert response.status_code == status.HTTP_403_FORBIDDEN
+    assert response.status_code == status.HTTP_401_UNAUTHORIZED

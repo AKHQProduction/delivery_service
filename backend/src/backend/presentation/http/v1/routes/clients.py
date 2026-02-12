@@ -315,7 +315,7 @@ async def import_clients(
 ) -> ImportClientsResult:
     if not file.filename or not file.filename.endswith(".xlsx"):
         raise HTTPException(
-            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            status_code=status.HTTP_422_UNPROCESSABLE_CONTENT,
             detail="Only .xlsx files are supported",
         )
     file_bytes = await file.read()

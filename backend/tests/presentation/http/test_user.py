@@ -92,4 +92,4 @@ async def test_me_unauthorized(
     url = BASE_URL + "/me"
     response = await http_client.get(url=url)
 
-    assert response.status_code == status.HTTP_403_FORBIDDEN
+    assert response.status_code == status.HTTP_401_UNAUTHORIZED

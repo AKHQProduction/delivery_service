@@ -22,7 +22,6 @@ class OSRMClient:
     ) -> None:
         self._http = http_client
         self._base_url = config.url.rstrip("/")
-        self._enabled = config.enabled
 
     async def optimize_route(
         self,
@@ -30,9 +29,6 @@ class OSRMClient:
         waypoints: list[CoordinatesDTO],
         roundtrip: bool = True,
     ) -> OptimizedRoute | None:
-        if not self._enabled:
-            return None
-
         coords = [shop, *waypoints]
         coords_str = ";".join(f"{c.longitude},{c.latitude}" for c in coords)
 

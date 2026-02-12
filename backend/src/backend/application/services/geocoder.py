@@ -1,13 +1,6 @@
-import logging
-
 from backend.application.dto.coordinates import CoordinatesDTO
 from backend.infrastructure.nominatim import NominatimClient
-from backend.infrastructure.persistence.gateways import (
-    RedisGeocodeCache,
-    SQLAlchemyClientGateway,
-)
-
-logger = logging.getLogger(__name__)
+from backend.infrastructure.persistence.gateways import RedisGeocodeCache
 
 
 class Geocoder:
@@ -15,11 +8,9 @@ class Geocoder:
         self,
         nominatim_client: NominatimClient,
         redis_cache: RedisGeocodeCache,
-        client_gateway: SQLAlchemyClientGateway,
     ) -> None:
         self._nominatim = nominatim_client
         self._redis_cache = redis_cache
-        self._client_gateway = client_gateway
 
     async def geocode(
         self, street: str, house: str, city: str
@@ -28,19 +19,11 @@ class Geocoder:
         if cached is not None:
             return cached
 
-        from_db = await self._client_gateway.find_coordinates_by_address(
-            street, house, city
-        )
-        if from_db is not None:
-            await self._redis_cache.set(city, street, house, from_db)
-            return from_db
+        result = await self._nominatim.geocode(street, house, city)
+        if result is not None:
+            await self._redis_cache.set(city, street, house, result)
 
-        from_api = await self._nominatim.geocode(street, house, city)
-        if from_api is not None:
-            await self._redis_cache.set(city, street, house, from_api)
-            return from_api
-
-        return None
+        return result
 
     async def geocode_if_missing(
         self,

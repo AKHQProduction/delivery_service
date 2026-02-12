@@ -148,6 +148,28 @@ services:
         reservations:
           memory: 1024M
 
+  nominatim:
+    container_name: "water_delivery-nominatim"
+    image: mediagis/nominatim:4.4
+    platform: linux/amd64
+    restart: unless-stopped
+    ports:
+      - "${NOMINATIM_PORT:-8088}:8080"
+    environment:
+      PBF_PATH: /nominatim/data/ukraine-latest.osm.pbf
+      NOMINATIM_PASSWORD: ${NOMINATIM_PASSWORD:-nominatim}
+    volumes:
+      - ./osrm-data/ukraine-latest.osm.pbf:/nominatim/data/ukraine-latest.osm.pbf
+      - nominatim_data:/var/lib/postgresql/14/main
+    shm_size: 1g
+    deploy:
+      resources:
+        limits:
+          cpus: '1.0'
+          memory: 4096M
+        reservations:
+          memory: 2048M
+
   otel-collector:
     container_name: "water_delivery-otel-collector"
     image: otel/opentelemetry-collector-contrib:0.117.0
@@ -293,3 +315,4 @@ volumes:
   victoria_metrics_data:
   loki_data:
   tempo_data:
+  nominatim_data:

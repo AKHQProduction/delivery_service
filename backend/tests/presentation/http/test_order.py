@@ -582,7 +582,7 @@ async def test_create_order_unauthorized(
 
     response = await http_client.post(url=BASE_URL, json=json)
 
-    assert response.status_code == status.HTTP_403_FORBIDDEN
+    assert response.status_code == status.HTTP_401_UNAUTHORIZED
 
 
 @pytest.mark.asyncio()
@@ -1149,7 +1149,7 @@ async def test_update_order_unauthorized(
         json={"comment": "test"},
     )
 
-    assert response.status_code == status.HTTP_403_FORBIDDEN
+    assert response.status_code == status.HTTP_401_UNAUTHORIZED
 
 
 @pytest.mark.asyncio()
@@ -2081,7 +2081,7 @@ async def test_get_order_stats_unauthorized(
         },
     )
 
-    assert response.status_code == status.HTTP_403_FORBIDDEN
+    assert response.status_code == status.HTTP_401_UNAUTHORIZED
 
 
 @pytest.mark.asyncio()
@@ -2163,7 +2163,7 @@ async def test_generate_orders_pdf_unauthorized(
         },
     )
 
-    assert response.status_code == status.HTTP_403_FORBIDDEN
+    assert response.status_code == status.HTTP_401_UNAUTHORIZED
 
 
 @pytest.mark.asyncio()
@@ -2251,7 +2251,7 @@ async def test_delete_order_unauthorized(
 ) -> None:
     response = await http_client.delete(url=f"{BASE_URL}/{uuid.uuid4()}")
 
-    assert response.status_code == status.HTTP_403_FORBIDDEN
+    assert response.status_code == status.HTTP_401_UNAUTHORIZED
 
 
 @pytest.mark.asyncio()
@@ -2280,7 +2280,7 @@ async def test_get_order_unauthorized(
 ) -> None:
     response = await http_client.get(url=f"{BASE_URL}/{uuid.uuid4()}")
 
-    assert response.status_code == status.HTTP_403_FORBIDDEN
+    assert response.status_code == status.HTTP_401_UNAUTHORIZED
 
 
 @pytest.mark.asyncio()
@@ -2289,7 +2289,7 @@ async def test_get_all_orders_unauthorized(
 ) -> None:
     response = await http_client.get(url=f"{BASE_URL}/all")
 
-    assert response.status_code == status.HTTP_403_FORBIDDEN
+    assert response.status_code == status.HTTP_401_UNAUTHORIZED
 
 
 @pytest.mark.asyncio()
@@ -2519,7 +2519,7 @@ async def test_update_order_address_with_district(
     assert order.delivery_address.district == "Подільський"
 
 
-NOMINATIM_GEOCODE = "backend.infrastructure.nominatim.NominatimClient.geocode"
+GEOCODER_GEOCODE = "backend.application.services.geocoder.Geocoder.geocode"
 
 
 @pytest.mark.asyncio()
@@ -2571,7 +2571,7 @@ async def test_create_order_geocodes_address_without_coordinates(
     }
 
     with patch(
-        NOMINATIM_GEOCODE,
+        GEOCODER_GEOCODE,
         new_callable=AsyncMock,
         return_value=fake_coords,
     ) as mock_geocode:
@@ -2655,7 +2655,7 @@ async def test_create_order_skips_geocoding_when_address_has_coords(
     }
 
     with patch(
-        NOMINATIM_GEOCODE,
+        GEOCODER_GEOCODE,
         new_callable=AsyncMock,
     ) as mock_geocode:
         response = await http_client.post(

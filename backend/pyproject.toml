@@ -41,6 +41,12 @@ backend = "backend:main"
 requires = ["hatchling"]
 build-backend = "hatchling.build"
 
+[tool.pytest.ini_options]
+filterwarnings = [
+    "ignore:.*dishka\\.integrations.*:DeprecationWarning",
+    "ignore:.*HTTP_422_UNPROCESSABLE_ENTITY.*:DeprecationWarning",
+]
+
 [dependency-groups]
 dev = [
     "faker>=40.4.0",

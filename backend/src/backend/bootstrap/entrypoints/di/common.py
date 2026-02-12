@@ -20,6 +20,7 @@ from sqlalchemy.ext.asyncio import (
 from backend.bootstrap.config import (
     AppConfig,
     Config,
+    NominatimConfig,
     OSRMConfig,
     OTelConfig,
     PostgresConfig,
@@ -76,6 +77,10 @@ class ConfigProvider(Provider):
     @provide
     def osrm_config(self, config: Config) -> OSRMConfig:
         return config.osrm_config
+
+    @provide
+    def nominatim_config(self, config: Config) -> NominatimConfig:
+        return config.nominatim_config
 
 
 class PersistenceProvider(Provider):

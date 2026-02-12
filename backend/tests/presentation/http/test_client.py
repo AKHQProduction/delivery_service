@@ -16,6 +16,9 @@ from backend.infrastructure.persistence.tables.clients import (
     ClientAddress,
     ClientPhone,
 )
+from backend.infrastructure.persistence.tables.districts import District
+
+from .conftest import XLSX_CONTENT_TYPE
 
 BASE_URL = "/api/v1/clients"
 
@@ -357,7 +360,7 @@ async def test_create_client_unauthorized(
 
     response = await http_client.post(url=BASE_URL, json=json)
 
-    assert response.status_code == status.HTTP_403_FORBIDDEN
+    assert response.status_code == status.HTTP_401_UNAUTHORIZED
 
 
 @pytest.mark.asyncio()
@@ -463,7 +466,7 @@ async def test_get_client_unauthorized(
 
     response = await http_client.get(url=f"{BASE_URL}/{client_id}")
 
-    assert response.status_code == status.HTTP_403_FORBIDDEN
+    assert response.status_code == status.HTTP_401_UNAUTHORIZED
 
 
 @pytest.mark.asyncio()
@@ -674,7 +677,7 @@ async def test_get_all_clients_unauthorized(
 ) -> None:
     response = await http_client.get(url=f"{BASE_URL}/all")
 
-    assert response.status_code == status.HTTP_403_FORBIDDEN
+    assert response.status_code == status.HTTP_401_UNAUTHORIZED
 
 
 @pytest.mark.asyncio()
@@ -1198,7 +1201,7 @@ async def test_edit_client_unauthorized(
         url=f"{BASE_URL}/{client_id}", json=json
     )
 
-    assert response.status_code == status.HTTP_403_FORBIDDEN
+    assert response.status_code == status.HTTP_401_UNAUTHORIZED
 
 
 @pytest.mark.asyncio()
@@ -1746,7 +1749,7 @@ async def test_delete_client_unauthorized(
     client_id = str(uuid.uuid4())
     response = await http_client.delete(url=f"{BASE_URL}/{client_id}")
 
-    assert response.status_code == status.HTTP_403_FORBIDDEN
+    assert response.status_code == status.HTTP_401_UNAUTHORIZED
 
 
 @pytest.mark.asyncio()
@@ -1791,7 +1794,7 @@ async def test_delete_client_not_found_returns_ok(
     assert response.status_code == status.HTTP_204_NO_CONTENT
 
 
-NOMINATIM_GEOCODE = "backend.infrastructure.nominatim.NominatimClient.geocode"
+GEOCODER_GEOCODE = "backend.application.services.geocoder.Geocoder.geocode"
 
 
 @pytest.mark.asyncio()
@@ -1823,7 +1826,7 @@ async def test_create_client_geocodes_address_when_shop_has_city(
     fake_coords = CoordinatesDTO(latitude=50.45, longitude=30.52)
 
     with patch(
-        NOMINATIM_GEOCODE,
+        GEOCODER_GEOCODE,
         new_callable=AsyncMock,
         return_value=fake_coords,
     ) as mock_geocode:
@@ -1878,7 +1881,7 @@ async def test_create_client_skips_geocoding_when_coords_provided(
     }
 
     with patch(
-        NOMINATIM_GEOCODE,
+        GEOCODER_GEOCODE,
         new_callable=AsyncMock,
     ) as mock_geocode:
         response = await http_client.post(
@@ -1926,7 +1929,7 @@ async def test_create_client_skips_geocoding_when_no_city(
     }
 
     with patch(
-        NOMINATIM_GEOCODE,
+        GEOCODER_GEOCODE,
         new_callable=AsyncMock,
     ) as mock_geocode:
         response = await http_client.post(
@@ -1998,7 +2001,7 @@ async def test_edit_client_geocodes_new_address(
     }
 
     with patch(
-        NOMINATIM_GEOCODE,
+        GEOCODER_GEOCODE,
         new_callable=AsyncMock,
         return_value=fake_coords,
     ) as mock_geocode:
@@ -2020,3 +2023,346 @@ async def test_edit_client_geocodes_new_address(
     assert len(addresses) == 1
     assert addresses[0].latitude == 50.46
     assert addresses[0].longitude == 30.53
+
+
+IMPORT_URL = f"{BASE_URL}/import"
+
+
+@pytest.mark.asyncio()
+async def test_import_clients_success(
+    http_client: AsyncClient,
+    session: AsyncSession,
+    customer_headers: Callable[[int], dict[str, Any]],
+    setup_full_test_user_with_shop,
+    upload_xlsx: Callable[..., dict[str, Any]],
+) -> None:
+    telegram_id = 5000
+    await setup_full_test_user_with_shop(telegram_id=telegram_id)
+    await session.commit()
+
+    headers = customer_headers(telegram_id)
+
+    response = await http_client.post(
+        url=IMPORT_URL,
+        headers=headers,
+        files=upload_xlsx([
+            ["Іван Іванов", "+380501234567", None, "Хрещатик", "10", "5"],
+            ["Петро Петренко", "0931234567", "+380671111111", "Садова", "22"],
+        ]),
+    )
+
+    assert response.status_code == status.HTTP_200_OK
+    assert response.json()["imported"] == 2
+
+    await session.flush()
+
+    clients = (await session.execute(select(Client))).scalars().all()
+    assert len(clients) == 2
+
+    names = sorted(c.full_name for c in clients)
+    assert names == ["Іван Іванов", "Петро Петренко"]
+
+
+@pytest.mark.asyncio()
+async def test_import_clients_rejects_non_xlsx(
+    http_client: AsyncClient,
+    session: AsyncSession,
+    customer_headers: Callable[[int], dict[str, Any]],
+    setup_full_test_user_with_shop,
+) -> None:
+    telegram_id = 5001
+    await setup_full_test_user_with_shop(telegram_id=telegram_id)
+    await session.commit()
+
+    headers = customer_headers(telegram_id)
+
+    response = await http_client.post(
+        url=IMPORT_URL,
+        headers=headers,
+        files={"file": ("clients.csv", b"data", "text/csv")},
+    )
+
+    assert response.status_code == status.HTTP_422_UNPROCESSABLE_CONTENT
+
+
+@pytest.mark.asyncio()
+async def test_import_clients_unauthorized(
+    http_client: AsyncClient,
+    build_xlsx: Callable[..., bytes],
+) -> None:
+    response = await http_client.post(
+        url=IMPORT_URL,
+        files={"file": ("clients.xlsx", build_xlsx([]), XLSX_CONTENT_TYPE)},
+    )
+
+    assert response.status_code == status.HTTP_401_UNAUTHORIZED
+
+
+@pytest.mark.asyncio()
+async def test_import_clients_as_courier_forbidden(
+    http_client: AsyncClient,
+    session: AsyncSession,
+    customer_headers: Callable[[int], dict[str, Any]],
+    setup_full_test_user_with_shop,
+    upload_xlsx: Callable[..., dict[str, Any]],
+) -> None:
+    telegram_id = 5002
+    await setup_full_test_user_with_shop(
+        telegram_id=telegram_id, role=ShopRole.COURIER
+    )
+    await session.commit()
+
+    headers = customer_headers(telegram_id)
+
+    response = await http_client.post(
+        url=IMPORT_URL,
+        headers=headers,
+        files=upload_xlsx([
+            ["Тест", "+380501234567", None, "Вулиця", "1"],
+        ]),
+    )
+
+    assert response.status_code == status.HTTP_403_FORBIDDEN
+
+
+@pytest.mark.asyncio()
+async def test_import_clients_empty_file(
+    http_client: AsyncClient,
+    session: AsyncSession,
+    customer_headers: Callable[[int], dict[str, Any]],
+    setup_full_test_user_with_shop,
+    upload_xlsx: Callable[..., dict[str, Any]],
+) -> None:
+    telegram_id = 5003
+    await setup_full_test_user_with_shop(telegram_id=telegram_id)
+    await session.commit()
+
+    headers = customer_headers(telegram_id)
+
+    response = await http_client.post(
+        url=IMPORT_URL,
+        headers=headers,
+        files=upload_xlsx([]),
+    )
+
+    assert response.status_code == status.HTTP_200_OK
+    assert response.json()["imported"] == 0
+
+
+@pytest.mark.asyncio()
+async def test_import_clients_skips_row_with_invalid_phone(
+    http_client: AsyncClient,
+    session: AsyncSession,
+    customer_headers: Callable[[int], dict[str, Any]],
+    setup_full_test_user_with_shop,
+    upload_xlsx: Callable[..., dict[str, Any]],
+) -> None:
+    telegram_id = 5004
+    await setup_full_test_user_with_shop(telegram_id=telegram_id)
+    await session.commit()
+
+    headers = customer_headers(telegram_id)
+
+    response = await http_client.post(
+        url=IMPORT_URL,
+        headers=headers,
+        files=upload_xlsx([
+            ["Валідний", "+380501234567", None, "Вулиця", "1"],
+            ["Невалідний", "123", None, "Вулиця", "2"],
+        ]),
+    )
+
+    assert response.status_code == status.HTTP_200_OK
+    assert response.json()["imported"] == 1
+
+    await session.flush()
+
+    clients = (await session.execute(select(Client))).scalars().all()
+    assert len(clients) == 1
+    assert clients[0].full_name == "Валідний"
+
+
+@pytest.mark.asyncio()
+async def test_import_clients_with_two_phones_and_two_addresses(
+    http_client: AsyncClient,
+    session: AsyncSession,
+    customer_headers: Callable[[int], dict[str, Any]],
+    setup_full_test_user_with_shop,
+    upload_xlsx: Callable[..., dict[str, Any]],
+) -> None:
+    telegram_id = 5005
+    await setup_full_test_user_with_shop(telegram_id=telegram_id)
+    await session.commit()
+
+    headers = customer_headers(telegram_id)
+
+    response = await http_client.post(
+        url=IMPORT_URL,
+        headers=headers,
+        files=upload_xlsx([
+            [
+                "Клієнт",
+                "+380501234567",
+                "+380671111111",
+                "Хрещатик",
+                "10",
+                "5",
+                "1",
+                "3",
+                "5",
+                None,
+                "Коментар 1",
+                "Садова",
+                "22",
+                None,
+                None,
+                None,
+                None,
+                None,
+                "Приватний будинок",
+            ],
+        ]),
+    )
+
+    assert response.status_code == status.HTTP_200_OK
+    assert response.json()["imported"] == 1
+
+    await session.flush()
+
+    clients = (await session.execute(select(Client))).scalars().all()
+    assert len(clients) == 1
+    client = clients[0]
+
+    phones = (
+        (
+            await session.execute(
+                select(ClientPhone)
+                .where(ClientPhone.client_id == client.id)
+                .order_by(ClientPhone.id)
+            )
+        )
+        .scalars()
+        .all()
+    )
+    assert len(phones) == 2
+    assert phones[0].number == "+380501234567"
+    assert phones[0].is_primary is True
+    assert phones[1].number == "+380671111111"
+    assert phones[1].is_primary is False
+
+    addresses = (
+        (
+            await session.execute(
+                select(ClientAddress)
+                .where(ClientAddress.client_id == client.id)
+                .order_by(ClientAddress.id)
+            )
+        )
+        .scalars()
+        .all()
+    )
+    assert len(addresses) == 2
+    assert addresses[0].street == "Хрещатик"
+    assert addresses[0].apartment == "5"
+    assert addresses[0].comment == "Коментар 1"
+    assert addresses[0].is_primary is True
+    assert addresses[1].street == "Садова"
+    assert addresses[1].comment == "Приватний будинок"
+    assert addresses[1].is_primary is False
+
+
+@pytest.mark.asyncio()
+async def test_import_clients_creates_districts(
+    http_client: AsyncClient,
+    session: AsyncSession,
+    customer_headers: Callable[[int], dict[str, Any]],
+    setup_full_test_user_with_shop,
+    upload_xlsx: Callable[..., dict[str, Any]],
+) -> None:
+    telegram_id = 5006
+    await setup_full_test_user_with_shop(telegram_id=telegram_id)
+    await session.commit()
+
+    headers = customer_headers(telegram_id)
+
+    response = await http_client.post(
+        url=IMPORT_URL,
+        headers=headers,
+        files=upload_xlsx([
+            [
+                "Клієнт 1",
+                "+380501234567",
+                None,
+                "Хрещатик",
+                "10",
+                None,
+                None,
+                None,
+                None,
+                "Центр",
+            ],
+            [
+                "Клієнт 2",
+                "+380502222222",
+                None,
+                "Садова",
+                "5",
+                None,
+                None,
+                None,
+                None,
+                "Центр",
+            ],
+            [
+                "Клієнт 3",
+                "+380503333333",
+                None,
+                "Заміська",
+                "1",
+                None,
+                None,
+                None,
+                None,
+                "Околиця",
+            ],
+        ]),
+    )
+
+    assert response.status_code == status.HTTP_200_OK
+    assert response.json()["imported"] == 3
+
+    await session.flush()
+
+    districts = (await session.execute(select(District))).scalars().all()
+    district_names = sorted(d.name for d in districts)
+    assert district_names == ["Околиця", "Центр"]
+
+
+@pytest.mark.asyncio()
+async def test_import_clients_skips_row_without_required_fields(
+    http_client: AsyncClient,
+    session: AsyncSession,
+    customer_headers: Callable[[int], dict[str, Any]],
+    setup_full_test_user_with_shop,
+    upload_xlsx: Callable[..., dict[str, Any]],
+) -> None:
+    telegram_id = 5007
+    await setup_full_test_user_with_shop(telegram_id=telegram_id)
+    await session.commit()
+
+    headers = customer_headers(telegram_id)
+
+    response = await http_client.post(
+        url=IMPORT_URL,
+        headers=headers,
+        files=upload_xlsx([
+            [None, "+380501234567", None, "Вулиця", "1"],
+            ["Клієнт", None, None, "Вулиця", "1"],
+            ["Клієнт", "+380501234567", None, None, "1"],
+            ["Клієнт", "+380501234567", None, "Вулиця", None],
+            ["Валідний", "+380509999999", None, "Вулиця", "1"],
+        ]),
+    )
+
+    assert response.status_code == status.HTTP_200_OK
+    assert response.json()["imported"] == 1

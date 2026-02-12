@@ -18,7 +18,7 @@ if [ -f "$OSRM_FILE" ]; then
     echo "Processed OSRM files already exist: $OSRM_FILE"
     read -rp "Re-process? (y/N): " answer
     if [[ ! "$answer" =~ ^[Yy]$ ]]; then
-        echo "Skipped. Run 'docker compose --profile routing up -d osrm' to start."
+        echo "Skipped. Run 'docker compose --profile map up -d osrm' to start."
         exit 0
     fi
 fi
@@ -46,10 +46,8 @@ docker run --rm --platform linux/amd64 -v "$DATA_DIR:/data" "$OSRM_IMAGE" \
     osrm-customize "/data/$(basename "$OSRM_FILE")"
 
 echo ""
-echo "Removing source .pbf file (~800 MB)..."
-rm -f "$PBF_FILE"
-
-echo ""
 echo "=== Done ==="
-echo "Start OSRM: docker compose --profile routing up -d osrm"
-echo "Test:        curl http://localhost:5000/trip/v1/driving/30.52,50.45;30.53,50.46"
+echo "PBF file kept at: $PBF_FILE"
+echo "Start OSRM + Nominatim: docker compose --profile map up -d"
+echo "Test OSRM:              curl http://localhost:5050/trip/v1/driving/30.52,50.45;30.53,50.46"
+echo "Test Nominatim:         curl 'http://localhost:8088/search?q=Kyiv&format=json'"
