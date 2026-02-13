@@ -10,8 +10,8 @@ from backend.bootstrap.config import AppConfig, Config
 from backend.bootstrap.entrypoints.di.api_providers import (
     APIInteractorsProvider,
     AdaptersProvider,
+    AuthProvider,
     ServicesProvider,
-    WebAppProvider,
 )
 from backend.bootstrap.entrypoints.di.common import (
     ConfigProvider,
@@ -45,5 +45,5 @@ class MockServicesProvider(ServicesProvider):
     pass
 
 
-class MockWebAppProvider(WebAppProvider):
+class MockAuthProvider(AuthProvider):
     pass

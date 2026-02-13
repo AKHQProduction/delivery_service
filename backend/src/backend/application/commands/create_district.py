@@ -5,7 +5,7 @@ from backend.application.errors import AlreadyExistsError
 from backend.application.policies.access import ensure_is_owner
 from backend.application.services.district import create_district
 from backend.application.vars import DistrictId
-from backend.infrastructure.idp import TelegramIdentityProvider
+from backend.infrastructure.idp import IdentityProvider
 from backend.infrastructure.persistence.gateways import (
     SQLAlchemyDistrictGateway,
 )
@@ -22,7 +22,7 @@ class CreateDistrictCommand:
 class CreateDistrictCommandHandler:
     def __init__(
         self,
-        idp: TelegramIdentityProvider,
+        idp: IdentityProvider,
         gateway: SQLAlchemyDistrictGateway,
         tr_manager: TransactionManager,
     ) -> None:

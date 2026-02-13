@@ -7,7 +7,7 @@ from backend.application.policies.access import ensure_is_owner
 from backend.application.services.time_slot import create_time_slot
 from backend.application.validators.time import validate_time_slot_range
 from backend.application.vars import TimeSlotId
-from backend.infrastructure.idp import TelegramIdentityProvider
+from backend.infrastructure.idp import IdentityProvider
 from backend.infrastructure.persistence.gateways import (
     SQLAlchemyTimeSlotGateway,
 )
@@ -29,7 +29,7 @@ class CreateTimeSlotCommand:
 class CreateTimeSlotCommandHandler:
     def __init__(
         self,
-        idp: TelegramIdentityProvider,
+        idp: IdentityProvider,
         time_slot_gateway: SQLAlchemyTimeSlotGateway,
         tr_manager: TransactionManager,
     ) -> None:

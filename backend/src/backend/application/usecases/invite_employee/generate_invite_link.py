@@ -8,7 +8,7 @@ from backend.application.usecases.invite_employee.interfaces import (
     Link,
 )
 from backend.application.vars import ShopRole
-from backend.infrastructure.idp import TelegramIdentityProvider
+from backend.infrastructure.idp import IdentityProvider
 from backend.infrastructure.persistence.gateways import RedisLinkGateway
 
 logger = logging.getLogger(__name__)
@@ -31,7 +31,7 @@ class GenerateInviteLinkCommand:
 class GenerateInviteLinkCommandHandler:
     def __init__(
         self,
-        idp: TelegramIdentityProvider,
+        idp: IdentityProvider,
         link_generator: InviteLinkGenerator,
         link_gateway: RedisLinkGateway,
     ) -> None:

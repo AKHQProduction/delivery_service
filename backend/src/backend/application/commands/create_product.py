@@ -6,7 +6,7 @@ from uuid import UUID
 from backend.application.policies.access import ensure_can_manage
 from backend.application.services.product import create_product
 from backend.application.vars import CategoryId, Empty, ProductId
-from backend.infrastructure.idp import TelegramIdentityProvider
+from backend.infrastructure.idp import IdentityProvider
 from backend.infrastructure.persistence.gateways import (
     SQLAlchemyProductGateway,
 )
@@ -25,7 +25,7 @@ class CreateProductCommand:
 class CreateProductCommandHandler:
     def __init__(
         self,
-        idp: TelegramIdentityProvider,
+        idp: IdentityProvider,
         gateway: SQLAlchemyProductGateway,
         tr_manager: TransactionManager,
     ) -> None:

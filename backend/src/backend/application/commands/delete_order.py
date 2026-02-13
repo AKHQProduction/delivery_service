@@ -6,7 +6,7 @@ from backend.application.policies.access import (
     ensure_related_to_shop,
 )
 from backend.application.vars import OrderId
-from backend.infrastructure.idp import TelegramIdentityProvider
+from backend.infrastructure.idp import IdentityProvider
 from backend.infrastructure.persistence.gateways import SQLAlchemyOrderGateway
 from backend.infrastructure.transaction_manager import TransactionManager
 
@@ -21,7 +21,7 @@ class DeleteOrderCommand:
 class DeleteOrderCommandHandler:
     def __init__(
         self,
-        idp: TelegramIdentityProvider,
+        idp: IdentityProvider,
         order_gateway: SQLAlchemyOrderGateway,
         tr_manager: TransactionManager,
     ) -> None:

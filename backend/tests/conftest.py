@@ -43,9 +43,9 @@ from backend.bootstrap.entrypoints.di.common import (
 from backend.bootstrap.entrypoints.di.tests_providers import (
     MockAPIInteractorsProvider,
     MockAdaptersProvider,
+    MockAuthProvider,
     MockConfigProvider,
     MockServicesProvider,
-    MockWebAppProvider,
 )
 from backend.infrastructure.persistence.tables import (
     Base,
@@ -160,7 +160,7 @@ def make_container(
         return make_async_container(
             mock_session_provider,
             MockConfigProvider(),
-            MockWebAppProvider(),
+            MockAuthProvider(),
             MockAPIInteractorsProvider(),
             MockAdaptersProvider(),
             MockServicesProvider(),

@@ -19,7 +19,7 @@ router = APIRouter(prefix="/links", tags=["Links"], route_class=DishkaRoute)
         status.HTTP_401_UNAUTHORIZED: {"model": ErrorSchema},
         status.HTTP_403_FORBIDDEN: {"model": ErrorSchema},
     },
-    dependencies=[Depends(HTTPBearer())],
+    dependencies=[Depends(HTTPBearer(auto_error=False))],
 )
 async def create_invite_link(
     body: GenerateInviteLinkCommand,

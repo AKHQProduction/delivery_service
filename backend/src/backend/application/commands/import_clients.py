@@ -12,7 +12,7 @@ from backend.application.services.client import (
 from backend.application.services.district import create_district
 from backend.application.validators import normalize_ukraine_phone
 from backend.application.vars import DistrictId, ShopId
-from backend.infrastructure.idp import TelegramIdentityProvider
+from backend.infrastructure.idp import IdentityProvider
 from backend.infrastructure.persistence.gateways import (
     SQLAlchemyClientGateway,
     SQLAlchemyDistrictGateway,
@@ -43,7 +43,7 @@ class ImportClientsResult:
 class ImportClientsCommandHandler:
     def __init__(
         self,
-        idp: TelegramIdentityProvider,
+        idp: IdentityProvider,
         client_gateway: SQLAlchemyClientGateway,
         district_gateway: SQLAlchemyDistrictGateway,
         tr_manager: TransactionManager,

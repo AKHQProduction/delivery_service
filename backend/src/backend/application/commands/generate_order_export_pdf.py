@@ -8,7 +8,7 @@ from backend.application.dto.coordinates import CoordinatesDTO
 from backend.application.errors import AccessDeniedError, EntityNotFoundError
 from backend.application.services.route_optimizer import RouteOptimizer
 from backend.application.vars import ExportDocType, OrderId, TimeSlotId
-from backend.infrastructure.idp import TelegramIdentityProvider
+from backend.infrastructure.idp import IdentityProvider
 from backend.infrastructure.pdf import ReportLabOrdersPDFGenerator
 from backend.infrastructure.persistence.gateways import (
     RedisPDFStorage,
@@ -37,7 +37,7 @@ class GenerateOrderExportPDFResult:
 class GenerateOrderExportPDFCommandHandler:
     def __init__(
         self,
-        idp: TelegramIdentityProvider,
+        idp: IdentityProvider,
         order_gateway: SQLAlchemyOrderGateway,
         shop_gateway: SQLAlchemyShopGateway,
         time_slot_gateway: SQLAlchemyTimeSlotGateway,

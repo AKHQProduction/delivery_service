@@ -32,6 +32,7 @@ from backend.infrastructure.persistence.gateways import (
     RedisGeocodeCache,
     RedisLinkGateway,
     RedisPDFStorage,
+    RedisSessionGateway,
     SQLAlchemyCategoryGateway,
     SQLAlchemyClientGateway,
     SQLAlchemyDistrictGateway,
@@ -145,6 +146,7 @@ class RedisProvider(Provider):
         ) as redis:
             yield redis
 
-    gateway = provide(WithParents[RedisLinkGateway])
-    pdf_storage = provide(RedisPDFStorage)
+    gateway = provide_all(WithParents[RedisLinkGateway], RedisSessionGateway)
     cache = provide(RedisGeocodeCache)
+
+    pdf_storage = provide(RedisPDFStorage)

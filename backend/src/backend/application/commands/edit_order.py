@@ -31,7 +31,7 @@ from backend.application.vars import (
     TimeSlotId,
     today,
 )
-from backend.infrastructure.idp import TelegramIdentityProvider
+from backend.infrastructure.idp import IdentityProvider
 from backend.infrastructure.persistence.gateways import (
     SQLAlchemyClientGateway,
     SQLAlchemyOrderGateway,
@@ -79,7 +79,7 @@ class EditOrderCommand:
 class EditOrderCommandHandler:
     def __init__(
         self,
-        idp: TelegramIdentityProvider,
+        idp: IdentityProvider,
         client_gateway: SQLAlchemyClientGateway,
         product_gateway: SQLAlchemyProductGateway,
         order_gateway: SQLAlchemyOrderGateway,

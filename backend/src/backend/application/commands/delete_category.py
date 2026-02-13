@@ -6,7 +6,7 @@ from backend.application.policies.access import (
     ensure_related_to_shop,
 )
 from backend.application.vars import CategoryId
-from backend.infrastructure.idp import TelegramIdentityProvider
+from backend.infrastructure.idp import IdentityProvider
 from backend.infrastructure.persistence.gateways import (
     SQLAlchemyCategoryGateway,
 )
@@ -23,7 +23,7 @@ class DeleteCategoryCommand:
 class DeleteCategoryCommandHandler:
     def __init__(
         self,
-        idp: TelegramIdentityProvider,
+        idp: IdentityProvider,
         category_gateway: SQLAlchemyCategoryGateway,
         tr_manager: TransactionManager,
     ) -> None:

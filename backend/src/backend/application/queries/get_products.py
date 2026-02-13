@@ -5,7 +5,7 @@ from backend.application.dto.gateways.product_gateway import (
     GetProductsFilters,
     ProductReadModel,
 )
-from backend.infrastructure.idp import TelegramIdentityProvider
+from backend.infrastructure.idp import IdentityProvider
 from backend.infrastructure.persistence.gateways import (
     SQLAlchemyProductGateway,
 )
@@ -20,7 +20,7 @@ class GetProductsQuery:
 class GetProductsQueryHandler:
     def __init__(
         self,
-        idp: TelegramIdentityProvider,
+        idp: IdentityProvider,
         product_gateway: SQLAlchemyProductGateway,
     ) -> None:
         self._idp = idp

@@ -52,7 +52,7 @@ _EDIT_SHOP_EXAMPLES: dict[str, Example] = {
             "model": ErrorSchema,
         },
     },
-    dependencies=[Depends(HTTPBearer())],
+    dependencies=[Depends(HTTPBearer(auto_error=False))],
 )
 async def update_shop(
     body: Annotated[
