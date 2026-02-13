@@ -45,6 +45,7 @@ from backend.application.vars import (
     ExportDocType,
     OrderId,
     PaymentMethod,
+    RoutingMode,
     TimeSlotId,
     today,
 )
@@ -424,12 +425,14 @@ async def generate_orders_pdf(
     doc_type: ExportDocType,
     handler: FromDishka[GenerateOrderExportPDFCommandHandler],
     time_slot_id: TimeSlotId | None = None,
+    routing_mode: RoutingMode = RoutingMode.NONE,
 ) -> GenerateOrderExportPDFResult:
     return await handler.handle(
         GenerateOrderExportPDFCommand(
             delivery_date=delivery_date,
             doc_type=doc_type,
             time_slot_id=time_slot_id,
+            routing_mode=routing_mode,
         )
     )
 

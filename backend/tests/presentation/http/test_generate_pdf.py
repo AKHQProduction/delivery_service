@@ -213,7 +213,11 @@ async def test_generate_pdf_with_coordinates_triggers_optimization(
     ) as mock_compute:
         response = await http_client.post(
             url=f"{BASE_URL}/generate",
-            params={"delivery_date": str(tomorrow), "doc_type": "ORDER_LIST"},
+            params={
+                "delivery_date": str(tomorrow),
+                "doc_type": "ORDER_LIST",
+                "routing_mode": "ROUNDTRIP",
+            },
             headers=customer_headers(telegram_id),
         )
 
@@ -253,9 +257,130 @@ async def test_generate_pdf_without_shop_coordinates_skips_optimization(
     ) as mock_compute:
         response = await http_client.post(
             url=f"{BASE_URL}/generate",
+            params={
+                "delivery_date": str(tomorrow),
+                "doc_type": "ORDER_LIST",
+                "routing_mode": "ROUNDTRIP",
+            },
+            headers=customer_headers(telegram_id),
+        )
+
+        assert response.status_code == status.HTTP_200_OK
+        mock_compute.assert_not_called()
+
+
+@pytest.mark.asyncio()
+async def test_generate_pdf_default_routing_skips_optimization(
+    http_client: AsyncClient,
+    session: AsyncSession,
+    customer_headers: Callable[[int], dict[str, Any]],
+    setup_full_test_user_with_shop,
+    setup_test_client,
+    setup_test_order,
+    tomorrow,
+) -> None:
+    telegram_id = 5006
+    _, shop_id = await setup_full_test_user_with_shop(
+        telegram_id=telegram_id,
+        shop_latitude=50.4501,
+        shop_longitude=30.5234,
+    )
+
+    client_id = await setup_test_client(shop_id=shop_id)
+
+    await setup_test_order(
+        shop_id=shop_id,
+        client_id=client_id,
+        delivery_date=tomorrow,
+        delivery_address={
+            "street": "Street A",
+            "house": "1",
+            "coordinates": {"latitude": 50.46, "longitude": 30.52},
+        },
+    )
+    await setup_test_order(
+        shop_id=shop_id,
+        client_id=client_id,
+        delivery_date=tomorrow,
+        delivery_address={
+            "street": "Street B",
+            "house": "2",
+            "coordinates": {"latitude": 50.47, "longitude": 30.53},
+        },
+    )
+    await session.commit()
+
+    with patch(
+        "backend.application.services.route_optimizer.RouteOptimizer.compute",
+        new_callable=AsyncMock,
+    ) as mock_compute:
+        response = await http_client.post(
+            url=f"{BASE_URL}/generate",
             params={"delivery_date": str(tomorrow), "doc_type": "ORDER_LIST"},
             headers=customer_headers(telegram_id),
         )
 
         assert response.status_code == status.HTTP_200_OK
         mock_compute.assert_not_called()
+
+
+@pytest.mark.asyncio()
+async def test_generate_pdf_one_way_routing(
+    http_client: AsyncClient,
+    session: AsyncSession,
+    customer_headers: Callable[[int], dict[str, Any]],
+    setup_full_test_user_with_shop,
+    setup_test_client,
+    setup_test_order,
+    tomorrow,
+) -> None:
+    telegram_id = 5007
+    _, shop_id = await setup_full_test_user_with_shop(
+        telegram_id=telegram_id,
+        shop_latitude=50.4501,
+        shop_longitude=30.5234,
+    )
+
+    client_id = await setup_test_client(shop_id=shop_id)
+
+    await setup_test_order(
+        shop_id=shop_id,
+        client_id=client_id,
+        delivery_date=tomorrow,
+        delivery_address={
+            "street": "Street A",
+            "house": "1",
+            "coordinates": {"latitude": 50.46, "longitude": 30.52},
+        },
+    )
+    await setup_test_order(
+        shop_id=shop_id,
+        client_id=client_id,
+        delivery_date=tomorrow,
+        delivery_address={
+            "street": "Street B",
+            "house": "2",
+            "coordinates": {"latitude": 50.47, "longitude": 30.53},
+        },
+    )
+    await session.commit()
+
+    with patch(
+        "backend.application.services.route_optimizer.RouteOptimizer.compute",
+        new_callable=AsyncMock,
+        return_value=None,
+    ) as mock_compute:
+        response = await http_client.post(
+            url=f"{BASE_URL}/generate",
+            params={
+                "delivery_date": str(tomorrow),
+                "doc_type": "ORDER_LIST",
+                "routing_mode": "ONE_WAY",
+            },
+            headers=customer_headers(telegram_id),
+        )
+
+        assert response.status_code == status.HTTP_200_OK
+        mock_compute.assert_called_once()
+        call_kwargs = mock_compute.call_args
+        assert call_kwargs.kwargs["roundtrip"] is False
