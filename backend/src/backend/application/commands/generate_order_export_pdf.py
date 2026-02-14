@@ -7,8 +7,15 @@ from datetime import date, time
 from backend.application.dto.coordinates import CoordinatesDTO
 from backend.application.errors import AccessDeniedError, EntityNotFoundError
 from backend.application.services.route_optimizer import RouteOptimizer
-from backend.application.vars import ExportDocType, OrderId, TimeSlotId
-from backend.infrastructure.idp import IdentityProvider
+from backend.application.vars import (
+    ExportDocType,
+    OrderId,
+    RoutingMode,
+    TimeSlotId,
+)
+from backend.infrastructure.idp import (
+    IdentityProvider,
+)
 from backend.infrastructure.pdf import ReportLabOrdersPDFGenerator
 from backend.infrastructure.persistence.gateways import (
     RedisPDFStorage,
@@ -26,6 +33,7 @@ class GenerateOrderExportPDFCommand:
     delivery_date: date
     doc_type: ExportDocType
     time_slot_id: TimeSlotId | None = None
+    routing_mode: RoutingMode = RoutingMode.NONE
 
 
 @dataclass(frozen=True)
@@ -97,9 +105,15 @@ class GenerateOrderExportPDFCommandHandler:
         loop = asyncio.get_running_loop()
 
         if command.doc_type == ExportDocType.ORDER_LIST:
-            shop_coords = CoordinatesDTO.build(shop.latitude, shop.longitude)
-            if shop_coords:
-                orders = await self._optimize_orders(orders, shop_coords)
+            if command.routing_mode != RoutingMode.NONE:
+                shop_coords = CoordinatesDTO.build(
+                    shop.latitude, shop.longitude
+                )
+                if shop_coords:
+                    roundtrip = command.routing_mode == RoutingMode.ROUNDTRIP
+                    orders = await self._optimize_orders(
+                        orders, shop_coords, roundtrip=roundtrip
+                    )
 
             pdf_bytes = await loop.run_in_executor(
                 None,
@@ -132,6 +146,8 @@ class GenerateOrderExportPDFCommandHandler:
         self,
         orders: list[Order],
         shop_coords: CoordinatesDTO,
+        *,
+        roundtrip: bool,
     ) -> list[Order]:
         slots: dict[tuple[time, time], list[Order]] = defaultdict(list)
         for order in orders:
@@ -142,7 +158,7 @@ class GenerateOrderExportPDFCommandHandler:
         for key in sorted(slots):
             slot_orders = slots[key]
             optimized_ids = await self._route_optimizer.compute(
-                shop_coords, slot_orders
+                shop_coords, slot_orders, roundtrip=roundtrip
             )
             if optimized_ids:
                 result.extend(

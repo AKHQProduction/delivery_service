@@ -18,6 +18,7 @@ from backend.infrastructure.persistence.gateways import (
     SQLAlchemyDistrictGateway,
 )
 from backend.infrastructure.persistence.tables.clients import (
+    Client,
     ClientAddress,
 )
 from backend.infrastructure.transaction_manager import TransactionManager
@@ -29,6 +30,8 @@ from backend.infrastructure.xlsx.client_xlsx_parser import (
 
 logger = logging.getLogger(__name__)
 
+DedupKey = tuple[str, tuple[str, ...], tuple[tuple[str, str], ...]]
+
 
 @dataclass(frozen=True)
 class ImportClientsCommand:
@@ -38,6 +41,7 @@ class ImportClientsCommand:
 @dataclass(frozen=True)
 class ImportClientsResult:
     imported: int
+    skipped: int
 
 
 class ImportClientsCommandHandler:
@@ -70,72 +74,35 @@ class ImportClientsCommandHandler:
         )
 
         if not parsed_rows:
-            return ImportClientsResult(imported=0)
+            return ImportClientsResult(imported=0, skipped=0)
 
         district_map = await self._resolve_districts(shop_id, parsed_rows)
+        existing_keys = await self._build_existing_keys(shop_id, parsed_rows)
 
+        seen_in_file: set[DedupKey] = set()
         clients = []
+        skipped = 0
+
         for row in parsed_rows:
-            phone1 = self._normalize_phone(row.phone1)
-            if phone1 is None:
+            if self._is_duplicate(row, existing_keys, seen_in_file):
+                skipped += 1
                 continue
-
-            phone2 = self._normalize_phone(row.phone2) if row.phone2 else None
-
-            client_id = self._client_gateway.next_id()
-            client = create_client(
-                client_id=client_id,
-                shop_id=shop_id,
-                full_name=row.full_name,
-            )
-
-            phones = [
-                create_phone(
-                    number=phone1,
-                    is_primary=True,
-                    shop_id=shop_id,
-                ),
-            ]
-            if phone2:
-                phones.append(
-                    create_phone(
-                        number=phone2,
-                        is_primary=False,
-                        shop_id=shop_id,
-                    )
-                )
-            client.phones = phones
-
-            addresses = [
-                self._build_address(
-                    row.address1,
-                    is_primary=True,
-                    district_map=district_map,
-                ),
-            ]
-            if row.address2:
-                addresses.append(
-                    self._build_address(
-                        row.address2,
-                        is_primary=False,
-                        district_map=district_map,
-                    ),
-                )
-            client.addresses = addresses
-
-            clients.append(client)
+            client = self._build_client(row, shop_id, district_map)
+            if client is not None:
+                clients.append(client)
 
         if clients:
             self._client_gateway.save_all(clients)
             await self._tr_manager.commit()
 
         logger.info(
-            "Imported %d clients for shop %s (parsed %d rows)",
+            "Imported %d clients (skipped %d) for shop %s (parsed %d rows)",
             len(clients),
+            skipped,
             shop_id,
             len(parsed_rows),
         )
-        return ImportClientsResult(imported=len(clients))
+        return ImportClientsResult(imported=len(clients), skipped=skipped)
 
     async def _resolve_districts(
         self,
@@ -167,6 +134,129 @@ class ImportClientsCommandHandler:
                 district_map[name.lower()] = district_id
 
         return district_map
+
+    def _is_duplicate(
+        self,
+        row: ParsedClientRow,
+        existing_keys: set[DedupKey],
+        seen_in_file: set[DedupKey],
+    ) -> bool:
+        phones = [self._normalize_phone(row.phone1) or ""]
+        if row.phone2:
+            p2 = self._normalize_phone(row.phone2)
+            if p2:
+                phones.append(p2)
+
+        addrs = [self._normalize_address(row.address1)]
+        if row.address2:
+            addrs.append(self._normalize_address(row.address2))
+
+        key = self._make_dedup_key(row.full_name, phones, addrs)
+
+        if key in existing_keys or key in seen_in_file:
+            return True
+        seen_in_file.add(key)
+        return False
+
+    def _build_client(
+        self,
+        row: ParsedClientRow,
+        shop_id: ShopId,
+        district_map: dict[str, DistrictId],
+    ) -> Client | None:
+        phone1 = self._normalize_phone(row.phone1)
+        if phone1 is None:
+            return None
+
+        phone2 = self._normalize_phone(row.phone2) if row.phone2 else None
+
+        client = create_client(
+            client_id=self._client_gateway.next_id(),
+            shop_id=shop_id,
+            full_name=row.full_name,
+        )
+
+        client.phones = [
+            create_phone(number=phone1, is_primary=True, shop_id=shop_id),
+        ]
+        if phone2:
+            client.phones.append(
+                create_phone(number=phone2, is_primary=False, shop_id=shop_id)
+            )
+
+        client.addresses = [
+            self._build_address(
+                row.address1, is_primary=True, district_map=district_map
+            ),
+        ]
+        if row.address2:
+            client.addresses.append(
+                self._build_address(
+                    row.address2, is_primary=False, district_map=district_map
+                ),
+            )
+
+        return client
+
+    async def _build_existing_keys(
+        self,
+        shop_id: ShopId,
+        parsed_rows: list[ParsedClientRow],
+    ) -> set[DedupKey]:
+        all_phones: set[str] = set()
+        all_addresses: set[tuple[str, str]] = set()
+
+        for row in parsed_rows:
+            phone1 = self._normalize_phone(row.phone1)
+            if phone1:
+                all_phones.add(phone1)
+            if row.phone2:
+                phone2 = self._normalize_phone(row.phone2)
+                if phone2:
+                    all_phones.add(phone2)
+            all_addresses.add(self._normalize_address(row.address1))
+            if row.address2:
+                all_addresses.add(self._normalize_address(row.address2))
+
+        candidate_ids = (
+            await self._client_gateway.find_candidate_ids_for_dedup(
+                shop_id, all_phones, all_addresses
+            )
+        )
+        if not candidate_ids:
+            return set()
+
+        candidates = await self._client_gateway.load_candidates_for_dedup(
+            candidate_ids
+        )
+        return {
+            self._make_dedup_key(
+                c.full_name,
+                [p.number for p in c.phones],
+                [
+                    (a.street.strip().lower(), a.house.strip().lower())
+                    for a in c.addresses
+                ],
+            )
+            for c in candidates
+        }
+
+    @staticmethod
+    def _make_dedup_key(
+        full_name: str,
+        phones: list[str],
+        addresses: list[tuple[str, str]],
+    ) -> tuple[str, tuple[str, ...], tuple[tuple[str, str], ...]]:
+        name = " ".join(full_name.strip().lower().split())
+        return (
+            name,
+            tuple(sorted(phones)),
+            tuple(sorted(addresses)),
+        )
+
+    @staticmethod
+    def _normalize_address(addr: ParsedAddress) -> tuple[str, str]:
+        return addr.street.strip().lower(), addr.house.strip().lower()
 
     @staticmethod
     def _normalize_phone(phone: str) -> str | None:
