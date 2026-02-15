@@ -1,18 +1,18 @@
 import axios from "axios";
 import initDataTG from "../services/tgInitData";
+import { useUserShopStore } from "../context/useUserShopStore";
 
 const baseURL = import.meta.env.VITE_API_URL;
-const userID = JSON.parse(localStorage.getItem("userID") || "{}");
 
 const api = axios.create({
   baseURL: baseURL,
   headers: {
     "Content-Type": "application/json",
-    Authorization: `Bearer ${initDataTG?.initData || userID}`,
   },
+  withCredentials: true,
 });
 
-// Request interceptor
+// Request interceptor: only set Bearer in TG WebApp mode
 api.interceptors.request.use((config) => {
   if (initDataTG?.initData) {
     config.headers.Authorization = `Bearer ${initDataTG.initData}`;
@@ -33,6 +33,16 @@ api.interceptors.response.use(
       //TODO:
       //MOVE THIS TO A SEPARATE FILE WITH ALL EXEPTIONS
       if (error.response.status === 409 && data?.code === "duplicate_phones") {
+        return Promise.reject(error);
+      }
+
+      // Session expired — redirect browser users to login
+      if (error.response.status === 401) {
+        const store = useUserShopStore.getState();
+        if (!store.isTGWebApp && store.authStatus === "authenticated") {
+          store.logout();
+          window.location.href = "/login";
+        }
         return Promise.reject(error);
       }
       // Extract error message from backend response

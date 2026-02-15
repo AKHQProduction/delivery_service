@@ -1,11 +1,24 @@
 import { useUserShopStore } from "../../context/useUserShopStore";
 import { useNavigate, useLocation } from "react-router-dom";
 import { getRoutesForRole } from "../../config/roles.config";
+import { logout } from "../../services/api/authApi";
 
 export const SidebarNav = () => {
   const user = useUserShopStore((s) => s.user);
+  const isTGWebApp = useUserShopStore((s) => s.isTGWebApp);
   const navigate = useNavigate();
   const location = useLocation();
+
+  const handleLogout = async () => {
+    try {
+      await logout();
+    } catch {
+      console.error("Logout failed");
+    } finally {
+      useUserShopStore.getState().logout();
+      navigate("/login", { replace: true });
+    }
+  };
 
   if (!user) return null;
 
@@ -53,10 +66,27 @@ export const SidebarNav = () => {
           <div className="w-8 h-8 rounded-full bg-indigo-100 flex items-center justify-center text-indigo-700 font-bold text-sm">
             {user.full_name[0]}
           </div>
-          <div className="min-w-0">
+          <div className="min-w-0 flex-1">
             <p className="text-sm font-medium text-gray-900 truncate">{user.full_name}</p>
             <p className="text-xs text-gray-500">{user.role}</p>
           </div>
+          {!isTGWebApp && (
+            <button
+              type="button"
+              onClick={handleLogout}
+              className="text-gray-400 hover:text-red-500 transition-colors shrink-0"
+              title="Вийти"
+            >
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"
+                />
+              </svg>
+            </button>
+          )}
         </div>
       </div>
     </aside>

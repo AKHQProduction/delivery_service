@@ -10,9 +10,10 @@ interface ProtectedRouteProps {
 
 export const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children, allowedRoles }) => {
   const user = useUserShopStore((s) => s.user);
+  const isTGWebApp = useUserShopStore((s) => s.isTGWebApp);
 
   if (!user) {
-    return <Navigate to="/" replace />;
+    return <Navigate to={isTGWebApp ? "/" : "/login"} replace />;
   }
 
   if (!allowedRoles.includes(user.role)) {

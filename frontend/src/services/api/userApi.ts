@@ -1,7 +1,7 @@
 import api from "../../config/api.config";
 
 export const getUserShopData = async () => {
-  const response = await api.get(`v1/users/me`);
+  const response = await api.get(`v1/auth/me`);
   return response.data;
 };
 
