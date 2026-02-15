@@ -6,9 +6,10 @@ interface CenterModalProps {
   onClose: () => void;
   title: string;
   children: React.ReactNode;
+  size?: "md" | "lg" | "xl";
 }
 
-export const CenterModal: React.FC<CenterModalProps> = ({ isOpen, onClose, title, children }) => {
+export const CenterModal: React.FC<CenterModalProps> = ({ isOpen, onClose, title, children, size = "md" }) => {
   const [isVisible, setIsVisible] = useState(false);
 
   useEffect(() => {
@@ -40,7 +41,7 @@ export const CenterModal: React.FC<CenterModalProps> = ({ isOpen, onClose, title
       />
 
       <div
-        className={`fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 bg-white rounded-2xl shadow-2xl transition-all duration-300 z-9999 w-[90%] max-w-md max-h-[80vh] flex flex-col ${
+        className={`fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 bg-white rounded-2xl shadow-2xl transition-all duration-300 z-9999 w-[90%] ${{ md: "max-w-md", lg: "max-w-lg", xl: "max-w-xl" }[size]} max-h-[80vh] flex flex-col ${
           isVisible ? "opacity-100 scale-100" : "opacity-0 scale-95"
         }`}
       >

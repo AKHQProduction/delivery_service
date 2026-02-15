@@ -33,7 +33,7 @@ export const FormSelect: React.FC<FormSelectProps> = ({
         value={value}
         onChange={onChange}
         required={required}
-        className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+        className="w-full px-4 py-3 bg-white border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
       >
         {(!required || value === "") && <option value="">Оберіть...</option>}
         {options.map((option) => (

@@ -7,9 +7,10 @@ interface ModalProps {
   onClose: () => void;
   title: string;
   children: React.ReactNode;
+  size?: "md" | "lg" | "xl";
 }
 
-export const Modal: React.FC<ModalProps> = (props) => {
+export const Modal: React.FC<ModalProps> = ({ size, ...rest }) => {
   const { type } = usePlatform();
-  return type === "telegram" ? <BottomModal {...props} /> : <CenterModal {...props} />;
+  return type === "telegram" ? <BottomModal {...rest} /> : <CenterModal {...rest} size={size} />;
 };

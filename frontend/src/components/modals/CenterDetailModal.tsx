@@ -36,16 +36,6 @@ export const CenterDetailModal: React.FC<CenterDetailModalProps> = ({ isOpen, on
     }
   }, [isOpen]);
 
-  // ESC key to close
-  useEffect(() => {
-    if (!isOpen) return;
-    const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === "Escape") handleClose();
-    };
-    document.addEventListener("keydown", handleKeyDown);
-    return () => document.removeEventListener("keydown", handleKeyDown);
-  }, [isOpen, handleClose]);
-
   useEffect(() => {
     return () => {
       document.body.style.overflow = "unset";
