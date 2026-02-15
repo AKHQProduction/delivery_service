@@ -5,16 +5,12 @@ import { useOrders } from "../hooks/orders/useOrders";
 import { paymentMap } from "../utils/dataMap";
 import { OrderDetailModal } from "../components/modals/detailsModals/OrderDetailModal";
 import { RightModal } from "../components/modals/RightModal";
-import { generateOrdersPdfLink, getOrderById } from "../services/api/ordersApi";
+import { getOrderById } from "../services/api/ordersApi";
 import { SearchFiltersPopup } from "../components/shared/SearchFiltersPopup";
 import { useInfiniteScroll } from "../hooks/useInfiniteScroll";
 import { DateInput } from "../components/shared/DateInput";
 import { OrderCardSkeleton } from "../components/ui/Skeleton";
-
-const getDownloadUrl = (fileId: string): string => {
-  const baseUrl = import.meta.env.VITE_API_URL;
-  return `${baseUrl}/v1/orders/export/pdf/download/${fileId}`;
-};
+import { ExportPdfModal } from "../components/features/ExportPdfModal";
 
 export interface OrderItem {
   name: string;
@@ -48,11 +44,7 @@ export const OrdersPage = () => {
   const [searchTerm, setSearchTerm] = useState("");
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
-  const [exportDate, setExportDate] = useState(() => {
-    const today = new Date();
-    return today.toISOString().split("T")[0];
-  });
-  const [exportError, setExportError] = useState<boolean>(false);
+  const [isExportModalOpen, setIsExportModalOpen] = useState(false);
   const {
     getOrders,
     orders,
@@ -148,31 +140,6 @@ export const OrdersPage = () => {
     }
   };
 
-  const handleExportPdf = async () => {
-    if (!exportDate) {
-      setExportError(true);
-      return;
-    }
-    setExportError(false);
-    try {
-      const { file_id, filename } = await generateOrdersPdfLink(exportDate);
-      const downloadUrl = getDownloadUrl(file_id);
-
-      if (window.Telegram?.WebApp?.downloadFile) {
-        window.Telegram.WebApp.downloadFile({
-          url: downloadUrl,
-          file_name: filename,
-        });
-      } else if (window.Telegram?.WebApp?.openLink) {
-        window.Telegram.WebApp.openLink(downloadUrl);
-      } else {
-        window.open(downloadUrl, "_blank");
-      }
-    } catch {
-      setExportError(true);
-    }
-  };
-
   return (
     <div className="min-h-screen bg-gray-50 pb-24 lg:bg-white lg:pb-8">
       <PageHeader title="Замовлення" />
@@ -197,38 +164,21 @@ export const OrdersPage = () => {
       </div>
 
       <div className="px-6 pb-4 lg:px-8">
-        <div className="bg-gradient-to-r from-yellow-50 to-amber-50 border-2 border-yellow-200 rounded-2xl p-4">
-          <h3 className="font-bold text-amber-900 mb-3 text-center">Сформувати документ</h3>
-          <div className="flex flex-col items-center gap-2">
-            <div className="flex items-center justify-center gap-3">
-              <DateInput
-                title="export date"
-                value={exportDate}
-                onChange={(value) => {
-                  setExportDate(value);
-                  setExportError(false);
-                }}
-                error={exportError}
-                variant="amber"
-              />
-              <button
-                onClick={handleExportPdf}
-                className="px-4 py-2 bg-gradient-to-r from-amber-500 to-orange-500 text-white rounded-lg font-semibold shadow-md transition-all hover:from-amber-600 hover:to-orange-600 flex items-center gap-2"
-              >
-                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"
-                  />
-                </svg>
-                Завантажити
-              </button>
-            </div>
-            {exportError && <p className="text-red-500 text-sm">Оберіть дату</p>}
-          </div>
-        </div>
+        <button
+          type="button"
+          onClick={() => setIsExportModalOpen(true)}
+          className="w-full px-4 py-3 bg-linear-to-r from-amber-500 to-orange-500 text-white rounded-2xl font-semibold shadow-md transition-all hover:from-amber-600 hover:to-orange-600 flex items-center justify-center gap-2"
+        >
+          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth={2}
+              d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
+            />
+          </svg>
+          Сформувати документ
+        </button>
       </div>
 
       <div className="px-6 pb-24 lg:pb-8 lg:px-8">
@@ -384,6 +334,11 @@ export const OrdersPage = () => {
           />
         )}
       </RightModal>
+
+      <ExportPdfModal
+        isOpen={isExportModalOpen}
+        onClose={() => setIsExportModalOpen(false)}
+      />
     </div>
   );
 };
