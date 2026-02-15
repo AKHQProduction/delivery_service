@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { BottomModal } from "../modals/BottomModal";
+import { Modal } from "../modals/Modal";
 import { DateInput } from "../shared/DateInput";
 import { generateOrdersPdfLink } from "../../services/api/ordersApi";
 import { getAllTimeSlots } from "../../services/api/settingsApi";
@@ -103,7 +103,7 @@ export const ExportPdfModal: React.FC<ExportPdfModalProps> = ({ isOpen, onClose 
   };
 
   return (
-    <BottomModal isOpen={isOpen} onClose={onClose} title="Сформувати документ">
+    <Modal isOpen={isOpen} onClose={onClose} title="Сформувати документ">
       <div className="space-y-4">
         {/* Date picker */}
         <div>
@@ -237,6 +237,6 @@ export const ExportPdfModal: React.FC<ExportPdfModalProps> = ({ isOpen, onClose 
           </button>
         </div>
       </div>
-    </BottomModal>
+    </Modal>
   );
 };

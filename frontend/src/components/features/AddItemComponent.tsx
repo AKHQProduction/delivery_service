@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useLocation } from "react-router-dom";
-import { BottomModal } from "../modals/BottomModal";
+import { Modal } from "../modals/Modal";
 import { MODAL_CONFIG } from "../../constants/modalContent";
 import { AddProductForm } from "../forms/products/AddProductForm";
 import { AddClientForm } from "../forms/client/AddClientForm";
@@ -96,13 +96,13 @@ export const AddItemComponent = () => {
           </svg>
         </button>
 
-        <BottomModal
+        <Modal
           isOpen={isModalOpen}
           onClose={() => setIsModalOpen(false)}
           title={currentConfig.title}
         >
           {renderModalContent()}
-        </BottomModal>
+        </Modal>
       </div>
 
       {inviteLink && <InviteLinkModal link={inviteLink} onClose={() => setInviteLink(null)} />}
