@@ -3,7 +3,7 @@ import { PageHeader } from "../components/ui/PageHeader";
 import { SearchBar } from "../components/ui/SearchBar";
 import { EmployeeCard } from "../components/ui/EmployeeCard";
 import { EmployeeDetailModal } from "../components/modals/detailsModals/EmployeeDetailModal";
-import { RightModal } from "../components/modals/RightModal";
+import { DetailModal } from "../components/modals/DetailModal";
 import { useEmployees } from "../hooks/useEmployees";
 import { reverseRoleMap } from "../utils/dataMap";
 import { type Employee } from "../types/entities/Employee";
@@ -169,7 +169,7 @@ export const EmployeePage = () => {
         </div>
       )}
 
-      <RightModal isOpen={isModalOpen} onClose={handleCloseModal}>
+      <DetailModal isOpen={isModalOpen} onClose={handleCloseModal}>
         {selectedEmployee && (
           <EmployeeDetailModal
             employee={selectedEmployee}
@@ -178,7 +178,7 @@ export const EmployeePage = () => {
             onSave={handleSave}
           />
         )}
-      </RightModal>
+      </DetailModal>
     </div>
   );
 };

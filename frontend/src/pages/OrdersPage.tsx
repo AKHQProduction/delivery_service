@@ -4,7 +4,7 @@ import { SearchBar } from "../components/ui/SearchBar";
 import { useOrders } from "../hooks/orders/useOrders";
 import { paymentMap } from "../utils/dataMap";
 import { OrderDetailModal } from "../components/modals/detailsModals/OrderDetailModal";
-import { RightModal } from "../components/modals/RightModal";
+import { DetailModal } from "../components/modals/DetailModal";
 import { getOrderById } from "../services/api/ordersApi";
 import { SearchFiltersPopup } from "../components/shared/SearchFiltersPopup";
 import { useInfiniteScroll } from "../hooks/useInfiniteScroll";
@@ -324,7 +324,7 @@ export const OrdersPage = () => {
         )}
       </div>
 
-      <RightModal isOpen={isModalOpen} onClose={handleCloseModal}>
+      <DetailModal isOpen={isModalOpen} onClose={handleCloseModal}>
         {selectedOrder && (
           <OrderDetailModal
             order={selectedOrder}
@@ -333,7 +333,7 @@ export const OrdersPage = () => {
             onSave={handleSave}
           />
         )}
-      </RightModal>
+      </DetailModal>
 
       <ExportPdfModal
         isOpen={isExportModalOpen}

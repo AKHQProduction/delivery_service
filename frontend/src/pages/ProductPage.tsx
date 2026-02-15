@@ -3,7 +3,7 @@ import { PageHeader } from "../components/ui/PageHeader";
 import { SearchBar } from "../components/ui/SearchBar";
 import { ProductCard } from "../components/ui/ProductCard";
 import { ProductDetailModal } from "../components/modals/detailsModals/ProductDetailModal";
-import { RightModal } from "../components/modals/RightModal";
+import { DetailModal } from "../components/modals/DetailModal";
 import { CategoryManagementModal } from "../components/features/AddCategoryComponent";
 import { useProducts } from "../hooks/products/useProducts";
 import { useCategories } from "../hooks/products/useCategories";
@@ -301,7 +301,7 @@ export const ProductPage = () => {
         </div>
       </div>
 
-      <RightModal isOpen={isModalOpen} onClose={handleCloseModal}>
+      <DetailModal isOpen={isModalOpen} onClose={handleCloseModal}>
         {selectedProduct && (
           <ProductDetailModal
             product={selectedProduct}
@@ -311,7 +311,7 @@ export const ProductPage = () => {
             categories={transformedCategories}
           />
         )}
-      </RightModal>
+      </DetailModal>
 
       <CategoryManagementModal
         isOpen={isCategoryModalOpen}

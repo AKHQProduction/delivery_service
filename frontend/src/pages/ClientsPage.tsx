@@ -3,7 +3,7 @@ import { PageHeader } from "../components/ui/PageHeader";
 import { SearchBar } from "../components/ui/SearchBar";
 import { ClientCard } from "../components/ui/ClientsCard";
 import { ClientDetailModal } from "../components/modals/detailsModals/ClientDetailModal";
-import { RightModal } from "../components/modals/RightModal";
+import { DetailModal } from "../components/modals/DetailModal";
 import { type Client } from "../types/entities/Client";
 import { useClient } from "../hooks/clients/useClients";
 import { getClientById } from "../services/api/clientApi";
@@ -189,7 +189,7 @@ export const ClientsPage = () => {
         </div>
       )}
 
-      <RightModal isOpen={isModalOpen} onClose={handleCloseModal}>
+      <DetailModal isOpen={isModalOpen} onClose={handleCloseModal}>
         {selectedClient && (
           <ClientDetailModal
             client={selectedClient}
@@ -198,7 +198,7 @@ export const ClientsPage = () => {
             onSave={handleSave}
           />
         )}
-      </RightModal>
+      </DetailModal>
 
       <ImportClientsModal
         isOpen={isImportModalOpen}
