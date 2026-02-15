@@ -9,11 +9,13 @@ import { useClient } from "../hooks/clients/useClients";
 import { getClientById } from "../services/api/clientApi";
 import { useInfiniteScroll } from "../hooks/useInfiniteScroll";
 import { ClientCardSkeleton } from "../components/ui/Skeleton";
+import { ImportClientsModal } from "../components/features/ImportClientsModal";
 
 export const ClientsPage = () => {
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedClient, setSelectedClient] = useState<Client | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isImportModalOpen, setIsImportModalOpen] = useState(false);
   const { clients, getClients, deleteClient, loadMoreClients, loading, loadingMore, hasMore } =
     useClient();
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -101,6 +103,24 @@ export const ClientsPage = () => {
         />
       </div>
 
+      <div className="px-6 pb-4 lg:px-8">
+        <button
+          type="button"
+          onClick={() => setIsImportModalOpen(true)}
+          className="w-full px-4 py-3 bg-linear-to-r from-amber-500 to-orange-500 text-white rounded-2xl font-semibold shadow-md transition-all hover:from-amber-600 hover:to-orange-600 flex items-center justify-center gap-2"
+        >
+          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth={2}
+              d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"
+            />
+          </svg>
+          Імпорт з Excel
+        </button>
+      </div>
+
       {loading && clients.length === 0 ? (
         <div className="px-6 pb-24 lg:pb-8 lg:px-8">
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
@@ -179,6 +199,12 @@ export const ClientsPage = () => {
           />
         )}
       </RightModal>
+
+      <ImportClientsModal
+        isOpen={isImportModalOpen}
+        onClose={() => setIsImportModalOpen(false)}
+        onSuccess={() => getClients(searchTerm)}
+      />
     </div>
   );
 };
