@@ -6,7 +6,7 @@ from backend.application.dto.gateways.order_gateway import (
     GetOrdersFilters,
     OrderReadModel,
 )
-from backend.infrastructure.idp import TelegramIdentityProvider
+from backend.infrastructure.idp import IdentityProvider
 from backend.infrastructure.persistence.gateways import SQLAlchemyOrderGateway
 
 
@@ -22,7 +22,7 @@ class GetOrdersQuery:
 class GetOrdersQueryHandler:
     def __init__(
         self,
-        idp: TelegramIdentityProvider,
+        idp: IdentityProvider,
         order_gateway: SQLAlchemyOrderGateway,
     ) -> None:
         self._idp = idp

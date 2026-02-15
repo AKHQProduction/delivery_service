@@ -5,7 +5,7 @@ from backend.application.errors import AlreadyExistsError
 from backend.application.policies.access import ensure_can_manage
 from backend.application.services.category import create_category
 from backend.application.vars import CategoryId
-from backend.infrastructure.idp import TelegramIdentityProvider
+from backend.infrastructure.idp import IdentityProvider
 from backend.infrastructure.persistence.gateways import (
     SQLAlchemyCategoryGateway,
 )
@@ -22,7 +22,7 @@ class CreateCategoryCommand:
 class CreateCategoryCommandHandler:
     def __init__(
         self,
-        idp: TelegramIdentityProvider,
+        idp: IdentityProvider,
         gateway: SQLAlchemyCategoryGateway,
         tr_manager: TransactionManager,
     ) -> None:

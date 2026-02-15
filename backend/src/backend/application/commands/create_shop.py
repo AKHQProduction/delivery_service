@@ -9,7 +9,7 @@ from backend.application.errors import (
 from backend.application.services.shop import create_shop
 from backend.application.services.time_slot import create_time_slot
 from backend.application.vars import ShopRole
-from backend.infrastructure.idp import TelegramIdentityProvider
+from backend.infrastructure.idp import IdentityProvider
 from backend.infrastructure.persistence.gateways import SQLAlchemyShopGateway
 from backend.infrastructure.persistence.gateways.time_slot_gateway import (
     SQLAlchemyTimeSlotGateway,
@@ -35,7 +35,7 @@ class CreateShopCommandHandler:
     def __init__(
         self,
         shop_gateway: SQLAlchemyShopGateway,
-        identity_provider: TelegramIdentityProvider,
+        identity_provider: IdentityProvider,
         tr_manager: TransactionManager,
         time_slot_gateway: SQLAlchemyTimeSlotGateway,
     ) -> None:

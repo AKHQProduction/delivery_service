@@ -41,7 +41,7 @@ router = APIRouter(
     "",
     status_code=status.HTTP_201_CREATED,
     responses={status.HTTP_401_UNAUTHORIZED: {"model": ErrorSchema}},
-    dependencies=[Depends(HTTPBearer())],
+    dependencies=[Depends(HTTPBearer(auto_error=False))],
 )
 async def create_new_product(
     body: Annotated[
@@ -79,7 +79,7 @@ async def create_new_product(
         status.HTTP_403_FORBIDDEN: {"model": ErrorSchema},
         status.HTTP_404_NOT_FOUND: {"model": ErrorSchema},
     },
-    dependencies=[Depends(HTTPBearer())],
+    dependencies=[Depends(HTTPBearer(auto_error=False))],
 )
 async def update_product(
     product_id: ProductId,
@@ -138,7 +138,7 @@ async def update_product(
         status.HTTP_403_FORBIDDEN: {"model": ErrorSchema},
         status.HTTP_404_NOT_FOUND: {"model": ErrorSchema},
     },
-    dependencies=[Depends(HTTPBearer())],
+    dependencies=[Depends(HTTPBearer(auto_error=False))],
 )
 async def delete_product(
     product_id: ProductId, handler: FromDishka[DeleteProductCommandHandler]
@@ -152,7 +152,7 @@ async def delete_product(
     responses={
         status.HTTP_401_UNAUTHORIZED: {"model": ErrorSchema},
     },
-    dependencies=[Depends(HTTPBearer())],
+    dependencies=[Depends(HTTPBearer(auto_error=False))],
 )
 async def get_all_products(
     handler: FromDishka[GetProductsQueryHandler],
@@ -176,7 +176,7 @@ async def get_all_products(
         status.HTTP_401_UNAUTHORIZED: {"model": ErrorSchema},
         status.HTTP_404_NOT_FOUND: {"model": ErrorSchema},
     },
-    dependencies=[Depends(HTTPBearer())],
+    dependencies=[Depends(HTTPBearer(auto_error=False))],
 )
 async def get_product(
     product_id: ProductId, handler: FromDishka[GetProductQueryHandler]

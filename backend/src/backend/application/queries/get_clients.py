@@ -5,7 +5,7 @@ from backend.application.dto.gateways.client_gateway import (
     ClientReadModel,
     GetClientsFilters,
 )
-from backend.infrastructure.idp import TelegramIdentityProvider
+from backend.infrastructure.idp import IdentityProvider
 from backend.infrastructure.persistence.gateways import SQLAlchemyClientGateway
 
 
@@ -19,7 +19,7 @@ class GetClientsQuery:
 class GetClientsQueryHandler:
     def __init__(
         self,
-        idp: TelegramIdentityProvider,
+        idp: IdentityProvider,
         client_gateway: SQLAlchemyClientGateway,
     ) -> None:
         self._idp = idp

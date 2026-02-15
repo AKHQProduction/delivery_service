@@ -9,7 +9,7 @@ from backend.application.policies.access import (
 )
 from backend.application.services.district import update_district
 from backend.application.vars import DistrictId
-from backend.infrastructure.idp import TelegramIdentityProvider
+from backend.infrastructure.idp import IdentityProvider
 from backend.infrastructure.persistence.gateways import (
     SQLAlchemyDistrictGateway,
 )
@@ -27,7 +27,7 @@ class EditDistrictCommand:
 class EditDistrictCommandHandler:
     def __init__(
         self,
-        idp: TelegramIdentityProvider,
+        idp: IdentityProvider,
         district_gateway: SQLAlchemyDistrictGateway,
         tr_manager: TransactionManager,
     ) -> None:

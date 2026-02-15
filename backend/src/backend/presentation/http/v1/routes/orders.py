@@ -61,7 +61,7 @@ router = APIRouter(prefix="/orders", tags=["Orders"], route_class=DishkaRoute)
         status.HTTP_403_FORBIDDEN: {"model": ErrorSchema},
         status.HTTP_404_NOT_FOUND: {"model": ErrorSchema},
     },
-    dependencies=[Depends(HTTPBearer())],
+    dependencies=[Depends(HTTPBearer(auto_error=False))],
 )
 async def create_new_order(
     body: Annotated[
@@ -163,7 +163,7 @@ async def create_new_order(
         status.HTTP_403_FORBIDDEN: {"model": ErrorSchema},
         status.HTTP_404_NOT_FOUND: {"model": ErrorSchema},
     },
-    dependencies=[Depends(HTTPBearer())],
+    dependencies=[Depends(HTTPBearer(auto_error=False))],
 )
 async def update_order(
     order_id: OrderId,
@@ -349,7 +349,7 @@ async def update_order(
         status.HTTP_401_UNAUTHORIZED: {"model": ErrorSchema},
         status.HTTP_403_FORBIDDEN: {"model": ErrorSchema},
     },
-    dependencies=[Depends(HTTPBearer())],
+    dependencies=[Depends(HTTPBearer(auto_error=False))],
 )
 async def delete_order(
     order_id: OrderId, handler: FromDishka[DeleteOrderCommandHandler]
@@ -363,7 +363,7 @@ async def delete_order(
     responses={
         status.HTTP_401_UNAUTHORIZED: {"model": ErrorSchema},
     },
-    dependencies=[Depends(HTTPBearer())],
+    dependencies=[Depends(HTTPBearer(auto_error=False))],
 )
 async def get_all_orders(
     handler: FromDishka[GetOrdersQueryHandler],
@@ -392,7 +392,7 @@ async def get_all_orders(
     responses={
         status.HTTP_401_UNAUTHORIZED: {"model": ErrorSchema},
     },
-    dependencies=[Depends(HTTPBearer())],
+    dependencies=[Depends(HTTPBearer(auto_error=False))],
 )
 async def get_order_stats(
     handler: FromDishka[GetOrderStatsQueryHandler],
@@ -415,7 +415,7 @@ async def get_order_stats(
         status.HTTP_403_FORBIDDEN: {"model": ErrorSchema},
         status.HTTP_404_NOT_FOUND: {"model": ErrorSchema},
     },
-    dependencies=[Depends(HTTPBearer())],
+    dependencies=[Depends(HTTPBearer(auto_error=False))],
 )
 async def generate_orders_pdf(
     command: GenerateOrderExportPDFCommand,
@@ -501,7 +501,7 @@ async def print_orders_pdf(
         status.HTTP_401_UNAUTHORIZED: {"model": ErrorSchema},
         status.HTTP_404_NOT_FOUND: {"model": ErrorSchema},
     },
-    dependencies=[Depends(HTTPBearer())],
+    dependencies=[Depends(HTTPBearer(auto_error=False))],
 )
 async def get_order(
     order_id: OrderId, handler: FromDishka[GetOrderQueryHandler]

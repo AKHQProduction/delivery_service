@@ -1,7 +1,7 @@
 from dataclasses import dataclass
 
 from backend.application.vars import ShopId, ShopRole, UserId
-from backend.infrastructure.idp import TelegramIdentityProvider
+from backend.infrastructure.idp import IdentityProvider
 from backend.infrastructure.persistence.gateways import SQLAlchemyShopGateway
 
 
@@ -29,7 +29,7 @@ class GetMeResponse:
 class GetMeQueryHandler:
     def __init__(
         self,
-        idp: TelegramIdentityProvider,
+        idp: IdentityProvider,
         shop_gateway: SQLAlchemyShopGateway,
     ) -> None:
         self._idp = idp

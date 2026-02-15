@@ -9,7 +9,7 @@ from backend.application.policies.access import (
 )
 from backend.application.services.category import update_category
 from backend.application.vars import CategoryId
-from backend.infrastructure.idp import TelegramIdentityProvider
+from backend.infrastructure.idp import IdentityProvider
 from backend.infrastructure.persistence.gateways import (
     SQLAlchemyCategoryGateway,
 )
@@ -27,7 +27,7 @@ class EditCategoryCommand:
 class EditCategoryCommandHandler:
     def __init__(
         self,
-        idp: TelegramIdentityProvider,
+        idp: IdentityProvider,
         category_gateway: SQLAlchemyCategoryGateway,
         tr_manager: TransactionManager,
     ) -> None:

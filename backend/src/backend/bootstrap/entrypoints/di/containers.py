@@ -8,8 +8,8 @@ from backend.bootstrap.config import Config
 from backend.bootstrap.entrypoints.di.api_providers import (
     APIInteractorsProvider,
     AdaptersProvider,
+    AuthProvider,
     ServicesProvider,
-    WebAppProvider,
 )
 from backend.bootstrap.entrypoints.di.bot_providers import (
     BotInteractorsProvider,
@@ -46,7 +46,7 @@ def api_container(config: Config) -> AsyncContainer:
         FastapiProvider(),
         PersistenceProvider(),
         RedisProvider(),
-        WebAppProvider(),
+        AuthProvider(),
         APIInteractorsProvider(),
         AdaptersProvider(),
         ServicesProvider(),

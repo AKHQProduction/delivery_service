@@ -7,7 +7,7 @@ from backend.application.dto.gateways.order_gateway import (
     TimeSlotFilter,
 )
 from backend.application.vars import PaymentMethod
-from backend.infrastructure.idp import TelegramIdentityProvider
+from backend.infrastructure.idp import IdentityProvider
 from backend.infrastructure.persistence.gateways import (
     SQLAlchemyOrderGateway,
     SQLAlchemyTimeSlotGateway,
@@ -52,7 +52,7 @@ class GetOrderStatsResponse:
 class GetOrderStatsQueryHandler:
     def __init__(
         self,
-        idp: TelegramIdentityProvider,
+        idp: IdentityProvider,
         order_gateway: SQLAlchemyOrderGateway,
         time_slot_gateway: SQLAlchemyTimeSlotGateway,
     ) -> None:

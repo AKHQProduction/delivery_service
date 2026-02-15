@@ -5,7 +5,7 @@ from backend.application.dto.gateways.shop_gateway import (
     EmployeeFilters,
     EmployeeReadModel,
 )
-from backend.infrastructure.idp import TelegramIdentityProvider
+from backend.infrastructure.idp import IdentityProvider
 from backend.infrastructure.persistence.gateways import SQLAlchemyShopGateway
 
 
@@ -18,7 +18,7 @@ class GetEmployeesQuery:
 class GetEmployeesQueryHandler:
     def __init__(
         self,
-        idp: TelegramIdentityProvider,
+        idp: IdentityProvider,
         shop_gateway: SQLAlchemyShopGateway,
     ) -> None:
         self._idp = idp

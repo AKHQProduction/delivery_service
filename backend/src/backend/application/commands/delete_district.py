@@ -6,7 +6,7 @@ from backend.application.policies.access import (
     ensure_related_to_shop,
 )
 from backend.application.vars import DistrictId
-from backend.infrastructure.idp import TelegramIdentityProvider
+from backend.infrastructure.idp import IdentityProvider
 from backend.infrastructure.persistence.gateways import (
     SQLAlchemyDistrictGateway,
 )
@@ -23,7 +23,7 @@ class DeleteDistrictCommand:
 class DeleteDistrictCommandHandler:
     def __init__(
         self,
-        idp: TelegramIdentityProvider,
+        idp: IdentityProvider,
         district_gateway: SQLAlchemyDistrictGateway,
         tr_manager: TransactionManager,
     ) -> None:

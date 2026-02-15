@@ -52,7 +52,7 @@ router = APIRouter(
         status.HTTP_403_FORBIDDEN: {"model": ErrorSchema},
         status.HTTP_409_CONFLICT: {"model": ErrorSchema},
     },
-    dependencies=[Depends(HTTPBearer())],
+    dependencies=[Depends(HTTPBearer(auto_error=False))],
 )
 async def create_new_client(
     body: Annotated[
@@ -166,7 +166,7 @@ async def create_new_client(
         status.HTTP_404_NOT_FOUND: {"model": ErrorSchema},
         status.HTTP_409_CONFLICT: {"model": ErrorSchema},
     },
-    dependencies=[Depends(HTTPBearer())],
+    dependencies=[Depends(HTTPBearer(auto_error=False))],
 )
 async def update_client(
     client_id: ClientId,
@@ -307,7 +307,7 @@ async def update_client(
         status.HTTP_401_UNAUTHORIZED: {"model": ErrorSchema},
         status.HTTP_403_FORBIDDEN: {"model": ErrorSchema},
     },
-    dependencies=[Depends(HTTPBearer())],
+    dependencies=[Depends(HTTPBearer(auto_error=False))],
 )
 async def import_clients(
     file: UploadFile,
@@ -328,7 +328,7 @@ async def import_clients(
     responses={
         status.HTTP_401_UNAUTHORIZED: {"model": ErrorSchema},
     },
-    dependencies=[Depends(HTTPBearer())],
+    dependencies=[Depends(HTTPBearer(auto_error=False))],
 )
 async def get_all_clients(
     handler: FromDishka[GetClientsQueryHandler],
@@ -354,7 +354,7 @@ async def get_all_clients(
         status.HTTP_401_UNAUTHORIZED: {"model": ErrorSchema},
         status.HTTP_404_NOT_FOUND: {"model": ErrorSchema},
     },
-    dependencies=[Depends(HTTPBearer())],
+    dependencies=[Depends(HTTPBearer(auto_error=False))],
 )
 async def get_client(
     client_id: ClientId, handler: FromDishka[GetClientQueryHandler]
@@ -370,7 +370,7 @@ async def get_client(
         status.HTTP_403_FORBIDDEN: {"model": ErrorSchema},
         status.HTTP_404_NOT_FOUND: {"model": ErrorSchema},
     },
-    dependencies=[Depends(HTTPBearer())],
+    dependencies=[Depends(HTTPBearer(auto_error=False))],
 )
 async def delete_client(
     client_id: ClientId, handler: FromDishka[DeleteClientCommandHandler]
