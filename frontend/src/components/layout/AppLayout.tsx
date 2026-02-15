@@ -13,8 +13,8 @@ export const AppLayout: React.FC<AppLayoutProps> = ({ children }) => {
   return (
     <>
       <SidebarNav />
-      <div className={showSidebar ? "lg:pl-64" : ""}>
-        <div className={showSidebar ? "lg:max-w-5xl lg:mx-auto" : ""}>{children}</div>
+      <div className={showSidebar ? "md:pl-64" : ""}>
+        <div className={showSidebar ? "md:max-w-5xl md:mx-auto" : ""}>{children}</div>
       </div>
     </>
   );

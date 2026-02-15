@@ -54,7 +54,7 @@ export const RightModal: React.FC<RightModalProps> = ({ isOpen, onClose, childre
       />
 
       <div
-        className={`z-9999 fixed top-0 right-0 h-full w-full max-w-lg bg-white shadow-2xl transition-transform duration-300 ease-in-out lg:top-4 lg:bottom-4 lg:right-4 lg:h-auto lg:rounded-2xl lg:border lg:border-gray-200 ${
+        className={`z-9999 fixed top-0 right-0 h-full w-full max-w-lg bg-white shadow-2xl transition-transform duration-300 ease-in-out md:top-4 md:bottom-4 md:right-4 md:h-auto md:rounded-2xl md:border md:border-gray-200 ${
           isVisible ? "translate-x-0" : "translate-x-full"
         }`}
       >

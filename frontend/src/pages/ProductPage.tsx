@@ -182,10 +182,10 @@ export const ProductPage = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 lg:bg-white">
+    <div className="min-h-screen bg-gray-50 md:bg-white">
       <PageHeader title="Товари" />
 
-      <div className="px-6 pb-4 lg:px-8">
+      <div className="px-6 pb-4 md:px-8">
         <SearchBar
           placeholder="Пошук товарів"
           searchTerm={searchTerm}
@@ -194,7 +194,7 @@ export const ProductPage = () => {
       </div>
 
       {loading && products.length === 0 ? (
-        <div className="px-6 pb-24 lg:pb-8 lg:px-8">
+        <div className="px-6 pb-24 md:pb-8 md:px-8">
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
             {Array.from({ length: 8 }).map((_, i) => (
               <ProductCardSkeleton key={i} />
@@ -224,7 +224,7 @@ export const ProductPage = () => {
           )}
         </div>
       ) : (
-        <div className="px-6 pb-24 lg:pb-8 lg:px-8">
+        <div className="px-6 pb-24 md:pb-8 md:px-8">
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
             {products.map((product) => (
               <ProductCard
@@ -262,7 +262,7 @@ export const ProductPage = () => {
       )}
 
       {/* Floating Action Buttons */}
-      <div className="fixed bottom-27 right-6 flex flex-col gap-3 lg:bottom-8">
+      <div className="fixed bottom-27 right-6 flex flex-col gap-3 md:bottom-8">
         {/* Category Management Button */}
         <button
           onClick={() => setIsCategoryModalOpen(true)}

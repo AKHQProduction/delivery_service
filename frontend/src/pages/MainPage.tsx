@@ -57,13 +57,17 @@ export const MainPage = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-gray-50 to-gray-100">
+    <div className="min-h-screen bg-gradient-to-b from-gray-50 to-gray-100 md:from-white md:to-white">
       <PageHeader title="Головна" />
 
-      <div className="px-6 pb-24 pt-4 lg:pb-8 lg:px-8">
-        <WelcomeSection title="Вітаємо! 👋" subtitle="Оберіть розділ для швидкого доступу" />
+      <div className="px-6 pb-24 pt-4 md:pb-8 md:px-8">
+        <WelcomeSection
+          title="Вітаємо! 👋"
+          subtitle="Оберіть розділ для швидкого доступу"
+        />
 
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+        {/* Menu cards — only on mobile (sidebar has all navigation on desktop) */}
+        <div className="grid grid-cols-1 gap-4 md:hidden">
           {menuCards.map((card) => (
             <MenuCard
               key={card.path}
@@ -74,6 +78,13 @@ export const MainPage = () => {
               disabled={!hasPermission(card)}
             />
           ))}
+        </div>
+
+        {/* Desktop — hint to use sidebar */}
+        <div className="hidden md:block">
+          <p className="text-gray-500 text-sm">
+            Використовуйте бічне меню для навігації між розділами.
+          </p>
         </div>
 
         <div className="h-4" />

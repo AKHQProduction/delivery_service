@@ -26,7 +26,7 @@ export const SidebarNav = () => {
   const allRoutes = getRoutesForRole(user.role);
 
   return (
-    <aside className="hidden lg:flex lg:flex-col lg:w-64 lg:fixed lg:inset-y-0 lg:left-0 bg-white border-r border-gray-200 z-40">
+    <aside className="hidden md:flex md:flex-col md:w-64 md:fixed md:inset-y-0 md:left-0 bg-white border-r border-gray-200 z-40">
       {/* Logo / Brand */}
       <div className="px-6 py-6 border-b border-gray-100">
         <h1 className="text-xl font-bold text-gray-900 tracking-tight">Water Delivery</h1>

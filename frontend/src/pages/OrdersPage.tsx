@@ -141,10 +141,10 @@ export const OrdersPage = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 pb-24 lg:bg-white lg:pb-8">
+    <div className="min-h-screen bg-gray-50 pb-24 md:bg-white md:pb-8">
       <PageHeader title="Замовлення" />
 
-      <div className="px-6 pb-4 flex items-center gap-3 relative lg:px-8">
+      <div className="px-6 pb-4 flex items-center gap-3 relative md:px-8">
         <div className="flex-1">
           <SearchBar
             searchTerm={searchTerm}
@@ -163,7 +163,7 @@ export const OrdersPage = () => {
         </SearchFiltersPopup>
       </div>
 
-      <div className="px-6 pb-4 lg:px-8">
+      <div className="px-6 pb-4 md:px-8">
         <button
           type="button"
           onClick={() => setIsExportModalOpen(true)}
@@ -181,7 +181,7 @@ export const OrdersPage = () => {
         </button>
       </div>
 
-      <div className="px-6 pb-24 lg:pb-8 lg:px-8">
+      <div className="px-6 pb-24 md:pb-8 md:px-8">
         {loading && (orders ?? []).length === 0 ? (
           <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4">
             {Array.from({ length: 8 }).map((_, i) => (

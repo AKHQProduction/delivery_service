@@ -8,10 +8,10 @@ export const SettingsPage = () => {
   const hasAnySettings = Object.values(features).some(Boolean);
 
   return (
-    <div className="min-h-screen bg-gray-50 lg:bg-white">
+    <div className="min-h-screen bg-gray-50 md:bg-white">
       <PageHeader title="Налаштування" />
 
-      <div className="px-6 pb-24 lg:pb-8 lg:px-8">
+      <div className="px-6 pb-24 md:pb-8 md:px-8">
         <div className="space-y-6 mt-4">
 
           {/* Fullscreen Section */}
