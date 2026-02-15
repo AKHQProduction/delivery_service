@@ -20,6 +20,8 @@ from sqlalchemy.ext.asyncio import (
 from backend.bootstrap.config import (
     AppConfig,
     Config,
+    NominatimConfig,
+    OSRMConfig,
     OTelConfig,
     PostgresConfig,
     RedisConfig,
@@ -27,6 +29,7 @@ from backend.bootstrap.config import (
     WebhookConfig,
 )
 from backend.infrastructure.persistence.gateways import (
+    RedisGeocodeCache,
     RedisLinkGateway,
     RedisPDFStorage,
     SQLAlchemyCategoryGateway,
@@ -70,6 +73,14 @@ class ConfigProvider(Provider):
     @provide
     def otel_config(self, config: Config) -> OTelConfig:
         return config.otel_config
+
+    @provide
+    def osrm_config(self, config: Config) -> OSRMConfig:
+        return config.osrm_config
+
+    @provide
+    def nominatim_config(self, config: Config) -> NominatimConfig:
+        return config.nominatim_config
 
 
 class PersistenceProvider(Provider):
@@ -125,7 +136,7 @@ class PersistenceProvider(Provider):
 
 
 class RedisProvider(Provider):
-    scope = Scope.REQUEST
+    scope = Scope.APP
 
     @provide(scope=Scope.APP)
     async def redis_session(self, config: RedisConfig) -> AsyncIterable[Redis]:
@@ -136,3 +147,4 @@ class RedisProvider(Provider):
 
     gateway = provide(WithParents[RedisLinkGateway])
     pdf_storage = provide(RedisPDFStorage)
+    cache = provide(RedisGeocodeCache)

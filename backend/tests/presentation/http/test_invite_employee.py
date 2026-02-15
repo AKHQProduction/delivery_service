@@ -117,4 +117,4 @@ async def test_create_invite_link_unauthorized_without_token(
     json_data = {"role": ShopRole.MANAGER.value, "full_name": "John Doe"}
     response = await http_client.post(url=BASE_URL, json=json_data)
 
-    assert response.status_code == status.HTTP_403_FORBIDDEN
+    assert response.status_code == status.HTTP_401_UNAUTHORIZED

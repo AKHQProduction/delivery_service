@@ -31,11 +31,11 @@ class CreateTimeSlotCommandHandler:
         self,
         idp: TelegramIdentityProvider,
         time_slot_gateway: SQLAlchemyTimeSlotGateway,
-        tx: TransactionManager,
+        tr_manager: TransactionManager,
     ) -> None:
         self._idp = idp
         self._time_slot_gateway = time_slot_gateway
-        self._tx = tx
+        self._tr_manager = tr_manager
 
     async def handle(self, command: CreateTimeSlotCommand) -> TimeSlotId:
         current_user = await self._idp.current_user()
@@ -57,7 +57,7 @@ class CreateTimeSlotCommandHandler:
         )
         self._time_slot_gateway.save(time_slot)
 
-        await self._tx.commit()
+        await self._tr_manager.commit()
 
         logger.info(
             "Time slot %s created for shop %s",

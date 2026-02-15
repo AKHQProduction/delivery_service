@@ -8,20 +8,22 @@ authors = [
 ]
 requires-python = ">=3.12"
 dependencies = [
-    "aiogram>=3.22.0",
+    "aiogram>=3.25.0",
     "aiogram-dialog>=2.4.0",
-    "alembic>=1.17.1",
-    "dishka>=1.7.2",
-    "fastapi>=0.121.0",
-    "orjson>=3.11.4",
-    "psycopg[binary]>=3.2.12",
+    "alembic>=1.18.4",
+    "dishka>=1.8.0",
+    "fastapi>=0.128.8",
+    "orjson>=3.11.7",
+    "psycopg[binary]>=3.3.2",
     "python-dotenv>=1.2.1",
-    "redis>=7.0.1",
-    "reportlab>=4.4.1",
-    "sqlalchemy[asyncio]>=2.0.44",
-    "uuid-utils>=0.11.1",
-    "uvicorn>=0.38.0",
-    "gunicorn>=23.0.0",
+    "python-multipart>=0.0.22",
+    "redis>=7.1.1",
+    "reportlab>=4.4.9",
+    "sqlalchemy[asyncio]>=2.0.46",
+    "uuid-utils>=0.14.0",
+    "httpx>=0.28.1",
+    "uvicorn>=0.40.0",
+    "gunicorn>=25.0.3",
     "opentelemetry-api>=1.29.0",
     "opentelemetry-sdk>=1.29.0",
     "opentelemetry-exporter-otlp-proto-grpc>=1.29.0",
@@ -29,6 +31,7 @@ dependencies = [
     "opentelemetry-instrumentation-sqlalchemy>=0.50b0",
     "opentelemetry-instrumentation-redis>=0.50b0",
     "opentelemetry-instrumentation-logging>=0.50b0",
+    "openpyxl>=3.1.5",
 ]
 
 [project.scripts]
@@ -38,17 +41,23 @@ backend = "backend:main"
 requires = ["hatchling"]
 build-backend = "hatchling.build"
 
+[tool.pytest.ini_options]
+filterwarnings = [
+    "ignore:.*dishka\\.integrations.*:DeprecationWarning",
+    "ignore:.*HTTP_422_UNPROCESSABLE_ENTITY.*:DeprecationWarning",
+]
+
 [dependency-groups]
 dev = [
-    "faker>=38.0.0",
-    "httpx>=0.28.1",
-    "pre-commit>=4.3.0",
-    "pytest>=8.4.2",
-    "pytest-asyncio>=1.2.0",
+    "faker>=40.4.0",
+    "pre-commit>=4.5.1",
+    "pytest>=9.0.2",
+    "pytest-asyncio>=1.3.0",
 ]
 lint = [
     "codespell>=2.4.1",
-    "mypy>=1.18.2",
-    "ruff>=0.14.3",
-    "types-reportlab>=4.4.0",
+    "mypy>=1.19.1",
+    "ruff>=0.15.0",
+    "types-openpyxl>=3.1.5",
+    "types-reportlab>=4.4.9",
 ]

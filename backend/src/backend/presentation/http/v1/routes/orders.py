@@ -3,9 +3,9 @@ from typing import Annotated
 
 from dishka import FromDishka
 from dishka.integrations.fastapi import DishkaRoute
-from fastapi import APIRouter, Body, Depends, HTTPException, status
+from fastapi import APIRouter, Body, Depends, HTTPException, Request, status
 from fastapi.openapi.models import Example
-from fastapi.responses import Response
+from fastapi.responses import HTMLResponse, Response
 from fastapi.security import HTTPBearer
 
 from backend.application.commands.create_order import (
@@ -17,9 +17,9 @@ from backend.application.commands.delete_order import (
     DeleteOrderCommandHandler,
 )
 from backend.application.commands.edit_order import (
-    OrderItem,
-    UpdateOrderCommand,
-    UpdateOrderCommandHandler,
+    EditOrderCommand,
+    EditOrderCommandHandler,
+    EditOrderItem,
 )
 from backend.application.commands.generate_order_export_pdf import (
     GenerateOrderExportPDFCommand,
@@ -314,11 +314,11 @@ async def update_order(
             }
         ),
     ],
-    handler: FromDishka[UpdateOrderCommandHandler],
+    handler: FromDishka[EditOrderCommandHandler],
 ) -> None:
     items = (
         [
-            OrderItem(
+            EditOrderItem(
                 product_id=item.product_id,
                 quantity=item.quantity,
                 id=item.id,
@@ -328,7 +328,7 @@ async def update_order(
         if body.items
         else None
     )
-    command = UpdateOrderCommand(
+    command = EditOrderCommand(
         order_id=order_id,
         client_id=body.client_id,
         delivery_date=body.delivery_date,
@@ -418,12 +418,10 @@ async def get_order_stats(
     dependencies=[Depends(HTTPBearer())],
 )
 async def generate_orders_pdf(
-    delivery_date: date,
+    command: GenerateOrderExportPDFCommand,
     handler: FromDishka[GenerateOrderExportPDFCommandHandler],
 ) -> GenerateOrderExportPDFResult:
-    return await handler.handle(
-        GenerateOrderExportPDFCommand(delivery_date=delivery_date)
-    )
+    return await handler.handle(command)
 
 
 @router.get(
@@ -436,6 +434,7 @@ async def generate_orders_pdf(
 async def download_orders_pdf(
     file_id: str,
     pdf_storage: FromDishka[RedisPDFStorage],
+    inline: bool = False,
 ) -> Response:
     result = await pdf_storage.get(file_id)
     if not result:
@@ -445,11 +444,54 @@ async def download_orders_pdf(
         )
 
     pdf_bytes, filename = result
+    disposition = "inline" if inline else f'attachment; filename="{filename}"'
     return Response(
         content=pdf_bytes,
         media_type="application/pdf",
-        headers={"Content-Disposition": f'attachment; filename="{filename}"'},
+        headers={"Content-Disposition": disposition},
     )
+
+
+@router.get(
+    "/export/pdf/print/{file_id}",
+    status_code=status.HTTP_200_OK,
+    responses={
+        status.HTTP_404_NOT_FOUND: {"model": ErrorSchema},
+    },
+)
+async def print_orders_pdf(
+    file_id: str,
+    request: Request,
+    pdf_storage: FromDishka[RedisPDFStorage],
+) -> HTMLResponse:
+    result = await pdf_storage.get(file_id)
+    if not result:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="File not found or expired",
+        )
+
+    root_path = request.scope.get("root_path", "")
+    download_url = (
+        f"{root_path}/v1/orders/export/pdf/download/{file_id}?inline=true"
+    )
+    html = (
+        "<!DOCTYPE html>"
+        "<html><head><title>Print</title>"
+        "<style>body,html{margin:0;padding:0;height:100%;overflow:hidden}"
+        "iframe{width:100%;height:100%;border:none}</style>"
+        "</head><body>"
+        f'<iframe src="{download_url}" '
+        'onload="window.print()"></iframe>'
+        "<script>"
+        "window.onafterprint=function(){"
+        "try{window.close()}catch(e){}"
+        "setTimeout(function(){location.href='https://t.me'},500)"
+        "};"
+        "</script>"
+        "</body></html>"
+    )
+    return HTMLResponse(content=html)
 
 
 @router.get(

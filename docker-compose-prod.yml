@@ -79,8 +79,10 @@ services:
     container_name: "water_delivery-postgres"
     image: postgres:18-alpine
     restart: unless-stopped
+    environment:
+      PGDATA: /var/lib/postgresql/data
     volumes:
-      - postgres_data:/var/lib/postgresql/data/
+      - postgres_data:/var/lib/postgresql/data
       - ./scripts:/scripts
     env_file:
       - .env
@@ -130,6 +132,45 @@ services:
       - api
       - admin_bot
 
+
+  osrm:
+    container_name: "water_delivery-osrm"
+    image: osrm/osrm-backend
+    restart: unless-stopped
+    ports:
+      - "${OSRM_PORT:-5000}:5000"
+    volumes:
+      - ./osrm-data:/data
+    command: osrm-routed --algorithm mld --port ${OSRM_PORT:-5000} /data/ukraine-latest.osrm
+    deploy:
+      resources:
+        limits:
+          cpus: '1.0'
+          memory: 2048M
+        reservations:
+          memory: 1024M
+
+  nominatim:
+    container_name: "water_delivery-nominatim"
+    image: mediagis/nominatim:4.4
+    platform: linux/amd64
+    restart: unless-stopped
+    ports:
+      - "${NOMINATIM_PORT:-8088}:8080"
+    environment:
+      PBF_PATH: /nominatim/data/ukraine-latest.osm.pbf
+      NOMINATIM_PASSWORD: ${NOMINATIM_PASSWORD:-nominatim}
+    volumes:
+      - ./osrm-data/ukraine-latest.osm.pbf:/nominatim/data/ukraine-latest.osm.pbf
+      - nominatim_data:/var/lib/postgresql/14/main
+    shm_size: 1g
+    deploy:
+      resources:
+        limits:
+          cpus: '1.0'
+          memory: 4096M
+        reservations:
+          memory: 2048M
 
   otel-collector:
     container_name: "water_delivery-otel-collector"
@@ -276,3 +317,4 @@ volumes:
   victoria_metrics_data:
   loki_data:
   tempo_data:
+  nominatim_data:

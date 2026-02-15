@@ -1,19 +1,20 @@
-from typing import cast
 from uuid import UUID
 
-from sqlalchemy import asc, desc, select
+from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 from uuid_utils.compat import uuid7
 
-from backend.application.dto.gateways import Pagination, SortOrder
+from backend.application.dto.gateways import Pagination
 from backend.application.dto.gateways.product_gateway import (
     GetProductsFilters,
     ProductReadModel,
 )
 from backend.application.vars import CategoryId, ProductId, ShopId
 from backend.infrastructure.persistence.tables import Product
+from backend.infrastructure.persistence.utils.cast import mapped_cast
 from backend.infrastructure.persistence.utils.escape import escape_like
+from backend.infrastructure.persistence.utils.sorting import apply_sorting
 
 
 class SQLAlchemyProductGateway:
@@ -52,8 +53,8 @@ class SQLAlchemyProductGateway:
         row = result.scalar_one_or_none()
         if row:
             return ProductReadModel(
-                product_id=ProductId(cast("UUID", cast("object", row.id))),
-                name=cast("str", cast("object", row.name)),
+                product_id=ProductId(mapped_cast(UUID, row.id)),
+                name=mapped_cast(str, row.name),
                 category_id=CategoryId(row.category_id)
                 if row.category_id
                 else None,
@@ -76,20 +77,15 @@ class SQLAlchemyProductGateway:
                 Product.name.ilike(f"%{escape_like(filters.name)}%")
             )
 
-        if pagination.order == SortOrder.ASC:
-            query = query.order_by(asc(Product.name), asc(Product.id))
-        else:
-            query = query.order_by(desc(Product.name), asc(Product.id))
-
-        query = query.offset(pagination.offset).limit(pagination.limit)
+        query = apply_sorting(query, Product.name, Product.id, pagination)
 
         result = await self._session.execute(query)
         rows = result.scalars().all()
 
         return [
             ProductReadModel(
-                product_id=ProductId(cast("UUID", cast("object", row.id))),
-                name=cast("str", cast("object", row.name)),
+                product_id=ProductId(mapped_cast(UUID, row.id)),
+                name=mapped_cast(str, row.name),
                 category_id=CategoryId(row.category_id)
                 if row.category_id
                 else None,

@@ -2,23 +2,21 @@ import logging
 from dataclasses import dataclass, field
 
 from backend.application.dto.coordinates import CoordinatesDTO
-from backend.application.errors import (
-    ExistingClientInfo,
-    PhoneDuplicate,
-    PhoneNumberAlreadyExistsError,
-)
 from backend.application.policies.access import ensure_can_manage
 from backend.application.services.client import (
+    check_phone_duplicates,
     create_address,
     create_client,
     create_phone,
 )
+from backend.application.services.geocoder import Geocoder
 from backend.application.validators import normalize_ukraine_phone
 from backend.application.validators.phone import validate_no_duplicate_phones
 from backend.application.vars import ClientId, DistrictId
 from backend.infrastructure.idp import TelegramIdentityProvider
 from backend.infrastructure.persistence.gateways import (
     SQLAlchemyClientGateway,
+    SQLAlchemyShopGateway,
 )
 from backend.infrastructure.transaction_manager import TransactionManager
 
@@ -56,10 +54,14 @@ class CreateClientCommandHandler:
         self,
         idp: TelegramIdentityProvider,
         client_gateway: SQLAlchemyClientGateway,
+        shop_gateway: SQLAlchemyShopGateway,
+        geocoder: Geocoder,
         tr_manager: TransactionManager,
     ) -> None:
         self._idp = idp
         self._client_gateway = client_gateway
+        self._shop_gateway = shop_gateway
+        self._geocoder = geocoder
         self._tr_manager = tr_manager
 
     async def handle(self, command: CreateClientCommand) -> ClientId:
@@ -82,26 +84,11 @@ class CreateClientCommandHandler:
             )
 
         if not command.confirm_duplicate_phones and normalized_numbers:
-            duplicates = await self._client_gateway.find_duplicate_phones(
+            await check_phone_duplicates(
+                client_gateway=self._client_gateway,
                 shop_id=current_user.shop_id,
                 phone_numbers=normalized_numbers,
             )
-            if duplicates:
-                raise PhoneNumberAlreadyExistsError(
-                    duplicates=[
-                        PhoneDuplicate(
-                            phone_number=dup.phone_number,
-                            existing_clients=[
-                                ExistingClientInfo(
-                                    client_id=owner.client_id,
-                                    full_name=owner.full_name,
-                                )
-                                for owner in dup.owners
-                            ],
-                        )
-                        for dup in duplicates
-                    ]
-                )
 
         client_id = self._client_gateway.next_id()
         client = create_client(
@@ -119,21 +106,31 @@ class CreateClientCommandHandler:
             for idx in range(len(command.phones))
         ]
 
-        client.addresses = [
-            create_address(
+        shop = await self._shop_gateway.load_shop(current_user.shop_id)
+        shop_city = shop.city if shop else None
+
+        for idx, addr in enumerate(command.addresses):
+            coordinates = await self._geocoder.geocode_if_missing(
                 street=addr.street,
                 house=addr.house,
-                apartment=addr.apartment,
-                entrance=addr.entrance,
-                floor=addr.floor,
-                intercom=addr.intercom,
-                comment=addr.comment,
                 coordinates=addr.coordinates,
-                is_primary=(idx == 0),
-                district_id=addr.district_id,
+                shop_city=shop_city,
             )
-            for idx, addr in enumerate(command.addresses)
-        ]
+
+            client.addresses.append(
+                create_address(
+                    street=addr.street,
+                    house=addr.house,
+                    apartment=addr.apartment,
+                    entrance=addr.entrance,
+                    floor=addr.floor,
+                    intercom=addr.intercom,
+                    comment=addr.comment,
+                    coordinates=coordinates,
+                    is_primary=(idx == 0),
+                    district_id=addr.district_id,
+                )
+            )
 
         self._client_gateway.save(client)
         await self._tr_manager.commit()

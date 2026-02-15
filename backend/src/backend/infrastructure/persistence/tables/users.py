@@ -17,10 +17,10 @@ class User(Base, CreatedAt, UpdatedAt):
     id: Mapped[UserId] = mapped_column(sa.UUID, primary_key=True)
 
     telegram_account: Mapped["TelegramAccount"] = relationship(
-        back_populates="user", uselist=False
+        back_populates="user", uselist=False, lazy="raise"
     )
     membership: Mapped["ShopMembership | None"] = relationship(
-        back_populates="user", uselist=False
+        back_populates="user", uselist=False, lazy="raise"
     )
 
     def __repr__(self) -> str:
@@ -41,7 +41,9 @@ class TelegramAccount(Base, CreatedAt, UpdatedAt):
     )
     full_name: Mapped[str] = mapped_column(sa.String, nullable=False)
 
-    user: Mapped["User"] = relationship(back_populates="telegram_account")
+    user: Mapped["User"] = relationship(
+        back_populates="telegram_account", lazy="raise"
+    )
 
     def __repr__(self) -> str:
         return (

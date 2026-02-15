@@ -5,9 +5,6 @@ from typing import TYPE_CHECKING
 import sqlalchemy as sa
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
-from backend.application.dto.gateways.order_gateway import (
-    DeliveryAddressDTO,
-)
 from backend.application.vars import (
     ClientId,
     OrderId,
@@ -18,6 +15,7 @@ from backend.application.vars import (
 from backend.infrastructure.persistence.tables.base import (
     Base,
     CreatedAt,
+    DeliveryAddressDTO,
     DeliveryAddressType,
     UpdatedAt,
 )
@@ -57,10 +55,12 @@ class Order(Base, CreatedAt, UpdatedAt):
         sa.ForeignKey("clients.id", ondelete="CASCADE"), nullable=False
     )
 
-    shop: Mapped["Shop"] = relationship(back_populates="orders")
-    client: Mapped["Client"] = relationship(back_populates="orders")
+    shop: Mapped["Shop"] = relationship(back_populates="orders", lazy="raise")
+    client: Mapped["Client"] = relationship(
+        back_populates="orders", lazy="raise"
+    )
     items: Mapped[list["OrderItem"]] = relationship(
-        back_populates="order", cascade="all, delete-orphan"
+        back_populates="order", cascade="all, delete-orphan", lazy="raise"
     )
 
     def __repr__(self) -> str:
@@ -91,7 +91,7 @@ class OrderItem(Base, CreatedAt, UpdatedAt):
         sa.ForeignKey("products.id", ondelete="SET NULL"), nullable=True
     )
 
-    order: Mapped["Order"] = relationship(back_populates="items")
+    order: Mapped["Order"] = relationship(back_populates="items", lazy="raise")
 
     def __repr__(self) -> str:
         return (

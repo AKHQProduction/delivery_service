@@ -58,8 +58,7 @@ def update_shop(
         shop.city = address.city
         shop.street = address.street
         shop.house = address.house
-        shop.latitude = address.coordinates.latitude
-        shop.longitude = address.coordinates.longitude
+        address.coordinates.apply_to(shop)
 
 
 def update_membership(

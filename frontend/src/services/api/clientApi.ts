@@ -46,6 +46,15 @@ export const getClientById = async (clientId: string) => {
   return response.data;
 };
 
+export const importClientsFromXlsx = async (file: File) => {
+  const formData = new FormData();
+  formData.append("file", file);
+  const response = await api.post(`v1/clients/import`, formData, {
+    headers: { "Content-Type": "multipart/form-data" },
+  });
+  return response.data as { imported: number; skipped: number };
+};
+
 export const getAllClients = async (
   full_name: string,
   phone: string,

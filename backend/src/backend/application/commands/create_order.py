@@ -3,17 +3,17 @@ from dataclasses import dataclass
 from datetime import date, timedelta
 
 from backend.application.common import ensure_exists
-from backend.application.dto.gateways.order_gateway import (
-    DeliveryAddressDTO,
-)
 from backend.application.errors import DateMustBeGreaterThanError
 from backend.application.policies.access import (
     ensure_can_manage,
     ensure_related_to_shop,
 )
+from backend.application.services.geocoder import Geocoder
 from backend.application.services.order import (
     create_order,
     create_order_item,
+    resolve_address,
+    resolve_phone,
 )
 from backend.application.vars import (
     AddressId,
@@ -30,6 +30,7 @@ from backend.infrastructure.persistence.gateways import (
     SQLAlchemyClientGateway,
     SQLAlchemyOrderGateway,
     SQLAlchemyProductGateway,
+    SQLAlchemyShopGateway,
     SQLAlchemyTimeSlotGateway,
 )
 from backend.infrastructure.persistence.tables import Product
@@ -39,7 +40,7 @@ logger = logging.getLogger(__name__)
 
 
 @dataclass(frozen=True)
-class ProductDTO:
+class OrderProductInput:
     product_id: ProductId
     quantity: int
 
@@ -51,7 +52,7 @@ class CreateOrderCommand:
     time_slot_id: TimeSlotId
     address_id: AddressId
     phone_id: PhoneId
-    products: list[ProductDTO]
+    products: list[OrderProductInput]
     payment_method: PaymentMethod
     comment: str | None = None
 
@@ -71,6 +72,8 @@ class CreateOrderCommandHandler:
         product_gateway: SQLAlchemyProductGateway,
         order_gateway: SQLAlchemyOrderGateway,
         time_slot_gateway: SQLAlchemyTimeSlotGateway,
+        shop_gateway: SQLAlchemyShopGateway,
+        geocoder: Geocoder,
         tr_manager: TransactionManager,
     ) -> None:
         self._idp = idp
@@ -78,6 +81,8 @@ class CreateOrderCommandHandler:
         self._product_gateway = product_gateway
         self._order_gateway = order_gateway
         self._time_slot_gateway = time_slot_gateway
+        self._shop_gateway = shop_gateway
+        self._geocoder = geocoder
         self._tr_manager = tr_manager
 
     async def handle(self, command: CreateOrderCommand) -> OrderId:
@@ -96,20 +101,8 @@ class CreateOrderCommandHandler:
         )
         ensure_related_to_shop(current_user, client.shop_id)
 
-        phone = next(
-            (phone for phone in client.phones if phone.id == command.phone_id),
-            None,
-        )
-        phone = ensure_exists(phone, "Phone")
-        address = next(
-            (
-                address
-                for address in client.addresses
-                if address.id == command.address_id
-            ),
-            None,
-        )
-        address = ensure_exists(address, "Address")
+        delivery_phone = resolve_phone(client, command.phone_id)
+        delivery_address = resolve_address(client, command.address_id)
 
         time_slot = ensure_exists(
             await self._time_slot_gateway.load(command.time_slot_id),
@@ -131,6 +124,22 @@ class CreateOrderCommandHandler:
             (products_map[p.product_id], p.quantity) for p in command.products
         ]
 
+        if delivery_address.coordinates is None:
+            shop = await self._shop_gateway.load_shop(current_user.shop_id)
+            shop_city = shop.city if shop else None
+            coords = await self._geocoder.geocode_if_missing(
+                street=delivery_address.street,
+                house=delivery_address.house,
+                coordinates=None,
+                shop_city=shop_city,
+            )
+            if coords is not None:
+                delivery_address.coordinates = coords
+                addr_obj = next(
+                    a for a in client.addresses if a.id == command.address_id
+                )
+                coords.apply_to(addr_obj)
+
         order_id = self._order_gateway.next_id()
         order = create_order(
             order_id=order_id,
@@ -139,17 +148,8 @@ class CreateOrderCommandHandler:
             delivery_date=command.delivery_date,
             delivery_start_time=time_slot.start_time,
             delivery_end_time=time_slot.end_time,
-            delivery_phone=phone.number,
-            delivery_address=DeliveryAddressDTO(
-                street=address.street,
-                house=address.house,
-                apartment=address.apartment,
-                entrance=address.entrance,
-                floor=address.floor,
-                intercom=address.intercom,
-                comment=address.comment,
-                district=address.district.name if address.district else None,
-            ),
+            delivery_phone=delivery_phone,
+            delivery_address=delivery_address,
             payment_method=command.payment_method,
             comment=command.comment,
         )

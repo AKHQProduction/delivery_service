@@ -2,6 +2,7 @@ import uuid
 from collections.abc import Callable
 from datetime import UTC, datetime, time, timedelta
 from typing import Any
+from unittest.mock import AsyncMock, patch
 
 import pytest
 from fastapi import status
@@ -9,10 +10,12 @@ from httpx import AsyncClient
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from backend.application.dto.coordinates import CoordinatesDTO
 from backend.application.vars import (
     PaymentMethod,
     ShopRole,
 )
+from backend.infrastructure.persistence.tables.clients import ClientAddress
 from backend.infrastructure.persistence.tables.orders import Order, OrderItem
 
 BASE_URL = "/api/v1/orders"
@@ -579,7 +582,7 @@ async def test_create_order_unauthorized(
 
     response = await http_client.post(url=BASE_URL, json=json)
 
-    assert response.status_code == status.HTTP_403_FORBIDDEN
+    assert response.status_code == status.HTTP_401_UNAUTHORIZED
 
 
 @pytest.mark.asyncio()
@@ -1146,7 +1149,7 @@ async def test_update_order_unauthorized(
         json={"comment": "test"},
     )
 
-    assert response.status_code == status.HTTP_403_FORBIDDEN
+    assert response.status_code == status.HTTP_401_UNAUTHORIZED
 
 
 @pytest.mark.asyncio()
@@ -2078,7 +2081,7 @@ async def test_get_order_stats_unauthorized(
         },
     )
 
-    assert response.status_code == status.HTTP_403_FORBIDDEN
+    assert response.status_code == status.HTTP_401_UNAUTHORIZED
 
 
 @pytest.mark.asyncio()
@@ -2136,7 +2139,7 @@ async def test_generate_orders_pdf(
     response = await http_client.post(
         url=f"{BASE_URL}/export/pdf/generate",
         headers=headers,
-        params={"delivery_date": tomorrow},
+        json={"delivery_date": tomorrow, "doc_type": "ORDER_LIST"},
     )
 
     assert response.status_code == status.HTTP_200_OK
@@ -2147,6 +2150,86 @@ async def test_generate_orders_pdf(
 
 
 @pytest.mark.asyncio()
+async def test_generate_orders_pdf_with_time_slot_filter(
+    http_client: AsyncClient,
+    session: AsyncSession,
+    customer_headers: Callable[[int], dict[str, Any]],
+    setup_full_test_user_with_shop,
+    setup_test_client,
+    setup_test_product,
+    setup_test_time_slot,
+) -> None:
+    telegram_id = 6110
+    _, shop_id = await setup_full_test_user_with_shop(telegram_id=telegram_id)
+
+    client_id = await setup_test_client(
+        shop_id=shop_id,
+        full_name="Тест Клієнт",
+        phones=["+380501234567"],
+        addresses=[
+            {
+                "street": "Тестова",
+                "house": "1",
+                "apartment": "1",
+            }
+        ],
+    )
+    product_id, _, _, _ = await setup_test_product(shop_id)
+
+    time_slot_1 = await setup_test_time_slot(shop_id=shop_id)
+    time_slot_2 = await setup_test_time_slot(
+        shop_id=shop_id, start_time=time(12, 0), end_time=time(15, 0)
+    )
+    await session.commit()
+
+    headers = customer_headers(telegram_id)
+
+    client_response = await http_client.get(
+        url=f"/api/v1/clients/{client_id}", headers=headers
+    )
+    client_data = client_response.json()
+    phone_id = client_data["phones"][0]["id"]
+    address_id = client_data["addresses"][0]["id"]
+
+    tomorrow = (datetime.now(UTC).date() + timedelta(days=1)).isoformat()
+
+    for ts_id in [time_slot_1, time_slot_2]:
+        await http_client.post(
+            url=BASE_URL,
+            headers=headers,
+            json={
+                "client_id": str(client_id),
+                "delivery_date": tomorrow,
+                "time_slot_id": str(ts_id),
+                "address_id": address_id,
+                "phone_id": phone_id,
+                "payment_method": PaymentMethod.CASH,
+                "products": [{"product_id": str(product_id), "quantity": 1}],
+            },
+        )
+    await session.commit()
+
+    response_all = await http_client.post(
+        url=f"{BASE_URL}/export/pdf/generate",
+        headers=headers,
+        json={"delivery_date": tomorrow, "doc_type": "ORDER_LIST"},
+    )
+    assert response_all.status_code == status.HTTP_200_OK
+
+    response_filtered = await http_client.post(
+        url=f"{BASE_URL}/export/pdf/generate",
+        headers=headers,
+        json={
+            "delivery_date": tomorrow,
+            "doc_type": "ORDER_LIST",
+            "time_slot_id": str(time_slot_1),
+        },
+    )
+    assert response_filtered.status_code == status.HTTP_200_OK
+    assert "file_id" in response_filtered.json()
+
+
+@pytest.mark.asyncio()
 async def test_generate_orders_pdf_unauthorized(
     http_client: AsyncClient,
 ) -> None:
@@ -2154,10 +2237,13 @@ async def test_generate_orders_pdf_unauthorized(
 
     response = await http_client.post(
         url=f"{BASE_URL}/export/pdf/generate",
-        params={"delivery_date": tomorrow.isoformat()},
+        json={
+            "delivery_date": tomorrow.isoformat(),
+            "doc_type": "ORDER_LIST",
+        },
     )
 
-    assert response.status_code == status.HTTP_403_FORBIDDEN
+    assert response.status_code == status.HTTP_401_UNAUTHORIZED
 
 
 @pytest.mark.asyncio()
@@ -2215,7 +2301,7 @@ async def test_download_orders_pdf(
     generate_response = await http_client.post(
         url=f"{BASE_URL}/export/pdf/generate",
         headers=headers,
-        params={"delivery_date": tomorrow},
+        json={"delivery_date": tomorrow, "doc_type": "ORDER_LIST"},
     )
     file_id = generate_response.json()["file_id"]
 
@@ -2245,7 +2331,7 @@ async def test_delete_order_unauthorized(
 ) -> None:
     response = await http_client.delete(url=f"{BASE_URL}/{uuid.uuid4()}")
 
-    assert response.status_code == status.HTTP_403_FORBIDDEN
+    assert response.status_code == status.HTTP_401_UNAUTHORIZED
 
 
 @pytest.mark.asyncio()
@@ -2274,7 +2360,7 @@ async def test_get_order_unauthorized(
 ) -> None:
     response = await http_client.get(url=f"{BASE_URL}/{uuid.uuid4()}")
 
-    assert response.status_code == status.HTTP_403_FORBIDDEN
+    assert response.status_code == status.HTTP_401_UNAUTHORIZED
 
 
 @pytest.mark.asyncio()
@@ -2283,7 +2369,7 @@ async def test_get_all_orders_unauthorized(
 ) -> None:
     response = await http_client.get(url=f"{BASE_URL}/all")
 
-    assert response.status_code == status.HTTP_403_FORBIDDEN
+    assert response.status_code == status.HTTP_401_UNAUTHORIZED
 
 
 @pytest.mark.asyncio()
@@ -2305,7 +2391,7 @@ async def test_generate_orders_pdf_as_courier_allowed(
     response = await http_client.post(
         url=f"{BASE_URL}/export/pdf/generate",
         headers=headers,
-        params={"delivery_date": tomorrow},
+        json={"delivery_date": tomorrow, "doc_type": "ORDER_LIST"},
     )
 
     assert response.status_code == status.HTTP_200_OK
@@ -2511,3 +2597,160 @@ async def test_update_order_address_with_district(
     order = result.scalar_one()
     assert order.delivery_address.street == "Друга"
     assert order.delivery_address.district == "Подільський"
+
+
+GEOCODER_GEOCODE = "backend.application.services.geocoder.Geocoder.geocode"
+
+
+@pytest.mark.asyncio()
+async def test_create_order_geocodes_address_without_coordinates(
+    http_client: AsyncClient,
+    session: AsyncSession,
+    customer_headers: Callable[[int], dict[str, Any]],
+    setup_full_test_user_with_shop,
+    setup_test_client,
+    setup_test_product,
+    setup_test_time_slot,
+) -> None:
+    telegram_id = 5100
+    _, shop_id = await setup_full_test_user_with_shop(
+        telegram_id=telegram_id, shop_city="Київ"
+    )
+
+    client_id = await setup_test_client(
+        shop_id=shop_id,
+        full_name="Клієнт",
+        phones=["+380501234567"],
+        addresses=[{"street": "Хрещатик", "house": "10"}],
+    )
+    product_id, _, _, _ = await setup_test_product(shop_id)
+    time_slot_id = await setup_test_time_slot(shop_id=shop_id)
+    await session.commit()
+
+    headers = customer_headers(telegram_id)
+
+    client_resp = await http_client.get(
+        url=f"/api/v1/clients/{client_id}", headers=headers
+    )
+    client_data = client_resp.json()
+    phone_id = client_data["phones"][0]["id"]
+    address_id = client_data["addresses"][0]["id"]
+
+    delivery_date = (datetime.now(UTC).date() + timedelta(days=1)).isoformat()
+
+    fake_coords = CoordinatesDTO(latitude=50.45, longitude=30.52)
+
+    json = {
+        "client_id": str(client_id),
+        "delivery_date": delivery_date,
+        "time_slot_id": str(time_slot_id),
+        "address_id": address_id,
+        "phone_id": phone_id,
+        "payment_method": PaymentMethod.CASH,
+        "products": [{"product_id": str(product_id), "quantity": 1}],
+    }
+
+    with patch(
+        GEOCODER_GEOCODE,
+        new_callable=AsyncMock,
+        return_value=fake_coords,
+    ) as mock_geocode:
+        response = await http_client.post(
+            url=BASE_URL, headers=headers, json=json
+        )
+
+        assert response.status_code == status.HTTP_201_CREATED
+        mock_geocode.assert_called_once_with("Хрещатик", "10", "Київ")
+
+    order_id = response.json()
+    await session.flush()
+
+    result = await session.execute(
+        select(Order).where(Order.id == uuid.UUID(order_id))
+    )
+    order = result.scalar_one()
+    assert order.delivery_address.coordinates is not None
+    assert order.delivery_address.coordinates.latitude == 50.45
+    assert order.delivery_address.coordinates.longitude == 30.52
+
+    addr_result = await session.execute(
+        select(ClientAddress).where(ClientAddress.client_id == client_id)
+    )
+    addr = addr_result.scalar_one()
+    assert addr.latitude == 50.45
+    assert addr.longitude == 30.52
+
+
+@pytest.mark.asyncio()
+async def test_create_order_skips_geocoding_when_address_has_coords(
+    http_client: AsyncClient,
+    session: AsyncSession,
+    customer_headers: Callable[[int], dict[str, Any]],
+    setup_full_test_user_with_shop,
+    setup_test_client,
+    setup_test_product,
+    setup_test_time_slot,
+) -> None:
+    telegram_id = 5101
+    _, shop_id = await setup_full_test_user_with_shop(
+        telegram_id=telegram_id, shop_city="Київ"
+    )
+
+    client_id = await setup_test_client(
+        shop_id=shop_id,
+        full_name="Клієнт",
+        phones=["+380501234567"],
+        addresses=[
+            {
+                "street": "Хрещатик",
+                "house": "10",
+                "latitude": 50.4501,
+                "longitude": 30.5234,
+            }
+        ],
+    )
+    product_id, _, _, _ = await setup_test_product(shop_id)
+    time_slot_id = await setup_test_time_slot(shop_id=shop_id)
+    await session.commit()
+
+    headers = customer_headers(telegram_id)
+
+    client_resp = await http_client.get(
+        url=f"/api/v1/clients/{client_id}", headers=headers
+    )
+    client_data = client_resp.json()
+    phone_id = client_data["phones"][0]["id"]
+    address_id = client_data["addresses"][0]["id"]
+
+    delivery_date = (datetime.now(UTC).date() + timedelta(days=1)).isoformat()
+
+    json = {
+        "client_id": str(client_id),
+        "delivery_date": delivery_date,
+        "time_slot_id": str(time_slot_id),
+        "address_id": address_id,
+        "phone_id": phone_id,
+        "payment_method": PaymentMethod.CASH,
+        "products": [{"product_id": str(product_id), "quantity": 1}],
+    }
+
+    with patch(
+        GEOCODER_GEOCODE,
+        new_callable=AsyncMock,
+    ) as mock_geocode:
+        response = await http_client.post(
+            url=BASE_URL, headers=headers, json=json
+        )
+
+        assert response.status_code == status.HTTP_201_CREATED
+        mock_geocode.assert_not_called()
+
+    order_id = response.json()
+    await session.flush()
+
+    result = await session.execute(
+        select(Order).where(Order.id == uuid.UUID(order_id))
+    )
+    order = result.scalar_one()
+    assert order.delivery_address.coordinates is not None
+    assert order.delivery_address.coordinates.latitude == 50.4501

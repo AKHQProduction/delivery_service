@@ -1,3 +1,6 @@
+from collections.abc import AsyncIterator
+
+import httpx
 from dishka import (
     Provider,
     Scope,
@@ -51,7 +54,7 @@ from backend.application.commands.edit_client import EditClientCommandHandler
 from backend.application.commands.edit_district import (
     EditDistrictCommandHandler,
 )
-from backend.application.commands.edit_order import UpdateOrderCommandHandler
+from backend.application.commands.edit_order import EditOrderCommandHandler
 from backend.application.commands.edit_product import EditProductCommandHandler
 from backend.application.commands.edit_shop import EditShopCommandHandler
 from backend.application.commands.edit_time_slot import (
@@ -59,6 +62,9 @@ from backend.application.commands.edit_time_slot import (
 )
 from backend.application.commands.generate_order_export_pdf import (
     GenerateOrderExportPDFCommandHandler,
+)
+from backend.application.commands.import_clients import (
+    ImportClientsCommandHandler,
 )
 from backend.application.queries.get_categories import (
     GetCategoriesQueryHandler,
@@ -79,10 +85,14 @@ from backend.application.queries.get_orders import GetOrdersQueryHandler
 from backend.application.queries.get_product import GetProductQueryHandler
 from backend.application.queries.get_products import GetProductsQueryHandler
 from backend.application.queries.get_time_slots import GetTimeSlotsQueryHandler
+from backend.application.services.geocoder import Geocoder
+from backend.application.services.route_optimizer import RouteOptimizer
 from backend.application.usecases.invite_employee.generate_invite_link import (
     GenerateInviteLinkCommandHandler,
 )
 from backend.infrastructure.idp import TelegramIdentityProvider
+from backend.infrastructure.nominatim import NominatimClient
+from backend.infrastructure.osrm import OSRMClient
 from backend.infrastructure.pdf import ReportLabOrdersPDFGenerator
 from backend.infrastructure.persistence.gateways import (
     SQLAlchemyShopGateway,
@@ -92,6 +102,7 @@ from backend.infrastructure.telegram.auth import Headers, InitData, WebAppAuth
 from backend.infrastructure.telegram.invite_link_generator import (
     TelegramInviteLinkGenerator,
 )
+from backend.infrastructure.xlsx import ClientXlsxParser
 
 
 class AdaptersProvider(Provider):
@@ -102,6 +113,22 @@ class AdaptersProvider(Provider):
     @provide
     def pdf_generator(self) -> ReportLabOrdersPDFGenerator:
         return ReportLabOrdersPDFGenerator()
+
+    @provide
+    async def http_client(self) -> AsyncIterator[httpx.AsyncClient]:
+        async with httpx.AsyncClient() as client:
+            yield client
+
+    osrm_client = provide(OSRMClient)
+    nominatim_client = provide(NominatimClient)
+    xlsx_parser = provide(ClientXlsxParser)
+
+
+class ServicesProvider(Provider):
+    scope = Scope.APP
+
+    route_optimizer = provide(RouteOptimizer)
+    geocoder = provide(Geocoder)
 
 
 class APIInteractorsProvider(Provider):
@@ -132,7 +159,7 @@ class APIInteractorsProvider(Provider):
         DeleteClientCommandHandler,
         EditClientCommandHandler,
         CreateOrderCommandHandler,
-        UpdateOrderCommandHandler,
+        EditOrderCommandHandler,
         DeleteOrderCommandHandler,
         GetOrderQueryHandler,
         GetOrdersQueryHandler,
@@ -143,6 +170,7 @@ class APIInteractorsProvider(Provider):
         DeleteTimeSlotCommandHandler,
         GetTimeSlotsQueryHandler,
         EditShopCommandHandler,
+        ImportClientsCommandHandler,
     )
 
     add_employee = provide_all(GenerateInviteLinkCommandHandler)

@@ -9,8 +9,8 @@ from dishka import FromDishka
 from dishka.integrations.aiogram_dialog import inject
 
 from backend.application.commands import (
-    CreateNewShopCommand,
-    CreateNewShopCommandHandler,
+    CreateShopCommand,
+    CreateShopCommandHandler,
 )
 from backend.presentation.admin_bot import states
 from backend.presentation.admin_bot.keyboards.inline import shop_kb
@@ -22,13 +22,13 @@ async def on_input_shp_name(
     __: Any,
     manager: DialogManager,
     value: str,
-    handler: FromDishka[CreateNewShopCommandHandler],
+    handler: FromDishka[CreateShopCommandHandler],
 ) -> None:
     bot: Bot = cast("Bot", manager.middleware_data.get("bot"))
     user: User = cast("User", manager.middleware_data.get("event_from_user"))
 
     await handler.handle(
-        CreateNewShopCommand(name=value, owner_full_name=user.full_name)
+        CreateShopCommand(name=value, owner_full_name=user.full_name)
     )
 
     bot_info = await bot.get_me()

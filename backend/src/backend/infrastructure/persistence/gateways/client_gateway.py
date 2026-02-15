@@ -1,3 +1,5 @@
+from itertools import starmap
+
 from sqlalchemy import (
     ColumnElement,
     asc,
@@ -33,6 +35,7 @@ from backend.infrastructure.persistence.tables.clients import (
     ClientAddress,
     ClientPhone,
 )
+from backend.infrastructure.persistence.tables.shops import Shop
 from backend.infrastructure.persistence.utils.escape import escape_like
 
 
@@ -42,6 +45,9 @@ class SQLAlchemyClientGateway:
 
     def save(self, entity: Client | ClientPhone | ClientAddress) -> None:
         self._session.add(entity)
+
+    def save_all(self, entities: list[Client]) -> None:
+        self._session.add_all(entities)
 
     async def load(self, client_id: ClientId) -> Client | None:
         query = (
@@ -171,8 +177,89 @@ class SQLAlchemyClientGateway:
             ],
         )
 
+    async def find_coordinates_by_address(
+        self, street: str, house: str, city: str
+    ) -> CoordinatesDTO | None:
+        query = (
+            select(
+                ClientAddress.latitude,
+                ClientAddress.longitude,
+            )
+            .join(Client, ClientAddress.client_id == Client.id)
+            .join(Shop, Client.shop_id == Shop.id)
+            .where(
+                func.lower(func.btrim(ClientAddress.street))
+                == street.strip().lower(),
+                func.lower(func.btrim(ClientAddress.house))
+                == house.strip().lower(),
+                func.lower(func.btrim(Shop.city)) == city.strip().lower(),
+                ClientAddress.latitude.isnot(None),
+                ClientAddress.longitude.isnot(None),
+            )
+            .limit(1)
+        )
+        result = await self._session.execute(query)
+        row = result.one_or_none()
+
+        if row is None:
+            return None
+
+        return CoordinatesDTO(latitude=row.latitude, longitude=row.longitude)
+
     def next_id(self) -> ClientId:
         return ClientId(uuid7())
+
+    async def find_candidate_ids_for_dedup(
+        self,
+        shop_id: ShopId,
+        phone_numbers: set[str],
+        addresses: set[tuple[str, str]],
+    ) -> set[ClientId]:
+        candidate_ids: set[ClientId] = set()
+
+        if phone_numbers:
+            phone_query = select(ClientPhone.client_id).where(
+                ClientPhone.shop_id == shop_id,
+                ClientPhone.number.in_(phone_numbers),
+            )
+            result = await self._session.execute(phone_query)
+            candidate_ids.update(starmap(ClientId, result.fetchall()))
+
+        if addresses:
+            addr_tuples = list(starmap(func.row, addresses))
+            addr_query = (
+                select(ClientAddress.client_id)
+                .join(Client, ClientAddress.client_id == Client.id)
+                .where(
+                    Client.shop_id == shop_id,
+                    func.row(
+                        func.lower(func.btrim(ClientAddress.street)),
+                        func.lower(func.btrim(ClientAddress.house)),
+                    ).in_(addr_tuples),
+                )
+            )
+            result = await self._session.execute(addr_query)
+            candidate_ids.update(starmap(ClientId, result.fetchall()))
+
+        return candidate_ids
+
+    async def load_candidates_for_dedup(
+        self,
+        client_ids: set[ClientId],
+    ) -> list[Client]:
+        if not client_ids:
+            return []
+
+        query = (
+            select(Client)
+            .where(Client.id.in_(client_ids))
+            .options(
+                selectinload(Client.phones),
+                selectinload(Client.addresses),
+            )
+        )
+        result = await self._session.execute(query)
+        return list(result.scalars().all())
 
     async def find_duplicate_phones(
         self,

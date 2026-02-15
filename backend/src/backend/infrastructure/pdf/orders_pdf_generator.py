@@ -11,7 +11,6 @@ from reportlab.lib.units import mm
 from reportlab.pdfbase import pdfmetrics
 from reportlab.pdfbase.ttfonts import TTFont
 from reportlab.platypus import (
-    PageBreak,
     Paragraph,
     SimpleDocTemplate,
     Spacer,
@@ -19,10 +18,8 @@ from reportlab.platypus import (
     TableStyle,
 )
 
-from backend.application.dto.gateways.order_gateway import (
-    OrderReadModel,
-)
 from backend.application.vars import PaymentMethod
+from backend.infrastructure.persistence.tables.orders import Order
 
 FONT_DIR = Path(__file__).parent / "fonts"
 
@@ -87,14 +84,8 @@ class ReportLabOrdersPDFGenerator:
             ),
         }
 
-    def handle(
-        self,
-        orders: list[OrderReadModel],
-        delivery_date: date,
-        shop_name: str,
-    ) -> bytes:
+    def _build_doc(self, elements: list) -> bytes:
         buffer = io.BytesIO()
-
         doc = SimpleDocTemplate(
             buffer,
             pagesize=A4,
@@ -103,44 +94,58 @@ class ReportLabOrdersPDFGenerator:
             topMargin=15 * mm,
             bottomMargin=15 * mm,
         )
+        doc.build(elements)
+        buffer.seek(0)
+        return buffer.read()
 
+    def build_order_list(
+        self,
+        orders: list[Order],
+        delivery_date: date,
+    ) -> bytes:
         elements: list = []
 
-        # Title
         date_str = delivery_date.strftime("%d.%m.%Y")
-        title = Paragraph(
-            f"Замовлення на {date_str}",
-            self._styles["title"],
+        elements.append(
+            Paragraph(f"Замовлення на {date_str}", self._styles["title"])
         )
-        elements.append(title)
 
         if not orders:
-            no_orders = Paragraph(
-                "Немає замовлень на цю дату",
-                self._styles["normal"],
+            elements.append(
+                Paragraph("Немає замовлень на цю дату", self._styles["normal"])
             )
-            elements.append(no_orders)
         else:
-            orders_by_slot: dict[str, list[OrderReadModel]] = defaultdict(list)
+            orders_by_slot: dict[str, list[Order]] = defaultdict(list)
             for order in orders:
-                orders_by_slot[order.time_slot].append(order)
+                slot_label = self._format_time_slot(order)
+                orders_by_slot[slot_label].append(order)
 
             for time_slot in sorted(orders_by_slot.keys()):
                 slot_orders = orders_by_slot[time_slot]
                 elements.append(Paragraph(time_slot, self._styles["heading"]))
                 elements.extend(self._build_orders_section(slot_orders))
 
-            # Summary on new page at the end
-            elements.append(PageBreak())
-            elements.extend(
-                self._build_summary_section(orders, shop_name, delivery_date)
-            )
+        return self._build_doc(elements)
 
-        doc.build(elements)
-        buffer.seek(0)
-        return buffer.read()
+    def build_statistics(
+        self,
+        orders: list[Order],
+        delivery_date: date,
+        shop_name: str,
+    ) -> bytes:
+        elements: list = self._build_summary_section(
+            orders, shop_name, delivery_date
+        )
+        return self._build_doc(elements)
 
-    def _build_orders_section(self, orders: list[OrderReadModel]) -> list:
+    @staticmethod
+    def _format_time_slot(order: Order) -> str:
+        return (
+            f"{order.delivery_start_time.strftime('%H:%M')}-"
+            f"{order.delivery_end_time.strftime('%H:%M')}"
+        )
+
+    def _build_orders_section(self, orders: list[Order]) -> list:
         if not orders:
             return []
 
@@ -148,6 +153,11 @@ class ReportLabOrdersPDFGenerator:
             "DejaVu"
             if "DejaVu" in pdfmetrics.getRegisteredFontNames()
             else "Helvetica"
+        )
+        font_bold = (
+            "DejaVu-Bold"
+            if "DejaVu-Bold" in pdfmetrics.getRegisteredFontNames()
+            else "Helvetica-Bold"
         )
 
         cell_style = ParagraphStyle(
@@ -157,69 +167,49 @@ class ReportLabOrdersPDFGenerator:
             leading=10,
         )
 
-        payment_labels = {
-            PaymentMethod.CASH: "Готівка",
-            PaymentMethod.BANK_TRANSFER: "На рахунок",
-            PaymentMethod.OTHER: "Інше",
-        }
-
-        # Build table data (reportlab Table accepts both str and Paragraph)
         table_data: list = [["Клієнт", "Деталі", "Товари", "Сума", "Оплата"]]
+        table_data.extend(
+            self._build_order_row(order, cell_style) for order in orders
+        )
 
+        cash_total = Decimal(0)
+        bank_total = Decimal(0)
+        other_total = Decimal(0)
         for order in orders:
-            client_cell = Paragraph(f"<b>{order.client_name}</b>", cell_style)
-
-            # Column 2: Details (address + phone + comments)
-            addr = order.delivery_address
-            details_lines = [f"{addr.street}, {addr.house}"]
-
-            # Second line: apartment details
-            apt_parts = []
-            if addr.apartment:
-                apt_parts.append(f"кв. {addr.apartment}")
-            if addr.entrance:
-                apt_parts.append(f"під. {addr.entrance}")
-            if addr.floor:
-                apt_parts.append(f"пов. {addr.floor}")
-            if addr.intercom:
-                apt_parts.append(f"домофон: {addr.intercom}")
-            if apt_parts:
-                details_lines.append(", ".join(apt_parts))
-            if addr.comment:
-                details_lines.append(f"Нотатка: {addr.comment}")
-
-            # Empty line for separation
-            details_lines.extend(["", f"Телефон: {order.delivery_phone}"])
-            if order.comment:
-                details_lines.append(f"Коментар: {order.comment}")
-
-            details_cell = Paragraph("<br/>".join(details_lines), cell_style)
-
-            # Column 3: Products
-            products_lines = [
-                f"{item.name} × {item.quantity}" for item in order.items
-            ]
-            products_cell = Paragraph("<br/>".join(products_lines), cell_style)
-
-            # Column 4: Sum
-            total = sum(
+            payment = PaymentMethod(order.payment_method)
+            order_sum = sum(
                 item.quantity * item.price_per_item for item in order.items
             )
-            sum_cell = Paragraph(f"<b>{total} грн</b>", cell_style)
+            if payment == PaymentMethod.CASH:
+                cash_total += order_sum
+            elif payment == PaymentMethod.BANK_TRANSFER:
+                bank_total += order_sum
+            else:
+                other_total += order_sum
+        grand = cash_total + bank_total + other_total
 
-            # Column 5: Payment
-            payment_cell = Paragraph(
-                payment_labels.get(order.payment_method, ""), cell_style
-            )
+        subtotal_style = ParagraphStyle(
+            "SubtotalStyle",
+            fontName=font_bold,
+            fontSize=8,
+            leading=10,
+            alignment=2,
+        )
+        subtotal_lines = [
+            f"Готівка: {cash_total} грн",
+            f"На рахунок: {bank_total} грн",
+            f"Інше: {other_total} грн",
+            f"<b>Всього: {grand} грн</b>",
+        ]
+        table_data.append([
+            "",
+            "",
+            "",
+            Paragraph("<br/>".join(subtotal_lines), subtotal_style),
+            "",
+        ])
 
-            table_data.append([
-                client_cell,
-                details_cell,
-                products_cell,
-                sum_cell,
-                payment_cell,
-            ])
-
+        last_row = len(table_data) - 1
         table = Table(
             table_data,
             colWidths=[30 * mm, 60 * mm, 45 * mm, 22 * mm, 23 * mm],
@@ -230,29 +220,89 @@ class ReportLabOrdersPDFGenerator:
                 ("FONTSIZE", (0, 0), (-1, 0), 9),
                 ("BACKGROUND", (0, 0), (-1, 0), colors.lightgrey),
                 ("ALIGN", (0, 0), (-1, 0), "CENTER"),
-                ("ALIGN", (3, 1), (4, -1), "CENTER"),
+                ("ALIGN", (3, 1), (4, -2), "CENTER"),
                 ("VALIGN", (0, 0), (-1, -1), "TOP"),
                 ("GRID", (0, 0), (-1, -1), 0.5, colors.grey),
                 ("TOPPADDING", (0, 0), (-1, -1), 3),
                 ("BOTTOMPADDING", (0, 0), (-1, -1), 3),
                 ("LEFTPADDING", (0, 0), (-1, -1), 3),
                 ("RIGHTPADDING", (0, 0), (-1, -1), 3),
+                ("SPAN", (3, last_row), (4, last_row)),
+                (
+                    "BACKGROUND",
+                    (0, last_row),
+                    (-1, last_row),
+                    colors.HexColor("#D9E2F3"),
+                ),
+                ("ALIGN", (3, last_row), (4, last_row), "RIGHT"),
             ])
         )
 
         return [table, Spacer(1, 5 * mm)]
 
+    @staticmethod
+    def _build_order_row(order: Order, cell_style: ParagraphStyle) -> list:
+        payment_labels = {
+            PaymentMethod.CASH: "Готівка",
+            PaymentMethod.BANK_TRANSFER: "На рахунок",
+            PaymentMethod.OTHER: "Інше",
+        }
+
+        client_cell = Paragraph(f"<b>{order.client.full_name}</b>", cell_style)
+
+        addr = order.delivery_address
+        details_lines = [f"{addr.street}, {addr.house}"]
+
+        apt_parts = []
+        if addr.apartment:
+            apt_parts.append(f"кв. {addr.apartment}")
+        if addr.entrance:
+            apt_parts.append(f"під. {addr.entrance}")
+        if addr.floor:
+            apt_parts.append(f"пов. {addr.floor}")
+        if addr.intercom:
+            apt_parts.append(f"домофон: {addr.intercom}")
+        if apt_parts:
+            details_lines.append(", ".join(apt_parts))
+        if addr.comment:
+            details_lines.append(f"Нотатка: {addr.comment}")
+
+        details_lines.append(f"Тел: {order.delivery_phone}")
+        if order.comment:
+            details_lines.append(f"Коментар: {order.comment}")
+
+        details_cell = Paragraph("<br/>".join(details_lines), cell_style)
+
+        products_lines = [
+            f"{item.name} × {item.quantity}" for item in order.items
+        ]
+        products_cell = Paragraph("<br/>".join(products_lines), cell_style)
+
+        total = sum(
+            item.quantity * item.price_per_item for item in order.items
+        )
+        sum_cell = Paragraph(f"<b>{total} грн</b>", cell_style)
+
+        payment = PaymentMethod(order.payment_method)
+        payment_cell = Paragraph(payment_labels.get(payment, ""), cell_style)
+
+        return [
+            client_cell,
+            details_cell,
+            products_cell,
+            sum_cell,
+            payment_cell,
+        ]
+
     def _build_summary_section(
-        self, orders: list[OrderReadModel], shop_name: str, delivery_date: date
+        self, orders: list[Order], shop_name: str, delivery_date: date
     ) -> list:
-        # Title
         date_str = delivery_date.strftime("%d.%m.%Y")
         title = Paragraph(
             f"Загальна статистика {shop_name} за {date_str}",
             self._styles["title"],
         )
 
-        # Aggregate items across all orders with payment method breakdown
         items_summary: dict[str, dict] = defaultdict(
             lambda: {
                 "quantity": 0,
@@ -264,13 +314,13 @@ class ReportLabOrdersPDFGenerator:
         )
 
         for order in orders:
+            payment = PaymentMethod(order.payment_method)
             for item in order.items:
                 item_total = item.quantity * item.price_per_item
                 items_summary[item.name]["quantity"] += item.quantity
                 items_summary[item.name]["total"] += item_total
-                items_summary[item.name][order.payment_method] += item_total
+                items_summary[item.name][payment] += item_total
 
-        # Build summary table with payment method columns
         summary_data = [
             [
                 "Товар",

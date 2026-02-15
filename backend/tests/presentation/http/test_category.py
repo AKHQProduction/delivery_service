@@ -365,7 +365,7 @@ async def test_create_category_unauthorized(
     json = {"name": "Water"}
     response = await http_client.post(url=BASE_URL, json=json)
 
-    assert response.status_code == status.HTTP_403_FORBIDDEN
+    assert response.status_code == status.HTTP_401_UNAUTHORIZED
 
 
 @pytest.mark.asyncio()
@@ -397,7 +397,7 @@ async def test_edit_category_unauthorized(
     url = BASE_URL + f"/{uuid.uuid4()}"
     response = await http_client.patch(url=url, json=json)
 
-    assert response.status_code == status.HTTP_403_FORBIDDEN
+    assert response.status_code == status.HTTP_401_UNAUTHORIZED
 
 
 @pytest.mark.asyncio()
@@ -451,7 +451,7 @@ async def test_delete_category_unauthorized(
     url = BASE_URL + f"/{uuid.uuid4()}"
     response = await http_client.delete(url=url)
 
-    assert response.status_code == status.HTTP_403_FORBIDDEN
+    assert response.status_code == status.HTTP_401_UNAUTHORIZED
 
 
 @pytest.mark.asyncio()

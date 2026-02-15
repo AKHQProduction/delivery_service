@@ -36,5 +36,16 @@ class PaymentMethod(StrEnum):
     OTHER = "OTHER"
 
 
+class ExportDocType(StrEnum):
+    ORDER_LIST = "ORDER_LIST"
+    STATISTICS = "STATISTICS"
+
+
+class RoutingMode(StrEnum):
+    NONE = "NONE"
+    ROUNDTRIP = "ROUNDTRIP"
+    ONE_WAY = "ONE_WAY"
+
+
 class Empty(StrEnum):
     EMPTY = "EMPTY"

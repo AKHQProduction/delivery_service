@@ -1,4 +1,4 @@
-from typing import cast
+import datetime
 from uuid import UUID
 
 from sqlalchemy import asc, case, desc, func, literal, or_, select
@@ -32,6 +32,7 @@ from backend.infrastructure.persistence.tables.orders import (
     OrderItem,
 )
 from backend.infrastructure.persistence.tables.products import Product
+from backend.infrastructure.persistence.utils.cast import mapped_cast
 from backend.infrastructure.persistence.utils.escape import escape_like
 
 
@@ -125,62 +126,67 @@ class SQLAlchemyOrderGateway:
             f"{row.delivery_end_time.strftime('%H:%M')}"
         )
         return OrderReadModel(
-            order_id=OrderId(cast("UUID", cast("object", row.id))),
+            order_id=OrderId(mapped_cast(UUID, row.id)),
             date=row.date.strftime("%d.%m.%Y"),
             time_slot=time_slot,
-            delivery_phone=cast("str", cast("object", row.delivery_phone)),
+            delivery_phone=mapped_cast(str, row.delivery_phone),
             delivery_address=row.delivery_address,
-            comment=cast("str | None", cast("object", row.comment)),
-            client_id=ClientId(cast("UUID", cast("object", row.client_id))),
-            client_name=cast("str", cast("object", row.client.full_name)),
-            items=[
-                OrderItemReadModel(
-                    id=int(cast("int", cast("object", item.id))),
-                    name=cast("str", cast("object", item.name)),
-                    quantity=int(cast("int", cast("object", item.quantity))),
-                    price_per_item=int(item.price_per_item),
-                    product_id=(
-                        ProductId(
-                            cast(
-                                "UUID",
-                                cast("object", item.product_id),
-                            )
-                        )
-                        if item.product_id
-                        else None
-                    ),
-                )
-                for item in row.items
-            ],
-            payment_method=PaymentMethod(
-                cast("str", cast("object", row.payment_method))
+            comment=mapped_cast(str, row.comment),
+            client_id=ClientId(mapped_cast(UUID, row.client_id)),
+            client_name=mapped_cast(str, row.client.full_name),
+            items=[self._to_item_read_model(item) for item in row.items],
+            payment_method=PaymentMethod(mapped_cast(str, row.payment_method)),
+        )
+
+    @staticmethod
+    def _to_item_read_model(item: OrderItem) -> OrderItemReadModel:
+        return OrderItemReadModel(
+            id=mapped_cast(int, item.id),
+            name=mapped_cast(str, item.name),
+            quantity=mapped_cast(int, item.quantity),
+            price_per_item=int(item.price_per_item),
+            product_id=(
+                ProductId(mapped_cast(UUID, item.product_id))
+                if item.product_id
+                else None
             ),
         )
+
+    async def load_by_date(
+        self,
+        shop_id: ShopId,
+        delivery_date: datetime.date,
+        start_time: datetime.time | None = None,
+        end_time: datetime.time | None = None,
+    ) -> list[Order]:
+        query = (
+            select(Order)
+            .options(
+                selectinload(Order.items),
+                selectinload(Order.client),
+            )
+            .where(
+                Order.shop_id == shop_id,
+                Order.date == delivery_date,
+            )
+            .order_by(asc(Order.delivery_start_time), asc(Order.id))
+        )
+
+        if start_time is not None and end_time is not None:
+            query = query.where(
+                Order.delivery_start_time == start_time,
+                Order.delivery_end_time == end_time,
+            )
+
+        result = await self._session.execute(query)
+        return list(result.scalars().all())
 
     async def load_items(self, order_id: OrderId) -> list[OrderItemReadModel]:
         query = select(OrderItem).where(OrderItem.order_id == order_id)
         result = await self._session.execute(query)
         items = result.scalars().all()
 
-        return [
-            OrderItemReadModel(
-                id=int(cast("int", cast("object", item.id))),
-                name=cast("str", cast("object", item.name)),
-                quantity=int(cast("int", cast("object", item.quantity))),
-                price_per_item=int(item.price_per_item),
-                product_id=(
-                    ProductId(
-                        cast(
-                            "UUID",
-                            cast("object", item.product_id),
-                        )
-                    )
-                    if item.product_id
-                    else None
-                ),
-            )
-            for item in items
-        ]
+        return [self._to_item_read_model(item) for item in items]
 
     async def get_stats(
         self,
@@ -286,7 +292,7 @@ class SQLAlchemyOrderGateway:
         result = await self._session.execute(query)
         return [
             CategoryStatsReadModel(
-                name=cast("str", row.category_name),
+                name=mapped_cast(str, row.category_name),
                 quantity=int(row.total_quantity or 0),
             )
             for row in result.all()
@@ -312,7 +318,7 @@ class SQLAlchemyOrderGateway:
         result = await self._session.execute(query)
         return [
             PaymentMethodStatsReadModel(
-                method=PaymentMethod(cast("str", row.payment_method)),
+                method=PaymentMethod(mapped_cast(str, row.payment_method)),
                 orders_sum=int(row.orders_sum or 0),
             )
             for row in result.all()

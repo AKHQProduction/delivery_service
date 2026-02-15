@@ -1,12 +1,11 @@
-from typing import cast
 from uuid import UUID
 
-from sqlalchemy import asc, desc, exists, select
+from sqlalchemy import exists, select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import joinedload
 from uuid_utils.compat import uuid7
 
-from backend.application.dto.gateways import Pagination, SortOrder
+from backend.application.dto.gateways import Pagination
 from backend.application.dto.gateways.shop_gateway import (
     EmployeeFilters,
     EmployeeReadModel,
@@ -17,7 +16,9 @@ from backend.infrastructure.persistence.tables import (
     Shop,
     ShopMembership,
 )
+from backend.infrastructure.persistence.utils.cast import mapped_cast
 from backend.infrastructure.persistence.utils.escape import escape_like
+from backend.infrastructure.persistence.utils.sorting import apply_sorting
 
 
 class SQLAlchemyShopGateway:
@@ -63,8 +64,8 @@ class SQLAlchemyShopGateway:
             full_name, role_name = row
             return EmployeeReadModel(
                 user_id=user_id,
-                full_name=cast("str", full_name),
-                role=ShopRole(cast("str", role_name)),
+                full_name=mapped_cast(str, full_name),
+                role=ShopRole(mapped_cast(str, role_name)),
             )
         return None
 
@@ -82,25 +83,18 @@ class SQLAlchemyShopGateway:
                 ShopMembership.name.ilike(f"%{escape_like(filters.name)}%")
             )
 
-        if pagination.order == SortOrder.ASC:
-            query = query.order_by(
-                asc(ShopMembership.name), asc(ShopMembership.user_id)
-            )
-        else:
-            query = query.order_by(
-                desc(ShopMembership.name), asc(ShopMembership.user_id)
-            )
-
-        query = query.offset(pagination.offset).limit(pagination.limit)
+        query = apply_sorting(
+            query, ShopMembership.name, ShopMembership.user_id, pagination
+        )
 
         result = await self._session.execute(query)
         rows = result.all()
 
         return [
             EmployeeReadModel(
-                user_id=UserId(cast("UUID", row[0])),
-                full_name=cast("str", row[1]),
-                role=ShopRole(cast("str", row[2])),
+                user_id=UserId(mapped_cast(UUID, row[0])),
+                full_name=mapped_cast(str, row[1]),
+                role=ShopRole(mapped_cast(str, row[2])),
             )
             for row in rows
         ]

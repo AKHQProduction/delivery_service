@@ -1,18 +1,19 @@
-from typing import cast
 from uuid import UUID
 
-from sqlalchemy import asc, desc, select
+from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 from uuid_utils.compat import uuid7
 
-from backend.application.dto.gateways import Pagination, SortOrder
+from backend.application.dto.gateways import Pagination
 from backend.application.dto.gateways.district_gateway import (
     DistrictReadModel,
     GetDistrictsFilters,
 )
 from backend.application.vars import DistrictId, ShopId
 from backend.infrastructure.persistence.tables.districts import District
+from backend.infrastructure.persistence.utils.cast import mapped_cast
 from backend.infrastructure.persistence.utils.escape import escape_like
+from backend.infrastructure.persistence.utils.sorting import apply_sorting
 
 
 class SQLAlchemyDistrictGateway:
@@ -43,23 +44,31 @@ class SQLAlchemyDistrictGateway:
                 District.name.ilike(f"%{escape_like(filters.name)}%")
             )
 
-        if pagination.order == SortOrder.ASC:
-            query = query.order_by(asc(District.name), asc(District.id))
-        else:
-            query = query.order_by(desc(District.name), asc(District.id))
-
-        query = query.offset(pagination.offset).limit(pagination.limit)
+        query = apply_sorting(query, District.name, District.id, pagination)
 
         result = await self._session.execute(query)
         rows = result.scalars().all()
 
         return [
             DistrictReadModel(
-                district_id=DistrictId(cast("UUID", cast("object", row.id))),
-                name=cast("str", cast("object", row.name)),
+                district_id=DistrictId(mapped_cast(UUID, row.id)),
+                name=mapped_cast(str, row.name),
             )
             for row in rows
         ]
+
+    async def find_by_names(
+        self, shop_id: ShopId, names: set[str]
+    ) -> list[District]:
+        if not names:
+            return []
+
+        query = select(District).where(
+            District.shop_id == shop_id,
+            func.lower(District.name).in_({n.lower() for n in names}),
+        )
+        result = await self._session.execute(query)
+        return list(result.scalars().all())
 
     async def exists_by_name_in_shop(self, name: str, shop_id: ShopId) -> bool:
         query = select(

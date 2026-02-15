@@ -1,18 +1,19 @@
-from typing import cast
 from uuid import UUID
 
-from sqlalchemy import asc, desc, select
+from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 from uuid_utils.compat import uuid7
 
-from backend.application.dto.gateways import Pagination, SortOrder
+from backend.application.dto.gateways import Pagination
 from backend.application.dto.gateways.category_gateway import (
     CategoryReadModel,
     GetCategoriesFilters,
 )
 from backend.application.vars import CategoryId, ShopId
 from backend.infrastructure.persistence.tables import Category
+from backend.infrastructure.persistence.utils.cast import mapped_cast
 from backend.infrastructure.persistence.utils.escape import escape_like
+from backend.infrastructure.persistence.utils.sorting import apply_sorting
 
 
 class SQLAlchemyCategoryGateway:
@@ -43,20 +44,15 @@ class SQLAlchemyCategoryGateway:
                 Category.name.ilike(f"%{escape_like(filters.name)}%")
             )
 
-        if pagination.order == SortOrder.ASC:
-            query = query.order_by(asc(Category.name), asc(Category.id))
-        else:
-            query = query.order_by(desc(Category.name), asc(Category.id))
-
-        query = query.offset(pagination.offset).limit(pagination.limit)
+        query = apply_sorting(query, Category.name, Category.id, pagination)
 
         result = await self._session.execute(query)
         rows = result.scalars().all()
 
         return [
             CategoryReadModel(
-                category_id=CategoryId(cast("UUID", cast("object", row.id))),
-                name=cast("str", cast("object", row.name)),
+                category_id=CategoryId(mapped_cast(UUID, row.id)),
+                name=mapped_cast(str, row.name),
             )
             for row in rows
         ]

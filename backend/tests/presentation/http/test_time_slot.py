@@ -150,7 +150,7 @@ async def test_create_time_slot_unauthorized(
 
     response = await http_client.post(url=BASE_URL, json=json)
 
-    assert response.status_code == status.HTTP_403_FORBIDDEN
+    assert response.status_code == status.HTTP_401_UNAUTHORIZED
 
 
 @pytest.mark.asyncio()
@@ -471,7 +471,7 @@ async def test_update_time_slot_unauthorized(
         url=f"{BASE_URL}/{uuid.uuid4()}", json=json
     )
 
-    assert response.status_code == status.HTTP_403_FORBIDDEN
+    assert response.status_code == status.HTTP_401_UNAUTHORIZED
 
 
 @pytest.mark.asyncio()
@@ -536,7 +536,7 @@ async def test_delete_time_slot_unauthorized(
 ) -> None:
     response = await http_client.delete(url=f"{BASE_URL}/{uuid.uuid4()}")
 
-    assert response.status_code == status.HTTP_403_FORBIDDEN
+    assert response.status_code == status.HTTP_401_UNAUTHORIZED
 
 
 @pytest.mark.asyncio()
@@ -545,4 +545,4 @@ async def test_get_all_time_slots_unauthorized(
 ) -> None:
     response = await http_client.get(url=f"{BASE_URL}/all")
 
-    assert response.status_code == status.HTTP_403_FORBIDDEN
+    assert response.status_code == status.HTTP_401_UNAUTHORIZED

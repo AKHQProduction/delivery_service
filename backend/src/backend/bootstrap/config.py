@@ -80,6 +80,20 @@ class OTelConfig(BaseModel):
     )
 
 
+class OSRMConfig(BaseModel):
+    url: str = Field(
+        alias="OSRM_URL",
+        default="https://router.project-osrm.org",
+    )
+
+
+class NominatimConfig(BaseModel):
+    url: str = Field(
+        alias="NOMINATIM_URL",
+        default="https://nominatim.openstreetmap.org",
+    )
+
+
 class Config(BaseModel):
     def __init__(self) -> None:
         load_dotenv(
@@ -110,4 +124,12 @@ class Config(BaseModel):
 
     otel_config: OTelConfig = Field(
         default_factory=lambda: OTelConfig.model_validate(env)
+    )
+
+    osrm_config: OSRMConfig = Field(
+        default_factory=lambda: OSRMConfig.model_validate(env)
+    )
+
+    nominatim_config: NominatimConfig = Field(
+        default_factory=lambda: NominatimConfig.model_validate(env)
     )

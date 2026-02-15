@@ -44,6 +44,7 @@ from backend.bootstrap.entrypoints.di.tests_providers import (
     MockAPIInteractorsProvider,
     MockAdaptersProvider,
     MockConfigProvider,
+    MockServicesProvider,
     MockWebAppProvider,
 )
 from backend.infrastructure.persistence.tables import (
@@ -162,6 +163,7 @@ def make_container(
             MockWebAppProvider(),
             MockAPIInteractorsProvider(),
             MockAdaptersProvider(),
+            MockServicesProvider(),
             RedisProvider(),
             context={Config: config},
         )
@@ -216,12 +218,20 @@ def create_shop(session: AsyncSession):
         city: str | None = None,
         street: str | None = None,
         house: str | None = None,
+        latitude: float | None = None,
+        longitude: float | None = None,
     ) -> ShopId:
         if shop_id is None:
             shop_id = ShopId(uuid.uuid4())
         await session.execute(
             insert(Shop).values(
-                id=shop_id, name=name, city=city, street=street, house=house
+                id=shop_id,
+                name=name,
+                city=city,
+                street=street,
+                house=house,
+                latitude=latitude,
+                longitude=longitude,
             )
         )
         return shop_id
@@ -263,6 +273,8 @@ def setup_full_test_user_with_shop(
         shop_city: str | None = None,
         shop_street: str | None = None,
         shop_house: str | None = None,
+        shop_latitude: float | None = None,
+        shop_longitude: float | None = None,
     ) -> tuple[UserId, ShopId]:
         user_id = await create_user(user_id=user_id)
         await create_telegram_account(
@@ -270,7 +282,11 @@ def setup_full_test_user_with_shop(
         )
         role_id = await create_role(name=role)
         shop_id = await create_shop(
-            city=shop_city, street=shop_street, house=shop_house
+            city=shop_city,
+            street=shop_street,
+            house=shop_house,
+            latitude=shop_latitude,
+            longitude=shop_longitude,
         )
         await create_shop_membership(
             user_id=user_id, shop_id=shop_id, role_id=role_id

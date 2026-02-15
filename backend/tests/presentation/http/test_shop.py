@@ -187,4 +187,4 @@ async def test_update_shop_unauthorized(
 
     response = await http_client.patch(url=BASE_URL, json=json_data)
 
-    assert response.status_code == status.HTTP_403_FORBIDDEN
+    assert response.status_code == status.HTTP_401_UNAUTHORIZED

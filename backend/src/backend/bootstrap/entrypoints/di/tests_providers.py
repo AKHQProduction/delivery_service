@@ -10,6 +10,7 @@ from backend.bootstrap.config import AppConfig, Config
 from backend.bootstrap.entrypoints.di.api_providers import (
     APIInteractorsProvider,
     AdaptersProvider,
+    ServicesProvider,
     WebAppProvider,
 )
 from backend.bootstrap.entrypoints.di.common import (
@@ -38,6 +39,10 @@ class MockConfigProvider(ConfigProvider):
     @provide
     def app_config(self, config: Config) -> AppConfig:
         return AppConfig(DEBUG=True, DEBUG_USER_ID=self.TEST_DEBUG_USER_ID)
+
+
+class MockServicesProvider(ServicesProvider):
+    pass
 
 
 class MockWebAppProvider(WebAppProvider):

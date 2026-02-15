@@ -10,24 +10,13 @@ from backend.application.vars import (
     ProductId,
     ShopId,
 )
+from backend.infrastructure.persistence.tables.base import DeliveryAddressDTO
 
 
 @dataclass(frozen=True)
 class PaymentMethodStatsReadModel:
     method: PaymentMethod
     orders_sum: int
-
-
-@dataclass(frozen=True)
-class DeliveryAddressDTO:
-    street: str
-    house: str
-    apartment: str | None = None
-    entrance: str | None = None
-    floor: str | None = None
-    intercom: str | None = None
-    comment: str | None = None
-    district: str | None = None
 
 
 @dataclass(frozen=True)

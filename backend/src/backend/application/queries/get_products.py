@@ -12,7 +12,7 @@ from backend.infrastructure.persistence.gateways import (
 
 
 @dataclass(frozen=True)
-class GetProductQuery:
+class GetProductsQuery:
     pagination: Pagination
     name: str | None = None
 
@@ -26,7 +26,7 @@ class GetProductsQueryHandler:
         self._idp = idp
         self._product_gateway = product_gateway
 
-    async def handle(self, query: GetProductQuery) -> list[ProductReadModel]:
+    async def handle(self, query: GetProductsQuery) -> list[ProductReadModel]:
         current_user = await self._idp.current_user()
 
         return await self._product_gateway.read_all(

@@ -54,8 +54,10 @@ services:
     container_name: "water_delivery-postgres"
     image: postgres:18-alpine
     restart: unless-stopped
+    environment:
+      PGDATA: /var/lib/postgresql/data
     volumes:
-      - postgres_data:/var/lib/postgresql/data/
+      - postgres_data:/var/lib/postgresql/data
       - ./scripts:/scripts
     env_file:
       - .env
@@ -104,7 +106,7 @@ services:
   tunnel:
     image: cloudflare/cloudflared:latest
     restart: unless-stopped
-    command: tunnel --no-autoupdate run --token ${CLOUDFLARE_TUNNEL_TOKEN}
+    command: tunnel --no-autoupdate --protocol http2 run --token ${CLOUDFLARE_TUNNEL_TOKEN}
     depends_on:
       - reverse-proxy
 
@@ -118,6 +120,34 @@ services:
     image: nginx:latest
     volumes:
       - ./nginx/nginx-dev.conf:/etc/nginx/conf.d/default.conf
+
+  osrm:
+    container_name: "water_delivery-osrm"
+    image: osrm/osrm-backend
+    platform: linux/amd64
+    restart: unless-stopped
+    ports:
+      - "${OSRM_PORT:-5050}:5050"
+    volumes:
+      - ./osrm-data:/data
+    command: osrm-routed --algorithm mld --port 5050 /data/ukraine-latest.osrm
+    profiles: ["map"]
+
+  nominatim:
+    container_name: "water_delivery-nominatim"
+    image: mediagis/nominatim:4.4
+    platform: linux/amd64
+    restart: unless-stopped
+    ports:
+      - "${NOMINATIM_PORT:-8088}:8080"
+    environment:
+      PBF_PATH: /nominatim/data/ukraine-latest.osm.pbf
+      NOMINATIM_PASSWORD: ${NOMINATIM_PASSWORD:-nominatim}
+    volumes:
+      - ./osrm-data/ukraine-latest.osm.pbf:/nominatim/data/ukraine-latest.osm.pbf
+      - nominatim_data:/var/lib/postgresql/14/main
+    shm_size: 1g
+    profiles: ["map"]
 
   otel-collector:
     container_name: "water_delivery-otel-collector"
@@ -230,3 +260,4 @@ volumes:
   victoria_metrics_data:
   loki_data:
   tempo_data:
+  nominatim_data:

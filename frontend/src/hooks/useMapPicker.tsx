@@ -1,4 +1,5 @@
 import { useState, useCallback } from "react";
+import api from "../config/api.config";
 
 export interface MapPickerResult {
   street: string;
@@ -12,20 +13,11 @@ export interface Coordinates {
   lng: number;
 }
 
-/**
- * Hook for managing map picker state and reverse geocoding
- */
 export const useMapPicker = () => {
   const [isMapOpen, setIsMapOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  /**
-   * Converts address to coordinates using OpenStreetMap Nominatim API (forward geocoding)
-   * @param street - Street name
-   * @param house - House number (optional)
-   * @param city - City name (optional, defaults to Ukraine-wide search)
-   */
   const forwardGeocode = useCallback(
     async (street: string, house?: string, city?: string): Promise<Coordinates | null> => {
       if (!street) return null;
@@ -34,30 +26,17 @@ export const useMapPicker = () => {
       setError(null);
 
       try {
-        const addressParts = [`${street} ${house || ""}`, city, "Ukraine"].filter(Boolean);
-        const query = addressParts.join(", ");
-        const response = await fetch(
-          `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(query)}&addressdetails=1&limit=1`,
-          {
-            headers: {
-              "Accept-Language": "uk",
-            },
-          },
-        );
+        const response = await api.get("/v1/geocoding/forward", {
+          params: { street, house: house || "", city: city || "" },
+        });
 
-        if (!response.ok) {
-          throw new Error("Failed to geocode address");
-        }
-
-        const data = (await response.json()) as Array<{ lat: string; lon: string }>;
-
-        if (!data || data.length === 0) {
+        if (!response.data) {
           return null;
         }
 
         return {
-          lat: parseFloat(data[0].lat),
-          lng: parseFloat(data[0].lon),
+          lat: response.data.latitude,
+          lng: response.data.longitude,
         };
       } catch (err) {
         console.error("Forward geocoding error:", err);
@@ -69,49 +48,22 @@ export const useMapPicker = () => {
     [],
   );
 
-  /**
-   * Converts coordinates to address using OpenStreetMap Nominatim API
-   */
   const reverseGeocode = useCallback(
     async (coordinates: Coordinates): Promise<MapPickerResult | null> => {
       setIsLoading(true);
       setError(null);
 
       try {
-        const response = await fetch(
-          `https://nominatim.openstreetmap.org/reverse?format=json&lat=${coordinates.lat}&lon=${coordinates.lng}&addressdetails=1`,
-          {
-            headers: {
-              "Accept-Language": "uk", // Ukrainian language for results
-            },
-          },
-        );
+        const response = await api.get("/v1/geocoding/reverse", {
+          params: { lat: coordinates.lat, lon: coordinates.lng },
+        });
 
-        if (!response.ok) {
-          throw new Error("Failed to fetch address");
-        }
-
-        const data = (await response.json()) as {
-          display_name?: string;
-          address?: {
-            road?: string;
-            street?: string;
-            pedestrian?: string;
-            footway?: string;
-            path?: string;
-            house_number?: string;
-            city?: string;
-            town?: string;
-            village?: string;
-            municipality?: string;
-          };
-        };
+        const data = response.data;
 
         if (!data.address) {
           throw new Error("Address not found");
         }
 
-        // Extract street and house number from the response
         const address = data.address;
         const street =
           address.road ||
@@ -122,8 +74,6 @@ export const useMapPicker = () => {
           "";
         const house = address.house_number || "";
         const city = address.city || address.town || address.village || address.municipality || "";
-
-        // Build full address for display
         const fullAddress = data.display_name || "";
 
         return {

@@ -1,4 +1,4 @@
-from dataclasses import asdict
+from dataclasses import asdict, dataclass
 from datetime import datetime
 from typing import Any
 
@@ -7,9 +7,20 @@ from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column
 from sqlalchemy.types import TypeDecorator
 
-from backend.application.dto.gateways.order_gateway import (
-    DeliveryAddressDTO,
-)
+from backend.application.dto.coordinates import CoordinatesDTO
+
+
+@dataclass
+class DeliveryAddressDTO:
+    street: str
+    house: str
+    apartment: str | None = None
+    entrance: str | None = None
+    floor: str | None = None
+    intercom: str | None = None
+    comment: str | None = None
+    district: str | None = None
+    coordinates: CoordinatesDTO | None = None
 
 
 class DeliveryAddressType(TypeDecorator):
@@ -30,7 +41,10 @@ class DeliveryAddressType(TypeDecorator):
     ) -> DeliveryAddressDTO | None:
         if value is None:
             return None
-        return DeliveryAddressDTO(**value)
+        coords = value.pop("coordinates", None)
+        if coords is not None:
+            coords = CoordinatesDTO(**coords)
+        return DeliveryAddressDTO(**value, coordinates=coords)
 
 
 class Base(DeclarativeBase):

@@ -37,16 +37,16 @@ class Client(Base, CreatedAt, UpdatedAt):
         sa.ForeignKey("users.id", ondelete="SET NULL"), nullable=True
     )
 
-    shop: Mapped["Shop"] = relationship(back_populates="clients")
-    user: Mapped["User"] = relationship()
+    shop: Mapped["Shop"] = relationship(back_populates="clients", lazy="raise")
+    user: Mapped["User"] = relationship(lazy="raise")
     phones: Mapped[list["ClientPhone"]] = relationship(
-        back_populates="client", cascade="all, delete-orphan"
+        back_populates="client", cascade="all, delete-orphan", lazy="raise"
     )
     addresses: Mapped[list["ClientAddress"]] = relationship(
-        back_populates="client", cascade="all, delete-orphan"
+        back_populates="client", cascade="all, delete-orphan", lazy="raise"
     )
     orders: Mapped[list["Order"]] = relationship(
-        back_populates="client", cascade="all, delete-orphan"
+        back_populates="client", cascade="all, delete-orphan", lazy="raise"
     )
 
     def __repr__(self) -> str:
@@ -71,8 +71,10 @@ class ClientPhone(Base, CreatedAt, UpdatedAt):
         sa.ForeignKey("shops.id", ondelete="CASCADE"), nullable=False
     )
 
-    client: Mapped["Client"] = relationship(back_populates="phones")
-    shop: Mapped["Shop"] = relationship()
+    client: Mapped["Client"] = relationship(
+        back_populates="phones", lazy="raise"
+    )
+    shop: Mapped["Shop"] = relationship(lazy="raise")
 
     def __repr__(self) -> str:
         return (
@@ -123,8 +125,10 @@ class ClientAddress(Base, CreatedAt, UpdatedAt):
         sa.ForeignKey("districts.id", ondelete="SET NULL"), nullable=True
     )
 
-    client: Mapped["Client"] = relationship(back_populates="addresses")
-    district: Mapped["District | None"] = relationship()
+    client: Mapped["Client"] = relationship(
+        back_populates="addresses", lazy="raise"
+    )
+    district: Mapped["District | None"] = relationship(lazy="raise")
 
     __table_args__ = (
         sa.CheckConstraint(

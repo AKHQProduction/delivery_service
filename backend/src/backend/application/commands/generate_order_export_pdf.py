@@ -1,21 +1,27 @@
 import asyncio
 import logging
+from collections import defaultdict
 from dataclasses import dataclass
-from datetime import date
+from datetime import date, time
 
-from backend.application.dto.gateways import Pagination
-from backend.application.dto.gateways.order_gateway import (
-    GetOrdersFilters,
-    OrderReadModel,
-)
+from backend.application.dto.coordinates import CoordinatesDTO
 from backend.application.errors import AccessDeniedError, EntityNotFoundError
+from backend.application.services.route_optimizer import RouteOptimizer
+from backend.application.vars import (
+    ExportDocType,
+    OrderId,
+    RoutingMode,
+    TimeSlotId,
+)
 from backend.infrastructure.idp import TelegramIdentityProvider
 from backend.infrastructure.pdf import ReportLabOrdersPDFGenerator
 from backend.infrastructure.persistence.gateways import (
     RedisPDFStorage,
     SQLAlchemyOrderGateway,
     SQLAlchemyShopGateway,
+    SQLAlchemyTimeSlotGateway,
 )
+from backend.infrastructure.persistence.tables.orders import Order
 
 logger = logging.getLogger(__name__)
 
@@ -23,6 +29,9 @@ logger = logging.getLogger(__name__)
 @dataclass(frozen=True)
 class GenerateOrderExportPDFCommand:
     delivery_date: date
+    doc_type: ExportDocType
+    time_slot_id: TimeSlotId | None = None
+    routing_mode: RoutingMode = RoutingMode.NONE
 
 
 @dataclass(frozen=True)
@@ -37,14 +46,18 @@ class GenerateOrderExportPDFCommandHandler:
         idp: TelegramIdentityProvider,
         order_gateway: SQLAlchemyOrderGateway,
         shop_gateway: SQLAlchemyShopGateway,
+        time_slot_gateway: SQLAlchemyTimeSlotGateway,
         pdf_generator: ReportLabOrdersPDFGenerator,
         pdf_storage: RedisPDFStorage,
+        route_optimizer: RouteOptimizer,
     ) -> None:
         self._idp = idp
         self._order_gateway = order_gateway
         self._shop_gateway = shop_gateway
+        self._time_slot_gateway = time_slot_gateway
         self._pdf_generator = pdf_generator
         self._pdf_storage = pdf_storage
+        self._route_optimizer = route_optimizer
 
     async def handle(
         self, command: GenerateOrderExportPDFCommand
@@ -60,28 +73,25 @@ class GenerateOrderExportPDFCommandHandler:
             logger.warning("User %s has no shop_id", current_user.user_id)
             raise AccessDeniedError
 
-        shop_name = await self._shop_gateway.get_shop_name(shop_id)
-        if not shop_name:
+        shop = await self._shop_gateway.load_shop(shop_id)
+        if not shop:
             logger.warning("Shop not found: shop_id=%s", shop_id)
             raise EntityNotFoundError(entity="Shop")
 
-        filters = GetOrdersFilters(
-            shop_id=shop_id,
-            start_date=command.delivery_date,
-            end_date=command.delivery_date,
+        start_time = None
+        end_time = None
+        if command.time_slot_id:
+            time_slot = await self._time_slot_gateway.load(
+                command.time_slot_id
+            )
+            if not time_slot:
+                raise EntityNotFoundError(entity="TimeSlot")
+            start_time = time_slot.start_time
+            end_time = time_slot.end_time
+
+        orders = await self._order_gateway.load_by_date(
+            shop_id, command.delivery_date, start_time, end_time
         )
-
-        batch_size = 200
-        offset = 0
-        orders: list[OrderReadModel] = []
-
-        while True:
-            pagination = Pagination(limit=batch_size, offset=offset)
-            batch = await self._order_gateway.read_all(filters, pagination)
-            orders.extend(batch)
-            if len(batch) < batch_size:
-                break
-            offset += batch_size
 
         logger.info(
             "Found %d orders for date %s, shop %s",
@@ -91,15 +101,34 @@ class GenerateOrderExportPDFCommandHandler:
         )
 
         loop = asyncio.get_running_loop()
-        pdf_bytes = await loop.run_in_executor(
-            None,
-            self._pdf_generator.handle,
-            orders,
-            command.delivery_date,
-            shop_name,
-        )
 
-        filename = f"orders_{command.delivery_date.isoformat()}.pdf"
+        if command.doc_type == ExportDocType.ORDER_LIST:
+            if command.routing_mode != RoutingMode.NONE:
+                shop_coords = CoordinatesDTO.build(
+                    shop.latitude, shop.longitude
+                )
+                if shop_coords:
+                    roundtrip = command.routing_mode == RoutingMode.ROUNDTRIP
+                    orders = await self._optimize_orders(
+                        orders, shop_coords, roundtrip=roundtrip
+                    )
+
+            pdf_bytes = await loop.run_in_executor(
+                None,
+                self._pdf_generator.build_order_list,
+                orders,
+                command.delivery_date,
+            )
+            filename = f"orders_{command.delivery_date.isoformat()}.pdf"
+        else:
+            pdf_bytes = await loop.run_in_executor(
+                None,
+                self._pdf_generator.build_statistics,
+                orders,
+                command.delivery_date,
+                shop.name,
+            )
+            filename = f"statistics_{command.delivery_date.isoformat()}.pdf"
         file_id = await self._pdf_storage.save(pdf_bytes, filename)
 
         logger.info(
@@ -110,3 +139,40 @@ class GenerateOrderExportPDFCommandHandler:
         )
 
         return GenerateOrderExportPDFResult(file_id=file_id, filename=filename)
+
+    async def _optimize_orders(
+        self,
+        orders: list[Order],
+        shop_coords: CoordinatesDTO,
+        *,
+        roundtrip: bool,
+    ) -> list[Order]:
+        slots: dict[tuple[time, time], list[Order]] = defaultdict(list)
+        for order in orders:
+            key = (order.delivery_start_time, order.delivery_end_time)
+            slots[key].append(order)
+
+        result: list[Order] = []
+        for key in sorted(slots):
+            slot_orders = slots[key]
+            optimized_ids = await self._route_optimizer.compute(
+                shop_coords, slot_orders, roundtrip=roundtrip
+            )
+            if optimized_ids:
+                result.extend(
+                    self._apply_route_order(slot_orders, optimized_ids)
+                )
+            else:
+                result.extend(slot_orders)
+
+        return result
+
+    @staticmethod
+    def _apply_route_order(
+        orders: list[Order], order_ids: list[OrderId]
+    ) -> list[Order]:
+        orders_map = {o.id: o for o in orders}
+        ordered = [orders_map[oid] for oid in order_ids if oid in orders_map]
+        seen = set(order_ids)
+        ordered.extend(o for o in orders if o.id not in seen)
+        return ordered

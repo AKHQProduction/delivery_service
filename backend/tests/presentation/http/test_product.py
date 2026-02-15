@@ -493,7 +493,7 @@ async def test_create_product_unauthorized(
     json = {"name": "Test Product", "price": 100}
     response = await http_client.post(url=BASE_URL, json=json)
 
-    assert response.status_code == status.HTTP_403_FORBIDDEN
+    assert response.status_code == status.HTTP_401_UNAUTHORIZED
 
 
 @pytest.mark.asyncio()
@@ -525,7 +525,7 @@ async def test_edit_product_unauthorized(
     url = BASE_URL + f"/{uuid.uuid4()}"
     response = await http_client.patch(url=url, json=json)
 
-    assert response.status_code == status.HTTP_403_FORBIDDEN
+    assert response.status_code == status.HTTP_401_UNAUTHORIZED
 
 
 @pytest.mark.asyncio()
@@ -579,7 +579,7 @@ async def test_delete_product_unauthorized(
     url = BASE_URL + f"/{uuid.uuid4()}"
     response = await http_client.delete(url=url)
 
-    assert response.status_code == status.HTTP_403_FORBIDDEN
+    assert response.status_code == status.HTTP_401_UNAUTHORIZED
 
 
 @pytest.mark.asyncio()
@@ -631,7 +631,7 @@ async def test_get_product_unauthorized(
     url = BASE_URL + f"/{uuid.uuid4()}"
     response = await http_client.get(url=url)
 
-    assert response.status_code == status.HTTP_403_FORBIDDEN
+    assert response.status_code == status.HTTP_401_UNAUTHORIZED
 
 
 @pytest.mark.asyncio()

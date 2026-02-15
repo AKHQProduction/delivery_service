@@ -1,5 +1,4 @@
 from datetime import time
-from typing import cast
 from uuid import UUID
 
 from sqlalchemy import func, select
@@ -13,6 +12,7 @@ from backend.application.vars import ShopId, TimeSlotId
 from backend.infrastructure.persistence.tables.shops import (
     ShopDeliveryTimeSlot,
 )
+from backend.infrastructure.persistence.utils.cast import mapped_cast
 
 
 class SQLAlchemyTimeSlotGateway:
@@ -42,14 +42,10 @@ class SQLAlchemyTimeSlotGateway:
 
         return [
             TimeSlotReadModel(
-                time_slot_id=TimeSlotId(cast("UUID", cast("object", row.id))),
-                start_time=cast(
-                    "time", cast("object", row.start_time)
-                ).strftime("%H:%M"),
-                end_time=cast("time", cast("object", row.end_time)).strftime(
-                    "%H:%M"
-                ),
-                label=cast("str | None", cast("object", row.label)),
+                time_slot_id=TimeSlotId(mapped_cast(UUID, row.id)),
+                start_time=mapped_cast(time, row.start_time).strftime("%H:%M"),
+                end_time=mapped_cast(time, row.end_time).strftime("%H:%M"),
+                label=mapped_cast(str, row.label),
             )
             for row in rows
         ]
