@@ -3,7 +3,7 @@ from typing import Annotated
 
 from dishka import FromDishka
 from dishka.integrations.fastapi import DishkaRoute
-from fastapi import APIRouter, Body, Depends, HTTPException, status
+from fastapi import APIRouter, Body, Depends, HTTPException, Request, status
 from fastapi.openapi.models import Example
 from fastapi.responses import HTMLResponse, Response
 from fastapi.security import HTTPBearer
@@ -461,6 +461,7 @@ async def download_orders_pdf(
 )
 async def print_orders_pdf(
     file_id: str,
+    request: Request,
     pdf_storage: FromDishka[RedisPDFStorage],
 ) -> HTMLResponse:
     result = await pdf_storage.get(file_id)
@@ -470,7 +471,10 @@ async def print_orders_pdf(
             detail="File not found or expired",
         )
 
-    download_url = f"/v1/orders/export/pdf/download/{file_id}?inline=true"
+    root_path = request.scope.get("root_path", "")
+    download_url = (
+        f"{root_path}/v1/orders/export/pdf/download/{file_id}?inline=true"
+    )
     html = (
         "<!DOCTYPE html>"
         "<html><head><title>Print</title>"

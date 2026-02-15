@@ -43,10 +43,21 @@ export const getOrderById = async (orderId: string) => {
   return response.data;
 };
 
-export const generateOrdersPdfLink = async (deliveryDate: string) => {
-  const response = await api.post(`v1/orders/export/pdf/generate`, null, {
-    params: { delivery_date: deliveryDate },
-  });
+export const generateOrdersPdfLink = async (
+  deliveryDate: string,
+  docType: "ORDER_LIST" | "STATISTICS",
+  timeSlotId?: string,
+  routingMode: "NONE" | "ROUNDTRIP" | "ONE_WAY" = "NONE",
+) => {
+  const body: Record<string, string> = {
+    delivery_date: deliveryDate,
+    doc_type: docType,
+    routing_mode: routingMode,
+  };
+  if (timeSlotId) {
+    body.time_slot_id = timeSlotId;
+  }
+  const response = await api.post(`v1/orders/export/pdf/generate`, body);
   return response.data as { file_id: string; filename: string };
 };
 
