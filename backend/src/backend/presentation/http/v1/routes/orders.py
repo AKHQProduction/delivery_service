@@ -42,11 +42,8 @@ from backend.application.queries.get_orders import (
 )
 from backend.application.vars import (
     KYIV_TZ,
-    ExportDocType,
     OrderId,
     PaymentMethod,
-    RoutingMode,
-    TimeSlotId,
     today,
 )
 from backend.infrastructure.persistence.gateways import RedisPDFStorage
@@ -421,20 +418,10 @@ async def get_order_stats(
     dependencies=[Depends(HTTPBearer())],
 )
 async def generate_orders_pdf(
-    delivery_date: date,
-    doc_type: ExportDocType,
+    command: GenerateOrderExportPDFCommand,
     handler: FromDishka[GenerateOrderExportPDFCommandHandler],
-    time_slot_id: TimeSlotId | None = None,
-    routing_mode: RoutingMode = RoutingMode.NONE,
 ) -> GenerateOrderExportPDFResult:
-    return await handler.handle(
-        GenerateOrderExportPDFCommand(
-            delivery_date=delivery_date,
-            doc_type=doc_type,
-            time_slot_id=time_slot_id,
-            routing_mode=routing_mode,
-        )
-    )
+    return await handler.handle(command)
 
 
 @router.get(
