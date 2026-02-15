@@ -9,14 +9,12 @@ interface UserShopStore {
   user: User | null;
   shop: Shop | null;
   authStatus: AuthStatus;
-  isTGWebApp: boolean;
 
   setUser: (u: User | null) => void;
   setShop: (s: Shop | null) => void;
   setUserAndShop: (user: User | null, shop: Shop | null) => void;
   clear: () => void;
   setAuthStatus: (status: AuthStatus) => void;
-  setIsTGWebApp: (value: boolean) => void;
   logout: () => void;
 
   hasRole: (role: UserRole) => boolean;
@@ -29,14 +27,12 @@ export const useUserShopStore = create(
       user: null,
       shop: null,
       authStatus: "idle" as AuthStatus,
-      isTGWebApp: false,
 
       setUser: (u) => set({ user: u }),
       setShop: (s) => set({ shop: s }),
       setUserAndShop: (user, shop) => set({ user, shop }),
       clear: () => set({ user: null, shop: null }),
       setAuthStatus: (status) => set({ authStatus: status }),
-      setIsTGWebApp: (value) => set({ isTGWebApp: value }),
       logout: () => set({ user: null, shop: null, authStatus: "unauthenticated" }),
 
       hasRole: (role) => get().user?.role === role,
@@ -52,7 +48,6 @@ export const useUserShopStore = create(
         ({
           user: state.user,
           shop: state.shop,
-          isTGWebApp: state.isTGWebApp,
         }) as UserShopStore,
     },
   ),

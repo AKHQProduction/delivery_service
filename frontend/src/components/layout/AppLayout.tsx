@@ -8,12 +8,13 @@ interface AppLayoutProps {
 
 export const AppLayout: React.FC<AppLayoutProps> = ({ children }) => {
   const user = useUserShopStore((s) => s.user);
+  const showSidebar = !!user;
 
   return (
     <>
       <SidebarNav />
-      <div className={user ? "lg:pl-64" : ""}>
-        <div className={user ? "lg:max-w-5xl lg:mx-auto" : ""}>{children}</div>
+      <div className={showSidebar ? "lg:pl-64" : ""}>
+        <div className={showSidebar ? "lg:max-w-5xl lg:mx-auto" : ""}>{children}</div>
       </div>
     </>
   );

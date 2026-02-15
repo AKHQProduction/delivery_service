@@ -2,10 +2,11 @@ import { useUserShopStore } from "../../context/useUserShopStore";
 import { useNavigate, useLocation } from "react-router-dom";
 import { getRoutesForRole } from "../../config/roles.config";
 import { logout } from "../../services/api/authApi";
+import { usePlatform } from "../../platforms/PlatformProvider";
 
 export const SidebarNav = () => {
   const user = useUserShopStore((s) => s.user);
-  const isTGWebApp = useUserShopStore((s) => s.isTGWebApp);
+  const { type } = usePlatform();
   const navigate = useNavigate();
   const location = useLocation();
 
@@ -70,7 +71,7 @@ export const SidebarNav = () => {
             <p className="text-sm font-medium text-gray-900 truncate">{user.full_name}</p>
             <p className="text-xs text-gray-500">{user.role}</p>
           </div>
-          {!isTGWebApp && (
+          {type === "web" && (
             <button
               type="button"
               onClick={handleLogout}

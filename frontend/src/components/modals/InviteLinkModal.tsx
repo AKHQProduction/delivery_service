@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import initDataTG from "../../services/tgInitData";
+import { getTelegramSdk } from "../../platforms/telegram/telegramSdk";
 
 interface InviteLinkModalProps {
   link: string;
@@ -16,11 +16,12 @@ export const InviteLinkModal: React.FC<InviteLinkModalProps> = ({ link, onClose 
   };
 
   const handleTelegramShare = () => {
-    if (initDataTG?.platform !== "unknown" && initDataTG?.openTelegramLink) {
+    const tg = getTelegramSdk();
+    if (tg?.platform !== "unknown" && tg?.openTelegramLink) {
       const telegramShareUrl = `https://t.me/share/url?url=${encodeURIComponent(
         link,
       )}&text=${encodeURIComponent("Запрошено до групи")}`;
-      initDataTG.openTelegramLink(telegramShareUrl);
+      tg.openTelegramLink(telegramShareUrl);
       onClose();
     }
   };

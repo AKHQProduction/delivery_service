@@ -12,7 +12,7 @@ import { useUserShopStore } from "./context/useUserShopStore";
 import { MenuModal } from "./components/modals/MenuModal";
 import { ErrorProvider } from "./context/ErrorContext";
 import { ErrorBoundary } from "./components/ErrorBoundary";
-import initDataTG from "./services/tgInitData";
+import { PlatformProvider } from "./platforms/PlatformProvider";
 
 const isDev = import.meta.env.MODE === "development";
 
@@ -21,8 +21,6 @@ function App() {
 
   useEffect(() => {
     const store = useUserShopStore.getState();
-    const isTG = !!initDataTG?.initData;
-    store.setIsTGWebApp(isTG);
     store.setAuthStatus("loading");
 
     const fetchUser = async () => {
@@ -48,30 +46,32 @@ function App() {
 
   return (
     <ErrorBoundary>
-      <BrowserRouter>
-        <ErrorProvider>
-          <AppLayout>
-            <Routes>
-              <Route path="/login" element={<LoginPage />} />
-              {isDev && <Route path="/dev" element={<DevPage />} />}
-              {routeConfig.map((route) => (
-                <Route
-                  key={route.path}
-                  path={route.path}
-                  element={
-                    <ProtectedRoute allowedRoles={route.allowedRoles}>
-                      <route.component />
-                    </ProtectedRoute>
-                  }
-                />
-              ))}
-            </Routes>
-          </AppLayout>
-          <MenuModal />
-          <AddItemComponent />
-          <BottomNavPanel />
-        </ErrorProvider>
-      </BrowserRouter>
+      <PlatformProvider>
+        <BrowserRouter>
+          <ErrorProvider>
+            <AppLayout>
+              <Routes>
+                <Route path="/login" element={<LoginPage />} />
+                {isDev && <Route path="/dev" element={<DevPage />} />}
+                {routeConfig.map((route) => (
+                  <Route
+                    key={route.path}
+                    path={route.path}
+                    element={
+                      <ProtectedRoute allowedRoles={route.allowedRoles}>
+                        <route.component />
+                      </ProtectedRoute>
+                    }
+                  />
+                ))}
+              </Routes>
+            </AppLayout>
+            <MenuModal />
+            <AddItemComponent />
+            <BottomNavPanel />
+          </ErrorProvider>
+        </BrowserRouter>
+      </PlatformProvider>
     </ErrorBoundary>
   );
 }

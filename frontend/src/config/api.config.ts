@@ -1,8 +1,13 @@
 import axios from "axios";
-import initDataTG from "../services/tgInitData";
-import { useUserShopStore } from "../context/useUserShopStore";
+import { detectPlatform } from "../platforms/detect";
+import { createWebPlatform } from "../platforms/web/WebPlatform";
+import { createTelegramPlatform } from "../platforms/telegram/TelegramPlatform";
 
 const baseURL = import.meta.env.VITE_API_URL;
+
+const platformType = detectPlatform();
+const platform =
+  platformType === "telegram" ? createTelegramPlatform() : createWebPlatform();
 
 const api = axios.create({
   baseURL: baseURL,
@@ -12,11 +17,10 @@ const api = axios.create({
   withCredentials: true,
 });
 
-// Request interceptor: only set Bearer in TG WebApp mode
+// Request interceptor: delegate auth headers to platform adapter
 api.interceptors.request.use((config) => {
-  if (initDataTG?.initData) {
-    config.headers.Authorization = `Bearer ${initDataTG.initData}`;
-  }
+  const headers = platform.auth.getHeaders();
+  Object.assign(config.headers, headers);
   return config;
 });
 
@@ -36,13 +40,9 @@ api.interceptors.response.use(
         return Promise.reject(error);
       }
 
-      // Session expired — redirect browser users to login
+      // Session expired — delegate to platform adapter
       if (error.response.status === 401) {
-        const store = useUserShopStore.getState();
-        if (!store.isTGWebApp && store.authStatus === "authenticated") {
-          store.logout();
-          window.location.href = "/login";
-        }
+        platform.auth.onUnauthorized();
         return Promise.reject(error);
       }
       // Extract error message from backend response
