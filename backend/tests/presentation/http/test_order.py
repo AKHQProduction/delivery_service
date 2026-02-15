@@ -2139,7 +2139,7 @@ async def test_generate_orders_pdf(
     response = await http_client.post(
         url=f"{BASE_URL}/export/pdf/generate",
         headers=headers,
-        params={"delivery_date": tomorrow, "doc_type": "ORDER_LIST"},
+        json={"delivery_date": tomorrow, "doc_type": "ORDER_LIST"},
     )
 
     assert response.status_code == status.HTTP_200_OK
@@ -2212,14 +2212,14 @@ async def test_generate_orders_pdf_with_time_slot_filter(
     response_all = await http_client.post(
         url=f"{BASE_URL}/export/pdf/generate",
         headers=headers,
-        params={"delivery_date": tomorrow, "doc_type": "ORDER_LIST"},
+        json={"delivery_date": tomorrow, "doc_type": "ORDER_LIST"},
     )
     assert response_all.status_code == status.HTTP_200_OK
 
     response_filtered = await http_client.post(
         url=f"{BASE_URL}/export/pdf/generate",
         headers=headers,
-        params={
+        json={
             "delivery_date": tomorrow,
             "doc_type": "ORDER_LIST",
             "time_slot_id": str(time_slot_1),
@@ -2237,7 +2237,7 @@ async def test_generate_orders_pdf_unauthorized(
 
     response = await http_client.post(
         url=f"{BASE_URL}/export/pdf/generate",
-        params={
+        json={
             "delivery_date": tomorrow.isoformat(),
             "doc_type": "ORDER_LIST",
         },
@@ -2301,7 +2301,7 @@ async def test_download_orders_pdf(
     generate_response = await http_client.post(
         url=f"{BASE_URL}/export/pdf/generate",
         headers=headers,
-        params={"delivery_date": tomorrow, "doc_type": "ORDER_LIST"},
+        json={"delivery_date": tomorrow, "doc_type": "ORDER_LIST"},
     )
     file_id = generate_response.json()["file_id"]
 
@@ -2391,7 +2391,7 @@ async def test_generate_orders_pdf_as_courier_allowed(
     response = await http_client.post(
         url=f"{BASE_URL}/export/pdf/generate",
         headers=headers,
-        params={"delivery_date": tomorrow, "doc_type": "ORDER_LIST"},
+        json={"delivery_date": tomorrow, "doc_type": "ORDER_LIST"},
     )
 
     assert response.status_code == status.HTTP_200_OK
