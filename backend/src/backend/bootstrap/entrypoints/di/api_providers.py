@@ -12,6 +12,7 @@ from dishka import (
 from fastapi import Request
 
 from backend.application.commands import (
+    CreateShopCommandHandler,
     DeleteEmployeeCommandHandler,
     EditEmployeeCommandHandler,
 )
@@ -181,6 +182,7 @@ class APIInteractorsProvider(Provider):
         DeleteTimeSlotCommandHandler,
         GetTimeSlotsQueryHandler,
         EditShopCommandHandler,
+        CreateShopCommandHandler,
         ImportClientsCommandHandler,
         LoginTelegramCommandHandler,
         LogoutCommandHandler,

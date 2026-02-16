@@ -15,6 +15,7 @@ class MeUser:
 @dataclass(frozen=True)
 class MeShop:
     shop_id: ShopId
+    name: str | None
     city: str | None
     street: str | None
     house: str | None
@@ -47,6 +48,7 @@ class GetMeQueryHandler:
             ),
             shop=MeShop(
                 shop_id=current_user.shop_id,
+                name=shop.name if shop else None,
                 city=shop.city if shop else None,
                 street=shop.street if shop else None,
                 house=shop.house if shop else None,
