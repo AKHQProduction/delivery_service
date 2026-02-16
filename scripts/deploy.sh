@@ -6,8 +6,12 @@ PULL_OUTPUT=$(git pull)
 echo "$PULL_OUTPUT"
 
 if [ "$PULL_OUTPUT" = "Already up to date." ]; then
-  echo "No changes found. Exiting."
-  exit 0
+  echo "No changes found."
+  read -p "Force redeploy anyway? (y/N): " FORCE
+  if [ "$FORCE" != "y" ] && [ "$FORCE" != "Y" ]; then
+    echo "Exiting."
+    exit 0
+  fi
 fi
 
 DUMPS_DIR="$(cd "$(dirname "$0")/.." && pwd)/dumps"
