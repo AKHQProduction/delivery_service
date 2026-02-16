@@ -1,4 +1,5 @@
 from itertools import starmap
+from typing import Any
 
 from sqlalchemy import (
     ColumnElement,
@@ -7,6 +8,7 @@ from sqlalchemy import (
     desc,
     exists,
     func,
+    insert,
     or_,
     select,
 )
@@ -46,8 +48,53 @@ class SQLAlchemyClientGateway:
     def save(self, entity: Client | ClientPhone | ClientAddress) -> None:
         self._session.add(entity)
 
-    def save_all(self, entities: list[Client]) -> None:
-        self._session.add_all(entities)
+    async def save_all(self, entities: list[Client]) -> None:
+        if not entities:
+            return
+
+        client_rows: list[dict[str, Any]] = []
+        phone_rows: list[dict[str, Any]] = []
+        address_rows: list[dict[str, Any]] = []
+
+        for client in entities:
+            client_rows.append({
+                "id": client.id,
+                "shop_id": client.shop_id,
+                "full_name": client.full_name,
+                "user_id": client.user_id or None,
+            })
+            phone_rows.extend(
+                {
+                    "number": phone.number,
+                    "is_primary": phone.is_primary,
+                    "client_id": client.id,
+                    "shop_id": phone.shop_id,
+                }
+                for phone in client.phones
+            )
+            address_rows.extend(
+                {
+                    "street": addr.street,
+                    "house": addr.house,
+                    "apartment": addr.apartment,
+                    "entrance": addr.entrance,
+                    "floor": addr.floor,
+                    "intercom": addr.intercom,
+                    "comment": addr.comment,
+                    "latitude": addr.latitude,
+                    "longitude": addr.longitude,
+                    "is_primary": addr.is_primary,
+                    "client_id": client.id,
+                    "district_id": addr.district_id,
+                }
+                for addr in client.addresses
+            )
+
+        await self._session.execute(insert(Client), client_rows)
+        if phone_rows:
+            await self._session.execute(insert(ClientPhone), phone_rows)
+        if address_rows:
+            await self._session.execute(insert(ClientAddress), address_rows)
 
     async def load(self, client_id: ClientId) -> Client | None:
         query = (
