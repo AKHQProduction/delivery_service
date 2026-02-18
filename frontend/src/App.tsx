@@ -5,6 +5,7 @@ import { routeConfig } from "./config/roles.config";
 import { ProtectedRoute } from "./components/ProtectedRoute";
 import { DevPage } from "./pages/DevPage";
 import { LoginPage } from "./pages/LoginPage";
+import { CreateShopPage } from "./pages/CreateShopPage";
 import { AddItemComponent } from "./components/features/AddItemComponent";
 import { getUserShopData } from "./services/api/userApi";
 import { useEffect } from "react";
@@ -52,6 +53,7 @@ function App() {
             <AppLayout>
               <Routes>
                 <Route path="/login" element={<LoginPage />} />
+                <Route path="/create-shop" element={<CreateShopPage />} />
                 {isDev && <Route path="/dev" element={<DevPage />} />}
                 {routeConfig.map((route) => (
                   <Route

@@ -5,6 +5,8 @@ import { loginViaTelegram, type TelegramLoginData } from "../services/api/authAp
 import { getUserShopData } from "../services/api/userApi";
 import { getDefaultRouteForRole } from "../config/roles.config";
 
+const TELEGRAM_BOT_NAME = import.meta.env.VITE_TELEGRAM_BOT_NAME;
+
 export const LoginPage = () => {
   const navigate = useNavigate();
   const authStatus = useUserShopStore((s) => s.authStatus);
@@ -46,8 +48,7 @@ export const LoginPage = () => {
     const script = document.createElement("script");
     script.src = "https://telegram.org/js/telegram-widget.js?22";
     script.async = true;
-    //Need to move data-telegram-login to .env
-    script.setAttribute("data-telegram-login", "HQTS_BOT");
+    script.setAttribute("data-telegram-login", TELEGRAM_BOT_NAME);
     script.setAttribute("data-size", "large");
     script.setAttribute("data-onauth", "onTelegramAuth(user)");
     script.setAttribute("data-request-access", "write");
@@ -134,6 +135,15 @@ export const LoginPage = () => {
               )}
             </div>
           </div>
+
+          {/* Create shop link */}
+          <button
+            type="button"
+            onClick={() => navigate("/create-shop")}
+            className="w-full mt-4 py-3 text-sm font-medium text-indigo-600 hover:text-indigo-700 hover:bg-indigo-50 rounded-xl transition-colors"
+          >
+            Створити новий магазин
+          </button>
 
           {/* Error */}
           {error && (
