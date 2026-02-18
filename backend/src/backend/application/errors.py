@@ -15,12 +15,6 @@ class AuthorizationError(ApplicationError):
         return "User not authorized"
 
 
-class UserAlreadyRelatedToShopError(ApplicationError):
-    @property
-    def message(self) -> str:
-        return "User already related to another shop"
-
-
 class AccessDeniedError(ApplicationError):
     @property
     def message(self) -> str:
@@ -41,6 +35,12 @@ class EntityNotFoundError(ApplicationError):
 
 class ConflictError(ApplicationError):
     pass
+
+
+class UserAlreadyRelatedToShopError(ConflictError):
+    @property
+    def message(self) -> str:
+        return "User already related to another shop"
 
 
 class AlreadyExistsError(ConflictError):
