@@ -1,5 +1,6 @@
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.orm import joinedload
 from uuid_utils.compat import uuid7
 
 from backend.application.vars import UserId
@@ -23,6 +24,15 @@ class SQLAlchemyUserGateway:
         result = await self._session.execute(query)
         user_id = result.scalar()
         return UserId(user_id) if user_id else None
+
+    async def load_user_with_tg(self, user_id: UserId) -> User | None:
+        query = (
+            select(User)
+            .options(joinedload(User.telegram_account))
+            .where(User.id == user_id)
+        )
+        result = await self._session.execute(query)
+        return result.scalar_one_or_none()
 
     def next_id(self) -> UserId:
         return UserId(uuid7())

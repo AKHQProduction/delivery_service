@@ -10,7 +10,10 @@ from backend.application.services.shop import create_shop
 from backend.application.services.time_slot import create_time_slot
 from backend.application.vars import ShopRole
 from backend.infrastructure.idp import IdentityProvider
-from backend.infrastructure.persistence.gateways import SQLAlchemyShopGateway
+from backend.infrastructure.persistence.gateways import (
+    SQLAlchemyShopGateway,
+    SQLAlchemyUserGateway,
+)
 from backend.infrastructure.persistence.gateways.time_slot_gateway import (
     SQLAlchemyTimeSlotGateway,
 )
@@ -22,7 +25,6 @@ logger = logging.getLogger(__name__)
 @dataclass(frozen=True)
 class CreateShopCommand:
     name: str
-    owner_full_name: str
 
 
 DEFAULT_TIME_SLOTS: list[tuple[str, time, time]] = [
@@ -35,11 +37,13 @@ class CreateShopCommandHandler:
     def __init__(
         self,
         shop_gateway: SQLAlchemyShopGateway,
+        user_gateway: SQLAlchemyUserGateway,
         identity_provider: IdentityProvider,
         tr_manager: TransactionManager,
         time_slot_gateway: SQLAlchemyTimeSlotGateway,
     ) -> None:
         self._shop_gateway = shop_gateway
+        self._user_gateway = user_gateway
         self._identity_provider = identity_provider
         self._tr_manager = tr_manager
         self._time_slot_gateway = time_slot_gateway
@@ -54,6 +58,10 @@ class CreateShopCommandHandler:
         if await self._shop_gateway.relate_to_shop(user_id):
             raise UserAlreadyRelatedToShopError
 
+        user = await self._user_gateway.load_user_with_tg(user_id)
+        if not user:
+            raise AuthorizationError
+
         shop_id = self._shop_gateway.next_id()
         owner_role_id = await self._shop_gateway.get_role_id(ShopRole.OWNER)
 
@@ -61,7 +69,7 @@ class CreateShopCommandHandler:
             shop_id=shop_id,
             name=command.name,
             owner_user_id=user_id,
-            owner_name=command.owner_full_name,
+            owner_name=user.telegram_account.full_name,
             owner_role_id=owner_role_id,
         )
         self._shop_gateway.save(shop)

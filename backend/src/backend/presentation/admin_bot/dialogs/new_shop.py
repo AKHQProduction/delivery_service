@@ -27,9 +27,7 @@ async def on_input_shp_name(
     bot: Bot = cast("Bot", manager.middleware_data.get("bot"))
     user: User = cast("User", manager.middleware_data.get("event_from_user"))
 
-    await handler.handle(
-        CreateShopCommand(name=value, owner_full_name=user.full_name)
-    )
+    await handler.handle(CreateShopCommand(name=value))
 
     bot_info = await bot.get_me()
     await bot.send_message(

@@ -28,12 +28,14 @@ async def test_create_shop(
 ) -> None:
     telegram_id = 9100
     user_id = await create_user()
-    await create_telegram_account(user_id=user_id, telegram_id=telegram_id)
+    await create_telegram_account(
+        user_id=user_id, telegram_id=telegram_id, full_name="Іван Іванов"
+    )
     await create_role(name=ShopRole.OWNER)
     await session.flush()
 
     headers = customer_headers(telegram_id)
-    json_data = {"name": "Моя крамниця", "owner_full_name": "Іван Іванов"}
+    json_data = {"name": "Моя крамниця"}
 
     response = await http_client.post(
         url=BASE_URL, headers=headers, json=json_data
@@ -74,7 +76,7 @@ async def test_create_shop_user_already_has_shop_conflict(
     await session.flush()
 
     headers = customer_headers(telegram_id)
-    json_data = {"name": "Друга крамниця", "owner_full_name": "Петро Петров"}
+    json_data = {"name": "Друга крамниця"}
 
     response = await http_client.post(
         url=BASE_URL, headers=headers, json=json_data
@@ -87,7 +89,7 @@ async def test_create_shop_user_already_has_shop_conflict(
 async def test_create_shop_unauthorized(
     http_client: AsyncClient,
 ) -> None:
-    json_data = {"name": "Крамниця", "owner_full_name": "Іван Іванов"}
+    json_data = {"name": "Крамниця"}
 
     response = await http_client.post(url=BASE_URL, json=json_data)
 
