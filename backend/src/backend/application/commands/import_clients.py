@@ -77,6 +77,7 @@ class ImportClientsCommandHandler:
             return ImportClientsResult(imported=0, skipped=0)
 
         district_map = await self._resolve_districts(shop_id, parsed_rows)
+        await self._tr_manager.flush()
         existing_keys = await self._build_existing_keys(shop_id, parsed_rows)
 
         seen_in_file: set[DedupKey] = set()
@@ -92,7 +93,7 @@ class ImportClientsCommandHandler:
                 clients.append(client)
 
         if clients:
-            self._client_gateway.save_all(clients)
+            await self._client_gateway.save_all(clients)
             await self._tr_manager.commit()
 
         logger.info(

@@ -478,16 +478,27 @@ async def print_orders_pdf(
     html = (
         "<!DOCTYPE html>"
         "<html><head><title>Print</title>"
-        "<style>body,html{margin:0;padding:0;height:100%;overflow:hidden}"
-        "iframe{width:100%;height:100%;border:none}</style>"
+        "<style>"
+        "body,html{margin:0;padding:0;height:100%;overflow:hidden}"
+        "iframe{width:100%;height:100%;border:none}"
+        "#print-btn{display:none;position:fixed;bottom:20px;left:50%;"
+        "transform:translateX(-50%);z-index:9999;padding:14px 36px;"
+        "font-size:16px;font-weight:600;color:#fff;background:#4F46E5;"
+        "border:none;border-radius:12px;cursor:pointer}"
+        "</style>"
         "</head><body>"
-        f'<iframe src="{download_url}" '
-        'onload="window.print()"></iframe>'
+        f'<iframe id="pdf" src="{download_url}"></iframe>'
+        '<button id="print-btn">Print</button>'
         "<script>"
+        "var isMobile=/iPhone|iPad|iPod|Android/i.test(navigator.userAgent);"
+        'document.getElementById("pdf").onload=function(){'
+        "setTimeout(function(){try{window.print()}catch(e){}},1000);"
+        "};"
+        "if(!isMobile){"
         "window.onafterprint=function(){"
         "try{window.close()}catch(e){}"
-        "setTimeout(function(){location.href='https://t.me'},500)"
         "};"
+        "}"
         "</script>"
         "</body></html>"
     )

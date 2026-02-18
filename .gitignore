@@ -163,4 +163,5 @@ cython_debug/
 .idea/
 tunnel-keys/
 osrm-data/
+dumps/
 
