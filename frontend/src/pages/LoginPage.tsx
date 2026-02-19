@@ -15,11 +15,17 @@ export const LoginPage = () => {
   const [loggingIn, setLoggingIn] = useState(false);
   const [error, setError] = useState("");
 
+  const shop = useUserShopStore((s) => s.shop);
+
   useEffect(() => {
     if (authStatus === "authenticated" && user) {
-      navigate(getDefaultRouteForRole(user.role), { replace: true });
+      if (!shop) {
+        navigate("/create-shop", { replace: true });
+      } else {
+        navigate(getDefaultRouteForRole(user.role), { replace: true });
+      }
     }
-  }, [authStatus, user, navigate]);
+  }, [authStatus, user, shop, navigate]);
 
   const handleTelegramAuth = useCallback(
     async (tgUser: TelegramLoginData) => {
@@ -31,7 +37,11 @@ export const LoginPage = () => {
         const store = useUserShopStore.getState();
         store.setUserAndShop(data.user, data.shop);
         store.setAuthStatus("authenticated");
-        navigate(getDefaultRouteForRole(data.user.role), { replace: true });
+        if (!data.shop) {
+          navigate("/create-shop", { replace: true });
+        } else {
+          navigate(getDefaultRouteForRole(data.user.role), { replace: true });
+        }
       } catch {
         setError("Не вдалося увійти. Спробуйте ще раз.");
         setLoggingIn(false);
@@ -47,7 +57,6 @@ export const LoginPage = () => {
 
     const script = document.createElement("script");
     script.src = "https://telegram.org/js/telegram-widget.js?22";
-    script.async = true;
     script.setAttribute("data-telegram-login", TELEGRAM_BOT_NAME);
     script.setAttribute("data-size", "large");
     script.setAttribute("data-onauth", "onTelegramAuth(user)");

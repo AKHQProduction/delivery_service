@@ -65,7 +65,7 @@ export const SidebarNav = () => {
       <div className="px-4 py-4 border-t border-gray-100">
         <div className="flex items-center gap-3 px-2">
           <div className="w-8 h-8 rounded-full bg-indigo-100 flex items-center justify-center text-indigo-700 font-bold text-sm">
-            {user.full_name[0]}
+            {user.full_name?.[0] ?? "?"}
           </div>
           <div className="min-w-0 flex-1">
             <p className="text-sm font-medium text-gray-900 truncate">{user.full_name}</p>

@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { FormWrapper } from "../components/shared/FormWrapper";
 import { FormInput } from "../components/shared/FormInput";
 import { createNewShop, getUserShopData } from "../services/api/userApi";
+import { logout } from "../services/api/authApi";
 import { useUserShopStore } from "../context/useUserShopStore";
 import { getDefaultRouteForRole } from "../config/roles.config";
 
@@ -27,7 +28,7 @@ export const CreateShopPage = () => {
     setError("");
 
     try {
-      await createNewShop(formData.name, formData.owner_full_name);
+      await createNewShop(formData.name);
       const data = await getUserShopData();
       const store = useUserShopStore.getState();
       store.setUserAndShop(data.user, data.shop);
@@ -50,7 +51,12 @@ export const CreateShopPage = () => {
         <div className="bg-white rounded-2xl shadow-lg border border-gray-100 p-6">
           <FormWrapper
             onSubmit={handleSubmit}
-            onClose={() => navigate("/login")}
+            onClose={async () => {
+              // Need to be updated
+              try { await logout(); } catch { /* ignore */ }
+              useUserShopStore.getState().logout();
+              navigate("/login", { replace: true });
+            }}
             submitLabel={submitting ? "Створення..." : "Створити"}
           >
             <FormInput
@@ -59,14 +65,6 @@ export const CreateShopPage = () => {
               value={formData.name}
               onChange={handleChange}
               placeholder="Введіть назву"
-              required
-            />
-            <FormInput
-              label="Ім'я власника"
-              name="owner_full_name"
-              value={formData.owner_full_name}
-              onChange={handleChange}
-              placeholder="Введіть ім'я власника"
               required
             />
           </FormWrapper>
