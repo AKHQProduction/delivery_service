@@ -1,5 +1,5 @@
 import { useState, useRef } from "react";
-import { BottomModal } from "../modals/BottomModal";
+import { Modal } from "../modals/Modal";
 import { importClientsFromXlsx } from "../../services/api/clientApi";
 
 interface ImportClientsModalProps {
@@ -99,7 +99,7 @@ export const ImportClientsModal: React.FC<ImportClientsModalProps> = ({ isOpen, 
   };
 
   return (
-    <BottomModal isOpen={isOpen} onClose={handleClose} title="Імпорт клієнтів">
+    <Modal isOpen={isOpen} onClose={handleClose} title="Імпорт клієнтів">
       <div className="space-y-4">
         {/* Template download card */}
         <a
@@ -244,6 +244,6 @@ export const ImportClientsModal: React.FC<ImportClientsModalProps> = ({ isOpen, 
           )}
         </button>
       </div>
-    </BottomModal>
+    </Modal>
   );
 };

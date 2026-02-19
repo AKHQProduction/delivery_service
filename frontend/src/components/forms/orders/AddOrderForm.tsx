@@ -9,6 +9,8 @@ import { DeliveryDateStep } from "./steps/DeliveryDateStep";
 import { FormNavigationButtons } from "../../shared/FormNavigationButtons";
 import { AddClientForm } from "../client/AddClientForm";
 import { type Client } from "../../../types/entities/Client";
+import { usePlatform } from "../../../platforms/PlatformProvider";
+import { AddOrderFormWeb } from "./AddOrderFormWeb";
 
 interface AddOrderFormProps {
   onClose: () => void;
@@ -16,6 +18,11 @@ interface AddOrderFormProps {
 }
 
 export const AddOrderForm: React.FC<AddOrderFormProps> = ({ onClose, onSave }) => {
+  const { type } = usePlatform();
+
+  if (type === "web") {
+    return <AddOrderFormWeb onClose={onClose} onSave={onSave} />;
+  }
   const { createNewOrder } = useOrders();
   const [showAddClient, setShowAddClient] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);

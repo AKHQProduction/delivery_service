@@ -2,7 +2,7 @@ import logging
 from dataclasses import dataclass
 
 from backend.application.services.user import create_user_via_tg
-from backend.infrastructure.idp import TelegramIdentityProvider
+from backend.infrastructure.idp import IdentityProvider
 from backend.infrastructure.persistence.gateways import (
     SQLAlchemyShopGateway,
     SQLAlchemyUserGateway,
@@ -21,7 +21,7 @@ class BotStartCommand:
 class BotStartCommandHandler:
     def __init__(
         self,
-        identity_provider: TelegramIdentityProvider,
+        identity_provider: IdentityProvider,
         user_gateway: SQLAlchemyUserGateway,
         shop_gateway: SQLAlchemyShopGateway,
         tr_manager: TransactionManager,

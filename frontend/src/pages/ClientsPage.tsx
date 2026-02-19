@@ -3,7 +3,7 @@ import { PageHeader } from "../components/ui/PageHeader";
 import { SearchBar } from "../components/ui/SearchBar";
 import { ClientCard } from "../components/ui/ClientsCard";
 import { ClientDetailModal } from "../components/modals/detailsModals/ClientDetailModal";
-import { RightModal } from "../components/modals/RightModal";
+import { DetailModal } from "../components/modals/DetailModal";
 import { type Client } from "../types/entities/Client";
 import { useClient } from "../hooks/clients/useClients";
 import { getClientById } from "../services/api/clientApi";
@@ -92,10 +92,10 @@ export const ClientsPage = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 lg:bg-white">
+    <div className="min-h-screen bg-gray-50 md:bg-white">
       <PageHeader title="Клієнти" />
 
-      <div className="px-6 pb-4 lg:px-8">
+      <div className="px-6 pb-4 md:px-8">
         <SearchBar
           placeholder="Пошук клієнтів"
           searchTerm={searchTerm}
@@ -103,7 +103,7 @@ export const ClientsPage = () => {
         />
       </div>
 
-      <div className="px-6 pb-4 lg:px-8">
+      <div className="px-6 pb-4 md:px-8">
         <button
           type="button"
           onClick={() => setIsImportModalOpen(true)}
@@ -122,7 +122,7 @@ export const ClientsPage = () => {
       </div>
 
       {loading && clients.length === 0 ? (
-        <div className="px-6 pb-24 lg:pb-8 lg:px-8">
+        <div className="px-6 pb-24 md:pb-8 md:px-8">
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
             {Array.from({ length: 8 }).map((_, i) => (
               <ClientCardSkeleton key={i} />
@@ -152,7 +152,7 @@ export const ClientsPage = () => {
           )}
         </div>
       ) : (
-        <div className="px-6 pb-24 lg:pb-8 lg:px-8">
+        <div className="px-6 pb-24 md:pb-8 md:px-8">
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
             {clients.map((client) => (
               <ClientCard
@@ -189,7 +189,7 @@ export const ClientsPage = () => {
         </div>
       )}
 
-      <RightModal isOpen={isModalOpen} onClose={handleCloseModal}>
+      <DetailModal isOpen={isModalOpen} onClose={handleCloseModal}>
         {selectedClient && (
           <ClientDetailModal
             client={selectedClient}
@@ -198,7 +198,7 @@ export const ClientsPage = () => {
             onSave={handleSave}
           />
         )}
-      </RightModal>
+      </DetailModal>
 
       <ImportClientsModal
         isOpen={isImportModalOpen}

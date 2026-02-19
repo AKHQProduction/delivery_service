@@ -38,7 +38,7 @@ router = APIRouter(
         status.HTTP_403_FORBIDDEN: {"model": ErrorSchema},
         status.HTTP_409_CONFLICT: {"model": ErrorSchema},
     },
-    dependencies=[Depends(HTTPBearer())],
+    dependencies=[Depends(HTTPBearer(auto_error=False))],
 )
 async def create_time_slot(
     body: Annotated[CreateTimeSlotCommand, Body()],
@@ -56,7 +56,7 @@ async def create_time_slot(
         status.HTTP_404_NOT_FOUND: {"model": ErrorSchema},
         status.HTTP_409_CONFLICT: {"model": ErrorSchema},
     },
-    dependencies=[Depends(HTTPBearer())],
+    dependencies=[Depends(HTTPBearer(auto_error=False))],
 )
 async def update_time_slot(
     time_slot_id: TimeSlotId,
@@ -81,7 +81,7 @@ async def update_time_slot(
         status.HTTP_403_FORBIDDEN: {"model": ErrorSchema},
         status.HTTP_404_NOT_FOUND: {"model": ErrorSchema},
     },
-    dependencies=[Depends(HTTPBearer())],
+    dependencies=[Depends(HTTPBearer(auto_error=False))],
 )
 async def delete_time_slot(
     time_slot_id: TimeSlotId,
@@ -96,7 +96,7 @@ async def delete_time_slot(
     responses={
         status.HTTP_401_UNAUTHORIZED: {"model": ErrorSchema},
     },
-    dependencies=[Depends(HTTPBearer())],
+    dependencies=[Depends(HTTPBearer(auto_error=False))],
 )
 async def get_all_time_slots(
     handler: FromDishka[GetTimeSlotsQueryHandler],

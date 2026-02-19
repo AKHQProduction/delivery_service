@@ -1,20 +1,20 @@
 import { useState, useEffect } from "react";
-import { useTelegram } from "../useTelegram";
+import { getTelegramSdk } from "../../platforms/telegram/telegramSdk";
 import { SettingsStorage } from "../../config/settings.config";
 import { type AppSettings } from "../../types/settings";
 
 export const useTGSettings = () => {
-  const { initDataTG } = useTelegram();
+  const tg = getTelegramSdk();
 
   const [settings, setSettings] = useState<AppSettings>(() => SettingsStorage.load());
 
   useEffect(() => {
-    if (!initDataTG) return;
+    if (!tg) return;
 
-    if (settings.fullscreen && initDataTG.requestFullscreen) {
-      initDataTG.requestFullscreen();
+    if (settings.fullscreen && tg.requestFullscreen) {
+      tg.requestFullscreen();
     }
-  }, [initDataTG, settings.fullscreen]);
+  }, [tg, settings.fullscreen]);
 
   const updateSetting = <K extends keyof AppSettings>(key: K, value: AppSettings[K]) => {
     setSettings((prev) => {
@@ -23,11 +23,11 @@ export const useTGSettings = () => {
       return updated;
     });
 
-    if (key === "fullscreen" && initDataTG) {
-      if (value && initDataTG.requestFullscreen) {
-        initDataTG.requestFullscreen();
-      } else if (!value && initDataTG.exitFullscreen) {
-        initDataTG.exitFullscreen();
+    if (key === "fullscreen" && tg) {
+      if (value && tg.requestFullscreen) {
+        tg.requestFullscreen();
+      } else if (!value && tg.exitFullscreen) {
+        tg.exitFullscreen();
       }
     }
   };

@@ -3,14 +3,14 @@ from backend.application.dto.gateways.order_gateway import (
 )
 from backend.application.errors import EntityNotFoundError
 from backend.application.vars import OrderId
-from backend.infrastructure.idp import TelegramIdentityProvider
+from backend.infrastructure.idp import IdentityProvider
 from backend.infrastructure.persistence.gateways import SQLAlchemyOrderGateway
 
 
 class GetOrderQueryHandler:
     def __init__(
         self,
-        idp: TelegramIdentityProvider,
+        idp: IdentityProvider,
         order_gateway: SQLAlchemyOrderGateway,
     ) -> None:
         self._idp = idp

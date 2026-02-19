@@ -5,7 +5,7 @@ from backend.application.dto.gateways.district_gateway import (
     DistrictReadModel,
     GetDistrictsFilters,
 )
-from backend.infrastructure.idp import TelegramIdentityProvider
+from backend.infrastructure.idp import IdentityProvider
 from backend.infrastructure.persistence.gateways import (
     SQLAlchemyDistrictGateway,
 )
@@ -20,7 +20,7 @@ class GetDistrictsQuery:
 class GetDistrictsQueryHandler:
     def __init__(
         self,
-        idp: TelegramIdentityProvider,
+        idp: IdentityProvider,
         district_gateway: SQLAlchemyDistrictGateway,
     ) -> None:
         self._idp = idp

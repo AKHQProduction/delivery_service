@@ -6,19 +6,19 @@ from collections.abc import Mapping
 from typing import Any, NewType
 from urllib.parse import parse_qsl, unquote
 
-from fastapi import HTTPException, status
 from fastapi.security.utils import get_authorization_scheme_param
 from pydantic import BaseModel
 
+from backend.application.errors import AuthorizationError
 from backend.bootstrap.config import AppConfig, TelegramConfig
 
 logger = logging.getLogger(__name__)
 
-AUTH_ERROR = HTTPException(
-    status_code=status.HTTP_401_UNAUTHORIZED,
-    detail="Not authenticated",
-    headers={"WWW-Authenticate": "Bearer"},
-)
+Headers = NewType("Headers", Mapping[str, str])
+
+
+class WebAppAuthError(AuthorizationError):
+    pass
 
 
 class WebAppUser(BaseModel):
@@ -40,40 +40,36 @@ class InitData(BaseModel):
     hash: str
 
 
-Headers = NewType("Headers", Mapping[str, str])
-
-
 class WebAppAuth:
     def __init__(
         self,
         app_config: AppConfig,
         telegram_config: TelegramConfig,
-        headers: Headers,
     ) -> None:
-        self._headers = headers
         self._app_config = app_config
         self._telegram_config = telegram_config
 
-    def with_init_data(self) -> InitData:
-        logger.debug("Initialize auth with headers: %s", self._headers)
+    def validate(self, headers: Headers) -> int:
         if self._app_config.debug:
-            return self._validate_fake_headers_param()
-        return self._validate_headers_param(self._get_headers_param())
+            return self._validate_fake(headers)
+        param = self._get_bearer_token(headers)
+        init_data = self._parse_and_verify(param)
+        return init_data.user.id
 
-    def _get_headers_param(self) -> str:
-        authorization = self._headers.get("Authorization")
+    def _get_bearer_token(self, headers: Headers) -> str:
+        authorization = headers.get("Authorization")
         schema, param = get_authorization_scheme_param(authorization)
 
         if not authorization or schema.lower() != "bearer":
-            raise AUTH_ERROR
+            raise WebAppAuthError
         return param
 
-    def _validate_headers_param(self, param: str) -> InitData:
+    def _parse_and_verify(self, param: str) -> InitData:
         parsed_init_data = self._parse_init_data(param)
 
         received_hash: str | None = parsed_init_data.get("hash")
         if not received_hash:
-            raise AUTH_ERROR
+            raise WebAppAuthError
 
         fields: list[tuple[str, str]] = sorted([
             (key, unquote(str(value)))
@@ -93,7 +89,7 @@ class WebAppAuth:
         ).hexdigest()
 
         if not hmac.compare_digest(received_hash, computed_hash):
-            raise AUTH_ERROR
+            raise WebAppAuthError
 
         if "user" in parsed_init_data:
             if isinstance(parsed_init_data["user"], str):
@@ -106,33 +102,14 @@ class WebAppAuth:
         parsed_init_data["hash"] = received_hash
         return InitData(**parsed_init_data)
 
-    def _validate_fake_headers_param(self) -> InitData:
-        authorization = self._headers.get("Authorization")
+    def _validate_fake(self, headers: Headers) -> int:
+        authorization = headers.get("Authorization")
         if authorization:
             _, param = get_authorization_scheme_param(authorization)
             if param and param.isdigit():
-                return self._get_dummy_init_data(int(param))
-        return self._get_dummy_init_data(self._app_config.debug_user_id)
+                return int(param)
+        return self._app_config.debug_user_id
 
     @staticmethod
     def _parse_init_data(param: str) -> dict[str, Any]:
         return dict(parse_qsl(param))
-
-    @staticmethod
-    def _get_dummy_init_data(user_id: int) -> InitData:
-        return InitData(
-            query_id="",
-            user=WebAppUser(
-                id=user_id,
-                first_name="",
-                last_name="",
-                username="",
-                language_code="",
-                is_premium=True,
-                added_to_attachment_menu=True,
-                allows_write_to_pm=True,
-                photo_url="",
-            ),
-            auth_date="",
-            hash="",
-        )

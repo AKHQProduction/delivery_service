@@ -52,10 +52,10 @@ export const OrdersStatsPage = () => {
   }, [startDate, endDate]);
 
   return (
-    <div className="min-h-screen bg-gray-50 pb-24 lg:bg-white lg:pb-8">
+    <div className="min-h-screen bg-gray-50 pb-24 md:bg-white md:pb-8">
       <PageHeader title="Статистика" />
 
-      <div className="px-4 sm:px-6 pt-6 pb-4 lg:px-8">
+      <div className="px-4 sm:px-6 pt-6 pb-4 md:px-8">
         <div className="bg-white rounded-2xl p-3 sm:p-4 shadow-sm border border-gray-200 overflow-hidden">
           <label className="block text-sm font-semibold text-gray-700 mb-2">Оберіть період</label>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
@@ -82,7 +82,7 @@ export const OrdersStatsPage = () => {
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-600"></div>
         </div>
       ) : stats ? (
-        <div className="px-6 space-y-4 pb-6 lg:px-8">
+        <div className="px-6 space-y-4 pb-6 md:px-8">
           {/* Summary Block - Combined */}
           <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-200">
             <h3 className="text-base font-bold text-gray-900 mb-4 flex items-center gap-2">

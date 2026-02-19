@@ -5,7 +5,7 @@ from backend.application.dto.gateways.category_gateway import (
     CategoryReadModel,
     GetCategoriesFilters,
 )
-from backend.infrastructure.idp import TelegramIdentityProvider
+from backend.infrastructure.idp import IdentityProvider
 from backend.infrastructure.persistence.gateways import (
     SQLAlchemyCategoryGateway,
 )
@@ -20,7 +20,7 @@ class GetCategoriesQuery:
 class GetCategoriesQueryHandler:
     def __init__(
         self,
-        idp: TelegramIdentityProvider,
+        idp: IdentityProvider,
         category_gateway: SQLAlchemyCategoryGateway,
     ) -> None:
         self._idp = idp

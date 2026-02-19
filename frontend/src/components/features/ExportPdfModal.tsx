@@ -1,9 +1,10 @@
 import { useState, useEffect } from "react";
-import { BottomModal } from "../modals/BottomModal";
+import { Modal } from "../modals/Modal";
 import { DateInput } from "../shared/DateInput";
 import { generateOrdersPdfLink } from "../../services/api/ordersApi";
 import { getAllTimeSlots } from "../../services/api/settingsApi";
 import { useUserShopStore } from "../../context/useUserShopStore";
+import { usePlatform } from "../../platforms/PlatformProvider";
 
 type DocType = "ORDER_LIST" | "STATISTICS";
 type RoutingMode = "NONE" | "ROUNDTRIP" | "ONE_WAY";
@@ -31,6 +32,7 @@ const getPrintUrl = (fileId: string): string => {
 };
 
 export const ExportPdfModal: React.FC<ExportPdfModalProps> = ({ isOpen, onClose }) => {
+  const { files } = usePlatform();
   const [exportDate, setExportDate] = useState(() => {
     const today = new Date();
     return today.toISOString().split("T")[0];
@@ -68,16 +70,7 @@ export const ExportPdfModal: React.FC<ExportPdfModalProps> = ({ isOpen, onClose 
       );
       const downloadUrl = getDownloadUrl(file_id);
 
-      if (window.Telegram?.WebApp?.downloadFile) {
-        window.Telegram.WebApp.downloadFile({
-          url: downloadUrl,
-          file_name: filename,
-        });
-      } else if (window.Telegram?.WebApp?.openLink) {
-        window.Telegram.WebApp.openLink(downloadUrl);
-      } else {
-        window.open(downloadUrl, "_blank");
-      }
+      files.download(downloadUrl, filename);
     } catch {
       setExportError(true);
     } finally {
@@ -101,11 +94,7 @@ export const ExportPdfModal: React.FC<ExportPdfModalProps> = ({ isOpen, onClose 
       );
       const printUrl = getPrintUrl(file_id);
 
-      if (window.Telegram?.WebApp?.openLink) {
-        window.Telegram.WebApp.openLink(printUrl);
-      } else {
-        window.open(printUrl, "_blank");
-      }
+      files.openLink(printUrl);
     } catch {
       setExportError(true);
     } finally {
@@ -114,7 +103,7 @@ export const ExportPdfModal: React.FC<ExportPdfModalProps> = ({ isOpen, onClose 
   };
 
   return (
-    <BottomModal isOpen={isOpen} onClose={onClose} title="Сформувати документ">
+    <Modal isOpen={isOpen} onClose={onClose} title="Сформувати документ">
       <div className="space-y-4">
         {/* Date picker */}
         <div>
@@ -248,6 +237,6 @@ export const ExportPdfModal: React.FC<ExportPdfModalProps> = ({ isOpen, onClose 
           </button>
         </div>
       </div>
-    </BottomModal>
+    </Modal>
   );
 };

@@ -1,22 +1,26 @@
 import axios from "axios";
-import initDataTG from "../services/tgInitData";
+import { detectPlatform } from "../platforms/detect";
+import { createWebPlatform } from "../platforms/web/WebPlatform";
+import { createTelegramPlatform } from "../platforms/telegram/TelegramPlatform";
 
 const baseURL = import.meta.env.VITE_API_URL;
-const userID = JSON.parse(localStorage.getItem("userID") || "{}");
+
+const platformType = detectPlatform();
+const platform =
+  platformType === "telegram" ? createTelegramPlatform() : createWebPlatform();
 
 const api = axios.create({
   baseURL: baseURL,
   headers: {
     "Content-Type": "application/json",
-    Authorization: `Bearer ${initDataTG?.initData || userID}`,
   },
+  withCredentials: true,
 });
 
-// Request interceptor
+// Request interceptor: delegate auth headers to platform adapter
 api.interceptors.request.use((config) => {
-  if (initDataTG?.initData) {
-    config.headers.Authorization = `Bearer ${initDataTG.initData}`;
-  }
+  const headers = platform.auth.getHeaders();
+  Object.assign(config.headers, headers);
   return config;
 });
 
@@ -33,6 +37,12 @@ api.interceptors.response.use(
       //TODO:
       //MOVE THIS TO A SEPARATE FILE WITH ALL EXEPTIONS
       if (error.response.status === 409 && data?.code === "duplicate_phones") {
+        return Promise.reject(error);
+      }
+
+      // Session expired — delegate to platform adapter
+      if (error.response.status === 401) {
+        platform.auth.onUnauthorized();
         return Promise.reject(error);
       }
       // Extract error message from backend response

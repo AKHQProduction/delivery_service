@@ -35,7 +35,7 @@ router = APIRouter(
         status.HTTP_403_FORBIDDEN: {"model": ErrorSchema},
         status.HTTP_404_NOT_FOUND: {"model": ErrorSchema},
     },
-    dependencies=[Depends(HTTPBearer())],
+    dependencies=[Depends(HTTPBearer(auto_error=False))],
 )
 async def update_employee(
     user_id: UserId,
@@ -57,7 +57,7 @@ async def update_employee(
         status.HTTP_403_FORBIDDEN: {"model": ErrorSchema},
         status.HTTP_404_NOT_FOUND: {"model": ErrorSchema},
     },
-    dependencies=[Depends(HTTPBearer())],
+    dependencies=[Depends(HTTPBearer(auto_error=False))],
 )
 async def delete_employee(
     user_id: UserId,
@@ -72,7 +72,7 @@ async def delete_employee(
     responses={
         status.HTTP_401_UNAUTHORIZED: {"model": ErrorSchema},
     },
-    dependencies=[Depends(HTTPBearer())],
+    dependencies=[Depends(HTTPBearer(auto_error=False))],
 )
 async def get_all_employees(
     handler: FromDishka[GetEmployeesQueryHandler],
@@ -96,7 +96,7 @@ async def get_all_employees(
         status.HTTP_401_UNAUTHORIZED: {"model": ErrorSchema},
         status.HTTP_404_NOT_FOUND: {"model": ErrorSchema},
     },
-    dependencies=[Depends(HTTPBearer())],
+    dependencies=[Depends(HTTPBearer(auto_error=False))],
 )
 async def get_employee(
     user_id: UserId, handler: FromDishka[GetEmployeeQueryHandler]

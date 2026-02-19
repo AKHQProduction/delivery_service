@@ -6,6 +6,10 @@ from fastapi import APIRouter, Body, Depends, status
 from fastapi.openapi.models import Example
 from fastapi.security import HTTPBearer
 
+from backend.application.commands.create_shop import (
+    CreateShopCommand,
+    CreateShopCommandHandler,
+)
 from backend.application.commands.edit_shop import (
     EditShopCommand,
     EditShopCommandHandler,
@@ -19,6 +23,23 @@ router = APIRouter(
     tags=["Shop"],
     route_class=DishkaRoute,
 )
+
+
+@router.post(
+    "",
+    status_code=status.HTTP_201_CREATED,
+    responses={
+        status.HTTP_401_UNAUTHORIZED: {"model": ErrorSchema},
+        status.HTTP_409_CONFLICT: {"model": ErrorSchema},
+    },
+    dependencies=[Depends(HTTPBearer(auto_error=False))],
+)
+async def create_new_shop(
+    body: CreateShopCommand,
+    handler: FromDishka[CreateShopCommandHandler],
+) -> None:
+    await handler.handle(body)
+
 
 _EDIT_SHOP_EXAMPLES: dict[str, Example] = {
     "update_address": Example(
@@ -52,7 +73,7 @@ _EDIT_SHOP_EXAMPLES: dict[str, Example] = {
             "model": ErrorSchema,
         },
     },
-    dependencies=[Depends(HTTPBearer())],
+    dependencies=[Depends(HTTPBearer(auto_error=False))],
 )
 async def update_shop(
     body: Annotated[

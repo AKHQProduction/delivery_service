@@ -8,7 +8,7 @@ from backend.application.errors import (
 )
 from backend.application.services.shop import create_membership
 from backend.application.services.user import create_user_via_tg
-from backend.infrastructure.idp import TelegramIdentityProvider
+from backend.infrastructure.idp import IdentityProvider
 from backend.infrastructure.persistence.gateways import (
     RedisLinkGateway,
     SQLAlchemyShopGateway,
@@ -29,7 +29,7 @@ class AcceptInviteCommand:
 class AcceptInviteCommandHandler:
     def __init__(
         self,
-        idp: TelegramIdentityProvider,
+        idp: IdentityProvider,
         shop_gateway: SQLAlchemyShopGateway,
         user_gateway: SQLAlchemyUserGateway,
         link_gateway: RedisLinkGateway,

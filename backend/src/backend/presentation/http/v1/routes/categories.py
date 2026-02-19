@@ -41,7 +41,7 @@ router = APIRouter(
         status.HTTP_401_UNAUTHORIZED: {"model": ErrorSchema},
         status.HTTP_409_CONFLICT: {"model": ErrorSchema},
     },
-    dependencies=[Depends(HTTPBearer())],
+    dependencies=[Depends(HTTPBearer(auto_error=False))],
 )
 async def create_category(
     body: Annotated[CreateCategoryCommand, Body()],
@@ -59,7 +59,7 @@ async def create_category(
         status.HTTP_404_NOT_FOUND: {"model": ErrorSchema},
         status.HTTP_409_CONFLICT: {"model": ErrorSchema},
     },
-    dependencies=[Depends(HTTPBearer())],
+    dependencies=[Depends(HTTPBearer(auto_error=False))],
 )
 async def update_category(
     category_id: CategoryId,
@@ -81,7 +81,7 @@ async def update_category(
         status.HTTP_401_UNAUTHORIZED: {"model": ErrorSchema},
         status.HTTP_403_FORBIDDEN: {"model": ErrorSchema},
     },
-    dependencies=[Depends(HTTPBearer())],
+    dependencies=[Depends(HTTPBearer(auto_error=False))],
 )
 async def delete_category(
     category_id: CategoryId,
@@ -96,7 +96,7 @@ async def delete_category(
     responses={
         status.HTTP_401_UNAUTHORIZED: {"model": ErrorSchema},
     },
-    dependencies=[Depends(HTTPBearer())],
+    dependencies=[Depends(HTTPBearer(auto_error=False))],
 )
 async def get_all_categories(
     handler: FromDishka[GetCategoriesQueryHandler],

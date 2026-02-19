@@ -8,7 +8,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from backend.application.vars import ShopRole
 
-BASE_URL = "/api/v1/users"
+BASE_URL = "/api/v1/auth"
 
 
 @pytest.mark.parametrize(
@@ -47,6 +47,7 @@ async def test_me_return_correct_id_and_role(
         },
         "shop": {
             "shop_id": str(shop_id),
+            "name": "Test Shop",
             "city": None,
             "street": None,
             "house": None,
@@ -79,6 +80,7 @@ async def test_me_returns_shop_address(
     assert response.status_code == status.HTTP_200_OK
     assert response.json()["shop"] == {
         "shop_id": str(shop_id),
+        "name": "Test Shop",
         "city": "Київ",
         "street": "Хрещатик",
         "house": "1",

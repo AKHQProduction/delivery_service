@@ -9,7 +9,7 @@ from backend.application.policies.access import (
 )
 from backend.application.services.shop import update_membership
 from backend.application.vars import ShopRole, UserId
-from backend.infrastructure.idp import TelegramIdentityProvider
+from backend.infrastructure.idp import IdentityProvider
 from backend.infrastructure.persistence.gateways import SQLAlchemyShopGateway
 from backend.infrastructure.transaction_manager import TransactionManager
 
@@ -35,7 +35,7 @@ class EditEmployeeCommand:
 class EditEmployeeCommandHandler:
     def __init__(
         self,
-        idp: TelegramIdentityProvider,
+        idp: IdentityProvider,
         shop_gateway: SQLAlchemyShopGateway,
         tr_manager: TransactionManager,
     ) -> None:

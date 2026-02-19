@@ -13,7 +13,7 @@ from backend.application.services.geocoder import Geocoder
 from backend.application.validators import normalize_ukraine_phone
 from backend.application.validators.phone import validate_no_duplicate_phones
 from backend.application.vars import ClientId, DistrictId
-from backend.infrastructure.idp import TelegramIdentityProvider
+from backend.infrastructure.idp import IdentityProvider
 from backend.infrastructure.persistence.gateways import (
     SQLAlchemyClientGateway,
     SQLAlchemyShopGateway,
@@ -52,7 +52,7 @@ class CreateClientCommand:
 class CreateClientCommandHandler:
     def __init__(
         self,
-        idp: TelegramIdentityProvider,
+        idp: IdentityProvider,
         client_gateway: SQLAlchemyClientGateway,
         shop_gateway: SQLAlchemyShopGateway,
         geocoder: Geocoder,

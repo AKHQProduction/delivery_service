@@ -10,7 +10,7 @@ from backend.application.policies.access import (
 )
 from backend.application.services.product import update_product
 from backend.application.vars import CategoryId, Empty, ProductId
-from backend.infrastructure.idp import TelegramIdentityProvider
+from backend.infrastructure.idp import IdentityProvider
 from backend.infrastructure.persistence.gateways import (
     SQLAlchemyProductGateway,
 )
@@ -30,7 +30,7 @@ class EditProductCommand:
 class EditProductCommandHandler:
     def __init__(
         self,
-        idp: TelegramIdentityProvider,
+        idp: IdentityProvider,
         product_gateway: SQLAlchemyProductGateway,
         tr_manager: TransactionManager,
     ) -> None:

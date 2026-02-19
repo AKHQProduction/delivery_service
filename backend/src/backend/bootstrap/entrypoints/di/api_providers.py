@@ -12,6 +12,7 @@ from dishka import (
 from fastapi import Request
 
 from backend.application.commands import (
+    CreateShopCommandHandler,
     DeleteEmployeeCommandHandler,
     EditEmployeeCommandHandler,
 )
@@ -66,6 +67,10 @@ from backend.application.commands.generate_order_export_pdf import (
 from backend.application.commands.import_clients import (
     ImportClientsCommandHandler,
 )
+from backend.application.commands.login_telegram import (
+    LoginTelegramCommandHandler,
+)
+from backend.application.commands.logout import LogoutCommandHandler
 from backend.application.queries.get_categories import (
     GetCategoriesQueryHandler,
 )
@@ -90,18 +95,25 @@ from backend.application.services.route_optimizer import RouteOptimizer
 from backend.application.usecases.invite_employee.generate_invite_link import (
     GenerateInviteLinkCommandHandler,
 )
-from backend.infrastructure.idp import TelegramIdentityProvider
+from backend.infrastructure.auth import (
+    AuthChain,
+    SessionAuthHandler,
+    WebAppAuthHandler,
+)
+from backend.infrastructure.idp import ApiIdentityProvider, IdentityProvider
 from backend.infrastructure.nominatim import NominatimClient
 from backend.infrastructure.osrm import OSRMClient
 from backend.infrastructure.pdf import ReportLabOrdersPDFGenerator
 from backend.infrastructure.persistence.gateways import (
+    RedisSessionGateway,
     SQLAlchemyShopGateway,
     SQLAlchemyUserGateway,
 )
-from backend.infrastructure.telegram.auth import Headers, InitData, WebAppAuth
+from backend.infrastructure.telegram.auth import WebAppAuth
 from backend.infrastructure.telegram.invite_link_generator import (
     TelegramInviteLinkGenerator,
 )
+from backend.infrastructure.telegram.widget_auth import WidgetAuth
 from backend.infrastructure.xlsx import ClientXlsxParser
 
 
@@ -170,39 +182,42 @@ class APIInteractorsProvider(Provider):
         DeleteTimeSlotCommandHandler,
         GetTimeSlotsQueryHandler,
         EditShopCommandHandler,
+        CreateShopCommandHandler,
         ImportClientsCommandHandler,
+        LoginTelegramCommandHandler,
+        LogoutCommandHandler,
     )
 
     add_employee = provide_all(GenerateInviteLinkCommandHandler)
 
 
-class WebAppProvider(Provider):
+class AuthProvider(Provider):
     scope = Scope.REQUEST
     request = from_context(provides=Request)
 
-    auth = provide(WebAppAuth)
+    auth = provide_all(WidgetAuth, WebAppAuth)
 
     @provide
-    async def get_headers(self, request: Request) -> Headers:
-        return Headers(request.headers)
-
-    @provide
-    async def init_data(self, auth: WebAppAuth) -> InitData:
-        return auth.with_init_data()
-
-    @provide
-    def current_user_id(self, init_data: InitData) -> int:
-        return init_data.user.id
+    def auth_chain(
+        self,
+        session_gateway: RedisSessionGateway,
+        webapp_auth: WebAppAuth,
+        user_gateway: SQLAlchemyUserGateway,
+    ) -> AuthChain:
+        return AuthChain([
+            SessionAuthHandler(session_gateway),
+            WebAppAuthHandler(webapp_auth, user_gateway),
+        ])
 
     @provide
     def idp(
         self,
-        current_user_id: int,
-        user_gateway: SQLAlchemyUserGateway,
+        auth_chain: AuthChain,
+        request: Request,
         shop_gateway: SQLAlchemyShopGateway,
-    ) -> TelegramIdentityProvider:
-        return TelegramIdentityProvider(
-            telegram_id=current_user_id,
-            user_gateway=user_gateway,
+    ) -> IdentityProvider:
+        return ApiIdentityProvider(
+            auth_chain=auth_chain,
+            request=request,
             shop_gateway=shop_gateway,
         )

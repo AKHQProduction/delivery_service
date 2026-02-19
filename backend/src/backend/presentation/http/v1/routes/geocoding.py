@@ -18,7 +18,7 @@ router = APIRouter(
     responses={
         status.HTTP_401_UNAUTHORIZED: {"model": ErrorSchema},
     },
-    dependencies=[Depends(HTTPBearer())],
+    dependencies=[Depends(HTTPBearer(auto_error=False))],
 )
 async def forward_geocode(
     street: str,
@@ -35,7 +35,7 @@ async def forward_geocode(
     responses={
         status.HTTP_401_UNAUTHORIZED: {"model": ErrorSchema},
     },
-    dependencies=[Depends(HTTPBearer())],
+    dependencies=[Depends(HTTPBearer(auto_error=False))],
 )
 async def reverse_geocode(
     lat: float,
