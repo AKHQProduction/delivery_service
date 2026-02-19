@@ -145,15 +145,6 @@ export const LoginPage = () => {
             </div>
           </div>
 
-          {/* Create shop link */}
-          <button
-            type="button"
-            onClick={() => navigate("/create-shop")}
-            className="w-full mt-4 py-3 text-sm font-medium text-indigo-600 hover:text-indigo-700 hover:bg-indigo-50 rounded-xl transition-colors"
-          >
-            Створити новий магазин
-          </button>
-
           {/* Error */}
           {error && (
             <div className="flex items-center gap-2 mt-4 px-3 py-2.5 bg-red-50 border border-red-100 rounded-xl">
