@@ -110,6 +110,7 @@ from backend.infrastructure.persistence.gateways import (
     SQLAlchemyUserGateway,
 )
 from backend.infrastructure.telegram.auth import WebAppAuth
+from backend.infrastructure.transaction_manager import TransactionManager
 from backend.infrastructure.telegram.invite_link_generator import (
     TelegramInviteLinkGenerator,
 )
@@ -203,10 +204,11 @@ class AuthProvider(Provider):
         session_gateway: RedisSessionGateway,
         webapp_auth: WebAppAuth,
         user_gateway: SQLAlchemyUserGateway,
+        tr_manager: TransactionManager,
     ) -> AuthChain:
         return AuthChain([
             SessionAuthHandler(session_gateway),
-            WebAppAuthHandler(webapp_auth, user_gateway),
+            WebAppAuthHandler(webapp_auth, user_gateway, tr_manager),
         ])
 
     @provide

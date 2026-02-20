@@ -11,10 +11,15 @@ interface ProtectedRouteProps {
 
 export const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children, allowedRoles }) => {
   const user = useUserShopStore((s) => s.user);
+  const shop = useUserShopStore((s) => s.shop);
   const { unauthorizedRedirect } = usePlatform();
 
   if (!user) {
     return <Navigate to={unauthorizedRedirect} replace />;
+  }
+
+  if (!shop) {
+    return <Navigate to="/create-shop" replace />;
   }
 
   if (!allowedRoles.includes(user.role)) {

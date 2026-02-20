@@ -49,12 +49,12 @@ class WebAppAuth:
         self._app_config = app_config
         self._telegram_config = telegram_config
 
-    def validate(self, headers: Headers) -> int:
+    def validate(self, headers: Headers) -> WebAppUser:
         if self._app_config.debug:
             return self._validate_fake(headers)
         param = self._get_bearer_token(headers)
         init_data = self._parse_and_verify(param)
-        return init_data.user.id
+        return init_data.user
 
     def _get_bearer_token(self, headers: Headers) -> str:
         authorization = headers.get("Authorization")
@@ -102,13 +102,15 @@ class WebAppAuth:
         parsed_init_data["hash"] = received_hash
         return InitData(**parsed_init_data)
 
-    def _validate_fake(self, headers: Headers) -> int:
+    def _validate_fake(self, headers: Headers) -> WebAppUser:
         authorization = headers.get("Authorization")
         if authorization:
             _, param = get_authorization_scheme_param(authorization)
             if param and param.isdigit():
-                return int(param)
-        return self._app_config.debug_user_id
+                return WebAppUser(id=int(param), first_name="Debug")
+        return WebAppUser(
+            id=self._app_config.debug_user_id, first_name="Debug"
+        )
 
     @staticmethod
     def _parse_init_data(param: str) -> dict[str, Any]:
