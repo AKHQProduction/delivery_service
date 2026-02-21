@@ -16,76 +16,125 @@ class RouteOptimizer:
         self,
         shop_location: CoordinatesDTO,
         orders: list[Order],
-        roundtrip: bool = True,
     ) -> list[OrderId] | None:
         if len(orders) <= 1:
             return None
 
-        with_coords: list[tuple[int, Order]] = []
+        coordinates: list[tuple[float, float]] = [
+            (shop_location.latitude, shop_location.longitude),
+        ]
+        coord_orders: list[Order] = []
         without_coords: list[Order] = []
 
-        for i, order in enumerate(orders):
+        for order in orders:
             addr = order.delivery_address
             if addr and addr.coordinates:
-                with_coords.append((i, order))
+                coord_orders.append(order)
+                coordinates.append((
+                    addr.coordinates.latitude,
+                    addr.coordinates.longitude,
+                ))
             else:
                 without_coords.append(order)
 
-        if not with_coords:
+        if not coord_orders:
             return None
 
-        if not roundtrip and len(with_coords) > 1:
-            farthest = await self._find_farthest(shop_location, with_coords)
-            with_coords.append(with_coords.pop(farthest))
-
-        waypoints: list[CoordinatesDTO] = [
-            o.delivery_address.coordinates
-            for _, o in with_coords
-            if o.delivery_address.coordinates is not None
-        ]
-
-        result = await self._osrm.optimize_route(
-            shop=shop_location,
-            waypoints=waypoints,
-            roundtrip=roundtrip,
-        )
-        if result is None:
+        matrix = await self._osrm.get_duration_matrix(coordinates)
+        if matrix is None:
             return None
 
-        optimized = [with_coords[idx][1].id for idx in result.waypoint_order]
+        route = _nearest_neighbor(matrix)
+        route = _three_opt(route, matrix)
+
+        index_map = {idx + 1: order for idx, order in enumerate(coord_orders)}
+        optimized = [index_map[i].id for i in route if i in index_map]
+
+        seen = set(optimized)
+        optimized.extend(o.id for o in coord_orders if o.id not in seen)
         optimized.extend(o.id for o in without_coords)
 
         return optimized
 
-    async def _find_farthest(
-        self,
-        shop_location: CoordinatesDTO,
-        with_coords: list[tuple[int, Order]],
-    ) -> int:
-        waypoints = [
-            o.delivery_address.coordinates
-            for _, o in with_coords
-            if o.delivery_address.coordinates is not None
-        ]
 
-        durations = await self._osrm.get_durations_from_shop(
-            shop_location, waypoints
-        )
-        if durations:
-            return max(range(len(durations)), key=lambda i: durations[i])
+def _nearest_neighbor(matrix: list[list[float]]) -> list[int]:
+    n = len(matrix)
+    visited = [False] * n
+    visited[0] = True
+    route = [0]
+    current = 0
 
-        return max(
-            range(len(with_coords)),
-            key=lambda i: self._distance_sq(
-                shop_location,
-                with_coords[i][1].delivery_address.coordinates,
-            ),
-        )
+    for _ in range(n - 1):
+        best_next = -1
+        best_cost = float("inf")
+        for j in range(n):
+            if not visited[j] and matrix[current][j] < best_cost:
+                best_cost = matrix[current][j]
+                best_next = j
+        if best_next == -1:
+            break
+        visited[best_next] = True
+        route.append(best_next)
+        current = best_next
 
-    @staticmethod
-    def _distance_sq(a: CoordinatesDTO, b: CoordinatesDTO | None) -> float:
-        if b is None:
-            return 0.0
-        dlat = a.latitude - b.latitude
-        dlng = a.longitude - b.longitude
-        return dlat * dlat + dlng * dlng
+    return route
+
+
+def _route_cost(route: list[int], matrix: list[list[float]]) -> float:
+    return sum(matrix[route[i]][route[i + 1]] for i in range(len(route) - 1))
+
+
+def _three_opt(route: list[int], matrix: list[list[float]]) -> list[int]:
+    n = len(route)
+    if n < 5:
+        return route
+
+    best_cost = _route_cost(route, matrix)
+    improved = True
+
+    while improved:
+        improved = False
+        for i in range(1, n - 3):
+            for j in range(i + 1, n - 2):
+                for k in range(j + 1, n - 1):
+                    route, best_cost, changed = _try_three_opt(
+                        route, matrix, best_cost, i, j, k
+                    )
+                    if changed:
+                        improved = True
+                        break
+                if improved:
+                    break
+            if improved:
+                break
+
+    return route
+
+
+def _try_three_opt(
+    route: list[int],
+    matrix: list[list[float]],
+    best_cost: float,
+    i: int,
+    j: int,
+    k: int,
+) -> tuple[list[int], float, bool]:
+    seg1 = route[:i]
+    seg2 = route[i:j]
+    seg3 = route[j:k]
+    seg4 = route[k:]
+
+    for candidate in (
+        seg1 + seg2[::-1] + seg3 + seg4,
+        seg1 + seg2 + seg3[::-1] + seg4,
+        seg1 + seg2[::-1] + seg3[::-1] + seg4,
+        seg1 + seg3 + seg2 + seg4,
+        seg1 + seg3 + seg2[::-1] + seg4,
+        seg1 + seg3[::-1] + seg2 + seg4,
+        seg1 + seg3[::-1] + seg2[::-1] + seg4,
+    ):
+        cost = _route_cost(candidate, matrix)
+        if cost < best_cost - 1e-10:
+            return candidate, cost, True
+
+    return route, best_cost, False

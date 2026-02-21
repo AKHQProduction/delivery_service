@@ -216,7 +216,7 @@ async def test_generate_pdf_with_coordinates_triggers_optimization(
             json={
                 "delivery_date": str(tomorrow),
                 "doc_type": "ORDER_LIST",
-                "routing_mode": "ROUNDTRIP",
+                "routing_mode": "OPTIMIZED",
             },
             headers=customer_headers(telegram_id),
         )
@@ -260,7 +260,7 @@ async def test_generate_pdf_without_shop_coordinates_skips_optimization(
             json={
                 "delivery_date": str(tomorrow),
                 "doc_type": "ORDER_LIST",
-                "routing_mode": "ROUNDTRIP",
+                "routing_mode": "OPTIMIZED",
             },
             headers=customer_headers(telegram_id),
         )
@@ -325,7 +325,7 @@ async def test_generate_pdf_default_routing_skips_optimization(
 
 
 @pytest.mark.asyncio()
-async def test_generate_pdf_one_way_routing(
+async def test_generate_pdf_optimized_routing(
     http_client: AsyncClient,
     session: AsyncSession,
     customer_headers: Callable[[int], dict[str, Any]],
@@ -375,12 +375,10 @@ async def test_generate_pdf_one_way_routing(
             json={
                 "delivery_date": str(tomorrow),
                 "doc_type": "ORDER_LIST",
-                "routing_mode": "ONE_WAY",
+                "routing_mode": "OPTIMIZED",
             },
             headers=customer_headers(telegram_id),
         )
 
         assert response.status_code == status.HTTP_200_OK
         mock_compute.assert_called_once()
-        call_kwargs = mock_compute.call_args
-        assert call_kwargs.kwargs["roundtrip"] is False

@@ -105,15 +105,12 @@ class GenerateOrderExportPDFCommandHandler:
         loop = asyncio.get_running_loop()
 
         if command.doc_type == ExportDocType.ORDER_LIST:
-            if command.routing_mode != RoutingMode.NONE:
+            if command.routing_mode == RoutingMode.OPTIMIZED:
                 shop_coords = CoordinatesDTO.build(
                     shop.latitude, shop.longitude
                 )
                 if shop_coords:
-                    roundtrip = command.routing_mode == RoutingMode.ROUNDTRIP
-                    orders = await self._optimize_orders(
-                        orders, shop_coords, roundtrip=roundtrip
-                    )
+                    orders = await self._optimize_orders(orders, shop_coords)
 
             pdf_bytes = await loop.run_in_executor(
                 None,
@@ -146,8 +143,6 @@ class GenerateOrderExportPDFCommandHandler:
         self,
         orders: list[Order],
         shop_coords: CoordinatesDTO,
-        *,
-        roundtrip: bool,
     ) -> list[Order]:
         slots: dict[tuple[time, time], list[Order]] = defaultdict(list)
         for order in orders:
@@ -158,13 +153,19 @@ class GenerateOrderExportPDFCommandHandler:
         for key in sorted(slots):
             slot_orders = slots[key]
             optimized_ids = await self._route_optimizer.compute(
-                shop_coords, slot_orders, roundtrip=roundtrip
+                shop_coords, slot_orders
             )
             if optimized_ids:
                 result.extend(
                     self._apply_route_order(slot_orders, optimized_ids)
                 )
             else:
+                logger.warning(
+                    "Route optimization failed for slot %s-%s (%d orders)",
+                    key[0],
+                    key[1],
+                    len(slot_orders),
+                )
                 result.extend(slot_orders)
 
         return result

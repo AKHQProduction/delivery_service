@@ -7,7 +7,7 @@ import { useUserShopStore } from "../../context/useUserShopStore";
 import { usePlatform } from "../../platforms/PlatformProvider";
 
 type DocType = "ORDER_LIST" | "STATISTICS";
-type RoutingMode = "NONE" | "ROUNDTRIP" | "ONE_WAY";
+type RoutingMode = "NONE" | "OPTIMIZED";
 
 interface TimeSlot {
   time_slot_id: string;
@@ -175,11 +175,10 @@ export const ExportPdfModal: React.FC<ExportPdfModalProps> = ({ isOpen, onClose 
                 <span className="text-xs text-gray-400 ml-1">(додайте адресу магазину)</span>
               )}
             </label>
-            <div className="grid grid-cols-3 gap-2">
+            <div className="grid grid-cols-2 gap-2">
               {([
                 { value: "NONE", label: "Без" },
-                { value: "ROUNDTRIP", label: "Кільцева" },
-                { value: "ONE_WAY", label: "Послідовна" },
+                { value: "OPTIMIZED", label: "Оптимальний" },
               ] as const).map((option) => (
                 <button
                   key={option.value}

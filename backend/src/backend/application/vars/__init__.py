@@ -43,8 +43,7 @@ class ExportDocType(StrEnum):
 
 class RoutingMode(StrEnum):
     NONE = "NONE"
-    ROUNDTRIP = "ROUNDTRIP"
-    ONE_WAY = "ONE_WAY"
+    OPTIMIZED = "OPTIMIZED"
 
 
 class Empty(StrEnum):

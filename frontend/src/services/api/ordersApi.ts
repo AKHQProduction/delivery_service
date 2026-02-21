@@ -47,7 +47,7 @@ export const generateOrdersPdfLink = async (
   deliveryDate: string,
   docType: "ORDER_LIST" | "STATISTICS",
   timeSlotId?: string,
-  routingMode: "NONE" | "ROUNDTRIP" | "ONE_WAY" = "NONE",
+  routingMode: "NONE" | "OPTIMIZED" = "NONE",
 ) => {
   const body: Record<string, string> = {
     delivery_date: deliveryDate,
