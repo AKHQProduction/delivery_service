@@ -13,6 +13,13 @@ interface CreateClientPayload {
   addresses: Address[];
 }
 
+export interface ImportResult {
+  imported: number;
+  skipped: number;
+  error_file_id: string | null;
+  error_filename: string | null;
+}
+
 export const createNewClient = async (
   body: CreateClientPayload,
   confirmDuplicate: boolean = false,
@@ -52,7 +59,7 @@ export const importClientsFromXlsx = async (file: File) => {
   const response = await api.post(`v1/clients/import`, formData, {
     headers: { "Content-Type": "multipart/form-data" },
   });
-  return response.data as { imported: number; skipped: number };
+  return response.data as ImportResult;
 };
 
 export const getAllClients = async (

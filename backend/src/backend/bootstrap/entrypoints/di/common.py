@@ -29,9 +29,9 @@ from backend.bootstrap.config import (
     WebhookConfig,
 )
 from backend.infrastructure.persistence.gateways import (
+    RedisFileStorage,
     RedisGeocodeCache,
     RedisLinkGateway,
-    RedisPDFStorage,
     RedisSessionGateway,
     SQLAlchemyCategoryGateway,
     SQLAlchemyClientGateway,
@@ -149,4 +149,4 @@ class RedisProvider(Provider):
     gateway = provide_all(WithParents[RedisLinkGateway], RedisSessionGateway)
     cache = provide(RedisGeocodeCache)
 
-    pdf_storage = provide(RedisPDFStorage)
+    file_storage = provide(RedisFileStorage)

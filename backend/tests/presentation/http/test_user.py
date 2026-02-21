@@ -88,10 +88,13 @@ async def test_me_returns_shop_address(
 
 
 @pytest.mark.asyncio()
-async def test_me_unauthorized(
+async def test_me_without_shop_membership(
     http_client: AsyncClient,
 ) -> None:
     url = BASE_URL + "/me"
     response = await http_client.get(url=url)
 
-    assert response.status_code == status.HTTP_401_UNAUTHORIZED
+    assert response.status_code == status.HTTP_200_OK
+    data = response.json()
+    assert data["user"]["user_id"] is not None
+    assert data["shop"] is None

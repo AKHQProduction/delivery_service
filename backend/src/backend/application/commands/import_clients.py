@@ -10,10 +10,15 @@ from backend.application.services.client import (
     create_phone,
 )
 from backend.application.services.district import create_district
-from backend.application.validators import normalize_ukraine_phone
+from backend.application.validators import (
+    normalize_house,
+    normalize_street,
+    normalize_ukraine_phone,
+)
 from backend.application.vars import DistrictId, ShopId
 from backend.infrastructure.idp import IdentityProvider
 from backend.infrastructure.persistence.gateways import (
+    RedisFileStorage,
     SQLAlchemyClientGateway,
     SQLAlchemyDistrictGateway,
 )
@@ -22,10 +27,15 @@ from backend.infrastructure.persistence.tables.clients import (
     ClientAddress,
 )
 from backend.infrastructure.transaction_manager import TransactionManager
-from backend.infrastructure.xlsx import ClientXlsxParser
+from backend.infrastructure.xlsx import (
+    ClientErrorXlsxGenerator,
+    ClientXlsxParser,
+)
 from backend.infrastructure.xlsx.client_xlsx_parser import (
+    ImportErrorKind,
     ParsedAddress,
     ParsedClientRow,
+    RejectedClientRow,
 )
 
 logger = logging.getLogger(__name__)
@@ -42,6 +52,8 @@ class ImportClientsCommand:
 class ImportClientsResult:
     imported: int
     skipped: int
+    error_file_id: str | None = None
+    error_filename: str | None = None
 
 
 class ImportClientsCommandHandler:
@@ -52,12 +64,16 @@ class ImportClientsCommandHandler:
         district_gateway: SQLAlchemyDistrictGateway,
         tr_manager: TransactionManager,
         parser: ClientXlsxParser,
+        error_report_generator: ClientErrorXlsxGenerator,
+        file_storage: RedisFileStorage,
     ) -> None:
         self._idp = idp
         self._client_gateway = client_gateway
         self._district_gateway = district_gateway
         self._tr_manager = tr_manager
         self._parser = parser
+        self._error_report_generator = error_report_generator
+        self._file_storage = file_storage
 
     async def handle(
         self,
@@ -69,41 +85,84 @@ class ImportClientsCommandHandler:
         shop_id = current_user.shop_id
 
         loop = asyncio.get_running_loop()
-        parsed_rows = await loop.run_in_executor(
+        parse_result = await loop.run_in_executor(
             None, self._parser.parse, command.file_bytes
         )
 
-        if not parsed_rows:
+        if not parse_result.valid and not parse_result.rejected:
             return ImportClientsResult(imported=0, skipped=0)
 
-        district_map = await self._resolve_districts(shop_id, parsed_rows)
-        await self._tr_manager.flush()
-        existing_keys = await self._build_existing_keys(shop_id, parsed_rows)
+        rejected = list(parse_result.rejected)
+        clients: list[Client] = []
 
-        seen_in_file: set[DedupKey] = set()
-        clients = []
-        skipped = 0
+        if parse_result.valid:
+            district_map = await self._resolve_districts(
+                shop_id, parse_result.valid
+            )
+            await self._tr_manager.flush()
+            existing_keys = await self._build_existing_keys(
+                shop_id, parse_result.valid
+            )
 
-        for row in parsed_rows:
-            if self._is_duplicate(row, existing_keys, seen_in_file):
-                skipped += 1
-                continue
-            client = self._build_client(row, shop_id, district_map)
-            if client is not None:
+            seen_in_file: dict[DedupKey, int] = {}
+            raw = parse_result.raw_by_row
+
+            for row in parse_result.valid:
+                dup_error = self._check_duplicate(
+                    row, existing_keys, seen_in_file
+                )
+                if dup_error is not None:
+                    rejected.append(
+                        RejectedClientRow(
+                            row_number=row.row_number,
+                            raw_values=raw[row.row_number],
+                            error_kind=dup_error[0],
+                            error_detail=dup_error[1],
+                        )
+                    )
+                    continue
+
+                client = self._build_client(row, shop_id, district_map)
+                if client is None:
+                    rejected.append(
+                        RejectedClientRow(
+                            row_number=row.row_number,
+                            raw_values=raw[row.row_number],
+                            error_kind=ImportErrorKind.INVALID_PHONE,
+                        )
+                    )
+                    continue
+
                 clients.append(client)
 
-        if clients:
-            await self._client_gateway.save_all(clients)
-            await self._tr_manager.commit()
+            if clients:
+                await self._client_gateway.save_all(clients)
+                await self._tr_manager.commit()
+
+        error_file_id = None
+        error_filename = None
+        if rejected:
+            rejected.sort(key=lambda r: r.row_number)
+            xlsx_bytes = await loop.run_in_executor(
+                None, self._error_report_generator.generate, rejected
+            )
+            error_filename = "import_errors.xlsx"
+            error_file_id = await self._file_storage.save(
+                xlsx_bytes, error_filename
+            )
 
         logger.info(
-            "Imported %d clients (skipped %d) for shop %s (parsed %d rows)",
+            "Imported %d clients (skipped %d) for shop %s",
             len(clients),
-            skipped,
+            len(rejected),
             shop_id,
-            len(parsed_rows),
         )
-        return ImportClientsResult(imported=len(clients), skipped=skipped)
+        return ImportClientsResult(
+            imported=len(clients),
+            skipped=len(rejected),
+            error_file_id=error_file_id,
+            error_filename=error_filename,
+        )
 
     async def _resolve_districts(
         self,
@@ -136,12 +195,12 @@ class ImportClientsCommandHandler:
 
         return district_map
 
-    def _is_duplicate(
+    def _check_duplicate(
         self,
         row: ParsedClientRow,
         existing_keys: set[DedupKey],
-        seen_in_file: set[DedupKey],
-    ) -> bool:
+        seen_in_file: dict[DedupKey, int],
+    ) -> tuple[ImportErrorKind, str | None] | None:
         phones = [self._normalize_phone(row.phone1) or ""]
         if row.phone2:
             p2 = self._normalize_phone(row.phone2)
@@ -154,10 +213,15 @@ class ImportClientsCommandHandler:
 
         key = self._make_dedup_key(row.full_name, phones, addrs)
 
-        if key in existing_keys or key in seen_in_file:
-            return True
-        seen_in_file.add(key)
-        return False
+        if key in existing_keys:
+            return ImportErrorKind.DUPLICATE_IN_DB, None
+        if key in seen_in_file:
+            return (
+                ImportErrorKind.DUPLICATE_IN_FILE,
+                f"рядок {seen_in_file[key]}",
+            )
+        seen_in_file[key] = row.row_number
+        return None
 
     def _build_client(
         self,
@@ -235,7 +299,7 @@ class ImportClientsCommandHandler:
                 c.full_name,
                 [p.number for p in c.phones],
                 [
-                    (a.street.strip().lower(), a.house.strip().lower())
+                    (normalize_street(a.street), normalize_house(a.house))
                     for a in c.addresses
                 ],
             )
@@ -257,7 +321,7 @@ class ImportClientsCommandHandler:
 
     @staticmethod
     def _normalize_address(addr: ParsedAddress) -> tuple[str, str]:
-        return addr.street.strip().lower(), addr.house.strip().lower()
+        return normalize_street(addr.street), normalize_house(addr.house)
 
     @staticmethod
     def _normalize_phone(phone: str) -> str | None:
