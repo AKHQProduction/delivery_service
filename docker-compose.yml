@@ -130,7 +130,7 @@ services:
       - "${OSRM_PORT:-5050}:5050"
     volumes:
       - ./osrm-data:/data
-    command: osrm-routed --algorithm mld --port 5050 /data/ukraine-latest.osrm
+    command: osrm-routed --algorithm ch --port 5050 /data/ukraine-latest.osrm
     profiles: ["map"]
 
   nominatim:

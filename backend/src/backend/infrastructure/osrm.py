@@ -33,10 +33,12 @@ class OSRMClient:
         coords_str = ";".join(f"{c.longitude},{c.latitude}" for c in coords)
 
         url = f"{self._base_url}/trip/v1/driving/{coords_str}"
-        params = {
+        params: dict[str, str] = {
             "source": "first",
             "roundtrip": str(roundtrip).lower(),
         }
+        if not roundtrip:
+            params["destination"] = "last"
 
         logger.debug(
             "OSRM request: %d waypoints, roundtrip=%s",
@@ -71,7 +73,10 @@ class OSRMClient:
             return None
 
         osrm_waypoints = data.get("waypoints", [])
-        order = [wp["waypoint_index"] - 1 for wp in osrm_waypoints[1:]]
+        order = sorted(
+            range(len(osrm_waypoints) - 1),
+            key=lambda i: osrm_waypoints[i + 1]["waypoint_index"],
+        )
 
         logger.debug("OSRM optimized route: %s", order)
         return OptimizedRoute(waypoint_order=order)

@@ -34,6 +34,16 @@ class RouteOptimizer:
         if not with_coords:
             return None
 
+        if not roundtrip and len(with_coords) > 1:
+            farthest = max(
+                range(len(with_coords)),
+                key=lambda i: self._distance_sq(
+                    shop_location,
+                    with_coords[i][1].delivery_address.coordinates,
+                ),
+            )
+            with_coords.append(with_coords.pop(farthest))
+
         waypoints: list[CoordinatesDTO] = [
             o.delivery_address.coordinates
             for _, o in with_coords
@@ -52,3 +62,13 @@ class RouteOptimizer:
         optimized.extend(o.id for o in without_coords)
 
         return optimized
+
+    @staticmethod
+    def _distance_sq(
+        a: CoordinatesDTO, b: CoordinatesDTO | None
+    ) -> float:
+        if b is None:
+            return 0.0
+        dlat = a.latitude - b.latitude
+        dlng = a.longitude - b.longitude
+        return dlat * dlat + dlng * dlng
