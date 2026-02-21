@@ -4,6 +4,7 @@ from dishka import FromDishka
 from dishka.integrations.fastapi import DishkaRoute
 from fastapi import APIRouter, Body, Depends, HTTPException, UploadFile, status
 from fastapi.openapi.models import Example
+from fastapi.responses import Response
 from fastapi.security import HTTPBearer
 
 from backend.application.commands.create_client import (
@@ -36,6 +37,7 @@ from backend.application.queries.get_clients import (
     GetClientsQueryHandler,
 )
 from backend.application.vars import AddressId, ClientId, DistrictId, PhoneId
+from backend.infrastructure.persistence.gateways import RedisFileStorage
 from backend.presentation.http.v1.schemas.client import EditClientSchema
 from backend.presentation.http.v1.schemas.error import ErrorSchema
 
@@ -320,6 +322,31 @@ async def import_clients(
         )
     file_bytes = await file.read()
     return await handler.handle(ImportClientsCommand(file_bytes=file_bytes))
+
+
+@router.get(
+    "/export/errors/{file_id}",
+    status_code=status.HTTP_200_OK,
+    responses={
+        status.HTTP_404_NOT_FOUND: {"model": ErrorSchema},
+    },
+)
+async def download_import_errors(
+    file_id: str,
+    file_storage: FromDishka[RedisFileStorage],
+) -> Response:
+    result = await file_storage.get(file_id)
+    if not result:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="File not found or expired",
+        )
+    content, filename = result
+    return Response(
+        content=content,
+        media_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+        headers={"Content-Disposition": f'attachment; filename="{filename}"'},
+    )
 
 
 @router.get(

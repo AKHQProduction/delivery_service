@@ -46,7 +46,7 @@ from backend.application.vars import (
     PaymentMethod,
     today,
 )
-from backend.infrastructure.persistence.gateways import RedisPDFStorage
+from backend.infrastructure.persistence.gateways import RedisFileStorage
 from backend.presentation.http.v1.schemas.error import ErrorSchema
 from backend.presentation.http.v1.schemas.order import UpdateOrderSchema
 
@@ -433,7 +433,7 @@ async def generate_orders_pdf(
 )
 async def download_orders_pdf(
     file_id: str,
-    pdf_storage: FromDishka[RedisPDFStorage],
+    pdf_storage: FromDishka[RedisFileStorage],
     inline: bool = False,
 ) -> Response:
     result = await pdf_storage.get(file_id)
@@ -462,7 +462,7 @@ async def download_orders_pdf(
 async def print_orders_pdf(
     file_id: str,
     request: Request,
-    pdf_storage: FromDishka[RedisPDFStorage],
+    pdf_storage: FromDishka[RedisFileStorage],
 ) -> HTMLResponse:
     result = await pdf_storage.get(file_id)
     if not result:

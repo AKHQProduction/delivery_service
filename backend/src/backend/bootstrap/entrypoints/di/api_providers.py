@@ -110,12 +110,15 @@ from backend.infrastructure.persistence.gateways import (
     SQLAlchemyUserGateway,
 )
 from backend.infrastructure.telegram.auth import WebAppAuth
-from backend.infrastructure.transaction_manager import TransactionManager
 from backend.infrastructure.telegram.invite_link_generator import (
     TelegramInviteLinkGenerator,
 )
 from backend.infrastructure.telegram.widget_auth import WidgetAuth
-from backend.infrastructure.xlsx import ClientXlsxParser
+from backend.infrastructure.transaction_manager import TransactionManager
+from backend.infrastructure.xlsx import (
+    ClientErrorXlsxGenerator,
+    ClientXlsxParser,
+)
 
 
 class AdaptersProvider(Provider):
@@ -135,6 +138,7 @@ class AdaptersProvider(Provider):
     osrm_client = provide(OSRMClient)
     nominatim_client = provide(NominatimClient)
     xlsx_parser = provide(ClientXlsxParser)
+    xlsx_error_generator = provide(ClientErrorXlsxGenerator)
 
 
 class ServicesProvider(Provider):

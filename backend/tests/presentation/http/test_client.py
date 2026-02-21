@@ -2053,6 +2053,7 @@ async def test_import_clients_success(
 
     assert response.status_code == status.HTTP_200_OK
     assert response.json()["imported"] == 2
+    assert response.json()["error_file_id"] is None
 
     await session.flush()
 
@@ -2147,6 +2148,7 @@ async def test_import_clients_empty_file(
 
     assert response.status_code == status.HTTP_200_OK
     assert response.json()["imported"] == 0
+    assert response.json()["error_file_id"] is None
 
 
 @pytest.mark.asyncio()
@@ -2174,6 +2176,7 @@ async def test_import_clients_skips_row_with_invalid_phone(
 
     assert response.status_code == status.HTTP_200_OK
     assert response.json()["imported"] == 1
+    assert response.json()["error_file_id"] is not None
 
     await session.flush()
 
@@ -2366,6 +2369,7 @@ async def test_import_clients_skips_row_without_required_fields(
 
     assert response.status_code == status.HTTP_200_OK
     assert response.json()["imported"] == 1
+    assert response.json()["error_file_id"] is not None
 
 
 @pytest.mark.asyncio()
@@ -2405,6 +2409,7 @@ async def test_import_clients_skips_duplicates_on_reupload(
     assert response2.status_code == status.HTTP_200_OK
     assert response2.json()["imported"] == 0
     assert response2.json()["skipped"] == 2
+    assert response2.json()["error_file_id"] is not None
 
     await session.flush()
 
@@ -2548,6 +2553,7 @@ async def test_import_clients_skips_intra_file_duplicates(
     assert response.status_code == status.HTTP_200_OK
     assert response.json()["imported"] == 2
     assert response.json()["skipped"] == 1
+    assert response.json()["error_file_id"] is not None
 
     await session.flush()
 
@@ -2677,3 +2683,251 @@ async def test_import_clients_partial_reupload(
 
     clients = (await session.execute(select(Client))).scalars().all()
     assert len(clients) == 2
+
+
+ERRORS_EXPORT_URL = f"{BASE_URL}/export/errors"
+
+
+@pytest.mark.asyncio()
+async def test_import_returns_error_file_on_invalid_rows(
+    http_client: AsyncClient,
+    session: AsyncSession,
+    customer_headers: Callable[[int], dict[str, Any]],
+    setup_full_test_user_with_shop,
+    upload_xlsx: Callable[..., dict[str, Any]],
+) -> None:
+    telegram_id = 5020
+    await setup_full_test_user_with_shop(telegram_id=telegram_id)
+    await session.commit()
+
+    headers = customer_headers(telegram_id)
+
+    response = await http_client.post(
+        url=IMPORT_URL,
+        headers=headers,
+        files=upload_xlsx([
+            ["Валідний", "+380501234567", None, "Хрещатик", "10"],
+            [None, "+380502222222", None, "Садова", "5"],
+        ]),
+    )
+
+    assert response.status_code == status.HTTP_200_OK
+    data = response.json()
+    assert data["imported"] == 1
+    assert data["error_file_id"] is not None
+    assert data["error_filename"] == "import_errors.xlsx"
+
+
+@pytest.mark.asyncio()
+async def test_import_returns_no_error_file_on_success(
+    http_client: AsyncClient,
+    session: AsyncSession,
+    customer_headers: Callable[[int], dict[str, Any]],
+    setup_full_test_user_with_shop,
+    upload_xlsx: Callable[..., dict[str, Any]],
+) -> None:
+    telegram_id = 5021
+    await setup_full_test_user_with_shop(telegram_id=telegram_id)
+    await session.commit()
+
+    headers = customer_headers(telegram_id)
+
+    response = await http_client.post(
+        url=IMPORT_URL,
+        headers=headers,
+        files=upload_xlsx([
+            ["Клієнт 1", "+380501234567", None, "Хрещатик", "10"],
+            ["Клієнт 2", "+380931234567", None, "Садова", "22"],
+        ]),
+    )
+
+    assert response.status_code == status.HTTP_200_OK
+    assert response.json()["error_file_id"] is None
+
+
+@pytest.mark.asyncio()
+async def test_import_all_invalid_returns_error_file(
+    http_client: AsyncClient,
+    session: AsyncSession,
+    customer_headers: Callable[[int], dict[str, Any]],
+    setup_full_test_user_with_shop,
+    upload_xlsx: Callable[..., dict[str, Any]],
+) -> None:
+    telegram_id = 5022
+    await setup_full_test_user_with_shop(telegram_id=telegram_id)
+    await session.commit()
+
+    headers = customer_headers(telegram_id)
+
+    response = await http_client.post(
+        url=IMPORT_URL,
+        headers=headers,
+        files=upload_xlsx([
+            [None, "+380501234567", None, "Хрещатик", "10"],
+            ["Клієнт", None, None, "Садова", "5"],
+        ]),
+    )
+
+    assert response.status_code == status.HTTP_200_OK
+    data = response.json()
+    assert data["imported"] == 0
+    assert data["skipped"] == 2
+    assert data["error_file_id"] is not None
+
+
+@pytest.mark.asyncio()
+async def test_download_import_errors(
+    http_client: AsyncClient,
+    session: AsyncSession,
+    customer_headers: Callable[[int], dict[str, Any]],
+    setup_full_test_user_with_shop,
+    upload_xlsx: Callable[..., dict[str, Any]],
+) -> None:
+    telegram_id = 5023
+    await setup_full_test_user_with_shop(telegram_id=telegram_id)
+    await session.commit()
+
+    headers = customer_headers(telegram_id)
+
+    import_response = await http_client.post(
+        url=IMPORT_URL,
+        headers=headers,
+        files=upload_xlsx([
+            [None, "+380501234567", None, "Хрещатик", "10"],
+        ]),
+    )
+    file_id = import_response.json()["error_file_id"]
+
+    download_response = await http_client.get(
+        url=f"{ERRORS_EXPORT_URL}/{file_id}",
+    )
+
+    assert download_response.status_code == status.HTTP_200_OK
+    assert download_response.headers["content-type"] == XLSX_CONTENT_TYPE
+
+
+@pytest.mark.asyncio()
+async def test_download_import_errors_not_found(
+    http_client: AsyncClient,
+) -> None:
+    random_uuid = str(uuid.uuid4())
+    response = await http_client.get(
+        url=f"{ERRORS_EXPORT_URL}/{random_uuid}",
+    )
+
+    assert response.status_code == status.HTTP_404_NOT_FOUND
+
+
+@pytest.mark.asyncio()
+async def test_download_import_errors_contains_error_column(
+    http_client: AsyncClient,
+    session: AsyncSession,
+    customer_headers: Callable[[int], dict[str, Any]],
+    setup_full_test_user_with_shop,
+    upload_xlsx: Callable[..., dict[str, Any]],
+) -> None:
+    from io import BytesIO
+
+    from openpyxl import load_workbook
+
+    telegram_id = 5024
+    await setup_full_test_user_with_shop(telegram_id=telegram_id)
+    await session.commit()
+
+    headers = customer_headers(telegram_id)
+
+    import_response = await http_client.post(
+        url=IMPORT_URL,
+        headers=headers,
+        files=upload_xlsx([
+            [None, "+380501234567", None, "Хрещатик", "10"],
+        ]),
+    )
+    file_id = import_response.json()["error_file_id"]
+
+    download_response = await http_client.get(
+        url=f"{ERRORS_EXPORT_URL}/{file_id}",
+    )
+
+    wb = load_workbook(BytesIO(download_response.content), read_only=True)
+    ws = wb.active
+    data_rows = list(ws.iter_rows(min_row=2, values_only=True))
+    assert len(data_rows) >= 1
+    last_col_value = data_rows[0][-1]
+    assert last_col_value is not None
+    assert isinstance(last_col_value, str)
+
+
+@pytest.mark.asyncio()
+async def test_import_skipped_count_matches_rejected(
+    http_client: AsyncClient,
+    session: AsyncSession,
+    customer_headers: Callable[[int], dict[str, Any]],
+    setup_full_test_user_with_shop,
+    upload_xlsx: Callable[..., dict[str, Any]],
+) -> None:
+    telegram_id = 5025
+    await setup_full_test_user_with_shop(telegram_id=telegram_id)
+    await session.commit()
+
+    headers = customer_headers(telegram_id)
+
+    response = await http_client.post(
+        url=IMPORT_URL,
+        headers=headers,
+        files=upload_xlsx([
+            ["Валідний", "+380501234567", None, "Хрещатик", "10"],
+            [None, "+380502222222", None, "Садова", "5"],
+            ["Без вулиці", "+380503333333", None, None, "1"],
+        ]),
+    )
+
+    assert response.status_code == status.HTTP_200_OK
+    assert response.json()["imported"] == 1
+    assert response.json()["skipped"] == 2
+
+
+@pytest.mark.asyncio()
+async def test_import_intra_file_duplicate_in_error_report(
+    http_client: AsyncClient,
+    session: AsyncSession,
+    customer_headers: Callable[[int], dict[str, Any]],
+    setup_full_test_user_with_shop,
+    upload_xlsx: Callable[..., dict[str, Any]],
+) -> None:
+    from io import BytesIO
+
+    from openpyxl import load_workbook
+
+    telegram_id = 5026
+    await setup_full_test_user_with_shop(telegram_id=telegram_id)
+    await session.commit()
+
+    headers = customer_headers(telegram_id)
+
+    import_response = await http_client.post(
+        url=IMPORT_URL,
+        headers=headers,
+        files=upload_xlsx([
+            ["Іван Іванов", "+380501234567", None, "Хрещатик", "10"],
+            ["Іван Іванов", "+380501234567", None, "Хрещатик", "10"],
+        ]),
+    )
+
+    data = import_response.json()
+    assert data["imported"] == 1
+    assert data["skipped"] == 1
+
+    file_id = data["error_file_id"]
+    assert file_id is not None
+
+    download_response = await http_client.get(
+        url=f"{ERRORS_EXPORT_URL}/{file_id}",
+    )
+
+    wb = load_workbook(BytesIO(download_response.content), read_only=True)
+    ws = wb.active
+    data_rows = list(ws.iter_rows(min_row=2, values_only=True))
+    assert len(data_rows) == 1
+    error_msg = data_rows[0][-1]
+    assert "Дубль у файлі" in error_msg

@@ -18,7 +18,7 @@ from backend.infrastructure.idp import (
 )
 from backend.infrastructure.pdf import ReportLabOrdersPDFGenerator
 from backend.infrastructure.persistence.gateways import (
-    RedisPDFStorage,
+    RedisFileStorage,
     SQLAlchemyOrderGateway,
     SQLAlchemyShopGateway,
     SQLAlchemyTimeSlotGateway,
@@ -50,7 +50,7 @@ class GenerateOrderExportPDFCommandHandler:
         shop_gateway: SQLAlchemyShopGateway,
         time_slot_gateway: SQLAlchemyTimeSlotGateway,
         pdf_generator: ReportLabOrdersPDFGenerator,
-        pdf_storage: RedisPDFStorage,
+        pdf_storage: RedisFileStorage,
         route_optimizer: RouteOptimizer,
     ) -> None:
         self._idp = idp
