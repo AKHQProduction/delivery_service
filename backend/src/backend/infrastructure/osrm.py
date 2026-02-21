@@ -80,3 +80,43 @@ class OSRMClient:
 
         logger.debug("OSRM optimized route: %s", order)
         return OptimizedRoute(waypoint_order=order)
+
+    async def get_durations_from_shop(
+        self,
+        shop: CoordinatesDTO,
+        waypoints: list[CoordinatesDTO],
+    ) -> list[float] | None:
+        coords = [shop, *waypoints]
+        coords_str = ";".join(f"{c.longitude},{c.latitude}" for c in coords)
+
+        url = f"{self._base_url}/table/v1/driving/{coords_str}"
+        params = {"sources": "0", "annotations": "duration"}
+
+        try:
+            response = await self._http.get(url, params=params)
+            response.raise_for_status()
+            data = response.json()
+        except httpx.HTTPStatusError as exc:
+            logger.error(
+                "OSRM Table HTTP error: status=%d, url=%s",
+                exc.response.status_code,
+                url,
+            )
+            return None
+        except Exception as exc:
+            logger.error(
+                "OSRM Table request failed [%s]",
+                exc.__class__.__name__,
+            )
+            return None
+
+        if data.get("code") != OSRM_OK:
+            logger.error(
+                "OSRM Table returned non-ok code: %s, message: %s",
+                data.get("code"),
+                data.get("message"),
+            )
+            return None
+
+        durations_row = data.get("durations", [[]])[0]
+        return durations_row[1:]

@@ -53,7 +53,7 @@ ignore = [
     "TC001",
     "TC002",
     "RUF067",
-
+    "TRY400",
     "C901",     # too complex
 
     # preview

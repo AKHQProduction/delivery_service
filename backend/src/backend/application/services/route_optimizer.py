@@ -35,13 +35,7 @@ class RouteOptimizer:
             return None
 
         if not roundtrip and len(with_coords) > 1:
-            farthest = max(
-                range(len(with_coords)),
-                key=lambda i: self._distance_sq(
-                    shop_location,
-                    with_coords[i][1].delivery_address.coordinates,
-                ),
-            )
+            farthest = await self._find_farthest(shop_location, with_coords)
             with_coords.append(with_coords.pop(farthest))
 
         waypoints: list[CoordinatesDTO] = [
@@ -63,10 +57,33 @@ class RouteOptimizer:
 
         return optimized
 
+    async def _find_farthest(
+        self,
+        shop_location: CoordinatesDTO,
+        with_coords: list[tuple[int, Order]],
+    ) -> int:
+        waypoints = [
+            o.delivery_address.coordinates
+            for _, o in with_coords
+            if o.delivery_address.coordinates is not None
+        ]
+
+        durations = await self._osrm.get_durations_from_shop(
+            shop_location, waypoints
+        )
+        if durations:
+            return max(range(len(durations)), key=lambda i: durations[i])
+
+        return max(
+            range(len(with_coords)),
+            key=lambda i: self._distance_sq(
+                shop_location,
+                with_coords[i][1].delivery_address.coordinates,
+            ),
+        )
+
     @staticmethod
-    def _distance_sq(
-        a: CoordinatesDTO, b: CoordinatesDTO | None
-    ) -> float:
+    def _distance_sq(a: CoordinatesDTO, b: CoordinatesDTO | None) -> float:
         if b is None:
             return 0.0
         dlat = a.latitude - b.latitude
