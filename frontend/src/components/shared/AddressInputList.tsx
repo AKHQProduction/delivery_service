@@ -310,6 +310,7 @@ export const AddressInputList: React.FC<AddressInputListProps> = ({
         initialHouse={currentEditingIndex !== null ? addresses[currentEditingIndex]?.house : ""}
         city={shop?.city ?? undefined}
         onGeocode={forwardGeocode}
+        onReverseGeocode={reverseGeocode}
         defaultCenter={
           currentEditingIndex !== null && addresses[currentEditingIndex]?.coordinates
             ? {

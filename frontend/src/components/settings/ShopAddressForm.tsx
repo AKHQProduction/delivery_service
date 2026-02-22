@@ -267,6 +267,7 @@ export const ShopAddressForm: React.FC<ShopAddressFormProps> = ({ onSuccess }) =
           initialHouse={shopAddress.house}
           city={shopAddress.city}
           onGeocode={forwardGeocode}
+          onReverseGeocode={reverseGeocode}
           defaultCenter={
             pendingCoordinates ??
             (shopAddress.coordinates
