@@ -3,9 +3,9 @@ from typing import Annotated
 
 from dishka import FromDishka
 from dishka.integrations.fastapi import DishkaRoute
-from fastapi import APIRouter, Body, Depends, HTTPException, Request, status
+from fastapi import APIRouter, Body, Depends, HTTPException, status
 from fastapi.openapi.models import Example
-from fastapi.responses import HTMLResponse, Response
+from fastapi.responses import Response
 from fastapi.security import HTTPBearer
 
 from backend.application.commands.create_order import (
@@ -450,59 +450,6 @@ async def download_orders_pdf(
         media_type="application/pdf",
         headers={"Content-Disposition": disposition},
     )
-
-
-@router.get(
-    "/export/pdf/print/{file_id}",
-    status_code=status.HTTP_200_OK,
-    responses={
-        status.HTTP_404_NOT_FOUND: {"model": ErrorSchema},
-    },
-)
-async def print_orders_pdf(
-    file_id: str,
-    request: Request,
-    pdf_storage: FromDishka[RedisFileStorage],
-) -> HTMLResponse:
-    result = await pdf_storage.get(file_id)
-    if not result:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="File not found or expired",
-        )
-
-    root_path = request.scope.get("root_path", "")
-    download_url = (
-        f"{root_path}/v1/orders/export/pdf/download/{file_id}?inline=true"
-    )
-    html = (
-        "<!DOCTYPE html>"
-        "<html><head><title>Print</title>"
-        "<style>"
-        "body,html{margin:0;padding:0;height:100%;overflow:hidden}"
-        "iframe{width:100%;height:100%;border:none}"
-        "#print-btn{display:none;position:fixed;bottom:20px;left:50%;"
-        "transform:translateX(-50%);z-index:9999;padding:14px 36px;"
-        "font-size:16px;font-weight:600;color:#fff;background:#4F46E5;"
-        "border:none;border-radius:12px;cursor:pointer}"
-        "</style>"
-        "</head><body>"
-        f'<iframe id="pdf" src="{download_url}"></iframe>'
-        '<button id="print-btn">Print</button>'
-        "<script>"
-        "var isMobile=/iPhone|iPad|iPod|Android/i.test(navigator.userAgent);"
-        'document.getElementById("pdf").onload=function(){'
-        "setTimeout(function(){try{window.print()}catch(e){}},1000);"
-        "};"
-        "if(!isMobile){"
-        "window.onafterprint=function(){"
-        "try{window.close()}catch(e){}"
-        "};"
-        "}"
-        "</script>"
-        "</body></html>"
-    )
-    return HTMLResponse(content=html)
 
 
 @router.get(
