@@ -92,6 +92,12 @@ from backend.application.queries.get_products import GetProductsQueryHandler
 from backend.application.queries.get_time_slots import GetTimeSlotsQueryHandler
 from backend.application.services.geocoder import Geocoder
 from backend.application.services.route_optimizer import RouteOptimizer
+from backend.application.services.tsp_solvers import (
+    AntColonySolver,
+    HeldKarpSolver,
+    NNTwoOptSolver,
+    ORToolsSolver,
+)
 from backend.application.usecases.invite_employee.generate_invite_link import (
     GenerateInviteLinkCommandHandler,
 )
@@ -144,6 +150,10 @@ class AdaptersProvider(Provider):
 class ServicesProvider(Provider):
     scope = Scope.APP
 
+    held_karp_solver = provide(HeldKarpSolver)
+    ant_colony_solver = provide(AntColonySolver)
+    ortools_solver = provide(ORToolsSolver)
+    nn_two_opt_solver = provide(NNTwoOptSolver)
     route_optimizer = provide(RouteOptimizer)
     geocoder = provide(Geocoder)
 
