@@ -493,18 +493,20 @@ export const AddOrderFormWeb: React.FC<AddOrderFormWebProps> = ({ onClose, onSav
       </section>
 
       {/* Submit */}
-      <button
-        onClick={handleSubmit}
-        disabled={!isFormValid || isSubmitting}
-        type="button"
-        className={`w-full py-3.5 rounded-xl font-semibold text-white transition-colors ${
-          isFormValid && !isSubmitting
-            ? "bg-indigo-600 hover:bg-indigo-700"
-            : "bg-gray-300 cursor-not-allowed"
-        }`}
-      >
-        {isSubmitting ? "Створення..." : "Створити замовлення"}
-      </button>
+      <div className="sticky bottom-0 bg-white pt-4 pb-4">
+        <button
+          onClick={handleSubmit}
+          disabled={!isFormValid || isSubmitting}
+          type="button"
+          className={`w-full py-3.5 rounded-xl font-semibold text-white transition-colors ${
+            isFormValid && !isSubmitting
+              ? "bg-indigo-600 hover:bg-indigo-700"
+              : "bg-gray-300 cursor-not-allowed"
+          }`}
+        >
+          {isSubmitting ? "Створення..." : "Створити замовлення"}
+        </button>
+      </div>
     </div>
   );
 };

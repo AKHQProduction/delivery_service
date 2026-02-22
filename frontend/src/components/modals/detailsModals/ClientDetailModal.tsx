@@ -58,7 +58,7 @@ export const ClientDetailModal: React.FC<ClientDetailModalProps> = ({
           </h1>
         </div>
 
-        <div className="flex-1 overflow-y-auto px-6 py-6">
+        <div className="flex-1 overflow-y-auto px-6 pt-6">
           <EditClientForm client={client} onClose={handleCancelEdit} onSave={handleSaveEdit} />
         </div>
       </div>
@@ -80,7 +80,7 @@ export const ClientDetailModal: React.FC<ClientDetailModalProps> = ({
         <h1 className="text-3xl font-bold text-white mb-2">{client.full_name}</h1>
       </div>
 
-      <div className="flex-1 overflow-y-auto px-6 py-6 space-y-6 pb-24">
+      <div className="flex-1 overflow-y-auto px-6 py-6 space-y-6">
         <div>
           <h2 className="text-sm font-semibold text-gray-500 uppercase tracking-wide mb-4">
             Основна інформація
@@ -111,7 +111,8 @@ export const ClientDetailModal: React.FC<ClientDetailModalProps> = ({
             );
           })}
         </div>
-
+      </div>
+      <div className="px-6 py-4 border-t border-gray-200">
         <ModalButtons
           firstButtonText={"Редагувати"}
           handleEditClick={handleEditClick}

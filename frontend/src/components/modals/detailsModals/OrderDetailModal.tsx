@@ -81,7 +81,7 @@ export const OrderDetailModal = ({ order, onClose, onDelete, onSave }: OrderDeta
           <h1 className="text-3xl font-bold text-white mb-2">Редагувати замовлення</h1>
         </div>
 
-        <div className="flex-1 overflow-y-auto px-6 py-6">
+        <div className="flex-1 overflow-y-auto px-6 pt-6">
           <EditOrderForm order={order} onClose={handleCancelEdit} onSave={handleSaveEdit} />
         </div>
       </div>
@@ -102,7 +102,7 @@ export const OrderDetailModal = ({ order, onClose, onDelete, onSave }: OrderDeta
         <h1 className="text-3xl font-bold text-white mb-2">Замовлення для {order.client_name}</h1>
       </div>
 
-      <div className="flex-1 overflow-y-auto px-6 py-6 space-y-4 pb-24">
+      <div className="flex-1 overflow-y-auto px-6 py-6 space-y-4">
         {/* Items List */}
         <div>
           <h2 className="text-xs font-bold text-gray-500 uppercase tracking-wide mb-3">Товари</h2>
@@ -232,6 +232,8 @@ export const OrderDetailModal = ({ order, onClose, onDelete, onSave }: OrderDeta
           </div>
         </div>
 
+      </div>
+      <div className="px-6 py-4 border-t border-gray-200">
         <ModalButtons
           firstButtonText={"Редагувати"}
           handleEditClick={handleEditClick}

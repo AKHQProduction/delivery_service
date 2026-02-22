@@ -67,7 +67,7 @@ export const BottomModal: React.FC<BottomModalProps> = ({ isOpen, onClose, title
           </button>
         </div>
 
-        <div className="px-6 py-4 overflow-y-auto flex-1">{children}</div>
+        <div className="px-6 pt-4 overflow-y-auto flex-1">{children}</div>
       </div>
     </>
   );
