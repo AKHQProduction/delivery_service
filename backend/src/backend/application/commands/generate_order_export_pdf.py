@@ -149,12 +149,19 @@ class GenerateOrderExportPDFCommandHandler:
             key = (order.delivery_start_time, order.delivery_end_time)
             slots[key].append(order)
 
-        result: list[Order] = []
-        for key in sorted(slots):
-            slot_orders = slots[key]
-            optimized_ids = await self._route_optimizer.compute(
-                shop_coords, slot_orders
+        sorted_keys = sorted(slots)
+        optimized_ids_list = await asyncio.gather(
+            *(
+                self._route_optimizer.compute(shop_coords, slots[key])
+                for key in sorted_keys
             )
+        )
+
+        result: list[Order] = []
+        for key, optimized_ids in zip(
+            sorted_keys, optimized_ids_list, strict=True
+        ):
+            slot_orders = slots[key]
             if optimized_ids:
                 result.extend(
                     self._apply_route_order(slot_orders, optimized_ids)
