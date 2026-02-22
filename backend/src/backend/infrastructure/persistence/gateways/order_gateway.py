@@ -1,12 +1,14 @@
 import datetime
+import json
 from uuid import UUID
 
-from sqlalchemy import asc, case, desc, func, literal, or_, select
+from sqlalchemy import asc, case, desc, func, literal, or_, select, text
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 from sqlalchemy.sql import Select
 from uuid_utils.compat import uuid7
 
+from backend.application.dto.coordinates import CoordinatesDTO
 from backend.application.dto.gateways import Pagination, SortOrder
 from backend.application.dto.gateways.order_gateway import (
     CategoryStatsReadModel,
@@ -323,6 +325,42 @@ class SQLAlchemyOrderGateway:
             )
             for row in result.all()
         ]
+
+    async def update_delivery_coordinates(
+        self,
+        client_id: ClientId,
+        street: str,
+        house: str,
+        new_coordinates: CoordinatesDTO,
+        from_date: datetime.date,
+    ) -> int:
+        stmt = text("""
+            UPDATE orders
+            SET delivery_address = jsonb_set(
+                delivery_address,
+                '{coordinates}',
+                CAST(:coords AS jsonb)
+            ),
+            updated_at = now()
+            WHERE client_id = :client_id
+              AND lower(btrim(delivery_address->>'street')) = :street
+              AND lower(btrim(delivery_address->>'house')) = :house
+              AND date >= :from_date
+        """)
+        result = await self._session.execute(
+            stmt,
+            {
+                "coords": json.dumps({
+                    "latitude": new_coordinates.latitude,
+                    "longitude": new_coordinates.longitude,
+                }),
+                "client_id": str(client_id),
+                "street": street.strip().lower(),
+                "house": house.strip().lower(),
+                "from_date": from_date,
+            },
+        )
+        return result.rowcount  # type: ignore[attr-defined]
 
     @staticmethod
     def _apply_order_filters(

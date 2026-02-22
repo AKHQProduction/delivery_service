@@ -1,3 +1,4 @@
+import datetime
 import logging
 from dataclasses import dataclass
 
@@ -24,6 +25,9 @@ from backend.infrastructure.idp import IdentityProvider
 from backend.infrastructure.persistence.gateways import (
     SQLAlchemyClientGateway,
     SQLAlchemyShopGateway,
+)
+from backend.infrastructure.persistence.gateways.order_gateway import (
+    SQLAlchemyOrderGateway,
 )
 from backend.infrastructure.transaction_manager import TransactionManager
 
@@ -84,12 +88,14 @@ class EditClientCommandHandler:
         idp: IdentityProvider,
         client_gateway: SQLAlchemyClientGateway,
         shop_gateway: SQLAlchemyShopGateway,
+        order_gateway: SQLAlchemyOrderGateway,
         geocoder: Geocoder,
         tr_manager: TransactionManager,
     ) -> None:
         self._idp = idp
         self._client_gateway = client_gateway
         self._shop_gateway = shop_gateway
+        self._order_gateway = order_gateway
         self._geocoder = geocoder
         self._tr_manager = tr_manager
 
@@ -152,6 +158,11 @@ class EditClientCommandHandler:
             shop = await self._shop_gateway.load_shop(client.shop_id)
             shop_city = shop.city if shop else None
 
+            old_coords = {
+                addr.id: (addr.latitude, addr.longitude)
+                for addr in client.addresses
+            }
+
             address_items = []
             for a in command.addresses:
                 coordinates = await self._geocoder.geocode_if_missing(
@@ -177,6 +188,39 @@ class EditClientCommandHandler:
                 )
 
             sync_addresses(client, addresses=address_items)
+
+            today = datetime.datetime.now(datetime.UTC).date()
+            for item in address_items:
+                if not item.id or not item.coordinates:
+                    continue
+                old = old_coords.get(item.id)
+                if not old:
+                    continue
+                old_lat, old_lng = old
+                if (item.coordinates.latitude, item.coordinates.longitude) == (
+                    old_lat,
+                    old_lng,
+                ):
+                    continue
+                updated = (
+                    await self._order_gateway.update_delivery_coordinates(
+                        client_id=client.id,
+                        street=item.street,
+                        house=item.house,
+                        new_coordinates=item.coordinates,
+                        from_date=today,
+                    )
+                )
+                if updated:
+                    logger.info(
+                        "Propagated coordinates to %d order(s) for "
+                        "client_id=%s, street=%s, house=%s",
+                        updated,
+                        client.id,
+                        item.street,
+                        item.house,
+                    )
+
             updates.append(f"addresses={len(command.addresses)}")
 
         await self._tr_manager.commit()

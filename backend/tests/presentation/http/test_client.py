@@ -1,5 +1,6 @@
 import uuid
 from collections.abc import Callable
+from datetime import UTC, datetime, timedelta
 from typing import Any
 from unittest.mock import AsyncMock, patch
 
@@ -17,6 +18,7 @@ from backend.infrastructure.persistence.tables.clients import (
     ClientPhone,
 )
 from backend.infrastructure.persistence.tables.districts import District
+from backend.infrastructure.persistence.tables.orders import Order
 
 from .conftest import XLSX_CONTENT_TYPE
 
@@ -2931,3 +2933,100 @@ async def test_import_intra_file_duplicate_in_error_report(
     assert len(data_rows) == 1
     error_msg = data_rows[0][-1]
     assert "Дубль у файлі" in error_msg
+
+
+@pytest.mark.asyncio()
+async def test_edit_client_propagates_coordinates_to_future_orders(
+    http_client: AsyncClient,
+    session: AsyncSession,
+    customer_headers: Callable[[int], dict[str, Any]],
+    setup_full_test_user_with_shop,
+    setup_test_client,
+    setup_test_order,
+) -> None:
+    telegram_id = 9001
+    _, shop_id = await setup_full_test_user_with_shop(telegram_id=telegram_id)
+
+    old_lat, old_lng = 50.0, 30.0
+    new_lat, new_lng = 51.1111, 31.2222
+
+    client_id = await setup_test_client(
+        shop_id=shop_id,
+        full_name="Клієнт Координати",
+        phones=["+380501111111"],
+        addresses=[
+            {
+                "street": "Шевченка",
+                "house": "10",
+                "latitude": old_lat,
+                "longitude": old_lng,
+            }
+        ],
+    )
+
+    today = datetime.now(UTC).date()
+    future_date = today + timedelta(days=1)
+    past_date = today - timedelta(days=1)
+
+    future_order_id = await setup_test_order(
+        shop_id=shop_id,
+        client_id=client_id,
+        delivery_date=future_date,
+        delivery_address={
+            "street": "Шевченка",
+            "house": "10",
+            "coordinates": {"latitude": old_lat, "longitude": old_lng},
+        },
+    )
+
+    past_order_id = await setup_test_order(
+        shop_id=shop_id,
+        client_id=client_id,
+        delivery_date=past_date,
+        delivery_address={
+            "street": "Шевченка",
+            "house": "10",
+            "coordinates": {"latitude": old_lat, "longitude": old_lng},
+        },
+    )
+
+    await session.commit()
+
+    address_result = await session.execute(
+        select(ClientAddress).where(ClientAddress.client_id == client_id)
+    )
+    address_id = address_result.scalars().first().id
+
+    headers = customer_headers(telegram_id)
+    response = await http_client.patch(
+        url=f"{BASE_URL}/{client_id}",
+        headers=headers,
+        json={
+            "addresses": [
+                {
+                    "id": address_id,
+                    "street": "Шевченка",
+                    "house": "10",
+                    "coordinates": {
+                        "latitude": new_lat,
+                        "longitude": new_lng,
+                    },
+                    "is_primary": True,
+                }
+            ]
+        },
+    )
+
+    assert response.status_code == status.HTTP_200_OK
+
+    await session.flush()
+
+    future_order = await session.get(Order, future_order_id)
+    assert future_order.delivery_address.coordinates is not None
+    assert future_order.delivery_address.coordinates.latitude == new_lat
+    assert future_order.delivery_address.coordinates.longitude == new_lng
+
+    past_order = await session.get(Order, past_order_id)
+    assert past_order.delivery_address.coordinates is not None
+    assert past_order.delivery_address.coordinates.latitude == old_lat
+    assert past_order.delivery_address.coordinates.longitude == old_lng
