@@ -1,7 +1,8 @@
 import logging
 import random
 
-from backend.application.services.tsp_solvers.base import route_cost, two_opt
+from backend.application.services.tsp_solvers.base import TSPSolver
+from backend.infrastructure.tsp_solvers.utils import route_cost, two_opt
 
 logger = logging.getLogger(__name__)
 
@@ -11,7 +12,7 @@ EVAPORATION = 0.3
 NUM_RESTARTS = 3
 
 
-class AntColonySolver:
+class AntColonySolver(TSPSolver):
     def solve(self, matrix: list[list[float]]) -> list[int]:
         n = len(matrix)
         num_ants = n

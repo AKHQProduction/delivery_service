@@ -6,7 +6,7 @@ from datetime import date, time
 
 from backend.application.dto.coordinates import CoordinatesDTO
 from backend.application.errors import AccessDeniedError, EntityNotFoundError
-from backend.application.services.route_optimizer import RouteOptimizer
+from backend.application.services.tsp_solvers import RouteOptimizer
 from backend.application.vars import (
     ExportDocType,
     OrderId,

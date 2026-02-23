@@ -1,11 +1,13 @@
 import logging
 
+from backend.application.services.tsp_solvers.base import TSPSolver
+
 logger = logging.getLogger(__name__)
 
 MAX_N = 22
 
 
-class HeldKarpSolver:
+class HeldKarpSolver(TSPSolver):
     def solve(self, matrix: list[list[float]]) -> list[int]:
         n = len(matrix)
         logger.info("Held-Karp solver started: n=%d", n)

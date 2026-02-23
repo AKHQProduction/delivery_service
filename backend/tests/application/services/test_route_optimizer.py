@@ -2,7 +2,7 @@ from unittest.mock import AsyncMock, Mock
 
 import pytest
 
-from backend.application.services.route_optimizer import (
+from backend.application.services.tsp_solvers.route_optimizer import (
     HELD_KARP_THRESHOLD,
     ORTOOLS_THRESHOLD,
     RouteOptimizer,

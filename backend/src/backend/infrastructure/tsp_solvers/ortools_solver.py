@@ -2,13 +2,15 @@ import logging
 
 from ortools.constraint_solver import pywrapcp, routing_enums_pb2
 
+from backend.application.services.tsp_solvers.base import TSPSolver
+
 logger = logging.getLogger(__name__)
 
 TIME_LIMIT_SECONDS = 15
 INF_REPLACEMENT = 10**7
 
 
-class ORToolsSolver:
+class ORToolsSolver(TSPSolver):
     def solve(self, matrix: list[list[float]]) -> list[int]:
         n = len(matrix)
         logger.info(

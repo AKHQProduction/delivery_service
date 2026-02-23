@@ -1,11 +1,12 @@
 import logging
 
-from backend.application.services.tsp_solvers.base import route_cost, two_opt
+from backend.application.services.tsp_solvers.base import TSPSolver
+from backend.infrastructure.tsp_solvers.utils import route_cost, two_opt
 
 logger = logging.getLogger(__name__)
 
 
-class NNTwoOptSolver:
+class NNTwoOptSolver(TSPSolver):
     def solve(self, matrix: list[list[float]]) -> list[int]:
         n = len(matrix)
         logger.info("NN+2opt solver started: n=%d", n)

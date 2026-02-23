@@ -91,13 +91,7 @@ from backend.application.queries.get_product import GetProductQueryHandler
 from backend.application.queries.get_products import GetProductsQueryHandler
 from backend.application.queries.get_time_slots import GetTimeSlotsQueryHandler
 from backend.application.services.geocoder import Geocoder
-from backend.application.services.route_optimizer import RouteOptimizer
-from backend.application.services.tsp_solvers import (
-    HeldKarpSolver,
-    IteratedNNSolver,
-    NNTwoOptSolver,
-    ORToolsSolver,
-)
+from backend.application.services.tsp_solvers import RouteOptimizer
 from backend.application.usecases.invite_employee.generate_invite_link import (
     GenerateInviteLinkCommandHandler,
 )
@@ -121,6 +115,12 @@ from backend.infrastructure.telegram.invite_link_generator import (
 )
 from backend.infrastructure.telegram.widget_auth import WidgetAuth
 from backend.infrastructure.transaction_manager import TransactionManager
+from backend.infrastructure.tsp_solvers import (
+    HeldKarpSolver,
+    IteratedNNSolver,
+    NNTwoOptSolver,
+    ORToolsSolver,
+)
 from backend.infrastructure.xlsx import (
     ClientErrorXlsxGenerator,
     ClientXlsxParser,
@@ -150,12 +150,17 @@ class AdaptersProvider(Provider):
 class ServicesProvider(Provider):
     scope = Scope.APP
 
-    held_karp_solver = provide(HeldKarpSolver)
-    iterated_nn_solver = provide(IteratedNNSolver)
-    ortools_solver = provide(ORToolsSolver)
-    nn_two_opt_solver = provide(NNTwoOptSolver)
-    route_optimizer = provide(RouteOptimizer)
     geocoder = provide(Geocoder)
+
+    @provide
+    def route_optimizer(self, osrm_client: OSRMClient) -> RouteOptimizer:
+        return RouteOptimizer(
+            osrm_client=osrm_client,
+            held_karp=HeldKarpSolver(),
+            iterated_nn=IteratedNNSolver(),
+            ortools=ORToolsSolver(),
+            fallback=NNTwoOptSolver(),
+        )
 
 
 class APIInteractorsProvider(Provider):

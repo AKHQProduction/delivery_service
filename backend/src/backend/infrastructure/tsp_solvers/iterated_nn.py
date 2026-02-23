@@ -1,16 +1,14 @@
 import logging
 
-from backend.application.services.tsp_solvers.base import (
-    local_search,
-    route_cost,
-)
+from backend.application.services.tsp_solvers.base import TSPSolver
+from backend.infrastructure.tsp_solvers.utils import local_search, route_cost
 
 logger = logging.getLogger(__name__)
 
 MAX_STARTS = 30
 
 
-class IteratedNNSolver:
+class IteratedNNSolver(TSPSolver):
     def solve(self, matrix: list[list[float]]) -> list[int]:
         n = len(matrix)
         k = min(n, MAX_STARTS)
