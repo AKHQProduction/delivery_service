@@ -45,6 +45,7 @@ from backend.bootstrap.entrypoints.di.tests_providers import (
     MockAdaptersProvider,
     MockAuthProvider,
     MockConfigProvider,
+    MockGeocoderProvider,
     MockServicesProvider,
 )
 from backend.infrastructure.persistence.tables import (
@@ -164,6 +165,7 @@ def make_container(
             MockAPIInteractorsProvider(),
             MockAdaptersProvider(),
             MockServicesProvider(),
+            MockGeocoderProvider(),
             RedisProvider(),
             context={Config: config},
         )

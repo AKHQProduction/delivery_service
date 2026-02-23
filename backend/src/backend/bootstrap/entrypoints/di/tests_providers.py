@@ -11,6 +11,7 @@ from backend.bootstrap.entrypoints.di.api_providers import (
     APIInteractorsProvider,
     AdaptersProvider,
     AuthProvider,
+    GeocoderProvider,
     ServicesProvider,
 )
 from backend.bootstrap.entrypoints.di.common import (
@@ -42,6 +43,10 @@ class MockConfigProvider(ConfigProvider):
 
 
 class MockServicesProvider(ServicesProvider):
+    pass
+
+
+class MockGeocoderProvider(GeocoderProvider):
     pass
 
 

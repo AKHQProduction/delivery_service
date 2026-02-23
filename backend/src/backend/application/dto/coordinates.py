@@ -10,9 +10,22 @@ class HasCoordinates(Protocol):
 
 
 @dataclass(frozen=True)
+class ReverseGeocodeResult:
+    display_name: str
+    street: str | None
+    house: str | None
+    city: str | None
+    district: str | None
+
+
+@dataclass(frozen=True)
 class CoordinatesDTO:
     latitude: float
     longitude: float
+
+    def __post_init__(self) -> None:
+        object.__setattr__(self, "latitude", round(self.latitude, 4))
+        object.__setattr__(self, "longitude", round(self.longitude, 4))
 
     @classmethod
     def build(

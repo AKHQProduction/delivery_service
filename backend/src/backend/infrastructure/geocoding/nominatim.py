@@ -2,86 +2,41 @@ import logging
 
 import httpx
 
-from backend.application.dto.coordinates import CoordinatesDTO
-from backend.bootstrap.config import NominatimConfig
-from backend.infrastructure.persistence.gateways.geocode_cache import (
-    RedisGeocodeCache,
+from backend.application.dto.coordinates import (
+    CoordinatesDTO,
+    ReverseGeocodeResult,
 )
+from backend.application.services.geocoder import GeocodingProvider
+from backend.bootstrap.config import NominatimConfig
 
 logger = logging.getLogger(__name__)
 
 
-class NominatimClient:
+class NominatimClient(GeocodingProvider):
     def __init__(
         self,
         http_client: httpx.AsyncClient,
         config: NominatimConfig,
-        cache: RedisGeocodeCache,
     ) -> None:
         self._http = http_client
         self._base_url = config.url.rstrip("/")
-        self._cache = cache
 
     async def geocode(
         self, street: str, house: str, city: str
     ) -> CoordinatesDTO | None:
-        cached = await self._cache.get(city, street, house)
-        if cached is not None:
-            return cached
-
-        result = await self._fetch(street, house, city)
-        if result is not None:
-            await self._cache.set(city, street, house, result)
-
-        return result
+        return await self._fetch(street, house, city)
 
     async def _fetch(
         self, street: str, house: str, city: str
     ) -> CoordinatesDTO | None:
-        logger.debug(
-            "Geocoding address: street=%s, house=%s, city=%s",
-            street,
-            house,
-            city,
-        )
-
         result = await self._structured_search(street, house, city)
         if result is not None:
-            logger.info(
-                "Geocoded via structured search: %s %s, %s -> (%s, %s)",
-                street,
-                house,
-                city,
-                result.latitude,
-                result.longitude,
-            )
             return result
-
-        logger.debug(
-            "Structured search empty, trying freetext: %s %s, %s",
-            street,
-            house,
-            city,
-        )
 
         result = await self._freetext_search(street, house, city)
         if result is not None:
-            logger.info(
-                "Geocoded via freetext search: %s %s, %s -> (%s, %s)",
-                street,
-                house,
-                city,
-                result.latitude,
-                result.longitude,
-            )
             return result
 
-        logger.warning(
-            "Geocoding failed: no results for %s %s, %s",
-            street,
-            house,
-            city,
-        )
         return None
 
     async def _structured_search(
@@ -92,9 +47,10 @@ class NominatimClient:
             "city": city,
             "country": "UA",
             "format": "jsonv2",
+            "addressdetails": "1",
             "limit": "1",
         }
-        return await self._request(params)
+        return await self._request(params, house=house)
 
     async def _freetext_search(
         self, street: str, house: str, city: str
@@ -102,11 +58,14 @@ class NominatimClient:
         params = {
             "q": f"{street} {house}, {city}, Україна",
             "format": "jsonv2",
+            "addressdetails": "1",
             "limit": "1",
         }
-        return await self._request(params)
+        return await self._request(params, house=house)
 
-    async def _request(self, params: dict[str, str]) -> CoordinatesDTO | None:
+    async def _request(
+        self, params: dict[str, str], *, house: str = ""
+    ) -> CoordinatesDTO | None:
         url = f"{self._base_url}/search"
 
         try:
@@ -118,7 +77,7 @@ class NominatimClient:
             response.raise_for_status()
             data = response.json()
         except httpx.HTTPStatusError as exc:
-            logger.exception(
+            logger.warning(
                 "Nominatim HTTP error: status=%d, url=%s",
                 exc.response.status_code,
                 url,
@@ -135,6 +94,22 @@ class NominatimClient:
             return None
 
         first = data[0]
+
+        address = first.get("address", {})
+        if not address.get("road"):
+            logger.info(
+                "Nominatim result has no street: %s",
+                params.get("q") or params.get("street"),
+            )
+            return None
+
+        if house.strip() and not address.get("house_number"):
+            logger.info(
+                "Nominatim did not resolve house number: %s",
+                params.get("q") or params.get("street"),
+            )
+            return None
+
         try:
             return CoordinatesDTO(
                 latitude=float(first["lat"]),
@@ -144,7 +119,9 @@ class NominatimClient:
             logger.exception("Failed to parse Nominatim response: %s", first)
             return None
 
-    async def reverse_raw(self, coordinates: CoordinatesDTO) -> dict | None:
+    async def reverse(
+        self, coordinates: CoordinatesDTO
+    ) -> ReverseGeocodeResult | None:
         url = f"{self._base_url}/reverse"
         params = {
             "format": "json",
@@ -161,9 +138,9 @@ class NominatimClient:
                 headers={"User-Agent": "WaterDelivery/1.0"},
             )
             response.raise_for_status()
-            return response.json()
+            data = response.json()
         except httpx.HTTPStatusError as exc:
-            logger.exception(
+            logger.warning(
                 "Nominatim reverse HTTP error: status=%d, url=%s",
                 exc.response.status_code,
                 url,
@@ -173,5 +150,24 @@ class NominatimClient:
             logger.exception(
                 "Nominatim reverse request failed [%s]",
                 exc.__class__.__name__,
+            )
+            return None
+
+        try:
+            address = data.get("address", {})
+            return ReverseGeocodeResult(
+                display_name=data["display_name"],
+                street=address.get("road"),
+                house=address.get("house_number"),
+                city=address.get("city")
+                or address.get("town")
+                or address.get("village"),
+                district=address.get("suburb")
+                or address.get("city_district")
+                or address.get("residential"),
+            )
+        except (KeyError, TypeError):
+            logger.exception(
+                "Failed to parse Nominatim reverse response: %s", data
             )
             return None

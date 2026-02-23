@@ -20,6 +20,8 @@ from sqlalchemy.ext.asyncio import (
 from backend.bootstrap.config import (
     AppConfig,
     Config,
+    GoogleGeocoderConfig,
+    HereGeocoderConfig,
     NominatimConfig,
     OSRMConfig,
     OTelConfig,
@@ -82,6 +84,14 @@ class ConfigProvider(Provider):
     @provide
     def nominatim_config(self, config: Config) -> NominatimConfig:
         return config.nominatim_config
+
+    @provide
+    def google_geocoder_config(self, config: Config) -> GoogleGeocoderConfig:
+        return config.google_geocoder_config
+
+    @provide
+    def here_geocoder_config(self, config: Config) -> HereGeocoderConfig:
+        return config.here_geocoder_config
 
 
 class PersistenceProvider(Provider):

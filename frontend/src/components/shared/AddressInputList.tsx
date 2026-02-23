@@ -66,6 +66,22 @@ export const AddressInputList: React.FC<AddressInputListProps> = ({
         latitude: coords.lat,
         longitude: coords.lng,
       });
+
+      if (districts.length > 0) {
+        const reverseResult = await reverseGeocode(coords);
+        if (reverseResult?.district) {
+          const normalized = reverseResult.district.toLowerCase();
+          const matched = districts.find(
+            (d) =>
+              d.name.toLowerCase().includes(normalized) ||
+              normalized.includes(d.name.toLowerCase()),
+          );
+          if (matched) {
+            onAddressChange(index, "district_id", matched.district_id);
+          }
+        }
+      }
+
       showToast(
         `Адресу "${street}${house ? `, ${house}` : ""}" знайдено${city ? ` в м. ${city}` : ""}`,
         "success",
@@ -102,7 +118,7 @@ export const AddressInputList: React.FC<AddressInputListProps> = ({
       if (street.trim()) {
         debounceTimers.current[index] = setTimeout(() => {
           checkAddress(index, street, house);
-        }, 1000);
+        }, 2000);
       }
     }
   };
@@ -121,6 +137,13 @@ export const AddressInputList: React.FC<AddressInputListProps> = ({
       onAddressChange(currentEditingIndex, "street", result.street);
       if (result.house) {
         onAddressChange(currentEditingIndex, "house", result.house);
+      }
+      if (result.district && districts.length > 0) {
+        const normalized = result.district.toLowerCase();
+        const matched = districts.find((d) => d.name.toLowerCase().includes(normalized) || normalized.includes(d.name.toLowerCase()));
+        if (matched) {
+          onAddressChange(currentEditingIndex, "district_id", matched.district_id);
+        }
       }
       onCoordinatesChange(currentEditingIndex, {
         latitude: coordinates.lat,

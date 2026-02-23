@@ -100,11 +100,16 @@ from backend.infrastructure.auth import (
     SessionAuthHandler,
     WebAppAuthHandler,
 )
+from backend.infrastructure.geocoding import (
+    DBGeocodingProvider,
+    GoogleGeocoderClient,
+    HereGeocoderClient,
+    NominatimClient,
+)
 from backend.infrastructure.idp import ApiIdentityProvider, IdentityProvider
-from backend.infrastructure.nominatim import NominatimClient
-from backend.infrastructure.osrm import OSRMClient
 from backend.infrastructure.pdf import ReportLabOrdersPDFGenerator
 from backend.infrastructure.persistence.gateways import (
+    RedisGeocodeCache,
     RedisSessionGateway,
     SQLAlchemyShopGateway,
     SQLAlchemyUserGateway,
@@ -120,6 +125,7 @@ from backend.infrastructure.tsp_solvers import (
     IteratedNNSolver,
     NNTwoOptSolver,
     ORToolsSolver,
+    OSRMClient,
 )
 from backend.infrastructure.xlsx import (
     ClientErrorXlsxGenerator,
@@ -143,14 +149,39 @@ class AdaptersProvider(Provider):
 
     osrm_client = provide(OSRMClient)
     nominatim_client = provide(NominatimClient)
+    google_geocoder = provide(GoogleGeocoderClient)
+    here_geocoder = provide(HereGeocoderClient)
     xlsx_parser = provide(ClientXlsxParser)
     xlsx_error_generator = provide(ClientErrorXlsxGenerator)
 
 
+class GeocoderProvider(Provider):
+    scope = Scope.REQUEST
+
+    db_geocoding = provide(DBGeocodingProvider)
+
+    @provide
+    def geocoder(
+        self,
+        cache: RedisGeocodeCache,
+        db_provider: DBGeocodingProvider,
+        here_client: HereGeocoderClient,
+        google_client: GoogleGeocoderClient,
+        nominatim_client: NominatimClient,
+    ) -> Geocoder:
+        return Geocoder(
+            cache=cache,
+            providers=[
+                db_provider,
+                here_client,
+                google_client,
+                nominatim_client,
+            ],
+        )
+
+
 class ServicesProvider(Provider):
     scope = Scope.APP
-
-    geocoder = provide(Geocoder)
 
     @provide
     def route_optimizer(self, osrm_client: OSRMClient) -> RouteOptimizer:

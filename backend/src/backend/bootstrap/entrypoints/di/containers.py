@@ -9,6 +9,7 @@ from backend.bootstrap.entrypoints.di.api_providers import (
     APIInteractorsProvider,
     AdaptersProvider,
     AuthProvider,
+    GeocoderProvider,
     ServicesProvider,
 )
 from backend.bootstrap.entrypoints.di.bot_providers import (
@@ -50,5 +51,6 @@ def api_container(config: Config) -> AsyncContainer:
         APIInteractorsProvider(),
         AdaptersProvider(),
         ServicesProvider(),
+        GeocoderProvider(),
         context={Config: config},
     )

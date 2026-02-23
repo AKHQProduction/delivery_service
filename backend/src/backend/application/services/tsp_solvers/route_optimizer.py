@@ -3,8 +3,8 @@ import logging
 from backend.application.dto.coordinates import CoordinatesDTO
 from backend.application.services.tsp_solvers.base import TSPSolver
 from backend.application.vars import OrderId
-from backend.infrastructure.osrm import OSRMClient
 from backend.infrastructure.persistence.tables.orders import Order
+from backend.infrastructure.tsp_solvers.osrm import OSRMClient
 
 logger = logging.getLogger(__name__)
 

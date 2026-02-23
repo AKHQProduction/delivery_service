@@ -16,7 +16,10 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 from uuid_utils.compat import uuid7
 
-from backend.application.dto.coordinates import CoordinatesDTO
+from backend.application.dto.coordinates import (
+    CoordinatesDTO,
+    ReverseGeocodeResult,
+)
 from backend.application.dto.gateways import Pagination, SortOrder
 from backend.application.dto.gateways.client_gateway import (
     AddressDTO,
@@ -252,6 +255,38 @@ class SQLAlchemyClientGateway:
             return None
 
         return CoordinatesDTO(latitude=row.latitude, longitude=row.longitude)
+
+    async def find_address_by_coordinates(
+        self, coordinates: CoordinatesDTO
+    ) -> ReverseGeocodeResult | None:
+        query = (
+            select(
+                ClientAddress.street,
+                ClientAddress.house,
+                Shop.city,
+            )
+            .join(Client, ClientAddress.client_id == Client.id)
+            .join(Shop, Client.shop_id == Shop.id)
+            .where(
+                ClientAddress.latitude == coordinates.latitude,
+                ClientAddress.longitude == coordinates.longitude,
+            )
+            .limit(1)
+        )
+        result = await self._session.execute(query)
+        row = result.one_or_none()
+
+        if row is None:
+            return None
+
+        parts = [p for p in (row.street, row.house, row.city) if p]
+        return ReverseGeocodeResult(
+            display_name=", ".join(parts),
+            street=row.street,
+            house=row.house,
+            city=row.city,
+            district=None,
+        )
 
     def next_id(self) -> ClientId:
         return ClientId(uuid7())
