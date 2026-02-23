@@ -17,7 +17,7 @@ class IteratedNNSolver:
         logger.info("Iterated NN solver started: n=%d, starts=%d", n, k)
 
         if n <= 2:
-            return [*list(range(n)), 0]
+            return [*range(n), 0]
 
         starts = _select_starts(matrix, n, k)
 
@@ -63,6 +63,13 @@ def _nearest_neighbor_from(
                 best_cost = matrix[current][j]
                 best_next = j
         if best_next == -1:
+            logger.error(
+                "Nearest neighbor: unreachable nodes from node %d, "
+                "visited %d/%d nodes",
+                current,
+                len(route),
+                n,
+            )
             break
         visited[best_next] = True
         route.append(best_next)

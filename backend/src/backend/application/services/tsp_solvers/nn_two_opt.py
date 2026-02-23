@@ -10,6 +10,9 @@ class NNTwoOptSolver:
         n = len(matrix)
         logger.info("NN+2opt solver started: n=%d", n)
 
+        if n <= 2:
+            return [*range(n), 0]
+
         route = _nearest_neighbor(matrix)
         nn_cost = route_cost([*route, 0], matrix)
 
@@ -41,6 +44,13 @@ def _nearest_neighbor(matrix: list[list[float]]) -> list[int]:
                 best_cost = matrix[current][j]
                 best_next = j
         if best_next == -1:
+            logger.error(
+                "Nearest neighbor: unreachable nodes from node %d, "
+                "visited %d/%d nodes",
+                current,
+                len(route),
+                n,
+            )
             break
         visited[best_next] = True
         route.append(best_next)

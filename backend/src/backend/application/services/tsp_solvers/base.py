@@ -96,25 +96,6 @@ def _two_opt_pass(
 
 
 def two_opt(route: list[int], matrix: list[list[float]]) -> list[int]:
-    n = len(route)
-    if n < 4:
+    if len(route) < 4:
         return route
-
-    improved = True
-    while improved:
-        improved = False
-        for i in range(1, n - 2):
-            for j in range(i + 1, n - 1):
-                d1 = (
-                    matrix[route[i - 1]][route[i]]
-                    + matrix[route[j]][route[(j + 1) % n]]
-                )
-                d2 = (
-                    matrix[route[i - 1]][route[j]]
-                    + matrix[route[i]][route[(j + 1) % n]]
-                )
-                if d2 < d1 - 1e-10:
-                    route[i : j + 1] = route[i : j + 1][::-1]
-                    improved = True
-
-    return route
+    return _converge_two_opt(route, matrix)
