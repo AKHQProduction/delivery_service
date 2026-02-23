@@ -1,33 +1,48 @@
 import logging
 
-from backend.application.services.tsp_solvers.base import route_cost, two_opt
+from backend.application.services.tsp_solvers.base import (
+    local_search,
+    route_cost,
+)
 
 logger = logging.getLogger(__name__)
+
+MAX_STARTS = 30
 
 
 class IteratedNNSolver:
     def solve(self, matrix: list[list[float]]) -> list[int]:
         n = len(matrix)
-        logger.info("Iterated NN+2opt solver started: n=%d", n)
+        k = min(n, MAX_STARTS)
+        logger.info("Iterated NN solver started: n=%d, starts=%d", n, k)
 
         if n <= 2:
             return [*list(range(n)), 0]
 
+        starts = _select_starts(matrix, n, k)
+
         best_route: list[int] = []
         best_cost = float("inf")
 
-        for start in range(n):
+        for start in starts:
             route = _nearest_neighbor_from(matrix, n, start)
-            route = two_opt(route, matrix)
+            route = local_search(route, matrix)
             cost = route_cost(route, matrix)
             if cost < best_cost:
                 best_cost = cost
                 best_route = route
 
         logger.info(
-            "Iterated NN+2opt solver finished: n=%d, cost=%.1f", n, best_cost
+            "Iterated NN solver finished: n=%d, cost=%.1f", n, best_cost
         )
         return best_route
+
+
+def _select_starts(matrix: list[list[float]], n: int, k: int) -> list[int]:
+    if k >= n:
+        return list(range(n))
+    ranked = sorted(range(n), key=lambda i: matrix[0][i])
+    return ranked[:k]
 
 
 def _nearest_neighbor_from(
