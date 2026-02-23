@@ -1,9 +1,11 @@
 import logging
 
 from backend.application.dto.coordinates import CoordinatesDTO
-from backend.application.services.tsp_solvers.ant_colony import AntColonySolver
 from backend.application.services.tsp_solvers.base import TSPSolver
 from backend.application.services.tsp_solvers.held_karp import HeldKarpSolver
+from backend.application.services.tsp_solvers.iterated_nn import (
+    IteratedNNSolver,
+)
 from backend.application.services.tsp_solvers.nn_two_opt import NNTwoOptSolver
 from backend.application.services.tsp_solvers.ortools_solver import (
     ORToolsSolver,
@@ -23,13 +25,13 @@ class RouteOptimizer:
         self,
         osrm_client: OSRMClient,
         held_karp: HeldKarpSolver,
-        ant_colony: AntColonySolver,
+        iterated_nn: IteratedNNSolver,
         ortools: ORToolsSolver,
         fallback: NNTwoOptSolver,
     ) -> None:
         self._osrm = osrm_client
         self._held_karp = held_karp
-        self._ant_colony = ant_colony
+        self._iterated_nn = iterated_nn
         self._ortools = ortools
         self._fallback = fallback
 
@@ -70,7 +72,7 @@ class RouteOptimizer:
         if n <= HELD_KARP_THRESHOLD:
             solver = self._held_karp
         elif n <= ACO_THRESHOLD:
-            solver = self._ant_colony
+            solver = self._iterated_nn
         else:
             solver = self._ortools
 

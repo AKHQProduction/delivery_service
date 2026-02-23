@@ -22,14 +22,14 @@ def held_karp():
 
 
 @pytest.fixture()
-def ortools():
+def iterated_nn():
     solver = Mock()
     solver.solve.return_value = [0, 1, 2, 0]
     return solver
 
 
 @pytest.fixture()
-def ant_colony():
+def ortools():
     solver = Mock()
     solver.solve.return_value = [0, 1, 2, 0]
     return solver
@@ -43,11 +43,11 @@ def fallback():
 
 
 @pytest.fixture()
-def optimizer(osrm, held_karp, ant_colony, ortools, fallback):
+def optimizer(osrm, held_karp, iterated_nn, ortools, fallback):
     return RouteOptimizer(
         osrm_client=osrm,
         held_karp=held_karp,
-        ant_colony=ant_colony,
+        iterated_nn=iterated_nn,
         ortools=ortools,
         fallback=fallback,
     )
@@ -86,26 +86,26 @@ class TestSolverSelection:
         ortools.solve.assert_not_called()
 
     @pytest.mark.asyncio()
-    async def test_selects_ant_colony_for_medium_n(
-        self, optimizer, osrm, held_karp, ant_colony, ortools
+    async def test_selects_iterated_nn_for_medium_n(
+        self, optimizer, osrm, held_karp, iterated_nn, ortools
     ):
         orders = [_make_order(i) for i in range(HELD_KARP_THRESHOLD)]
         n = len(orders) + 1
         assert HELD_KARP_THRESHOLD < n <= ACO_THRESHOLD
 
         osrm.get_duration_matrix.return_value = _make_matrix(n)
-        ant_colony.solve.return_value = [0, *range(1, n), 0]
+        iterated_nn.solve.return_value = [0, *range(1, n), 0]
         shop = Mock(latitude=50.0, longitude=30.0)
 
         await optimizer.compute(shop, orders)
 
-        ant_colony.solve.assert_called_once()
+        iterated_nn.solve.assert_called_once()
         held_karp.solve.assert_not_called()
         ortools.solve.assert_not_called()
 
     @pytest.mark.asyncio()
     async def test_selects_ortools_for_large_n(
-        self, optimizer, osrm, held_karp, ant_colony, ortools
+        self, optimizer, osrm, held_karp, iterated_nn, ortools
     ):
         orders = [_make_order(i) for i in range(ACO_THRESHOLD)]
         n = len(orders) + 1
@@ -119,7 +119,7 @@ class TestSolverSelection:
 
         ortools.solve.assert_called_once()
         held_karp.solve.assert_not_called()
-        ant_colony.solve.assert_not_called()
+        iterated_nn.solve.assert_not_called()
 
     @pytest.mark.asyncio()
     async def test_fallback_on_exception(

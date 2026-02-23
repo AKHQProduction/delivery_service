@@ -3,6 +3,7 @@ import pytest
 from backend.application.services.tsp_solvers import (
     AntColonySolver,
     HeldKarpSolver,
+    IteratedNNSolver,
     NNTwoOptSolver,
     ORToolsSolver,
 )
@@ -54,6 +55,11 @@ def ortools():
 @pytest.fixture()
 def ant_colony():
     return AntColonySolver()
+
+
+@pytest.fixture()
+def iterated_nn():
+    return IteratedNNSolver()
 
 
 @pytest.fixture()
@@ -148,6 +154,39 @@ class TestAntColonySolver:
 
     def test_matrix_with_inf(self, ant_colony):
         route = ant_colony.solve(INF_MATRIX)
+        assert route[0] == 0
+        assert route[-1] == 0
+        assert set(route) == {0, 1, 2, 3}
+        assert _route_cost(route, INF_MATRIX) < INF
+
+
+class TestIteratedNNSolver:
+    def test_returns_cyclic_route(self, iterated_nn):
+        route = iterated_nn.solve(SIMPLE_MATRIX)
+        assert route[0] == 0
+        assert route[-1] == 0
+
+    def test_visits_all_nodes(self, iterated_nn):
+        route = iterated_nn.solve(SIMPLE_MATRIX)
+        assert set(route) == {0, 1, 2, 3}
+
+    def test_finds_optimal_cost(self, iterated_nn):
+        route = iterated_nn.solve(SIMPLE_MATRIX)
+        assert _route_cost(route, SIMPLE_MATRIX) == OPTIMAL_COST
+
+    def test_deterministic(self, iterated_nn):
+        route1 = iterated_nn.solve(SIMPLE_MATRIX)
+        route2 = iterated_nn.solve(SIMPLE_MATRIX)
+        assert route1 == route2
+
+    def test_two_point_matrix(self, iterated_nn):
+        route = iterated_nn.solve(TWO_POINT_MATRIX)
+        assert route[0] == 0
+        assert route[-1] == 0
+        assert set(route) == {0, 1}
+
+    def test_matrix_with_inf(self, iterated_nn):
+        route = iterated_nn.solve(INF_MATRIX)
         assert route[0] == 0
         assert route[-1] == 0
         assert set(route) == {0, 1, 2, 3}

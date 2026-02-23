@@ -1,7 +1,7 @@
 import logging
 import random
 
-from backend.application.services.tsp_solvers.nn_two_opt import two_opt
+from backend.application.services.tsp_solvers.base import route_cost, two_opt
 
 logger = logging.getLogger(__name__)
 
@@ -49,7 +49,7 @@ class AntColonySolver:
             for _ in range(num_iterations):
                 for _ in range(num_ants):
                     route = _build_route(n, pheromone, eta)
-                    cost = _route_cost(route, matrix)
+                    cost = route_cost(route, matrix)
                     if cost < run_best_cost:
                         run_best_cost = cost
                         run_best_route = route
@@ -65,7 +65,7 @@ class AntColonySolver:
                     pheromone[j][i] += deposit
 
             run_best_route = two_opt(run_best_route, matrix)
-            run_best_cost = _route_cost(run_best_route, matrix)
+            run_best_cost = route_cost(run_best_route, matrix)
 
             if run_best_cost < best_cost:
                 best_cost = run_best_cost
@@ -83,7 +83,7 @@ def _init_pheromone(
     pheromone = [[1.0] * n for _ in range(n)]
 
     nn_route = _nearest_neighbor(matrix, n)
-    nn_cost = _route_cost(nn_route, matrix)
+    nn_cost = route_cost(nn_route, matrix)
     deposit = q / nn_cost
     for k in range(len(nn_route) - 1):
         i, j = nn_route[k], nn_route[k + 1]
@@ -171,7 +171,3 @@ def _build_route(
 
     route.append(0)
     return route
-
-
-def _route_cost(route: list[int], matrix: list[list[float]]) -> float:
-    return sum(matrix[route[i]][route[i + 1]] for i in range(len(route) - 1))

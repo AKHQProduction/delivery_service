@@ -93,8 +93,8 @@ from backend.application.queries.get_time_slots import GetTimeSlotsQueryHandler
 from backend.application.services.geocoder import Geocoder
 from backend.application.services.route_optimizer import RouteOptimizer
 from backend.application.services.tsp_solvers import (
-    AntColonySolver,
     HeldKarpSolver,
+    IteratedNNSolver,
     NNTwoOptSolver,
     ORToolsSolver,
 )
@@ -151,7 +151,7 @@ class ServicesProvider(Provider):
     scope = Scope.APP
 
     held_karp_solver = provide(HeldKarpSolver)
-    ant_colony_solver = provide(AntColonySolver)
+    iterated_nn_solver = provide(IteratedNNSolver)
     ortools_solver = provide(ORToolsSolver)
     nn_two_opt_solver = provide(NNTwoOptSolver)
     route_optimizer = provide(RouteOptimizer)
