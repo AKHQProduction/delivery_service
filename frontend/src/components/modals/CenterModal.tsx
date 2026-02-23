@@ -64,7 +64,7 @@ export const CenterModal: React.FC<CenterModalProps> = ({ isOpen, onClose, title
           </button>
         </div>
 
-        <div className="px-6 py-4 overflow-y-auto flex-1">{children}</div>
+        <div className="px-6 pt-4 overflow-y-auto flex-1">{children}</div>
       </div>
     </>
   );

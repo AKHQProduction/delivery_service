@@ -48,7 +48,7 @@ export const ProductDetailModal: React.FC<ProductDetailModalProps> = ({
           <h1 className="text-3xl font-bold text-white mb-2">Редагувати товар</h1>
         </div>
 
-        <div className="flex-1 overflow-y-auto px-6 py-6">
+        <div className="flex-1 overflow-y-auto px-6 pt-6">
           <EditProductForm product={product} onClose={handleCancelEdit} onSave={handleSaveEdit} />
         </div>
       </div>
@@ -71,7 +71,7 @@ export const ProductDetailModal: React.FC<ProductDetailModalProps> = ({
         <p className="text-indigo-100">Категорія: {product.category_name || "Без категорії"}</p>
       </div>
 
-      <div className="flex-1 overflow-y-auto px-6 py-6 space-y-6 pb-24">
+      <div className="flex-1 overflow-y-auto px-6 py-6 space-y-6">
         <div>
           <h2 className="text-sm font-semibold text-gray-500 uppercase tracking-wide mb-4">
             Основна інформація
@@ -83,6 +83,8 @@ export const ProductDetailModal: React.FC<ProductDetailModalProps> = ({
           />
           <ItemElement descriptionText={"Ціна"} elementText={`₴${product.price}`} />
         </div>
+      </div>
+      <div className="px-6 py-4 border-t border-gray-200">
         <ModalButtons
           firstButtonText={"Редагувати"}
           handleEditClick={handleEditClick}

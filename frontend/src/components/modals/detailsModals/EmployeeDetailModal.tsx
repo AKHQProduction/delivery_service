@@ -55,7 +55,7 @@ export const EmployeeDetailModal: React.FC<EmployeeDetailModalProps> = ({
           </h1>
         </div>
 
-        <div className="flex-1 overflow-y-auto px-6 py-6">
+        <div className="flex-1 overflow-y-auto px-6 pt-6">
           <EditEmployeeForm
             employee={employee}
             onClose={handleCancelEdit}
@@ -82,7 +82,7 @@ export const EmployeeDetailModal: React.FC<EmployeeDetailModalProps> = ({
         <p className="text-indigo-100">{roleMap[employee.role]}</p>
       </div>
 
-      <div className="flex-1 overflow-y-auto px-6 py-6 space-y-6 pb-24">
+      <div className="flex-1 overflow-y-auto px-6 py-6 space-y-6">
         <div>
           <h2 className="text-sm font-semibold text-gray-500 uppercase tracking-wide mb-4">
             Основна інформація
@@ -90,6 +90,8 @@ export const EmployeeDetailModal: React.FC<EmployeeDetailModalProps> = ({
           <ItemElement descriptionText={"Ім'я працівника"} elementText={employee.full_name} />
           <ItemElement descriptionText={"Роль працівника"} elementText={roleMap[employee.role]} />
         </div>
+      </div>
+      <div className="px-6 py-4 border-t border-gray-200">
         <ModalButtons
           firstButtonText={"Редагувати"}
           handleEditClick={handleEditClick}
