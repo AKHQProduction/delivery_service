@@ -3,7 +3,8 @@ import { createPortal } from "react-dom";
 import { MapContainer, TileLayer, Marker, useMapEvents } from "react-leaflet";
 import type { LatLng } from "leaflet";
 import "leaflet/dist/leaflet.css";
-import { type Coordinates } from "../../hooks/useMapPicker";
+import { type Coordinates, type MapPickerResult } from "../../hooks/useMapPicker";
+import { hasLetter, hasDigit } from "../../utils/addressValidation";
 
 //default marker icons in React-Leaflet
 import L from "leaflet";
@@ -19,16 +20,25 @@ const DefaultIcon = L.icon({
 
 L.Marker.prototype.options.icon = DefaultIcon;
 
+export interface MapConfirmData {
+  lat: number;
+  lng: number;
+  street: string;
+  house: string;
+  city: string;
+}
+
 interface MapPickerProps {
   isOpen: boolean;
   onClose: () => void;
-  onConfirm: (coordinates: Coordinates) => void;
+  onConfirm: (data: MapConfirmData) => void;
   isLoading?: boolean;
   defaultCenter?: Coordinates;
   initialStreet?: string;
   initialHouse?: string;
   city?: string;
   onGeocode?: (street: string, house?: string, city?: string) => Promise<Coordinates | null>;
+  onReverseGeocode?: (coordinates: Coordinates) => Promise<MapPickerResult | null>;
 }
 
 /**
@@ -73,12 +83,20 @@ export const MapPicker: React.FC<MapPickerProps> = ({
   initialHouse = "",
   city,
   onGeocode,
+  onReverseGeocode,
 }) => {
   const center = defaultCenter ?? DEFAULT_CENTER;
   const [markerPosition, setMarkerPosition] = useState<LatLng | null>(null);
   const [mapCenter, setMapCenter] = useState<Coordinates>(center);
   const hasGeocodedRef = useRef(false);
   const prevIsOpenRef = useRef(isOpen);
+
+  const [addressCity, setAddressCity] = useState(city ?? "");
+  const [addressStreet, setAddressStreet] = useState(initialStreet);
+  const [addressHouse, setAddressHouse] = useState(initialHouse);
+  const [searchError, setSearchError] = useState(false);
+  const [isSearching, setIsSearching] = useState(false);
+  const [showValidation, setShowValidation] = useState(false);
 
   // Update map center when defaultCenter changes and map opens
   useEffect(() => {
@@ -128,9 +146,28 @@ export const MapPicker: React.FC<MapPickerProps> = ({
       hasGeocodedRef.current = false;
       setMarkerPosition(null);
       setMapCenter(DEFAULT_CENTER);
+      setSearchError(false);
+      setShowValidation(false);
     }
     prevIsOpenRef.current = isOpen;
   }, [isOpen]);
+
+  const handleAddressSearch = async () => {
+    setShowValidation(true);
+    if (!onGeocode || !addressStreet.trim() || !addressCity.trim()) return;
+    if (!hasLetter(addressStreet)) return;
+    setIsSearching(true);
+    setSearchError(false);
+    const house = hasDigit(addressHouse) ? addressHouse : undefined;
+    const coords = await onGeocode(addressStreet, house, addressCity);
+    if (coords) {
+      setMarkerPosition(L.latLng(coords.lat, coords.lng));
+      setMapCenter(coords);
+    } else {
+      setSearchError(true);
+    }
+    setIsSearching(false);
+  };
 
   if (!isOpen) return null;
 
@@ -139,13 +176,16 @@ export const MapPicker: React.FC<MapPickerProps> = ({
       onConfirm({
         lat: markerPosition.lat,
         lng: markerPosition.lng,
+        street: addressStreet,
+        house: addressHouse || "-",
+        city: addressCity,
       });
     }
   };
 
   return createPortal(
     <div className="fixed inset-0 z-9999 flex items-center justify-center bg-black/50 p-4">
-      <div className="bg-white rounded-xl shadow-xl w-full max-w-4xl max-h-full overflow-hidden flex flex-col">
+      <div className="bg-white rounded-xl shadow-xl w-full max-w-4xl h-full max-h-[95vh] overflow-hidden flex flex-col">
         {/* Header */}
         <div className="px-6 py-4 border-b border-gray-200 flex items-center justify-between">
           <div>
@@ -170,8 +210,48 @@ export const MapPicker: React.FC<MapPickerProps> = ({
           </button>
         </div>
 
+        {/* Address search */}
+        {onGeocode && (
+          <div className="px-6 py-3 border-b border-gray-200 bg-gray-50">
+            <div className="flex flex-col sm:flex-row gap-2">
+              <input
+                type="text"
+                value={addressCity}
+                onChange={(e) => { setAddressCity(e.target.value); setSearchError(false); setShowValidation(false); }}
+                placeholder="Місто"
+                className="px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 sm:w-36"
+              />
+              <input
+                type="text"
+                value={addressStreet}
+                onChange={(e) => { setAddressStreet(e.target.value); setSearchError(false); setShowValidation(false); }}
+                placeholder="Вулиця"
+                className={`px-3 py-2 border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 flex-1 ${showValidation && addressStreet.trim() && !hasLetter(addressStreet) ? "border-red-400 bg-red-50" : "border-gray-300"}`}
+              />
+              <input
+                type="text"
+                value={addressHouse}
+                onChange={(e) => { setAddressHouse(e.target.value); setSearchError(false); setShowValidation(false); }}
+                placeholder="Будинок"
+                className={`px-3 py-2 border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 sm:w-24 ${showValidation && addressHouse.trim() && !hasDigit(addressHouse) ? "border-red-400 bg-red-50" : "border-gray-300"}`}
+              />
+              <button
+                type="button"
+                onClick={handleAddressSearch}
+                disabled={isSearching || !addressStreet.trim() || !addressCity.trim() || !hasLetter(addressStreet)}
+                className="px-4 py-2 bg-indigo-600 text-white text-sm font-medium rounded-lg hover:bg-indigo-700 disabled:bg-gray-300 disabled:cursor-not-allowed transition-colors whitespace-nowrap"
+              >
+                {isSearching ? "Пошук..." : "Знайти"}
+              </button>
+            </div>
+            {searchError && (
+              <p className="text-xs text-red-600 mt-1">Адресу не знайдено. Спробуйте інший запит або виберіть точку на карті.</p>
+            )}
+          </div>
+        )}
+
         {/* Map */}
-        <div className="relative h-[60vh] sm:h-[500px] shrink w-full">
+        <div className="relative flex-1 min-h-0 w-full">
           <MapContainer
             center={[mapCenter.lat, mapCenter.lng]}
             zoom={17.5}
@@ -184,7 +264,18 @@ export const MapPicker: React.FC<MapPickerProps> = ({
               maxZoom={21}
             />
             <MapCenterController center={mapCenter} />
-            <MapClickHandler onPositionChange={setMarkerPosition} />
+            <MapClickHandler onPositionChange={(pos) => {
+              setMarkerPosition(pos);
+              if (onReverseGeocode) {
+                onReverseGeocode({ lat: pos.lat, lng: pos.lng }).then((result) => {
+                  if (result) {
+                    setAddressCity(result.city);
+                    setAddressStreet(result.street || result.fullAddress);
+                    setAddressHouse(result.house || "-");
+                  }
+                });
+              }
+            }} />
             {markerPosition && <Marker position={markerPosition} />}
           </MapContainer>
 

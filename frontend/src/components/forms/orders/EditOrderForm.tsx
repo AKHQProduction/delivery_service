@@ -864,7 +864,7 @@ export const EditOrderForm: React.FC<EditOrderFormProps> = ({ onClose, onSave, o
       </div>
 
       {/* Footer Actions */}
-      <div className="pt-4 border-t border-gray-200 mt-4">
+      <div className="sticky bottom-0 bg-white pt-4 pb-4 border-t border-gray-200 mt-4">
         <div className="flex gap-3">
           <button
             type="button"

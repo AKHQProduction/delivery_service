@@ -2,9 +2,9 @@ from unittest.mock import AsyncMock, Mock
 
 import pytest
 
-from backend.application.services.route_optimizer import (
-    ACO_THRESHOLD,
+from backend.application.services.tsp_solvers.route_optimizer import (
     HELD_KARP_THRESHOLD,
+    ORTOOLS_THRESHOLD,
     RouteOptimizer,
 )
 
@@ -91,7 +91,7 @@ class TestSolverSelection:
     ):
         orders = [_make_order(i) for i in range(HELD_KARP_THRESHOLD)]
         n = len(orders) + 1
-        assert HELD_KARP_THRESHOLD < n <= ACO_THRESHOLD
+        assert HELD_KARP_THRESHOLD < n <= ORTOOLS_THRESHOLD
 
         osrm.get_duration_matrix.return_value = _make_matrix(n)
         iterated_nn.solve.return_value = [0, *range(1, n), 0]
@@ -107,9 +107,9 @@ class TestSolverSelection:
     async def test_selects_ortools_for_large_n(
         self, optimizer, osrm, held_karp, iterated_nn, ortools
     ):
-        orders = [_make_order(i) for i in range(ACO_THRESHOLD)]
+        orders = [_make_order(i) for i in range(ORTOOLS_THRESHOLD)]
         n = len(orders) + 1
-        assert n > ACO_THRESHOLD
+        assert n > ORTOOLS_THRESHOLD
 
         osrm.get_duration_matrix.return_value = _make_matrix(n)
         ortools.solve.return_value = [0, *range(1, n), 0]
@@ -136,6 +136,22 @@ class TestSolverSelection:
 
         held_karp.solve.assert_called_once()
         fallback.solve.assert_called_once()
+
+    @pytest.mark.asyncio()
+    async def test_returns_none_when_both_solvers_fail(
+        self, optimizer, osrm, held_karp, fallback
+    ):
+        orders = [_make_order(i) for i in range(3)]
+        n = len(orders) + 1
+
+        osrm.get_duration_matrix.return_value = _make_matrix(n)
+        held_karp.solve.side_effect = RuntimeError("boom")
+        fallback.solve.side_effect = RuntimeError("fallback boom")
+        shop = Mock(latitude=50.0, longitude=30.0)
+
+        result = await optimizer.compute(shop, orders)
+
+        assert result is None
 
 
 class TestEdgeCases:

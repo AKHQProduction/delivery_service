@@ -2,13 +2,15 @@ import logging
 
 from ortools.constraint_solver import pywrapcp, routing_enums_pb2
 
+from backend.application.services.tsp_solvers.base import TSPSolver
+
 logger = logging.getLogger(__name__)
 
 TIME_LIMIT_SECONDS = 15
 INF_REPLACEMENT = 10**7
 
 
-class ORToolsSolver:
+class ORToolsSolver(TSPSolver):
     def solve(self, matrix: list[list[float]]) -> list[int]:
         n = len(matrix)
         logger.info(
@@ -18,7 +20,7 @@ class ORToolsSolver:
         )
 
         if n <= 2:
-            return [*list(range(n)), 0]
+            return [*range(n), 0]
 
         int_matrix = [
             [INF_REPLACEMENT if v == float("inf") else round(v) for v in row]
@@ -47,6 +49,11 @@ class ORToolsSolver:
 
         solution = routing.SolveWithParameters(search_params)
         if solution is None:
+            logger.error(
+                "OR-Tools failed to find solution: n=%d, time_limit=%ds",
+                n,
+                TIME_LIMIT_SECONDS,
+            )
             msg = "OR-Tools failed to find a solution"
             raise RuntimeError(msg)
 

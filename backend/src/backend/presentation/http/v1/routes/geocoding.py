@@ -3,8 +3,11 @@ from dishka.integrations.fastapi import DishkaRoute
 from fastapi import APIRouter, Depends, status
 from fastapi.security import HTTPBearer
 
-from backend.application.dto.coordinates import CoordinatesDTO
-from backend.infrastructure.nominatim import NominatimClient
+from backend.application.dto.coordinates import (
+    CoordinatesDTO,
+    ReverseGeocodeResult,
+)
+from backend.application.services.geocoder import Geocoder
 from backend.presentation.http.v1.schemas.error import ErrorSchema
 
 router = APIRouter(
@@ -24,9 +27,9 @@ async def forward_geocode(
     street: str,
     house: str,
     city: str,
-    client: FromDishka[NominatimClient],
+    geocoder: FromDishka[Geocoder],
 ) -> CoordinatesDTO | None:
-    return await client.geocode(street, house, city)
+    return await geocoder.geocode(street, house, city)
 
 
 @router.get(
@@ -40,8 +43,6 @@ async def forward_geocode(
 async def reverse_geocode(
     lat: float,
     lon: float,
-    client: FromDishka[NominatimClient],
-) -> dict | None:
-    return await client.reverse_raw(
-        CoordinatesDTO(latitude=lat, longitude=lon)
-    )
+    geocoder: FromDishka[Geocoder],
+) -> ReverseGeocodeResult | None:
+    return await geocoder.reverse(CoordinatesDTO(latitude=lat, longitude=lon))

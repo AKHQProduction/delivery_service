@@ -1,7 +1,8 @@
 import logging
 import random
 
-from backend.application.services.tsp_solvers.base import route_cost, two_opt
+from backend.application.services.tsp_solvers.base import TSPSolver
+from backend.infrastructure.tsp_solvers.utils import route_cost, two_opt
 
 logger = logging.getLogger(__name__)
 
@@ -11,7 +12,7 @@ EVAPORATION = 0.3
 NUM_RESTARTS = 3
 
 
-class AntColonySolver:
+class AntColonySolver(TSPSolver):
     def solve(self, matrix: list[list[float]]) -> list[int]:
         n = len(matrix)
         num_ants = n
@@ -26,7 +27,7 @@ class AntColonySolver:
         )
 
         if n <= 2:
-            return [*list(range(n)), 0]
+            return [*range(n), 0]
 
         q = _compute_q(matrix, n)
         eta = [
@@ -58,7 +59,7 @@ class AntColonySolver:
                     for j in range(n):
                         pheromone[i][j] *= 1 - EVAPORATION
 
-                deposit = q / run_best_cost
+                deposit = q / run_best_cost if run_best_cost > 0 else 1.0
                 for k in range(len(run_best_route) - 1):
                     i, j = run_best_route[k], run_best_route[k + 1]
                     pheromone[i][j] += deposit
@@ -84,7 +85,7 @@ def _init_pheromone(
 
     nn_route = _nearest_neighbor(matrix, n)
     nn_cost = route_cost(nn_route, matrix)
-    deposit = q / nn_cost
+    deposit = q / nn_cost if nn_cost > 0 else 1.0
     for k in range(len(nn_route) - 1):
         i, j = nn_route[k], nn_route[k + 1]
         pheromone[i][j] += deposit
@@ -107,6 +108,13 @@ def _nearest_neighbor(matrix: list[list[float]], n: int) -> list[int]:
                 best_cost = matrix[current][j]
                 best_next = j
         if best_next == -1:
+            logger.error(
+                "Nearest neighbor: unreachable nodes from node %d, "
+                "visited %d/%d nodes",
+                current,
+                len(route),
+                n,
+            )
             break
         visited[best_next] = True
         route.append(best_next)
@@ -150,6 +158,13 @@ def _build_route(
                 candidates.append(j)
 
         if not candidates:
+            logger.error(
+                "ACO build route: no candidates from node %d, "
+                "visited %d/%d nodes",
+                current,
+                len(route),
+                n,
+            )
             break
 
         total = sum(probabilities)

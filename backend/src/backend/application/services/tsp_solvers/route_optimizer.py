@@ -2,32 +2,24 @@ import logging
 
 from backend.application.dto.coordinates import CoordinatesDTO
 from backend.application.services.tsp_solvers.base import TSPSolver
-from backend.application.services.tsp_solvers.held_karp import HeldKarpSolver
-from backend.application.services.tsp_solvers.iterated_nn import (
-    IteratedNNSolver,
-)
-from backend.application.services.tsp_solvers.nn_two_opt import NNTwoOptSolver
-from backend.application.services.tsp_solvers.ortools_solver import (
-    ORToolsSolver,
-)
 from backend.application.vars import OrderId
-from backend.infrastructure.osrm import OSRMClient
 from backend.infrastructure.persistence.tables.orders import Order
+from backend.infrastructure.tsp_solvers.osrm import OSRMClient
 
 logger = logging.getLogger(__name__)
 
 HELD_KARP_THRESHOLD = 20
-ACO_THRESHOLD = 80
+ORTOOLS_THRESHOLD = 80
 
 
 class RouteOptimizer:
     def __init__(
         self,
         osrm_client: OSRMClient,
-        held_karp: HeldKarpSolver,
-        iterated_nn: IteratedNNSolver,
-        ortools: ORToolsSolver,
-        fallback: NNTwoOptSolver,
+        held_karp: TSPSolver,
+        iterated_nn: TSPSolver,
+        ortools: TSPSolver,
+        fallback: TSPSolver,
     ) -> None:
         self._osrm = osrm_client
         self._held_karp = held_karp
@@ -61,17 +53,26 @@ class RouteOptimizer:
                 without_coords.append(order)
 
         if not coord_orders:
+            logger.error(
+                "Route optimization skipped: "
+                "none of %d orders have coordinates",
+                len(orders),
+            )
             return None
 
         matrix = await self._osrm.get_duration_matrix(coordinates)
         if matrix is None:
+            logger.error(
+                "Route optimization failed: "
+                "OSRM matrix unavailable for %d points",
+                len(coordinates),
+            )
             return None
 
         n = len(matrix)
-        solver: TSPSolver
         if n <= HELD_KARP_THRESHOLD:
             solver = self._held_karp
-        elif n <= ACO_THRESHOLD:
+        elif n <= ORTOOLS_THRESHOLD:
             solver = self._iterated_nn
         else:
             solver = self._ortools
@@ -80,9 +81,18 @@ class RouteOptimizer:
             route = solver.solve(matrix)
         except Exception as exc:
             logger.exception(
-                "Solver failed [%s], using fallback", exc.__class__.__name__
+                "Solver %s failed [%s], using fallback",
+                solver.__class__.__name__,
+                exc.__class__.__name__,
             )
-            route = self._fallback.solve(matrix)
+            try:
+                route = self._fallback.solve(matrix)
+            except Exception as fallback_exc:
+                logger.exception(
+                    "Fallback solver also failed [%s]",
+                    fallback_exc.__class__.__name__,
+                )
+                return None
 
         index_map = {idx + 1: order for idx, order in enumerate(coord_orders)}
         optimized = [index_map[i].id for i in route if i in index_map]

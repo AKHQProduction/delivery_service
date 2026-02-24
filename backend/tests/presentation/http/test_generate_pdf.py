@@ -207,7 +207,7 @@ async def test_generate_pdf_with_coordinates_triggers_optimization(
     await session.commit()
 
     with patch(
-        "backend.application.services.route_optimizer.RouteOptimizer.compute",
+        "backend.application.services.tsp_solvers.route_optimizer.RouteOptimizer.compute",
         new_callable=AsyncMock,
         return_value=None,
     ) as mock_compute:
@@ -252,7 +252,7 @@ async def test_generate_pdf_without_shop_coordinates_skips_optimization(
     await session.commit()
 
     with patch(
-        "backend.application.services.route_optimizer.RouteOptimizer.compute",
+        "backend.application.services.tsp_solvers.route_optimizer.RouteOptimizer.compute",
         new_callable=AsyncMock,
     ) as mock_compute:
         response = await http_client.post(
@@ -311,7 +311,7 @@ async def test_generate_pdf_default_routing_skips_optimization(
     await session.commit()
 
     with patch(
-        "backend.application.services.route_optimizer.RouteOptimizer.compute",
+        "backend.application.services.tsp_solvers.route_optimizer.RouteOptimizer.compute",
         new_callable=AsyncMock,
     ) as mock_compute:
         response = await http_client.post(
@@ -366,7 +366,7 @@ async def test_generate_pdf_optimized_routing(
     await session.commit()
 
     with patch(
-        "backend.application.services.route_optimizer.RouteOptimizer.compute",
+        "backend.application.services.tsp_solvers.route_optimizer.RouteOptimizer.compute",
         new_callable=AsyncMock,
         return_value=None,
     ) as mock_compute:

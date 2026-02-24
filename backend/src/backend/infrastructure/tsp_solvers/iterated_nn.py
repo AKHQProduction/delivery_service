@@ -1,23 +1,21 @@
 import logging
 
-from backend.application.services.tsp_solvers.base import (
-    local_search,
-    route_cost,
-)
+from backend.application.services.tsp_solvers.base import TSPSolver
+from backend.infrastructure.tsp_solvers.utils import local_search, route_cost
 
 logger = logging.getLogger(__name__)
 
 MAX_STARTS = 30
 
 
-class IteratedNNSolver:
+class IteratedNNSolver(TSPSolver):
     def solve(self, matrix: list[list[float]]) -> list[int]:
         n = len(matrix)
         k = min(n, MAX_STARTS)
         logger.info("Iterated NN solver started: n=%d, starts=%d", n, k)
 
         if n <= 2:
-            return [*list(range(n)), 0]
+            return [*range(n), 0]
 
         starts = _select_starts(matrix, n, k)
 
@@ -63,6 +61,13 @@ def _nearest_neighbor_from(
                 best_cost = matrix[current][j]
                 best_next = j
         if best_next == -1:
+            logger.error(
+                "Nearest neighbor: unreachable nodes from node %d, "
+                "visited %d/%d nodes",
+                current,
+                len(route),
+                n,
+            )
             break
         visited[best_next] = True
         route.append(best_next)

@@ -1,14 +1,18 @@
 import logging
 
-from backend.application.services.tsp_solvers.base import route_cost, two_opt
+from backend.application.services.tsp_solvers.base import TSPSolver
+from backend.infrastructure.tsp_solvers.utils import route_cost, two_opt
 
 logger = logging.getLogger(__name__)
 
 
-class NNTwoOptSolver:
+class NNTwoOptSolver(TSPSolver):
     def solve(self, matrix: list[list[float]]) -> list[int]:
         n = len(matrix)
         logger.info("NN+2opt solver started: n=%d", n)
+
+        if n <= 2:
+            return [*range(n), 0]
 
         route = _nearest_neighbor(matrix)
         nn_cost = route_cost([*route, 0], matrix)
@@ -41,6 +45,13 @@ def _nearest_neighbor(matrix: list[list[float]]) -> list[int]:
                 best_cost = matrix[current][j]
                 best_next = j
         if best_next == -1:
+            logger.error(
+                "Nearest neighbor: unreachable nodes from node %d, "
+                "visited %d/%d nodes",
+                current,
+                len(route),
+                n,
+            )
             break
         visited[best_next] = True
         route.append(best_next)

@@ -102,3 +102,6 @@ def setup_logging(level: LoggingLevel = "INFO") -> None:
     console_handler.setLevel(numeric_level)
     console_handler.setFormatter(formatter)
     root_logger.addHandler(console_handler)
+
+    logging.getLogger("httpx").setLevel(logging.WARNING)
+    logging.getLogger("httpcore").setLevel(logging.WARNING)

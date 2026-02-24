@@ -91,6 +91,14 @@ class NominatimConfig(BaseModel):
     )
 
 
+class GoogleGeocoderConfig(BaseModel):
+    api_key: str = Field(alias="GOOGLE_GEOCODER_API_KEY", default="")
+
+
+class HereGeocoderConfig(BaseModel):
+    api_key: str = Field(alias="HERE_GEOCODER_API_KEY", default="")
+
+
 class Config(BaseModel):
     def __init__(self) -> None:
         load_dotenv(
@@ -129,4 +137,12 @@ class Config(BaseModel):
 
     nominatim_config: NominatimConfig = Field(
         default_factory=lambda: NominatimConfig.model_validate(env)
+    )
+
+    google_geocoder_config: GoogleGeocoderConfig = Field(
+        default_factory=lambda: GoogleGeocoderConfig.model_validate(env)
+    )
+
+    here_geocoder_config: HereGeocoderConfig = Field(
+        default_factory=lambda: HereGeocoderConfig.model_validate(env)
     )

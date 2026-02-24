@@ -91,13 +91,7 @@ from backend.application.queries.get_product import GetProductQueryHandler
 from backend.application.queries.get_products import GetProductsQueryHandler
 from backend.application.queries.get_time_slots import GetTimeSlotsQueryHandler
 from backend.application.services.geocoder import Geocoder
-from backend.application.services.route_optimizer import RouteOptimizer
-from backend.application.services.tsp_solvers import (
-    HeldKarpSolver,
-    IteratedNNSolver,
-    NNTwoOptSolver,
-    ORToolsSolver,
-)
+from backend.application.services.tsp_solvers import RouteOptimizer
 from backend.application.usecases.invite_employee.generate_invite_link import (
     GenerateInviteLinkCommandHandler,
 )
@@ -106,11 +100,16 @@ from backend.infrastructure.auth import (
     SessionAuthHandler,
     WebAppAuthHandler,
 )
+from backend.infrastructure.geocoding import (
+    DBGeocodingProvider,
+    GoogleGeocoderClient,
+    HereGeocoderClient,
+    NominatimClient,
+)
 from backend.infrastructure.idp import ApiIdentityProvider, IdentityProvider
-from backend.infrastructure.nominatim import NominatimClient
-from backend.infrastructure.osrm import OSRMClient
 from backend.infrastructure.pdf import ReportLabOrdersPDFGenerator
 from backend.infrastructure.persistence.gateways import (
+    RedisGeocodeCache,
     RedisSessionGateway,
     SQLAlchemyShopGateway,
     SQLAlchemyUserGateway,
@@ -121,6 +120,13 @@ from backend.infrastructure.telegram.invite_link_generator import (
 )
 from backend.infrastructure.telegram.widget_auth import WidgetAuth
 from backend.infrastructure.transaction_manager import TransactionManager
+from backend.infrastructure.tsp_solvers import (
+    HeldKarpSolver,
+    IteratedNNSolver,
+    NNTwoOptSolver,
+    ORToolsSolver,
+    OSRMClient,
+)
 from backend.infrastructure.xlsx import (
     ClientErrorXlsxGenerator,
     ClientXlsxParser,
@@ -143,19 +149,49 @@ class AdaptersProvider(Provider):
 
     osrm_client = provide(OSRMClient)
     nominatim_client = provide(NominatimClient)
+    google_geocoder = provide(GoogleGeocoderClient)
+    here_geocoder = provide(HereGeocoderClient)
     xlsx_parser = provide(ClientXlsxParser)
     xlsx_error_generator = provide(ClientErrorXlsxGenerator)
+
+
+class GeocoderProvider(Provider):
+    scope = Scope.REQUEST
+
+    db_geocoding = provide(DBGeocodingProvider)
+
+    @provide
+    def geocoder(
+        self,
+        cache: RedisGeocodeCache,
+        db_provider: DBGeocodingProvider,
+        here_client: HereGeocoderClient,
+        google_client: GoogleGeocoderClient,
+        nominatim_client: NominatimClient,
+    ) -> Geocoder:
+        return Geocoder(
+            cache=cache,
+            providers=[
+                db_provider,
+                nominatim_client,
+                here_client,
+                google_client,
+            ],
+        )
 
 
 class ServicesProvider(Provider):
     scope = Scope.APP
 
-    held_karp_solver = provide(HeldKarpSolver)
-    iterated_nn_solver = provide(IteratedNNSolver)
-    ortools_solver = provide(ORToolsSolver)
-    nn_two_opt_solver = provide(NNTwoOptSolver)
-    route_optimizer = provide(RouteOptimizer)
-    geocoder = provide(Geocoder)
+    @provide
+    def route_optimizer(self, osrm_client: OSRMClient) -> RouteOptimizer:
+        return RouteOptimizer(
+            osrm_client=osrm_client,
+            held_karp=HeldKarpSolver(),
+            iterated_nn=IteratedNNSolver(),
+            ortools=ORToolsSolver(),
+            fallback=NNTwoOptSolver(),
+        )
 
 
 class APIInteractorsProvider(Provider):

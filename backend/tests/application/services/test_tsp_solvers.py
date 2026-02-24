@@ -1,6 +1,6 @@
 import pytest
 
-from backend.application.services.tsp_solvers import (
+from backend.infrastructure.tsp_solvers import (
     AntColonySolver,
     HeldKarpSolver,
     IteratedNNSolver,

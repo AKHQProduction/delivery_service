@@ -60,27 +60,15 @@ export const useMapPicker = () => {
 
         const data = response.data;
 
-        if (!data.address) {
+        if (!data) {
           throw new Error("Address not found");
         }
 
-        const address = data.address;
-        const street =
-          address.road ||
-          address.street ||
-          address.pedestrian ||
-          address.footway ||
-          address.path ||
-          "";
-        const house = address.house_number || "";
-        const city = address.city || address.town || address.village || address.municipality || "";
-        const fullAddress = data.display_name || "";
-
         return {
-          street,
-          house,
-          city,
-          fullAddress,
+          street: data.street || "",
+          house: data.house || "",
+          city: data.city || "",
+          fullAddress: data.display_name || "",
         };
       } catch (err) {
         const errorMessage = err instanceof Error ? err.message : "Failed to get address";
