@@ -17,7 +17,12 @@ logger = logging.getLogger(__name__)
 class GeocodingProvider(Protocol):
     @abstractmethod
     async def geocode(
-        self, street: str, house: str, city: str
+        self,
+        street: str,
+        house: str,
+        city: str,
+        *,
+        require_house: bool = True,
     ) -> CoordinatesDTO | None: ...
 
     async def reverse(
@@ -36,18 +41,24 @@ class Geocoder:
         self._providers = providers
 
     async def geocode(
-        self, street: str, house: str, city: str
+        self,
+        street: str,
+        house: str,
+        city: str,
+        *,
+        require_house: bool = True,
     ) -> CoordinatesDTO | None:
         cached = await self._cache.get(city, street, house)
         if cached is Empty.EMPTY:
-            logger.info(
-                "Geocode negative cache hit: %s %s, %s",
-                street,
-                house,
-                city,
-            )
-            return None
-        if cached is not None:
+            if require_house:
+                logger.info(
+                    "Geocode negative cache hit: %s %s, %s",
+                    street,
+                    house,
+                    city,
+                )
+                return None
+        elif cached is not None:
             logger.info(
                 "Geocoded from cache: %s %s, %s -> (%s, %s)",
                 street,
@@ -59,7 +70,9 @@ class Geocoder:
             return cached
 
         for provider in self._providers:
-            result = await provider.geocode(street, house, city)
+            result = await provider.geocode(
+                street, house, city, require_house=require_house
+            )
             if result is not None:
                 await self._cache.set(city, street, house, result)
                 logger.info(
@@ -73,7 +86,8 @@ class Geocoder:
                 )
                 return result
 
-        await self._cache.set_not_found(city, street, house)
+        if require_house:
+            await self._cache.set_not_found(city, street, house)
         logger.warning(
             "All geocoding providers failed: %s %s, %s",
             street,
@@ -89,12 +103,15 @@ class Geocoder:
         house: str,
         coordinates: CoordinatesDTO | None,
         shop_city: str | None,
+        require_house: bool = True,
     ) -> CoordinatesDTO | None:
         if coordinates is not None:
             return coordinates
         if shop_city is None:
             return None
-        return await self.geocode(street, house, shop_city)
+        return await self.geocode(
+            street, house, shop_city, require_house=require_house
+        )
 
     async def reverse(
         self, coordinates: CoordinatesDTO

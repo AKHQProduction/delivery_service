@@ -13,10 +13,15 @@ class DBGeocodingProvider(GeocodingProvider):
         self._gateway = client_gateway
 
     async def geocode(
-        self, street: str, house: str, city: str
+        self,
+        street: str,
+        house: str,
+        city: str,
+        *,
+        require_house: bool = True,
     ) -> CoordinatesDTO | None:
         return await self._gateway.find_coordinates_by_address(
-            street, house, city
+            street, house if require_house else "", city
         )
 
     async def reverse(

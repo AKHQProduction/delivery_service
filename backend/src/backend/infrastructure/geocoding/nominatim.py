@@ -22,25 +22,46 @@ class NominatimClient(GeocodingProvider):
         self._base_url = config.url.rstrip("/")
 
     async def geocode(
-        self, street: str, house: str, city: str
+        self,
+        street: str,
+        house: str,
+        city: str,
+        *,
+        require_house: bool = True,
     ) -> CoordinatesDTO | None:
-        return await self._fetch(street, house, city)
+        return await self._fetch(
+            street, house, city, require_house=require_house
+        )
 
     async def _fetch(
-        self, street: str, house: str, city: str
+        self,
+        street: str,
+        house: str,
+        city: str,
+        *,
+        require_house: bool = True,
     ) -> CoordinatesDTO | None:
-        result = await self._structured_search(street, house, city)
+        result = await self._structured_search(
+            street, house, city, require_house=require_house
+        )
         if result is not None:
             return result
 
-        result = await self._freetext_search(street, house, city)
+        result = await self._freetext_search(
+            street, house, city, require_house=require_house
+        )
         if result is not None:
             return result
 
         return None
 
     async def _structured_search(
-        self, street: str, house: str, city: str
+        self,
+        street: str,
+        house: str,
+        city: str,
+        *,
+        require_house: bool = True,
     ) -> CoordinatesDTO | None:
         params = {
             "street": f"{house} {street}",
@@ -50,10 +71,17 @@ class NominatimClient(GeocodingProvider):
             "addressdetails": "1",
             "limit": "1",
         }
-        return await self._request(params, house=house)
+        return await self._request(
+            params, house=house, require_house=require_house
+        )
 
     async def _freetext_search(
-        self, street: str, house: str, city: str
+        self,
+        street: str,
+        house: str,
+        city: str,
+        *,
+        require_house: bool = True,
     ) -> CoordinatesDTO | None:
         params = {
             "q": f"{street} {house}, {city}, Україна",
@@ -61,10 +89,16 @@ class NominatimClient(GeocodingProvider):
             "addressdetails": "1",
             "limit": "1",
         }
-        return await self._request(params, house=house)
+        return await self._request(
+            params, house=house, require_house=require_house
+        )
 
     async def _request(
-        self, params: dict[str, str], *, house: str = ""
+        self,
+        params: dict[str, str],
+        *,
+        house: str = "",
+        require_house: bool = True,
     ) -> CoordinatesDTO | None:
         url = f"{self._base_url}/search"
 
@@ -103,7 +137,7 @@ class NominatimClient(GeocodingProvider):
             )
             return None
 
-        if house.strip() and not address.get("house_number"):
+        if require_house and house.strip() and not address.get("house_number"):
             logger.info(
                 "Nominatim did not resolve house number: %s",
                 params.get("q") or params.get("street"),

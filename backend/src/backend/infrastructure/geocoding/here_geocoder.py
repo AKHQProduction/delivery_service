@@ -29,7 +29,12 @@ class HereGeocoderClient(GeocodingProvider):
         self._redis = redis
 
     async def geocode(
-        self, street: str, house: str, city: str
+        self,
+        street: str,
+        house: str,
+        city: str,
+        *,
+        require_house: bool = True,
     ) -> CoordinatesDTO | None:
         if not self._config.api_key:
             return None
@@ -82,7 +87,11 @@ class HereGeocoderClient(GeocodingProvider):
                 )
                 return None
 
-            if house.strip() and not address.get("houseNumber"):
+            if (
+                require_house
+                and house.strip()
+                and not address.get("houseNumber")
+            ):
                 logger.info(
                     "HERE did not resolve house number, query=%s",
                     query,

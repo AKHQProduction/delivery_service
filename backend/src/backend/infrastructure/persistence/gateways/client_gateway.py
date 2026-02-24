@@ -230,6 +230,18 @@ class SQLAlchemyClientGateway:
     async def find_coordinates_by_address(
         self, street: str, house: str, city: str
     ) -> CoordinatesDTO | None:
+        filters = [
+            func.lower(func.btrim(ClientAddress.street))
+            == street.strip().lower(),
+            func.lower(func.btrim(Shop.city)) == city.strip().lower(),
+            ClientAddress.latitude.isnot(None),
+            ClientAddress.longitude.isnot(None),
+        ]
+        if house.strip():
+            filters.append(
+                func.lower(func.btrim(ClientAddress.house))
+                == house.strip().lower()
+            )
         query = (
             select(
                 ClientAddress.latitude,
@@ -237,15 +249,7 @@ class SQLAlchemyClientGateway:
             )
             .join(Client, ClientAddress.client_id == Client.id)
             .join(Shop, Client.shop_id == Shop.id)
-            .where(
-                func.lower(func.btrim(ClientAddress.street))
-                == street.strip().lower(),
-                func.lower(func.btrim(ClientAddress.house))
-                == house.strip().lower(),
-                func.lower(func.btrim(Shop.city)) == city.strip().lower(),
-                ClientAddress.latitude.isnot(None),
-                ClientAddress.longitude.isnot(None),
-            )
+            .where(*filters)
             .limit(1)
         )
         result = await self._session.execute(query)

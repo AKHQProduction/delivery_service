@@ -132,6 +132,7 @@ class CreateOrderCommandHandler:
                 house=delivery_address.house,
                 coordinates=None,
                 shop_city=shop_city,
+                require_house=False,
             )
             if coords is not None:
                 delivery_address.coordinates = coords
