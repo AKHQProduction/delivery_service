@@ -9,7 +9,7 @@ from backend.infrastructure.tsp_solvers.osrm import OSRMClient
 logger = logging.getLogger(__name__)
 
 HELD_KARP_THRESHOLD = 20
-ORTOOLS_THRESHOLD = 80
+UNREACHABLE_RATIO = 0.3
 
 
 class RouteOptimizer:
@@ -17,15 +17,11 @@ class RouteOptimizer:
         self,
         osrm_client: OSRMClient,
         held_karp: TSPSolver,
-        iterated_nn: TSPSolver,
-        ortools: TSPSolver,
-        fallback: TSPSolver,
+        pyvrp: TSPSolver,
     ) -> None:
         self._osrm = osrm_client
         self._held_karp = held_karp
-        self._iterated_nn = iterated_nn
-        self._ortools = ortools
-        self._fallback = fallback
+        self._pyvrp = pyvrp
 
     async def compute(
         self,
@@ -69,30 +65,31 @@ class RouteOptimizer:
             )
             return None
 
+        matrix, coord_orders, unreachable = self._filter_unreachable(
+            matrix,
+            coord_orders,
+        )
+        without_coords.extend(unreachable)
+
+        if not coord_orders:
+            logger.error(
+                "Route optimization skipped: all %d points are unreachable",
+                len(orders),
+            )
+            return None
+
         n = len(matrix)
-        if n <= HELD_KARP_THRESHOLD:
-            solver = self._held_karp
-        elif n <= ORTOOLS_THRESHOLD:
-            solver = self._iterated_nn
-        else:
-            solver = self._ortools
+        solver = self._held_karp if n <= HELD_KARP_THRESHOLD else self._pyvrp
 
         try:
             route = solver.solve(matrix)
         except Exception as exc:
             logger.exception(
-                "Solver %s failed [%s], using fallback",
+                "Solver %s failed [%s]",
                 solver.__class__.__name__,
                 exc.__class__.__name__,
             )
-            try:
-                route = self._fallback.solve(matrix)
-            except Exception as fallback_exc:
-                logger.exception(
-                    "Fallback solver also failed [%s]",
-                    fallback_exc.__class__.__name__,
-                )
-                return None
+            return None
 
         index_map = {idx + 1: order for idx, order in enumerate(coord_orders)}
         optimized = [index_map[i].id for i in route if i in index_map]
@@ -102,3 +99,42 @@ class RouteOptimizer:
         optimized.extend(o.id for o in without_coords)
 
         return optimized
+
+    def _filter_unreachable(
+        self,
+        matrix: list[list[float]],
+        coord_orders: list[Order],
+    ) -> tuple[list[list[float]], list[Order], list[Order]]:
+        n = len(matrix)
+        inf = float("inf")
+
+        bad_indices: set[int] = set()
+        for i in range(1, n):
+            inf_count = sum(
+                1
+                for j in range(n)
+                if i != j and (matrix[i][j] == inf or matrix[j][i] == inf)
+            )
+            if inf_count / max(n - 1, 1) > UNREACHABLE_RATIO:
+                bad_indices.add(i)
+
+        if not bad_indices:
+            return matrix, coord_orders, []
+
+        logger.warning(
+            "Dropping %d unreachable points from routing",
+            len(bad_indices),
+        )
+
+        keep = [i for i in range(n) if i not in bad_indices]
+        filtered_matrix = [[matrix[i][j] for j in keep] for i in keep]
+        filtered_orders = [
+            o
+            for idx, o in enumerate(coord_orders)
+            if (idx + 1) not in bad_indices
+        ]
+        unreachable_orders = [
+            o for idx, o in enumerate(coord_orders) if (idx + 1) in bad_indices
+        ]
+
+        return filtered_matrix, filtered_orders, unreachable_orders

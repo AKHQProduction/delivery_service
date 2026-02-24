@@ -122,10 +122,8 @@ from backend.infrastructure.telegram.widget_auth import WidgetAuth
 from backend.infrastructure.transaction_manager import TransactionManager
 from backend.infrastructure.tsp_solvers import (
     HeldKarpSolver,
-    IteratedNNSolver,
-    NNTwoOptSolver,
-    ORToolsSolver,
     OSRMClient,
+    PyVRPSolver,
 )
 from backend.infrastructure.xlsx import (
     ClientErrorXlsxGenerator,
@@ -188,9 +186,7 @@ class ServicesProvider(Provider):
         return RouteOptimizer(
             osrm_client=osrm_client,
             held_karp=HeldKarpSolver(),
-            iterated_nn=IteratedNNSolver(),
-            ortools=ORToolsSolver(),
-            fallback=NNTwoOptSolver(),
+            pyvrp=PyVRPSolver(),
         )
 
 

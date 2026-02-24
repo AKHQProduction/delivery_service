@@ -10,7 +10,7 @@ COPY --from=ghcr.io/astral-sh/uv:0.8.13 /uv /uvx /usr/local/bin/
 
 RUN set -eux; apt-get update && \
     DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends \
-        libpq5 \
+        libpq5 g++ \
     && rm -rf /var/lib/apt/lists/*
 
 RUN uv venv /venv
