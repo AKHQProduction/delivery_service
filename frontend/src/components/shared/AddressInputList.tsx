@@ -1,11 +1,12 @@
 import React, { useState, useEffect, useRef } from "react";
-import { MapPicker } from "./MapPicker";
+import { MapPicker, type MapConfirmData } from "./MapPicker";
 import { MapButton } from "./MapButton";
 import { Toast } from "../ui/Toast";
 import { useMapPicker } from "../../hooks/useMapPicker";
 import { useUserShopStore } from "../../context/useUserShopStore";
 import { useToast } from "../../hooks/useToast";
 import { type Address, type AddressCoordinates } from "../../types/entities/Client";
+import { hasLetter, hasDigit } from "../../utils/addressValidation";
 
 export interface District {
   district_id: string;
@@ -40,6 +41,7 @@ export const AddressInputList: React.FC<AddressInputListProps> = ({
   const [addressStatus, setAddressStatus] = useState<Record<number, "found" | "not_found" | null>>(
     {},
   );
+  const [fieldErrors, setFieldErrors] = useState<Record<number, { street?: boolean; house?: boolean }>>({});
   const debounceTimers = useRef<Record<number, ReturnType<typeof setTimeout>>>({});
 
   // Cleanup timers on unmount
@@ -51,14 +53,13 @@ export const AddressInputList: React.FC<AddressInputListProps> = ({
   }, []);
 
   const checkAddress = async (index: number, street: string, house: string) => {
-    if (!street.trim()) {
+    if (!street.trim() || !house.trim() || !hasLetter(street) || !hasDigit(house)) {
       setAddressStatus((prev) => ({ ...prev, [index]: null }));
-      onCoordinatesChange(index, null);
       return;
     }
 
     const city = shop?.city ?? undefined;
-    const coords = await forwardGeocode(street, house || undefined, city);
+    const coords = await forwardGeocode(street, house, city);
 
     if (coords) {
       setAddressStatus((prev) => ({ ...prev, [index]: "found" }));
@@ -67,30 +68,14 @@ export const AddressInputList: React.FC<AddressInputListProps> = ({
         longitude: coords.lng,
       });
 
-      if (districts.length > 0) {
-        const reverseResult = await reverseGeocode(coords);
-        if (reverseResult?.district) {
-          const normalized = reverseResult.district.toLowerCase();
-          const matched = districts.find(
-            (d) =>
-              d.name.toLowerCase().includes(normalized) ||
-              normalized.includes(d.name.toLowerCase()),
-          );
-          if (matched) {
-            onAddressChange(index, "district_id", matched.district_id);
-          }
-        }
-      }
-
       showToast(
-        `Адресу "${street}${house ? `, ${house}` : ""}" знайдено${city ? ` в м. ${city}` : ""}`,
+        `Адресу "${street}, ${house}" знайдено${city ? ` в м. ${city}` : ""}`,
         "success",
       );
     } else {
       setAddressStatus((prev) => ({ ...prev, [index]: "not_found" }));
-      onCoordinatesChange(index, null);
       showToast(
-        `Адресу "${street}${house ? `, ${house}` : ""}" не знайдено. Спробуйте вибрати на карті`,
+        `Адресу "${street}, ${house}" не знайдено. Спробуйте вибрати на карті`,
         "warning",
       );
     }
@@ -101,23 +86,29 @@ export const AddressInputList: React.FC<AddressInputListProps> = ({
 
     // Only trigger geocode check for street or house changes
     if (field === "street" || field === "house") {
-      // Clear previous status
       setAddressStatus((prev) => ({ ...prev, [index]: null }));
+      setFieldErrors((prev) => ({ ...prev, [index]: {} }));
 
-      // Clear previous timer for this index
       if (debounceTimers.current[index]) {
         clearTimeout(debounceTimers.current[index]);
       }
 
-      // Get current values (with the new value applied)
       const currentAddress = addresses[index];
       const street = field === "street" ? value : currentAddress.street;
       const house = field === "house" ? value : currentAddress.house;
 
-      // Debounce the geocode check
-      if (street.trim()) {
+      if (street.trim() && house.trim()) {
         debounceTimers.current[index] = setTimeout(() => {
-          checkAddress(index, street, house);
+          const streetValid = hasLetter(street);
+          const houseValid = hasDigit(house);
+          if (streetValid && houseValid) {
+            checkAddress(index, street, house);
+          } else {
+            setFieldErrors((prev) => ({
+              ...prev,
+              [index]: { street: !streetValid, house: !houseValid },
+            }));
+          }
         }, 2000);
       }
     }
@@ -128,32 +119,33 @@ export const AddressInputList: React.FC<AddressInputListProps> = ({
     openMap();
   };
 
-  const handleMapConfirm = async (coordinates: { lat: number; lng: number }) => {
+  const handleMapConfirm = async (data: MapConfirmData) => {
     if (currentEditingIndex === null) return;
 
-    const result = await reverseGeocode(coordinates);
+    let street = data.street;
+    let house = data.house;
 
-    if (result) {
-      onAddressChange(currentEditingIndex, "street", result.street);
-      if (result.house) {
-        onAddressChange(currentEditingIndex, "house", result.house);
+    if (!street) {
+      const result = await reverseGeocode({ lat: data.lat, lng: data.lng });
+      if (result) {
+        street = result.street || result.fullAddress;
+        house = result.house || "-";
       }
-      if (result.district && districts.length > 0) {
-        const normalized = result.district.toLowerCase();
-        const matched = districts.find((d) => d.name.toLowerCase().includes(normalized) || normalized.includes(d.name.toLowerCase()));
-        if (matched) {
-          onAddressChange(currentEditingIndex, "district_id", matched.district_id);
-        }
-      }
-      onCoordinatesChange(currentEditingIndex, {
-        latitude: coordinates.lat,
-        longitude: coordinates.lng,
-      });
-      setAddressStatus((prev) => ({ ...prev, [currentEditingIndex]: "found" }));
-      showToast("Адресу вибрано з карти", "success");
-      closeMap();
-      setCurrentEditingIndex(null);
     }
+
+    if (street) {
+      onAddressChange(currentEditingIndex, "street", street);
+      onAddressChange(currentEditingIndex, "house", house);
+    }
+
+    onCoordinatesChange(currentEditingIndex, {
+      latitude: data.lat,
+      longitude: data.lng,
+    });
+    setAddressStatus((prev) => ({ ...prev, [currentEditingIndex]: "found" }));
+    showToast("Адресу вибрано з карти", "success");
+    closeMap();
+    setCurrentEditingIndex(null);
   };
 
   const getInputBorderClass = (index: number) => {
@@ -208,7 +200,7 @@ export const AddressInputList: React.FC<AddressInputListProps> = ({
                     onChange={(e) => handleAddressFieldChange(index, "street", e.target.value)}
                     placeholder="Вулиця *"
                     required
-                    className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500 ${getInputBorderClass(index)}`}
+                    className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500 ${fieldErrors[index]?.street ? "border-red-400 bg-red-50" : getInputBorderClass(index)}`}
                   />
                 </div>
 
@@ -218,7 +210,7 @@ export const AddressInputList: React.FC<AddressInputListProps> = ({
                   onChange={(e) => handleAddressFieldChange(index, "house", e.target.value)}
                   placeholder="Будинок *"
                   required
-                  className={`px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500 ${getInputBorderClass(index)}`}
+                  className={`px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500 ${fieldErrors[index]?.house ? "border-red-400 bg-red-50" : getInputBorderClass(index)}`}
                 />
               </div>
             </div>

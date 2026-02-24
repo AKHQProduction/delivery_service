@@ -109,9 +109,14 @@ class Geocoder:
             )
             return cached
 
+        partial: ReverseGeocodeResult | None = None
+        partial_provider: str = ""
+
         for provider in self._providers:
             result = await provider.reverse(coordinates)
-            if result is not None:
+            if result is None or not result.street:
+                continue
+            if result.house:
                 await self._cache.set_reverse(coordinates, result)
                 logger.info(
                     "Reverse geocoded via %s: (%s, %s) -> %s",
@@ -121,6 +126,20 @@ class Geocoder:
                     result.display_name,
                 )
                 return result
+            if partial is None:
+                partial = result
+                partial_provider = type(provider).__name__
+
+        if partial is not None:
+            await self._cache.set_reverse(coordinates, partial)
+            logger.info(
+                "Reverse geocoded via %s (no house): (%s, %s) -> %s",
+                partial_provider,
+                coordinates.latitude,
+                coordinates.longitude,
+                partial.display_name,
+            )
+            return partial
 
         logger.warning(
             "All reverse geocoding providers failed: %s, %s",

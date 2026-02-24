@@ -5,7 +5,6 @@ export interface MapPickerResult {
   street: string;
   house: string;
   city: string;
-  district: string;
   fullAddress: string;
 }
 
@@ -69,7 +68,6 @@ export const useMapPicker = () => {
           street: data.street || "",
           house: data.house || "",
           city: data.city || "",
-          district: data.district || "",
           fullAddress: data.display_name || "",
         };
       } catch (err) {

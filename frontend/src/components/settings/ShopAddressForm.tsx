@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { MapPicker } from "../shared/MapPicker";
+import { MapPicker, type MapConfirmData } from "../shared/MapPicker";
 import { MapButton } from "../shared/MapButton";
 import { useMapPicker } from "../../hooks/useMapPicker";
 import { useShopSettings, type ShopAddress } from "../../hooks/settings/useShopSettings";
@@ -56,30 +56,37 @@ export const ShopAddressForm: React.FC<ShopAddressFormProps> = ({ onSuccess }) =
     openMap();
   };
 
-  const handleMapConfirm = async (coordinates: { lat: number; lng: number }) => {
-    const result = await reverseGeocode(coordinates);
+  const handleMapConfirm = async (data: MapConfirmData) => {
+    let street = data.street;
+    let house = data.house || shopAddress.house;
+    let city = data.city || shopAddress.city;
 
-    if (result) {
-      const updatedAddress: ShopAddress = {
-        street: result.street,
-        house: result.house || shopAddress.house,
-        city: result.city,
-        coordinates: {
-          latitude: coordinates.lat,
-          longitude: coordinates.lng,
-        },
-      };
-      setShopAddress(updatedAddress);
-      setAddressError(null);
-      setPendingCoordinates(null);
-      closeMap();
+    if (!street) {
+      const result = await reverseGeocode({ lat: data.lat, lng: data.lng });
+      if (result) {
+        street = result.street || result.fullAddress;
+        house = result.house || shopAddress.house;
+        city = result.city || shopAddress.city;
+      }
+    }
 
-      // Auto-save after map selection
-      if (updatedAddress.street.trim()) {
-        const success = await saveShopAddress(updatedAddress);
-        if (success) {
-          onSuccess?.();
-        }
+    if (!street) return;
+
+    const updatedAddress: ShopAddress = {
+      street,
+      house,
+      city,
+      coordinates: { latitude: data.lat, longitude: data.lng },
+    };
+    setShopAddress(updatedAddress);
+    setAddressError(null);
+    setPendingCoordinates(null);
+    closeMap();
+
+    if (updatedAddress.street.trim()) {
+      const success = await saveShopAddress(updatedAddress);
+      if (success) {
+        onSuccess?.();
       }
     }
   };

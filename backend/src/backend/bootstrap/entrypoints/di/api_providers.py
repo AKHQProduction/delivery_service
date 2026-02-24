@@ -173,9 +173,9 @@ class GeocoderProvider(Provider):
             cache=cache,
             providers=[
                 db_provider,
+                nominatim_client,
                 here_client,
                 google_client,
-                nominatim_client,
             ],
         )
 

@@ -4,6 +4,7 @@ import { MapContainer, TileLayer, Marker, useMapEvents } from "react-leaflet";
 import type { LatLng } from "leaflet";
 import "leaflet/dist/leaflet.css";
 import { type Coordinates, type MapPickerResult } from "../../hooks/useMapPicker";
+import { hasLetter, hasDigit } from "../../utils/addressValidation";
 
 //default marker icons in React-Leaflet
 import L from "leaflet";
@@ -19,10 +20,18 @@ const DefaultIcon = L.icon({
 
 L.Marker.prototype.options.icon = DefaultIcon;
 
+export interface MapConfirmData {
+  lat: number;
+  lng: number;
+  street: string;
+  house: string;
+  city: string;
+}
+
 interface MapPickerProps {
   isOpen: boolean;
   onClose: () => void;
-  onConfirm: (coordinates: Coordinates) => void;
+  onConfirm: (data: MapConfirmData) => void;
   isLoading?: boolean;
   defaultCenter?: Coordinates;
   initialStreet?: string;
@@ -87,6 +96,7 @@ export const MapPicker: React.FC<MapPickerProps> = ({
   const [addressHouse, setAddressHouse] = useState(initialHouse);
   const [searchError, setSearchError] = useState(false);
   const [isSearching, setIsSearching] = useState(false);
+  const [showValidation, setShowValidation] = useState(false);
 
   // Update map center when defaultCenter changes and map opens
   useEffect(() => {
@@ -137,15 +147,19 @@ export const MapPicker: React.FC<MapPickerProps> = ({
       setMarkerPosition(null);
       setMapCenter(DEFAULT_CENTER);
       setSearchError(false);
+      setShowValidation(false);
     }
     prevIsOpenRef.current = isOpen;
   }, [isOpen]);
 
   const handleAddressSearch = async () => {
-    if (!onGeocode || !addressStreet.trim()) return;
+    setShowValidation(true);
+    if (!onGeocode || !addressStreet.trim() || !addressCity.trim()) return;
+    if (!hasLetter(addressStreet)) return;
     setIsSearching(true);
     setSearchError(false);
-    const coords = await onGeocode(addressStreet, addressHouse, addressCity);
+    const house = hasDigit(addressHouse) ? addressHouse : undefined;
+    const coords = await onGeocode(addressStreet, house, addressCity);
     if (coords) {
       setMarkerPosition(L.latLng(coords.lat, coords.lng));
       setMapCenter(coords);
@@ -162,6 +176,9 @@ export const MapPicker: React.FC<MapPickerProps> = ({
       onConfirm({
         lat: markerPosition.lat,
         lng: markerPosition.lng,
+        street: addressStreet,
+        house: addressHouse || "-",
+        city: addressCity,
       });
     }
   };
@@ -200,28 +217,28 @@ export const MapPicker: React.FC<MapPickerProps> = ({
               <input
                 type="text"
                 value={addressCity}
-                onChange={(e) => { setAddressCity(e.target.value); setSearchError(false); }}
+                onChange={(e) => { setAddressCity(e.target.value); setSearchError(false); setShowValidation(false); }}
                 placeholder="Місто"
                 className="px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 sm:w-36"
               />
               <input
                 type="text"
                 value={addressStreet}
-                onChange={(e) => { setAddressStreet(e.target.value); setSearchError(false); }}
+                onChange={(e) => { setAddressStreet(e.target.value); setSearchError(false); setShowValidation(false); }}
                 placeholder="Вулиця"
-                className="px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 flex-1"
+                className={`px-3 py-2 border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 flex-1 ${showValidation && addressStreet.trim() && !hasLetter(addressStreet) ? "border-red-400 bg-red-50" : "border-gray-300"}`}
               />
               <input
                 type="text"
                 value={addressHouse}
-                onChange={(e) => { setAddressHouse(e.target.value); setSearchError(false); }}
+                onChange={(e) => { setAddressHouse(e.target.value); setSearchError(false); setShowValidation(false); }}
                 placeholder="Будинок"
-                className="px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 sm:w-24"
+                className={`px-3 py-2 border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 sm:w-24 ${showValidation && addressHouse.trim() && !hasDigit(addressHouse) ? "border-red-400 bg-red-50" : "border-gray-300"}`}
               />
               <button
                 type="button"
                 onClick={handleAddressSearch}
-                disabled={isSearching || !addressStreet.trim()}
+                disabled={isSearching || !addressStreet.trim() || !addressCity.trim() || !hasLetter(addressStreet)}
                 className="px-4 py-2 bg-indigo-600 text-white text-sm font-medium rounded-lg hover:bg-indigo-700 disabled:bg-gray-300 disabled:cursor-not-allowed transition-colors whitespace-nowrap"
               >
                 {isSearching ? "Пошук..." : "Знайти"}
@@ -253,8 +270,8 @@ export const MapPicker: React.FC<MapPickerProps> = ({
                 onReverseGeocode({ lat: pos.lat, lng: pos.lng }).then((result) => {
                   if (result) {
                     setAddressCity(result.city);
-                    setAddressStreet(result.street);
-                    setAddressHouse(result.house);
+                    setAddressStreet(result.street || result.fullAddress);
+                    setAddressHouse(result.house || "-");
                   }
                 });
               }
