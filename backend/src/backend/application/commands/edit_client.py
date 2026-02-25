@@ -204,6 +204,7 @@ class EditClientCommandHandler:
                     continue
                 updated = (
                     await self._order_gateway.update_delivery_coordinates(
+                        shop_id=client.shop_id,
                         client_id=client.id,
                         street=item.street,
                         house=item.house,

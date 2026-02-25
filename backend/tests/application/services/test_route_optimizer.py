@@ -173,3 +173,44 @@ class TestEdgeCases:
         result = await optimizer.compute(shop, orders)
 
         assert result is None
+
+
+class TestFindBestInsertionPosition:
+    def test_empty_sequence_returns_zero(self):
+        pos = RouteOptimizer.find_best_insertion_position(
+            shop_coords=(50.0, 30.0),
+            existing_sequence_coords=[],
+            new_point_coords=(50.1, 30.1),
+        )
+        assert pos == 0
+
+    def test_inserts_near_closest_point(self):
+        shop = (50.0, 30.0)
+        existing = [
+            (50.1, 30.1),
+            (50.2, 30.2),
+            (50.3, 30.3),
+        ]
+        new_point = (50.15, 30.15)
+
+        pos = RouteOptimizer.find_best_insertion_position(
+            shop_coords=shop,
+            existing_sequence_coords=existing,
+            new_point_coords=new_point,
+        )
+
+        assert 0 <= pos <= len(existing)
+        assert pos == 1
+
+    def test_single_point(self):
+        shop = (50.0, 30.0)
+        existing = [(50.5, 30.5)]
+        new_point = (50.6, 30.6)
+
+        pos = RouteOptimizer.find_best_insertion_position(
+            shop_coords=shop,
+            existing_sequence_coords=existing,
+            new_point_coords=new_point,
+        )
+
+        assert pos in {0, 1}

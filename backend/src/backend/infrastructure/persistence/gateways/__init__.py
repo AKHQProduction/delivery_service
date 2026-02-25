@@ -6,6 +6,7 @@ from .geocode_cache import RedisGeocodeCache
 from .link_gateway import RedisLinkGateway
 from .order_gateway import SQLAlchemyOrderGateway
 from .product_gateway import SQLAlchemyProductGateway
+from .route_plan_gateway import SQLAlchemyRoutePlanGateway
 from .session_gateway import RedisSessionGateway
 from .shop_gateway import SQLAlchemyShopGateway
 from .time_slot_gateway import SQLAlchemyTimeSlotGateway
@@ -21,6 +22,7 @@ __all__ = [
     "SQLAlchemyDistrictGateway",
     "SQLAlchemyOrderGateway",
     "SQLAlchemyProductGateway",
+    "SQLAlchemyRoutePlanGateway",
     "SQLAlchemyShopGateway",
     "SQLAlchemyTimeSlotGateway",
     "SQLAlchemyUserGateway",

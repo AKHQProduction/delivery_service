@@ -1,4 +1,5 @@
 import logging
+import math
 
 from backend.application.dto.coordinates import CoordinatesDTO
 from backend.application.services.tsp_solvers.base import TSPSolver
@@ -138,3 +139,36 @@ class RouteOptimizer:
         ]
 
         return filtered_matrix, filtered_orders, unreachable_orders
+
+    @staticmethod
+    def find_best_insertion_position(
+        shop_coords: tuple[float, float],
+        existing_sequence_coords: list[tuple[float, float]],
+        new_point_coords: tuple[float, float],
+    ) -> int:
+        if not existing_sequence_coords:
+            return 0
+
+        waypoints = [shop_coords, *existing_sequence_coords]
+
+        def _dist(a: tuple[float, float], b: tuple[float, float]) -> float:
+            avg_lat = math.radians((a[0] + b[0]) / 2)
+            return math.hypot(a[0] - b[0], (a[1] - b[1]) * math.cos(avg_lat))
+
+        best_pos = len(existing_sequence_coords)
+        best_cost = float("inf")
+
+        for i in range(len(waypoints)):
+            prev = waypoints[i]
+            nxt = waypoints[i + 1] if i + 1 < len(waypoints) else shop_coords
+
+            cost = (
+                _dist(prev, new_point_coords)
+                + _dist(new_point_coords, nxt)
+                - _dist(prev, nxt)
+            )
+            if cost < best_cost:
+                best_cost = cost
+                best_pos = i
+
+        return best_pos

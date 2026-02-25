@@ -2660,7 +2660,9 @@ async def test_create_order_geocodes_address_without_coordinates(
         )
 
         assert response.status_code == status.HTTP_201_CREATED
-        mock_geocode.assert_called_once_with("Хрещатик", "10", "Київ")
+        mock_geocode.assert_called_once_with(
+            "Хрещатик", "10", "Київ", require_house=False
+        )
 
     order_id = response.json()
     await session.flush()
