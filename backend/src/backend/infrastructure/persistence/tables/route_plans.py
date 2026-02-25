@@ -1,7 +1,7 @@
 import datetime
 
 import sqlalchemy as sa
-from sqlalchemy.dialects.postgresql import ARRAY, JSONB
+from sqlalchemy.dialects.postgresql import ARRAY
 from sqlalchemy.orm import Mapped, mapped_column
 
 from backend.application.vars import OrderId, RoutePlanId, ShopId, TimeSlotId
@@ -28,9 +28,6 @@ class RoutePlan(Base, CreatedAt, UpdatedAt):
     )
     order_sequence: Mapped[list[OrderId]] = mapped_column(
         ARRAY(sa.UUID), nullable=False, default=list
-    )
-    coordinates_snapshot: Mapped[dict[str, list[float]] | None] = (
-        mapped_column(JSONB, nullable=True)
     )
 
     __table_args__ = (

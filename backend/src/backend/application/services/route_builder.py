@@ -136,24 +136,6 @@ def collect_waypoints(
     return waypoints
 
 
-def build_coordinates_snapshot(
-    orders: list[Order],
-    order_sequence: list,
-) -> dict:
-    orders_map = {str(order.id): order for order in orders}
-    snapshot = {}
-    for oid in order_sequence:
-        order = orders_map.get(str(oid))
-        if (
-            order
-            and order.delivery_address
-            and order.delivery_address.coordinates
-        ):
-            coords = order.delivery_address.coordinates
-            snapshot[str(oid)] = [coords.latitude, coords.longitude]
-    return snapshot
-
-
 def create_route_plan(
     route_plan_gateway: SQLAlchemyRoutePlanGateway,
     shop_id: ShopId,
@@ -175,7 +157,6 @@ def create_route_plan(
         delivery_date=delivery_date,
         time_slot_id=time_slot_id,
         order_sequence=all_ids,
-        coordinates_snapshot=build_coordinates_snapshot(orders, all_ids),
     )
     route_plan_gateway.save(route_plan)
     return route_plan

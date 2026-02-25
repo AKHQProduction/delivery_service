@@ -10,7 +10,7 @@ from collections.abc import Sequence
 
 import sqlalchemy as sa
 from alembic import op
-from sqlalchemy.dialects.postgresql import ARRAY, JSONB
+from sqlalchemy.dialects.postgresql import ARRAY
 
 revision: str = "00013"
 down_revision: str | Sequence[str] | None = "00012"
@@ -26,7 +26,6 @@ def upgrade() -> None:
         sa.Column("delivery_date", sa.Date(), nullable=False),
         sa.Column("time_slot_id", sa.UUID(), nullable=True),
         sa.Column("order_sequence", ARRAY(sa.UUID()), nullable=False),
-        sa.Column("coordinates_snapshot", JSONB(), nullable=True),
         sa.Column(
             "created_at",
             sa.DateTime(),

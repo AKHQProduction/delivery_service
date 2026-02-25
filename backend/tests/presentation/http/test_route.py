@@ -170,10 +170,6 @@ async def test_get_route_returns_existing_plan(
             delivery_date=delivery_date,
             time_slot_id=None,
             order_sequence=[order_id_2, order_id_1],
-            coordinates_snapshot={
-                str(order_id_1): [50.46, 30.53],
-                str(order_id_2): [50.44, 30.51],
-            },
         )
     )
     await session.commit()
@@ -353,7 +349,6 @@ async def test_reorder_route(
             delivery_date=delivery_date,
             time_slot_id=None,
             order_sequence=[order_a, order_b, order_c],
-            coordinates_snapshot={},
         )
     )
     await session.commit()
@@ -586,10 +581,6 @@ async def test_get_shared_route(
             delivery_date=delivery_date,
             time_slot_id=None,
             order_sequence=[order_id_1, order_id_2],
-            coordinates_snapshot={
-                str(order_id_1): [50.46, 30.53],
-                str(order_id_2): [50.44, 30.51],
-            },
         )
     )
     await session.commit()

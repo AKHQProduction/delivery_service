@@ -4,7 +4,6 @@ from uuid import uuid4
 
 from backend.application.dto.coordinates import CoordinatesDTO
 from backend.application.services.route_builder import (
-    build_coordinates_snapshot,
     build_route_read_model,
     collect_waypoints,
     create_route_plan,
@@ -135,26 +134,6 @@ class TestCollectWaypoints:
         assert waypoints[0] == (50.45, 30.52)
 
 
-class TestBuildCoordinatesSnapshot:
-    def test_snapshot_for_orders_with_coords(self):
-        o0 = _make_order("aaa", lat=50.1, lon=30.1)
-        o1 = _make_order("bbb", lat=50.2, lon=30.2)
-        snapshot = build_coordinates_snapshot([o0, o1], ["aaa", "bbb"])
-
-        assert snapshot == {
-            "aaa": [50.1, 30.1],
-            "bbb": [50.2, 30.2],
-        }
-
-    def test_snapshot_skips_missing_coords(self):
-        o0 = _make_order("aaa", lat=50.1, lon=30.1)
-        o1 = _make_order("bbb", has_coords=False)
-        snapshot = build_coordinates_snapshot([o0, o1], ["aaa", "bbb"])
-
-        assert "aaa" in snapshot
-        assert "bbb" not in snapshot
-
-
 class TestBuildRouteReadModel:
     def test_builds_model_with_geometry(self):
         from uuid import uuid4
@@ -257,20 +236,3 @@ class TestCreateRoutePlan:
         ids = plan.order_sequence
         assert ids[0] == "a"
         assert ids[1] == "b"
-
-    def test_coordinates_snapshot_built(self):
-        gw = self._make_gateway()
-        o0 = _make_order("a", lat=50.1, lon=30.1)
-        o1 = _make_order("b", has_coords=False)
-
-        plan = create_route_plan(
-            route_plan_gateway=gw,
-            shop_id=ShopId(uuid4()),
-            delivery_date=date(2026, 2, 25),
-            time_slot_id=None,
-            orders=[o0, o1],
-            optimized_ids=None,
-        )
-
-        assert "a" in plan.coordinates_snapshot
-        assert "b" not in plan.coordinates_snapshot
