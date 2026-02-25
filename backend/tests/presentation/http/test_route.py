@@ -358,7 +358,7 @@ async def test_reorder_route(
     response = await http_client.patch(
         url=f"{BASE_URL}",
         headers=headers,
-        params={
+        json={
             "delivery_date": delivery_date.isoformat(),
             "order_id": str(order_c),
             "new_position": 0,
@@ -392,7 +392,7 @@ async def test_reorder_route_plan_not_found(
     response = await http_client.patch(
         url=f"{BASE_URL}",
         headers=headers,
-        params={
+        json={
             "delivery_date": _delivery_date_future().isoformat(),
             "order_id": str(uuid.uuid4()),
             "new_position": 0,
