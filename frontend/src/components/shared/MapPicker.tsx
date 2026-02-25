@@ -259,7 +259,7 @@ export const MapPicker: React.FC<MapPickerProps> = ({
             scrollWheelZoom={true}
           >
             <TileLayer
-              url="https://{s}.google.com/vt/lyrs=y&x={x}&y={y}&z={z}&hl=uk"
+              url={import.meta.env.VITE_MAP_TILE_URL}
               subdomains={["mt0", "mt1", "mt2", "mt3"]}
               maxZoom={21}
             />

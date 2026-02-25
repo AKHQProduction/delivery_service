@@ -8,6 +8,7 @@ import statisticIcon from "../assets/icons/statistic-board-com.svg";
 import usersIcon from "../assets/icons/users.svg";
 import settingsIcon from "../assets/icons/settings.svg";
 import shopIcon from "../assets/icons/shop.svg";
+import routeIcon from "../assets/icons/route.svg";
 
 interface MenuCardData {
   path: string;
@@ -18,6 +19,13 @@ interface MenuCardData {
 }
 
 const menuCards: MenuCardData[] = [
+  {
+    path: "/routes",
+    label: "Маршрути",
+    description: "Перегляд та редагування маршрутів доставки",
+    icon: routeIcon,
+    allowedRoles: [UserRole.COURIER, UserRole.MANAGER, UserRole.OWNER],
+  },
   {
     path: "/stats",
     label: "Статистика",

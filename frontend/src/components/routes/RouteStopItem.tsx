@@ -1,0 +1,123 @@
+import React from "react";
+import { type RoutePoint } from "../../types/entities/Route";
+import { paymentMap } from "../../utils/dataMap";
+
+interface RouteStopItemProps {
+  point: RoutePoint;
+  index: number;
+  totalCount: number;
+  canEdit: boolean;
+  isDragging: boolean;
+  isOver: boolean;
+  isEditingMarker: boolean;
+  onDragStart: (index: number) => void;
+  onDragOver: (e: React.DragEvent, index: number) => void;
+  onDrop: (index: number) => void;
+  onDragEnd: () => void;
+  onMoveUp: (index: number) => void;
+  onMoveDown: (index: number) => void;
+  onToggleEditMarker: (orderId: string) => void;
+}
+
+export const RouteStopItem: React.FC<RouteStopItemProps> = ({
+  point,
+  index,
+  totalCount,
+  canEdit,
+  isDragging,
+  isOver,
+  isEditingMarker,
+  onDragStart,
+  onDragOver,
+  onDrop,
+  onDragEnd,
+  onMoveUp,
+  onMoveDown,
+  onToggleEditMarker,
+}) => {
+  return (
+    <div
+      draggable={canEdit}
+      onDragStart={canEdit ? () => onDragStart(index) : undefined}
+      onDragOver={canEdit ? (e) => onDragOver(e, index) : undefined}
+      onDrop={canEdit ? () => onDrop(index) : undefined}
+      onDragEnd={canEdit ? onDragEnd : undefined}
+      className={`border-b border-gray-200 bg-white transition-all ${
+        isDragging ? "opacity-40" : ""
+      } ${isOver ? "border-t-2 border-t-indigo-500" : ""}`}
+    >
+      <div className="flex items-start gap-3 px-4 py-3">
+        {/* Number + drag handle */}
+        <div className="flex flex-col items-center gap-1 pt-0.5 shrink-0">
+          <div className="w-7 h-7 rounded-full bg-indigo-600 text-white flex items-center justify-center text-xs font-bold">
+            {index + 1}
+          </div>
+          {canEdit && (
+            <svg className="w-4 h-4 text-gray-300 cursor-grab active:cursor-grabbing" fill="currentColor" viewBox="0 0 24 24">
+              <path d="M8 6h2v2H8V6zm6 0h2v2h-2V6zM8 11h2v2H8v-2zm6 0h2v2h-2v-2zm-6 5h2v2H8v-2zm6 0h2v2h-2v-2z" />
+            </svg>
+          )}
+        </div>
+
+        {/* Point info */}
+        <div className="flex-1 min-w-0">
+          <p className="font-semibold text-gray-900 text-sm truncate">{point.client_name}</p>
+          <p className="text-xs text-gray-500 mt-0.5 truncate">{point.address}</p>
+          {point.comment && (
+            <p className="text-xs text-amber-600 mt-1 truncate">{point.comment}</p>
+          )}
+          <div className="flex items-center gap-2 mt-1.5 flex-wrap">
+            <span className="text-xs text-gray-400">{point.items_summary}</span>
+            <span className="text-xs text-gray-300">·</span>
+            <span className="text-xs text-gray-400">{point.total_price} ₴</span>
+            <span className="text-xs text-gray-300">·</span>
+            <span className="text-xs text-gray-400">{paymentMap[point.payment_method] ?? point.payment_method}</span>
+          </div>
+        </div>
+
+        {/* Actions (owner only) */}
+        {canEdit && (
+          <div className="flex flex-col gap-1 shrink-0">
+            <button
+              type="button"
+              title="Вгору"
+              onClick={() => onMoveUp(index)}
+              disabled={index === 0}
+              className="md:hidden w-7 h-7 rounded bg-gray-100 hover:bg-gray-200 disabled:opacity-30 flex items-center justify-center transition-colors"
+            >
+              <svg className="w-4 h-4 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 15l7-7 7 7" />
+              </svg>
+            </button>
+            <button
+              type="button"
+              title="Вниз"
+              onClick={() => onMoveDown(index)}
+              disabled={index === totalCount - 1}
+              className="md:hidden w-7 h-7 rounded bg-gray-100 hover:bg-gray-200 disabled:opacity-30 flex items-center justify-center transition-colors"
+            >
+              <svg className="w-4 h-4 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+              </svg>
+            </button>
+            <button
+              type="button"
+              onClick={() => onToggleEditMarker(point.order_id)}
+              title="Редагувати маркер"
+              className={`w-7 h-7 rounded flex items-center justify-center transition-colors ${
+                isEditingMarker
+                  ? "bg-indigo-600 text-white"
+                  : "bg-gray-100 hover:bg-gray-200 text-gray-600"
+              }`}
+            >
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+              </svg>
+            </button>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+};
