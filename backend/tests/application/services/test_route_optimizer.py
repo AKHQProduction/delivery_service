@@ -2,7 +2,7 @@ from unittest.mock import AsyncMock, Mock
 
 import pytest
 
-from backend.application.dto.coordinates import CoordinatesDTO
+from backend.application.dto.coordinates import CoordinatesDTO, EdgeInput
 from backend.application.services.tsp_solvers.route_optimizer import (
     HELD_KARP_THRESHOLD,
     RouteOptimizer,
@@ -37,12 +37,13 @@ def optimizer(osrm, held_karp, pyvrp):
     )
 
 
-def _make_order(order_id, has_coords=True):
+def _make_order(order_id, has_coords=True, lat=50.0, lng=30.0):
     order = Mock()
     order.id = order_id
     if has_coords:
-        order.delivery_address.coordinates.latitude = 50.0
-        order.delivery_address.coordinates.longitude = 30.0
+        order.delivery_address.coordinates = CoordinatesDTO(
+            latitude=lat, longitude=lng
+        )
     else:
         order.delivery_address = None
     return order
@@ -215,3 +216,109 @@ class TestFindBestInsertionPosition:
         )
 
         assert pos in {0, 1}
+
+
+class TestApplyPreferences:
+    def test_adjusts_matrix(self):
+        o1 = _make_order(1, lat=50.1, lng=30.1)
+        o2 = _make_order(2, lat=50.2, lng=30.2)
+        matrix = [
+            [0, 100, 100],
+            [100, 0, 100],
+            [100, 100, 0],
+        ]
+
+        preferences = {
+            EdgeInput(
+                from_coords=CoordinatesDTO(50.1, 30.1),
+                to_coords=CoordinatesDTO(50.2, 30.2),
+            ): 1.0,
+        }
+
+        RouteOptimizer._apply_preferences(matrix, [o1, o2], preferences)
+
+        assert matrix[1][2] == pytest.approx(80.0)
+        assert matrix[2][1] == 100
+
+    def test_no_match_unchanged(self):
+        o1 = _make_order(1, lat=50.1, lng=30.1)
+        o2 = _make_order(2, lat=50.2, lng=30.2)
+        matrix = [
+            [0, 100, 100],
+            [100, 0, 100],
+            [100, 100, 0],
+        ]
+
+        preferences = {
+            EdgeInput(
+                from_coords=CoordinatesDTO(99.0, 99.0),
+                to_coords=CoordinatesDTO(98.0, 98.0),
+            ): 1.0,
+        }
+
+        RouteOptimizer._apply_preferences(matrix, [o1, o2], preferences)
+
+        assert matrix[1][2] == 100
+        assert matrix[2][1] == 100
+
+    def test_inf_not_adjusted(self):
+        o1 = _make_order(1, lat=50.1, lng=30.1)
+        o2 = _make_order(2, lat=50.2, lng=30.2)
+        inf = float("inf")
+        matrix = [
+            [0, inf, inf],
+            [inf, 0, inf],
+            [inf, inf, 0],
+        ]
+
+        preferences = {
+            EdgeInput(
+                from_coords=CoordinatesDTO(50.1, 30.1),
+                to_coords=CoordinatesDTO(50.2, 30.2),
+            ): 1.0,
+        }
+
+        RouteOptimizer._apply_preferences(matrix, [o1, o2], preferences)
+
+        assert matrix[1][2] == inf
+
+    @pytest.mark.asyncio()
+    async def test_compute_with_preferences_backward_compat(
+        self, optimizer, osrm, held_karp
+    ):
+        orders = [_make_order(i) for i in range(3)]
+        n = len(orders) + 1
+
+        osrm.get_duration_matrix.return_value = _make_matrix(n)
+        shop = Mock(latitude=50.0, longitude=30.0)
+
+        result = await optimizer.compute(shop, orders, edge_preferences=None)
+
+        held_karp.solve.assert_called_once()
+        assert result is not None
+
+    @pytest.mark.asyncio()
+    async def test_compute_with_preferences_adjusts_matrix(
+        self, optimizer, osrm, held_karp
+    ):
+        o1 = _make_order(1, lat=50.1, lng=30.1)
+        o2 = _make_order(2, lat=50.2, lng=30.2)
+        o3 = _make_order(3, lat=50.3, lng=30.3)
+        orders = [o1, o2, o3]
+        n = len(orders) + 1
+
+        osrm.get_duration_matrix.return_value = _make_matrix(n)
+        shop = CoordinatesDTO(latitude=50.0, longitude=30.0)
+
+        preferences = {
+            EdgeInput(
+                from_coords=CoordinatesDTO(50.1, 30.1),
+                to_coords=CoordinatesDTO(50.2, 30.2),
+            ): 1.0,
+        }
+
+        await optimizer.compute(shop, orders, edge_preferences=preferences)
+
+        called_matrix = held_karp.solve.call_args[0][0]
+        assert called_matrix[1][2] == pytest.approx(80.0)
+        assert called_matrix[2][1] == 100

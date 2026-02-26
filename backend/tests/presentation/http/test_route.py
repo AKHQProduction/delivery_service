@@ -13,6 +13,9 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from backend.application.vars import RoutePlanId
 from backend.infrastructure.persistence.tables.clients import ClientAddress
 from backend.infrastructure.persistence.tables.orders import Order
+from backend.infrastructure.persistence.tables.route_edge_history import (
+    RouteEdgeHistory,
+)
 from backend.infrastructure.persistence.tables.route_plans import RoutePlan
 
 BASE_URL = "/api/v1/route"
@@ -938,3 +941,93 @@ async def test_edit_order_date_change_removes_from_old_route_plan(
     route_plan = result.scalar_one()
     assert order_a not in route_plan.order_sequence
     assert route_plan.order_sequence == [order_b]
+
+
+@pytest.mark.asyncio()
+async def test_reorder_records_edge_history(
+    http_client: AsyncClient,
+    session: AsyncSession,
+    customer_headers: Callable[[int], dict[str, Any]],
+    setup_full_test_user_with_shop,
+    setup_test_client,
+    setup_test_order,
+) -> None:
+    telegram_id = 7012
+    _, shop_id = await setup_full_test_user_with_shop(
+        telegram_id=telegram_id,
+        shop_latitude=50.45,
+        shop_longitude=30.52,
+    )
+
+    client_id = await setup_test_client(
+        shop_id=shop_id,
+        full_name="Клієнт",
+        phones=["+380501234567"],
+        addresses=[{"street": "Хрещатик", "house": "10"}],
+    )
+
+    delivery_date = _delivery_date_future()
+    order_a = await setup_test_order(
+        shop_id=shop_id,
+        client_id=client_id,
+        delivery_date=delivery_date,
+        delivery_address={
+            "street": "A",
+            "house": "1",
+            "coordinates": {"latitude": 50.46, "longitude": 30.53},
+        },
+    )
+    order_b = await setup_test_order(
+        shop_id=shop_id,
+        client_id=client_id,
+        delivery_date=delivery_date,
+        delivery_address={
+            "street": "B",
+            "house": "2",
+            "coordinates": {"latitude": 50.47, "longitude": 30.54},
+        },
+    )
+    order_c = await setup_test_order(
+        shop_id=shop_id,
+        client_id=client_id,
+        delivery_date=delivery_date,
+        delivery_address={
+            "street": "C",
+            "house": "3",
+            "coordinates": {"latitude": 50.48, "longitude": 30.55},
+        },
+    )
+
+    route_plan_id = RoutePlanId(uuid.uuid4())
+    await session.execute(
+        insert(RoutePlan).values(
+            id=route_plan_id,
+            shop_id=shop_id,
+            delivery_date=delivery_date,
+            time_slot_id=None,
+            order_sequence=[order_a, order_b, order_c],
+        )
+    )
+    await session.commit()
+
+    headers = customer_headers(telegram_id)
+
+    response = await http_client.patch(
+        url=f"{BASE_URL}",
+        headers=headers,
+        json={
+            "delivery_date": delivery_date.isoformat(),
+            "order_id": str(order_c),
+            "new_position": 0,
+        },
+    )
+
+    assert response.status_code == status.HTTP_204_NO_CONTENT
+
+    await session.flush()
+
+    result = await session.execute(
+        select(RouteEdgeHistory).where(RouteEdgeHistory.shop_id == shop_id)
+    )
+    edge_rows = result.scalars().all()
+    assert len(edge_rows) >= 2

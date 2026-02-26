@@ -8,6 +8,10 @@ from backend.application.dto.gateways.route_gateway import (
     RouteReadModel,
 )
 from backend.application.policies.access import ensure_can_manage
+from backend.application.services.edge_preference_collector import (
+    PREFERENCE_WINDOW_DAYS,
+    build_preference_map,
+)
 from backend.application.services.route_builder import (
     build_route_read_model,
     collect_waypoints,
@@ -20,6 +24,7 @@ from backend.application.vars import TimeSlotId
 from backend.infrastructure.idp import IdentityProvider
 from backend.infrastructure.persistence.gateways import (
     SQLAlchemyOrderGateway,
+    SQLAlchemyRouteEdgeHistoryGateway,
     SQLAlchemyRoutePlanGateway,
     SQLAlchemyShopGateway,
     SQLAlchemyTimeSlotGateway,
@@ -42,6 +47,7 @@ class GetRouteQueryHandler:
         idp: IdentityProvider,
         order_gateway: SQLAlchemyOrderGateway,
         route_plan_gateway: SQLAlchemyRoutePlanGateway,
+        route_edge_history_gateway: SQLAlchemyRouteEdgeHistoryGateway,
         time_slot_gateway: SQLAlchemyTimeSlotGateway,
         shop_gateway: SQLAlchemyShopGateway,
         route_optimizer: RouteOptimizer,
@@ -51,6 +57,7 @@ class GetRouteQueryHandler:
         self._idp = idp
         self._order_gateway = order_gateway
         self._route_plan_gateway = route_plan_gateway
+        self._edge_gateway = route_edge_history_gateway
         self._time_slot_gateway = time_slot_gateway
         self._shop_gateway = shop_gateway
         self._route_optimizer = route_optimizer
@@ -91,8 +98,23 @@ class GetRouteQueryHandler:
         else:
             optimized_ids = None
             if shop_coords:
+                try:
+                    pref_map = (
+                        build_preference_map(
+                            await self._edge_gateway.load_preferences(
+                                current_user.shop_id, PREFERENCE_WINDOW_DAYS
+                            )
+                        )
+                        or None
+                    )
+                except Exception as exc:
+                    logger.exception(
+                        "Failed to load edge preferences [%s]",
+                        exc.__class__.__name__,
+                    )
+                    pref_map = None
                 optimized_ids = await self._route_optimizer.compute(
-                    shop_coords, orders
+                    shop_coords, orders, pref_map
                 )
 
             route_plan = create_route_plan(
