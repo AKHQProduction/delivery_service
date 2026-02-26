@@ -4,7 +4,7 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 from uuid_utils.compat import uuid7
 
-from backend.application.vars import RoutePlanId, ShopId, TimeSlotId
+from backend.application.vars import OrderId, RoutePlanId, ShopId, TimeSlotId
 from backend.infrastructure.persistence.tables.route_plans import RoutePlan
 
 
@@ -39,3 +39,10 @@ class SQLAlchemyRoutePlanGateway:
 
         result = await self._session.execute(query)
         return result.scalar_one_or_none()
+
+    async def find_by_order(self, order_id: OrderId) -> RoutePlan | None:
+        query = select(RoutePlan).where(
+            RoutePlan.order_sequence.contains([order_id]),
+        )
+        result = await self._session.execute(query)
+        return result.scalars().first()

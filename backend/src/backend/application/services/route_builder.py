@@ -1,3 +1,4 @@
+import logging
 from datetime import date, time
 
 from backend.application.dto.coordinates import CoordinatesDTO
@@ -7,6 +8,7 @@ from backend.application.dto.gateways.route_gateway import (
     RouteReadModel,
     RouteStatsReadModel,
 )
+from backend.application.services.tsp_solvers import RouteOptimizer
 from backend.application.vars import (
     OrderId,
     PaymentMethod,
@@ -22,6 +24,8 @@ from backend.infrastructure.persistence.gateways.time_slot_gateway import (
 )
 from backend.infrastructure.persistence.tables.orders import Order
 from backend.infrastructure.persistence.tables.route_plans import RoutePlan
+
+logger = logging.getLogger(__name__)
 
 
 async def resolve_time_slot(
@@ -160,6 +164,60 @@ def create_route_plan(
     )
     route_plan_gateway.save(route_plan)
     return route_plan
+
+
+def remove_order_from_route(route_plan: RoutePlan, order_id: OrderId) -> None:
+    if order_id not in route_plan.order_sequence:
+        logger.warning(
+            "Order %s not found in route plan %s sequence",
+            order_id,
+            route_plan.id,
+        )
+    route_plan.order_sequence = [
+        oid for oid in route_plan.order_sequence if oid != order_id
+    ]
+
+
+def insert_order_into_route(
+    route_plan: RoutePlan,
+    order: Order,
+    shop_coords: CoordinatesDTO | None,
+    all_orders: list[Order],
+) -> None:
+    addr = order.delivery_address
+
+    if addr and addr.coordinates and shop_coords:
+        orders_map = {o.id: o for o in all_orders}
+        existing_coords = [
+            o.delivery_address.coordinates
+            for oid in route_plan.order_sequence
+            if (o := orders_map.get(OrderId(oid)))
+            and o.delivery_address
+            and o.delivery_address.coordinates
+        ]
+
+        pos = RouteOptimizer.find_best_insertion_position(
+            shop_coords=shop_coords,
+            existing_sequence_coords=existing_coords,
+            new_point_coords=addr.coordinates,
+        )
+        sequence = route_plan.order_sequence[:]
+        sequence.insert(pos, order.id)
+        route_plan.order_sequence = sequence
+        logger.info(
+            "Inserted order %s at position %d in route plan %s",
+            order.id,
+            pos,
+            route_plan.id,
+        )
+    else:
+        route_plan.order_sequence = [*route_plan.order_sequence, order.id]
+        logger.warning(
+            "Appended order %s to end of route plan %s"
+            " (no coords or no shop_coords)",
+            order.id,
+            route_plan.id,
+        )
 
 
 def _order_to_point(order: Order, seq: int) -> RoutePointReadModel:

@@ -142,18 +142,21 @@ class RouteOptimizer:
 
     @staticmethod
     def find_best_insertion_position(
-        shop_coords: tuple[float, float],
-        existing_sequence_coords: list[tuple[float, float]],
-        new_point_coords: tuple[float, float],
+        shop_coords: CoordinatesDTO,
+        existing_sequence_coords: list[CoordinatesDTO],
+        new_point_coords: CoordinatesDTO,
     ) -> int:
         if not existing_sequence_coords:
             return 0
 
         waypoints = [shop_coords, *existing_sequence_coords]
 
-        def _dist(a: tuple[float, float], b: tuple[float, float]) -> float:
-            avg_lat = math.radians((a[0] + b[0]) / 2)
-            return math.hypot(a[0] - b[0], (a[1] - b[1]) * math.cos(avg_lat))
+        def _dist(a: CoordinatesDTO, b: CoordinatesDTO) -> float:
+            avg_lat = math.radians((a.latitude + b.latitude) / 2)
+            return math.hypot(
+                a.latitude - b.latitude,
+                (a.longitude - b.longitude) * math.cos(avg_lat),
+            )
 
         best_pos = len(existing_sequence_coords)
         best_cost = float("inf")

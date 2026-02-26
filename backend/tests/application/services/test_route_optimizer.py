@@ -2,6 +2,7 @@ from unittest.mock import AsyncMock, Mock
 
 import pytest
 
+from backend.application.dto.coordinates import CoordinatesDTO
 from backend.application.services.tsp_solvers.route_optimizer import (
     HELD_KARP_THRESHOLD,
     RouteOptimizer,
@@ -178,20 +179,20 @@ class TestEdgeCases:
 class TestFindBestInsertionPosition:
     def test_empty_sequence_returns_zero(self):
         pos = RouteOptimizer.find_best_insertion_position(
-            shop_coords=(50.0, 30.0),
+            shop_coords=CoordinatesDTO(50.0, 30.0),
             existing_sequence_coords=[],
-            new_point_coords=(50.1, 30.1),
+            new_point_coords=CoordinatesDTO(50.1, 30.1),
         )
         assert pos == 0
 
     def test_inserts_near_closest_point(self):
-        shop = (50.0, 30.0)
+        shop = CoordinatesDTO(50.0, 30.0)
         existing = [
-            (50.1, 30.1),
-            (50.2, 30.2),
-            (50.3, 30.3),
+            CoordinatesDTO(50.1, 30.1),
+            CoordinatesDTO(50.2, 30.2),
+            CoordinatesDTO(50.3, 30.3),
         ]
-        new_point = (50.15, 30.15)
+        new_point = CoordinatesDTO(50.15, 30.15)
 
         pos = RouteOptimizer.find_best_insertion_position(
             shop_coords=shop,
@@ -203,9 +204,9 @@ class TestFindBestInsertionPosition:
         assert pos == 1
 
     def test_single_point(self):
-        shop = (50.0, 30.0)
-        existing = [(50.5, 30.5)]
-        new_point = (50.6, 30.6)
+        shop = CoordinatesDTO(50.0, 30.0)
+        existing = [CoordinatesDTO(50.5, 30.5)]
+        new_point = CoordinatesDTO(50.6, 30.6)
 
         pos = RouteOptimizer.find_best_insertion_position(
             shop_coords=shop,

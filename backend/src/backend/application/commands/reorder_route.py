@@ -17,9 +17,9 @@ logger = logging.getLogger(__name__)
 @dataclass(frozen=True)
 class ReorderRouteCommand:
     delivery_date: date
-    time_slot_id: TimeSlotId | None
     order_id: OrderId
     new_position: int
+    time_slot_id: TimeSlotId | None = None
 
 
 class ReorderRouteCommandHandler:
