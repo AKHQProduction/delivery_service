@@ -7,6 +7,8 @@ from backend.application.services.route_builder import (
     build_route_read_model,
     collect_waypoints,
     create_route_plan,
+    insert_order_into_route,
+    remove_order_from_route,
     sort_orders_by_sequence,
     split_orders_by_coords,
 )
@@ -236,3 +238,70 @@ class TestCreateRoutePlan:
         ids = plan.order_sequence
         assert ids[0] == "a"
         assert ids[1] == "b"
+
+
+def _make_route_plan(order_ids: list) -> Mock:
+    plan = Mock()
+    plan.id = RoutePlanId(uuid4())
+    plan.order_sequence = list(order_ids)
+    return plan
+
+
+class TestRemoveOrderFromRoute:
+    def test_remove_from_middle(self):
+        plan = _make_route_plan(["a", "b", "c"])
+        remove_order_from_route(plan, "b")
+        assert plan.order_sequence == ["a", "c"]
+
+    def test_remove_from_start(self):
+        plan = _make_route_plan(["a", "b", "c"])
+        remove_order_from_route(plan, "a")
+        assert plan.order_sequence == ["b", "c"]
+
+    def test_remove_from_end(self):
+        plan = _make_route_plan(["a", "b", "c"])
+        remove_order_from_route(plan, "c")
+        assert plan.order_sequence == ["a", "b"]
+
+    def test_remove_missing_order(self):
+        plan = _make_route_plan(["a", "b"])
+        remove_order_from_route(plan, "missing")
+        assert plan.order_sequence == ["a", "b"]
+
+
+class TestInsertOrderIntoRoute:
+    def test_insert_with_coordinates(self):
+        plan = _make_route_plan(["a", "c"])
+        shop_coords = CoordinatesDTO(latitude=50.0, longitude=30.0)
+
+        order_a = _make_order("a", lat=50.1, lon=30.1)
+        order_b = _make_order("b", lat=50.15, lon=30.15)
+        order_c = _make_order("c", lat=50.3, lon=30.3)
+
+        insert_order_into_route(
+            plan, order_b, shop_coords, [order_a, order_b, order_c]
+        )
+
+        assert "b" in plan.order_sequence
+        assert len(plan.order_sequence) == 3
+
+    def test_insert_without_coordinates_appends(self):
+        plan = _make_route_plan(["a"])
+        shop_coords = CoordinatesDTO(latitude=50.0, longitude=30.0)
+
+        order_no_coords = _make_order("b", has_coords=False)
+
+        insert_order_into_route(
+            plan, order_no_coords, shop_coords, [order_no_coords]
+        )
+
+        assert plan.order_sequence == ["a", "b"]
+
+    def test_insert_without_shop_coords_appends(self):
+        plan = _make_route_plan(["a"])
+
+        order = _make_order("b", lat=50.1, lon=30.1)
+
+        insert_order_into_route(plan, order, None, [order])
+
+        assert plan.order_sequence == ["a", "b"]

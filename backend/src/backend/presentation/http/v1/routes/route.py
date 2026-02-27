@@ -61,20 +61,10 @@ async def get_route(
     dependencies=[Depends(HTTPBearer(auto_error=False))],
 )
 async def reorder_route(
-    delivery_date: date,
-    order_id: OrderId,
-    new_position: int,
+    body: ReorderRouteCommand,
     handler: FromDishka[ReorderRouteCommandHandler],
-    time_slot_id: TimeSlotId | None = None,
 ) -> None:
-    await handler.handle(
-        ReorderRouteCommand(
-            delivery_date=delivery_date,
-            time_slot_id=time_slot_id,
-            order_id=order_id,
-            new_position=new_position,
-        )
-    )
+    await handler.handle(body)
 
 
 @router.patch(

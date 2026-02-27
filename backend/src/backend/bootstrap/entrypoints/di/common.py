@@ -40,6 +40,7 @@ from backend.infrastructure.persistence.gateways import (
     SQLAlchemyDistrictGateway,
     SQLAlchemyOrderGateway,
     SQLAlchemyProductGateway,
+    SQLAlchemyRouteEdgeHistoryGateway,
     SQLAlchemyRoutePlanGateway,
     SQLAlchemyShopGateway,
     SQLAlchemyTimeSlotGateway,
@@ -143,6 +144,7 @@ class PersistenceProvider(Provider):
         SQLAlchemyDistrictGateway,
         SQLAlchemyClientGateway,
         SQLAlchemyOrderGateway,
+        SQLAlchemyRouteEdgeHistoryGateway,
         SQLAlchemyRoutePlanGateway,
         SQLAlchemyTimeSlotGateway,
     )

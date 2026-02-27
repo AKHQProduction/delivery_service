@@ -23,6 +23,7 @@ PhoneId = NewType("PhoneId", int)
 TimeSlotId = NewType("TimeSlotId", UUID)
 DistrictId = NewType("DistrictId", UUID)
 RoutePlanId = NewType("RoutePlanId", UUID)
+RouteEdgeHistoryId = NewType("RouteEdgeHistoryId", UUID)
 
 
 class ShopRole(StrEnum):

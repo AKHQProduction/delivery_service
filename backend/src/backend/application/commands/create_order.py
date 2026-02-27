@@ -16,7 +16,10 @@ from backend.application.services.order import (
     resolve_address,
     resolve_phone,
 )
-from backend.application.services.route_builder import create_route_plan
+from backend.application.services.route_builder import (
+    create_route_plan,
+    insert_order_into_route,
+)
 from backend.application.services.tsp_solvers import RouteOptimizer
 from backend.application.vars import (
     AddressId,
@@ -42,7 +45,6 @@ from backend.infrastructure.persistence.tables import (
     Order as OrderModel,
     Product,
 )
-from backend.infrastructure.persistence.tables.route_plans import RoutePlan
 from backend.infrastructure.transaction_manager import TransactionManager
 
 logger = logging.getLogger(__name__)
@@ -210,9 +212,25 @@ class CreateOrderCommandHandler:
             await self._create_initial_route_plan(
                 shop_id, order.date, time_slot_id, start_time, end_time
             )
+            logger.info(
+                "Created initial route plan for shop %s, date=%s, slot=%s",
+                shop_id,
+                order.date,
+                time_slot_id,
+            )
         else:
-            await self._insert_into_existing_route(
-                route_plan, order, shop_id, start_time, end_time
+            shop_coords = await self._load_shop_coords(shop_id)
+            all_orders = await self._order_gateway.load_by_date(
+                shop_id=shop_id,
+                delivery_date=order.date,
+                start_time=start_time,
+                end_time=end_time,
+            )
+            insert_order_into_route(route_plan, order, shop_coords, all_orders)
+            logger.info(
+                "Inserted order %s into existing route plan %s",
+                order.id,
+                route_plan.id,
             )
 
     async def _create_initial_route_plan(
@@ -248,58 +266,6 @@ class CreateOrderCommandHandler:
             orders=existing_orders,
             optimized_ids=optimized_ids,
         )
-
-    async def _insert_into_existing_route(
-        self,
-        route_plan: RoutePlan,
-        order: OrderModel,
-        shop_id: ShopId,
-        start_time: time,
-        end_time: time,
-    ) -> None:
-        addr = order.delivery_address
-        sequence = list(route_plan.order_sequence)
-
-        if addr and addr.coordinates:
-            shop_coords = await self._load_shop_coords(shop_id)
-
-            if shop_coords:
-                all_orders = await self._order_gateway.load_by_date(
-                    shop_id=shop_id,
-                    delivery_date=order.date,
-                    start_time=start_time,
-                    end_time=end_time,
-                )
-                orders_map = {o.id: o for o in all_orders}
-                existing_coords = []
-                for oid in sequence:
-                    o = orders_map.get(OrderId(oid))
-                    if (
-                        o
-                        and o.delivery_address
-                        and o.delivery_address.coordinates
-                    ):
-                        c = o.delivery_address.coordinates
-                        existing_coords.append((c.latitude, c.longitude))
-
-                pos = RouteOptimizer.find_best_insertion_position(
-                    shop_coords=(
-                        shop_coords.latitude,
-                        shop_coords.longitude,
-                    ),
-                    existing_sequence_coords=existing_coords,
-                    new_point_coords=(
-                        addr.coordinates.latitude,
-                        addr.coordinates.longitude,
-                    ),
-                )
-                sequence.insert(pos, order.id)
-            else:
-                sequence.append(order.id)
-        else:
-            sequence.append(order.id)
-
-        route_plan.order_sequence = sequence
 
     async def _load_shop_coords(
         self, shop_id: ShopId
