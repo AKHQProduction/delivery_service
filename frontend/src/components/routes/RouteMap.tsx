@@ -4,7 +4,6 @@ import L from "leaflet";
 import "leaflet/dist/leaflet.css";
 import { type RoutePoint } from "../../types/entities/Route";
 
-// Numbered marker icon factory
 const createNumberedIcon = (num: number, isEditing: boolean) => {
   const color = isEditing ? "#f59e0b" : "#4f46e5";
   return L.divIcon({
@@ -28,39 +27,6 @@ const createNumberedIcon = (num: number, isEditing: boolean) => {
   });
 };
 
-/** Decode Google encoded polyline to array of [lat, lng] */
-const decodePolyline = (encoded: string): [number, number][] => {
-  const points: [number, number][] = [];
-  let index = 0;
-  let lat = 0;
-  let lng = 0;
-
-  while (index < encoded.length) {
-    let shift = 0;
-    let result = 0;
-    let byte: number;
-    do {
-      byte = encoded.charCodeAt(index++) - 63;
-      result |= (byte & 0x1f) << shift;
-      shift += 5;
-    } while (byte >= 0x20);
-    lat += result & 1 ? ~(result >> 1) : result >> 1;
-
-    shift = 0;
-    result = 0;
-    do {
-      byte = encoded.charCodeAt(index++) - 63;
-      result |= (byte & 0x1f) << shift;
-      shift += 5;
-    } while (byte >= 0x20);
-    lng += result & 1 ? ~(result >> 1) : result >> 1;
-
-    points.push([lat / 1e5, lng / 1e5]);
-  }
-  return points;
-};
-
-/** Fit map bounds to all markers */
 const FitBounds: React.FC<{ points: RoutePoint[] }> = ({ points }) => {
   const map = useMap();
 
@@ -77,7 +43,6 @@ const FitBounds: React.FC<{ points: RoutePoint[] }> = ({ points }) => {
   return null;
 };
 
-/** Click handler for marker editing */
 const MapClickHandler: React.FC<{
   editingOrderId: string | null;
   onMarkerMove: (orderId: string, lat: number, lng: number) => void;
@@ -94,19 +59,15 @@ const MapClickHandler: React.FC<{
 
 interface RouteMapProps {
   points: RoutePoint[];
-  encodedPolyline?: string;
   editingOrderId: string | null;
   onMarkerMove: (orderId: string, lat: number, lng: number) => void;
 }
 
-export const RouteMap: React.FC<RouteMapProps> = ({ points, encodedPolyline, editingOrderId, onMarkerMove }) => {
-  // Use encoded polyline from geometry if available, otherwise fall back to straight lines between points
-  const polylinePositions = useMemo(() => {
-    if (encodedPolyline) {
-      return decodePolyline(encodedPolyline);
-    }
-    return points.map((p) => [p.coordinates.latitude, p.coordinates.longitude] as [number, number]);
-  }, [points, encodedPolyline]);
+export const RouteMap: React.FC<RouteMapProps> = ({ points, editingOrderId, onMarkerMove }) => {
+  const polylinePositions = useMemo(
+    () => points.map((p) => [p.coordinates.latitude, p.coordinates.longitude] as [number, number]),
+    [points],
+  );
 
   const defaultCenter: [number, number] =
     points.length > 0
@@ -128,7 +89,6 @@ export const RouteMap: React.FC<RouteMapProps> = ({ points, encodedPolyline, edi
       <FitBounds points={points} />
       <MapClickHandler editingOrderId={editingOrderId} onMarkerMove={onMarkerMove} />
 
-      {/* Route polyline */}
       {polylinePositions.length >= 2 && (
         <Polyline
           positions={polylinePositions}
@@ -136,12 +96,11 @@ export const RouteMap: React.FC<RouteMapProps> = ({ points, encodedPolyline, edi
             color: "#4f46e5",
             weight: 4,
             opacity: 0.8,
-            dashArray: encodedPolyline ? undefined : "12, 8",
+            dashArray: "12, 8",
           }}
         />
       )}
 
-      {/* Markers */}
       {points.map((point, index) => {
         const pos: [number, number] = [
           point.coordinates.latitude,

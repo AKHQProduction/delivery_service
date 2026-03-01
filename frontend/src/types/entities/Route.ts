@@ -16,17 +16,9 @@ export interface RoutePoint {
   total_price: number;
 }
 
-export interface RouteGeometry {
-  encoded_polyline: string;
-  distance_meters: number;
-  duration_seconds: number;
-}
-
 export interface RouteStats {
   total_orders: number;
   unique_addresses: number;
-  total_distance_meters: number;
-  total_duration_seconds: number;
 }
 
 export interface RoutePlan {
@@ -36,5 +28,4 @@ export interface RoutePlan {
   points: RoutePoint[];
   unroutable_orders: RoutePoint[];
   stats: RouteStats;
-  geometry: RouteGeometry;
 }

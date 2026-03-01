@@ -8,19 +8,6 @@ import { getRoutes } from "../services/api/routesApi";
 import { type RoutePlan } from "../types/entities/Route";
 import { paymentMap } from "../utils/dataMap";
 
-const formatDuration = (seconds: number) => {
-  if (seconds < 60) return `${seconds} сек`;
-  const m = Math.round(seconds / 60);
-  if (m < 60) return `${m} хв`;
-  const h = Math.floor(m / 60);
-  return `${h} год ${m % 60} хв`;
-};
-
-const formatDistance = (meters: number) => {
-  if (meters < 1000) return `${meters} м`;
-  return `${(meters / 1000).toFixed(1)} км`;
-};
-
 export const RoutesListPage = () => {
   const navigate = useNavigate();
   const { timeSlots } = useTimeSlotsSettings();
@@ -206,46 +193,6 @@ export const RoutesListPage = () => {
                   <span className="font-medium">{routePlan.stats.unique_addresses}</span>
                   <span>адрес</span>
                 </div>
-                {routePlan.stats.total_distance_meters > 0 && (
-                  <div className="flex items-center gap-1.5 text-sm text-gray-600">
-                    <svg
-                      className="w-4 h-4 text-indigo-500"
-                      fill="none"
-                      stroke="currentColor"
-                      viewBox="0 0 24 24"
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth={2}
-                        d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"
-                      />
-                    </svg>
-                    <span className="font-medium">
-                      {formatDistance(routePlan.stats.total_distance_meters)}
-                    </span>
-                  </div>
-                )}
-                {routePlan.stats.total_duration_seconds > 0 && (
-                  <div className="flex items-center gap-1.5 text-sm text-gray-600">
-                    <svg
-                      className="w-4 h-4 text-indigo-500"
-                      fill="none"
-                      stroke="currentColor"
-                      viewBox="0 0 24 24"
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth={2}
-                        d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"
-                      />
-                    </svg>
-                    <span className="font-medium">
-                      {formatDuration(routePlan.stats.total_duration_seconds)}
-                    </span>
-                  </div>
-                )}
               </div>
 
               {/* Mini stop list */}

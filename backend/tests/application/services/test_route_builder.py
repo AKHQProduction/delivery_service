@@ -5,7 +5,6 @@ from uuid import uuid4
 from backend.application.dto.coordinates import CoordinatesDTO
 from backend.application.services.route_builder import (
     build_route_read_model,
-    collect_waypoints,
     create_route_plan,
     insert_order_into_route,
     remove_order_from_route,
@@ -13,7 +12,6 @@ from backend.application.services.route_builder import (
     split_orders_by_coords,
 )
 from backend.application.vars import RoutePlanId, ShopId
-from backend.infrastructure.tsp_solvers.osrm import RouteGeometry
 
 
 def _make_order(
@@ -116,28 +114,8 @@ class TestSplitOrdersByCoords:
         assert len(unroutable) == 2
 
 
-class TestCollectWaypoints:
-    def test_waypoints_include_shop_and_orders(self):
-        shop = CoordinatesDTO(latitude=50.45, longitude=30.52)
-        o0 = _make_order(0, lat=50.46, lon=30.53)
-        o1 = _make_order(1, lat=50.47, lon=30.54)
-        waypoints = collect_waypoints(shop, [o0, o1])
-
-        assert len(waypoints) == 3
-        assert waypoints[0] == (50.45, 30.52)
-        assert waypoints[1] == (50.46, 30.53)
-        assert waypoints[2] == (50.47, 30.54)
-
-    def test_empty_orders(self):
-        shop = CoordinatesDTO(latitude=50.45, longitude=30.52)
-        waypoints = collect_waypoints(shop, [])
-
-        assert len(waypoints) == 1
-        assert waypoints[0] == (50.45, 30.52)
-
-
 class TestBuildRouteReadModel:
-    def test_builds_model_with_geometry(self):
+    def test_builds_model(self):
         from uuid import uuid4
 
         from backend.application.vars import RoutePlanId
@@ -145,11 +123,6 @@ class TestBuildRouteReadModel:
         plan_id = RoutePlanId(uuid4())
         o0 = _make_order(uuid4(), street="Хрещатик", house="10")
         o1 = _make_order(uuid4(), street="Хрещатик", house="10")
-        geometry = RouteGeometry(
-            encoded_polyline="abc123",
-            distance_meters=5000,
-            duration_seconds=600,
-        )
 
         model = build_route_read_model(
             route_plan_id=plan_id,
@@ -157,7 +130,6 @@ class TestBuildRouteReadModel:
             time_slot=None,
             ordered_orders=[o0, o1],
             unroutable_orders=[],
-            geometry=geometry,
         )
 
         assert model.route_plan_id == plan_id
@@ -167,12 +139,8 @@ class TestBuildRouteReadModel:
         assert model.points[1].sequence == 1
         assert model.stats.total_orders == 2
         assert model.stats.unique_addresses == 1
-        assert model.stats.total_distance_meters == 5000
-        assert model.stats.total_duration_seconds == 600
-        assert model.geometry is not None
-        assert model.geometry.encoded_polyline == "abc123"
 
-    def test_builds_model_without_geometry(self):
+    def test_builds_model_with_time_slot(self):
         from uuid import uuid4
 
         from backend.application.vars import RoutePlanId
@@ -186,12 +154,8 @@ class TestBuildRouteReadModel:
             time_slot="09:00-14:00",
             ordered_orders=[o0],
             unroutable_orders=[],
-            geometry=None,
         )
 
-        assert model.geometry is None
-        assert model.stats.total_distance_meters == 0
-        assert model.stats.total_duration_seconds == 0
         assert model.time_slot == "09:00-14:00"
 
 
