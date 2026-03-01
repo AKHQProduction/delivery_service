@@ -8,6 +8,7 @@ from fastapi.security import HTTPBearer
 from backend.application.commands.reorder_route import (
     ReorderRouteCommand,
     ReorderRouteCommandHandler,
+    ReorderRouteResult,
 )
 from backend.application.commands.update_order_coordinates import (
     UpdateOrderCoordinatesCommand,
@@ -52,7 +53,7 @@ async def get_route(
 
 @router.patch(
     "",
-    status_code=status.HTTP_204_NO_CONTENT,
+    status_code=status.HTTP_200_OK,
     responses={
         status.HTTP_401_UNAUTHORIZED: {"model": ErrorSchema},
         status.HTTP_403_FORBIDDEN: {"model": ErrorSchema},
@@ -63,8 +64,8 @@ async def get_route(
 async def reorder_route(
     body: ReorderRouteCommand,
     handler: FromDishka[ReorderRouteCommandHandler],
-) -> None:
-    await handler.handle(body)
+) -> ReorderRouteResult:
+    return await handler.handle(body)
 
 
 @router.patch(

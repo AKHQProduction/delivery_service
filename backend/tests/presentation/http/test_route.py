@@ -368,7 +368,13 @@ async def test_reorder_route(
         },
     )
 
-    assert response.status_code == status.HTTP_204_NO_CONTENT
+    assert response.status_code == status.HTTP_200_OK
+
+    data = response.json()
+    assert "geometry" in data
+    assert "encoded_polyline" in data["geometry"]
+    assert "distance_meters" in data["geometry"]
+    assert "duration_seconds" in data["geometry"]
 
     await session.flush()
 
@@ -1022,7 +1028,7 @@ async def test_reorder_records_edge_history(
         },
     )
 
-    assert response.status_code == status.HTTP_204_NO_CONTENT
+    assert response.status_code == status.HTTP_200_OK
 
     await session.flush()
 
