@@ -57,6 +57,45 @@ const MapClickHandler: React.FC<{
   return null;
 };
 
+const InvalidateSize: React.FC = () => {
+  const map = useMap();
+  useEffect(() => {
+    map.invalidateSize();
+  });
+  return null;
+};
+
+const OFFSET = 0.00015;
+
+function spreadDuplicates(points: RoutePoint[]): Map<string, [number, number]> {
+  const groups = new Map<string, number[]>();
+  points.forEach((p, i) => {
+    const key = `${p.coordinates.latitude},${p.coordinates.longitude}`;
+    const list = groups.get(key);
+    if (list) list.push(i);
+    else groups.set(key, [i]);
+  });
+
+  const result = new Map<string, [number, number]>();
+  for (const indices of groups.values()) {
+    if (indices.length === 1) {
+      const p = points[indices[0]];
+      result.set(p.order_id, [p.coordinates.latitude, p.coordinates.longitude]);
+      continue;
+    }
+    const base = points[indices[0]].coordinates;
+    for (let j = 0; j < indices.length; j++) {
+      const angle = (2 * Math.PI * j) / indices.length - Math.PI / 2;
+      const p = points[indices[j]];
+      result.set(p.order_id, [
+        base.latitude + OFFSET * Math.sin(angle),
+        base.longitude + OFFSET * Math.cos(angle),
+      ]);
+    }
+  }
+  return result;
+}
+
 interface RouteMapProps {
   points: RoutePoint[];
   editingOrderId: string | null;
@@ -68,6 +107,8 @@ export const RouteMap: React.FC<RouteMapProps> = ({ points, editingOrderId, onMa
     () => points.map((p) => [p.coordinates.latitude, p.coordinates.longitude] as [number, number]),
     [points],
   );
+
+  const markerPositions = useMemo(() => spreadDuplicates(points), [points]);
 
   const defaultCenter: [number, number] =
     points.length > 0
@@ -86,6 +127,7 @@ export const RouteMap: React.FC<RouteMapProps> = ({ points, editingOrderId, onMa
         subdomains={["mt0", "mt1", "mt2", "mt3"]}
         maxZoom={21}
       />
+      <InvalidateSize />
       <FitBounds points={points} />
       <MapClickHandler editingOrderId={editingOrderId} onMarkerMove={onMarkerMove} />
 
@@ -102,14 +144,14 @@ export const RouteMap: React.FC<RouteMapProps> = ({ points, editingOrderId, onMa
       )}
 
       {points.map((point, index) => {
-        const pos: [number, number] = [
+        const pos = markerPositions.get(point.order_id) ?? [
           point.coordinates.latitude,
           point.coordinates.longitude,
         ];
         return (
           <Marker
             key={point.order_id}
-            position={pos}
+            position={pos as [number, number]}
             icon={createNumberedIcon(index + 1, editingOrderId === point.order_id)}
           >
             <Tooltip direction="top" offset={[0, -20]} permanent={false}>
