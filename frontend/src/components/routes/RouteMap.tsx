@@ -1,4 +1,4 @@
-import React, { useMemo, useEffect, useCallback } from "react";
+import React, { useMemo, useEffect, useCallback, useRef } from "react";
 import { MapContainer, TileLayer, Marker, Polyline, Tooltip, useMap, useMapEvents } from "react-leaflet";
 import L from "leaflet";
 import "leaflet/dist/leaflet.css";
@@ -29,22 +29,28 @@ const createNumberedIcon = (num: number, isEditing: boolean) => {
 
 const FitBounds: React.FC<{ points: RoutePoint[] }> = ({ points }) => {
   const map = useMap();
+  const hasFitted = useRef(false);
+  const pointsRef = useRef(points);
+  pointsRef.current = points;
 
   const fitBounds = useCallback(() => {
-    if (points.length === 0) return;
+    const pts = pointsRef.current;
+    if (pts.length === 0) return;
     const bounds = L.latLngBounds(
-      points.map((p) => [p.coordinates.latitude, p.coordinates.longitude] as [number, number]),
+      pts.map((p) => [p.coordinates.latitude, p.coordinates.longitude] as [number, number]),
     );
     if (bounds.isValid()) {
       map.fitBounds(bounds, { padding: [30, 30], maxZoom: 15 });
     }
-  }, [points, map]);
+  }, [map]);
 
   useEffect(() => {
-    fitBounds();
-  }, [fitBounds]);
+    if (!hasFitted.current && points.length > 0) {
+      hasFitted.current = true;
+      fitBounds();
+    }
+  }, [points, fitBounds]);
 
-  // Re-fit when map resizes (e.g. mobile list/map toggle)
   useEffect(() => {
     map.on("resize", fitBounds);
     return () => { map.off("resize", fitBounds); };
