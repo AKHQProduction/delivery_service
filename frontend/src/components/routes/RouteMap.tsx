@@ -1,4 +1,4 @@
-import React, { useMemo, useEffect } from "react";
+import React, { useMemo, useEffect, useCallback } from "react";
 import { MapContainer, TileLayer, Marker, Polyline, Tooltip, useMap, useMapEvents } from "react-leaflet";
 import L from "leaflet";
 import "leaflet/dist/leaflet.css";
@@ -30,15 +30,25 @@ const createNumberedIcon = (num: number, isEditing: boolean) => {
 const FitBounds: React.FC<{ points: RoutePoint[] }> = ({ points }) => {
   const map = useMap();
 
-  useEffect(() => {
+  const fitBounds = useCallback(() => {
     if (points.length === 0) return;
     const bounds = L.latLngBounds(
       points.map((p) => [p.coordinates.latitude, p.coordinates.longitude] as [number, number]),
     );
     if (bounds.isValid()) {
-      map.fitBounds(bounds, { padding: [40, 40], maxZoom: 15 });
+      map.fitBounds(bounds, { padding: [30, 30], maxZoom: 15 });
     }
   }, [points, map]);
+
+  useEffect(() => {
+    fitBounds();
+  }, [fitBounds]);
+
+  // Re-fit when map resizes (e.g. mobile list/map toggle)
+  useEffect(() => {
+    map.on("resize", fitBounds);
+    return () => { map.off("resize", fitBounds); };
+  }, [map, fitBounds]);
 
   return null;
 };
