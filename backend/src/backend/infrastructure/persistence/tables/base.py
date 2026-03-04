@@ -4,6 +4,7 @@ from typing import Any
 
 from sqlalchemy import TIMESTAMP, func
 from sqlalchemy.dialects.postgresql import JSONB
+from sqlalchemy.ext.mutable import Mutable
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column
 from sqlalchemy.types import TypeDecorator
 
@@ -11,7 +12,7 @@ from backend.application.dto.coordinates import CoordinatesDTO
 
 
 @dataclass
-class DeliveryAddressDTO:
+class DeliveryAddressDTO(Mutable):
     street: str
     house: str
     apartment: str | None = None
@@ -21,6 +22,24 @@ class DeliveryAddressDTO:
     comment: str | None = None
     district: str | None = None
     coordinates: CoordinatesDTO | None = None
+
+    @classmethod
+    def coerce(  # type: ignore[override]
+        cls,
+        key: str,
+        value: Any,
+    ) -> "DeliveryAddressDTO | None":
+        if isinstance(value, cls):
+            return value
+        return super().coerce(key, value)
+
+    def __setattr__(  # type: ignore[override]
+        self,
+        key: str,
+        value: Any,
+    ) -> None:
+        object.__setattr__(self, key, value)
+        self.changed()
 
 
 class DeliveryAddressType(TypeDecorator):

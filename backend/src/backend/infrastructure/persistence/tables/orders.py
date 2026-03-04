@@ -31,7 +31,7 @@ class Order(Base, CreatedAt, UpdatedAt):
     id: Mapped[OrderId] = mapped_column(sa.UUID, primary_key=True)
     date: Mapped[datetime.date] = mapped_column(sa.Date, nullable=False)
     delivery_address: Mapped[DeliveryAddressDTO] = mapped_column(
-        DeliveryAddressType, nullable=False
+        DeliveryAddressDTO.as_mutable(DeliveryAddressType), nullable=False
     )
     delivery_phone: Mapped[str] = mapped_column(sa.String, nullable=False)
     delivery_start_time: Mapped[datetime.time] = mapped_column(

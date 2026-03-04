@@ -65,7 +65,6 @@ class UpdateOrderCoordinatesCommandHandler:
 
         addr = ensure_exists(order.delivery_address, "DeliveryAddress")
         addr.coordinates = new_coords
-        order.delivery_address = addr
 
         client = await self._client_gateway.load(order.client_id)
         if client:
