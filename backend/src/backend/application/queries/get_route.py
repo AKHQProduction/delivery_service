@@ -85,9 +85,12 @@ class GetRouteQueryHandler:
         )
 
         if route_plan:
+            seq_len_before = len(route_plan.order_sequence)
             routable, unroutable = sort_orders_by_sequence(
                 orders, route_plan.order_sequence
             )
+            if len(route_plan.order_sequence) > seq_len_before:
+                await self._tr_manager.commit()
         else:
             optimized_ids = None
             if shop_coords:
