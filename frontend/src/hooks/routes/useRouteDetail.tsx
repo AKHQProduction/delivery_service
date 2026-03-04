@@ -57,9 +57,10 @@ export const useRouteDetail = (routePlan: RoutePlan | null) => {
       return;
     }
     const orderId = points[dragIndex].order_id;
+    const adjustedIndex = index > dragIndex ? index - 1 : index;
     setDragIndex(null);
     setOverIndex(null);
-    applyReorder(orderId, index);
+    applyReorder(orderId, adjustedIndex);
   }, [dragIndex, points, applyReorder]);
 
   const handleDragEnd = useCallback(() => {

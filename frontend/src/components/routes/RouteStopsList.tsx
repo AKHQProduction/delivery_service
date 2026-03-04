@@ -60,6 +60,16 @@ export const RouteStopsList: React.FC<RouteStopsListProps> = ({
             onToggleEditMarker={onToggleEditMarker}
           />
         ))}
+        {/* Drop zone for dropping after the last item */}
+        {canEdit && dragIndex !== null && (
+          <div
+            className="min-h-16 flex-1"
+            onDragOver={(e) => { e.preventDefault(); onDragOver(e, points.length); }}
+            onDrop={() => onDrop(points.length)}
+          >
+            <div className={`h-0.5 mx-4 transition-colors ${overIndex === points.length ? "bg-indigo-500" : "bg-transparent"}`} />
+          </div>
+        )}
       </div>
     </div>
   );
