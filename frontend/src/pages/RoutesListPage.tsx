@@ -42,7 +42,7 @@ export const RoutesListPage = () => {
 
   const handleOpenRoute = () => {
     if (!routePlan) return;
-    navigate(`/routes/${routePlan.route_plan_id}`, { state: { routePlan } });
+    navigate(`/routes/${routePlan.route_plan_id}`, { state: { routePlan, timeSlotId: timeSlotId || null } });
   };
 
   const formatTimeSlotLabel = (slot: { start_time: string; end_time: string; label?: string }) => {

@@ -8,7 +8,9 @@ import { RouteMap } from "../components/routes/RouteMap";
 export const RouteDetailPage = () => {
   const navigate = useNavigate();
   const location = useLocation();
-  const routePlan = (location.state as { routePlan?: RoutePlan })?.routePlan ?? null;
+  const state = location.state as { routePlan?: RoutePlan; timeSlotId?: string | null } | null;
+  const routePlan = state?.routePlan ?? null;
+  const timeSlotId = state?.timeSlotId ?? null;
 
   const {
     points,
@@ -27,7 +29,7 @@ export const RouteDetailPage = () => {
     toggleEditMarker,
     cancelEditMarker,
     toggleList,
-  } = useRouteDetail(routePlan);
+  } = useRouteDetail(routePlan, timeSlotId);
 
   if (!routePlan || points.length === 0) {
     return (

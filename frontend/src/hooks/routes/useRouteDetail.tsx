@@ -1,11 +1,11 @@
-import { useState, useCallback, useMemo } from "react";
+import { useState, useCallback, useMemo, useEffect } from "react";
 import { type RoutePlan, type RoutePoint } from "../../types/entities/Route";
 import { useUserShopStore } from "../../context/useUserShopStore";
 import { UserRole } from "../../constants/roles";
-import { reorderRoute, updateOrderCoordinates } from "../../services/api/routesApi";
+import { getRoutes, reorderRoute, updateOrderCoordinates } from "../../services/api/routesApi";
 
 
-export const useRouteDetail = (routePlan: RoutePlan | null) => {
+export const useRouteDetail = (routePlan: RoutePlan | null, timeSlotId: string | null = null) => {
   const user = useUserShopStore((s) => s.user);
   const canEdit = user?.role === UserRole.OWNER;
 
@@ -19,6 +19,23 @@ export const useRouteDetail = (routePlan: RoutePlan | null) => {
   // Marker edit mode
   const [editingOrderId, setEditingOrderId] = useState<string | null>(null);
 
+  // Fetch fresh data on mount
+  useEffect(() => {
+    if (!routePlan) return;
+    const [day, month, year] = routePlan.delivery_date.split(".");
+    const isoDate = `${year}-${month}-${day}`;
+    getRoutes(isoDate, timeSlotId)
+      .then((data) => {
+        const fresh = data as RoutePlan;
+        if (fresh?.points) {
+          setPoints(fresh.points);
+        }
+      })
+      .catch((err) => {
+        console.error("Failed to fetch fresh route data:", err);
+      });
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+
   const handleDragStart = useCallback((index: number) => {
     setDragIndex(index);
   }, []);
@@ -30,6 +47,7 @@ export const useRouteDetail = (routePlan: RoutePlan | null) => {
 
   const applyReorder = useCallback(async (orderId: string, newPosition: number) => {
     if (!routePlan) return;
+    const snapshot = [...points];
     setPoints((prev) => {
       const oldIndex = prev.findIndex((p) => p.order_id === orderId);
       if (oldIndex === -1 || oldIndex === newPosition) return prev;
@@ -43,12 +61,13 @@ export const useRouteDetail = (routePlan: RoutePlan | null) => {
         routePlan.delivery_date,
         orderId,
         newPosition,
-        routePlan.time_slot || null,
+        timeSlotId,
       );
     } catch (err) {
       console.error("Failed to reorder route:", err);
+      setPoints(snapshot);
     }
-  }, [routePlan]);
+  }, [routePlan, timeSlotId, points]);
 
   const handleDrop = useCallback((index: number) => {
     if (dragIndex === null || dragIndex === index) {
