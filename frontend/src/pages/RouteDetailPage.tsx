@@ -105,7 +105,6 @@ export const RouteDetailPage = () => {
           )}
           <RouteMap
             points={pointsWithCoords}
-            encodedPolyline={routePlan.geometry?.encoded_polyline}
             editingOrderId={editingOrderId}
             onMarkerMove={handleMarkerMove}
           />

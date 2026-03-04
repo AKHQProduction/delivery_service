@@ -24,7 +24,7 @@ export const FormSelect: React.FC<FormSelectProps> = ({
 }) => {
   return (
     <div>
-      <label htmlFor={name} className="block text-sm font-medium text-gray-700 mb-2">
+      <label htmlFor={name} className="block text-xs sm:text-sm font-medium text-gray-600 sm:text-gray-700 mb-1.5">
         {label}
       </label>
       <select
@@ -33,7 +33,9 @@ export const FormSelect: React.FC<FormSelectProps> = ({
         value={value}
         onChange={onChange}
         required={required}
-        className="w-full px-4 py-3 bg-white border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+        className="w-full h-12 px-3 sm:px-4 bg-white border-2 border-indigo-200 rounded-lg sm:rounded-xl
+                   focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent
+                   text-gray-900 font-medium transition-all text-sm sm:text-base"
       >
         {(!required || value === "") && <option value="">Оберіть...</option>}
         {options.map((option) => (

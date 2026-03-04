@@ -3,10 +3,7 @@ from dataclasses import dataclass
 from datetime import date
 
 from backend.application.dto.coordinates import CoordinatesDTO
-from backend.application.dto.gateways.route_gateway import (
-    RouteGeometryReadModel,
-    RouteReadModel,
-)
+from backend.application.dto.gateways.route_gateway import RouteReadModel
 from backend.application.policies.access import ensure_can_manage
 from backend.application.services.edge_preference_collector import (
     PREFERENCE_WINDOW_DAYS,
@@ -14,7 +11,6 @@ from backend.application.services.edge_preference_collector import (
 )
 from backend.application.services.route_builder import (
     build_route_read_model,
-    collect_waypoints,
     create_route_plan,
     resolve_time_slot,
     sort_orders_by_sequence,
@@ -30,7 +26,6 @@ from backend.infrastructure.persistence.gateways import (
     SQLAlchemyTimeSlotGateway,
 )
 from backend.infrastructure.transaction_manager import TransactionManager
-from backend.infrastructure.tsp_solvers.osrm import OSRMClient
 
 logger = logging.getLogger(__name__)
 
@@ -51,7 +46,6 @@ class GetRouteQueryHandler:
         time_slot_gateway: SQLAlchemyTimeSlotGateway,
         shop_gateway: SQLAlchemyShopGateway,
         route_optimizer: RouteOptimizer,
-        osrm_client: OSRMClient,
         tr_manager: TransactionManager,
     ) -> None:
         self._idp = idp
@@ -61,7 +55,6 @@ class GetRouteQueryHandler:
         self._time_slot_gateway = time_slot_gateway
         self._shop_gateway = shop_gateway
         self._route_optimizer = route_optimizer
-        self._osrm = osrm_client
         self._tr_manager = tr_manager
 
     async def handle(self, query: GetRouteQuery) -> RouteReadModel:
@@ -131,22 +124,10 @@ class GetRouteQueryHandler:
                 orders, route_plan.order_sequence
             )
 
-        geometry = None
-        if shop_coords and routable:
-            waypoints = collect_waypoints(shop_coords, routable)
-            raw = await self._osrm.get_route_geometry(waypoints)
-            if raw:
-                geometry = RouteGeometryReadModel(
-                    encoded_polyline=raw.encoded_polyline,
-                    distance_meters=raw.distance_meters,
-                    duration_seconds=raw.duration_seconds,
-                )
-
         return build_route_read_model(
             route_plan_id=route_plan.id,
             delivery_date=query.delivery_date.strftime("%d.%m.%Y"),
             time_slot=time_slot_label,
             ordered_orders=routable,
             unroutable_orders=unroutable,
-            geometry=geometry,
         )

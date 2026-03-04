@@ -26,15 +26,6 @@ class RoutePointReadModel:
 class RouteStatsReadModel:
     total_orders: int
     unique_addresses: int
-    total_distance_meters: int
-    total_duration_seconds: int
-
-
-@dataclass(frozen=True)
-class RouteGeometryReadModel:
-    encoded_polyline: str
-    distance_meters: int
-    duration_seconds: int
 
 
 @dataclass(frozen=True)
@@ -45,4 +36,3 @@ class RouteReadModel:
     points: list[RoutePointReadModel]
     unroutable_orders: list[RoutePointReadModel]
     stats: RouteStatsReadModel
-    geometry: RouteGeometryReadModel | None = None

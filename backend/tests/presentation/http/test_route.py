@@ -24,9 +24,6 @@ OPTIMIZER_COMPUTE = (
     "backend.application.services.tsp_solvers.route_optimizer"
     ".RouteOptimizer.compute"
 )
-OSRM_GET_GEOMETRY = (
-    "backend.infrastructure.tsp_solvers.osrm.OSRMClient.get_route_geometry"
-)
 
 
 def _delivery_date_future() -> datetime:
@@ -88,10 +85,7 @@ async def test_get_route_creates_route_plan(
 
     headers = customer_headers(telegram_id)
 
-    with (
-        patch(OPTIMIZER_COMPUTE, new_callable=AsyncMock, return_value=None),
-        patch(OSRM_GET_GEOMETRY, new_callable=AsyncMock, return_value=None),
-    ):
+    with patch(OPTIMIZER_COMPUTE, new_callable=AsyncMock, return_value=None):
         response = await http_client.get(
             url=f"{BASE_URL}",
             headers=headers,
@@ -179,12 +173,11 @@ async def test_get_route_returns_existing_plan(
 
     headers = customer_headers(telegram_id)
 
-    with patch(OSRM_GET_GEOMETRY, new_callable=AsyncMock, return_value=None):
-        response = await http_client.get(
-            url=f"{BASE_URL}",
-            headers=headers,
-            params={"delivery_date": delivery_date.isoformat()},
-        )
+    response = await http_client.get(
+        url=f"{BASE_URL}",
+        headers=headers,
+        params={"delivery_date": delivery_date.isoformat()},
+    )
 
     assert response.status_code == status.HTTP_200_OK
     data = response.json()
@@ -269,10 +262,7 @@ async def test_get_route_with_time_slot(
     )
     time_slot = result.scalar_one()
 
-    with (
-        patch(OPTIMIZER_COMPUTE, new_callable=AsyncMock, return_value=None),
-        patch(OSRM_GET_GEOMETRY, new_callable=AsyncMock, return_value=None),
-    ):
+    with patch(OPTIMIZER_COMPUTE, new_callable=AsyncMock, return_value=None):
         response = await http_client.get(
             url=f"{BASE_URL}",
             headers=headers,
@@ -588,10 +578,9 @@ async def test_get_shared_route(
     )
     await session.commit()
 
-    with patch(OSRM_GET_GEOMETRY, new_callable=AsyncMock, return_value=None):
-        response = await http_client.get(
-            url=f"{BASE_URL}/shared/{route_plan_id}",
-        )
+    response = await http_client.get(
+        url=f"{BASE_URL}/shared/{route_plan_id}",
+    )
 
     assert response.status_code == status.HTTP_200_OK
     data = response.json()
@@ -665,10 +654,7 @@ async def test_get_route_unroutable_orders(
 
     headers = customer_headers(telegram_id)
 
-    with (
-        patch(OPTIMIZER_COMPUTE, new_callable=AsyncMock, return_value=None),
-        patch(OSRM_GET_GEOMETRY, new_callable=AsyncMock, return_value=None),
-    ):
+    with patch(OPTIMIZER_COMPUTE, new_callable=AsyncMock, return_value=None):
         response = await http_client.get(
             url=f"{BASE_URL}",
             headers=headers,

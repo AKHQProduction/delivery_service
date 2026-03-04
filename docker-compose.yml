@@ -136,7 +136,7 @@ services:
 
   nominatim:
     container_name: "water_delivery-nominatim"
-    image: mediagis/nominatim:4.4
+    image: mediagis/nominatim:5.2
     platform: linux/amd64
     restart: unless-stopped
     ports:
@@ -146,7 +146,7 @@ services:
       NOMINATIM_PASSWORD: ${NOMINATIM_PASSWORD:-nominatim}
     volumes:
       - ./osrm-data/ukraine-latest.osm.pbf:/nominatim/data/ukraine-latest.osm.pbf
-      - nominatim_data:/var/lib/postgresql/14/main
+      - nominatim_data:/var/lib/postgresql/16/main
     shm_size: 1g
     profiles: ["map"]
 

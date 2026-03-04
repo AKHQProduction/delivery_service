@@ -2,6 +2,7 @@ import datetime
 
 import sqlalchemy as sa
 from sqlalchemy.dialects.postgresql import ARRAY
+from sqlalchemy.ext.mutable import MutableList
 from sqlalchemy.orm import Mapped, mapped_column
 
 from backend.application.vars import OrderId, RoutePlanId, ShopId, TimeSlotId
@@ -27,7 +28,7 @@ class RoutePlan(Base, CreatedAt, UpdatedAt):
         nullable=True,
     )
     order_sequence: Mapped[list[OrderId]] = mapped_column(
-        ARRAY(sa.UUID), nullable=False, default=list
+        MutableList.as_mutable(ARRAY(sa.UUID)), nullable=False, default=list
     )
 
     __table_args__ = (

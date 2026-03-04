@@ -15,8 +15,9 @@ export const reorderRoute = async (
   new_position: number,
   time_slot_id: string | null,
 ) => {
+  const [day, month, year] = delivery_date.split(".");
   const body = {
-    delivery_date,
+    delivery_date: `${year}-${month}-${day}`,
     order_id,
     new_position,
     time_slot_id,

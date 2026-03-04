@@ -3,7 +3,6 @@ from datetime import date, time
 
 from backend.application.dto.coordinates import CoordinatesDTO
 from backend.application.dto.gateways.route_gateway import (
-    RouteGeometryReadModel,
     RoutePointReadModel,
     RouteReadModel,
     RouteStatsReadModel,
@@ -49,7 +48,6 @@ def build_route_read_model(
     time_slot: str | None,
     ordered_orders: list[Order],
     unroutable_orders: list[Order],
-    geometry: RouteGeometryReadModel | None,
 ) -> RouteReadModel:
     points = [
         _order_to_point(order, seq) for seq, order in enumerate(ordered_orders)
@@ -67,8 +65,6 @@ def build_route_read_model(
     stats = RouteStatsReadModel(
         total_orders=len(ordered_orders) + len(unroutable_orders),
         unique_addresses=len(addresses),
-        total_distance_meters=geometry.distance_meters if geometry else 0,
-        total_duration_seconds=geometry.duration_seconds if geometry else 0,
     )
 
     return RouteReadModel(
@@ -78,7 +74,6 @@ def build_route_read_model(
         points=points,
         unroutable_orders=unroutable,
         stats=stats,
-        geometry=geometry,
     )
 
 
@@ -121,23 +116,6 @@ def split_orders_by_coords(
         else:
             unroutable.append(order)
     return routable, unroutable
-
-
-def collect_waypoints(
-    shop_coords: CoordinatesDTO,
-    orders: list[Order],
-) -> list[tuple[float, float]]:
-    waypoints: list[tuple[float, float]] = [
-        (shop_coords.latitude, shop_coords.longitude),
-    ]
-    for order in orders:
-        addr = order.delivery_address
-        if addr and addr.coordinates:
-            waypoints.append((
-                addr.coordinates.latitude,
-                addr.coordinates.longitude,
-            ))
-    return waypoints
 
 
 def create_route_plan(

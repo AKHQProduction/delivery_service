@@ -4,6 +4,7 @@ import { useUserShopStore } from "../../context/useUserShopStore";
 import { UserRole } from "../../constants/roles";
 import { reorderRoute, updateOrderCoordinates } from "../../services/api/routesApi";
 
+
 export const useRouteDetail = (routePlan: RoutePlan | null) => {
   const user = useUserShopStore((s) => s.user);
   const canEdit = user?.role === UserRole.OWNER;
@@ -38,15 +39,12 @@ export const useRouteDetail = (routePlan: RoutePlan | null) => {
       return next.map((p, i) => ({ ...p, sequence: i }));
     });
     try {
-      const updated = await reorderRoute(
+      await reorderRoute(
         routePlan.delivery_date,
         orderId,
         newPosition,
         routePlan.time_slot || null,
-      ) as RoutePlan;
-      if (updated?.points) {
-        setPoints(updated.points);
-      }
+      );
     } catch (err) {
       console.error("Failed to reorder route:", err);
     }

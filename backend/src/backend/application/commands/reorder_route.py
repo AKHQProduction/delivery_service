@@ -3,11 +3,14 @@ from dataclasses import dataclass
 from datetime import date
 
 from backend.application.common import ensure_exists
+from backend.application.errors import EntityNotFoundError
 from backend.application.policies.access import ensure_can_manage
 from backend.application.services.edge_preference_collector import (
     extract_edges,
 )
-from backend.application.services.route_builder import resolve_time_slot
+from backend.application.services.route_builder import (
+    resolve_time_slot,
+)
 from backend.application.vars import OrderId, TimeSlotId
 from backend.infrastructure.idp import IdentityProvider
 from backend.infrastructure.persistence.gateways import (
@@ -50,6 +53,14 @@ class ReorderRouteCommandHandler:
         current_user = await self._idp.current_user()
         ensure_can_manage(current_user)
 
+        logger.info(
+            "Reorder requested: date=%s, order=%s, new_pos=%d, slot=%s",
+            command.delivery_date,
+            command.order_id,
+            command.new_position,
+            command.time_slot_id,
+        )
+
         route_plan = ensure_exists(
             await self._route_plan_gateway.load_by_date(
                 shop_id=current_user.shop_id,
@@ -59,21 +70,26 @@ class ReorderRouteCommandHandler:
             "RoutePlan",
         )
 
-        sequence = list(route_plan.order_sequence)
-
-        if command.order_id not in sequence:
+        if command.order_id not in route_plan.order_sequence:
             logger.warning(
                 "Order %s not in route plan %s sequence",
                 command.order_id,
                 route_plan.id,
             )
-            return
+            raise EntityNotFoundError(entity="Order in route sequence")
 
-        sequence.remove(command.order_id)
-        pos = max(0, min(command.new_position, len(sequence)))
-        sequence.insert(pos, command.order_id)
+        old_pos = route_plan.order_sequence.index(command.order_id)
+        route_plan.order_sequence.remove(command.order_id)
+        pos = max(0, min(command.new_position, len(route_plan.order_sequence)))
+        route_plan.order_sequence.insert(pos, command.order_id)
 
-        route_plan.order_sequence = sequence
+        logger.info(
+            "Route plan %s: order %s moved %d -> %d",
+            route_plan.id,
+            command.order_id,
+            old_pos,
+            pos,
+        )
 
         try:
             _, start_time, end_time = await resolve_time_slot(
@@ -95,3 +111,4 @@ class ReorderRouteCommandHandler:
             )
 
         await self._tr_manager.commit()
+        logger.info("Route plan %s reordered", route_plan.id)

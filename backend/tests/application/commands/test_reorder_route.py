@@ -30,6 +30,7 @@ def _make_handler(*, edge_gateway=None):
     order_gateway.load_by_date.return_value = []
 
     time_slot_gateway = AsyncMock()
+
     tr_manager = AsyncMock()
 
     handler = ReorderRouteCommandHandler(
