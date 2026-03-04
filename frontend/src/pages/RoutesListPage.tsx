@@ -7,6 +7,7 @@ import { MapPicker } from "../components/shared/MapPicker";
 import { RoutePlanCard } from "../components/routes/RoutePlanCard";
 import { UnroutableOrdersList } from "../components/routes/UnroutableOrdersList";
 import { useRoutesList } from "../hooks/routes/useRoutesList";
+import { useUserShopStore } from "../context/useUserShopStore";
 
 const formatTimeSlotLabel = (slot: { start_time: string; end_time: string; label?: string }) => {
   const start = slot.start_time.slice(0, 5);
@@ -16,6 +17,7 @@ const formatTimeSlotLabel = (slot: { start_time: string; end_time: string; label
 
 export const RoutesListPage = () => {
   const navigate = useNavigate();
+  const shop = useUserShopStore((state) => state.shop);
   const { timeSlots } = useTimeSlotsSettings();
 
   const {
@@ -128,6 +130,7 @@ export const RoutesListPage = () => {
         onConfirm={handleMapConfirm}
         isLoading={mapLoading}
         initialStreet={editingOrder?.address?.split(",")[0]?.trim()}
+        city={shop?.city ?? undefined}
         onGeocode={forwardGeocode}
         onReverseGeocode={reverseGeocode}
       />
