@@ -90,10 +90,7 @@ def sort_orders_by_sequence(
         if order:
             ordered.append(order)
 
-    new_orders = [order for order in orders if order.id not in sequence_ids]
-    ordered.extend(new_orders)
-    for order in new_orders:
-        order_sequence.append(order.id)
+    ordered.extend(order for order in orders if order.id not in sequence_ids)
 
     routable = []
     unroutable = []

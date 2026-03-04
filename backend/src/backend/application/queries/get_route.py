@@ -85,11 +85,19 @@ class GetRouteQueryHandler:
         )
 
         if route_plan:
-            seq_len_before = len(route_plan.order_sequence)
             routable, unroutable = sort_orders_by_sequence(
                 orders, route_plan.order_sequence
             )
-            if len(route_plan.order_sequence) > seq_len_before:
+            new_ids = [
+                o.id
+                for o in orders
+                if o.id not in set(route_plan.order_sequence)
+            ]
+            if new_ids:
+                route_plan.order_sequence = [
+                    *route_plan.order_sequence,
+                    *new_ids,
+                ]
                 await self._tr_manager.commit()
         else:
             optimized_ids = None
