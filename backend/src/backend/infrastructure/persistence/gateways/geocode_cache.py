@@ -7,6 +7,7 @@ from backend.application.dto.coordinates import (
     CoordinatesDTO,
     ReverseGeocodeResult,
 )
+from backend.application.validators import normalize_house, normalize_street
 from backend.application.vars import Empty
 
 logger = logging.getLogger(__name__)
@@ -135,8 +136,8 @@ class RedisGeocodeCache:
     @staticmethod
     def _build_forward_key(city: str, street: str, house: str) -> str:
         c = city.strip().lower()
-        s = street.strip().lower()
-        h = house.strip().lower()
+        s = normalize_street(street)
+        h = normalize_house(house)
         return f"geocode:{c}:{s}:{h}"
 
     @staticmethod
