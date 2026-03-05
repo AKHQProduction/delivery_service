@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState } from "react";
 import { type RoutePoint } from "../../types/entities/Route";
 import { paymentMap } from "../../utils/dataMap";
 
@@ -17,6 +17,7 @@ interface RouteStopItemProps {
   onMoveUp: (index: number) => void;
   onMoveDown: (index: number) => void;
   onToggleEditMarker: (orderId: string) => void;
+  onReorder: (fromIndex: number, toIndex: number) => void;
 }
 
 export const RouteStopItem: React.FC<RouteStopItemProps> = ({
@@ -34,7 +35,17 @@ export const RouteStopItem: React.FC<RouteStopItemProps> = ({
   onMoveUp,
   onMoveDown,
   onToggleEditMarker,
+  onReorder,
 }) => {
+  const [editingNumber, setEditingNumber] = useState(false);
+  const [inputValue, setInputValue] = useState("");
+
+  const handleNumberSubmit = () => {
+    const newPos = parseInt(inputValue, 10) - 1;
+    setEditingNumber(false);
+    if (isNaN(newPos) || newPos < 0 || newPos >= totalCount || newPos === index) return;
+    onReorder(index, newPos);
+  };
   return (
     <div
       draggable={canEdit}
@@ -49,9 +60,30 @@ export const RouteStopItem: React.FC<RouteStopItemProps> = ({
       <div className="flex items-start gap-3 px-4 py-3">
         {/* Number + drag handle */}
         <div className="flex flex-col items-center gap-1 pt-0.5 shrink-0">
-          <div className="w-7 h-7 rounded-full bg-indigo-600 text-white flex items-center justify-center text-xs font-bold">
-            {index + 1}
-          </div>
+          {canEdit && editingNumber ? (
+            <input
+              type="number"
+              min={1}
+              max={totalCount}
+              title="Позиція в маршруті"
+              autoFocus
+              value={inputValue}
+              onChange={(e) => setInputValue(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === "Enter") handleNumberSubmit();
+                if (e.key === "Escape") setEditingNumber(false);
+              }}
+              onBlur={handleNumberSubmit}
+              className="w-7 h-7 rounded-full bg-indigo-600 text-white text-xs font-bold text-center outline-none [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+            />
+          ) : (
+            <div
+              onClick={canEdit ? () => { setInputValue(String(index + 1)); setEditingNumber(true); } : undefined}
+              className={`w-7 h-7 rounded-full bg-indigo-600 text-white flex items-center justify-center text-xs font-bold ${canEdit ? "cursor-pointer hover:bg-indigo-700" : ""}`}
+            >
+              {index + 1}
+            </div>
+          )}
           {canEdit && (
             <svg className="w-4 h-4 text-gray-300 cursor-grab active:cursor-grabbing" fill="currentColor" viewBox="0 0 24 24">
               <path d="M8 6h2v2H8V6zm6 0h2v2h-2V6zM8 11h2v2H8v-2zm6 0h2v2h-2v-2zm-6 5h2v2H8v-2zm6 0h2v2h-2v-2z" />

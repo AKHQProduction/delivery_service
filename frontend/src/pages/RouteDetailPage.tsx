@@ -29,6 +29,8 @@ export const RouteDetailPage = () => {
     toggleEditMarker,
     cancelEditMarker,
     toggleList,
+    handleReverseRoute,
+    reorderByIndex,
   } = useRouteDetail(routePlan, timeSlotId);
 
   if (!routePlan || points.length === 0) {
@@ -55,8 +57,10 @@ export const RouteDetailPage = () => {
         routePlan={routePlan}
         pointCount={points.length}
         showList={showList}
+        canEdit={canEdit}
         onToggleList={toggleList}
         onBack={() => navigate("/routes")}
+        onReverseRoute={handleReverseRoute}
       />
 
       <div className="flex-1 min-h-0 flex flex-col md:flex-row">
@@ -73,6 +77,7 @@ export const RouteDetailPage = () => {
           onDragEnd={handleDragEnd}
           onMovePoint={movePoint}
           onToggleEditMarker={toggleEditMarker}
+          onReorder={reorderByIndex}
         />
 
         {/* Map */}

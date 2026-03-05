@@ -9,6 +9,10 @@ from backend.application.commands.reorder_route import (
     ReorderRouteCommand,
     ReorderRouteCommandHandler,
 )
+from backend.application.commands.reverse_route import (
+    ReverseRouteCommand,
+    ReverseRouteCommandHandler,
+)
 from backend.application.commands.update_order_coordinates import (
     UpdateOrderCoordinatesCommand,
     UpdateOrderCoordinatesCommandHandler,
@@ -63,6 +67,23 @@ async def get_route(
 async def reorder_route(
     body: ReorderRouteCommand,
     handler: FromDishka[ReorderRouteCommandHandler],
+) -> None:
+    await handler.handle(body)
+
+
+@router.patch(
+    "/reverse",
+    status_code=status.HTTP_204_NO_CONTENT,
+    responses={
+        status.HTTP_401_UNAUTHORIZED: {"model": ErrorSchema},
+        status.HTTP_403_FORBIDDEN: {"model": ErrorSchema},
+        status.HTTP_404_NOT_FOUND: {"model": ErrorSchema},
+    },
+    dependencies=[Depends(HTTPBearer(auto_error=False))],
+)
+async def reverse_route(
+    body: ReverseRouteCommand,
+    handler: FromDishka[ReverseRouteCommandHandler],
 ) -> None:
     await handler.handle(body)
 

@@ -1,5 +1,5 @@
 import { useState, useCallback } from "react";
-import api from "../config/api.config";
+import { forwardGeocode as forwardGeocodeApi, reverseGeocode as reverseGeocodeApi } from "../services/api/geocodingApi";
 
 export interface MapPickerResult {
   street: string;
@@ -26,17 +26,15 @@ export const useMapPicker = () => {
       setError(null);
 
       try {
-        const response = await api.get("/v1/geocoding/forward", {
-          params: { street, house: house || "", city: city || "" },
-        });
+        const data = await forwardGeocodeApi(street, house, city);
 
-        if (!response.data) {
+        if (!data) {
           return null;
         }
 
         return {
-          lat: response.data.latitude,
-          lng: response.data.longitude,
+          lat: data.latitude,
+          lng: data.longitude,
         };
       } catch (err) {
         console.error("Forward geocoding error:", err);
@@ -54,11 +52,7 @@ export const useMapPicker = () => {
       setError(null);
 
       try {
-        const response = await api.get("/v1/geocoding/reverse", {
-          params: { lat: coordinates.lat, lon: coordinates.lng },
-        });
-
-        const data = response.data;
+        const data = await reverseGeocodeApi(coordinates.lat, coordinates.lng);
 
         if (!data) {
           throw new Error("Address not found");

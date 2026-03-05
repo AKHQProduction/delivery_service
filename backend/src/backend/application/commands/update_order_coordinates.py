@@ -11,6 +11,7 @@ from backend.application.services.route_builder import (
     insert_order_into_route,
     remove_order_from_route,
 )
+from backend.application.validators import normalize_house, normalize_street
 from backend.application.vars import OrderId, today
 from backend.infrastructure.idp import IdentityProvider
 from backend.infrastructure.persistence.gateways import (
@@ -68,12 +69,12 @@ class UpdateOrderCoordinatesCommandHandler:
 
         client = await self._client_gateway.load(order.client_id)
         if client:
+            norm_street = normalize_street(addr.street)
+            norm_house = normalize_house(addr.house)
             for client_addr in client.addresses:
                 if (
-                    client_addr.street.strip().lower()
-                    == addr.street.strip().lower()
-                    and client_addr.house.strip().lower()
-                    == addr.house.strip().lower()
+                    normalize_street(client_addr.street) == norm_street
+                    and normalize_house(client_addr.house) == norm_house
                 ):
                     client_addr.latitude = new_coords.latitude
                     client_addr.longitude = new_coords.longitude

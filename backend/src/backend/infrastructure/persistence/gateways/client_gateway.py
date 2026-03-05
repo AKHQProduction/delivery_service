@@ -29,6 +29,13 @@ from backend.application.dto.gateways.client_gateway import (
     GetClientsFilters,
     PhoneDTO,
 )
+from backend.application.validators import (
+    HOUSE_LETTER_SQL_RE,
+    HOUSE_LETTER_SQL_REPL,
+    STREET_PREFIX_SQL_RE,
+    normalize_house,
+    normalize_street,
+)
 from backend.application.vars import (
     AddressId,
     ClientId,
@@ -230,18 +237,27 @@ class SQLAlchemyClientGateway:
     async def find_coordinates_by_address(
         self, street: str, house: str, city: str
     ) -> CoordinatesDTO | None:
+        norm_street_col = func.btrim(
+            func.regexp_replace(
+                func.lower(func.btrim(ClientAddress.street)),
+                STREET_PREFIX_SQL_RE,
+                "",
+            )
+        )
         filters = [
-            func.lower(func.btrim(ClientAddress.street))
-            == street.strip().lower(),
+            norm_street_col == normalize_street(street),
             func.lower(func.btrim(Shop.city)) == city.strip().lower(),
             ClientAddress.latitude.isnot(None),
             ClientAddress.longitude.isnot(None),
         ]
         if house.strip():
-            filters.append(
-                func.lower(func.btrim(ClientAddress.house))
-                == house.strip().lower()
+            norm_house_col = func.regexp_replace(
+                func.lower(func.btrim(ClientAddress.house)),
+                HOUSE_LETTER_SQL_RE,
+                HOUSE_LETTER_SQL_REPL,
+                "g",
             )
+            filters.append(norm_house_col == normalize_house(house))
         query = (
             select(
                 ClientAddress.latitude,
@@ -313,14 +329,27 @@ class SQLAlchemyClientGateway:
 
         if addresses:
             addr_tuples = list(starmap(func.row, addresses))
+            norm_street_col = func.btrim(
+                func.regexp_replace(
+                    func.lower(func.btrim(ClientAddress.street)),
+                    STREET_PREFIX_SQL_RE,
+                    "",
+                )
+            )
+            norm_house_col = func.regexp_replace(
+                func.lower(func.btrim(ClientAddress.house)),
+                HOUSE_LETTER_SQL_RE,
+                HOUSE_LETTER_SQL_REPL,
+                "g",
+            )
             addr_query = (
                 select(ClientAddress.client_id)
                 .join(Client, ClientAddress.client_id == Client.id)
                 .where(
                     Client.shop_id == shop_id,
                     func.row(
-                        func.lower(func.btrim(ClientAddress.street)),
-                        func.lower(func.btrim(ClientAddress.house)),
+                        norm_street_col,
+                        norm_house_col,
                     ).in_(addr_tuples),
                 )
             )
