@@ -2,7 +2,7 @@ import { useState, useCallback, useMemo, useEffect } from "react";
 import { type RoutePlan, type RoutePoint } from "../../types/entities/Route";
 import { useUserShopStore } from "../../context/useUserShopStore";
 import { UserRole } from "../../constants/roles";
-import { getRoutes, reorderRoute, updateOrderCoordinates } from "../../services/api/routesApi";
+import { getRoutes, reorderRoute, updateOrderCoordinates, reverseRoute } from "../../services/api/routesApi";
 
 
 export const useRouteDetail = (routePlan: RoutePlan | null, timeSlotId: string | null = null) => {
@@ -118,6 +118,18 @@ export const useRouteDetail = (routePlan: RoutePlan | null, timeSlotId: string |
     setEditingOrderId(null);
   }, []);
 
+  const handleReverseRoute = useCallback(async () => {
+    if (!routePlan) return;
+    const snapshot = [...points];
+    setPoints((prev) => [...prev].reverse().map((p, i) => ({ ...p, sequence: i })));
+    try {
+      await reverseRoute(routePlan.route_plan_id);
+    } catch (err) {
+      console.error("Failed to reverse route:", err);
+      setPoints(snapshot);
+    }
+  }, [routePlan, points]);
+
   const toggleList = useCallback(() => {
     setShowList((v) => !v);
   }, []);
@@ -144,5 +156,6 @@ export const useRouteDetail = (routePlan: RoutePlan | null, timeSlotId: string |
     toggleEditMarker,
     cancelEditMarker,
     toggleList,
+    handleReverseRoute,
   };
 };

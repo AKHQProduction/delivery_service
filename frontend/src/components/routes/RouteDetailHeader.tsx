@@ -5,16 +5,20 @@ interface RouteDetailHeaderProps {
   routePlan: RoutePlan;
   pointCount: number;
   showList: boolean;
+  canEdit: boolean;
   onToggleList: () => void;
   onBack: () => void;
+  onReverseRoute: () => void;
 }
 
 export const RouteDetailHeader: React.FC<RouteDetailHeaderProps> = ({
   routePlan,
   pointCount,
   showList,
+  canEdit,
   onToggleList,
   onBack,
+  onReverseRoute,
 }) => {
   return (
     <div className="shrink-0 bg-white border-b border-gray-200 px-4 py-3 md:px-6 md:py-4 flex items-center gap-3 z-10">
@@ -40,6 +44,19 @@ export const RouteDetailHeader: React.FC<RouteDetailHeaderProps> = ({
         </h1>
         <p className="text-xs text-gray-500">{pointCount} зупинок</p>
       </div>
+      {/* Reverse route */}
+      {canEdit && (
+        <button
+          type="button"
+          title="Розвернути маршрут"
+          onClick={onReverseRoute}
+          className="w-9 h-9 rounded-full bg-gray-100 hover:bg-gray-200 flex items-center justify-center transition-colors shrink-0"
+        >
+          <svg className="w-5 h-5 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16V4m0 0L3 8m4-4l4 4m6 0v12m0 0l4-4m-4 4l-4-4" />
+          </svg>
+        </button>
+      )}
       {/* Toggle list/map on mobile */}
       <button
         type="button"

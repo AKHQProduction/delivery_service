@@ -82,10 +82,10 @@ async def reorder_route(
     dependencies=[Depends(HTTPBearer(auto_error=False))],
 )
 async def reverse_route(
-    route_plan_id: RoutePlanId,
+    body: ReverseRouteCommand,
     handler: FromDishka[ReverseRouteCommandHandler],
 ) -> None:
-    await handler.handle(ReverseRouteCommand(route_plan_id=route_plan_id))
+    await handler.handle(body)
 
 
 @router.patch(

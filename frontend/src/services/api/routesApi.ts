@@ -35,3 +35,10 @@ export const updateOrderCoordinates = async (order_id: string, latitude: number,
   });
   return response.data;
 }
+
+export const reverseRoute = async (route_plan_id: string) => {
+  const response = await api.patch(`v1/route/reverse`, {
+    route_plan_id,
+  });
+  return response.data;
+}
