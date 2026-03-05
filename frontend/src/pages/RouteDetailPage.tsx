@@ -50,7 +50,7 @@ export const RouteDetailPage = () => {
   }
 
   return (
-    <div className="flex flex-col mb-20 md:mb-0 md:h-screen bg-white">
+    <div className="flex flex-col h-dvh md:h-screen bg-white">
       <RouteDetailHeader
         routePlan={routePlan}
         pointCount={points.length}
@@ -112,6 +112,8 @@ export const RouteDetailPage = () => {
           />
         </div>
       </div>
+      {/* Spacer for bottom nav on mobile */}
+      <div className="h-20 shrink-0 md:hidden" />
     </div>
   );
 };
