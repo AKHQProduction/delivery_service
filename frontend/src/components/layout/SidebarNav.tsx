@@ -28,7 +28,7 @@ export const SidebarNav = () => {
   return (
     <aside className="hidden md:flex md:flex-col md:w-64 md:fixed md:inset-y-0 md:left-0 bg-white border-r border-gray-200 z-40">
       {/* Logo / Brand */}
-      <div className="px-6 py-6 border-b border-gray-100">
+      <div className="px-6 py-6 border-b border-gray-100 cursor-pointer" onClick={() => navigate("/")}>
         <h1 className="text-xl font-bold text-gray-900 tracking-tight">Water Delivery</h1>
       </div>
 
