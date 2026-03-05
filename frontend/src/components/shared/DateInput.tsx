@@ -53,7 +53,7 @@ export const DateInput: React.FC<DateInputProps> = ({
         min={minDate}
         onChange={(e) => onChange(e.target.value)}
         required={required}
-        className={`w-full px-3 py-3 sm:px-4 sm:py-3.5 border-2 rounded-lg sm:rounded-xl bg-white
+        className={`w-full h-12 px-3 sm:px-4 border-2 rounded-lg sm:rounded-xl bg-white
                    focus:outline-none focus:ring-2 focus:border-transparent
                    text-gray-900 font-medium transition-all text-sm sm:text-base
                    ${getBorderColor()} ${getFocusRingColor()}`}

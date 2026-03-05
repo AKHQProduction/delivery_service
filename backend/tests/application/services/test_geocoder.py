@@ -56,7 +56,9 @@ class TestGeocode:
         result = await geocoder.geocode("Хрещатик", "1", "Київ")
 
         assert result == coords
-        provider_a.geocode.assert_awaited_once_with("Хрещатик", "1", "Київ")
+        provider_a.geocode.assert_awaited_once_with(
+            "Хрещатик", "1", "Київ", require_house=True
+        )
         provider_b.geocode.assert_not_awaited()
         cache.set.assert_awaited_once_with("Київ", "Хрещатик", "1", coords)
 
@@ -71,8 +73,12 @@ class TestGeocode:
         result = await geocoder.geocode("Хрещатик", "1", "Київ")
 
         assert result == coords
-        provider_a.geocode.assert_awaited_once_with("Хрещатик", "1", "Київ")
-        provider_b.geocode.assert_awaited_once_with("Хрещатик", "1", "Київ")
+        provider_a.geocode.assert_awaited_once_with(
+            "Хрещатик", "1", "Київ", require_house=True
+        )
+        provider_b.geocode.assert_awaited_once_with(
+            "Хрещатик", "1", "Київ", require_house=True
+        )
         cache.set.assert_awaited_once_with("Київ", "Хрещатик", "1", coords)
 
     @pytest.mark.asyncio()
@@ -151,4 +157,6 @@ class TestGeocodeIfMissing:
 
         assert result == coords
         cache.get.assert_awaited_once()
-        provider_a.geocode.assert_awaited_once_with("Хрещатик", "1", "Київ")
+        provider_a.geocode.assert_awaited_once_with(
+            "Хрещатик", "1", "Київ", require_house=True
+        )

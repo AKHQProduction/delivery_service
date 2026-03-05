@@ -3,6 +3,7 @@ from dataclasses import dataclass
 from datetime import date, timedelta
 
 from backend.application.common import ensure_exists
+from backend.application.dto.coordinates import CoordinatesDTO
 from backend.application.errors import (
     DateMustBeGreaterThanError,
     ProductIdRequiredForNewItemError,
@@ -18,6 +19,10 @@ from backend.application.services.order import (
     resolve_phone,
     update_order,
     update_order_items,
+)
+from backend.application.services.route_builder import (
+    insert_order_into_route,
+    remove_order_from_route,
 )
 from backend.application.vars import (
     AddressId,
@@ -36,6 +41,7 @@ from backend.infrastructure.persistence.gateways import (
     SQLAlchemyClientGateway,
     SQLAlchemyOrderGateway,
     SQLAlchemyProductGateway,
+    SQLAlchemyRoutePlanGateway,
     SQLAlchemyShopGateway,
     SQLAlchemyTimeSlotGateway,
 )
@@ -85,6 +91,7 @@ class EditOrderCommandHandler:
         order_gateway: SQLAlchemyOrderGateway,
         time_slot_gateway: SQLAlchemyTimeSlotGateway,
         shop_gateway: SQLAlchemyShopGateway,
+        route_plan_gateway: SQLAlchemyRoutePlanGateway,
         geocoder: Geocoder,
         tr_manager: TransactionManager,
     ) -> None:
@@ -94,6 +101,7 @@ class EditOrderCommandHandler:
         self._order_gateway = order_gateway
         self._time_slot_gateway = time_slot_gateway
         self._shop_gateway = shop_gateway
+        self._route_plan_gateway = route_plan_gateway
         self._geocoder = geocoder
         self._tr_manager = tr_manager
 
@@ -178,6 +186,13 @@ class EditOrderCommandHandler:
             payment_method=command.payment_method,
         )
 
+        if (
+            command.address_id is not None
+            or command.delivery_date is not None
+            or command.time_slot_id is not None
+        ):
+            await self._update_route_position(order, command.time_slot_id)
+
         if command.items is not None:
             await self._process_items(command, order)
 
@@ -187,6 +202,56 @@ class EditOrderCommandHandler:
             "Successfully updated order: id=%s, shop_id=%s",
             command.order_id,
             order.shop_id,
+        )
+
+    async def _update_route_position(
+        self, order: Order, new_time_slot_id: TimeSlotId | None
+    ) -> None:
+        old_route_plan = await self._route_plan_gateway.find_by_order(order.id)
+        if old_route_plan:
+            remove_order_from_route(old_route_plan, order.id)
+            logger.info(
+                "Removed order %s from route plan %s",
+                order.id,
+                old_route_plan.id,
+            )
+
+        target_slot_id = (
+            new_time_slot_id
+            if new_time_slot_id is not None
+            else (old_route_plan.time_slot_id if old_route_plan else None)
+        )
+
+        target_plan = await self._route_plan_gateway.load_by_date(
+            shop_id=order.shop_id,
+            delivery_date=order.date,
+            time_slot_id=target_slot_id,
+        )
+        if not target_plan:
+            logger.info(
+                "No target route plan for order %s (date=%s, slot=%s)",
+                order.id,
+                order.date,
+                target_slot_id,
+            )
+            return
+
+        shop = await self._shop_gateway.load_shop(order.shop_id)
+        shop_coords = CoordinatesDTO.build(
+            shop.latitude if shop else None,
+            shop.longitude if shop else None,
+        )
+        all_orders = await self._order_gateway.load_by_date(
+            shop_id=order.shop_id,
+            delivery_date=order.date,
+            start_time=order.delivery_start_time,
+            end_time=order.delivery_end_time,
+        )
+        insert_order_into_route(target_plan, order, shop_coords, all_orders)
+        logger.info(
+            "Inserted order %s into route plan %s",
+            order.id,
+            target_plan.id,
         )
 
     async def _process_items(

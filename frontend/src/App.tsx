@@ -6,10 +6,12 @@ import { ProtectedRoute } from "./components/ProtectedRoute";
 import { DevPage } from "./pages/DevPage";
 import { LoginPage } from "./pages/LoginPage";
 import { CreateShopPage } from "./pages/CreateShopPage";
+import { RouteDetailPage } from "./pages/RouteDetailPage";
 import { AddItemComponent } from "./components/features/AddItemComponent";
 import { getUserShopData } from "./services/api/userApi";
 import { useEffect } from "react";
 import { useUserShopStore } from "./context/useUserShopStore";
+import { UserRole } from "./constants/roles";
 import { MenuModal } from "./components/modals/MenuModal";
 import { ErrorProvider } from "./context/ErrorContext";
 import { ErrorBoundary } from "./components/ErrorBoundary";
@@ -55,6 +57,14 @@ function App() {
                 <Route path="/login" element={<LoginPage />} />
                 <Route path="/create-shop" element={<CreateShopPage />} />
                 {isDev && <Route path="/dev" element={<DevPage />} />}
+                <Route
+                  path="/routes/:routeId"
+                  element={
+                    <ProtectedRoute allowedRoles={[UserRole.COURIER, UserRole.MANAGER, UserRole.OWNER]}>
+                      <RouteDetailPage />
+                    </ProtectedRoute>
+                  }
+                />
                 {routeConfig.map((route) => (
                   <Route
                     key={route.path}

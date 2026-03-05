@@ -328,6 +328,7 @@ class SQLAlchemyOrderGateway:
 
     async def update_delivery_coordinates(
         self,
+        shop_id: ShopId,
         client_id: ClientId,
         street: str,
         house: str,
@@ -342,7 +343,8 @@ class SQLAlchemyOrderGateway:
                 CAST(:coords AS jsonb)
             ),
             updated_at = now()
-            WHERE client_id = :client_id
+            WHERE shop_id = :shop_id
+              AND client_id = :client_id
               AND lower(btrim(delivery_address->>'street')) = :street
               AND lower(btrim(delivery_address->>'house')) = :house
               AND date >= :from_date
@@ -354,6 +356,7 @@ class SQLAlchemyOrderGateway:
                     "latitude": new_coordinates.latitude,
                     "longitude": new_coordinates.longitude,
                 }),
+                "shop_id": str(shop_id),
                 "client_id": str(client_id),
                 "street": street.strip().lower(),
                 "house": house.strip().lower(),

@@ -1,6 +1,11 @@
 import logging
+import math
 
-from backend.application.dto.coordinates import CoordinatesDTO
+from backend.application.dto.coordinates import CoordinatesDTO, EdgeInput
+from backend.application.services.edge_preference_collector import (
+    PREFERENCE_ALPHA,
+    PreferenceMap,
+)
 from backend.application.services.tsp_solvers.base import TSPSolver
 from backend.application.vars import OrderId
 from backend.infrastructure.persistence.tables.orders import Order
@@ -27,6 +32,7 @@ class RouteOptimizer:
         self,
         shop_location: CoordinatesDTO,
         orders: list[Order],
+        edge_preferences: PreferenceMap | None = None,
     ) -> list[OrderId] | None:
         if len(orders) <= 1:
             return None
@@ -78,6 +84,9 @@ class RouteOptimizer:
             )
             return None
 
+        if edge_preferences:
+            self._apply_preferences(matrix, coord_orders, edge_preferences)
+
         n = len(matrix)
         solver = self._held_karp if n <= HELD_KARP_THRESHOLD else self._pyvrp
 
@@ -99,6 +108,32 @@ class RouteOptimizer:
         optimized.extend(o.id for o in without_coords)
 
         return optimized
+
+    @staticmethod
+    def _apply_preferences(
+        matrix: list[list[float]],
+        coord_orders: list[Order],
+        preferences: PreferenceMap,
+    ) -> None:
+        inf = float("inf")
+        coords_by_index: dict[int, CoordinatesDTO] = {}
+        for idx, order in enumerate(coord_orders):
+            addr = order.delivery_address
+            if addr and addr.coordinates:
+                coords_by_index[idx + 1] = addr.coordinates
+
+        n = len(matrix)
+        for i in range(n):
+            for j in range(n):
+                if i == j or matrix[i][j] == inf:
+                    continue
+                ci = coords_by_index.get(i)
+                cj = coords_by_index.get(j)
+                if ci and cj:
+                    key = EdgeInput(from_coords=ci, to_coords=cj)
+                    score = preferences.get(key)
+                    if score is not None:
+                        matrix[i][j] *= max(1 - PREFERENCE_ALPHA * score, 0.01)
 
     def _filter_unreachable(
         self,
@@ -138,3 +173,39 @@ class RouteOptimizer:
         ]
 
         return filtered_matrix, filtered_orders, unreachable_orders
+
+    @staticmethod
+    def find_best_insertion_position(
+        shop_coords: CoordinatesDTO,
+        existing_sequence_coords: list[CoordinatesDTO],
+        new_point_coords: CoordinatesDTO,
+    ) -> int:
+        if not existing_sequence_coords:
+            return 0
+
+        waypoints = [shop_coords, *existing_sequence_coords]
+
+        def _dist(a: CoordinatesDTO, b: CoordinatesDTO) -> float:
+            avg_lat = math.radians((a.latitude + b.latitude) / 2)
+            return math.hypot(
+                a.latitude - b.latitude,
+                (a.longitude - b.longitude) * math.cos(avg_lat),
+            )
+
+        best_pos = len(existing_sequence_coords)
+        best_cost = float("inf")
+
+        for i in range(len(waypoints)):
+            prev = waypoints[i]
+            nxt = waypoints[i + 1] if i + 1 < len(waypoints) else shop_coords
+
+            cost = (
+                _dist(prev, new_point_coords)
+                + _dist(new_point_coords, nxt)
+                - _dist(prev, nxt)
+            )
+            if cost < best_cost:
+                best_cost = cost
+                best_pos = i
+
+        return best_pos

@@ -1837,7 +1837,9 @@ async def test_create_client_geocodes_address_when_shop_has_city(
         )
 
         assert response.status_code == status.HTTP_201_CREATED
-        mock_geocode.assert_called_once_with("Хрещатик", "10", "Київ")
+        mock_geocode.assert_called_once_with(
+            "Хрещатик", "10", "Київ", require_house=True
+        )
 
     client_id = response.json()
     await session.flush()
@@ -2014,7 +2016,9 @@ async def test_edit_client_geocodes_new_address(
         )
 
         assert response.status_code == status.HTTP_200_OK
-        mock_geocode.assert_called_once_with("Нова вулиця", "5", "Київ")
+        mock_geocode.assert_called_once_with(
+            "Нова вулиця", "5", "Київ", require_house=True
+        )
 
     await session.flush()
 

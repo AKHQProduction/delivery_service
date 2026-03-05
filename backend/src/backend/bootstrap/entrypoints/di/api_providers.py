@@ -71,6 +71,12 @@ from backend.application.commands.login_telegram import (
     LoginTelegramCommandHandler,
 )
 from backend.application.commands.logout import LogoutCommandHandler
+from backend.application.commands.reorder_route import (
+    ReorderRouteCommandHandler,
+)
+from backend.application.commands.update_order_coordinates import (
+    UpdateOrderCoordinatesCommandHandler,
+)
 from backend.application.queries.get_categories import (
     GetCategoriesQueryHandler,
 )
@@ -89,6 +95,10 @@ from backend.application.queries.get_order_stats import (
 from backend.application.queries.get_orders import GetOrdersQueryHandler
 from backend.application.queries.get_product import GetProductQueryHandler
 from backend.application.queries.get_products import GetProductsQueryHandler
+from backend.application.queries.get_route import GetRouteQueryHandler
+from backend.application.queries.get_shared_route import (
+    GetSharedRouteQueryHandler,
+)
 from backend.application.queries.get_time_slots import GetTimeSlotsQueryHandler
 from backend.application.services.geocoder import Geocoder
 from backend.application.services.tsp_solvers import RouteOptimizer
@@ -224,6 +234,10 @@ class APIInteractorsProvider(Provider):
         GetOrdersQueryHandler,
         GetOrderStatsQueryHandler,
         GenerateOrderExportPDFCommandHandler,
+        GetRouteQueryHandler,
+        GetSharedRouteQueryHandler,
+        ReorderRouteCommandHandler,
+        UpdateOrderCoordinatesCommandHandler,
         CreateTimeSlotCommandHandler,
         EditTimeSlotCommandHandler,
         DeleteTimeSlotCommandHandler,

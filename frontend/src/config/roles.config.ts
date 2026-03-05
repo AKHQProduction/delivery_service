@@ -7,6 +7,7 @@ import { OrdersStatsPage } from "../pages/OrderStatsPage";
 import { MainPage } from "../pages/MainPage";
 import { SettingsPage } from "../pages/SettingsPage";
 import { ShopSettingsPage } from "../pages/ShopSettingsPage";
+import { RoutesListPage } from "../pages/RoutesListPage";
 import goodsIcon from "../assets/icons/goods.svg";
 import clientsIcon from "../assets/icons/client.svg";
 import ordersIcon from "../assets/icons/order.svg";
@@ -15,6 +16,7 @@ import statisticIcon from "../assets/icons/statistic-board-com.svg";
 import menuIcon from "../assets/icons/menu.svg";
 import settingsIcon from "../assets/icons/settings.svg";
 import shopIcon from "../assets/icons/shop.svg";
+import routeIcon from "../assets/icons/route.svg";
 
 export interface RouteConfig {
   path: string;
@@ -62,6 +64,14 @@ export const routeConfig: RouteConfig[] = [
     icon: ordersIcon,
     component: OrdersPage,
     allowedRoles: [UserRole.COURIER, UserRole.MANAGER, UserRole.OWNER],
+  },
+  {
+    path: "/routes",
+    label: "Маршрути",
+    icon: routeIcon,
+    component: RoutesListPage,
+    allowedRoles: [UserRole.COURIER, UserRole.MANAGER, UserRole.OWNER],
+    showInNav: false,
   },
   {
     path: "/staff",

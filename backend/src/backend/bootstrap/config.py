@@ -81,7 +81,9 @@ class OTelConfig(BaseModel):
 
 
 class OSRMConfig(BaseModel):
-    url: str = Field(alias="OSRM_URL", default="http://osrm:5000")
+    url: str = Field(
+        alias="OSRM_URL", default="https://router.project-osrm.org"
+    )
 
 
 class NominatimConfig(BaseModel):

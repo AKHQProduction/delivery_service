@@ -6,6 +6,7 @@ from datetime import date, time
 
 from backend.application.dto.coordinates import CoordinatesDTO
 from backend.application.errors import AccessDeniedError, EntityNotFoundError
+from backend.application.services.route_builder import sort_orders_by_sequence
 from backend.application.services.tsp_solvers import RouteOptimizer
 from backend.application.vars import (
     ExportDocType,
@@ -20,9 +21,11 @@ from backend.infrastructure.pdf import ReportLabOrdersPDFGenerator
 from backend.infrastructure.persistence.gateways import (
     RedisFileStorage,
     SQLAlchemyOrderGateway,
+    SQLAlchemyRoutePlanGateway,
     SQLAlchemyShopGateway,
     SQLAlchemyTimeSlotGateway,
 )
+from backend.infrastructure.persistence.tables import Shop
 from backend.infrastructure.persistence.tables.orders import Order
 
 logger = logging.getLogger(__name__)
@@ -49,6 +52,7 @@ class GenerateOrderExportPDFCommandHandler:
         order_gateway: SQLAlchemyOrderGateway,
         shop_gateway: SQLAlchemyShopGateway,
         time_slot_gateway: SQLAlchemyTimeSlotGateway,
+        route_plan_gateway: SQLAlchemyRoutePlanGateway,
         pdf_generator: ReportLabOrdersPDFGenerator,
         pdf_storage: RedisFileStorage,
         route_optimizer: RouteOptimizer,
@@ -57,6 +61,7 @@ class GenerateOrderExportPDFCommandHandler:
         self._order_gateway = order_gateway
         self._shop_gateway = shop_gateway
         self._time_slot_gateway = time_slot_gateway
+        self._route_plan_gateway = route_plan_gateway
         self._pdf_generator = pdf_generator
         self._pdf_storage = pdf_storage
         self._route_optimizer = route_optimizer
@@ -106,11 +111,12 @@ class GenerateOrderExportPDFCommandHandler:
 
         if command.doc_type == ExportDocType.ORDER_LIST:
             if command.routing_mode == RoutingMode.OPTIMIZED:
-                shop_coords = CoordinatesDTO.build(
-                    shop.latitude, shop.longitude
+                orders = await self._sort_by_route(
+                    orders,
+                    shop,
+                    command.delivery_date,
+                    command.time_slot_id,
                 )
-                if shop_coords:
-                    orders = await self._optimize_orders(orders, shop_coords)
 
             pdf_bytes = await loop.run_in_executor(
                 None,
@@ -138,6 +144,31 @@ class GenerateOrderExportPDFCommandHandler:
         )
 
         return GenerateOrderExportPDFResult(file_id=file_id, filename=filename)
+
+    async def _sort_by_route(
+        self,
+        orders: list[Order],
+        shop: Shop,
+        delivery_date: date,
+        time_slot_id: TimeSlotId | None,
+    ) -> list[Order]:
+        route_plan = await self._route_plan_gateway.load_by_date(
+            shop.id,
+            delivery_date,
+            time_slot_id,
+        )
+
+        if route_plan:
+            routable, unroutable = sort_orders_by_sequence(
+                orders,
+                route_plan.order_sequence,
+            )
+            return [*routable, *unroutable]
+
+        shop_coords = CoordinatesDTO.build(shop.latitude, shop.longitude)
+        if shop_coords:
+            return await self._optimize_orders(orders, shop_coords)
+        return orders
 
     async def _optimize_orders(
         self,
