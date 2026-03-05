@@ -7,7 +7,7 @@ import { getRoutes, reorderRoute, updateOrderCoordinates } from "../../services/
 
 export const useRouteDetail = (routePlan: RoutePlan | null, timeSlotId: string | null = null) => {
   const user = useUserShopStore((s) => s.user);
-  const canEdit = user?.role === UserRole.OWNER;
+  const canEdit = user?.role === UserRole.OWNER || user?.role === UserRole.MANAGER;
 
   const [points, setPoints] = useState<RoutePoint[]>(routePlan?.points ?? []);
   const [showList, setShowList] = useState(true);
