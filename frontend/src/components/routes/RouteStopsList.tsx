@@ -32,7 +32,7 @@ export const RouteStopsList: React.FC<RouteStopsListProps> = ({
   onToggleEditMarker,
 }) => {
   return (
-    <div className={`${showList ? "flex" : "hidden"} md:flex flex-col w-full md:w-80 lg:w-96 border-r border-gray-200 bg-gray-50 shrink-0 overflow-hidden`}>
+    <div className={`${showList ? "flex" : "hidden"} md:flex flex-col w-full md:w-80 lg:w-96 border-r border-gray-200 bg-gray-50 min-h-0 md:shrink-0 overflow-hidden`}>
       <div className="px-4 py-3 border-b border-gray-200 bg-white">
         <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider">Порядок зупинок</p>
         {canEdit && (
