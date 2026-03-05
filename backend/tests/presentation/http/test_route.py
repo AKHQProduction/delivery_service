@@ -930,6 +930,114 @@ async def test_edit_order_date_change_removes_from_old_route_plan(
 
 
 @pytest.mark.asyncio()
+async def test_reverse_route(
+    http_client: AsyncClient,
+    session: AsyncSession,
+    customer_headers: Callable[[int], dict[str, Any]],
+    setup_full_test_user_with_shop,
+    setup_test_client,
+    setup_test_order,
+) -> None:
+    telegram_id = 7013
+    _, shop_id = await setup_full_test_user_with_shop(
+        telegram_id=telegram_id,
+        shop_latitude=50.45,
+        shop_longitude=30.52,
+    )
+
+    client_id = await setup_test_client(
+        shop_id=shop_id,
+        full_name="Клієнт",
+        phones=["+380501234567"],
+        addresses=[{"street": "Хрещатик", "house": "10"}],
+    )
+
+    delivery_date = _delivery_date_future()
+    order_a = await setup_test_order(
+        shop_id=shop_id,
+        client_id=client_id,
+        delivery_date=delivery_date,
+        delivery_address={
+            "street": "A",
+            "house": "1",
+            "coordinates": {"latitude": 50.46, "longitude": 30.53},
+        },
+    )
+    order_b = await setup_test_order(
+        shop_id=shop_id,
+        client_id=client_id,
+        delivery_date=delivery_date,
+        delivery_address={
+            "street": "B",
+            "house": "2",
+            "coordinates": {"latitude": 50.47, "longitude": 30.54},
+        },
+    )
+    order_c = await setup_test_order(
+        shop_id=shop_id,
+        client_id=client_id,
+        delivery_date=delivery_date,
+        delivery_address={
+            "street": "C",
+            "house": "3",
+            "coordinates": {"latitude": 50.48, "longitude": 30.55},
+        },
+    )
+
+    route_plan_id = RoutePlanId(uuid.uuid4())
+    await session.execute(
+        insert(RoutePlan).values(
+            id=route_plan_id,
+            shop_id=shop_id,
+            delivery_date=delivery_date,
+            time_slot_id=None,
+            order_sequence=[order_a, order_b, order_c],
+        )
+    )
+    await session.commit()
+
+    headers = customer_headers(telegram_id)
+
+    response = await http_client.patch(
+        url=f"{BASE_URL}/reverse",
+        headers=headers,
+        params={"route_plan_id": str(route_plan_id)},
+    )
+
+    assert response.status_code == status.HTTP_204_NO_CONTENT
+
+    await session.flush()
+
+    result = await session.execute(
+        select(RoutePlan).where(RoutePlan.id == route_plan_id)
+    )
+    route_plan = result.scalar_one()
+    assert route_plan.order_sequence == [order_c, order_b, order_a]
+
+
+@pytest.mark.asyncio()
+async def test_reverse_route_not_found(
+    http_client: AsyncClient,
+    session: AsyncSession,
+    customer_headers: Callable[[int], dict[str, Any]],
+    setup_full_test_user_with_shop,
+) -> None:
+    telegram_id = 7014
+    await setup_full_test_user_with_shop(telegram_id=telegram_id)
+    await session.commit()
+
+    headers = customer_headers(telegram_id)
+
+    response = await http_client.patch(
+        url=f"{BASE_URL}/reverse",
+        headers=headers,
+        params={"route_plan_id": str(uuid.uuid4())},
+    )
+
+    assert response.status_code == status.HTTP_404_NOT_FOUND
+
+
+@pytest.mark.asyncio()
 async def test_reorder_records_edge_history(
     http_client: AsyncClient,
     session: AsyncSession,
