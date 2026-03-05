@@ -20,6 +20,13 @@ from backend.application.dto.gateways.order_gateway import (
     TimeSlotFilter,
     TimeSlotStatsReadModel,
 )
+from backend.application.validators import (
+    HOUSE_LETTER_SQL_RE,
+    HOUSE_LETTER_SQL_REPL,
+    STREET_PREFIX_SQL_RE,
+    normalize_house,
+    normalize_street,
+)
 from backend.application.vars import (
     ClientId,
     OrderId,
@@ -345,8 +352,14 @@ class SQLAlchemyOrderGateway:
             updated_at = now()
             WHERE shop_id = :shop_id
               AND client_id = :client_id
-              AND lower(btrim(delivery_address->>'street')) = :street
-              AND lower(btrim(delivery_address->>'house')) = :house
+              AND btrim(regexp_replace(
+                    lower(btrim(delivery_address->>'street')),
+                    :street_re, ''
+                  )) = :street
+              AND regexp_replace(
+                    lower(btrim(delivery_address->>'house')),
+                    :house_re, :house_repl, 'g'
+                  ) = :house
               AND date >= :from_date
         """)
         result = await self._session.execute(
@@ -358,8 +371,11 @@ class SQLAlchemyOrderGateway:
                 }),
                 "shop_id": str(shop_id),
                 "client_id": str(client_id),
-                "street": street.strip().lower(),
-                "house": house.strip().lower(),
+                "street": normalize_street(street),
+                "house": normalize_house(house),
+                "street_re": STREET_PREFIX_SQL_RE,
+                "house_re": HOUSE_LETTER_SQL_RE,
+                "house_repl": HOUSE_LETTER_SQL_REPL,
                 "from_date": from_date,
             },
         )
