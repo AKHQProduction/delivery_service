@@ -1001,7 +1001,7 @@ async def test_reverse_route(
     response = await http_client.patch(
         url=f"{BASE_URL}/reverse",
         headers=headers,
-        params={"route_plan_id": str(route_plan_id)},
+        json={"route_plan_id": str(route_plan_id)},
     )
 
     assert response.status_code == status.HTTP_204_NO_CONTENT
@@ -1031,7 +1031,7 @@ async def test_reverse_route_not_found(
     response = await http_client.patch(
         url=f"{BASE_URL}/reverse",
         headers=headers,
-        params={"route_plan_id": str(uuid.uuid4())},
+        json={"route_plan_id": str(uuid.uuid4())},
     )
 
     assert response.status_code == status.HTTP_404_NOT_FOUND
