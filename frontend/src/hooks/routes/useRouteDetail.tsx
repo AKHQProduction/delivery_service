@@ -118,6 +118,11 @@ export const useRouteDetail = (routePlan: RoutePlan | null, timeSlotId: string |
     setEditingOrderId(null);
   }, []);
 
+  const reorderByIndex = useCallback((fromIndex: number, toIndex: number) => {
+    if (fromIndex === toIndex || !points[fromIndex]) return;
+    applyReorder(points[fromIndex].order_id, toIndex);
+  }, [points, applyReorder]);
+
   const handleReverseRoute = useCallback(async () => {
     if (!routePlan) return;
     const snapshot = [...points];
@@ -157,5 +162,6 @@ export const useRouteDetail = (routePlan: RoutePlan | null, timeSlotId: string |
     cancelEditMarker,
     toggleList,
     handleReverseRoute,
+    reorderByIndex,
   };
 };

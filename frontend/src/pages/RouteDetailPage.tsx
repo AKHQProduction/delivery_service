@@ -30,6 +30,7 @@ export const RouteDetailPage = () => {
     cancelEditMarker,
     toggleList,
     handleReverseRoute,
+    reorderByIndex,
   } = useRouteDetail(routePlan, timeSlotId);
 
   if (!routePlan || points.length === 0) {
@@ -76,6 +77,7 @@ export const RouteDetailPage = () => {
           onDragEnd={handleDragEnd}
           onMovePoint={movePoint}
           onToggleEditMarker={toggleEditMarker}
+          onReorder={reorderByIndex}
         />
 
         {/* Map */}

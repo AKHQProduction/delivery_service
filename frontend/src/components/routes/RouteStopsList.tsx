@@ -15,6 +15,7 @@ interface RouteStopsListProps {
   onDragEnd: () => void;
   onMovePoint: (from: number, direction: "up" | "down") => void;
   onToggleEditMarker: (orderId: string) => void;
+  onReorder: (fromIndex: number, toIndex: number) => void;
 }
 
 export const RouteStopsList: React.FC<RouteStopsListProps> = ({
@@ -30,13 +31,14 @@ export const RouteStopsList: React.FC<RouteStopsListProps> = ({
   onDragEnd,
   onMovePoint,
   onToggleEditMarker,
+  onReorder,
 }) => {
   return (
     <div className={`${showList ? "flex" : "hidden"} md:flex flex-col w-full md:w-80 lg:w-96 border-r border-gray-200 bg-gray-50 min-h-0 md:shrink-0 overflow-hidden`}>
       <div className="px-4 py-3 border-b border-gray-200 bg-white">
         <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider">Порядок зупинок</p>
         {canEdit && (
-          <p className="text-xs text-gray-400 mt-0.5">Перетягніть для зміни порядку</p>
+          <p className="text-xs text-gray-400 mt-0.5">Перетягніть або натисніть на номер для зміни порядку</p>
         )}
       </div>
 
@@ -58,6 +60,7 @@ export const RouteStopsList: React.FC<RouteStopsListProps> = ({
             onMoveUp={(i) => onMovePoint(i, "up")}
             onMoveDown={(i) => onMovePoint(i, "down")}
             onToggleEditMarker={onToggleEditMarker}
+            onReorder={onReorder}
           />
         ))}
         {/* Drop zone for dropping after the last item */}
