@@ -130,9 +130,10 @@ export const useClientForm = (initialData?: Partial<Client>) => {
   const handleAddressChange = (index: number, field: keyof Address, value: string) => {
     setFormData((prev) => {
       const addresses = [...prev.addresses];
+      const fieldValue = field === "district_id" && !value ? null : value;
       addresses[index] = {
         ...addresses[index],
-        [field]: value,
+        [field]: fieldValue,
         // Clear coordinates when street or house changes
         ...(field === "street" || field === "house" ? { coordinates: null } : {}),
       };
