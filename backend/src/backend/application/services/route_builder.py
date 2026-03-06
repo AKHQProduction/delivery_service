@@ -39,9 +39,10 @@ async def resolve_time_slot(
     ts = await time_slot_gateway.load(time_slot_id)
     if not ts:
         return None, None, None
-    label = (
+    time_range = (
         f"{ts.start_time.strftime('%H:%M')}-{ts.end_time.strftime('%H:%M')}"
     )
+    label = f"{ts.label} | {time_range}" if ts.label else time_range
     return label, ts.start_time, ts.end_time
 
 
@@ -49,6 +50,7 @@ def build_route_read_model(
     route_plan_id: RoutePlanId,
     delivery_date: str,
     time_slot: str | None,
+    time_slot_id: TimeSlotId | None,
     ordered_orders: list[Order],
     unroutable_orders: list[Order],
 ) -> RouteReadModel:
@@ -74,6 +76,7 @@ def build_route_read_model(
         route_plan_id=route_plan_id,
         delivery_date=delivery_date,
         time_slot=time_slot,
+        time_slot_id=time_slot_id,
         points=points,
         unroutable_orders=unroutable,
         stats=stats,

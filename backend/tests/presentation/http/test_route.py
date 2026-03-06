@@ -1125,3 +1125,129 @@ async def test_reorder_records_edge_history(
     )
     edge_rows = result.scalars().all()
     assert len(edge_rows) >= 2
+
+
+BASE_URL_ALL = "/api/v1/route/all"
+
+
+@pytest.mark.asyncio()
+async def test_get_all_routes_returns_list(
+    http_client: AsyncClient,
+    session: AsyncSession,
+    customer_headers: Callable[[int], dict[str, Any]],
+    setup_full_test_user_with_shop,
+    setup_test_client,
+    setup_test_order,
+) -> None:
+    telegram_id = 8000
+    _, shop_id = await setup_full_test_user_with_shop(
+        telegram_id=telegram_id,
+        shop_latitude=50.45,
+        shop_longitude=30.52,
+    )
+
+    client_id = await setup_test_client(
+        shop_id=shop_id,
+        full_name="Клієнт",
+        phones=["+380501234567"],
+        addresses=[
+            {
+                "street": "Хрещатик",
+                "house": "10",
+                "latitude": 50.46,
+                "longitude": 30.53,
+            }
+        ],
+    )
+
+    delivery_date = _delivery_date_future()
+
+    await setup_test_order(
+        shop_id=shop_id,
+        client_id=client_id,
+        delivery_date=delivery_date,
+        delivery_start_time=time(9, 0),
+        delivery_end_time=time(14, 0),
+        delivery_address={
+            "street": "Хрещатик",
+            "house": "10",
+            "coordinates": {"latitude": 50.46, "longitude": 30.53},
+        },
+    )
+    await setup_test_order(
+        shop_id=shop_id,
+        client_id=client_id,
+        delivery_date=delivery_date,
+        delivery_start_time=time(14, 0),
+        delivery_end_time=time(21, 0),
+        delivery_address={
+            "street": "Саксаганського",
+            "house": "5",
+            "coordinates": {"latitude": 50.44, "longitude": 30.51},
+        },
+    )
+    await session.commit()
+
+    headers = customer_headers(telegram_id)
+
+    from sqlalchemy import select as sa_select
+
+    from backend.infrastructure.persistence.tables.shops import (
+        ShopDeliveryTimeSlot,
+    )
+
+    result = await session.execute(
+        sa_select(ShopDeliveryTimeSlot).where(
+            ShopDeliveryTimeSlot.shop_id == shop_id,
+        )
+    )
+    time_slots = result.scalars().all()
+
+    with patch(OPTIMIZER_COMPUTE, new_callable=AsyncMock, return_value=None):
+        for ts in time_slots:
+            resp = await http_client.get(
+                url=BASE_URL,
+                headers=headers,
+                params={
+                    "delivery_date": delivery_date.isoformat(),
+                    "time_slot_id": str(ts.id),
+                },
+            )
+            assert resp.status_code == status.HTTP_200_OK
+
+    await session.flush()
+
+    response = await http_client.get(
+        url=BASE_URL_ALL,
+        headers=headers,
+        params={"delivery_date": delivery_date.isoformat()},
+    )
+
+    assert response.status_code == status.HTTP_200_OK
+    data = response.json()
+    assert isinstance(data, list)
+    assert len(data) >= 2
+    for item in data:
+        assert "route_plan_id" in item
+        assert "time_slot_id" in item
+        assert "points" in item
+
+
+@pytest.mark.asyncio()
+async def test_get_all_routes_empty(
+    http_client: AsyncClient,
+    customer_headers: Callable[[int], dict[str, Any]],
+    setup_full_test_user_with_shop,
+) -> None:
+    telegram_id = 8001
+    await setup_full_test_user_with_shop(telegram_id=telegram_id)
+
+    headers = customer_headers(telegram_id)
+    response = await http_client.get(
+        url=BASE_URL_ALL,
+        headers=headers,
+        params={"delivery_date": _delivery_date_future().isoformat()},
+    )
+
+    assert response.status_code == status.HTTP_200_OK
+    assert response.json() == []

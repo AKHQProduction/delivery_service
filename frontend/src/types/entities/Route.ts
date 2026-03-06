@@ -25,6 +25,7 @@ export interface RoutePlan {
   route_plan_id: string;
   delivery_date: string;
   time_slot: string;
+  time_slot_id: string | null;
   points: RoutePoint[];
   unroutable_orders: RoutePoint[];
   stats: RouteStats;

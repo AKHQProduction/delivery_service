@@ -9,6 +9,11 @@ export const getRoutes = async (delivery_date: string, time_slot_id: string | nu
   return response.data;
 };
 
+export const getAllRoutes = async (delivery_date: string) => {
+  const response = await api.get(`v1/route/all`, { params: { delivery_date } });
+  return response.data;
+};
+
 export const reorderRoute = async (
   delivery_date: string,
   order_id: string,

@@ -22,6 +22,10 @@ from backend.application.queries.get_route import (
     GetRouteQuery,
     GetRouteQueryHandler,
 )
+from backend.application.queries.get_routes import (
+    GetRoutesQuery,
+    GetRoutesQueryHandler,
+)
 from backend.application.queries.get_shared_route import (
     GetSharedRouteQueryHandler,
 )
@@ -52,6 +56,22 @@ async def get_route(
             time_slot_id=time_slot_id,
         )
     )
+
+
+@router.get(
+    "/all",
+    status_code=status.HTTP_200_OK,
+    responses={
+        status.HTTP_401_UNAUTHORIZED: {"model": ErrorSchema},
+        status.HTTP_403_FORBIDDEN: {"model": ErrorSchema},
+    },
+    dependencies=[Depends(HTTPBearer(auto_error=False))],
+)
+async def get_all_routes(
+    delivery_date: date,
+    handler: FromDishka[GetRoutesQueryHandler],
+) -> list[RouteReadModel]:
+    return await handler.handle(GetRoutesQuery(delivery_date=delivery_date))
 
 
 @router.patch(

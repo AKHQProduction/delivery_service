@@ -188,6 +188,7 @@ class CreateOrderCommandHandler:
         ]
 
         self._order_gateway.save(order)
+        await self._tr_manager.flush()
 
         await self._auto_insert_into_route(
             shop_id=current_user.shop_id,
@@ -216,15 +217,16 @@ class CreateOrderCommandHandler:
         )
 
         if route_plan is None:
-            await self._create_initial_route_plan(
+            created = await self._create_initial_route_plan(
                 shop_id, order.date, time_slot_id, start_time, end_time
             )
-            logger.info(
-                "Created initial route plan for shop %s, date=%s, slot=%s",
-                shop_id,
-                order.date,
-                time_slot_id,
-            )
+            if created:
+                logger.info(
+                    "Created initial route plan for shop %s, date=%s, slot=%s",
+                    shop_id,
+                    order.date,
+                    time_slot_id,
+                )
         else:
             shop_coords = await self._load_shop_coords(shop_id)
             all_orders = await self._order_gateway.load_by_date(
@@ -257,15 +259,15 @@ class CreateOrderCommandHandler:
         time_slot_id: TimeSlotId,
         start_time: time,
         end_time: time,
-    ) -> None:
+    ) -> bool:
         existing_orders = await self._order_gateway.load_by_date(
             shop_id=shop_id,
             delivery_date=delivery_date,
             start_time=start_time,
             end_time=end_time,
         )
-        if len(existing_orders) < 2:
-            return
+        if not existing_orders:
+            return False
 
         shop_coords = await self._load_shop_coords(shop_id)
 
@@ -283,6 +285,7 @@ class CreateOrderCommandHandler:
             orders=existing_orders,
             optimized_ids=optimized_ids,
         )
+        return True
 
     async def _load_shop_coords(
         self, shop_id: ShopId

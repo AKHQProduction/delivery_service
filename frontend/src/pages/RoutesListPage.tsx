@@ -1,31 +1,21 @@
 import { useNavigate } from "react-router-dom";
 import { PageHeader } from "../components/ui/PageHeader";
 import { DateInput } from "../components/shared/DateInput";
-import { FormSelect } from "../components/shared/FormSelect";
-import { useTimeSlotsSettings } from "../hooks/settings/useTimeSlotsSettings";
 import { MapPicker } from "../components/shared/MapPicker";
 import { RoutePlanCard } from "../components/routes/RoutePlanCard";
 import { UnroutableOrdersList } from "../components/routes/UnroutableOrdersList";
 import { useRoutesList } from "../hooks/routes/useRoutesList";
 import { useUserShopStore } from "../context/useUserShopStore";
-
-const formatTimeSlotLabel = (slot: { start_time: string; end_time: string; label?: string }) => {
-  const start = slot.start_time.slice(0, 5);
-  const end = slot.end_time.slice(0, 5);
-  return slot.label ? `${slot.label} (${start} - ${end})` : `${start} - ${end}`;
-};
+import { type RoutePlan } from "../types/entities/Route";
 
 export const RoutesListPage = () => {
   const navigate = useNavigate();
   const shop = useUserShopStore((state) => state.shop);
-  const { timeSlots } = useTimeSlotsSettings();
 
   const {
     deliveryDate,
     setDeliveryDate,
-    timeSlotId,
-    setTimeSlotId,
-    routePlan,
+    routePlans,
     isLoading,
     error,
     fetchRoute,
@@ -39,9 +29,8 @@ export const RoutesListPage = () => {
     handleMapClose,
   } = useRoutesList();
 
-  const handleOpenRoute = () => {
-    if (!routePlan) return;
-    navigate(`/routes/${routePlan.route_plan_id}`, { state: { routePlan, timeSlotId: timeSlotId || null } });
+  const handleOpenRoute = (plan: RoutePlan) => {
+    navigate(`/routes/${plan.route_plan_id}`, { state: { routePlan: plan, timeSlotId: plan.time_slot_id } });
   };
 
   return (
@@ -50,23 +39,12 @@ export const RoutesListPage = () => {
 
       <div className="px-6 pb-24 pt-2 md:pb-8 md:px-8">
         {/* Filters */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-6">
+        <div className="mb-6">
           <DateInput
             label="Дата доставки"
             value={deliveryDate}
             onChange={setDeliveryDate}
             required
-          />
-          <FormSelect
-            label="Часовий слот"
-            name="timeSlot"
-            value={timeSlotId}
-            onChange={(e) => setTimeSlotId(e.target.value)}
-            options={timeSlots.map((slot) => ({
-              value: slot.time_slot_id,
-              label: formatTimeSlotLabel(slot),
-            }))}
-            required={false}
           />
         </div>
 
@@ -92,7 +70,7 @@ export const RoutesListPage = () => {
         )}
 
         {/* Empty */}
-        {!isLoading && !error && !routePlan && (
+        {!isLoading && !error && routePlans.length === 0 && (
           <div className="text-center py-16 text-gray-400">
             <svg
               className="w-16 h-16 mx-auto mb-4 text-gray-300"
@@ -108,18 +86,22 @@ export const RoutesListPage = () => {
               />
             </svg>
             <p className="font-medium text-lg">Маршрутів не знайдено</p>
-            <p className="text-sm mt-1">Оберіть іншу дату або часовий слот</p>
+            <p className="text-sm mt-1">Оберіть іншу дату</p>
           </div>
         )}
 
-        {/* Route plan */}
-        {!isLoading && routePlan && (
+        {/* Route plans */}
+        {!isLoading && routePlans.length > 0 && (
           <div className="space-y-4">
-            <RoutePlanCard routePlan={routePlan} onClick={handleOpenRoute} />
-            <UnroutableOrdersList
-              orders={routePlan.unroutable_orders}
-              onSetAddress={handleSetAddress}
-            />
+            {routePlans.map((plan) => (
+              <div key={plan.route_plan_id}>
+                <RoutePlanCard routePlan={plan} onClick={() => handleOpenRoute(plan)} />
+                <UnroutableOrdersList
+                  orders={plan.unroutable_orders}
+                  onSetAddress={handleSetAddress}
+                />
+              </div>
+            ))}
           </div>
         )}
       </div>

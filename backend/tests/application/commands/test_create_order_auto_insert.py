@@ -55,10 +55,8 @@ def _make_handler(
 
 class TestAutoInsertNoExistingPlan:
     @pytest.mark.asyncio()
-    async def test_skips_when_fewer_than_two_orders(self):
-        handler = _make_handler(
-            route_plan=None, existing_orders=[_make_order(1)]
-        )
+    async def test_skips_when_no_orders(self):
+        handler = _make_handler(route_plan=None, existing_orders=[])
         order = _make_order(OrderId(uuid4()))
 
         await handler._auto_insert_into_route(
@@ -72,8 +70,8 @@ class TestAutoInsertNoExistingPlan:
         handler._route_plan_gateway.save.assert_not_called()
 
     @pytest.mark.asyncio()
-    async def test_creates_route_plan_with_two_or_more_orders(self):
-        orders = [_make_order(1), _make_order(2)]
+    async def test_creates_route_plan_with_single_order(self):
+        orders = [_make_order(1)]
         handler = _make_handler(route_plan=None, existing_orders=orders)
         order = _make_order(OrderId(uuid4()))
 
