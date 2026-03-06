@@ -7,6 +7,9 @@ from backend.application.dto.gateways.route_gateway import (
     RouteReadModel,
     RouteStatsReadModel,
 )
+from backend.application.services.edge_preference_collector import (
+    PreferenceMap,
+)
 from backend.application.services.tsp_solvers import RouteOptimizer
 from backend.application.vars import (
     OrderId,
@@ -161,6 +164,7 @@ def insert_order_into_route(
     order: Order,
     shop_coords: CoordinatesDTO | None,
     all_orders: list[Order],
+    edge_preferences: PreferenceMap | None = None,
 ) -> None:
     addr = order.delivery_address
 
@@ -178,6 +182,7 @@ def insert_order_into_route(
             shop_coords=shop_coords,
             existing_sequence_coords=existing_coords,
             new_point_coords=addr.coordinates,
+            edge_preferences=edge_preferences,
         )
         sequence = route_plan.order_sequence[:]
         sequence.insert(pos, order.id)

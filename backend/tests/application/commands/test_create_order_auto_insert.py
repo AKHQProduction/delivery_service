@@ -47,6 +47,9 @@ def _make_handler(
     handler._route_optimizer = AsyncMock()
     handler._route_optimizer.compute.return_value = None
 
+    handler._edge_gateway = AsyncMock()
+    handler._edge_gateway.load_preferences.return_value = []
+
     return handler
 
 

@@ -9,6 +9,10 @@ from backend.application.policies.access import (
     ensure_can_manage,
     ensure_related_to_shop,
 )
+from backend.application.services.edge_preference_collector import (
+    PREFERENCE_WINDOW_DAYS,
+    build_preference_map,
+)
 from backend.application.services.geocoder import Geocoder
 from backend.application.services.order import (
     create_order,
@@ -37,6 +41,7 @@ from backend.infrastructure.persistence.gateways import (
     SQLAlchemyClientGateway,
     SQLAlchemyOrderGateway,
     SQLAlchemyProductGateway,
+    SQLAlchemyRouteEdgeHistoryGateway,
     SQLAlchemyRoutePlanGateway,
     SQLAlchemyShopGateway,
     SQLAlchemyTimeSlotGateway,
@@ -85,6 +90,7 @@ class CreateOrderCommandHandler:
         time_slot_gateway: SQLAlchemyTimeSlotGateway,
         shop_gateway: SQLAlchemyShopGateway,
         route_plan_gateway: SQLAlchemyRoutePlanGateway,
+        route_edge_history_gateway: SQLAlchemyRouteEdgeHistoryGateway,
         route_optimizer: RouteOptimizer,
         geocoder: Geocoder,
         tr_manager: TransactionManager,
@@ -96,6 +102,7 @@ class CreateOrderCommandHandler:
         self._time_slot_gateway = time_slot_gateway
         self._shop_gateway = shop_gateway
         self._route_plan_gateway = route_plan_gateway
+        self._edge_gateway = route_edge_history_gateway
         self._route_optimizer = route_optimizer
         self._geocoder = geocoder
         self._tr_manager = tr_manager
@@ -226,7 +233,17 @@ class CreateOrderCommandHandler:
                 start_time=start_time,
                 end_time=end_time,
             )
-            insert_order_into_route(route_plan, order, shop_coords, all_orders)
+            pref_map = (
+                build_preference_map(
+                    await self._edge_gateway.load_preferences(
+                        shop_id, PREFERENCE_WINDOW_DAYS
+                    )
+                )
+                or None
+            )
+            insert_order_into_route(
+                route_plan, order, shop_coords, all_orders, pref_map
+            )
             logger.info(
                 "Inserted order %s into existing route plan %s",
                 order.id,
