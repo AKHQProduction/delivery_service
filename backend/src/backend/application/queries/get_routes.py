@@ -58,6 +58,8 @@ class GetRoutesQueryHandler:
                 start_time=start_time,
                 end_time=end_time,
             )
+            if not orders:
+                continue
 
             routable, unroutable = sort_orders_by_sequence(
                 orders, route_plan.order_sequence
