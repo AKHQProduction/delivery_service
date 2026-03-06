@@ -40,6 +40,18 @@ class SQLAlchemyRoutePlanGateway:
         result = await self._session.execute(query)
         return result.scalar_one_or_none()
 
+    async def load_all_by_date(
+        self,
+        shop_id: ShopId,
+        delivery_date: datetime.date,
+    ) -> list[RoutePlan]:
+        query = select(RoutePlan).where(
+            RoutePlan.shop_id == shop_id,
+            RoutePlan.delivery_date == delivery_date,
+        )
+        result = await self._session.execute(query)
+        return list(result.scalars().all())
+
     async def find_by_order(self, order_id: OrderId) -> RoutePlan | None:
         query = select(RoutePlan).where(
             RoutePlan.order_sequence.contains([order_id]),

@@ -139,6 +139,7 @@ class GetRouteQueryHandler:
             route_plan_id=route_plan.id,
             delivery_date=query.delivery_date.strftime("%d.%m.%Y"),
             time_slot=time_slot_label,
+            time_slot_id=query.time_slot_id,
             ordered_orders=routable,
             unroutable_orders=unroutable,
         )

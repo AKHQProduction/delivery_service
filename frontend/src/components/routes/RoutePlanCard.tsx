@@ -13,7 +13,7 @@ export const RoutePlanCard: React.FC<RoutePlanCardProps> = ({ routePlan, onClick
       onClick={onClick}
       className="w-full bg-white rounded-2xl border border-gray-200 p-5 text-left hover:shadow-lg hover:-translate-y-0.5 transition-all duration-200 group"
     >
-      <div className="flex items-start justify-between gap-3">
+      <div className="flex items-center justify-between gap-3">
         <div className="flex-1 min-w-0">
           <h3 className="font-bold text-gray-900 text-base group-hover:text-indigo-600 transition-colors">
             Маршрут на {routePlan.delivery_date}
@@ -49,21 +49,6 @@ export const RoutePlanCard: React.FC<RoutePlanCardProps> = ({ routePlan, onClick
           <span className="font-medium">{routePlan.stats.unique_addresses}</span>
           <span>адрес</span>
         </div>
-      </div>
-
-      {/* Mini stop list */}
-      <div className="mt-3 flex items-center gap-1 overflow-hidden">
-        {routePlan.points.slice(0, 3).map((point, i) => (
-          <span key={point.order_id} className="text-xs text-gray-400 truncate">
-            {i > 0 && <span className="mx-1">→</span>}
-            {point.client_name}
-          </span>
-        ))}
-        {routePlan.points.length > 3 && (
-          <span className="text-xs text-gray-400 shrink-0">
-            +{routePlan.points.length - 3}
-          </span>
-        )}
       </div>
     </button>
   );

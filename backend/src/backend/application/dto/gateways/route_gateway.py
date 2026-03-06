@@ -5,6 +5,7 @@ from backend.application.vars import (
     OrderId,
     PaymentMethod,
     RoutePlanId,
+    TimeSlotId,
 )
 
 
@@ -33,6 +34,7 @@ class RouteReadModel:
     route_plan_id: RoutePlanId
     delivery_date: str
     time_slot: str | None
+    time_slot_id: TimeSlotId | None
     points: list[RoutePointReadModel]
     unroutable_orders: list[RoutePointReadModel]
     stats: RouteStatsReadModel

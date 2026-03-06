@@ -179,6 +179,7 @@ class RouteOptimizer:
         shop_coords: CoordinatesDTO,
         existing_sequence_coords: list[CoordinatesDTO],
         new_point_coords: CoordinatesDTO,
+        edge_preferences: PreferenceMap | None = None,
     ) -> int:
         if not existing_sequence_coords:
             return 0
@@ -187,10 +188,17 @@ class RouteOptimizer:
 
         def _dist(a: CoordinatesDTO, b: CoordinatesDTO) -> float:
             avg_lat = math.radians((a.latitude + b.latitude) / 2)
-            return math.hypot(
+            d = math.hypot(
                 a.latitude - b.latitude,
                 (a.longitude - b.longitude) * math.cos(avg_lat),
             )
+            if edge_preferences:
+                score = edge_preferences.get(
+                    EdgeInput(from_coords=a, to_coords=b)
+                )
+                if score is not None:
+                    d *= max(1 - PREFERENCE_ALPHA * score, 0.01)
+            return d
 
         best_pos = len(existing_sequence_coords)
         best_cost = float("inf")

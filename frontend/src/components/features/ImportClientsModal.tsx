@@ -114,7 +114,7 @@ export const ImportClientsModal: React.FC<ImportClientsModalProps> = ({ isOpen, 
 
   return (
     <Modal isOpen={isOpen} onClose={handleClose} title="Імпорт клієнтів">
-      <div className="space-y-4">
+      <div className="space-y-4 pb-4">
         {/* Template download card */}
         <a
           href="https://docs.google.com/spreadsheets/d/1hoWFYZpfd8rlt3oDpfMLQpdPtQQeCStnxUjeyzyk-rc/edit?gid=814068555#gid=814068555"

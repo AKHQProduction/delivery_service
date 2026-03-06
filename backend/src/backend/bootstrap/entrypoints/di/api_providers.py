@@ -99,6 +99,7 @@ from backend.application.queries.get_orders import GetOrdersQueryHandler
 from backend.application.queries.get_product import GetProductQueryHandler
 from backend.application.queries.get_products import GetProductsQueryHandler
 from backend.application.queries.get_route import GetRouteQueryHandler
+from backend.application.queries.get_routes import GetRoutesQueryHandler
 from backend.application.queries.get_shared_route import (
     GetSharedRouteQueryHandler,
 )
@@ -238,6 +239,7 @@ class APIInteractorsProvider(Provider):
         GetOrderStatsQueryHandler,
         GenerateOrderExportPDFCommandHandler,
         GetRouteQueryHandler,
+        GetRoutesQueryHandler,
         GetSharedRouteQueryHandler,
         ReorderRouteCommandHandler,
         ReverseRouteCommandHandler,

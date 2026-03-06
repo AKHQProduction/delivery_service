@@ -116,10 +116,6 @@ class TestSplitOrdersByCoords:
 
 class TestBuildRouteReadModel:
     def test_builds_model(self):
-        from uuid import uuid4
-
-        from backend.application.vars import RoutePlanId
-
         plan_id = RoutePlanId(uuid4())
         o0 = _make_order(uuid4(), street="Хрещатик", house="10")
         o1 = _make_order(uuid4(), street="Хрещатик", house="10")
@@ -128,6 +124,7 @@ class TestBuildRouteReadModel:
             route_plan_id=plan_id,
             delivery_date="25.02.2026",
             time_slot=None,
+            time_slot_id=None,
             ordered_orders=[o0, o1],
             unroutable_orders=[],
         )
@@ -152,6 +149,7 @@ class TestBuildRouteReadModel:
             route_plan_id=plan_id,
             delivery_date="25.02.2026",
             time_slot="09:00-14:00",
+            time_slot_id=None,
             ordered_orders=[o0],
             unroutable_orders=[],
         )
