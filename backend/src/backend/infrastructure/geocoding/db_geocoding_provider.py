@@ -20,9 +20,16 @@ class DBGeocodingProvider(GeocodingProvider):
         *,
         require_house: bool = True,
     ) -> CoordinatesDTO | None:
-        return await self._gateway.find_coordinates_by_address(
-            street, house if require_house else "", city
+        result = await self._gateway.find_coordinates_by_address(
+            street, house, city
         )
+        if result is not None:
+            return result
+        if not require_house:
+            return await self._gateway.find_coordinates_by_address(
+                street, "", city
+            )
+        return None
 
     async def reverse(
         self, coordinates: CoordinatesDTO
