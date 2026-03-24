@@ -152,16 +152,74 @@ class GenerateOrderExportPDFCommandHandler:
         delivery_date: date,
         time_slot_id: TimeSlotId | None,
     ) -> list[Order]:
+        if time_slot_id is not None:
+            return await self._sort_slot_by_route(
+                orders, shop, delivery_date, time_slot_id
+            )
+
+        time_slots = await self._time_slot_gateway.load_by_shop(shop.id)
+        time_key_to_slot_id: dict[tuple[str, str], TimeSlotId] = {
+            (ts.start_time, ts.end_time): ts.time_slot_id
+            for ts in time_slots
+        }
+
+        route_plans = await self._route_plan_gateway.load_all_by_date(
+            shop.id, delivery_date
+        )
+        slot_id_to_plan = {rp.time_slot_id: rp for rp in route_plans}
+
+        slots: dict[tuple[time, time], list[Order]] = defaultdict(list)
+        for order in orders:
+            key = (order.delivery_start_time, order.delivery_end_time)
+            slots[key].append(order)
+
+        shop_coords = CoordinatesDTO.build(shop.latitude, shop.longitude)
+        result: list[Order] = []
+
+        for time_key in sorted(slots):
+            slot_orders = slots[time_key]
+            str_key = (
+                time_key[0].strftime("%H:%M"),
+                time_key[1].strftime("%H:%M"),
+            )
+            slot_id = time_key_to_slot_id.get(str_key)
+            plan = slot_id_to_plan.get(slot_id) if slot_id else None
+
+            if plan:
+                routable, unroutable = sort_orders_by_sequence(
+                    slot_orders, plan.order_sequence
+                )
+                result.extend(routable)
+                result.extend(unroutable)
+            elif shop_coords:
+                optimized = await self._route_optimizer.compute(
+                    shop_coords, slot_orders
+                )
+                if optimized:
+                    result.extend(
+                        self._apply_route_order(slot_orders, optimized)
+                    )
+                else:
+                    result.extend(slot_orders)
+            else:
+                result.extend(slot_orders)
+
+        return result
+
+    async def _sort_slot_by_route(
+        self,
+        orders: list[Order],
+        shop: Shop,
+        delivery_date: date,
+        time_slot_id: TimeSlotId,
+    ) -> list[Order]:
         route_plan = await self._route_plan_gateway.load_by_date(
-            shop.id,
-            delivery_date,
-            time_slot_id,
+            shop.id, delivery_date, time_slot_id
         )
 
         if route_plan:
             routable, unroutable = sort_orders_by_sequence(
-                orders,
-                route_plan.order_sequence,
+                orders, route_plan.order_sequence
             )
             return [*routable, *unroutable]
 
