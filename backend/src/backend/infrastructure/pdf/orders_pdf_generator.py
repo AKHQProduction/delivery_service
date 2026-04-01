@@ -172,42 +172,9 @@ class ReportLabOrdersPDFGenerator:
             self._build_order_row(order, cell_style) for order in orders
         )
 
-        cash_total = Decimal(0)
-        bank_total = Decimal(0)
-        other_total = Decimal(0)
-        for order in orders:
-            payment = PaymentMethod(order.payment_method)
-            order_sum = sum(
-                item.quantity * item.price_per_item for item in order.items
-            )
-            if payment == PaymentMethod.CASH:
-                cash_total += order_sum
-            elif payment == PaymentMethod.BANK_TRANSFER:
-                bank_total += order_sum
-            else:
-                other_total += order_sum
-        grand = cash_total + bank_total + other_total
-
-        subtotal_style = ParagraphStyle(
-            "SubtotalStyle",
-            fontName=font_bold,
-            fontSize=8,
-            leading=10,
-            alignment=2,
+        table_data.append(
+            self._build_subtotal_row(orders, cell_style, font_bold)
         )
-        subtotal_lines = [
-            f"Готівка: {cash_total} грн",
-            f"На рахунок: {bank_total} грн",
-            f"Інше: {other_total} грн",
-            f"<b>Всього: {grand} грн</b>",
-        ]
-        table_data.append([
-            "",
-            "",
-            "",
-            Paragraph("<br/>".join(subtotal_lines), subtotal_style),
-            "",
-        ])
 
         last_row = len(table_data) - 1
         table = Table(
@@ -227,6 +194,7 @@ class ReportLabOrdersPDFGenerator:
                 ("BOTTOMPADDING", (0, 0), (-1, -1), 3),
                 ("LEFTPADDING", (0, 0), (-1, -1), 3),
                 ("RIGHTPADDING", (0, 0), (-1, -1), 3),
+                ("SPAN", (0, last_row), (1, last_row)),
                 ("SPAN", (3, last_row), (4, last_row)),
                 (
                     "BACKGROUND",
@@ -234,11 +202,65 @@ class ReportLabOrdersPDFGenerator:
                     (-1, last_row),
                     colors.HexColor("#D9E2F3"),
                 ),
+                ("ALIGN", (2, last_row), (2, last_row), "CENTER"),
                 ("ALIGN", (3, last_row), (4, last_row), "RIGHT"),
             ])
         )
 
         return [table, Spacer(1, 5 * mm)]
+
+    @staticmethod
+    def _build_subtotal_row(
+        orders: list[Order],
+        cell_style: ParagraphStyle,
+        font_bold: str,
+    ) -> list:
+        cash_total = Decimal(0)
+        bank_total = Decimal(0)
+        other_total = Decimal(0)
+        products: dict[str, int] = defaultdict(int)
+
+        for order in orders:
+            payment = PaymentMethod(order.payment_method)
+            for item in order.items:
+                products[item.name] += item.quantity
+                item_total = item.quantity * item.price_per_item
+                if payment == PaymentMethod.CASH:
+                    cash_total += item_total
+                elif payment == PaymentMethod.BANK_TRANSFER:
+                    bank_total += item_total
+                else:
+                    other_total += item_total
+
+        grand = cash_total + bank_total + other_total
+
+        subtotal_style = ParagraphStyle(
+            "SubtotalStyle",
+            fontName=font_bold,
+            fontSize=8,
+            leading=10,
+            alignment=2,
+        )
+        subtotal_lines = [
+            f"Готівка: {cash_total} грн",
+            f"На рахунок: {bank_total} грн",
+            f"Інше: {other_total} грн",
+            f"<b>Всього: {grand} грн</b>",
+        ]
+        product_names = "<br/>".join(
+            name for name, _ in sorted(products.items())
+        )
+        product_qtys = "<br/>".join(
+            str(qty) for _, qty in sorted(products.items())
+        )
+
+        return [
+            Paragraph(product_names, cell_style),
+            "",
+            Paragraph(product_qtys, cell_style),
+            Paragraph("<br/>".join(subtotal_lines), subtotal_style),
+            "",
+        ]
 
     @staticmethod
     def _build_order_row(order: Order, cell_style: ParagraphStyle) -> list:
