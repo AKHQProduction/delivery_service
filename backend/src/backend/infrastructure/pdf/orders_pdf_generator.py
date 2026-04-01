@@ -250,6 +250,11 @@ class ReportLabOrdersPDFGenerator:
         product_names = "<br/>".join(
             name for name, _ in sorted(products.items())
         )
+        qty_style = ParagraphStyle(
+            "QtyStyle",
+            parent=cell_style,
+            alignment=2,
+        )
         product_qtys = "<br/>".join(
             str(qty) for _, qty in sorted(products.items())
         )
@@ -257,7 +262,7 @@ class ReportLabOrdersPDFGenerator:
         return [
             Paragraph(product_names, cell_style),
             "",
-            Paragraph(product_qtys, cell_style),
+            Paragraph(product_qtys, qty_style),
             Paragraph("<br/>".join(subtotal_lines), subtotal_style),
             "",
         ]

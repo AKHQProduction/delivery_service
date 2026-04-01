@@ -159,8 +159,7 @@ class GenerateOrderExportPDFCommandHandler:
 
         time_slots = await self._time_slot_gateway.load_by_shop(shop.id)
         time_key_to_slot_id: dict[tuple[str, str], TimeSlotId] = {
-            (ts.start_time, ts.end_time): ts.time_slot_id
-            for ts in time_slots
+            (ts.start_time, ts.end_time): ts.time_slot_id for ts in time_slots
         }
 
         route_plans = await self._route_plan_gateway.load_all_by_date(
