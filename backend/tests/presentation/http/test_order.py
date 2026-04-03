@@ -869,6 +869,43 @@ async def test_update_order_payment_method(
 
 
 @pytest.mark.asyncio()
+async def test_update_order_is_paid(
+    http_client: AsyncClient,
+    session: AsyncSession,
+    customer_headers: Callable[[int], dict[str, Any]],
+    setup_full_test_user_with_shop,
+    setup_test_client,
+    setup_test_order,
+) -> None:
+    telegram_id = 5055
+    _, shop_id = await setup_full_test_user_with_shop(telegram_id=telegram_id)
+
+    client_id = await setup_test_client(shop_id=shop_id)
+    order_id = await setup_test_order(
+        shop_id=shop_id,
+        client_id=client_id,
+        is_paid=False,
+    )
+    await session.commit()
+
+    headers = customer_headers(telegram_id)
+
+    response = await http_client.patch(
+        url=f"{BASE_URL}/{order_id}",
+        headers=headers,
+        json={"is_paid": True},
+    )
+
+    assert response.status_code == status.HTTP_200_OK
+
+    await session.flush()
+
+    result = await session.execute(select(Order).where(Order.id == order_id))
+    order = result.scalar_one()
+    assert order.is_paid is True
+
+
+@pytest.mark.asyncio()
 async def test_update_order_time_slot(
     http_client: AsyncClient,
     session: AsyncSession,
@@ -1429,6 +1466,7 @@ async def test_get_order(
     assert order_data["delivery_phone"] == "+380501234567"
     assert order_data["delivery_address"]["street"] == "Хрещатик"
     assert order_data["comment"] == "Test comment"
+    assert order_data["is_paid"] is False
     assert len(order_data["items"]) == 1
     assert order_data["items"][0]["quantity"] == 2
 

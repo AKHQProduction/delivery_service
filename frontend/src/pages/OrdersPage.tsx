@@ -38,6 +38,7 @@ export interface Order {
 
   note?: string;
   comment?: string;
+  is_paid?: boolean;
 }
 
 export const OrdersPage = () => {
@@ -215,9 +216,9 @@ export const OrdersPage = () => {
                 <div
                   key={order.order_id}
                   onClick={() => handleOrderClick(typedOrder)}
-                  className="bg-white rounded-2xl p-5 shadow-sm border border-gray-100 hover:shadow-2xl hover:-translate-y-2 transition-all duration-300 cursor-pointer"
+                  className="bg-white rounded-2xl p-4 border border-gray-200 hover:border-indigo-300 transition-colors cursor-pointer"
                 >
-                  <div className="space-y-2.5">
+                  <div className="space-y-3">
                     <div className="flex items-center justify-between w-full gap-3">
                       <div className="flex items-center gap-3 min-w-0">
                         <div className="w-9 h-9 rounded-full bg-indigo-100 flex items-center justify-center shrink-0">
@@ -236,7 +237,7 @@ export const OrdersPage = () => {
                           </svg>
                         </div>
 
-                        <span className="text-gray-700 font-medium truncate">
+                        <span className="text-sm font-medium text-gray-700 truncate">
                           {String(typedOrder.client_name)}
                         </span>
                       </div>
@@ -262,7 +263,7 @@ export const OrdersPage = () => {
                           />
                         </svg>
                       </div>
-                      <span className="text-gray-700">
+                      <span className="text-sm font-medium text-gray-700">
                         {String(typedOrder.date)} | {String(typedOrder.time_slot)}
                       </span>
                     </div>
@@ -283,12 +284,42 @@ export const OrdersPage = () => {
                           />
                         </svg>
                       </div>
-                      <span className="text-gray-700">
+                      <span className="text-sm font-medium text-gray-700">
                         {(typedOrder.items ?? []).reduce(
                           (sum: number, item: OrderItem) => sum + (Number(item.quantity) || 0),
                           0,
                         )}{" "}
                         товарів
+                      </span>
+                    </div>
+
+                    <div className="flex items-center gap-3">
+                      <div className={`w-9 h-9 rounded-full flex items-center justify-center shrink-0 ${typedOrder.is_paid ? "bg-green-100" : "bg-red-100"}`}>
+                        <svg
+                          className={`w-5 h-5 ${typedOrder.is_paid ? "text-green-600" : "text-red-500"}`}
+                          fill="none"
+                          stroke="currentColor"
+                          viewBox="0 0 24 24"
+                        >
+                          {typedOrder.is_paid ? (
+                            <path
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                              strokeWidth={2}
+                              d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"
+                            />
+                          ) : (
+                            <path
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                              strokeWidth={2}
+                              d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+                            />
+                          )}
+                        </svg>
+                      </div>
+                      <span className={`text-sm font-medium ${typedOrder.is_paid ? "text-green-600" : "text-red-500"}`}>
+                        {typedOrder.is_paid ? "Оплачено" : "Не оплачено"}
                       </span>
                     </div>
                   </div>
@@ -324,7 +355,7 @@ export const OrdersPage = () => {
         )}
       </div>
 
-      <DetailModal isOpen={isModalOpen} onClose={handleCloseModal}>
+      <DetailModal isOpen={isModalOpen} onClose={handleCloseModal} size="5xl">
         {selectedOrder && (
           <OrderDetailModal
             order={selectedOrder}

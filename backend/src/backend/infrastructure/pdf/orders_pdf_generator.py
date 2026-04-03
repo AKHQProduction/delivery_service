@@ -295,7 +295,11 @@ class ReportLabOrdersPDFGenerator:
         )
         sum_cell = Paragraph(f"<b>{total} грн</b>", cell_style)
 
-        payment_cell = Paragraph(order.payment_method or "", cell_style)
+        payment_label = order.payment_method or ""
+        paid_status = "Оплачено" if order.is_paid else "Не оплачено"
+        payment_cell = Paragraph(
+            f"{payment_label}<br/><b>{paid_status}</b>", cell_style
+        )
 
         return [
             client_cell,

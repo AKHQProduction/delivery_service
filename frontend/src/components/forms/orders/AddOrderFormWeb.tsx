@@ -17,6 +17,7 @@ export const AddOrderFormWeb: React.FC<AddOrderFormWebProps> = ({ onClose, onSav
   const [showAddClient, setShowAddClient] = useState(false);
   const [isChangingClient, setIsChangingClient] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isPaid, setIsPaid] = useState(false);
 
   const {
     formData,
@@ -80,6 +81,7 @@ export const AddOrderFormWeb: React.FC<AddOrderFormWebProps> = ({ onClose, onSav
         delivery_date: formData.deliveryDate,
         time_slot_id: formData.timeSlotId,
         payment_method: formData.paymentMethod,
+        is_paid: isPaid,
         comment: formData.note,
       });
       if (onSave) {
@@ -494,6 +496,52 @@ export const AddOrderFormWeb: React.FC<AddOrderFormWebProps> = ({ onClose, onSav
                 label: m.name,
               }))}
             />
+
+            <div
+              onClick={() => setIsPaid(!isPaid)}
+              className={`p-4 rounded-xl border-2 cursor-pointer transition-colors flex items-center justify-between ${
+                isPaid
+                  ? "border-green-300 bg-green-50"
+                  : "border-gray-200 bg-white"
+              }`}
+            >
+              <div className="flex items-center gap-3">
+                <div className={`w-10 h-10 rounded-xl flex items-center justify-center shrink-0 ${isPaid ? "bg-green-100" : "bg-gray-100"}`}>
+                  <svg
+                    className={`w-5 h-5 ${isPaid ? "text-green-600" : "text-gray-400"}`}
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    {isPaid ? (
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"
+                      />
+                    ) : (
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+                      />
+                    )}
+                  </svg>
+                </div>
+                <div>
+                  <span className="font-semibold text-gray-900">Оплата</span>
+                  <p className={`text-sm ${isPaid ? "text-green-600" : "text-gray-500"}`}>
+                    {isPaid ? "Оплачено" : "Не оплачено"}
+                  </p>
+                </div>
+              </div>
+
+              <div className={`w-12 h-7 rounded-full transition-colors relative ${isPaid ? "bg-green-500" : "bg-gray-300"}`}>
+                <div className={`w-5 h-5 rounded-full bg-white shadow absolute top-1 transition-transform ${isPaid ? "translate-x-6" : "translate-x-1"}`} />
+              </div>
+            </div>
 
             <div>
               <label className="block text-xs font-medium text-gray-600 mb-1">Примітка</label>

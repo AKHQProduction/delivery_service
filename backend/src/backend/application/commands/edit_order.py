@@ -72,6 +72,7 @@ class EditOrderCommand:
     comment: str | Empty | None = None
     items: list[EditOrderItem] | None = None
     payment_method: str | None = None
+    is_paid: bool | None = None
 
     def __post_init__(self) -> None:
         if self.delivery_date is not None:
@@ -183,6 +184,7 @@ class EditOrderCommandHandler:
             delivery_address=delivery_address,
             comment=command.comment,
             payment_method=command.payment_method,
+            is_paid=command.is_paid,
         )
 
         if (

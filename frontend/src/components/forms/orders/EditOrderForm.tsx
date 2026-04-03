@@ -33,6 +33,7 @@ interface LoadedOrder {
   payment_method?: string;
   note?: string;
   comment?: string;
+  is_paid?: boolean;
   items?: Array<{
     id: number;
     product_id: string;
@@ -77,6 +78,7 @@ export const EditOrderForm: React.FC<EditOrderFormProps> = ({ onClose, onSave, o
   const [deliveryDate, setDeliveryDate] = useState("");
   const [timeSlot, setTimeSlot] = useState("");
   const [paymentMethod, setPaymentMethod] = useState("");
+  const [isPaid, setIsPaid] = useState(false);
   const [note, setNote] = useState("");
 
   // UI state
@@ -153,6 +155,7 @@ export const EditOrderForm: React.FC<EditOrderFormProps> = ({ onClose, onSave, o
         }
 
         setPaymentMethod(orderData.payment_method || "");
+        setIsPaid(orderData.is_paid ?? false);
         setNote(orderData.note || orderData.comment || "");
       } catch (error) {
         console.error("Error loading order:", error);
@@ -312,6 +315,9 @@ export const EditOrderForm: React.FC<EditOrderFormProps> = ({ onClose, onSave, o
       if (note !== (loadedOrder.note || loadedOrder.comment || "")) {
         payload.comment = note;
       }
+      if (isPaid !== (loadedOrder.is_paid ?? false)) {
+        payload.is_paid = isPaid;
+      }
 
       payload.items = orderItems.map((item) => {
         if (item.id) {
@@ -337,109 +343,253 @@ export const EditOrderForm: React.FC<EditOrderFormProps> = ({ onClose, onSave, o
   };
 
   return (
-    <div className="flex flex-col h-full ">
-      {/* Content */}
-      <div className="flex-1 overflow-y-auto space-y-6">
-        {/* Order Items Section */}
-        <div className="space-y-3">
-          {orderItems.length === 0 ? (
-            <div className="text-center py-8 text-gray-500 bg-gray-50 rounded-xl">
-              <svg
-                className="w-12 h-12 mx-auto mb-3 text-gray-300"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"
-                />
-              </svg>
-              <p className="font-medium">Немає товарів</p>
-              <p className="text-sm">Додайте товари до замовлення</p>
+    <div className="space-y-5">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
+        <div className="space-y-5">
+          <section className="bg-gray-50 rounded-2xl p-4 border border-gray-200">
+            <div className="flex items-center gap-2.5 mb-3">
+              <span className="w-6 h-6 rounded-full bg-indigo-600 text-white flex items-center justify-center text-xs font-bold shrink-0">
+                1
+              </span>
+              <h3 className="text-sm font-bold text-gray-900">Клієнт</h3>
+              {selectedClient && !showClientSearch && (
+                <svg className="w-5 h-5 text-green-500 ml-auto" fill="currentColor" viewBox="0 0 20 20">
+                  <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+                </svg>
+              )}
             </div>
-          ) : (
-            orderItems.map((item, index) => (
-              <div
-                key={`${item.product_id}-${index}`}
-                className="p-4 rounded-xl border-2 border-indigo-600 bg-indigo-50"
-              >
-                <div className="flex items-center gap-3">
-                  <div className="flex-1 min-w-0">
-                    <div className="font-semibold text-gray-900 truncate">{item.name}</div>
-                    <div className="flex items-center gap-2 mt-1">
-                      <span className="text-base font-bold text-indigo-600">{item.price} ₴</span>
-                    </div>
-                  </div>
 
-                  <div className="flex items-center shrink-0">
-                    <button
-                      onClick={() => handleQuantityChange(index, -1)}
-                      disabled={item.quantity <= 1}
-                      type="button"
-                      className="w-9 h-9 rounded-lg bg-gray-200 hover:bg-gray-300 disabled:opacity-50 flex items-center justify-center transition-colors font-bold text-lg"
-                    >
-                      −
-                    </button>
-                    <div className="w-14 text-center">
-                      <span className="text-lg font-bold text-gray-900">{item.quantity}</span>
+            {selectedClient && !showClientSearch ? (
+              <div className="p-3 rounded-xl border-2 border-indigo-600 bg-white flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  <div className="w-9 h-9 rounded-full bg-indigo-600 text-white flex items-center justify-center font-bold text-sm">
+                    {(selectedClient.full_name || "")
+                      .split(" ")
+                      .map((n) => n[0])
+                      .join("")
+                      .toUpperCase()
+                      .slice(0, 2)}
+                  </div>
+                  <div>
+                    <div className="font-semibold text-gray-900 text-sm">
+                      {selectedClient.full_name}
                     </div>
-                    <button
-                      onClick={() => handleQuantityChange(index, 1)}
-                      type="button"
-                      className="w-9 h-9 rounded-lg bg-indigo-600 hover:bg-indigo-700 text-white flex items-center justify-center transition-colors font-bold text-lg"
-                    >
-                      +
-                    </button>
-                    <button
-                      title="remove"
-                      onClick={() => handleRemoveItem(index)}
-                      type="button"
-                      className="ml-2 w-9 h-9 rounded-lg bg-red-100 hover:bg-red-200 text-red-600 flex items-center justify-center transition-colors"
-                    >
-                      <svg
-                        className="w-5 h-5"
-                        fill="none"
-                        stroke="currentColor"
-                        viewBox="0 0 24 24"
-                      >
-                        <path
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          strokeWidth={2}
-                          d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
-                        />
-                      </svg>
-                    </button>
+                    <div className="text-xs text-gray-500">
+                      {selectedClient.phones?.[0]?.number || ""}
+                    </div>
                   </div>
                 </div>
+                <button
+                  type="button"
+                  onClick={() => setShowClientSearch(true)}
+                  className="text-xs text-indigo-600 hover:text-indigo-800 font-medium"
+                >
+                  Змінити
+                </button>
               </div>
-            ))
-          )}
+            ) : (
+              <>
+                <SearchBar
+                  searchTerm={clientSearch}
+                  setSearchTerm={setClientSearch}
+                  placeholder="Пошук за ім'ям або телефоном..."
+                />
+                <div
+                  ref={clientListRef}
+                  onScroll={handleClientScroll}
+                  className="mt-2 space-y-1.5 max-h-48 overflow-y-auto"
+                >
+                  {clients.length === 0 ? (
+                    <p className="text-sm text-gray-400 text-center py-4">Клієнтів не знайдено</p>
+                  ) : (
+                    clients.map((client) => (
+                      <div
+                        key={client.client_id}
+                        onClick={() => handleClientSelect(client)}
+                        className="p-3 rounded-xl border border-gray-200 hover:border-indigo-300 bg-white cursor-pointer transition-colors flex items-center gap-3"
+                      >
+                        <div className="w-8 h-8 rounded-full bg-gray-200 text-gray-600 flex items-center justify-center font-bold text-xs">
+                          {(client.full_name || "")
+                            .split(" ")
+                            .map((n) => n[0])
+                            .join("")
+                            .toUpperCase()
+                            .slice(0, 2)}
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <div className="font-medium text-gray-900 text-sm truncate">
+                            {client.full_name || "Unknown"}
+                          </div>
+                          <div className="text-xs text-gray-500">
+                            {client.phones?.[0]?.number || "—"}
+                          </div>
+                        </div>
+                      </div>
+                    ))
+                  )}
+                  {clientsLoadingMore && (
+                    <div className="flex justify-center py-2">
+                      <svg className="animate-spin h-5 w-5 text-indigo-600" viewBox="0 0 24 24">
+                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
+                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
+                      </svg>
+                    </div>
+                  )}
+                </div>
+              </>
+            )}
+          </section>
 
-          {/* Add Product Button */}
+          {selectedClient && (
+            <section className="bg-gray-50 rounded-2xl p-4 border border-gray-200">
+              <div className="flex items-center gap-2.5 mb-3">
+                <h3 className="text-sm font-bold text-gray-900">Контактна інформація</h3>
+                {selectedPhoneId && selectedAddressId && (
+                  <svg className="w-5 h-5 text-green-500 ml-auto" fill="currentColor" viewBox="0 0 20 20">
+                    <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+                  </svg>
+                )}
+              </div>
+
+              <div className="space-y-3">
+                <div>
+                  <label className="block text-xs font-medium text-gray-600 mb-1">
+                    Телефон <span className="text-red-500">*</span>
+                  </label>
+                  {selectedClient.phones && selectedClient.phones.length > 1 ? (
+                    <select
+                      title="Select phone"
+                      value={selectedPhoneId || ""}
+                      onChange={(e) => setSelectedPhoneId(Number(e.target.value))}
+                      className="w-full px-3 py-2.5 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500 text-sm bg-white"
+                    >
+                      <option value="">Оберіть телефон...</option>
+                      {selectedClient.phones.map((phone) => (
+                        <option key={phone.id} value={phone.id}>
+                          {phone.number} {phone.is_primary ? "(основний)" : ""}
+                        </option>
+                      ))}
+                    </select>
+                  ) : (
+                    <div className="px-3 py-2.5 bg-white border border-gray-200 rounded-xl text-sm text-gray-900 font-medium">
+                      {selectedClient.phones?.[0]?.number || "—"}
+                    </div>
+                  )}
+                </div>
+
+                <div>
+                  <label className="block text-xs font-medium text-gray-600 mb-1">
+                    Адреса доставки <span className="text-red-500">*</span>
+                  </label>
+                  {selectedClient.addresses && selectedClient.addresses.length > 1 ? (
+                    <select
+                      title="Address select"
+                      value={selectedAddressId || ""}
+                      onChange={(e) => setSelectedAddressId(Number(e.target.value))}
+                      className="w-full px-3 py-2.5 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500 text-sm bg-white"
+                    >
+                      <option value="">Оберіть адресу...</option>
+                      {selectedClient.addresses.map((addr) => (
+                        <option key={addr.id} value={addr.id}>
+                          {addr.street} {addr.house} {addr.is_primary ? "(основна)" : ""}
+                        </option>
+                      ))}
+                    </select>
+                  ) : (
+                    <div className="px-3 py-2.5 bg-white border border-gray-200 rounded-xl text-sm text-gray-900 font-medium">
+                      {selectedClient.addresses?.[0]?.street} {selectedClient.addresses?.[0]?.house}
+                    </div>
+                  )}
+                </div>
+              </div>
+            </section>
+          )}
+        </div>
+
+        <section className="bg-gray-50 rounded-2xl p-4 border border-gray-200">
+          <div className="flex items-center gap-2.5 mb-3">
+            <span className="w-6 h-6 rounded-full bg-indigo-600 text-white flex items-center justify-center text-xs font-bold shrink-0">
+              2
+            </span>
+            <h3 className="text-sm font-bold text-gray-900">Товари</h3>
+            {orderItems.length > 0 && (
+              <>
+                <svg className="w-5 h-5 text-green-500 ml-auto" fill="currentColor" viewBox="0 0 20 20">
+                  <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+                </svg>
+                <span className="text-xs text-gray-500 font-medium">
+                  {orderItems.length} / {totalItems} шт.
+                </span>
+              </>
+            )}
+          </div>
+
+          <div className="space-y-1.5">
+            {orderItems.length === 0 ? (
+              <p className="text-sm text-gray-400 text-center py-4">Немає товарів</p>
+            ) : (
+              orderItems.map((item, index) => (
+                <div
+                  key={`${item.product_id}-${index}`}
+                  className="p-3 rounded-xl border-2 border-indigo-600 bg-white"
+                >
+                  <div className="flex items-center gap-3">
+                    <div className="flex-1 min-w-0">
+                      <div className="font-medium text-gray-900 text-sm truncate">{item.name}</div>
+                      <div className="text-xs font-semibold text-indigo-600">{item.price} ₴</div>
+                    </div>
+
+                    <div className="flex items-center shrink-0">
+                      <button
+                        onClick={() => handleQuantityChange(index, -1)}
+                        disabled={item.quantity <= 1}
+                        type="button"
+                        className="w-7 h-7 rounded-lg bg-gray-200 hover:bg-gray-300 disabled:opacity-50 flex items-center justify-center transition-colors font-bold text-sm"
+                      >
+                        −
+                      </button>
+                      <span className="w-10 text-center text-sm font-bold text-gray-900">
+                        {item.quantity}
+                      </span>
+                      <button
+                        onClick={() => handleQuantityChange(index, 1)}
+                        type="button"
+                        className="w-7 h-7 rounded-lg bg-indigo-600 hover:bg-indigo-700 text-white flex items-center justify-center transition-colors font-bold text-sm"
+                      >
+                        +
+                      </button>
+                      <button
+                        title="remove"
+                        onClick={() => handleRemoveItem(index)}
+                        type="button"
+                        className="ml-1.5 w-7 h-7 rounded-lg bg-red-100 hover:bg-red-200 text-red-600 flex items-center justify-center transition-colors"
+                      >
+                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                        </svg>
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              ))
+            )}
+          </div>
+
           {!showAddProduct ? (
             <button
               type="button"
               onClick={() => setShowAddProduct(true)}
-              className="w-full py-3 border-2 border-dashed border-gray-300 rounded-xl text-gray-500 hover:border-indigo-400 hover:text-indigo-600 hover:bg-indigo-50 transition-colors flex items-center justify-center gap-2 font-medium"
+              className="mt-2 w-full py-2.5 border-2 border-dashed border-gray-300 rounded-xl text-gray-600 hover:border-indigo-400 hover:text-indigo-600 transition-all font-medium text-sm flex items-center justify-center gap-2"
             >
-              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M12 4v16m8-8H4"
-                />
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
               </svg>
               Додати товар
             </button>
           ) : (
-            <div className="bg-white rounded-xl border-2 border-indigo-200 p-4 space-y-3">
+            <div className="mt-2 space-y-2">
               <div className="flex items-center justify-between">
-                <span className="font-medium text-gray-900">Вибрати товар</span>
+                <span className="font-medium text-gray-900 text-sm">Вибрати товар</span>
                 <button
                   title="Product select"
                   type="button"
@@ -450,12 +600,7 @@ export const EditOrderForm: React.FC<EditOrderFormProps> = ({ onClose, onSave, o
                   className="text-gray-400 hover:text-gray-600"
                 >
                   <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M6 18L18 6M6 6l12 12"
-                    />
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
                   </svg>
                 </button>
               </div>
@@ -469,56 +614,35 @@ export const EditOrderForm: React.FC<EditOrderFormProps> = ({ onClose, onSave, o
               <div
                 ref={productListRef}
                 onScroll={handleProductScroll}
-                className="max-h-48 overflow-y-auto space-y-2"
+                className="max-h-48 overflow-y-auto space-y-1.5"
               >
                 {availableProducts.length === 0 ? (
-                  <p className="text-center text-gray-500 py-4 text-sm">Товарів не знайдено</p>
+                  <p className="text-sm text-gray-400 text-center py-4">Товарів не знайдено</p>
                 ) : (
                   availableProducts.map((product) => (
                     <div
                       key={product.product_id}
                       onClick={() => handleAddProduct(product)}
-                      className="flex items-center justify-between p-3 bg-gray-50 rounded-lg hover:bg-indigo-50 cursor-pointer transition-colors"
+                      className="p-3 rounded-xl border border-gray-200 hover:border-indigo-300 bg-white cursor-pointer transition-colors flex items-center gap-3"
                     >
-                      <div>
-                        <div className="font-medium text-gray-900">{product.name}</div>
-                        <div className="text-sm text-indigo-600 font-semibold">
-                          {product.price} ₴
-                        </div>
+                      <div className="flex-1 min-w-0">
+                        <div className="font-medium text-gray-900 text-sm truncate">{product.name}</div>
+                        <div className="text-xs font-semibold text-indigo-600">{product.price} ₴</div>
                       </div>
-                      <svg
-                        className="w-5 h-5 text-indigo-600"
-                        fill="none"
-                        stroke="currentColor"
-                        viewBox="0 0 24 24"
+                      <button
+                        type="button"
+                        className="px-3 py-1.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg font-medium transition-colors text-xs"
                       >
-                        <path
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          strokeWidth={2}
-                          d="M12 4v16m8-8H4"
-                        />
-                      </svg>
+                        Додати
+                      </button>
                     </div>
                   ))
                 )}
                 {productsLoadingMore && (
                   <div className="flex justify-center py-2">
                     <svg className="animate-spin h-5 w-5 text-indigo-600" viewBox="0 0 24 24">
-                      <circle
-                        className="opacity-25"
-                        cx="12"
-                        cy="12"
-                        r="10"
-                        stroke="currentColor"
-                        strokeWidth="4"
-                        fill="none"
-                      />
-                      <path
-                        className="opacity-75"
-                        fill="currentColor"
-                        d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
-                      />
+                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
+                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
                     </svg>
                   </div>
                 )}
@@ -526,320 +650,72 @@ export const EditOrderForm: React.FC<EditOrderFormProps> = ({ onClose, onSave, o
             </div>
           )}
 
-          {/* Order Total */}
           {orderItems.length > 0 && (
-            <div className="p-4 bg-linear-to-r from-indigo-600 to-purple-600 rounded-xl text-white">
-              <div className="flex items-center justify-between">
-                <div>
-                  <div className="text-sm opacity-90">Всього</div>
-                  <div className="text-xl font-bold">{totalItems} шт.</div>
-                </div>
-                <div className="text-right">
-                  <div className="text-sm opacity-90">До сплати</div>
-                  <div className="text-2xl font-bold">{totalAmount} ₴</div>
-                </div>
+            <div className="mt-3 p-3 bg-indigo-100 rounded-xl flex items-center justify-between">
+              <div>
+                <div className="text-xs text-gray-600">Всього до сплати</div>
+                <div className="text-lg font-bold text-indigo-600">{totalAmount} ₴</div>
+              </div>
+              <div className="text-right">
+                <div className="text-xs text-gray-600">Кількість</div>
+                <div className="text-base font-bold text-gray-900">{totalItems} шт.</div>
               </div>
             </div>
           )}
-        </div>
+        </section>
+      </div>
 
-        {/* Client Section */}
-        <div className="space-y-3">
-          <label className="text-sm font-medium text-gray-700">
-            Клієнт <span className="text-red-500">*</span>
-          </label>
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
+        <section className="bg-gray-50 rounded-2xl p-4 border border-gray-200">
+          <div className="flex items-center gap-2.5 mb-3">
+            <span className="w-6 h-6 rounded-full bg-indigo-600 text-white flex items-center justify-center text-xs font-bold shrink-0">
+              3
+            </span>
+            <h3 className="text-sm font-bold text-gray-900">Дата доставки</h3>
+            {deliveryDate && timeSlot && (
+              <svg className="w-5 h-5 text-green-500 ml-auto" fill="currentColor" viewBox="0 0 20 20">
+                <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+              </svg>
+            )}
+          </div>
 
-          {!showClientSearch ? (
-            <div
-              onClick={() => setShowClientSearch(true)}
-              className="p-4 bg-white rounded-xl border-2 border-gray-200 cursor-pointer hover:border-indigo-300 transition-colors"
-            >
-              {selectedClient ? (
-                <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-full bg-indigo-600 text-white flex items-center justify-center font-bold shrink-0">
-                    {(selectedClient.full_name || "")
-                      .split(" ")
-                      .map((n) => n[0])
-                      .join("")
-                      .toUpperCase()
-                      .slice(0, 2)}
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <div className="font-semibold text-gray-900">{selectedClient.full_name}</div>
-                    <div className="text-sm text-gray-500">
-                      {selectedClient.phones?.[0]?.number || "—"}
-                    </div>
-                  </div>
-                  <svg
-                    className="w-5 h-5 text-gray-400"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M19 9l-7 7-7-7"
-                    />
-                  </svg>
-                </div>
-              ) : (
-                <div className="flex items-center justify-between text-gray-500">
-                  <span>Оберіть клієнта...</span>
-                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M19 9l-7 7-7-7"
-                    />
-                  </svg>
-                </div>
-              )}
-            </div>
-          ) : (
-            <div className="bg-white rounded-xl border-2 border-indigo-200 p-4 space-y-3">
-              <div className="flex items-center justify-between">
-                <span className="font-medium text-gray-900">Вибрати клієнта</span>
-                <button
-                  title="Client choose"
-                  type="button"
-                  onClick={() => {
-                    setShowClientSearch(false);
-                    setClientSearch("");
-                  }}
-                  className="text-gray-400 hover:text-gray-600"
-                >
-                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M6 18L18 6M6 6l12 12"
-                    />
-                  </svg>
-                </button>
-              </div>
-
-              <SearchBar
-                searchTerm={clientSearch}
-                setSearchTerm={setClientSearch}
-                placeholder="Пошук за ім'ям або телефоном..."
-              />
-
-              <div
-                ref={clientListRef}
-                onScroll={handleClientScroll}
-                className="max-h-48 overflow-y-auto space-y-2"
-              >
-                {clients.length === 0 ? (
-                  <p className="text-center text-gray-500 py-4 text-sm">Клієнтів не знайдено</p>
-                ) : (
-                  clients.map((client) => (
-                    <div
-                      key={client.client_id}
-                      onClick={() => handleClientSelect(client)}
-                      className={`flex items-center gap-3 p-3 rounded-lg cursor-pointer transition-colors ${
-                        selectedClient?.client_id === client.client_id
-                          ? "bg-indigo-50 border-2 border-indigo-300"
-                          : "bg-gray-50 hover:bg-gray-100"
-                      }`}
-                    >
-                      <div
-                        className={`w-8 h-8 rounded-full flex items-center justify-center font-bold text-sm ${
-                          selectedClient?.client_id === client.client_id
-                            ? "bg-indigo-600 text-white"
-                            : "bg-gray-300 text-gray-600"
-                        }`}
-                      >
-                        {(client.full_name || "")
-                          .split(" ")
-                          .map((n) => n[0])
-                          .join("")
-                          .toUpperCase()
-                          .slice(0, 2)}
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <div className="font-medium text-gray-900 truncate">{client.full_name}</div>
-                        <div className="text-sm text-gray-500">
-                          {client.phones?.[0]?.number || "—"}
-                        </div>
-                      </div>
-                      {selectedClient?.client_id === client.client_id && (
-                        <svg
-                          className="w-5 h-5 text-indigo-600"
-                          fill="currentColor"
-                          viewBox="0 0 20 20"
-                        >
-                          <path
-                            fillRule="evenodd"
-                            d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z"
-                            clipRule="evenodd"
-                          />
-                        </svg>
-                      )}
-                    </div>
-                  ))
-                )}
-                {clientsLoadingMore && (
-                  <div className="flex justify-center py-2">
-                    <svg className="animate-spin h-5 w-5 text-indigo-600" viewBox="0 0 24 24">
-                      <circle
-                        className="opacity-25"
-                        cx="12"
-                        cy="12"
-                        r="10"
-                        stroke="currentColor"
-                        strokeWidth="4"
-                        fill="none"
-                      />
-                      <path
-                        className="opacity-75"
-                        fill="currentColor"
-                        d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
-                      />
-                    </svg>
-                  </div>
-                )}
-              </div>
-            </div>
-          )}
-
-          {/* Phone & Address */}
-          {selectedClient && (
-            <div className="space-y-3">
-              {/* Phone */}
-              {selectedClient.phones && selectedClient.phones.length > 1 ? (
-                <div className="relative">
-                  <select
-                    title="Select phone"
-                    value={selectedPhoneId || ""}
-                    onChange={(e) => setSelectedPhoneId(Number(e.target.value))}
-                    className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500 appearance-none bg-white pr-10 font-medium"
-                  >
-                    <option value="">Оберіть телефон...</option>
-                    {selectedClient.phones.map((phone) => (
-                      <option key={phone.id} value={phone.id}>
-                        {phone.number} {phone.is_primary ? "(основний)" : ""}
-                      </option>
-                    ))}
-                  </select>
-                  <svg
-                    className="absolute right-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400 pointer-events-none"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M19 9l-7 7-7-7"
-                    />
-                  </svg>
-                </div>
-              ) : (
-                <div className="px-4 py-3 bg-indigo-50 border-2 border-indigo-200 rounded-xl font-medium text-gray-900 flex items-center gap-2">
-                  <svg className="w-5 h-5 text-indigo-600" fill="currentColor" viewBox="0 0 20 20">
-                    <path
-                      fillRule="evenodd"
-                      d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z"
-                      clipRule="evenodd"
-                    />
-                  </svg>
-                  {selectedClient.phones?.[0]?.number || "Немає телефону"}
-                </div>
-              )}
-
-              {/* Address */}
-              {selectedClient.addresses && selectedClient.addresses.length > 1 ? (
-                <div className="relative">
-                  <select
-                    title="Address select"
-                    value={selectedAddressId || ""}
-                    onChange={(e) => setSelectedAddressId(Number(e.target.value))}
-                    className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500 appearance-none bg-white pr-10 font-medium"
-                  >
-                    <option value="">Оберіть адресу...</option>
-                    {selectedClient.addresses.map((addr) => (
-                      <option key={addr.id} value={addr.id}>
-                        {addr.street} {addr.house} {addr.is_primary ? "(основна)" : ""}
-                      </option>
-                    ))}
-                  </select>
-                  <svg
-                    className="absolute right-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400 pointer-events-none"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M19 9l-7 7-7-7"
-                    />
-                  </svg>
-                </div>
-              ) : (
-                <div className="px-4 py-3 bg-indigo-50 border-2 border-indigo-200 rounded-xl font-medium text-gray-900 flex items-center gap-2">
-                  <svg className="w-5 h-5 text-indigo-600" fill="currentColor" viewBox="0 0 20 20">
-                    <path
-                      fillRule="evenodd"
-                      d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z"
-                      clipRule="evenodd"
-                    />
-                  </svg>
-                  {selectedClient.addresses?.[0]
-                    ? `${selectedClient.addresses[0].street} ${selectedClient.addresses[0].house}`
-                    : "Немає адреси"}
-                </div>
-              )}
-            </div>
-          )}
-        </div>
-
-        {/* Delivery Date Section */}
-        <div className="space-y-3">
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 pb-3">
+          <div className="space-y-3">
             <DateInput
               label="Дата доставки"
               value={deliveryDate}
               onChange={setDeliveryDate}
               required
               minDate={new Date().toISOString().split("T")[0]}
-              icon={
-                <svg
-                  className="w-5 h-5 text-indigo-600"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"
-                  />
-                </svg>
-              }
             />
 
             <FormSelect
-              label="Час"
+              label="Час доставки"
               name="timeSlot"
               value={timeSlot}
               required={true}
               onChange={(e) => setTimeSlot(e.target.value)}
-              options={[
-                ...timeSlots.map((slot) => ({
-                  value: slot.time_slot_id,
-                  label: formatTimeSlotLabel(slot),
-                })),
-              ]}
+              options={timeSlots.map((slot) => ({
+                value: slot.time_slot_id,
+                label: formatTimeSlotLabel(slot),
+              }))}
             />
+          </div>
+        </section>
 
+        <section className="bg-gray-50 rounded-2xl p-4 border border-gray-200">
+          <div className="flex items-center gap-2.5 mb-3">
+            <span className="w-6 h-6 rounded-full bg-indigo-600 text-white flex items-center justify-center text-xs font-bold shrink-0">
+              4
+            </span>
+            <h3 className="text-sm font-bold text-gray-900">Оплата</h3>
+            {paymentMethod && (
+              <svg className="w-5 h-5 text-green-500 ml-auto" fill="currentColor" viewBox="0 0 20 20">
+                <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+              </svg>
+            )}
+          </div>
+
+          <div className="space-y-3">
             <FormSelect
               label="Спосіб оплати"
               name="paymentMethod"
@@ -851,52 +727,90 @@ export const EditOrderForm: React.FC<EditOrderFormProps> = ({ onClose, onSave, o
                 label: m.name,
               }))}
             />
-          </div>
 
-          {/* Note */}
-          <textarea
-            value={note}
-            onChange={(e) => setNote(e.target.value)}
-            placeholder="Примітка для кур'єра..."
-            rows={2}
-            className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500 resize-none text-sm"
-          />
-        </div>
+            <div
+              onClick={() => setIsPaid(!isPaid)}
+              className={`p-4 rounded-xl border-2 cursor-pointer transition-colors flex items-center justify-between ${
+                isPaid
+                  ? "border-green-300 bg-green-50"
+                  : "border-gray-200 bg-white"
+              }`}
+            >
+              <div className="flex items-center gap-3">
+                <div className={`w-10 h-10 rounded-xl flex items-center justify-center shrink-0 ${isPaid ? "bg-green-100" : "bg-gray-100"}`}>
+                  <svg
+                    className={`w-5 h-5 ${isPaid ? "text-green-600" : "text-gray-400"}`}
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    {isPaid ? (
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"
+                      />
+                    ) : (
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+                      />
+                    )}
+                  </svg>
+                </div>
+                <div>
+                  <span className="font-semibold text-gray-900">Оплата</span>
+                  <p className={`text-sm ${isPaid ? "text-green-600" : "text-gray-500"}`}>
+                    {isPaid ? "Оплачено" : "Не оплачено"}
+                  </p>
+                </div>
+              </div>
+
+              <div className={`w-12 h-7 rounded-full transition-colors relative ${isPaid ? "bg-green-500" : "bg-gray-300"}`}>
+                <div className={`w-5 h-5 rounded-full bg-white shadow absolute top-1 transition-transform ${isPaid ? "translate-x-6" : "translate-x-1"}`} />
+              </div>
+            </div>
+
+            <div>
+              <label className="block text-xs font-medium text-gray-600 mb-1">Примітка</label>
+              <textarea
+                value={note}
+                onChange={(e) => setNote(e.target.value)}
+                placeholder="Примітка до замовлення..."
+                rows={2}
+                className="w-full px-3 py-2.5 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500 resize-none text-sm bg-white"
+              />
+            </div>
+          </div>
+        </section>
       </div>
 
-      {/* Footer Actions */}
-      <div className="sticky bottom-0 bg-white pt-4 pb-4 border-t border-gray-200 mt-4">
+      <div className="sticky bottom-0 bg-white pt-4 pb-4">
         <div className="flex gap-3">
           <button
             type="button"
             onClick={onClose}
-            className="flex-1 py-3 bg-gray-100 hover:bg-gray-200 text-gray-700 font-semibold rounded-xl transition-colors"
+            className="flex-1 py-3.5 rounded-xl font-semibold text-gray-700 bg-gray-100 hover:bg-gray-200 transition-colors"
           >
             Скасувати
           </button>
-
           <button
             type="button"
             onClick={handleSubmit}
             disabled={isSubmitting || !selectedClient || orderItems.length === 0}
-            className="flex-1 py-3 bg-indigo-600 hover:bg-indigo-700 disabled:bg-gray-300 disabled:cursor-not-allowed text-white font-semibold rounded-xl transition-colors flex items-center justify-center gap-2"
+            className={`flex-1 py-3.5 rounded-xl font-semibold text-white transition-colors flex items-center justify-center gap-2 ${
+              !isSubmitting && selectedClient && orderItems.length > 0
+                ? "bg-indigo-600 hover:bg-indigo-700"
+                : "bg-gray-300 cursor-not-allowed"
+            }`}
           >
             {isSubmitting ? (
               <svg className="animate-spin h-5 w-5" viewBox="0 0 24 24">
-                <circle
-                  className="opacity-25"
-                  cx="12"
-                  cy="12"
-                  r="10"
-                  stroke="currentColor"
-                  strokeWidth="4"
-                  fill="none"
-                />
-                <path
-                  className="opacity-75"
-                  fill="currentColor"
-                  d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
-                />
+                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
+                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
               </svg>
             ) : null}
             Зберегти

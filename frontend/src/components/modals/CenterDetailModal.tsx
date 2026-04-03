@@ -5,9 +5,10 @@ interface CenterDetailModalProps {
   isOpen: boolean;
   onClose: () => void;
   children: React.ReactNode;
+  size?: "xl" | "2xl" | "3xl" | "4xl" | "5xl";
 }
 
-export const CenterDetailModal: React.FC<CenterDetailModalProps> = ({ isOpen, onClose, children }) => {
+export const CenterDetailModal: React.FC<CenterDetailModalProps> = ({ isOpen, onClose, children, size = "xl" }) => {
   const [isVisible, setIsVisible] = useState(false);
   const [shouldRender, setShouldRender] = useState(false);
 
@@ -56,7 +57,7 @@ export const CenterDetailModal: React.FC<CenterDetailModalProps> = ({ isOpen, on
 
       {/* Panel */}
       <div
-        className={`z-9999 fixed top-1/2 left-1/2 -translate-x-1/2 w-[95%] max-w-xl h-[85vh] bg-white rounded-2xl shadow-[0_25px_60px_-12px_rgba(0,0,0,0.25)] overflow-hidden transition-all duration-300 ease-out ${
+        className={`z-9999 fixed top-1/2 left-1/2 -translate-x-1/2 w-[95%] ${{ xl: "max-w-xl", "2xl": "max-w-2xl", "3xl": "max-w-3xl", "4xl": "max-w-4xl", "5xl": "max-w-5xl" }[size]} h-[85vh] bg-white rounded-2xl shadow-[0_25px_60px_-12px_rgba(0,0,0,0.25)] overflow-hidden transition-all duration-300 ease-out ${
           isVisible
             ? "opacity-100 -translate-y-1/2 scale-100"
             : "opacity-0 -translate-y-[45%] scale-[0.97]"

@@ -29,6 +29,7 @@ export interface Order {
   payment_method: string;
   note?: string;
   comment?: string;
+  is_paid?: boolean;
 }
 
 export interface OrderDetailModalProps {
@@ -40,7 +41,6 @@ export interface OrderDetailModalProps {
 
 export const OrderDetailModal = ({ order, onClose, onDelete, onSave }: OrderDetailModalProps) => {
   const [isEditing, setIsEditing] = useState(false);
-
   const handleEditClick = () => {
     setIsEditing(true);
   };
@@ -229,6 +229,42 @@ export const OrderDetailModal = ({ order, onClose, onDelete, onSave }: OrderDeta
 
           <div className="bg-white rounded-2xl p-5 border border-gray-200">
             <p className="font-semibold text-gray-900">{order.payment_method}</p>
+          </div>
+        </div>
+
+        <div>
+          <h2 className="text-xs font-bold text-gray-500 uppercase tracking-wide mb-3">
+            Статус оплати
+          </h2>
+
+          <div className="bg-white rounded-2xl p-5 border border-gray-200 flex items-center gap-3">
+            <div className={`w-8 h-8 rounded-lg flex items-center justify-center shrink-0 ${order.is_paid ? "bg-green-100" : "bg-red-100"}`}>
+              <svg
+                className={`w-4 h-4 ${order.is_paid ? "text-green-600" : "text-red-500"}`}
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                {order.is_paid ? (
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"
+                  />
+                ) : (
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+                  />
+                )}
+              </svg>
+            </div>
+            <span className={`font-semibold ${order.is_paid ? "text-green-600" : "text-red-500"}`}>
+              {order.is_paid ? "Оплачено" : "Не оплачено"}
+            </span>
           </div>
         </div>
 

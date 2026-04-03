@@ -70,6 +70,7 @@ class CreateOrderCommand:
     products: list[OrderProductInput]
     payment_method: str
     comment: str | None = None
+    is_paid: bool = False
 
     def __post_init__(self) -> None:
         current_date = today()
@@ -174,6 +175,7 @@ class CreateOrderCommandHandler:
             delivery_address=delivery_address,
             payment_method=command.payment_method,
             comment=command.comment,
+            is_paid=command.is_paid,
         )
 
         order.items = [

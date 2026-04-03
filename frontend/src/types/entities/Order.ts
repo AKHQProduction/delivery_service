@@ -18,4 +18,5 @@ export interface Order {
   delivery_address: Address;
   items: OrderItem[];
   comment?: string;
+  is_paid: boolean;
 }
