@@ -13,7 +13,6 @@ from backend.application.services.edge_preference_collector import (
 from backend.application.services.tsp_solvers import RouteOptimizer
 from backend.application.vars import (
     OrderId,
-    PaymentMethod,
     RoutePlanId,
     ShopId,
     TimeSlotId,
@@ -234,6 +233,6 @@ def _order_to_point(order: Order, seq: int) -> RoutePointReadModel:
         coordinates=coords,
         items_summary=", ".join(items_parts),
         comment=order.comment,
-        payment_method=PaymentMethod(order.payment_method),
+        payment_method=order.payment_method or "",
         total_price=total_price,
     )

@@ -136,6 +136,15 @@ class LastTimeSlotError(ConflictError):
         )
 
 
+class LastPaymentMethodError(ConflictError):
+    @property
+    def message(self) -> str:
+        return (
+            "Cannot delete the last payment method. "
+            "Shop must have at least one payment method"
+        )
+
+
 class InvalidTimeSlotRangeError(ValidationError):
     @property
     def message(self) -> str:

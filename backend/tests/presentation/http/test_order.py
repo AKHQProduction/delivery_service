@@ -12,7 +12,6 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from backend.application.dto.coordinates import CoordinatesDTO
 from backend.application.vars import (
-    PaymentMethod,
     ShopRole,
 )
 from backend.infrastructure.persistence.tables.clients import ClientAddress
@@ -74,7 +73,7 @@ async def test_create_order_with_single_product(
         "time_slot_id": str(time_slot_id),
         "address_id": address_id,
         "phone_id": phone_id,
-        "payment_method": PaymentMethod.CASH,
+        "payment_method": "Готівка",
         "products": [
             {
                 "product_id": str(product_id),
@@ -173,7 +172,7 @@ async def test_create_order_with_multiple_products(
         "time_slot_id": str(time_slot_id),
         "address_id": address_id,
         "phone_id": phone_id,
-        "payment_method": PaymentMethod.BANK_TRANSFER,
+        "payment_method": "На рахунок",
         "products": [
             {"product_id": str(product_id_1), "quantity": 3},
             {"product_id": str(product_id_2), "quantity": 1},
@@ -250,7 +249,7 @@ async def test_create_order_without_comment(
         "time_slot_id": str(time_slot_id),
         "address_id": address_id,
         "phone_id": phone_id,
-        "payment_method": PaymentMethod.CASH,
+        "payment_method": "Готівка",
         "products": [{"product_id": str(product_id), "quantity": 1}],
     }
 
@@ -323,7 +322,7 @@ async def test_create_order_with_different_time_slots(
         "time_slot_id": str(time_slot_first),
         "address_id": address_id,
         "phone_id": phone_id,
-        "payment_method": PaymentMethod.CASH,
+        "payment_method": "Готівка",
         "products": [{"product_id": str(product_id), "quantity": 1}],
     }
 
@@ -339,7 +338,7 @@ async def test_create_order_with_different_time_slots(
         "time_slot_id": str(time_slot_second),
         "address_id": address_id,
         "phone_id": phone_id,
-        "payment_method": PaymentMethod.CASH,
+        "payment_method": "Готівка",
         "products": [{"product_id": str(product_id), "quantity": 1}],
     }
 
@@ -391,7 +390,7 @@ async def test_create_order_client_not_found(
         "time_slot_id": str(time_slot_id),
         "address_id": 1,
         "phone_id": 1,
-        "payment_method": PaymentMethod.CASH,
+        "payment_method": "Готівка",
         "products": [{"product_id": str(uuid.uuid4()), "quantity": 1}],
     }
 
@@ -445,7 +444,7 @@ async def test_create_order_product_not_found(
         "time_slot_id": str(time_slot_id),
         "address_id": address_id,
         "phone_id": phone_id,
-        "payment_method": PaymentMethod.CASH,
+        "payment_method": "Готівка",
         "products": [{"product_id": str(uuid.uuid4()), "quantity": 1}],
     }
 
@@ -500,7 +499,7 @@ async def test_create_order_phone_not_found(
         "time_slot_id": str(time_slot_id),
         "address_id": address_id,
         "phone_id": 999,  # Non-existent phone_id
-        "payment_method": PaymentMethod.CASH,
+        "payment_method": "Готівка",
         "products": [{"product_id": str(product_id), "quantity": 1}],
     }
 
@@ -555,7 +554,7 @@ async def test_create_order_address_not_found(
         "time_slot_id": str(time_slot_id),
         "address_id": 999,  # Non-existent address_id
         "phone_id": phone_id,
-        "payment_method": PaymentMethod.CASH,
+        "payment_method": "Готівка",
         "products": [{"product_id": str(product_id), "quantity": 1}],
     }
 
@@ -634,7 +633,7 @@ async def test_create_order_as_courier_forbidden(
         "time_slot_id": str(time_slot_id),
         "address_id": address_id,
         "phone_id": phone_id,
-        "payment_method": PaymentMethod.CASH,
+        "payment_method": "Готівка",
         "products": [{"product_id": str(product_id), "quantity": 1}],
     }
 
@@ -691,7 +690,7 @@ async def test_create_order_with_past_delivery_date(
         "time_slot_id": str(time_slot_id),
         "address_id": address_id,
         "phone_id": phone_id,
-        "payment_method": PaymentMethod.CASH,
+        "payment_method": "Готівка",
         "products": [{"product_id": str(product_id), "quantity": 1}],
     }
 
@@ -848,7 +847,7 @@ async def test_update_order_payment_method(
     order_id = await setup_test_order(
         shop_id=shop_id,
         client_id=client_id,
-        payment_method=PaymentMethod.CASH,
+        payment_method="Готівка",
     )
     await session.commit()
 
@@ -857,7 +856,7 @@ async def test_update_order_payment_method(
     response = await http_client.patch(
         url=f"{BASE_URL}/{order_id}",
         headers=headers,
-        json={"payment_method": PaymentMethod.BANK_TRANSFER},
+        json={"payment_method": "На рахунок"},
     )
 
     assert response.status_code == status.HTTP_200_OK
@@ -866,7 +865,7 @@ async def test_update_order_payment_method(
 
     result = await session.execute(select(Order).where(Order.id == order_id))
     order = result.scalar_one()
-    assert order.payment_method == PaymentMethod.BANK_TRANSFER
+    assert order.payment_method == "На рахунок"
 
 
 @pytest.mark.asyncio()
@@ -1287,7 +1286,7 @@ async def test_update_order_full(
             "phone_id": phone_id,
             "address_id": address_id,
             "comment": "Повне оновлення",
-            "payment_method": PaymentMethod.CASH,
+            "payment_method": "Готівка",
             "items": [
                 {"product_id": str(product_id), "quantity": 7},
             ],
@@ -1304,7 +1303,7 @@ async def test_update_order_full(
     assert order.delivery_start_time == time(14, 0)
     assert order.delivery_end_time == time(20, 0)
     assert order.comment == "Повне оновлення"
-    assert order.payment_method == PaymentMethod.CASH
+    assert order.payment_method == "Готівка"
 
 
 @pytest.mark.asyncio()
@@ -2130,7 +2129,7 @@ async def test_generate_orders_pdf(
         "time_slot_id": str(time_slot_id),
         "address_id": address_id,
         "phone_id": phone_id,
-        "payment_method": PaymentMethod.CASH,
+        "payment_method": "Готівка",
         "products": [{"product_id": str(product_id), "quantity": 1}],
     }
     await http_client.post(url=BASE_URL, headers=headers, json=order_json)
@@ -2203,7 +2202,7 @@ async def test_generate_orders_pdf_with_time_slot_filter(
                 "time_slot_id": str(ts_id),
                 "address_id": address_id,
                 "phone_id": phone_id,
-                "payment_method": PaymentMethod.CASH,
+                "payment_method": "Готівка",
                 "products": [{"product_id": str(product_id), "quantity": 1}],
             },
         )
@@ -2292,7 +2291,7 @@ async def test_download_orders_pdf(
         "time_slot_id": str(time_slot_id),
         "address_id": address_id,
         "phone_id": phone_id,
-        "payment_method": PaymentMethod.CASH,
+        "payment_method": "Готівка",
         "products": [{"product_id": str(product_id), "quantity": 1}],
     }
     await http_client.post(url=BASE_URL, headers=headers, json=order_json)
@@ -2450,7 +2449,7 @@ async def test_create_order_with_district_in_address(
         "time_slot_id": str(time_slot_id),
         "address_id": address_id,
         "phone_id": phone_id,
-        "payment_method": PaymentMethod.CASH,
+        "payment_method": "Готівка",
         "products": [{"product_id": str(product_id), "quantity": 1}],
     }
 
@@ -2517,7 +2516,7 @@ async def test_create_order_without_district_in_address(
         "time_slot_id": str(time_slot_id),
         "address_id": address_id,
         "phone_id": phone_id,
-        "payment_method": PaymentMethod.CASH,
+        "payment_method": "Готівка",
         "products": [{"product_id": str(product_id), "quantity": 1}],
     }
 
@@ -2646,7 +2645,7 @@ async def test_create_order_geocodes_address_without_coordinates(
         "time_slot_id": str(time_slot_id),
         "address_id": address_id,
         "phone_id": phone_id,
-        "payment_method": PaymentMethod.CASH,
+        "payment_method": "Готівка",
         "products": [{"product_id": str(product_id), "quantity": 1}],
     }
 
@@ -2732,7 +2731,7 @@ async def test_create_order_skips_geocoding_when_address_has_coords(
         "time_slot_id": str(time_slot_id),
         "address_id": address_id,
         "phone_id": phone_id,
-        "payment_method": PaymentMethod.CASH,
+        "payment_method": "Готівка",
         "products": [{"product_id": str(product_id), "quantity": 1}],
     }
 

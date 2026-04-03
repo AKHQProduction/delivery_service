@@ -21,6 +21,7 @@ OrderItemId = NewType("OrderItemId", int)
 AddressId = NewType("AddressId", int)
 PhoneId = NewType("PhoneId", int)
 TimeSlotId = NewType("TimeSlotId", UUID)
+PaymentMethodId = NewType("PaymentMethodId", UUID)
 DistrictId = NewType("DistrictId", UUID)
 RoutePlanId = NewType("RoutePlanId", UUID)
 RouteEdgeHistoryId = NewType("RouteEdgeHistoryId", UUID)
@@ -30,12 +31,6 @@ class ShopRole(StrEnum):
     OWNER = "OWNER"
     MANAGER = "MANAGER"
     COURIER = "COURIER"
-
-
-class PaymentMethod(StrEnum):
-    CASH = "CASH"
-    BANK_TRANSFER = "BANK_TRANSFER"
-    OTHER = "OTHER"
 
 
 class ExportDocType(StrEnum):

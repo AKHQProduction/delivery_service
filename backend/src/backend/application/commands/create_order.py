@@ -29,7 +29,6 @@ from backend.application.vars import (
     AddressId,
     ClientId,
     OrderId,
-    PaymentMethod,
     PhoneId,
     ProductId,
     ShopId,
@@ -69,7 +68,7 @@ class CreateOrderCommand:
     address_id: AddressId
     phone_id: PhoneId
     products: list[OrderProductInput]
-    payment_method: PaymentMethod
+    payment_method: str
     comment: str | None = None
 
     def __post_init__(self) -> None:

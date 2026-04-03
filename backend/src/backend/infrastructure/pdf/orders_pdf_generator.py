@@ -18,7 +18,6 @@ from reportlab.platypus import (
     TableStyle,
 )
 
-from backend.application.vars import PaymentMethod
 from backend.infrastructure.persistence.tables.orders import Order
 
 FONT_DIR = Path(__file__).parent / "fonts"
@@ -215,24 +214,17 @@ class ReportLabOrdersPDFGenerator:
         cell_style: ParagraphStyle,
         font_bold: str,
     ) -> list:
-        cash_total = Decimal(0)
-        bank_total = Decimal(0)
-        other_total = Decimal(0)
+        payment_totals: dict[str, Decimal] = defaultdict(Decimal)
         products: dict[str, int] = defaultdict(int)
 
         for order in orders:
-            payment = PaymentMethod(order.payment_method)
+            method = order.payment_method or ""
             for item in order.items:
                 products[item.name] += item.quantity
                 item_total = item.quantity * item.price_per_item
-                if payment == PaymentMethod.CASH:
-                    cash_total += item_total
-                elif payment == PaymentMethod.BANK_TRANSFER:
-                    bank_total += item_total
-                else:
-                    other_total += item_total
+                payment_totals[method] += item_total
 
-        grand = cash_total + bank_total + other_total
+        grand = sum(payment_totals.values(), Decimal(0))
 
         subtotal_style = ParagraphStyle(
             "SubtotalStyle",
@@ -242,11 +234,10 @@ class ReportLabOrdersPDFGenerator:
             alignment=2,
         )
         subtotal_lines = [
-            f"Готівка: {cash_total} грн",
-            f"На рахунок: {bank_total} грн",
-            f"Інше: {other_total} грн",
-            f"<b>Всього: {grand} грн</b>",
+            f"{method}: {total} грн"
+            for method, total in payment_totals.items()
         ]
+        subtotal_lines.append(f"<b>Всього: {grand} грн</b>")
         product_names = "<br/>".join(
             name for name, _ in sorted(products.items())
         )
@@ -269,12 +260,6 @@ class ReportLabOrdersPDFGenerator:
 
     @staticmethod
     def _build_order_row(order: Order, cell_style: ParagraphStyle) -> list:
-        payment_labels = {
-            PaymentMethod.CASH: "Готівка",
-            PaymentMethod.BANK_TRANSFER: "На рахунок",
-            PaymentMethod.OTHER: "Інше",
-        }
-
         client_cell = Paragraph(f"<b>{order.client.full_name}</b>", cell_style)
 
         addr = order.delivery_address
@@ -310,8 +295,7 @@ class ReportLabOrdersPDFGenerator:
         )
         sum_cell = Paragraph(f"<b>{total} грн</b>", cell_style)
 
-        payment = PaymentMethod(order.payment_method)
-        payment_cell = Paragraph(payment_labels.get(payment, ""), cell_style)
+        payment_cell = Paragraph(order.payment_method or "", cell_style)
 
         return [
             client_cell,
@@ -320,6 +304,58 @@ class ReportLabOrdersPDFGenerator:
             sum_cell,
             payment_cell,
         ]
+
+    @staticmethod
+    def _collect_summary_data(
+        orders: list[Order],
+    ) -> list[list[str]]:
+        payment_methods: list[str] = list(
+            dict.fromkeys(order.payment_method or "" for order in orders)
+        )
+
+        items_summary: dict[str, dict] = defaultdict(
+            lambda: {
+                "quantity": 0,
+                "total": Decimal(0),
+                **{m: Decimal(0) for m in payment_methods},
+            }
+        )
+
+        for order in orders:
+            method = order.payment_method or ""
+            for item in order.items:
+                item_total = item.quantity * item.price_per_item
+                items_summary[item.name]["quantity"] += item.quantity
+                items_summary[item.name]["total"] += item_total
+                items_summary[item.name][method] += item_total
+
+        header = ["Товар", "К-сть", *payment_methods, "Разом"]
+        rows: list[list[str]] = [header]
+
+        grand_total = Decimal(0)
+        grand_total_quantity = 0
+        grand_by_method: dict[str, Decimal] = {
+            m: Decimal(0) for m in payment_methods
+        }
+
+        for name, data in sorted(items_summary.items()):
+            row = [name, str(data["quantity"])]
+            for m in payment_methods:
+                row.append(f"{data[m]} грн")
+                grand_by_method[m] += data[m]
+            row.append(f"{data['total']} грн")
+            rows.append(row)
+            grand_total += data["total"]
+            grand_total_quantity += data["quantity"]
+
+        rows.append([
+            f"Всього замовлень: {len(orders)}",
+            str(grand_total_quantity),
+            *[f"{grand_by_method[m]} грн" for m in payment_methods],
+            f"{grand_total} грн",
+        ])
+
+        return rows
 
     def _build_summary_section(
         self, orders: list[Order], shop_name: str, delivery_date: date
@@ -330,63 +366,8 @@ class ReportLabOrdersPDFGenerator:
             self._styles["title"],
         )
 
-        items_summary: dict[str, dict] = defaultdict(
-            lambda: {
-                "quantity": 0,
-                "total": Decimal(0),
-                PaymentMethod.CASH: Decimal(0),
-                PaymentMethod.BANK_TRANSFER: Decimal(0),
-                PaymentMethod.OTHER: Decimal(0),
-            }
-        )
-
-        for order in orders:
-            payment = PaymentMethod(order.payment_method)
-            for item in order.items:
-                item_total = item.quantity * item.price_per_item
-                items_summary[item.name]["quantity"] += item.quantity
-                items_summary[item.name]["total"] += item_total
-                items_summary[item.name][payment] += item_total
-
-        summary_data = [
-            [
-                "Товар",
-                "К-сть",
-                "Готівка",
-                "На рахунок",
-                "Інше",
-                "Разом",
-            ]
-        ]
-        grand_total = Decimal(0)
-        grand_total_quantity = 0
-        grand_cash = Decimal(0)
-        grand_bank = Decimal(0)
-        grand_other = Decimal(0)
-
-        for name, data in sorted(items_summary.items()):
-            summary_data.append([
-                name,
-                str(data["quantity"]),
-                f"{data[PaymentMethod.CASH]} грн",
-                f"{data[PaymentMethod.BANK_TRANSFER]} грн",
-                f"{data[PaymentMethod.OTHER]} грн",
-                f"{data['total']} грн",
-            ])
-            grand_total += data["total"]
-            grand_total_quantity += data["quantity"]
-            grand_cash += data[PaymentMethod.CASH]
-            grand_bank += data[PaymentMethod.BANK_TRANSFER]
-            grand_other += data[PaymentMethod.OTHER]
-
-        summary_data.append([
-            f"Всього замовлень: {len(orders)}",
-            str(grand_total_quantity),
-            f"{grand_cash} грн",
-            f"{grand_bank} грн",
-            f"{grand_other} грн",
-            f"{grand_total} грн",
-        ])
+        summary_data = self._collect_summary_data(orders)
+        num_payment_cols = len(summary_data[0]) - 3
 
         font_name = (
             "DejaVu"
@@ -394,10 +375,18 @@ class ReportLabOrdersPDFGenerator:
             else "Helvetica"
         )
 
-        summary_table = Table(
-            summary_data,
-            colWidths=[60 * mm, 20 * mm, 28 * mm, 28 * mm, 22 * mm, 28 * mm],
+        remaining = 186 * mm - 60 * mm - 20 * mm - 28 * mm
+        payment_col_width = (
+            remaining / num_payment_cols if num_payment_cols else 28 * mm
         )
+        col_widths = [
+            60 * mm,
+            20 * mm,
+            *([payment_col_width] * num_payment_cols),
+            28 * mm,
+        ]
+
+        summary_table = Table(summary_data, colWidths=col_widths)
         summary_table.setStyle(
             TableStyle([
                 ("FONTNAME", (0, 0), (-1, -1), font_name),

@@ -5,7 +5,12 @@ import sqlalchemy as sa
 from sqlalchemy import CheckConstraint, UniqueConstraint
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
-from backend.application.vars import ShopId, TimeSlotId, UserId
+from backend.application.vars import (
+    PaymentMethodId,
+    ShopId,
+    TimeSlotId,
+    UserId,
+)
 from backend.infrastructure.persistence.tables.base import (
     Base,
     CreatedAt,
@@ -52,6 +57,9 @@ class Shop(Base, CreatedAt, UpdatedAt):
         back_populates="shop", lazy="raise"
     )
     delivery_time_slots: Mapped[list["ShopDeliveryTimeSlot"]] = relationship(
+        back_populates="shop", lazy="raise"
+    )
+    payment_methods: Mapped[list["ShopPaymentMethod"]] = relationship(
         back_populates="shop", lazy="raise"
     )
 
@@ -143,4 +151,32 @@ class ShopDeliveryTimeSlot(Base, CreatedAt, UpdatedAt):
         return (
             f"<ShopDeliveryTimeSlot id={self.id} "
             f"shop_id={self.shop_id} {self.start_time}-{self.end_time}>"
+        )
+
+
+class ShopPaymentMethod(Base, CreatedAt, UpdatedAt):
+    __tablename__ = "shop_payment_methods"
+
+    id: Mapped[PaymentMethodId] = mapped_column(sa.UUID, primary_key=True)
+    shop_id: Mapped[ShopId] = mapped_column(
+        sa.ForeignKey("shops.id", ondelete="CASCADE"), nullable=False
+    )
+    name: Mapped[str] = mapped_column(sa.String(100), nullable=False)
+
+    shop: Mapped["Shop"] = relationship(
+        back_populates="payment_methods", lazy="raise"
+    )
+
+    __table_args__ = (
+        UniqueConstraint(
+            "shop_id",
+            "name",
+            name="uq_shop_payment_method",
+        ),
+    )
+
+    def __repr__(self) -> str:
+        return (
+            f"<ShopPaymentMethod id={self.id} "
+            f"shop_id={self.shop_id} name={self.name}>"
         )

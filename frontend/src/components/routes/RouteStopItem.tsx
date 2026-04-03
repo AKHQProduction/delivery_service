@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { type RoutePoint } from "../../types/entities/Route";
-import { paymentMap } from "../../utils/dataMap";
+
 
 interface RouteStopItemProps {
   point: RoutePoint;
@@ -103,7 +103,7 @@ export const RouteStopItem: React.FC<RouteStopItemProps> = ({
             <span className="text-xs text-gray-300">·</span>
             <span className="text-xs text-gray-400">{point.total_price} ₴</span>
             <span className="text-xs text-gray-300">·</span>
-            <span className="text-xs text-gray-400">{paymentMap[point.payment_method] ?? point.payment_method}</span>
+            <span className="text-xs text-gray-400">{point.payment_method}</span>
           </div>
         </div>
 

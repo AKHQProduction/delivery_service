@@ -12,7 +12,7 @@ export interface RoutePoint {
   coordinates: RoutePointCoordinates;
   items_summary: string;
   comment: string;
-  payment_method: "CASH" | "BANK_TRANSFER" | "OTHER";
+  payment_method: string;
   total_price: number;
 }
 

@@ -34,6 +34,7 @@ export const AddOrderForm: React.FC<AddOrderFormProps> = ({ onClose, onSave }) =
     searchProduct,
     clients,
     timeSlots,
+    paymentMethods,
     products,
     loadMoreClients,
     clientsLoadingMore,
@@ -162,6 +163,7 @@ export const AddOrderForm: React.FC<AddOrderFormProps> = ({ onClose, onSave }) =
             timeSlotId={formData.timeSlotId}
             timeSlots={timeSlots}
             paymentMethod={formData.paymentMethod}
+            paymentMethods={paymentMethods}
             note={formData.note || ""}
             onDateChange={handleDateChange}
             onTimeChange={handleTimeSlotChange}

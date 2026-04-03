@@ -10,7 +10,6 @@ from backend.application.vars import (
     Empty,
     OrderId,
     OrderItemId,
-    PaymentMethod,
     PhoneId,
     ProductId,
     ShopId,
@@ -97,7 +96,7 @@ def create_order(
     delivery_end_time: time,
     delivery_phone: str,
     delivery_address: DeliveryAddressDTO,
-    payment_method: PaymentMethod,
+    payment_method: str,
     comment: str | None,
 ) -> Order:
     return Order(
@@ -124,7 +123,7 @@ def update_order(
     delivery_phone: str | None = None,
     delivery_address: DeliveryAddressDTO | None = None,
     comment: str | Empty | None = None,
-    payment_method: PaymentMethod | None = None,
+    payment_method: str | None = None,
 ) -> None:
     if client_id is not None:
         order.client_id = client_id
@@ -141,7 +140,7 @@ def update_order(
     if comment is not None:
         order.comment = None if comment == Empty.EMPTY else comment
     if payment_method is not None:
-        order.payment_method = payment_method.value
+        order.payment_method = payment_method
 
 
 def update_order_items(

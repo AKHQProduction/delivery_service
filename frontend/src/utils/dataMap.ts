@@ -20,8 +20,3 @@ export const reverseRoleMap: Record<string, string> = {
   Менеджер: "MANAGER",
 };
 
-export const paymentMap: Record<string, string> = {
-  CASH: "Готівка",
-  BANK_TRANSFER: "На рахунок",
-  OTHER: "Інше",
-};

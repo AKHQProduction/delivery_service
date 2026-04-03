@@ -39,6 +39,7 @@ from backend.infrastructure.persistence.gateways import (
     SQLAlchemyClientGateway,
     SQLAlchemyDistrictGateway,
     SQLAlchemyOrderGateway,
+    SQLAlchemyPaymentMethodGateway,
     SQLAlchemyProductGateway,
     SQLAlchemyRouteEdgeHistoryGateway,
     SQLAlchemyRoutePlanGateway,
@@ -147,6 +148,7 @@ class PersistenceProvider(Provider):
         SQLAlchemyRouteEdgeHistoryGateway,
         SQLAlchemyRoutePlanGateway,
         SQLAlchemyTimeSlotGateway,
+        SQLAlchemyPaymentMethodGateway,
     )
 
 

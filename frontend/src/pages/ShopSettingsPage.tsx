@@ -4,6 +4,7 @@ import { Toast } from "../components/ui/Toast";
 import { ShopAddressForm } from "../components/settings/ShopAddressForm";
 import { DistrictsComponent } from "../components/settings/DistrictsComponent";
 import { TimeSlotsComponent } from "../components/settings/TimeSlotsComponent";
+import { PaymentMethodsComponent } from "../components/settings/PaymentMethodsComponent";
 import { useToast } from "../hooks/useToast";
 
 export const ShopSettingsPage: React.FC = () => {
@@ -23,6 +24,8 @@ export const ShopSettingsPage: React.FC = () => {
         <DistrictsComponent />
 
         <TimeSlotsComponent />
+
+        <PaymentMethodsComponent />
       </div>
 
       {toast.isVisible && <Toast message={toast.message} type={toast.type} onClose={hideToast} />}

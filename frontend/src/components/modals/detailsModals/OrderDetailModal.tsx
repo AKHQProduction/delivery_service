@@ -1,6 +1,6 @@
 import { ModalButtons } from "../../ui/ModalButtons";
 import leftArrowIcon from "../../../assets/icons/left_arrow.svg";
-import { paymentMap } from "../../../utils/dataMap";
+
 import { useState } from "react";
 import { EditOrderForm } from "../../forms/orders/EditOrderForm";
 
@@ -26,7 +26,7 @@ export interface Order {
 
   date: string;
   time_slot: string;
-  payment_method: keyof typeof paymentMap;
+  payment_method: string;
   note?: string;
   comment?: string;
 }
@@ -228,7 +228,7 @@ export const OrderDetailModal = ({ order, onClose, onDelete, onSave }: OrderDeta
           </h2>
 
           <div className="bg-white rounded-2xl p-5 border border-gray-200">
-            <p className="font-semibold text-gray-900">{paymentMap[order.payment_method]}</p>
+            <p className="font-semibold text-gray-900">{order.payment_method}</p>
           </div>
         </div>
 

@@ -7,7 +7,6 @@ from backend.application.vars import (
     ClientId,
     Empty,
     OrderItemId,
-    PaymentMethod,
     PhoneId,
     ProductId,
     TimeSlotId,
@@ -27,5 +26,5 @@ class UpdateOrderSchema(BaseModel):
     address_id: AddressId | None = None
     phone_id: PhoneId | None = None
     comment: str | Empty | None = None
-    payment_method: PaymentMethod | None = None
+    payment_method: str | None = None
     items: list[OrderItemSchema] | None = None

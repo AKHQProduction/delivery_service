@@ -78,3 +78,24 @@ export const getAllDistricts = async () => {
   const response = await api.get(`v1/districts/all`);
   return response.data;
 };
+
+// Payment methods settings API calls
+export const createPaymentMethod = async (name: string) => {
+  const response = await api.post(`v1/payment-methods`, { name });
+  return response.data;
+};
+
+export const updatePaymentMethod = async (payment_method_id: string, name: string) => {
+  const response = await api.patch(`v1/payment-methods/${payment_method_id}`, { name });
+  return response.data;
+};
+
+export const deletePaymentMethod = async (payment_method_id: string) => {
+  const response = await api.delete(`v1/payment-methods/${payment_method_id}`);
+  return response.data;
+};
+
+export const getAllPaymentMethods = async () => {
+  const response = await api.get(`v1/payment-methods/all`);
+  return response.data;
+};

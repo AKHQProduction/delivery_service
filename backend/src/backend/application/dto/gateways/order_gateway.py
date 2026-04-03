@@ -6,7 +6,6 @@ from backend.application.vars import (
     ClientId,
     OrderId,
     OrderItemId,
-    PaymentMethod,
     ProductId,
     ShopId,
 )
@@ -15,7 +14,7 @@ from backend.infrastructure.persistence.tables.base import DeliveryAddressDTO
 
 @dataclass(frozen=True)
 class PaymentMethodStatsReadModel:
-    method: PaymentMethod
+    method: str
     orders_sum: int
 
 
@@ -48,7 +47,7 @@ class OrderReadModel:
     client_id: ClientId
     client_name: str
     items: list[OrderItemReadModel]
-    payment_method: PaymentMethod
+    payment_method: str
 
 
 @dataclass(frozen=True)

@@ -30,7 +30,6 @@ from backend.application.vars import (
     Empty,
     OrderId,
     OrderItemId,
-    PaymentMethod,
     PhoneId,
     ProductId,
     TimeSlotId,
@@ -72,7 +71,7 @@ class EditOrderCommand:
     phone_id: PhoneId | None = None
     comment: str | Empty | None = None
     items: list[EditOrderItem] | None = None
-    payment_method: PaymentMethod | None = None
+    payment_method: str | None = None
 
     def __post_init__(self) -> None:
         if self.delivery_date is not None:

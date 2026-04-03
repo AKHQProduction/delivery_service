@@ -2,6 +2,7 @@ import { useState, useEffect, useRef, useCallback, useMemo } from "react";
 import { useClient } from "../clients/useClients";
 import { useProducts } from "../products/useProducts";
 import { useTimeSlotsSettings } from "../settings/useTimeSlotsSettings";
+import { usePaymentMethodsSettings } from "../settings/usePaymentMethodsSettings";
 import { type Client } from "../../types/entities/Client";
 import { type Product } from "../../types/entities/Product";
 
@@ -71,8 +72,9 @@ export const useOrderForm = (options: UseOrderFormOptions = {}) => {
     hasMore: clientsHasMore,
   } = useClient();
 
-  // Get time slots
+  // Get time slots and payment methods
   const { timeSlots } = useTimeSlotsSettings();
+  const { paymentMethods } = usePaymentMethodsSettings();
 
   // Merge newly created clients (at the top) with fetched clients
   const clients = useMemo(
@@ -394,6 +396,7 @@ export const useOrderForm = (options: UseOrderFormOptions = {}) => {
     clients,
     products,
     timeSlots,
+    paymentMethods,
 
     // Infinite scroll for clients
     loadMoreClients,

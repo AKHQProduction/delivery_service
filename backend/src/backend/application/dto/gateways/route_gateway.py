@@ -3,7 +3,6 @@ from dataclasses import dataclass
 from backend.application.dto.coordinates import CoordinatesDTO
 from backend.application.vars import (
     OrderId,
-    PaymentMethod,
     RoutePlanId,
     TimeSlotId,
 )
@@ -19,7 +18,7 @@ class RoutePointReadModel:
     coordinates: CoordinatesDTO | None
     items_summary: str
     comment: str | None
-    payment_method: PaymentMethod
+    payment_method: str
     total_price: int
 
 

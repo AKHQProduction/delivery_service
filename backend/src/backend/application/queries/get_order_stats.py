@@ -6,7 +6,6 @@ from backend.application.dto.gateways.order_gateway import (
     GetOrdersFilters,
     TimeSlotFilter,
 )
-from backend.application.vars import PaymentMethod
 from backend.infrastructure.idp import IdentityProvider
 from backend.infrastructure.persistence.gateways import (
     SQLAlchemyOrderGateway,
@@ -30,7 +29,7 @@ class OrderStatsByCategory:
 
 @dataclass(frozen=True)
 class OrderStatsByPaymentMethod:
-    method: PaymentMethod
+    method: str
     orders_sum: int
 
 

@@ -43,7 +43,6 @@ from backend.application.queries.get_orders import (
 from backend.application.vars import (
     KYIV_TZ,
     OrderId,
-    PaymentMethod,
     today,
 )
 from backend.infrastructure.persistence.gateways import RedisFileStorage
@@ -86,7 +85,7 @@ async def create_new_order(
                                 "quantity": 2,
                             }
                         ],
-                        "payment_method": PaymentMethod.CASH,
+                        "payment_method": "Готівка",
                         "comment": (
                             "Доставити до 12:00, передзвоніть за 30 хвилин"
                         ),
@@ -122,7 +121,7 @@ async def create_new_order(
                                 "quantity": 50,
                             },
                         ],
-                        "payment_method": PaymentMethod.BANK_TRANSFER,
+                        "payment_method": "На рахунок",
                         "comment": "Доставка після 14:00, домофон не працює",
                     },
                 ),
@@ -144,7 +143,7 @@ async def create_new_order(
                                 "quantity": 1,
                             }
                         ],
-                        "payment_method": PaymentMethod.OTHER,
+                        "payment_method": "Інше",
                     },
                 ),
             }
@@ -285,7 +284,7 @@ async def update_order(
                 "change_payment_method": Example(
                     description="Change payment method",
                     value={
-                        "payment_method": PaymentMethod.BANK_TRANSFER,
+                        "payment_method": "На рахунок",
                     },
                 ),
                 "full_update": Example(
@@ -299,7 +298,7 @@ async def update_order(
                         "phone_id": 1,
                         "address_id": 2,
                         "comment": "Терміново",
-                        "payment_method": PaymentMethod.CASH,
+                        "payment_method": "Готівка",
                         "items": [
                             {"id": 1, "quantity": 10},
                             {

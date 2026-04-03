@@ -6,11 +6,13 @@ from backend.application.errors import (
     AuthorizationError,
     UserAlreadyRelatedToShopError,
 )
+from backend.application.services.payment_method import create_payment_method
 from backend.application.services.shop import create_shop
 from backend.application.services.time_slot import create_time_slot
 from backend.application.vars import ShopRole
 from backend.infrastructure.idp import IdentityProvider
 from backend.infrastructure.persistence.gateways import (
+    SQLAlchemyPaymentMethodGateway,
     SQLAlchemyShopGateway,
     SQLAlchemyUserGateway,
 )
@@ -32,6 +34,12 @@ DEFAULT_TIME_SLOTS: list[tuple[str, time, time]] = [
     ("Друга половина дня", time(14, 0), time(21, 0)),
 ]
 
+DEFAULT_PAYMENT_METHODS: list[str] = [
+    "Готівка",
+    "На рахунок",
+    "Інше",
+]
+
 
 class CreateShopCommandHandler:
     def __init__(
@@ -41,12 +49,14 @@ class CreateShopCommandHandler:
         identity_provider: IdentityProvider,
         tr_manager: TransactionManager,
         time_slot_gateway: SQLAlchemyTimeSlotGateway,
+        payment_method_gateway: SQLAlchemyPaymentMethodGateway,
     ) -> None:
         self._shop_gateway = shop_gateway
         self._user_gateway = user_gateway
         self._identity_provider = identity_provider
         self._tr_manager = tr_manager
         self._time_slot_gateway = time_slot_gateway
+        self._payment_method_gateway = payment_method_gateway
 
     async def handle(self, command: CreateShopCommand) -> None:
         logger.info("Creating shop: name=%s", command.name)
@@ -83,6 +93,14 @@ class CreateShopCommandHandler:
                 label=label,
             )
             self._time_slot_gateway.save(ts)
+
+        for name in DEFAULT_PAYMENT_METHODS:
+            pm = create_payment_method(
+                payment_method_id=self._payment_method_gateway.next_id(),
+                shop_id=shop_id,
+                name=name,
+            )
+            self._payment_method_gateway.save(pm)
 
         await self._tr_manager.commit()
         logger.info(

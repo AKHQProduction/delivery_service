@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { PageHeader } from "../components/ui/PageHeader";
 import { getOrderStats } from "../services/api/ordersApi";
-import { paymentMap } from "../utils/dataMap";
+
 import { DateInput } from "../components/shared/DateInput";
 
 interface OrderStats {
@@ -162,7 +162,7 @@ export const OrdersStatsPage = () => {
                         key={`${payment.method}-${index}`}
                         className="flex flex-col items-center p-3 bg-gray-50 rounded-lg border border-gray-100"
                       >
-                        <p className="text-xs text-gray-600 mb-1">{paymentMap[payment.method]}</p>
+                        <p className="text-xs text-gray-600 mb-1">{payment.method}</p>
                         <p className="text-lg font-bold text-gray-900">{payment.orders_sum}₴</p>
                       </div>
                     );

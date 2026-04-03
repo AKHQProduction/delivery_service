@@ -3,6 +3,7 @@ import { useOrders } from "../../../hooks/orders/useOrders";
 import { useClient } from "../../../hooks/clients/useClients";
 import { useProducts } from "../../../hooks/products/useProducts";
 import { useTimeSlotsSettings } from "../../../hooks/settings/useTimeSlotsSettings";
+import { usePaymentMethodsSettings } from "../../../hooks/settings/usePaymentMethodsSettings";
 import { getOrderById } from "../../../services/api/ordersApi";
 import { getClientById } from "../../../services/api/clientApi";
 import { type Client } from "../../../types/entities/Client";
@@ -66,6 +67,7 @@ export const EditOrderForm: React.FC<EditOrderFormProps> = ({ onClose, onSave, o
     hasMore: productsHasMore,
   } = useProducts();
   const { timeSlots } = useTimeSlotsSettings();
+  const { paymentMethods } = usePaymentMethodsSettings();
 
   // Form state
   const [selectedClient, setSelectedClient] = useState<Client | null>(null);
@@ -844,11 +846,10 @@ export const EditOrderForm: React.FC<EditOrderFormProps> = ({ onClose, onSave, o
               value={paymentMethod}
               required={true}
               onChange={(e) => setPaymentMethod(e.target.value)}
-              options={[
-                { value: "CASH", label: "Готівка" },
-                { value: "BANK_TRANSFER", label: "На рахунок" },
-                { value: "OTHER", label: "Інше" },
-              ]}
+              options={paymentMethods.map((m) => ({
+                value: m.name,
+                label: m.name,
+              }))}
             />
           </div>
 

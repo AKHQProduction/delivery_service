@@ -29,6 +29,7 @@ from backend.application.vars import (
     ClientId,
     DistrictId,
     OrderId,
+    PaymentMethodId,
     ProductId,
     ShopId,
     ShopRole,
@@ -67,6 +68,7 @@ from backend.infrastructure.persistence.tables.clients import (
 from backend.infrastructure.persistence.tables.orders import Order, OrderItem
 from backend.infrastructure.persistence.tables.shops import (
     ShopDeliveryTimeSlot,
+    ShopPaymentMethod,
 )
 
 
@@ -266,6 +268,7 @@ def setup_full_test_user_with_shop(
     create_role,
     create_shop_membership,
     setup_test_time_slot,
+    setup_test_payment_method,
 ):
     async def _setup_user(
         telegram_id: int,
@@ -305,6 +308,9 @@ def setup_full_test_user_with_shop(
             end_time=time(21, 0),
             label="Друга половина дня",
         )
+        await setup_test_payment_method(shop_id=shop_id, name="Готівка")
+        await setup_test_payment_method(shop_id=shop_id, name="На рахунок")
+        await setup_test_payment_method(shop_id=shop_id, name="Інше")
         return user_id, shop_id
 
     return _setup_user
@@ -459,6 +465,29 @@ def setup_test_time_slot(session: AsyncSession):
         return time_slot_id
 
     return _setup_test_time_slot
+
+
+@pytest.fixture()
+def setup_test_payment_method(session: AsyncSession):
+    async def _setup_test_payment_method(
+        shop_id: ShopId,
+        payment_method_id: PaymentMethodId | None = None,
+        name: str = "Тестовий метод",
+    ) -> PaymentMethodId:
+        if payment_method_id is None:
+            payment_method_id = PaymentMethodId(uuid.uuid4())
+
+        await session.execute(
+            insert(ShopPaymentMethod).values(
+                id=payment_method_id,
+                shop_id=shop_id,
+                name=name,
+            )
+        )
+
+        return payment_method_id
+
+    return _setup_test_payment_method
 
 
 @pytest.fixture()

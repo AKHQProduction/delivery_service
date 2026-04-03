@@ -1,6 +1,6 @@
 import React from "react";
 import { type RoutePoint } from "../../types/entities/Route";
-import { paymentMap } from "../../utils/dataMap";
+
 
 interface UnroutableOrdersListProps {
   orders: RoutePoint[];
@@ -37,7 +37,7 @@ export const UnroutableOrdersList: React.FC<UnroutableOrdersListProps> = ({ orde
                 <span className="text-xs text-gray-300">·</span>
                 <span className="text-xs text-gray-400">{order.total_price} ₴</span>
                 <span className="text-xs text-gray-300">·</span>
-                <span className="text-xs text-gray-400">{paymentMap[order.payment_method] ?? order.payment_method}</span>
+                <span className="text-xs text-gray-400">{order.payment_method}</span>
               </div>
             </div>
             <button

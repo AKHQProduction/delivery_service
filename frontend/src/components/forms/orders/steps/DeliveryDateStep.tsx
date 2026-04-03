@@ -24,6 +24,10 @@ interface DeliveryDateStepProps {
     label?: string;
   }[];
   paymentMethod: string;
+  paymentMethods: {
+    payment_method_id: string;
+    name: string;
+  }[];
   note: string;
   onDateChange: (date: string) => void;
   onTimeChange: (time: string) => void;
@@ -40,6 +44,7 @@ export const DeliveryDateStep: React.FC<DeliveryDateStepProps> = ({
   timeSlotId,
   timeSlots,
   paymentMethod,
+  paymentMethods,
   note,
   onDateChange,
   onTimeChange,
@@ -108,11 +113,10 @@ export const DeliveryDateStep: React.FC<DeliveryDateStepProps> = ({
         value={paymentMethod}
         required={true}
         onChange={(e) => onPaymentMethodChange(e.target.value)}
-        options={[
-          { value: "CASH", label: "Готівка" },
-          { value: "BANK_TRANSFER", label: "На рахунок" },
-          { value: "OTHER", label: "Інше" },
-        ]}
+        options={paymentMethods.map((m) => ({
+          value: m.name,
+          label: m.name,
+        }))}
       />
 
       <div>

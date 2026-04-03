@@ -25,6 +25,7 @@ export const AddOrderFormWeb: React.FC<AddOrderFormWebProps> = ({ onClose, onSav
     clients,
     products,
     timeSlots,
+    paymentMethods,
     loadMoreClients,
     clientsLoadingMore,
     clientsHasMore,
@@ -488,11 +489,10 @@ export const AddOrderFormWeb: React.FC<AddOrderFormWebProps> = ({ onClose, onSav
               value={formData.paymentMethod}
               required={true}
               onChange={(e) => handlePaymentMethodChange(e.target.value)}
-              options={[
-                { value: "CASH", label: "Готівка" },
-                { value: "BANK_TRANSFER", label: "На рахунок" },
-                { value: "OTHER", label: "Інше" },
-              ]}
+              options={paymentMethods.map((m) => ({
+                value: m.name,
+                label: m.name,
+              }))}
             />
 
             <div>

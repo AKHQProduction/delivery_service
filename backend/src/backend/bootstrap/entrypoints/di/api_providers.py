@@ -26,6 +26,9 @@ from backend.application.commands.create_district import (
     CreateDistrictCommandHandler,
 )
 from backend.application.commands.create_order import CreateOrderCommandHandler
+from backend.application.commands.create_payment_method import (
+    CreatePaymentMethodCommandHandler,
+)
 from backend.application.commands.create_product import (
     CreateProductCommandHandler,
 )
@@ -42,6 +45,9 @@ from backend.application.commands.delete_district import (
     DeleteDistrictCommandHandler,
 )
 from backend.application.commands.delete_order import DeleteOrderCommandHandler
+from backend.application.commands.delete_payment_method import (
+    DeletePaymentMethodCommandHandler,
+)
 from backend.application.commands.delete_product import (
     DeleteProductCommandHandler,
 )
@@ -56,6 +62,9 @@ from backend.application.commands.edit_district import (
     EditDistrictCommandHandler,
 )
 from backend.application.commands.edit_order import EditOrderCommandHandler
+from backend.application.commands.edit_payment_method import (
+    EditPaymentMethodCommandHandler,
+)
 from backend.application.commands.edit_product import EditProductCommandHandler
 from backend.application.commands.edit_shop import EditShopCommandHandler
 from backend.application.commands.edit_time_slot import (
@@ -96,6 +105,9 @@ from backend.application.queries.get_order_stats import (
     GetOrderStatsQueryHandler,
 )
 from backend.application.queries.get_orders import GetOrdersQueryHandler
+from backend.application.queries.get_payment_methods import (
+    GetPaymentMethodsQueryHandler,
+)
 from backend.application.queries.get_product import GetProductQueryHandler
 from backend.application.queries.get_products import GetProductsQueryHandler
 from backend.application.queries.get_route import GetRouteQueryHandler
@@ -251,6 +263,10 @@ class APIInteractorsProvider(Provider):
         EditTimeSlotCommandHandler,
         DeleteTimeSlotCommandHandler,
         GetTimeSlotsQueryHandler,
+        CreatePaymentMethodCommandHandler,
+        EditPaymentMethodCommandHandler,
+        DeletePaymentMethodCommandHandler,
+        GetPaymentMethodsQueryHandler,
         EditShopCommandHandler,
         CreateShopCommandHandler,
         ImportClientsCommandHandler,

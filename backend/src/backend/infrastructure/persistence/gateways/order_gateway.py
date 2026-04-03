@@ -30,7 +30,6 @@ from backend.application.validators import (
 from backend.application.vars import (
     ClientId,
     OrderId,
-    PaymentMethod,
     ProductId,
     ShopId,
 )
@@ -144,7 +143,7 @@ class SQLAlchemyOrderGateway:
             client_id=ClientId(mapped_cast(UUID, row.client_id)),
             client_name=mapped_cast(str, row.client.full_name),
             items=[self._to_item_read_model(item) for item in row.items],
-            payment_method=PaymentMethod(mapped_cast(str, row.payment_method)),
+            payment_method=mapped_cast(str, row.payment_method),
         )
 
     @staticmethod
@@ -327,7 +326,7 @@ class SQLAlchemyOrderGateway:
         result = await self._session.execute(query)
         return [
             PaymentMethodStatsReadModel(
-                method=PaymentMethod(mapped_cast(str, row.payment_method)),
+                method=mapped_cast(str, row.payment_method),
                 orders_sum=int(row.orders_sum or 0),
             )
             for row in result.all()
