@@ -11,12 +11,12 @@ from uuid_utils.compat import uuid7
 from backend.application.dto.coordinates import CoordinatesDTO
 from backend.application.dto.gateways import Pagination, SortOrder
 from backend.application.dto.gateways.order_gateway import (
-    CategoryStatsReadModel,
     GetOrdersFilters,
     OrderItemReadModel,
     OrderReadModel,
     OrderStatsReadModel,
     PaymentMethodStatsReadModel,
+    ProductStatsReadModel,
     TimeSlotFilter,
     TimeSlotStatsReadModel,
 )
@@ -33,13 +33,11 @@ from backend.application.vars import (
     ProductId,
     ShopId,
 )
-from backend.infrastructure.persistence.tables.categories import Category
 from backend.infrastructure.persistence.tables.clients import Client
 from backend.infrastructure.persistence.tables.orders import (
     Order,
     OrderItem,
 )
-from backend.infrastructure.persistence.tables.products import Product
 from backend.infrastructure.persistence.utils.cast import mapped_cast
 from backend.infrastructure.persistence.utils.escape import escape_like
 
@@ -221,7 +219,7 @@ class SQLAlchemyOrderGateway:
             time_slot_stats=await self._get_time_slot_stats(
                 filters, time_slots_filter
             ),
-            category_stats=await self._get_category_stats(filters),
+            product_stats=await self._get_product_stats(filters),
             payment_method_stats=payment_method_stats,
         )
 
@@ -278,30 +276,26 @@ class SQLAlchemyOrderGateway:
             for label in slot_labels
         ]
 
-    async def _get_category_stats(
+    async def _get_product_stats(
         self, filters: GetOrdersFilters
-    ) -> list[CategoryStatsReadModel]:
+    ) -> list[ProductStatsReadModel]:
         query = (
             select(
-                func.coalesce(Category.name, "Без категорії").label(
-                    "category_name"
-                ),
+                OrderItem.name.label("product_name"),
                 func.coalesce(func.sum(OrderItem.quantity), 0).label(
                     "total_quantity"
                 ),
             )
             .select_from(Order)
             .join(OrderItem, Order.id == OrderItem.order_id)
-            .join(Product, OrderItem.product_id == Product.id)
-            .outerjoin(Category, Product.category_id == Category.id)
-            .group_by(Category.id, Category.name)
+            .group_by(OrderItem.name)
         )
         query = self._apply_order_filters(query, filters)
 
         result = await self._session.execute(query)
         return [
-            CategoryStatsReadModel(
-                name=mapped_cast(str, row.category_name),
+            ProductStatsReadModel(
+                name=mapped_cast(str, row.product_name),
                 quantity=int(row.total_quantity or 0),
             )
             for row in result.all()

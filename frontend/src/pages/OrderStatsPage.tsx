@@ -15,7 +15,7 @@ interface OrderStats {
     total: number;
   }[];
   total_orders_sum: number;
-  category_stats: {
+  product_stats: {
     name: string;
     quantity: number;
   }[];
@@ -184,6 +184,46 @@ export const OrdersStatsPage = () => {
                   strokeLinecap="round"
                   strokeLinejoin="round"
                   strokeWidth={2}
+                  d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"
+                />
+              </svg>
+              Розподіл по товарах
+            </h3>
+
+            {stats.product_stats.length > 0 ? (
+              stats.product_stats.map((product) => (
+                <div
+                  key={product.name}
+                  className="flex items-center justify-between p-4 bg-gradient-to-r from-purple-50 to-pink-50 rounded-xl border border-purple-200 mb-3"
+                >
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 rounded-full bg-purple-400 flex items-center justify-center">
+                      <span className="text-xl">📦</span>
+                    </div>
+                    <span className="font-semibold text-gray-900">{product.name}</span>
+                  </div>
+                  <span className="text-2xl font-bold text-gray-900">{product.quantity}</span>
+                </div>
+              ))
+            ) : (
+              <div className="flex items-center justify-center py-6">
+                <p className="text-gray-500 text-center">Немає даних по товарах.</p>
+              </div>
+            )}
+          </div>
+
+          <div className="bg-white rounded-2xl p-5 shadow-sm border border-gray-200">
+            <h3 className="text-base font-bold text-gray-900 mb-4 flex items-center gap-2">
+              <svg
+                className="w-5 h-5 text-gray-600"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
                   d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"
                 />
               </svg>
@@ -192,11 +232,9 @@ export const OrdersStatsPage = () => {
 
             <div className="space-y-3">
               {stats.time_slot_stats?.map((slot: { time_slot: string; total: number }) => {
-                // Extract start time from time_slot (e.g., "09:00" from "09:00-14:00")
                 const startTime = slot.time_slot.split("-")[0];
                 const [hours] = startTime.split(":").map(Number);
 
-                // Determine if it's before or after 18:00
                 const isBeforeEvening = hours < 18;
 
                 return (
@@ -223,46 +261,6 @@ export const OrdersStatsPage = () => {
                 );
               })}
             </div>
-          </div>
-
-          <div className="bg-white rounded-2xl p-5 shadow-sm border border-gray-200">
-            <h3 className="text-base font-bold text-gray-900 mb-4 flex items-center gap-2">
-              <svg
-                className="w-5 h-5 text-gray-600"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"
-                />
-              </svg>
-              Розподіл по категоріям
-            </h3>
-
-            {stats.category_stats.length > 0 ? (
-              stats.category_stats.map((category) => (
-                <div
-                  key={category.name}
-                  className="flex items-center justify-between p-4 bg-gradient-to-r from-purple-50 to-pink-50 rounded-xl border border-purple-200 mb-3"
-                >
-                  <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 rounded-full bg-purple-400 flex items-center justify-center">
-                      <span className="text-xl">📦</span>
-                    </div>
-                    <span className="font-semibold text-gray-900">{category.name}</span>
-                  </div>
-                  <span className="text-2xl font-bold text-gray-900">{category.quantity}</span>
-                </div>
-              ))
-            ) : (
-              <div className="flex items-center justify-center py-6">
-                <p className="text-gray-500 text-center">Немає даних по категоріям.</p>
-              </div>
-            )}
           </div>
         </div>
       ) : null}

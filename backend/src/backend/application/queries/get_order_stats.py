@@ -22,7 +22,7 @@ class GetOrderStatsQuery:
 
 
 @dataclass(frozen=True)
-class OrderStatsByCategory:
+class OrderStatsByProduct:
     name: str
     quantity: int
 
@@ -44,7 +44,7 @@ class GetOrderStatsResponse:
     total_orders: int
     total_orders_sum: int
     time_slot_stats: list[OrderStatsByTimeSlot]
-    category_stats: list[OrderStatsByCategory]
+    product_stats: list[OrderStatsByProduct]
     payment_method_stats: list[OrderStatsByPaymentMethod]
 
 
@@ -105,9 +105,9 @@ class GetOrderStatsQueryHandler:
                 )
                 for slot in stats.time_slot_stats
             ],
-            category_stats=[
-                OrderStatsByCategory(name=cat.name, quantity=cat.quantity)
-                for cat in stats.category_stats
+            product_stats=[
+                OrderStatsByProduct(name=p.name, quantity=p.quantity)
+                for p in stats.product_stats
             ],
             payment_method_stats=[
                 OrderStatsByPaymentMethod(

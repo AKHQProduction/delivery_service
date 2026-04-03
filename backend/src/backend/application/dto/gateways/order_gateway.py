@@ -67,7 +67,7 @@ class GetOrdersFilters:
 
 
 @dataclass(frozen=True)
-class CategoryStatsReadModel:
+class ProductStatsReadModel:
     name: str
     quantity: int
 
@@ -83,5 +83,5 @@ class OrderStatsReadModel:
     total_orders: int
     total_orders_sum: int
     time_slot_stats: list[TimeSlotStatsReadModel]
-    category_stats: list[CategoryStatsReadModel]
+    product_stats: list[ProductStatsReadModel]
     payment_method_stats: list[PaymentMethodStatsReadModel]
