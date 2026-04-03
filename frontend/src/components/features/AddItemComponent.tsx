@@ -100,7 +100,7 @@ export const AddItemComponent = () => {
           isOpen={isModalOpen}
           onClose={() => setIsModalOpen(false)}
           title={currentConfig.title}
-          size={currentConfig.component === "AddOrderForm" ? "lg" : undefined}
+          size={currentConfig.component === "AddOrderForm" ? "5xl" : undefined}
         >
           {renderModalContent()}
         </Modal>
