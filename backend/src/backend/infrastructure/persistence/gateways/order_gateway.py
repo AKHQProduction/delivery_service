@@ -240,8 +240,8 @@ class SQLAlchemyOrderGateway:
         time_slot_case = case(
             *[
                 (
-                    (Order.delivery_start_time >= slot.start_time)
-                    & (Order.delivery_start_time < slot.end_time),
+                    (Order.delivery_start_time == slot.start_time)
+                    & (Order.delivery_end_time == slot.end_time),
                     literal(label),
                 )
                 for label, slot in slot_labels.items()
@@ -256,8 +256,8 @@ class SQLAlchemyOrderGateway:
             .select_from(Order)
             .where(
                 or_(*[
-                    (Order.delivery_start_time >= slot.start_time)
-                    & (Order.delivery_start_time < slot.end_time)
+                    (Order.delivery_start_time == slot.start_time)
+                    & (Order.delivery_end_time == slot.end_time)
                     for slot in time_slots_filter
                 ])
             )
