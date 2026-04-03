@@ -27,5 +27,4 @@ class UpdateOrderSchema(BaseModel):
     phone_id: PhoneId | None = None
     comment: str | Empty | None = None
     payment_method: str | None = None
-    is_paid: bool | None = None
     items: list[OrderItemSchema] | None = None

@@ -336,7 +336,6 @@ async def update_order(
         phone_id=body.phone_id,
         comment=body.comment,
         payment_method=body.payment_method,
-        is_paid=body.is_paid,
         items=items,
     )
     await handler.handle(command)

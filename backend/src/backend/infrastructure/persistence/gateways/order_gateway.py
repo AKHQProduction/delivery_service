@@ -142,7 +142,6 @@ class SQLAlchemyOrderGateway:
             client_name=mapped_cast(str, row.client.full_name),
             items=[self._to_item_read_model(item) for item in row.items],
             payment_method=mapped_cast(str, row.payment_method),
-            is_paid=row.is_paid,
         )
 
     @staticmethod

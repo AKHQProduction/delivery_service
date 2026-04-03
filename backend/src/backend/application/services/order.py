@@ -98,7 +98,6 @@ def create_order(
     delivery_address: DeliveryAddressDTO,
     payment_method: str,
     comment: str | None,
-    is_paid: bool = False,
 ) -> Order:
     return Order(
         id=order_id,
@@ -111,7 +110,6 @@ def create_order(
         shop_id=shop_id,
         client_id=client_id,
         payment_method=payment_method,
-        is_paid=is_paid,
     )
 
 
@@ -126,7 +124,6 @@ def update_order(
     delivery_address: DeliveryAddressDTO | None = None,
     comment: str | Empty | None = None,
     payment_method: str | None = None,
-    is_paid: bool | None = None,
 ) -> None:
     if client_id is not None:
         order.client_id = client_id
@@ -144,8 +141,6 @@ def update_order(
         order.comment = None if comment == Empty.EMPTY else comment
     if payment_method is not None:
         order.payment_method = payment_method
-    if is_paid is not None:
-        order.is_paid = is_paid
 
 
 def update_order_items(

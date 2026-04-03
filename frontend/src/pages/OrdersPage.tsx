@@ -38,7 +38,6 @@ export interface Order {
 
   note?: string;
   comment?: string;
-  is_paid?: boolean;
 }
 
 export const OrdersPage = () => {
@@ -290,36 +289,6 @@ export const OrdersPage = () => {
                           0,
                         )}{" "}
                         товарів
-                      </span>
-                    </div>
-
-                    <div className="flex items-center gap-3">
-                      <div className={`w-9 h-9 rounded-full flex items-center justify-center shrink-0 ${typedOrder.is_paid ? "bg-green-100" : "bg-red-100"}`}>
-                        <svg
-                          className={`w-5 h-5 ${typedOrder.is_paid ? "text-green-600" : "text-red-500"}`}
-                          fill="none"
-                          stroke="currentColor"
-                          viewBox="0 0 24 24"
-                        >
-                          {typedOrder.is_paid ? (
-                            <path
-                              strokeLinecap="round"
-                              strokeLinejoin="round"
-                              strokeWidth={2}
-                              d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"
-                            />
-                          ) : (
-                            <path
-                              strokeLinecap="round"
-                              strokeLinejoin="round"
-                              strokeWidth={2}
-                              d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
-                            />
-                          )}
-                        </svg>
-                      </div>
-                      <span className={`text-sm font-medium ${typedOrder.is_paid ? "text-green-600" : "text-red-500"}`}>
-                        {typedOrder.is_paid ? "Оплачено" : "Не оплачено"}
                       </span>
                     </div>
                   </div>

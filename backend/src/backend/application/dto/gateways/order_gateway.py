@@ -48,7 +48,6 @@ class OrderReadModel:
     client_name: str
     items: list[OrderItemReadModel]
     payment_method: str
-    is_paid: bool
 
 
 @dataclass(frozen=True)
