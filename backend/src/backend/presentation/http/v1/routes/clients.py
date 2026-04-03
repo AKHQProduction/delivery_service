@@ -1,8 +1,17 @@
+import json
 from typing import Annotated
 
 from dishka import FromDishka
 from dishka.integrations.fastapi import DishkaRoute
-from fastapi import APIRouter, Body, Depends, HTTPException, UploadFile, status
+from fastapi import (
+    APIRouter,
+    Body,
+    Depends,
+    Form,
+    HTTPException,
+    UploadFile,
+    status,
+)
 from fastapi.openapi.models import Example
 from fastapi.responses import Response
 from fastapi.security import HTTPBearer
@@ -36,8 +45,17 @@ from backend.application.queries.get_clients import (
     GetClientsQuery,
     GetClientsQueryHandler,
 )
+from backend.application.queries.preview_import_xlsx import (
+    PreviewImportXlsxQuery,
+    PreviewImportXlsxQueryHandler,
+)
 from backend.application.vars import AddressId, ClientId, DistrictId, PhoneId
 from backend.infrastructure.persistence.gateways import RedisFileStorage
+from backend.infrastructure.xlsx.client_xlsx_preview import PreviewResult
+from backend.infrastructure.xlsx.column_mapping import (
+    SystemField,
+    validate_mapping,
+)
 from backend.presentation.http.v1.schemas.client import EditClientSchema
 from backend.presentation.http.v1.schemas.error import ErrorSchema
 
@@ -303,6 +321,28 @@ async def update_client(
 
 
 @router.post(
+    "/import/preview",
+    status_code=status.HTTP_200_OK,
+    responses={
+        status.HTTP_401_UNAUTHORIZED: {"model": ErrorSchema},
+        status.HTTP_403_FORBIDDEN: {"model": ErrorSchema},
+    },
+    dependencies=[Depends(HTTPBearer(auto_error=False))],
+)
+async def preview_import(
+    file: UploadFile,
+    handler: FromDishka[PreviewImportXlsxQueryHandler],
+) -> PreviewResult:
+    if not file.filename or not file.filename.endswith(".xlsx"):
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_CONTENT,
+            detail="Only .xlsx files are supported",
+        )
+    file_bytes = await file.read()
+    return await handler.handle(PreviewImportXlsxQuery(file_bytes=file_bytes))
+
+
+@router.post(
     "/import",
     status_code=status.HTTP_200_OK,
     responses={
@@ -314,14 +354,41 @@ async def update_client(
 async def import_clients(
     file: UploadFile,
     handler: FromDishka[ImportClientsCommandHandler],
+    column_mapping: Annotated[str | None, Form()] = None,
+    first_row_is_header: Annotated[bool, Form()] = True,
+    original_headers: Annotated[str | None, Form()] = None,
 ) -> ImportClientsResult:
     if not file.filename or not file.filename.endswith(".xlsx"):
         raise HTTPException(
             status_code=status.HTTP_422_UNPROCESSABLE_CONTENT,
             detail="Only .xlsx files are supported",
         )
+
+    mapping = None
+    headers = None
+
+    if column_mapping:
+        raw = json.loads(column_mapping)
+        mapping = {int(k): SystemField(v) for k, v in raw.items()}
+        errors = validate_mapping(mapping)
+        if errors:
+            raise HTTPException(
+                status_code=status.HTTP_422_UNPROCESSABLE_CONTENT,
+                detail=errors,
+            )
+
+    if original_headers:
+        headers = json.loads(original_headers)
+
     file_bytes = await file.read()
-    return await handler.handle(ImportClientsCommand(file_bytes=file_bytes))
+    return await handler.handle(
+        ImportClientsCommand(
+            file_bytes=file_bytes,
+            column_mapping=mapping,
+            first_row_is_header=first_row_is_header,
+            original_headers=headers,
+        )
+    )
 
 
 @router.get(

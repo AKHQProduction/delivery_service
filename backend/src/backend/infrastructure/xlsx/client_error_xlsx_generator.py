@@ -32,14 +32,20 @@ BOLD = Font(bold=True)
 
 
 class ClientErrorXlsxGenerator:
-    def generate(self, rows: list[RejectedClientRow]) -> bytes:
+    def generate(
+        self,
+        rows: list[RejectedClientRow],
+        headers: list[str] | None = None,
+    ) -> bytes:
         wb = Workbook()
         ws = wb.active
         if ws is None:
             wb.close()
             return b""
 
-        for col_idx, header in enumerate(HEADERS, start=1):
+        header_row = [*headers, "Помилка"] if headers is not None else HEADERS
+
+        for col_idx, header in enumerate(header_row, start=1):
             cell = ws.cell(row=1, column=col_idx, value=header)
             cell.font = BOLD
 
@@ -48,7 +54,7 @@ class ClientErrorXlsxGenerator:
                 ws.cell(row=row_offset, column=col_idx, value=value)
             ws.cell(
                 row=row_offset,
-                column=len(HEADERS),
+                column=len(header_row),
                 value=rejected.error_message,
             )
 

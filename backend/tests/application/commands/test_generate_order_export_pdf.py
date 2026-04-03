@@ -1,5 +1,5 @@
 from datetime import time as dt_time
-from unittest.mock import AsyncMock, Mock, patch
+from unittest.mock import AsyncMock, Mock
 from uuid import uuid4
 
 import pytest
@@ -12,11 +12,13 @@ from backend.application.vars import (
     ExportDocType,
     RoutingMode,
     ShopRole,
+    TimeSlotId,
     today,
 )
 
 _START = dt_time(9, 0)
 _END = dt_time(18, 0)
+_SLOT_ID = TimeSlotId(uuid4())
 
 
 def _make_order(order_id=None):
@@ -42,7 +44,12 @@ def _make_handler(*, route_plan=None):
     shop_gateway.load_shop.return_value = shop
 
     order_gateway = AsyncMock()
+
+    time_slot = Mock()
+    time_slot.start_time = "09:00"
+    time_slot.end_time = "18:00"
     time_slot_gateway = AsyncMock()
+    time_slot_gateway.load.return_value = time_slot
 
     route_plan_gateway = AsyncMock()
     route_plan_gateway.load_by_date.return_value = route_plan
@@ -85,6 +92,7 @@ async def test_uses_existing_route_plan():
             delivery_date=today(),
             doc_type=ExportDocType.ORDER_LIST,
             routing_mode=RoutingMode.OPTIMIZED,
+            time_slot_id=_SLOT_ID,
         )
     )
 
@@ -102,17 +110,14 @@ async def test_falls_back_to_optimizer_when_no_plan():
     order_gw.load_by_date.return_value = [o1, o2]
     optimizer.compute.return_value = [o2.id, o1.id]
 
-    with patch("asyncio.get_running_loop") as mock_loop:
-        mock_loop.return_value.run_in_executor = AsyncMock(
-            return_value=b"%PDF-fake"
+    await handler.handle(
+        GenerateOrderExportPDFCommand(
+            delivery_date=today(),
+            doc_type=ExportDocType.ORDER_LIST,
+            routing_mode=RoutingMode.OPTIMIZED,
+            time_slot_id=_SLOT_ID,
         )
-        await handler.handle(
-            GenerateOrderExportPDFCommand(
-                delivery_date=today(),
-                doc_type=ExportDocType.ORDER_LIST,
-                routing_mode=RoutingMode.OPTIMIZED,
-            )
-        )
+    )
 
     route_plan_gw.load_by_date.assert_awaited_once()
     optimizer.compute.assert_awaited_once()

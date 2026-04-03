@@ -1,7 +1,17 @@
-import { useState, useRef } from "react";
+import { useState } from "react";
 import { Modal } from "../modals/Modal";
-import { importClientsFromXlsx, type ImportResult } from "../../services/api/clientApi";
-import { usePlatform } from "../../platforms/PlatformProvider";
+import {
+  importClientsFromXlsx,
+  previewImportXlsx,
+  type ColumnMapping,
+  type ImportResult,
+  type PreviewResult,
+} from "../../services/api/clientApi";
+import { ProgressSteps } from "../shared/ProgressSteps";
+import { UploadStep } from "./import/UploadStep";
+import { ColumnMappingStep } from "./import/ColumnMappingStep";
+import { ImportResultStep } from "./import/ImportResultStep";
+import { autoMatchColumns, REQUIRED_SYSTEM_FIELDS } from "./import/constants";
 
 interface ImportClientsModalProps {
   isOpen: boolean;
@@ -9,38 +19,25 @@ interface ImportClientsModalProps {
   onSuccess: () => void;
 }
 
-const getErrorReportUrl = (fileId: string): string => {
-  const baseUrl = import.meta.env.VITE_API_URL;
-  return `${baseUrl}/v1/clients/export/errors/${fileId}`;
-};
-
 export const ImportClientsModal: React.FC<ImportClientsModalProps> = ({ isOpen, onClose, onSuccess }) => {
-  const { files } = usePlatform();
+  const [step, setStep] = useState<1 | 2 | 3>(1);
   const [file, setFile] = useState<File | null>(null);
-  const [importing, setImporting] = useState(false);
   const [error, setError] = useState("");
+  const [preview, setPreview] = useState<PreviewResult | null>(null);
+  const [mapping, setMapping] = useState<ColumnMapping>({});
+  const [firstRowIsHeader, setFirstRowIsHeader] = useState(true);
+  const [loading, setLoading] = useState(false);
   const [result, setResult] = useState<ImportResult | null>(null);
-  const [dragging, setDragging] = useState(false);
-  const fileInputRef = useRef<HTMLInputElement>(null);
-
-  const validateAndSetFile = (selected: File) => {
-    setError("");
-    setResult(null);
-    if (!selected.name.endsWith(".xlsx")) {
-      setError("Підтримується лише формат .xlsx");
-      return;
-    }
-    setFile(selected);
-  };
 
   const resetState = () => {
+    setStep(1);
     setFile(null);
     setError("");
+    setPreview(null);
+    setMapping({});
+    setFirstRowIsHeader(true);
+    setLoading(false);
     setResult(null);
-    setImporting(false);
-    if (fileInputRef.current) {
-      fileInputRef.current.value = "";
-    }
   };
 
   const handleClose = () => {
@@ -48,52 +45,59 @@ export const ImportClientsModal: React.FC<ImportClientsModalProps> = ({ isOpen, 
     onClose();
   };
 
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const selected = e.target.files?.[0];
-    if (!selected) {
-      setFile(null);
-      return;
-    }
-    validateAndSetFile(selected);
-  };
+  const isMappingValid = REQUIRED_SYSTEM_FIELDS.every((f) =>
+    Object.values(mapping).includes(f),
+  );
 
-  const handleDrop = (e: React.DragEvent) => {
-    e.preventDefault();
-    setDragging(false);
-    const dropped = e.dataTransfer.files[0];
-    if (dropped) {
-      validateAndSetFile(dropped);
-    }
-  };
-
-  const handleDragOver = (e: React.DragEvent) => {
-    e.preventDefault();
-    setDragging(true);
-  };
-
-  const handleDragLeave = (e: React.DragEvent) => {
-    e.preventDefault();
-    setDragging(false);
-  };
-
-  const handleImport = async () => {
+  const handlePreview = async () => {
     if (!file) return;
     setError("");
-    setResult(null);
-    setImporting(true);
+    setLoading(true);
     try {
-      const data = await importClientsFromXlsx(file);
-      setResult(data);
-      setFile(null);
-      if (fileInputRef.current) {
-        fileInputRef.current.value = "";
-      }
-      onSuccess();
+      const data = await previewImportXlsx(file);
+      setPreview(data);
+      const autoMapping = autoMatchColumns(data.columns);
+      setMapping(autoMapping);
+      setStep(2);
     } catch (err: unknown) {
       if (err && typeof err === "object" && "response" in err) {
         const response = (err as { response: { status: number } }).response;
         if (response.status === 422) {
           setError("Невірний формат файлу. Підтримується лише .xlsx");
+        } else {
+          setError("Помилка завантаження. Спробуйте ще раз");
+        }
+      } else {
+        setError("Помилка завантаження. Спробуйте ще раз");
+      }
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleImport = async () => {
+    if (!file || !isMappingValid) return;
+    setError("");
+    setLoading(true);
+    try {
+      const originalHeaders = firstRowIsHeader && preview
+        ? preview.columns.map((c) => c.header ?? `Стовпець ${c.index}`)
+        : undefined;
+
+      const data = await importClientsFromXlsx(
+        file,
+        mapping,
+        firstRowIsHeader,
+        originalHeaders,
+      );
+      setResult(data);
+      setStep(3);
+      onSuccess();
+    } catch (err: unknown) {
+      if (err && typeof err === "object" && "response" in err) {
+        const response = (err as { response: { status: number } }).response;
+        if (response.status === 422) {
+          setError("Невірний маппінг колонок");
         } else {
           setError("Помилка імпорту. Спробуйте ще раз");
         }
@@ -101,177 +105,110 @@ export const ImportClientsModal: React.FC<ImportClientsModalProps> = ({ isOpen, 
         setError("Помилка імпорту. Спробуйте ще раз");
       }
     } finally {
-      setImporting(false);
+      setLoading(false);
     }
   };
 
-  const handleDownloadErrors = () => {
-    if (result?.error_file_id) {
-      const url = getErrorReportUrl(result.error_file_id);
-      files.download(url, result.error_filename ?? "import_errors.xlsx");
-    }
-  };
+  const modalSize = step === 2 ? "3xl" as const : "md" as const;
 
   return (
-    <Modal isOpen={isOpen} onClose={handleClose} title="Імпорт клієнтів">
+    <Modal isOpen={isOpen} onClose={handleClose} title="Імпорт клієнтів" size={modalSize}>
       <div className="space-y-4 pb-4">
-        {/* Template download card */}
-        <a
-          href="https://docs.google.com/spreadsheets/d/1hoWFYZpfd8rlt3oDpfMLQpdPtQQeCStnxUjeyzyk-rc/edit?gid=814068555#gid=814068555"
-          target="_blank"
-          rel="noopener noreferrer"
-          className="flex items-center gap-3 px-4 py-3 bg-indigo-50 border border-indigo-100 rounded-xl hover:bg-indigo-100 transition-colors group"
-        >
-          <div className="w-9 h-9 rounded-full bg-indigo-100 group-hover:bg-indigo-200 flex items-center justify-center shrink-0 transition-colors">
-            <svg className="w-5 h-5 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"
-              />
-            </svg>
-          </div>
-          <div className="min-w-0">
-            <p className="text-sm font-medium text-indigo-700">Завантажити шаблон</p>
-            <p className="text-xs text-indigo-500">Google Sheets (.xlsx)</p>
-          </div>
-        </a>
+        {step < 3 && <ProgressSteps currentStep={step} totalSteps={2} />}
 
-        {/* File upload zone */}
-        <div
-          onClick={() => fileInputRef.current?.click()}
-          onDrop={handleDrop}
-          onDragOver={handleDragOver}
-          onDragLeave={handleDragLeave}
-          className={`relative border-2 border-dashed rounded-xl p-6 text-center cursor-pointer transition-colors ${
-            dragging
-              ? "border-indigo-400 bg-indigo-50"
-              : file
-                ? "border-indigo-300 bg-indigo-50"
-                : "border-gray-200 bg-gray-50 hover:border-indigo-300 hover:bg-indigo-50/50"
-          }`}
-        >
-          <input
-            title="import file"
-            ref={fileInputRef}
-            type="file"
-            accept=".xlsx"
-            onChange={handleFileChange}
-            className="hidden"
-          />
-          {file ? (
-            <div className="flex items-center justify-center gap-3">
-              <div className="w-10 h-10 rounded-xl bg-green-100 flex items-center justify-center shrink-0">
-                <svg className="w-5 h-5 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                </svg>
-              </div>
-              <div className="text-left min-w-0">
-                <p className="text-sm font-medium text-gray-800 truncate">{file.name}</p>
-                <p className="text-xs text-gray-500">{(file.size / 1024).toFixed(1)} KB</p>
-              </div>
-            </div>
-          ) : (
-            <>
-              <div className="w-12 h-12 rounded-full bg-gray-100 flex items-center justify-center mx-auto mb-3">
-                <svg className="w-6 h-6 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"
-                  />
-                </svg>
-              </div>
-              <p className="text-sm font-medium text-gray-700">Натисніть або перетягніть файл</p>
-              <p className="text-xs text-gray-400 mt-1">Підтримується лише .xlsx</p>
-            </>
-          )}
-        </div>
-
-        {/* Result message */}
-        {result !== null && (
-          <div className="space-y-2">
-            <div className="flex items-center gap-3 px-4 py-3 bg-green-50 border border-green-100 text-green-700 rounded-xl">
-              <div className="w-8 h-8 rounded-full bg-green-100 flex items-center justify-center shrink-0">
-                <svg className="w-4 h-4 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                </svg>
-              </div>
-              <p className="text-sm font-medium">Імпортовано: {result.imported}</p>
-            </div>
-            {result.skipped > 0 && result.error_file_id && (
-              <div className="px-4 py-3 bg-amber-50 border border-amber-100 text-amber-700 rounded-xl space-y-3">
-                <div className="flex items-center gap-3">
-                  <div className="w-8 h-8 rounded-full bg-amber-100 flex items-center justify-center shrink-0">
-                    <svg className="w-4 h-4 text-amber-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01M12 3a9 9 0 100 18 9 9 0 000-18z" />
-                    </svg>
-                  </div>
-                  <p className="text-sm font-medium">Пропущено: {result.skipped}</p>
-                </div>
-                <button
-                  type="button"
-                  onClick={handleDownloadErrors}
-                  className="w-full py-2.5 bg-amber-100 hover:bg-amber-200 text-amber-800 font-medium text-sm rounded-lg transition-colors flex items-center justify-center gap-2"
-                >
-                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"
-                    />
+        {step === 1 && (
+          <>
+            <UploadStep
+              file={file}
+              onFileChange={setFile}
+              error={error}
+              onError={setError}
+            />
+            <button
+              type="button"
+              onClick={handlePreview}
+              disabled={!file || loading}
+              className="w-full py-3 bg-linear-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 text-white font-semibold rounded-xl transition-colors flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              {loading ? (
+                <>
+                  <svg className="animate-spin h-5 w-5" viewBox="0 0 24 24">
+                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
+                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
                   </svg>
-                  Завантажити звіт помилок
-                </button>
+                  Завантаження...
+                </>
+              ) : (
+                "Далі"
+              )}
+            </button>
+          </>
+        )}
+
+        {step === 2 && preview && (
+          <>
+            <ColumnMappingStep
+              columns={preview.columns}
+              mapping={mapping}
+              onMappingChange={setMapping}
+              firstRowIsHeader={firstRowIsHeader}
+              onFirstRowIsHeaderChange={setFirstRowIsHeader}
+              totalRows={preview.total_rows}
+            />
+
+            {error && (
+              <div className="flex items-center gap-3 px-4 py-3 bg-red-50 border border-red-100 text-red-600 rounded-xl">
+                <div className="w-8 h-8 rounded-full bg-red-100 flex items-center justify-center shrink-0">
+                  <svg className="w-4 h-4 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                  </svg>
+                </div>
+                <p className="text-sm font-medium">{error}</p>
               </div>
             )}
-          </div>
-        )}
 
-        {/* Error message */}
-        {error && (
-          <div className="flex items-center gap-3 px-4 py-3 bg-red-50 border border-red-100 text-red-600 rounded-xl">
-            <div className="w-8 h-8 rounded-full bg-red-100 flex items-center justify-center shrink-0">
-              <svg className="w-4 h-4 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-              </svg>
+            <div className="flex gap-3">
+              <button
+                type="button"
+                onClick={() => { setStep(1); setError(""); }}
+                className="flex-1 py-3 border border-gray-300 text-gray-700 font-semibold rounded-xl hover:bg-gray-50 transition-colors"
+              >
+                Назад
+              </button>
+              <button
+                type="button"
+                onClick={handleImport}
+                disabled={!isMappingValid || loading}
+                className="flex-1 py-3 bg-linear-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 text-white font-semibold rounded-xl transition-colors flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                {loading ? (
+                  <>
+                    <svg className="animate-spin h-5 w-5" viewBox="0 0 24 24">
+                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
+                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
+                    </svg>
+                    Імпорт...
+                  </>
+                ) : (
+                  "Імпортувати"
+                )}
+              </button>
             </div>
-            <p className="text-sm font-medium">{error}</p>
-          </div>
+          </>
         )}
 
-        {/* Import button */}
-        <button
-          type="button"
-          onClick={handleImport}
-          disabled={!file || importing}
-          className="w-full py-3 bg-linear-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 text-white font-semibold rounded-xl transition-colors flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
-        >
-          {importing ? (
-            <>
-              <svg className="animate-spin h-5 w-5" viewBox="0 0 24 24">
-                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
-                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
-              </svg>
-              Імпорт...
-            </>
-          ) : (
-            <>
-              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"
-                />
-              </svg>
-              Імпортувати
-            </>
-          )}
-        </button>
+        {step === 3 && result && (
+          <>
+            <ImportResultStep result={result} />
+            <button
+              type="button"
+              onClick={handleClose}
+              className="w-full py-3 bg-indigo-600 hover:bg-indigo-700 text-white font-semibold rounded-xl transition-colors"
+            >
+              Закрити
+            </button>
+          </>
+        )}
       </div>
     </Modal>
   );

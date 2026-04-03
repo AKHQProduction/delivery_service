@@ -104,6 +104,9 @@ from backend.application.queries.get_shared_route import (
     GetSharedRouteQueryHandler,
 )
 from backend.application.queries.get_time_slots import GetTimeSlotsQueryHandler
+from backend.application.queries.preview_import_xlsx import (
+    PreviewImportXlsxQueryHandler,
+)
 from backend.application.services.geocoder import Geocoder
 from backend.application.services.tsp_solvers import RouteOptimizer
 from backend.application.usecases.invite_employee.generate_invite_link import (
@@ -251,6 +254,7 @@ class APIInteractorsProvider(Provider):
         EditShopCommandHandler,
         CreateShopCommandHandler,
         ImportClientsCommandHandler,
+        PreviewImportXlsxQueryHandler,
         LoginTelegramCommandHandler,
         LogoutCommandHandler,
     )

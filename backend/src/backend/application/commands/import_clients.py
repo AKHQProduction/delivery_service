@@ -32,11 +32,13 @@ from backend.infrastructure.xlsx import (
     ClientXlsxParser,
 )
 from backend.infrastructure.xlsx.client_xlsx_parser import (
+    DATA_START_ROW,
     ImportErrorKind,
     ParsedAddress,
     ParsedClientRow,
     RejectedClientRow,
 )
+from backend.infrastructure.xlsx.column_mapping import ColumnMapping
 
 logger = logging.getLogger(__name__)
 
@@ -46,6 +48,9 @@ DedupKey = tuple[str, tuple[str, ...], tuple[tuple[str, str], ...]]
 @dataclass(frozen=True)
 class ImportClientsCommand:
     file_bytes: bytes
+    column_mapping: ColumnMapping | None = None
+    first_row_is_header: bool = True
+    original_headers: list[str] | None = None
 
 
 @dataclass(frozen=True)
@@ -86,7 +91,16 @@ class ImportClientsCommandHandler:
 
         loop = asyncio.get_running_loop()
         parse_result = await loop.run_in_executor(
-            None, self._parser.parse, command.file_bytes
+            None,
+            lambda: self._parser.parse(
+                command.file_bytes,
+                column_mapping=command.column_mapping,
+                data_start_row=(
+                    (2 if command.first_row_is_header else 1)
+                    if command.column_mapping is not None
+                    else DATA_START_ROW
+                ),
+            ),
         )
 
         if not parse_result.valid and not parse_result.rejected:
@@ -144,7 +158,11 @@ class ImportClientsCommandHandler:
         if rejected:
             rejected.sort(key=lambda r: r.row_number)
             xlsx_bytes = await loop.run_in_executor(
-                None, self._error_report_generator.generate, rejected
+                None,
+                lambda: self._error_report_generator.generate(
+                    rejected,
+                    headers=command.original_headers,
+                ),
             )
             error_filename = "import_errors.xlsx"
             error_file_id = await self._file_storage.save(
