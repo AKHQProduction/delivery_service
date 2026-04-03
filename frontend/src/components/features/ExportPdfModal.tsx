@@ -104,7 +104,7 @@ export const ExportPdfModal: React.FC<ExportPdfModalProps> = ({ isOpen, onClose 
 
   return (
     <Modal isOpen={isOpen} onClose={onClose} title="Сформувати документ">
-      <div className="space-y-4">
+      <div className="space-y-4 pb-4">
         {/* Date picker */}
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-2">Дата доставки</label>
