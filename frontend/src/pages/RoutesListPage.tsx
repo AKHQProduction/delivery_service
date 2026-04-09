@@ -4,7 +4,10 @@ import { DateInput } from "../components/shared/DateInput";
 import { MapPicker } from "../components/shared/MapPicker";
 import { RoutePlanCard } from "../components/routes/RoutePlanCard";
 import { UnroutableOrdersList } from "../components/routes/UnroutableOrdersList";
+import { Toast } from "../components/ui/Toast";
 import { useRoutesList } from "../hooks/routes/useRoutesList";
+import { useOrdersPdfPreview } from "../hooks/useOrdersPdfPreview";
+import { useToast } from "../hooks/useToast";
 import { useUserShopStore } from "../context/useUserShopStore";
 import { type RoutePlan } from "../types/entities/Route";
 
@@ -29,6 +32,11 @@ export const RoutesListPage = () => {
     handleMapClose,
   } = useRoutesList();
 
+  const { toast, showToast, hideToast } = useToast();
+  const { previewPdf, loading: isExporting } = useOrdersPdfPreview(
+    (msg) => showToast(msg, "error"),
+  );
+
   const handleOpenRoute = (plan: RoutePlan) => {
     navigate(`/routes/${plan.route_plan_id}`, { state: { routePlan: plan, timeSlotId: plan.time_slot_id } });
   };
@@ -39,13 +47,36 @@ export const RoutesListPage = () => {
 
       <div className="px-6 pb-24 pt-2 md:pb-8 md:px-8">
         {/* Filters */}
-        <div className="mb-6">
-          <DateInput
-            label="Дата доставки"
-            value={deliveryDate}
-            onChange={setDeliveryDate}
-            required
-          />
+        <div className="mb-6 flex flex-col md:flex-row md:items-end gap-3">
+          <div className="flex-1">
+            <DateInput
+              label="Дата доставки"
+              value={deliveryDate}
+              onChange={setDeliveryDate}
+              required
+            />
+          </div>
+          <button
+            type="button"
+            title="Сформувати документ зі списком замовлень"
+            onClick={() => previewPdf({ deliveryDateIso: deliveryDate })}
+            disabled={isExporting || routePlans.length === 0}
+            className="h-[46px] px-5 bg-linear-to-r from-amber-500 to-orange-500 text-white rounded-xl font-semibold shadow-md hover:from-amber-600 hover:to-orange-600 flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed transition-all w-full md:w-auto"
+          >
+            {isExporting ? (
+              <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white" />
+            ) : (
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
+                />
+              </svg>
+            )}
+            {isExporting ? "Формування..." : "Друк"}
+          </button>
         </div>
 
         {/* Loading */}
@@ -116,6 +147,10 @@ export const RoutesListPage = () => {
         onGeocode={forwardGeocode}
         onReverseGeocode={reverseGeocode}
       />
+
+      {toast.isVisible && (
+        <Toast message={toast.message} type={toast.type} onClose={hideToast} />
+      )}
     </div>
   );
 };

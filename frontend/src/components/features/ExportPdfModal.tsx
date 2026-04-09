@@ -5,6 +5,7 @@ import { generateOrdersPdfLink } from "../../services/api/ordersApi";
 import { getAllTimeSlots } from "../../services/api/settingsApi";
 import { useUserShopStore } from "../../context/useUserShopStore";
 import { usePlatform } from "../../platforms/PlatformProvider";
+import { useOrdersPdfPreview } from "../../hooks/useOrdersPdfPreview";
 
 type DocType = "ORDER_LIST" | "STATISTICS";
 type RoutingMode = "NONE" | "OPTIMIZED";
@@ -26,11 +27,6 @@ const getDownloadUrl = (fileId: string): string => {
   return `${baseUrl}/v1/orders/export/pdf/download/${fileId}`;
 };
 
-const getPreviewUrl = (fileId: string): string => {
-  const baseUrl = import.meta.env.VITE_API_URL;
-  return `${baseUrl}/v1/orders/export/pdf/download/${fileId}?inline=true`;
-};
-
 export const ExportPdfModal: React.FC<ExportPdfModalProps> = ({ isOpen, onClose }) => {
   const { files } = usePlatform();
   const [exportDate, setExportDate] = useState(() => {
@@ -43,6 +39,10 @@ export const ExportPdfModal: React.FC<ExportPdfModalProps> = ({ isOpen, onClose 
   const [routingMode, setRoutingMode] = useState<RoutingMode>("NONE");
   const [timeSlots, setTimeSlots] = useState<TimeSlot[]>([]);
   const [exporting, setExporting] = useState(false);
+
+  const { previewPdf, loading: previewLoading } = useOrdersPdfPreview(
+    () => setExportError(true),
+  );
 
   const shop = useUserShopStore((s) => s.shop);
   const shopHasAddress = !!(shop?.street && shop?.house);
@@ -78,28 +78,18 @@ export const ExportPdfModal: React.FC<ExportPdfModalProps> = ({ isOpen, onClose 
     }
   };
 
-  const handlePreviewPdf = async () => {
+  const handlePreviewPdf = () => {
     if (!exportDate) {
       setExportError(true);
       return;
     }
     setExportError(false);
-    setExporting(true);
-    try {
-      const { file_id } = await generateOrdersPdfLink(
-        exportDate,
-        docType,
-        selectedTimeSlotId || undefined,
-        routingMode,
-      );
-      const previewUrl = getPreviewUrl(file_id);
-
-      files.openLink(previewUrl);
-    } catch {
-      setExportError(true);
-    } finally {
-      setExporting(false);
-    }
+    previewPdf({
+      deliveryDateIso: exportDate,
+      timeSlotId: selectedTimeSlotId || undefined,
+      docType,
+      routingMode,
+    });
   };
 
   return (
@@ -205,7 +195,7 @@ export const ExportPdfModal: React.FC<ExportPdfModalProps> = ({ isOpen, onClose 
           <button
             type="button"
             onClick={handlePreviewPdf}
-            disabled={exporting}
+            disabled={exporting || previewLoading}
             className="flex-1 py-3 bg-gray-100 hover:bg-gray-200 text-gray-700 font-semibold rounded-xl transition-colors flex items-center justify-center gap-2 disabled:opacity-50"
           >
             <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">

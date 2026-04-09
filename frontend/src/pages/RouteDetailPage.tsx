@@ -1,9 +1,13 @@
 import { useNavigate, useLocation } from "react-router-dom";
 import { type RoutePlan } from "../types/entities/Route";
 import { useRouteDetail } from "../hooks/routes/useRouteDetail";
+import { useOrdersPdfPreview } from "../hooks/useOrdersPdfPreview";
+import { useToast } from "../hooks/useToast";
+import { convertDateToISO } from "../utils/dateUtils";
 import { RouteDetailHeader } from "../components/routes/RouteDetailHeader";
 import { RouteStopsList } from "../components/routes/RouteStopsList";
 import { RouteMap } from "../components/routes/RouteMap";
+import { Toast } from "../components/ui/Toast";
 
 export const RouteDetailPage = () => {
   const navigate = useNavigate();
@@ -33,6 +37,19 @@ export const RouteDetailPage = () => {
     reorderByIndex,
   } = useRouteDetail(routePlan, timeSlotId);
 
+  const { toast, showToast, hideToast } = useToast();
+  const { previewPdf, loading: isExporting } = useOrdersPdfPreview(
+    (msg) => showToast(msg, "error"),
+  );
+
+  const handleExportDocument = () => {
+    if (!routePlan) return;
+    previewPdf({
+      deliveryDateIso: convertDateToISO(routePlan.delivery_date),
+      timeSlotId: routePlan.time_slot_id,
+    });
+  };
+
   if (!routePlan || points.length === 0) {
     return (
       <div className="min-h-screen flex flex-col items-center justify-center gap-4 px-6">
@@ -58,9 +75,11 @@ export const RouteDetailPage = () => {
         pointCount={points.length}
         showList={showList}
         canEdit={canEdit}
+        isExporting={isExporting}
         onToggleList={toggleList}
         onBack={() => navigate("/routes")}
         onReverseRoute={handleReverseRoute}
+        onExportDocument={handleExportDocument}
       />
 
       <div className="flex-1 min-h-0 flex flex-col md:flex-row">
@@ -119,6 +138,10 @@ export const RouteDetailPage = () => {
       </div>
       {/* Spacer for bottom nav on mobile */}
       <div className="h-20 shrink-0 md:hidden" />
+
+      {toast.isVisible && (
+        <Toast message={toast.message} type={toast.type} onClose={hideToast} />
+      )}
     </div>
   );
 };
