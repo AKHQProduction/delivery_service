@@ -3,43 +3,28 @@ import leftArrowIcon from "../../../assets/icons/left_arrow.svg";
 
 import { useState } from "react";
 import { EditOrderForm } from "../../forms/orders/EditOrderForm";
-
-export interface OrderItem {
-  name: string;
-  quantity?: number | string;
-  price_per_item?: number | string;
-}
-
-export interface DeliveryAddress {
-  street?: string;
-  house?: string;
-  district?: string | null;
-}
-
-export interface Order {
-  order_id: string;
-  client_name: string;
-  items?: OrderItem[];
-
-  delivery_phone?: string;
-  delivery_address?: DeliveryAddress;
-
-  date: string;
-  time_slot: string;
-  payment_method: string;
-  note?: string;
-  comment?: string;
-}
+import { type Order } from "../../../types/entities/Order";
+import { useDistrictsSettings } from "../../../hooks/settings/useDistrictsSettings";
 
 export interface OrderDetailModalProps {
   order: Order;
   onClose: () => void;
   onDelete: () => void;
   onSave?: () => void;
+  onPayFromBalance: (orderId: string) => Promise<void> | void;
 }
 
-export const OrderDetailModal = ({ order, onClose, onDelete, onSave }: OrderDetailModalProps) => {
+export const OrderDetailModal = ({
+  order,
+  onClose,
+  onDelete,
+  onSave,
+  onPayFromBalance,
+}: OrderDetailModalProps) => {
   const [isEditing, setIsEditing] = useState(false);
+  const [isPaying, setIsPaying] = useState(false);
+  const [balanceChargedInSession, setBalanceChargedInSession] = useState(false);
+  const { districts } = useDistrictsSettings();
   const handleEditClick = () => {
     setIsEditing(true);
   };
@@ -53,6 +38,16 @@ export const OrderDetailModal = ({ order, onClose, onDelete, onSave }: OrderDeta
     onSave?.();
   };
 
+  const handlePayFromBalance = async () => {
+    setIsPaying(true);
+    try {
+      await onPayFromBalance(order.order_id);
+      setBalanceChargedInSession(true);
+    } finally {
+      setIsPaying(false);
+    }
+  };
+
   const getOrderTotal = () => {
     return (order.items ?? []).reduce((sum, item) => {
       const quantity = Number(item.quantity) || 0;
@@ -63,6 +58,12 @@ export const OrderDetailModal = ({ order, onClose, onDelete, onSave }: OrderDeta
 
   const getTotalItems = () => {
     return (order.items ?? []).reduce((sum, item) => sum + (Number(item.quantity) || 0), 0);
+  };
+
+  const getDistrictName = (districtId: string | null | undefined) => {
+    if (!districtId) return null;
+    const district = districts.find((d) => d.district_id === districtId);
+    return district?.name || null;
   };
 
   if (isEditing) {
@@ -187,9 +188,9 @@ export const OrderDetailModal = ({ order, onClose, onDelete, onSave }: OrderDeta
                 <span className="text-gray-700 leading-relaxed">
                   {order.delivery_address?.street} {order.delivery_address?.house}
                 </span>
-                {order.delivery_address?.district && (
+                {getDistrictName(order.delivery_address?.district_id) && (
                   <p className="text-xs text-gray-500 mt-1">
-                    Район: {order.delivery_address?.district}
+                    Район: {getDistrictName(order.delivery_address?.district_id)}
                   </p>
                 )}
               </div>
@@ -233,6 +234,14 @@ export const OrderDetailModal = ({ order, onClose, onDelete, onSave }: OrderDeta
 
       </div>
       <div className="px-6 py-4 border-t border-gray-200">
+        <button
+          type="button"
+          onClick={handlePayFromBalance}
+          disabled={isPaying || balanceChargedInSession || Boolean(order.is_paid)}
+          className="w-full py-4 mb-3 rounded-2xl font-semibold transition-colors bg-emerald-600 hover:bg-emerald-700 disabled:bg-gray-200 disabled:text-gray-500 disabled:cursor-not-allowed text-white"
+        >
+          Списати з балансу
+        </button>
         <ModalButtons
           firstButtonText={"Редагувати"}
           handleEditClick={handleEditClick}

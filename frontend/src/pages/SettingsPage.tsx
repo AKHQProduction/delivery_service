@@ -1,6 +1,6 @@
 import { PageHeader } from "../components/ui/PageHeader";
 import { useTGSettings } from "../hooks/settings/useTGSettings";
-import { usePlatform } from "../platforms/PlatformProvider";
+import { usePlatform } from "../platforms/usePlatform";
 
 export const SettingsPage = () => {
   const { settings, updateSetting } = useTGSettings();

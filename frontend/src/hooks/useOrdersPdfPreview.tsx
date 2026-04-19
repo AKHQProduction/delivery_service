@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { generateOrdersPdfLink } from "../services/api/ordersApi";
-import { usePlatform } from "../platforms/PlatformProvider";
+import { usePlatform } from "../platforms/usePlatform";
 
 type DocType = "ORDER_LIST" | "STATISTICS";
 type RoutingMode = "NONE" | "OPTIMIZED";

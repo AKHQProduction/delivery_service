@@ -26,6 +26,10 @@ from backend.application.commands.generate_order_export_pdf import (
     GenerateOrderExportPDFCommandHandler,
     GenerateOrderExportPDFResult,
 )
+from backend.application.commands.pay_order_from_balance import (
+    PayOrderFromBalanceCommand,
+    PayOrderFromBalanceCommandHandler,
+)
 from backend.application.dto.gateways import Pagination, SortOrder
 from backend.application.dto.gateways.order_gateway import (
     OrderReadModel,
@@ -152,6 +156,25 @@ async def create_new_order(
     handler: FromDishka[CreateOrderCommandHandler],
 ) -> OrderId:
     return await handler.handle(body)
+
+
+@router.post(
+    "/{order_id}/pay-from-balance",
+    status_code=status.HTTP_200_OK,
+    responses={
+        status.HTTP_401_UNAUTHORIZED: {"model": ErrorSchema},
+        status.HTTP_403_FORBIDDEN: {"model": ErrorSchema},
+        status.HTTP_404_NOT_FOUND: {"model": ErrorSchema},
+        status.HTTP_409_CONFLICT: {"model": ErrorSchema},
+        status.HTTP_422_UNPROCESSABLE_CONTENT: {"model": ErrorSchema},
+    },
+    dependencies=[Depends(HTTPBearer(auto_error=False))],
+)
+async def pay_order_from_balance(
+    order_id: OrderId,
+    handler: FromDishka[PayOrderFromBalanceCommandHandler],
+) -> None:
+    await handler.handle(PayOrderFromBalanceCommand(order_id=order_id))
 
 
 @router.patch(

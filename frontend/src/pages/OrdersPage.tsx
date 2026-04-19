@@ -11,34 +11,7 @@ import { useInfiniteScroll } from "../hooks/useInfiniteScroll";
 import { DateInput } from "../components/shared/DateInput";
 import { OrderCardSkeleton } from "../components/ui/Skeleton";
 import { ExportPdfModal } from "../components/features/ExportPdfModal";
-
-export interface OrderItem {
-  name: string;
-  quantity?: number | string;
-  price_per_item?: number | string;
-}
-
-export interface DeliveryAddress {
-  street?: string;
-  house?: string;
-}
-
-export interface Order {
-  order_id: string;
-
-  client_name: string;
-  items?: OrderItem[];
-
-  delivery_phone?: string;
-  delivery_address?: DeliveryAddress;
-
-  date: string;
-  time_slot: string;
-  payment_method: string;
-
-  note?: string;
-  comment?: string;
-}
+import { type Order, type OrderItem } from "../types/entities/Order";
 
 export const OrdersPage = () => {
   const [searchTerm, setSearchTerm] = useState("");
@@ -49,6 +22,7 @@ export const OrdersPage = () => {
     getOrders,
     orders,
     deleteOrder,
+    payFromBalance,
     loadMoreOrders,
     setStartDate,
     setEndDate,
@@ -59,6 +33,7 @@ export const OrdersPage = () => {
     hasMore,
   } = useOrders();
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const hasInitializedSearchRef = useRef(false);
 
   const { sentinelRef } = useInfiniteScroll({
     onLoadMore: loadMoreOrders,
@@ -87,6 +62,11 @@ export const OrdersPage = () => {
   }, []);
 
   useEffect(() => {
+    if (!hasInitializedSearchRef.current) {
+      hasInitializedSearchRef.current = true;
+      return;
+    }
+
     if (debounceRef.current) {
       clearTimeout(debounceRef.current);
     }
@@ -124,9 +104,13 @@ export const OrdersPage = () => {
   const handleDelete = async () => {
     if (!selectedOrder) return;
 
-    await deleteOrder(selectedOrder.order_id);
-    handleCloseModal();
-    getOrders(searchTerm);
+    try {
+      await deleteOrder(selectedOrder.order_id);
+      handleCloseModal();
+      await getOrders(searchTerm);
+    } catch (error: unknown) {
+      console.error("Failed to delete order", error);
+    }
   };
 
   const handleSave = async () => {
@@ -137,6 +121,17 @@ export const OrdersPage = () => {
       if (updatedOrder) {
         setSelectedOrder(updatedOrder as Order);
       }
+    }
+  };
+
+  const handlePayFromBalance = async (orderId: string) => {
+    try {
+      await payFromBalance(orderId);
+      const refreshedOrder = (await getOrderById(orderId)) as Order;
+      setSelectedOrder(refreshedOrder);
+      await getOrders(searchTerm);
+    } catch (error: unknown) {
+      console.error("Failed to pay order from balance", error);
     }
   };
 
@@ -331,6 +326,7 @@ export const OrdersPage = () => {
             onClose={handleCloseModal}
             onDelete={handleDelete}
             onSave={handleSave}
+            onPayFromBalance={handlePayFromBalance}
           />
         )}
       </DetailModal>

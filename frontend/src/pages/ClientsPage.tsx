@@ -16,8 +16,15 @@ export const ClientsPage = () => {
   const [selectedClient, setSelectedClient] = useState<Client | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isImportModalOpen, setIsImportModalOpen] = useState(false);
-  const { clients, getClients, deleteClient, loadMoreClients, loading, loadingMore, hasMore } =
-    useClient();
+  const {
+    clients,
+    getClients,
+    deleteClient,
+    loadMoreClients,
+    loading,
+    loadingMore,
+    hasMore,
+  } = useClient();
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const { sentinelRef } = useInfiniteScroll({

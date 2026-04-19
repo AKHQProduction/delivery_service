@@ -35,6 +35,10 @@ from backend.application.commands.import_clients import (
     ImportClientsCommandHandler,
     ImportClientsResult,
 )
+from backend.application.commands.set_client_balance import (
+    SetClientBalanceCommand,
+    SetClientBalanceCommandHandler,
+)
 from backend.application.dto.coordinates import CoordinatesDTO
 from backend.application.dto.gateways import Pagination, SortOrder
 from backend.application.dto.gateways.client_gateway import (
@@ -56,7 +60,10 @@ from backend.infrastructure.xlsx.column_mapping import (
     SystemField,
     validate_mapping,
 )
-from backend.presentation.http.v1.schemas.client import EditClientSchema
+from backend.presentation.http.v1.schemas.client import (
+    EditClientSchema,
+    SetClientBalanceSchema,
+)
 from backend.presentation.http.v1.schemas.error import ErrorSchema
 
 router = APIRouter(
@@ -198,6 +205,10 @@ async def update_client(
                     description="Update only client's full name",
                     value={"full_name": "Оновлене Ім'я"},
                 ),
+                "balance": Example(
+                    description="Update only client's balance",
+                    value={"balance": 250.75},
+                ),
                 "phones": Example(
                     description="Update existing phones and add new ones",
                     value={
@@ -278,6 +289,7 @@ async def update_client(
         EditClientCommand(
             client_id=client_id,
             full_name=body.full_name,
+            balance=body.balance,
             confirm_duplicate_phones=body.confirm_duplicate_phones,
             phones=[
                 Phone(
@@ -316,6 +328,39 @@ async def update_client(
             ]
             if body.addresses is not None
             else None,
+        )
+    )
+
+
+@router.patch(
+    "/{client_id}/balance",
+    status_code=status.HTTP_200_OK,
+    responses={
+        status.HTTP_401_UNAUTHORIZED: {"model": ErrorSchema},
+        status.HTTP_403_FORBIDDEN: {"model": ErrorSchema},
+        status.HTTP_404_NOT_FOUND: {"model": ErrorSchema},
+    },
+    dependencies=[Depends(HTTPBearer(auto_error=False))],
+)
+async def set_client_balance(
+    client_id: ClientId,
+    body: Annotated[
+        SetClientBalanceSchema,
+        Body(
+            openapi_examples={
+                "set_balance": Example(
+                    description="Set an absolute balance value",
+                    value={"balance": 250.75},
+                ),
+            }
+        ),
+    ],
+    handler: FromDishka[SetClientBalanceCommandHandler],
+) -> None:
+    await handler.handle(
+        SetClientBalanceCommand(
+            client_id=client_id,
+            balance=body.balance,
         )
     )
 

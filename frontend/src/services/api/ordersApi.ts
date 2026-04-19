@@ -33,6 +33,11 @@ export const updateOrder = async (orderId: string, orderData: unknown) => {
   return response.data;
 };
 
+export const payOrderFromBalance = async (orderId: string) => {
+  const response = await api.post(`v1/orders/${orderId}/pay-from-balance`);
+  return response.data;
+};
+
 export const deleteOrderById = async (orderId: string) => {
   const response = await api.delete(`v1/orders/${orderId}`);
   return response.data;

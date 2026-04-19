@@ -1,17 +1,14 @@
 import { useState, useCallback } from "react";
+import { type Order } from "../../types/entities/Order";
 import {
   getAllOrders,
   createOrder,
   updateOrder,
   deleteOrderById,
+  payOrderFromBalance,
 } from "../../services/api/ordersApi";
 
 const PAGE_SIZE = 20;
-
-interface Order {
-  order_id: string;
-  [key: string]: unknown;
-}
 
 export const useOrders = () => {
   const [orders, setOrders] = useState<Order[]>();
@@ -94,8 +91,31 @@ export const useOrders = () => {
     setError(null);
     try {
       await updateOrder(orderId, orderData);
-    } catch {
-      setError("Не вдалося оновити замовлення.");
+    } catch (err: unknown) {
+      const error = err as {
+        response?: { data?: { detail?: string } };
+      };
+      const errorMessage = error?.response?.data?.detail || "Не вдалося оновити замовлення.";
+      setError(errorMessage);
+      throw new Error(errorMessage);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const payFromBalance = async (orderId: string) => {
+    setLoading(true);
+    setError(null);
+    try {
+      await payOrderFromBalance(orderId);
+    } catch (err: unknown) {
+      const error = err as {
+        response?: { data?: { detail?: string } };
+      };
+      const errorMessage =
+        error?.response?.data?.detail || "Не вдалося списати замовлення з балансу.";
+      setError(errorMessage);
+      throw new Error(errorMessage);
     } finally {
       setLoading(false);
     }
@@ -106,8 +126,13 @@ export const useOrders = () => {
     setError(null);
     try {
       await deleteOrderById(orderId);
-    } catch {
-      setError("Не вдалося видалити замовлення.");
+    } catch (err: unknown) {
+      const error = err as {
+        response?: { data?: { detail?: string } };
+      };
+      const errorMessage = error?.response?.data?.detail || "Не вдалося видалити замовлення.";
+      setError(errorMessage);
+      throw new Error(errorMessage);
     } finally {
       setLoading(false);
     }
@@ -127,6 +152,7 @@ export const useOrders = () => {
     setEndDate,
     createNewOrder,
     updateCurrentOrder,
+    payFromBalance,
     deleteOrder,
   };
 };

@@ -1,3 +1,4 @@
+from decimal import Decimal
 from typing import TYPE_CHECKING
 
 import sqlalchemy as sa
@@ -29,6 +30,12 @@ class Client(Base, CreatedAt, UpdatedAt):
 
     id: Mapped[ClientId] = mapped_column(sa.UUID, primary_key=True)
     full_name: Mapped[str] = mapped_column(sa.String, nullable=False)
+    balance: Mapped[Decimal] = mapped_column(
+        sa.Numeric(precision=10, scale=2),
+        nullable=False,
+        default=Decimal(0),
+        server_default=sa.text("0"),
+    )
 
     shop_id: Mapped[ShopId] = mapped_column(
         sa.ForeignKey("shops.id", ondelete="CASCADE"), nullable=False

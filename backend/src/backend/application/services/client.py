@@ -1,4 +1,5 @@
 from dataclasses import dataclass
+from decimal import Decimal
 
 from backend.application.dto.coordinates import CoordinatesDTO
 from backend.application.errors import (
@@ -51,16 +52,28 @@ def create_client(
     shop_id: ShopId,
     full_name: str,
 ) -> Client:
-    return Client(id=client_id, shop_id=shop_id, full_name=full_name)
+    return Client(
+        id=client_id,
+        shop_id=shop_id,
+        full_name=full_name,
+        balance=Decimal(0),
+    )
 
 
 def update_client(
     client: Client,
     *,
     full_name: str | None = None,
+    balance: Decimal | None = None,
 ) -> None:
     if full_name is not None:
         client.full_name = full_name
+    if balance is not None:
+        client.balance = balance
+
+
+def set_client_balance(client: Client, *, balance: Decimal) -> None:
+    client.balance = balance
 
 
 def create_phone(

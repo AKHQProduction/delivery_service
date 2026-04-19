@@ -2,7 +2,7 @@ import { useUserShopStore } from "../../context/useUserShopStore";
 import { useNavigate, useLocation } from "react-router-dom";
 import { getRoutesForRole } from "../../config/roles.config";
 import { logout } from "../../services/api/authApi";
-import { usePlatform } from "../../platforms/PlatformProvider";
+import { usePlatform } from "../../platforms/usePlatform";
 
 export const SidebarNav = () => {
   const user = useUserShopStore((s) => s.user);

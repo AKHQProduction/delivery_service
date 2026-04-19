@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from "react";
+import React, { useEffect, useLayoutEffect, useRef, useState } from "react";
 import { MapPicker, type MapConfirmData } from "./MapPicker";
 import { MapButton } from "./MapButton";
 import { Toast } from "../ui/Toast";
@@ -138,20 +138,14 @@ const getAddressFingerprint = (address: Address) =>
     street: address.street || "",
   });
 
-const createAddressRowKey = (rowState: AddressRowState) => {
-  const key = `address-row-${rowState.nextKey}`;
-  rowState.nextKey += 1;
-  return key;
-};
-
 const syncAddressRowEntries = (
   addresses: Address[],
-  rowStateRef: React.MutableRefObject<AddressRowState>,
-) => {
-  const rowState = rowStateRef.current;
-  const previousEntries = rowState.entries;
+  previousState: AddressRowState,
+): AddressRowState => {
+  const previousEntries = previousState.entries;
   const nextEntries = new Array<AddressRowEntry>(addresses.length);
   const usedPreviousEntries = new Array(previousEntries.length).fill(false);
+  let nextKey = previousState.nextKey;
   const fingerprints = addresses.map(getAddressFingerprint);
   const persistentIds = addresses.map((address) =>
     address.id !== undefined && address.id !== null ? `address:${address.id}` : undefined,
@@ -235,16 +229,22 @@ const syncAddressRowEntries = (
   addresses.forEach((_, index) => {
     if (!nextEntries[index]) {
       nextEntries[index] = {
-        key: createAddressRowKey(rowState),
+        key: `address-row-${nextKey}`,
         persistentId: persistentIds[index],
         fingerprint: fingerprints[index],
       };
+      nextKey += 1;
     }
   });
 
-  rowState.entries = nextEntries;
-  return nextEntries;
+  return {
+    entries: nextEntries,
+    nextKey,
+  };
 };
+
+const createInitialAddressRowState = (addresses: Address[]): AddressRowState =>
+  syncAddressRowEntries(addresses, { entries: [], nextKey: 0 });
 
 const pruneRecord = <T,>(record: Record<string, T>, activeRowKeys: Set<string>) => {
   let changed = false;
@@ -559,15 +559,24 @@ export const AddressInputList: React.FC<AddressInputListProps> = ({
 
   const debounceTimers = useRef<Record<string, ReturnType<typeof setTimeout>>>({});
   const validationTokens = useRef<Record<string, number>>({});
-  const addressRowStateRef = useRef<AddressRowState>({ entries: [], nextKey: 0 });
-  const addressIndexByRowKeyRef = useRef<Record<string, number>>({});
+  const [addressRowState, setAddressRowState] = useState<AddressRowState>(() =>
+    createInitialAddressRowState(addresses),
+  );
 
-  const addressRowEntries = syncAddressRowEntries(addresses, addressRowStateRef);
-  const addressRowKeys = addressRowEntries.map((entry) => entry.key);
-  const activeRowKeySignature = addressRowKeys.join("|");
+  useLayoutEffect(() => {
+    queueMicrotask(() => {
+      setAddressRowState((previousState) => syncAddressRowEntries(addresses, previousState));
+    });
+  }, [addresses]);
 
-  addressIndexByRowKeyRef.current = Object.fromEntries(
-    addressRowEntries.map((entry, index) => [entry.key, index]),
+  const addressRowEntries = addressRowState.entries;
+  const addressRowKeys = React.useMemo(
+    () => addressRowEntries.map((entry) => entry.key),
+    [addressRowEntries],
+  );
+  const addressIndexByRowKey = React.useMemo(
+    () => Object.fromEntries(addressRowEntries.map((entry, index) => [entry.key, index])),
+    [addressRowEntries],
   );
 
   useEffect(() => {
@@ -579,31 +588,32 @@ export const AddressInputList: React.FC<AddressInputListProps> = ({
 
   useEffect(() => {
     const activeRowKeys = new Set(addressRowKeys);
+    queueMicrotask(() => {
+      setAddressStatus((prev) => pruneRecord(prev, activeRowKeys));
+      setFieldErrors((prev) => pruneRecord(prev, activeRowKeys));
+      setPendingSuggestionDistrictIds((prev) => pruneRecord(prev, activeRowKeys));
 
-    setAddressStatus((prev) => pruneRecord(prev, activeRowKeys));
-    setFieldErrors((prev) => pruneRecord(prev, activeRowKeys));
-    setPendingSuggestionDistrictIds((prev) => pruneRecord(prev, activeRowKeys));
+      Object.keys(debounceTimers.current).forEach((rowKey) => {
+        if (!activeRowKeys.has(rowKey)) {
+          clearTimeout(debounceTimers.current[rowKey]);
+          delete debounceTimers.current[rowKey];
+        }
+      });
 
-    Object.keys(debounceTimers.current).forEach((rowKey) => {
-      if (!activeRowKeys.has(rowKey)) {
-        clearTimeout(debounceTimers.current[rowKey]);
-        delete debounceTimers.current[rowKey];
+      Object.keys(validationTokens.current).forEach((rowKey) => {
+        if (!activeRowKeys.has(rowKey)) {
+          delete validationTokens.current[rowKey];
+        }
+      });
+
+      if (currentEditingRowKey && !activeRowKeys.has(currentEditingRowKey)) {
+        setCurrentEditingRowKey(null);
       }
     });
-
-    Object.keys(validationTokens.current).forEach((rowKey) => {
-      if (!activeRowKeys.has(rowKey)) {
-        delete validationTokens.current[rowKey];
-      }
-    });
-
-    if (currentEditingRowKey && !activeRowKeys.has(currentEditingRowKey)) {
-      setCurrentEditingRowKey(null);
-    }
-  }, [activeRowKeySignature, currentEditingRowKey]);
+  }, [addressRowKeys, currentEditingRowKey]);
 
   const getAddressIndex = (rowKey: string) => {
-    const index = addressIndexByRowKeyRef.current[rowKey];
+    const index = addressIndexByRowKey[rowKey];
     return typeof index === "number" ? index : null;
   };
 
@@ -841,7 +851,7 @@ export const AddressInputList: React.FC<AddressInputListProps> = ({
     setCurrentEditingRowKey(null);
   };
 
-  const currentEditingIndex = currentEditingRowKey ? getAddressIndex(currentEditingRowKey) : null;
+  const currentEditingIndex = currentEditingRowKey ? addressIndexByRowKey[currentEditingRowKey] ?? null : null;
 
   return (
     <div className="space-y-3">

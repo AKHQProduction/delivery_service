@@ -1,6 +1,7 @@
+from decimal import Decimal
 from uuid import UUID
 
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 
 
 class PhoneSchema(BaseModel):
@@ -30,6 +31,13 @@ class AddressSchema(BaseModel):
 
 class EditClientSchema(BaseModel):
     full_name: str | None = None
+    balance: Decimal | None = Field(
+        default=None, max_digits=10, decimal_places=2
+    )
     phones: list[PhoneSchema] | None = None
     addresses: list[AddressSchema] | None = None
     confirm_duplicate_phones: bool = False
+
+
+class SetClientBalanceSchema(BaseModel):
+    balance: Decimal = Field(max_digits=10, decimal_places=2)

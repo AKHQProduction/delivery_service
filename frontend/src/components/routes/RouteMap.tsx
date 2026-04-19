@@ -30,19 +30,16 @@ const createNumberedIcon = (num: number, isEditing: boolean) => {
 const FitBounds: React.FC<{ points: RoutePoint[] }> = ({ points }) => {
   const map = useMap();
   const hasFitted = useRef(false);
-  const pointsRef = useRef(points);
-  pointsRef.current = points;
 
   const fitBounds = useCallback(() => {
-    const pts = pointsRef.current;
-    if (pts.length === 0) return;
+    if (points.length === 0) return;
     const bounds = L.latLngBounds(
-      pts.map((p) => [p.coordinates.latitude, p.coordinates.longitude] as [number, number]),
+      points.map((p) => [p.coordinates.latitude, p.coordinates.longitude] as [number, number]),
     );
     if (bounds.isValid()) {
       map.fitBounds(bounds, { padding: [30, 30], maxZoom: 15 });
     }
-  }, [map]);
+  }, [map, points]);
 
   useEffect(() => {
     if (!hasFitted.current && points.length > 0) {

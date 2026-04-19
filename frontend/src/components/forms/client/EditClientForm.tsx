@@ -42,6 +42,8 @@ export const EditClientForm: React.FC<EditClientFormProps> = ({ client, onClose,
   } = useClientForm();
   const { updateClient } = useClient();
   const { districts } = useDistrictsSettings();
+  const [balance, setBalance] = useState("");
+  const [balanceError, setBalanceError] = useState<string | null>(null);
   const [phoneErrors, setPhoneErrors] = useState<Record<string, string>>({});
   const [duplicateError, setDuplicateError] = useState<{
     code: string;
@@ -51,6 +53,8 @@ export const EditClientForm: React.FC<EditClientFormProps> = ({ client, onClose,
   useEffect(() => {
     if (client) {
       initializeForm(client);
+      setBalance(String(client.balance ?? 0));
+      setBalanceError(null);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [client]);
@@ -74,9 +78,19 @@ export const EditClientForm: React.FC<EditClientFormProps> = ({ client, onClose,
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setPhoneErrors({});
+    setBalanceError(null);
+
+    const nextBalance = Number(balance.replace(",", "."));
+    if (Number.isNaN(nextBalance)) {
+      setBalanceError("Будь ласка, введіть коректне число.");
+      return;
+    }
 
     try {
-      await updateClient(client.client_id, formData);
+      await updateClient(client.client_id, {
+        ...formData,
+        balance: nextBalance,
+      });
       await onSave?.();
     } catch (err: unknown) {
       if (
@@ -105,8 +119,21 @@ export const EditClientForm: React.FC<EditClientFormProps> = ({ client, onClose,
   const handleConfirmDuplicate = async () => {
     if (!pendingClientData) return;
 
+    const nextBalance = Number(balance.replace(",", "."));
+    if (Number.isNaN(nextBalance)) {
+      setBalanceError("Будь ласка, введіть коректне число.");
+      return;
+    }
+
     try {
-      await updateClient(client.client_id, formData, true);
+      await updateClient(
+        client.client_id,
+        {
+          ...formData,
+          balance: nextBalance,
+        },
+        true,
+      );
       await onSave?.();
 
       setDuplicateError(null);
@@ -135,6 +162,22 @@ export const EditClientForm: React.FC<EditClientFormProps> = ({ client, onClose,
           placeholder="Введіть повне ім'я..."
           required
         />
+
+        <FormInput
+          label="Баланс"
+          name="balance"
+          type="text"
+          value={balance}
+          onChange={(e) => {
+            setBalance(e.target.value);
+            if (balanceError) {
+              setBalanceError(null);
+            }
+          }}
+          placeholder="Наприклад 1500 або -250"
+          required
+        />
+        {balanceError && <p className="text-sm text-red-600">{balanceError}</p>}
 
         <PhoneInputList
           phones={formData.phones}

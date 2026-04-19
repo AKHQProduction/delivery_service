@@ -1,7 +1,7 @@
 import { useEffect } from "react";
 import { createPortal } from "react-dom";
 import { getTelegramSdk } from "../../platforms/telegram/telegramSdk";
-import { usePlatform } from "../../platforms/PlatformProvider";
+import { usePlatform } from "../../platforms/usePlatform";
 import { useTGSettings } from "../../hooks/settings/useTGSettings";
 import { useModal } from "../../hooks/useModal";
 

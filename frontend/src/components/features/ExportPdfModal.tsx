@@ -4,7 +4,7 @@ import { DateInput } from "../shared/DateInput";
 import { generateOrdersPdfLink } from "../../services/api/ordersApi";
 import { getAllTimeSlots } from "../../services/api/settingsApi";
 import { useUserShopStore } from "../../context/useUserShopStore";
-import { usePlatform } from "../../platforms/PlatformProvider";
+import { usePlatform } from "../../platforms/usePlatform";
 import { useOrdersPdfPreview } from "../../hooks/useOrdersPdfPreview";
 
 type DocType = "ORDER_LIST" | "STATISTICS";

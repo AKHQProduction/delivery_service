@@ -1,6 +1,7 @@
 import uuid
 from collections.abc import Callable
 from datetime import UTC, datetime, timedelta
+from decimal import Decimal
 from typing import Any
 from unittest.mock import AsyncMock, patch
 
@@ -11,7 +12,10 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from backend.application.dto.coordinates import CoordinatesDTO
-from backend.application.vars import ShopRole
+from backend.application.vars import ClientId, ShopRole
+from backend.infrastructure.persistence.gateways.client_gateway import (
+    SQLAlchemyClientGateway,
+)
 from backend.infrastructure.persistence.tables.clients import (
     Client,
     ClientAddress,
@@ -58,6 +62,14 @@ async def test_create_client_with_apartment(
     assert response.status_code == status.HTTP_201_CREATED
     client_id = response.json()
     assert client_id is not None
+
+    await session.flush()
+
+    client_response = await http_client.get(
+        url=f"{BASE_URL}/{client_id}", headers=headers
+    )
+    assert client_response.status_code == status.HTTP_200_OK
+    assert client_response.json()["balance"] == 0
 
     await session.flush()
 
@@ -439,6 +451,171 @@ async def test_get_client_by_id(
 
 
 @pytest.mark.asyncio()
+async def test_get_client_returns_balance(
+    http_client: AsyncClient,
+    session: AsyncSession,
+    customer_headers: Callable[[int], dict[str, Any]],
+    setup_full_test_user_with_shop,
+    setup_test_client,
+) -> None:
+    telegram_id = 2002
+    _, shop_id = await setup_full_test_user_with_shop(telegram_id=telegram_id)
+
+    client_id = await setup_test_client(
+        shop_id=shop_id,
+        full_name="Балансовий клієнт",
+        balance=Decimal("1250.75"),
+        phones=["+380501234567"],
+        addresses=[{"street": "Хрещатик", "house": "10"}],
+    )
+    await session.commit()
+
+    response = await http_client.get(
+        url=f"{BASE_URL}/{client_id}", headers=customer_headers(telegram_id)
+    )
+
+    assert response.status_code == status.HTTP_200_OK
+    balance = response.json()["balance"]
+    assert isinstance(balance, float)
+    assert balance == 1250.75
+
+
+@pytest.mark.asyncio()
+async def test_set_client_balance(
+    http_client: AsyncClient,
+    session: AsyncSession,
+    customer_headers: Callable[[int], dict[str, Any]],
+    setup_full_test_user_with_shop,
+    setup_test_client,
+) -> None:
+    telegram_id = 2004
+    _, shop_id = await setup_full_test_user_with_shop(telegram_id=telegram_id)
+
+    client_id = await setup_test_client(
+        shop_id=shop_id,
+        full_name="Клієнт для балансу",
+        balance=Decimal("100.00"),
+    )
+    await session.commit()
+
+    response = await http_client.patch(
+        url=f"{BASE_URL}/{client_id}/balance",
+        headers=customer_headers(telegram_id),
+        json={"balance": 250.75},
+    )
+
+    assert response.status_code == status.HTTP_200_OK
+
+    await session.flush()
+    stored_client = await session.get(Client, client_id)
+    assert stored_client is not None
+    assert stored_client.balance == Decimal("250.75")
+
+    client_response = await http_client.get(
+        url=f"{BASE_URL}/{client_id}",
+        headers=customer_headers(telegram_id),
+    )
+    assert client_response.status_code == status.HTTP_200_OK
+    assert client_response.json()["balance"] == 250.75
+
+
+@pytest.mark.asyncio()
+async def test_set_client_balance_rejects_over_precision(
+    http_client: AsyncClient,
+    session: AsyncSession,
+    customer_headers: Callable[[int], dict[str, Any]],
+    setup_full_test_user_with_shop,
+    setup_test_client,
+) -> None:
+    telegram_id = 2006
+    _, shop_id = await setup_full_test_user_with_shop(telegram_id=telegram_id)
+
+    client_id = await setup_test_client(shop_id=shop_id)
+    await session.commit()
+
+    response = await http_client.patch(
+        url=f"{BASE_URL}/{client_id}/balance",
+        headers=customer_headers(telegram_id),
+        json={"balance": 1.999},
+    )
+
+    assert response.status_code == status.HTTP_422_UNPROCESSABLE_CONTENT
+
+
+@pytest.mark.asyncio()
+async def test_set_client_balance_as_courier_forbidden(
+    http_client: AsyncClient,
+    session: AsyncSession,
+    customer_headers: Callable[[int], dict[str, Any]],
+    setup_full_test_user_with_shop,
+    setup_test_client,
+) -> None:
+    telegram_id = 2007
+    _, shop_id = await setup_full_test_user_with_shop(
+        telegram_id=telegram_id, role=ShopRole.COURIER
+    )
+
+    client_id = await setup_test_client(shop_id=shop_id)
+    await session.commit()
+
+    response = await http_client.patch(
+        url=f"{BASE_URL}/{client_id}/balance",
+        headers=customer_headers(telegram_id),
+        json={"balance": 250.75},
+    )
+
+    assert response.status_code == status.HTTP_403_FORBIDDEN
+
+
+@pytest.mark.asyncio()
+async def test_set_client_balance_not_found(
+    http_client: AsyncClient,
+    session: AsyncSession,
+    customer_headers: Callable[[int], dict[str, Any]],
+    setup_full_test_user_with_shop,
+) -> None:
+    telegram_id = 2005
+    await setup_full_test_user_with_shop(telegram_id=telegram_id)
+    await session.commit()
+
+    response = await http_client.patch(
+        url=f"{BASE_URL}/{uuid.uuid4()}/balance",
+        headers=customer_headers(telegram_id),
+        json={"balance": 250.75},
+    )
+
+    assert response.status_code == status.HTTP_404_NOT_FOUND
+
+
+@pytest.mark.asyncio()
+async def test_bulk_save_client_defaults_balance_to_zero(
+    http_client: AsyncClient,
+    session: AsyncSession,
+    customer_headers: Callable[[int], dict[str, Any]],
+    setup_full_test_user_with_shop,
+) -> None:
+    telegram_id = 2003
+    _, shop_id = await setup_full_test_user_with_shop(telegram_id=telegram_id)
+
+    client_id = ClientId(uuid.uuid4())
+    client = Client(id=client_id, shop_id=shop_id, full_name="Bulk Client")
+    client.balance = None
+    gateway = SQLAlchemyClientGateway(session)
+
+    await gateway.save_all([client])
+    await session.commit()
+
+    response = await http_client.get(
+        url=f"{BASE_URL}/{client_id}", headers=customer_headers(telegram_id)
+    )
+
+    assert response.status_code == status.HTTP_200_OK
+    balance = response.json()["balance"]
+    assert isinstance(balance, (int, float))
+    assert balance == 0
+
+
+@pytest.mark.asyncio()
 async def test_get_client_by_id_not_found(
     http_client: AsyncClient,
     session: AsyncSession,
@@ -486,6 +663,7 @@ async def test_get_all_clients(
     await setup_test_client(
         shop_id=shop_id,
         full_name="Анна Антоненко",
+        balance=Decimal("14.50"),
         phones=["+380501111111"],
     )
     await setup_test_client(
@@ -508,6 +686,8 @@ async def test_get_all_clients(
     assert response.status_code == status.HTTP_200_OK
     data = response.json()
     assert len(data) == 3
+    assert isinstance(data[0]["balance"], float)
+    assert data[0]["balance"] == 14.5
     assert data[0]["full_name"] == "Анна Антоненко"
     assert data[1]["full_name"] == "Борис Борисенко"
     assert data[2]["full_name"] == "Віктор Вікторенко"
@@ -751,6 +931,48 @@ async def test_edit_client_full_name(
     )
     client = result.scalar_one()
     assert client.full_name == "Оновлене Ім'я"
+
+
+@pytest.mark.asyncio()
+async def test_edit_client_balance(
+    http_client: AsyncClient,
+    session: AsyncSession,
+    customer_headers: Callable[[int], dict[str, Any]],
+    setup_full_test_user_with_shop,
+    setup_test_client,
+) -> None:
+    telegram_id = 3001
+    _, shop_id = await setup_full_test_user_with_shop(telegram_id=telegram_id)
+
+    client_id = await setup_test_client(
+        shop_id=shop_id,
+        full_name="Балансовий клієнт",
+        balance=Decimal("100.00"),
+    )
+    await session.commit()
+
+    headers = customer_headers(telegram_id)
+
+    response = await http_client.patch(
+        url=f"{BASE_URL}/{client_id}",
+        headers=headers,
+        json={"balance": -250.75},
+    )
+
+    assert response.status_code == status.HTTP_200_OK
+
+    await session.flush()
+
+    stored_client = await session.get(Client, client_id)
+    assert stored_client is not None
+    assert stored_client.balance == Decimal("-250.75")
+
+    client_response = await http_client.get(
+        url=f"{BASE_URL}/{client_id}",
+        headers=headers,
+    )
+    assert client_response.status_code == status.HTTP_200_OK
+    assert client_response.json()["balance"] == -250.75
 
 
 @pytest.mark.asyncio()

@@ -1,4 +1,8 @@
 from dataclasses import dataclass
+from decimal import Decimal
+from typing import Annotated
+
+from pydantic import PlainSerializer
 
 from backend.application.dto.coordinates import CoordinatesDTO
 from backend.application.vars import (
@@ -8,6 +12,10 @@ from backend.application.vars import (
     PhoneId,
     ShopId,
 )
+
+
+def serialize_decimal_as_float(value: Decimal) -> float:
+    return float(value)
 
 
 @dataclass(frozen=True)
@@ -38,6 +46,10 @@ class ClientReadModel:
     full_name: str
     phones: list[PhoneDTO]
     addresses: list[AddressDTO]
+    balance: Annotated[
+        Decimal,
+        PlainSerializer(serialize_decimal_as_float, return_type=float),
+    ]
 
 
 @dataclass(frozen=True)

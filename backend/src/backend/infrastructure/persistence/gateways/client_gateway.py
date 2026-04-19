@@ -1,3 +1,4 @@
+from decimal import Decimal
 from itertools import starmap
 from typing import Any
 
@@ -72,6 +73,11 @@ class SQLAlchemyClientGateway:
                 "shop_id": client.shop_id,
                 "full_name": client.full_name,
                 "user_id": client.user_id or None,
+                "balance": (
+                    client.balance
+                    if client.balance is not None
+                    else Decimal(0)
+                ),
             })
             phone_rows.extend(
                 {
@@ -117,6 +123,11 @@ class SQLAlchemyClientGateway:
                 ),
             )
         )
+        result = await self._session.execute(query)
+        return result.scalar_one_or_none()
+
+    async def load_for_update(self, client_id: ClientId) -> Client | None:
+        query = select(Client).where(Client.id == client_id).with_for_update()
         result = await self._session.execute(query)
         return result.scalar_one_or_none()
 
@@ -232,6 +243,7 @@ class SQLAlchemyClientGateway:
                 )
                 for address in client.addresses
             ],
+            balance=client.balance,
         )
 
     async def find_coordinates_by_address(

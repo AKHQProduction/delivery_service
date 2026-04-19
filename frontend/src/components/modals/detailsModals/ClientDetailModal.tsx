@@ -89,6 +89,10 @@ export const ClientDetailModal: React.FC<ClientDetailModalProps> = ({
             descriptionText={"Ім'я клієнта"}
             elementText={client.full_name || "Не вказано"}
           />
+          <ItemElement
+            descriptionText="Баланс"
+            elementText={`₴${(client.balance ?? 0).toFixed(2)}`}
+          />
           {client.phones?.map((phone, index) => (
             <ItemElement
               key={index}

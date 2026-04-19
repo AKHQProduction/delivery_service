@@ -1,6 +1,6 @@
 import React from "react";
 import { type ImportResult } from "../../../services/api/clientApi";
-import { usePlatform } from "../../../platforms/PlatformProvider";
+import { usePlatform } from "../../../platforms/usePlatform";
 
 interface ImportResultStepProps {
   result: ImportResult;

@@ -9,7 +9,7 @@ import { DeliveryDateStep } from "./steps/DeliveryDateStep";
 import { FormNavigationButtons } from "../../shared/FormNavigationButtons";
 import { AddClientForm } from "../client/AddClientForm";
 import { type Client } from "../../../types/entities/Client";
-import { usePlatform } from "../../../platforms/PlatformProvider";
+import { usePlatform } from "../../../platforms/usePlatform";
 import { AddOrderFormWeb } from "./AddOrderFormWeb";
 
 interface AddOrderFormProps {
@@ -23,6 +23,11 @@ export const AddOrderForm: React.FC<AddOrderFormProps> = ({ onClose, onSave }) =
   if (type === "web") {
     return <AddOrderFormWeb onClose={onClose} onSave={onSave} />;
   }
+
+  return <AddOrderFormNative onClose={onClose} onSave={onSave} />;
+};
+
+const AddOrderFormNative: React.FC<AddOrderFormProps> = ({ onClose, onSave }) => {
   const { createNewOrder } = useOrders();
   const [showAddClient, setShowAddClient] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -98,7 +103,6 @@ export const AddOrderForm: React.FC<AddOrderFormProps> = ({ onClose, onSave }) =
       }
     } catch (error) {
       console.error("Error creating order:", error);
-      alert("Помилка при створенні замовлення");
     } finally {
       setIsSubmitting(false);
     }

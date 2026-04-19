@@ -89,7 +89,6 @@ export const AddOrderFormWeb: React.FC<AddOrderFormWebProps> = ({ onClose, onSav
       }
     } catch (error) {
       console.error("Error creating order:", error);
-      alert("Помилка при створенні замовлення");
     } finally {
       setIsSubmitting(false);
     }

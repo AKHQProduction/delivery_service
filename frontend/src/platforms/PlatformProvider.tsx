@@ -1,12 +1,11 @@
-import { createContext, useContext, useMemo } from "react";
-import type { Platform } from "./types";
+import { useMemo } from "react";
+import type { ReactNode } from "react";
 import { detectPlatform } from "./detect";
 import { createWebPlatform } from "./web/WebPlatform";
 import { createTelegramPlatform } from "./telegram/TelegramPlatform";
+import { PlatformContext } from "./usePlatform";
 
-const PlatformContext = createContext<Platform | null>(null);
-
-export const PlatformProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+export function PlatformProvider({ children }: { children: ReactNode }) {
   const platform = useMemo(() => {
     const type = detectPlatform();
     console.log(`%c[Platform] ${type}`, "font-size:20px;font-weight:bold;color:#2563eb");
@@ -14,12 +13,4 @@ export const PlatformProvider: React.FC<{ children: React.ReactNode }> = ({ chil
   }, []);
 
   return <PlatformContext.Provider value={platform}>{children}</PlatformContext.Provider>;
-};
-
-export const usePlatform = (): Platform => {
-  const ctx = useContext(PlatformContext);
-  if (!ctx) {
-    throw new Error("usePlatform must be used within PlatformProvider");
-  }
-  return ctx;
-};
+}

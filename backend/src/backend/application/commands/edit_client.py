@@ -1,6 +1,7 @@
 import datetime
 import logging
 from dataclasses import dataclass
+from decimal import Decimal
 
 from backend.application.common import ensure_exists
 from backend.application.dto.coordinates import CoordinatesDTO
@@ -60,6 +61,7 @@ class Address:
 class EditClientCommand:
     client_id: ClientId
     full_name: str | None = None
+    balance: Decimal | None = None
     phones: list[Phone] | None = None
     addresses: list[Address] | None = None
     confirm_duplicate_phones: bool = False
@@ -120,9 +122,16 @@ class EditClientCommandHandler:
 
         updates = []
 
-        if command.full_name is not None:
-            update_client(client, full_name=command.full_name)
-            updates.append(f"full_name={command.full_name}")
+        if command.full_name is not None or command.balance is not None:
+            update_client(
+                client,
+                full_name=command.full_name,
+                balance=command.balance,
+            )
+            if command.full_name is not None:
+                updates.append(f"full_name={command.full_name}")
+            if command.balance is not None:
+                updates.append(f"balance={command.balance}")
 
         if command.phones is not None:
             normalized_phones = [

@@ -14,8 +14,12 @@ export interface Order {
   client_name: string;
   date: string;
   time_preference: string;
+  time_slot?: string;
   delivery_phone: string;
   delivery_address: Address;
   items: OrderItem[];
+  payment_method?: string;
   comment?: string;
+  note?: string;
+  is_paid: boolean;
 }

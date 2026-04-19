@@ -12,6 +12,7 @@ import { SearchBar } from "../../ui/SearchBar";
 import { DateInput } from "../../shared/DateInput";
 import { FormSelect } from "../../shared/FormSelect";
 import { convertDateToISO } from "../../../utils/dateUtils";
+import { useError } from "../../../context/ErrorContext";
 
 interface OrderItem {
   id?: number;
@@ -52,6 +53,7 @@ interface EditOrderFormProps {
 
 export const EditOrderForm: React.FC<EditOrderFormProps> = ({ onClose, onSave, order }) => {
   const { updateCurrentOrder } = useOrders();
+  const { showWarning } = useError();
   const {
     clients,
     getClients,
@@ -285,7 +287,7 @@ export const EditOrderForm: React.FC<EditOrderFormProps> = ({ onClose, onSave, o
       !loadedOrder ||
       !timeSlot
     ) {
-      alert("Будь ласка, заповніть всі обов'язкові поля");
+      showWarning("Будь ласка, заповніть всі обов'язкові поля");
       return;
     }
 
@@ -330,7 +332,6 @@ export const EditOrderForm: React.FC<EditOrderFormProps> = ({ onClose, onSave, o
       }
     } catch (error) {
       console.error("Error updating order:", error);
-      alert("Помилка при оновленні замовлення");
     } finally {
       setIsSubmitting(false);
     }

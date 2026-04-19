@@ -1,4 +1,4 @@
-import { usePlatform } from "../../platforms/PlatformProvider";
+import { usePlatform } from "../../platforms/usePlatform";
 import { BottomModal } from "./BottomModal";
 import { CenterModal } from "./CenterModal";
 

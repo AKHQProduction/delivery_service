@@ -3,8 +3,10 @@ import { type Client, type Address, type Phone } from "../../types/entities/Clie
 import {
   getAllClients,
   createNewClient,
+  getClientById,
   updateExistingClientById,
   deleteClientById,
+  setClientBalance as setClientBalanceApi,
 } from "../../services/api/clientApi";
 
 const PAGE_SIZE = 20;
@@ -112,6 +114,7 @@ export const useClient = () => {
     clientId: string,
     clientData: {
       full_name: string;
+      balance?: number;
       phones: Phone[];
       addresses: Address[];
     },
@@ -124,6 +127,7 @@ export const useClient = () => {
         clientId,
         {
           full_name: clientData.full_name,
+          balance: clientData.balance,
           phones: clientData.phones.filter((p) => p.number.trim() !== ""),
           addresses: clientData.addresses.filter((a) => a.street.trim() !== ""),
         },
@@ -147,6 +151,28 @@ export const useClient = () => {
     }
   };
 
+  const setClientBalance = async (clientId: string, balance: number) => {
+    setLoading(true);
+    setError(null);
+    try {
+      await setClientBalanceApi(clientId, balance);
+      const updatedClient = (await getClientById(clientId)) as Client;
+      setClients((prev) =>
+        prev.map((client) => (client.client_id === clientId ? updatedClient : client)),
+      );
+      return updatedClient;
+    } catch (err: unknown) {
+      const error = err as {
+        response?: { data?: { detail?: string } };
+      };
+      const errorMessage = error?.response?.data?.detail || "Не вдалося оновити баланс клієнта.";
+      setError(errorMessage);
+      throw new Error(errorMessage);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   return {
     clients,
     loading,
@@ -158,5 +184,6 @@ export const useClient = () => {
     loadMoreClients,
     updateClient,
     deleteClient,
+    setClientBalance,
   };
 };

@@ -1,6 +1,7 @@
 import uuid
 from collections.abc import Callable
 from datetime import UTC, datetime, time, timedelta
+from decimal import Decimal
 from typing import Any
 from unittest.mock import AsyncMock, patch
 
@@ -14,7 +15,10 @@ from backend.application.dto.coordinates import CoordinatesDTO
 from backend.application.vars import (
     ShopRole,
 )
-from backend.infrastructure.persistence.tables.clients import ClientAddress
+from backend.infrastructure.persistence.tables.clients import (
+    Client,
+    ClientAddress,
+)
 from backend.infrastructure.persistence.tables.orders import Order, OrderItem
 
 BASE_URL = "/api/v1/orders"
@@ -1431,6 +1435,333 @@ async def test_get_order(
     assert order_data["comment"] == "Test comment"
     assert len(order_data["items"]) == 1
     assert order_data["items"][0]["quantity"] == 2
+
+
+@pytest.mark.asyncio()
+async def test_get_order_returns_is_paid_field(
+    http_client: AsyncClient,
+    session: AsyncSession,
+    customer_headers: Callable[[int], dict[str, Any]],
+    setup_full_test_user_with_shop,
+    setup_test_client,
+    setup_test_order,
+) -> None:
+    telegram_id = 5202
+    _, shop_id = await setup_full_test_user_with_shop(telegram_id=telegram_id)
+
+    client_id = await setup_test_client(shop_id=shop_id)
+    order_id = await setup_test_order(
+        shop_id=shop_id,
+        client_id=client_id,
+        is_paid=True,
+    )
+    await session.commit()
+
+    response = await http_client.get(
+        url=f"{BASE_URL}/{order_id}",
+        headers=customer_headers(telegram_id),
+    )
+
+    assert response.status_code == status.HTTP_200_OK
+    assert response.json()["is_paid"] is True
+
+
+@pytest.mark.asyncio()
+async def test_pay_order_from_balance(
+    http_client: AsyncClient,
+    session: AsyncSession,
+    customer_headers: Callable[[int], dict[str, Any]],
+    setup_full_test_user_with_shop,
+    setup_test_client,
+    setup_test_order,
+) -> None:
+    telegram_id = 5203
+    _, shop_id = await setup_full_test_user_with_shop(telegram_id=telegram_id)
+
+    client_id = await setup_test_client(
+        shop_id=shop_id,
+        balance=Decimal(250),
+    )
+    order_id = await setup_test_order(
+        shop_id=shop_id,
+        client_id=client_id,
+        items=[
+            {
+                "name": "Water 19L",
+                "quantity": 2,
+                "price_per_item": Decimal(100),
+            },
+            {"name": "Pump", "quantity": 1, "price_per_item": Decimal(50)},
+        ],
+    )
+    await session.commit()
+
+    response = await http_client.post(
+        url=f"{BASE_URL}/{order_id}/pay-from-balance",
+        headers=customer_headers(telegram_id),
+    )
+
+    assert response.status_code == status.HTTP_200_OK
+
+    client = await session.get(Client, client_id)
+    order = await session.get(Order, order_id)
+
+    assert client is not None
+    assert order is not None
+    assert client.balance == Decimal(0)
+    assert order.is_paid is True
+
+
+@pytest.mark.asyncio()
+async def test_pay_order_from_balance_allows_negative_balance(
+    http_client: AsyncClient,
+    session: AsyncSession,
+    customer_headers: Callable[[int], dict[str, Any]],
+    setup_full_test_user_with_shop,
+    setup_test_client,
+    setup_test_order,
+) -> None:
+    telegram_id = 5204
+    _, shop_id = await setup_full_test_user_with_shop(telegram_id=telegram_id)
+
+    client_id = await setup_test_client(
+        shop_id=shop_id,
+        balance=Decimal(50),
+    )
+    order_id = await setup_test_order(
+        shop_id=shop_id,
+        client_id=client_id,
+        items=[
+            {
+                "name": "Water 19L",
+                "quantity": 2,
+                "price_per_item": Decimal(100),
+            },
+        ],
+    )
+    await session.commit()
+
+    response = await http_client.post(
+        url=f"{BASE_URL}/{order_id}/pay-from-balance",
+        headers=customer_headers(telegram_id),
+    )
+
+    assert response.status_code == status.HTTP_200_OK
+
+    client = await session.get(Client, client_id)
+    order = await session.get(Order, order_id)
+
+    assert client is not None
+    assert order is not None
+    assert client.balance == Decimal(-150)
+    assert order.is_paid is True
+
+
+@pytest.mark.asyncio()
+async def test_pay_order_from_balance_rejects_paid_order(
+    http_client: AsyncClient,
+    session: AsyncSession,
+    customer_headers: Callable[[int], dict[str, Any]],
+    setup_full_test_user_with_shop,
+    setup_test_client,
+    setup_test_order,
+) -> None:
+    telegram_id = 5205
+    _, shop_id = await setup_full_test_user_with_shop(telegram_id=telegram_id)
+
+    client_id = await setup_test_client(
+        shop_id=shop_id,
+        balance=Decimal(250),
+    )
+    order_id = await setup_test_order(
+        shop_id=shop_id,
+        client_id=client_id,
+        is_paid=True,
+        items=[
+            {
+                "name": "Water 19L",
+                "quantity": 2,
+                "price_per_item": Decimal(100),
+            },
+        ],
+    )
+    await session.commit()
+
+    response = await http_client.post(
+        url=f"{BASE_URL}/{order_id}/pay-from-balance",
+        headers=customer_headers(telegram_id),
+    )
+
+    assert response.status_code == status.HTTP_409_CONFLICT
+    assert "already paid" in response.json()["detail"].lower()
+
+    client = await session.get(Client, client_id)
+    order = await session.get(Order, order_id)
+
+    assert client is not None
+    assert order is not None
+    assert client.balance == Decimal(250)
+    assert order.is_paid is True
+
+
+@pytest.mark.asyncio()
+async def test_pay_order_from_balance_rejects_zero_total_order(
+    http_client: AsyncClient,
+    session: AsyncSession,
+    customer_headers: Callable[[int], dict[str, Any]],
+    setup_full_test_user_with_shop,
+    setup_test_client,
+    setup_test_order,
+) -> None:
+    telegram_id = 5206
+    _, shop_id = await setup_full_test_user_with_shop(telegram_id=telegram_id)
+
+    client_id = await setup_test_client(
+        shop_id=shop_id,
+        balance=Decimal(250),
+    )
+    order_id = await setup_test_order(
+        shop_id=shop_id,
+        client_id=client_id,
+        items=[
+            {
+                "name": "Water 19L",
+                "quantity": 0,
+                "price_per_item": Decimal(100),
+            },
+        ],
+    )
+    await session.commit()
+
+    response = await http_client.post(
+        url=f"{BASE_URL}/{order_id}/pay-from-balance",
+        headers=customer_headers(telegram_id),
+    )
+
+    assert response.status_code == status.HTTP_422_UNPROCESSABLE_CONTENT
+    assert "total" in response.json()["detail"].lower()
+
+    client = await session.get(Client, client_id)
+    order = await session.get(Order, order_id)
+
+    assert client is not None
+    assert order is not None
+    assert client.balance == Decimal(250)
+    assert order.is_paid is False
+
+
+@pytest.mark.asyncio()
+async def test_pay_order_from_balance_as_courier_forbidden(
+    http_client: AsyncClient,
+    session: AsyncSession,
+    customer_headers: Callable[[int], dict[str, Any]],
+    setup_full_test_user_with_shop,
+    setup_test_client,
+    setup_test_order,
+) -> None:
+    telegram_id = 5207
+    _, shop_id = await setup_full_test_user_with_shop(
+        telegram_id=telegram_id,
+        role=ShopRole.COURIER,
+    )
+
+    client_id = await setup_test_client(
+        shop_id=shop_id,
+        balance=Decimal(250),
+    )
+    order_id = await setup_test_order(
+        shop_id=shop_id,
+        client_id=client_id,
+        items=[
+            {
+                "name": "Water 19L",
+                "quantity": 1,
+                "price_per_item": Decimal(100),
+            },
+        ],
+    )
+    await session.commit()
+
+    response = await http_client.post(
+        url=f"{BASE_URL}/{order_id}/pay-from-balance",
+        headers=customer_headers(telegram_id),
+    )
+
+    assert response.status_code == status.HTTP_403_FORBIDDEN
+
+    client = await session.get(Client, client_id)
+    order = await session.get(Order, order_id)
+
+    assert client is not None
+    assert order is not None
+    assert client.balance == Decimal(250)
+    assert order.is_paid is False
+
+
+@pytest.mark.asyncio()
+async def test_pay_order_from_balance_cross_shop_forbidden(
+    http_client: AsyncClient,
+    session: AsyncSession,
+    customer_headers: Callable[[int], dict[str, Any]],
+    setup_full_test_user_with_shop,
+    setup_test_client,
+    setup_test_order,
+    create_user,
+    create_telegram_account,
+    create_shop,
+    create_role,
+    create_shop_membership,
+) -> None:
+    order_owner_telegram_id = 5208
+    attacker_telegram_id = 5209
+
+    _, shop_id = await setup_full_test_user_with_shop(
+        telegram_id=order_owner_telegram_id
+    )
+    attacker_user_id = await create_user()
+    await create_telegram_account(
+        user_id=attacker_user_id,
+        telegram_id=attacker_telegram_id,
+    )
+    attacker_role_id = await create_role(role_id=2, name=ShopRole.MANAGER)
+    attacker_shop_id = await create_shop()
+    await create_shop_membership(
+        user_id=attacker_user_id,
+        shop_id=attacker_shop_id,
+        role_id=attacker_role_id,
+    )
+
+    client_id = await setup_test_client(
+        shop_id=shop_id,
+        balance=Decimal(250),
+    )
+    order_id = await setup_test_order(
+        shop_id=shop_id,
+        client_id=client_id,
+        items=[
+            {
+                "name": "Water 19L",
+                "quantity": 1,
+                "price_per_item": Decimal(100),
+            },
+        ],
+    )
+    await session.commit()
+
+    response = await http_client.post(
+        url=f"{BASE_URL}/{order_id}/pay-from-balance",
+        headers=customer_headers(attacker_telegram_id),
+    )
+
+    assert response.status_code == status.HTTP_403_FORBIDDEN
+
+    client = await session.get(Client, client_id)
+    order = await session.get(Order, order_id)
+
+    assert client is not None
+    assert order is not None
+    assert client.balance == Decimal(250)
+    assert order.is_paid is False
 
 
 @pytest.mark.asyncio()

@@ -80,11 +80,17 @@ from backend.application.commands.login_telegram import (
     LoginTelegramCommandHandler,
 )
 from backend.application.commands.logout import LogoutCommandHandler
+from backend.application.commands.pay_order_from_balance import (
+    PayOrderFromBalanceCommandHandler,
+)
 from backend.application.commands.reorder_route import (
     ReorderRouteCommandHandler,
 )
 from backend.application.commands.reverse_route import (
     ReverseRouteCommandHandler,
+)
+from backend.application.commands.set_client_balance import (
+    SetClientBalanceCommandHandler,
 )
 from backend.application.commands.update_order_coordinates import (
     UpdateOrderCoordinatesCommandHandler,
@@ -246,8 +252,10 @@ class APIInteractorsProvider(Provider):
         GetClientsQueryHandler,
         DeleteClientCommandHandler,
         EditClientCommandHandler,
+        SetClientBalanceCommandHandler,
         CreateOrderCommandHandler,
         EditOrderCommandHandler,
+        PayOrderFromBalanceCommandHandler,
         DeleteOrderCommandHandler,
         GetOrderQueryHandler,
         GetOrdersQueryHandler,

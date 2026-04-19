@@ -394,6 +394,7 @@ def setup_test_client(session: AsyncSession):
         full_name: str = "Test Client",
         phones: list[str] | None = None,
         addresses: list[dict[str, Any]] | None = None,
+        balance: Decimal = Decimal(0),
     ) -> ClientId:
         client_id = ClientId(uuid.uuid4())
 
@@ -401,6 +402,7 @@ def setup_test_client(session: AsyncSession):
             insert(Client).values(
                 id=client_id,
                 full_name=full_name,
+                balance=balance,
                 shop_id=shop_id,
             )
         )

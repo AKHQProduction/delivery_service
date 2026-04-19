@@ -5,6 +5,7 @@ from uuid import UUID
 from sqlalchemy import asc, case, desc, func, literal, or_, select, text
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
+from sqlalchemy.orm.attributes import set_committed_value
 from sqlalchemy.sql import Select
 from uuid_utils.compat import uuid7
 
@@ -63,6 +64,27 @@ class SQLAlchemyOrderGateway:
         )
         result = await self._session.execute(query)
         return result.scalar_one_or_none()
+
+    async def load_with_items_for_update(
+        self, order_id: OrderId
+    ) -> Order | None:
+        order_query = (
+            select(Order).where(Order.id == order_id).with_for_update()
+        )
+        order_result = await self._session.execute(order_query)
+        order = order_result.scalar_one_or_none()
+        if order is None:
+            return None
+
+        items_query = (
+            select(OrderItem)
+            .where(OrderItem.order_id == order_id)
+            .with_for_update()
+        )
+        items_result = await self._session.execute(items_query)
+        set_committed_value(order, "items", list(items_result.scalars().all()))
+
+        return order
 
     async def delete(self, order: Order) -> None:
         await self._session.delete(order)
@@ -142,6 +164,7 @@ class SQLAlchemyOrderGateway:
             client_name=mapped_cast(str, row.client.full_name),
             items=[self._to_item_read_model(item) for item in row.items],
             payment_method=mapped_cast(str, row.payment_method),
+            is_paid=mapped_cast(bool, row.is_paid),
         )
 
     @staticmethod

@@ -159,3 +159,15 @@ class InvalidPhoneNumberError(ValidationError):
     @property
     def message(self) -> str:
         return f"Invalid phone number '{self._phone}': {self._reason}"
+
+
+class OrderAlreadyPaidError(ConflictError):
+    @property
+    def message(self) -> str:
+        return "Order is already paid"
+
+
+class InvalidOrderTotalError(ValidationError):
+    @property
+    def message(self) -> str:
+        return "Order total must be greater than 0"

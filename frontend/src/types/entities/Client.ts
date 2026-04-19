@@ -28,4 +28,5 @@ export interface Client {
   full_name?: string;
   phones?: Phone[];
   addresses?: Address[];
+  balance?: number;
 }

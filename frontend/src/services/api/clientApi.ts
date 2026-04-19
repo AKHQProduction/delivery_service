@@ -3,6 +3,7 @@ import { type Phone, type Address } from "../../types/entities/Client";
 
 interface UpdateClientPayload {
   full_name?: string;
+  balance?: number;
   phones?: Phone[];
   addresses?: Address[];
 }
@@ -63,6 +64,13 @@ export const deleteClientById = async (clientId: string) => {
 
 export const getClientById = async (clientId: string) => {
   const response = await api.get(`v1/clients/${clientId}`);
+  return response.data;
+};
+
+export const setClientBalance = async (clientId: string, balance: number) => {
+  const response = await api.patch(`v1/clients/${clientId}/balance`, {
+    balance,
+  });
   return response.data;
 };
 
