@@ -5,6 +5,7 @@ import httpx
 from redis.asyncio import Redis
 
 from backend.application.dto.coordinates import (
+    AddressSuggestionDTO,
     CoordinatesDTO,
     ReverseGeocodeResult,
 )
@@ -15,6 +16,7 @@ logger = logging.getLogger(__name__)
 
 MONTHLY_COUNTER_KEY = "here_geocoder:monthly:{year}:{month}"
 FREE_MONTHLY_LIMIT = 29_990
+SUGGEST_RAW_LIMIT = 10
 
 
 class HereGeocoderClient(GeocodingProvider):
@@ -156,12 +158,17 @@ class HereGeocoderClient(GeocodingProvider):
         try:
             first = items[0]
             address = first.get("address", {})
+            city = self._normalize_text(address.get("city"))
+            district = self._normalize_text(address.get("district"))
+            if district and city and district.casefold() == city.casefold():
+                district = ""
+
             result = ReverseGeocodeResult(
                 display_name=address.get("label", first.get("title", "")),
                 street=address.get("street"),
                 house=address.get("houseNumber"),
-                city=address.get("city"),
-                district=address.get("district"),
+                city=city or None,
+                district=district or None,
             )
         except (KeyError, TypeError, IndexError):
             logger.exception("Failed to parse HERE reverse response: %s", data)
@@ -169,6 +176,79 @@ class HereGeocoderClient(GeocodingProvider):
 
         await self._increment_counter()
         return result
+
+    async def suggest(
+        self,
+        query: str,
+        city: str,
+        *,
+        limit: int = 5,
+    ) -> list[AddressSuggestionDTO]:
+        if not self._config.api_key:
+            return []
+
+        if limit <= 0:
+            return []
+
+        if not await self._within_limit():
+            return []
+
+        search_query = f"{query}, {city}, Україна"
+        request_limit = max(limit, SUGGEST_RAW_LIMIT)
+        should_increment = False
+        data: object | None = None
+        try:
+            response = await self._http.get(
+                "https://geocode.search.hereapi.com/v1/geocode",
+                params={
+                    "q": search_query,
+                    "apiKey": self._config.api_key,
+                    "lang": "uk",
+                    "in": "countryCode:UKR",
+                    "limit": str(request_limit),
+                },
+            )
+            response.raise_for_status()
+            should_increment = True
+            data = response.json()
+        except httpx.HTTPStatusError as exc:
+            logger.warning(
+                "HERE suggest HTTP error: status=%d, query=%s",
+                exc.response.status_code,
+                search_query,
+            )
+            return []
+        except Exception as exc:
+            logger.exception(
+                "HERE suggest request failed [%s], query=%s",
+                exc.__class__.__name__,
+                search_query,
+            )
+            return []
+        finally:
+            if should_increment:
+                await self._increment_counter()
+
+        if not isinstance(data, dict):
+            return []
+
+        items = data.get("items")
+        if not isinstance(items, list) or not items:
+            return []
+
+        suggestions: list[AddressSuggestionDTO] = []
+        for item in items:
+            if not isinstance(item, dict):
+                continue
+            suggestion = self._normalize_suggestion(item)
+            if suggestion is not None:
+                suggestions.append(suggestion)
+
+        if not suggestions:
+            return []
+
+        suggestions.sort(key=lambda item: not item.house)
+        return suggestions[:limit]
 
     async def _within_limit(self) -> bool:
         now = datetime.now(UTC)
@@ -205,3 +285,90 @@ class HereGeocoderClient(GeocodingProvider):
                 "Redis counter increment failed [%s]",
                 exc.__class__.__name__,
             )
+
+    @staticmethod
+    def _normalize_text(value: object | None) -> str:
+        if not isinstance(value, str):
+            return ""
+        text = value.strip()
+        if not text or text.lower() == "none":
+            return ""
+        return text
+
+    @classmethod
+    def _build_suggestion_label(
+        cls,
+        *,
+        street: str,
+        house: str,
+        district: str,
+        city: str,
+    ) -> str:
+        street_line = ", ".join(part for part in [street, house] if part)
+        return ", ".join(
+            part for part in [street_line, district, city] if part
+        )
+
+    def _normalize_suggestion(
+        self,
+        item: dict[str, object],
+    ) -> AddressSuggestionDTO | None:
+        try:
+            result_type = self._normalize_text(item.get("resultType"))
+            if result_type not in {"houseNumber", "street"}:
+                return None
+
+            address = item.get("address", {})
+            if not isinstance(address, dict):
+                return None
+
+            street = self._normalize_text(address.get("street"))
+            if not street:
+                return None
+
+            position = item.get("position", {})
+            if not isinstance(position, dict):
+                return None
+
+            coordinates = None
+            lat = position.get("lat")
+            lng = position.get("lng")
+            if lat is not None and lng is not None:
+                coordinates = CoordinatesDTO(
+                    latitude=float(lat),
+                    longitude=float(lng),
+                )
+            else:
+                return None
+
+            city = self._normalize_text(address.get("city"))
+            if not city:
+                return None
+
+            district = self._normalize_text(
+                address.get("district")
+            ) or self._normalize_text(address.get("subdistrict"))
+
+            house = self._normalize_text(address.get("houseNumber"))
+            label = self._build_suggestion_label(
+                street=street,
+                house=house,
+                district=district,
+                city=city,
+            )
+
+            return AddressSuggestionDTO(
+                label=label,
+                street=str(street),
+                house=house,
+                city=city,
+                coordinates=coordinates,
+                district=district or None,
+            )
+        except Exception as exc:
+            logger.exception(
+                "Failed to parse HERE suggest item [%s]: %s",
+                exc.__class__.__name__,
+                item,
+            )
+            return None

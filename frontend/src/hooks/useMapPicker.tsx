@@ -1,10 +1,14 @@
-import { useState, useCallback } from "react";
-import { forwardGeocode as forwardGeocodeApi, reverseGeocode as reverseGeocodeApi } from "../services/api/geocodingApi";
+import { useCallback, useRef, useState } from "react";
+import {
+  forwardGeocode as forwardGeocodeApi,
+  reverseGeocode as reverseGeocodeApi,
+} from "../services/api/geocodingApi";
 
 export interface MapPickerResult {
   street: string;
   house: string;
   city: string;
+  district?: string;
   fullAddress: string;
 }
 
@@ -18,12 +22,33 @@ export const useMapPicker = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
+  const pendingRequestsRef = useRef(0);
+  const latestRequestIdRef = useRef(0);
+
+  const beginRequest = useCallback(() => {
+    const requestId = latestRequestIdRef.current + 1;
+    latestRequestIdRef.current = requestId;
+    pendingRequestsRef.current += 1;
+    setIsLoading(true);
+    setError(null);
+    return requestId;
+  }, []);
+
+  const finishRequest = useCallback((requestId: number, nextError: string | null) => {
+    pendingRequestsRef.current = Math.max(0, pendingRequestsRef.current - 1);
+    setIsLoading(pendingRequestsRef.current > 0);
+
+    if (requestId === latestRequestIdRef.current) {
+      setError(nextError);
+    }
+  }, []);
+
   const forwardGeocode = useCallback(
     async (street: string, house?: string, city?: string): Promise<Coordinates | null> => {
       if (!street) return null;
 
-      setIsLoading(true);
-      setError(null);
+      const requestId = beginRequest();
+      let requestError: string | null = null;
 
       try {
         const data = await forwardGeocodeApi(street, house, city);
@@ -37,43 +62,45 @@ export const useMapPicker = () => {
           lng: data.longitude,
         };
       } catch (err) {
+        requestError = err instanceof Error ? err.message : "Failed to geocode address";
         console.error("Forward geocoding error:", err);
         return null;
       } finally {
-        setIsLoading(false);
+        finishRequest(requestId, requestError);
       }
     },
-    [],
+    [beginRequest, finishRequest],
   );
 
   const reverseGeocode = useCallback(
     async (coordinates: Coordinates): Promise<MapPickerResult | null> => {
-      setIsLoading(true);
-      setError(null);
+      const requestId = beginRequest();
+      let requestError: string | null = null;
 
       try {
         const data = await reverseGeocodeApi(coordinates.lat, coordinates.lng);
 
         if (!data) {
-          throw new Error("Address not found");
+          requestError = "Address not found";
+          return null;
         }
 
         return {
           street: data.street || "",
           house: data.house || "",
           city: data.city || "",
+          district: data.district || undefined,
           fullAddress: data.display_name || "",
         };
       } catch (err) {
-        const errorMessage = err instanceof Error ? err.message : "Failed to get address";
-        setError(errorMessage);
+        requestError = err instanceof Error ? err.message : "Failed to get address";
         console.error("Reverse geocoding error:", err);
         return null;
       } finally {
-        setIsLoading(false);
+        finishRequest(requestId, requestError);
       }
     },
-    [],
+    [beginRequest, finishRequest],
   );
 
   const openMap = () => {

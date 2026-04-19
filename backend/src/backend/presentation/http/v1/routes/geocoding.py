@@ -1,9 +1,12 @@
+from typing import Annotated
+
 from dishka import FromDishka
 from dishka.integrations.fastapi import DishkaRoute
-from fastapi import APIRouter, Depends, status
+from fastapi import APIRouter, Depends, Query, status
 from fastapi.security import HTTPBearer
 
 from backend.application.dto.coordinates import (
+    AddressSuggestionDTO,
     CoordinatesDTO,
     ReverseGeocodeResult,
 )
@@ -46,3 +49,20 @@ async def reverse_geocode(
     geocoder: FromDishka[Geocoder],
 ) -> ReverseGeocodeResult | None:
     return await geocoder.reverse(CoordinatesDTO(latitude=lat, longitude=lon))
+
+
+@router.get(
+    "/suggest",
+    status_code=status.HTTP_200_OK,
+    responses={
+        status.HTTP_401_UNAUTHORIZED: {"model": ErrorSchema},
+    },
+    dependencies=[Depends(HTTPBearer(auto_error=False))],
+)
+async def suggest_addresses(
+    query: str,
+    city: str,
+    geocoder: FromDishka[Geocoder],
+    limit: Annotated[int, Query(ge=1)] = 5,
+) -> list[AddressSuggestionDTO]:
+    return await geocoder.suggest(query=query, city=city, limit=limit)

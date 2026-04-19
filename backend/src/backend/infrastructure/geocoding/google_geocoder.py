@@ -5,6 +5,7 @@ import httpx
 from redis.asyncio import Redis
 
 from backend.application.dto.coordinates import (
+    AddressSuggestionDTO,
     CoordinatesDTO,
     ReverseGeocodeResult,
 )
@@ -180,6 +181,77 @@ class GoogleGeocoderClient(GeocodingProvider):
         await self._increment_counter()
         return result
 
+    async def suggest(
+        self,
+        query: str,
+        city: str,
+        *,
+        limit: int = 5,
+    ) -> list[AddressSuggestionDTO]:
+        if not self._config.api_key:
+            return []
+
+        if limit <= 0:
+            return []
+
+        if not await self._within_limit():
+            return []
+
+        address = f"{query}, {city}, Україна"
+        should_increment = False
+        data: object | None = None
+        try:
+            response = await self._http.get(
+                "https://maps.googleapis.com/maps/api/geocode/json",
+                params={
+                    "address": address,
+                    "key": self._config.api_key,
+                    "language": "uk",
+                    "components": "country:UA",
+                },
+            )
+            response.raise_for_status()
+            should_increment = True
+            data = response.json()
+        except httpx.HTTPStatusError as exc:
+            logger.warning(
+                "Google suggest HTTP error: status=%d, address=%s",
+                exc.response.status_code,
+                address,
+            )
+            return []
+        except Exception as exc:
+            logger.exception(
+                "Google suggest request failed [%s], address=%s",
+                exc.__class__.__name__,
+                address,
+            )
+            return []
+        finally:
+            if should_increment:
+                await self._increment_counter()
+
+        if not isinstance(data, dict):
+            return []
+
+        results = data.get("results")
+        if not isinstance(results, list) or not results:
+            return []
+
+        suggestions: list[AddressSuggestionDTO] = []
+        for item in results:
+            if not isinstance(item, dict):
+                continue
+            suggestion = self._normalize_suggestion(item)
+            if suggestion is not None:
+                suggestions.append(suggestion)
+
+        if not suggestions:
+            return []
+
+        suggestions.sort(key=lambda item: not item.house)
+        return suggestions[:limit]
+
     async def _within_limit(self) -> bool:
         now = datetime.now(UTC)
         key = MONTHLY_COUNTER_KEY.format(year=now.year, month=now.month)
@@ -215,3 +287,110 @@ class GoogleGeocoderClient(GeocodingProvider):
                 "Redis counter increment failed [%s]",
                 exc.__class__.__name__,
             )
+
+    @staticmethod
+    def _normalize_text(value: object | None) -> str:
+        if not isinstance(value, str):
+            return ""
+        text = value.strip()
+        if not text or text.lower() == "none":
+            return ""
+        return text
+
+    @classmethod
+    def _build_suggestion_label(
+        cls,
+        *,
+        street: str,
+        house: str,
+        district: str,
+        city: str,
+    ) -> str:
+        street_line = ", ".join(part for part in [street, house] if part)
+        return ", ".join(
+            part for part in [street_line, district, city] if part
+        )
+
+    def _normalize_suggestion(
+        self,
+        item: dict[str, object],
+    ) -> AddressSuggestionDTO | None:
+        try:
+            components_by_type: dict[str, str] = {}
+            address_components = item.get("address_components")
+            if not isinstance(address_components, list):
+                return None
+
+            for component in address_components:
+                if not isinstance(component, dict):
+                    continue
+                long_name = self._normalize_text(component.get("long_name"))
+                if not long_name:
+                    continue
+                types = component.get("types", [])
+                if not isinstance(types, list):
+                    continue
+                for component_type in types:
+                    if isinstance(component_type, str):
+                        components_by_type[component_type] = long_name
+
+            street = self._normalize_text(components_by_type.get("route"))
+            if not street:
+                return None
+
+            geometry = item.get("geometry", {})
+            if not isinstance(geometry, dict):
+                return None
+            location = geometry.get("location", {})
+            if not isinstance(location, dict):
+                return None
+            coordinates = None
+            lat = location.get("lat")
+            lng = location.get("lng")
+            if lat is not None and lng is not None:
+                coordinates = CoordinatesDTO(
+                    latitude=float(lat),
+                    longitude=float(lng),
+                )
+            else:
+                return None
+
+            city = self._normalize_text(
+                components_by_type.get("locality")
+            ) or self._normalize_text(components_by_type.get("postal_town"))
+            if not city:
+                return None
+
+            district = (
+                self._normalize_text(components_by_type.get("sublocality"))
+                or self._normalize_text(
+                    components_by_type.get("sublocality_level_1")
+                )
+                or self._normalize_text(components_by_type.get("neighborhood"))
+            )
+
+            house = self._normalize_text(
+                components_by_type.get("street_number")
+            )
+            label = self._build_suggestion_label(
+                street=street,
+                house=house,
+                district=district,
+                city=city,
+            )
+
+            return AddressSuggestionDTO(
+                label=label,
+                street=street,
+                house=house,
+                city=city,
+                coordinates=coordinates,
+                district=district or None,
+            )
+        except Exception as exc:
+            logger.exception(
+                "Failed to parse Google suggest item [%s]: %s",
+                exc.__class__.__name__,
+                item,
+            )
+            return None
