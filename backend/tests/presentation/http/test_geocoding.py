@@ -43,6 +43,7 @@ async def test_suggest_returns_normalized_items(
             "street": "Хрещатик",
             "house": "1",
             "city": "Київ",
+            "district": None,
             "coordinates": {
                 "latitude": 50.4501,
                 "longitude": 30.5234,
