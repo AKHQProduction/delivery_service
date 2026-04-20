@@ -145,6 +145,12 @@ class LastPaymentMethodError(ConflictError):
         )
 
 
+class ProtectedPaymentMethodError(ConflictError):
+    @property
+    def message(self) -> str:
+        return "Cannot modify protected payment method"
+
+
 class InvalidTimeSlotRangeError(ValidationError):
     @property
     def message(self) -> str:

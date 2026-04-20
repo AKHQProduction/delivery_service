@@ -2,10 +2,16 @@ import logging
 from dataclasses import dataclass
 
 from backend.application.common import ensure_exists
-from backend.application.errors import LastPaymentMethodError
+from backend.application.errors import (
+    LastPaymentMethodError,
+    ProtectedPaymentMethodError,
+)
 from backend.application.policies.access import (
     ensure_is_owner,
     ensure_related_to_shop,
+)
+from backend.application.services.payment_method import (
+    is_balance_payment_method,
 )
 from backend.application.vars import PaymentMethodId
 from backend.infrastructure.idp import IdentityProvider
@@ -42,6 +48,9 @@ class DeletePaymentMethodCommandHandler:
             "PaymentMethod",
         )
         ensure_related_to_shop(current_user, payment_method.shop_id)
+
+        if is_balance_payment_method(payment_method=payment_method):
+            raise ProtectedPaymentMethodError
 
         count = await self._payment_method_gateway.count_by_shop(
             payment_method.shop_id

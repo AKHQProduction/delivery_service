@@ -166,6 +166,36 @@ async def test_update_payment_method_duplicate_conflict(
 
 
 @pytest.mark.asyncio()
+async def test_update_balance_payment_method_conflict(
+    http_client: AsyncClient,
+    session: AsyncSession,
+    customer_headers: Callable[[int], dict[str, Any]],
+    setup_full_test_user_with_shop,
+) -> None:
+    telegram_id = 8104
+    _, shop_id = await setup_full_test_user_with_shop(telegram_id=telegram_id)
+    await session.commit()
+
+    result = await session.execute(
+        select(ShopPaymentMethod).where(
+            ShopPaymentMethod.shop_id == shop_id,
+            ShopPaymentMethod.name == "Баланс",
+        )
+    )
+    pm = result.scalar_one()
+
+    headers = customer_headers(telegram_id)
+
+    response = await http_client.patch(
+        url=f"{BASE_URL}/{pm.id}",
+        headers=headers,
+        json={"name": "Новий баланс"},
+    )
+
+    assert response.status_code == status.HTTP_409_CONFLICT
+
+
+@pytest.mark.asyncio()
 async def test_update_payment_method_not_found(
     http_client: AsyncClient,
     session: AsyncSession,
@@ -253,6 +283,34 @@ async def test_delete_payment_method(
         select(ShopPaymentMethod).where(ShopPaymentMethod.id == pm_id)
     )
     assert result.scalar_one_or_none() is None
+
+
+@pytest.mark.asyncio()
+async def test_delete_balance_payment_method_conflict(
+    http_client: AsyncClient,
+    session: AsyncSession,
+    customer_headers: Callable[[int], dict[str, Any]],
+    setup_full_test_user_with_shop,
+) -> None:
+    telegram_id = 8204
+    _, shop_id = await setup_full_test_user_with_shop(telegram_id=telegram_id)
+    await session.commit()
+
+    result = await session.execute(
+        select(ShopPaymentMethod).where(
+            ShopPaymentMethod.shop_id == shop_id,
+            ShopPaymentMethod.name == "Баланс",
+        )
+    )
+    pm = result.scalar_one()
+
+    headers = customer_headers(telegram_id)
+
+    response = await http_client.delete(
+        url=f"{BASE_URL}/{pm.id}", headers=headers
+    )
+
+    assert response.status_code == status.HTTP_409_CONFLICT
 
 
 @pytest.mark.asyncio()
@@ -360,11 +418,12 @@ async def test_get_all_payment_methods(
 
     assert response.status_code == status.HTTP_200_OK
     methods = response.json()
-    assert len(methods) == 3
+    assert len(methods) == 4
     names = [m["name"] for m in methods]
     assert "Готівка" in names
     assert "На рахунок" in names
     assert "Інше" in names
+    assert "Баланс" in names
 
 
 @pytest.mark.asyncio()

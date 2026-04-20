@@ -6,7 +6,10 @@ from backend.application.errors import (
     AuthorizationError,
     UserAlreadyRelatedToShopError,
 )
-from backend.application.services.payment_method import create_payment_method
+from backend.application.services.payment_method import (
+    BALANCE_PAYMENT_METHOD_NAME,
+    create_payment_method,
+)
 from backend.application.services.shop import create_shop
 from backend.application.services.time_slot import create_time_slot
 from backend.application.vars import ShopRole
@@ -38,6 +41,7 @@ DEFAULT_PAYMENT_METHODS: list[str] = [
     "Готівка",
     "На рахунок",
     "Інше",
+    BALANCE_PAYMENT_METHOD_NAME,
 ]
 
 

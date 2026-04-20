@@ -5,6 +5,7 @@ import { useState } from "react";
 import { EditOrderForm } from "../../forms/orders/EditOrderForm";
 import { type Order } from "../../../types/entities/Order";
 import { useDistrictsSettings } from "../../../hooks/settings/useDistrictsSettings";
+import { isBalancePaymentMethodName } from "../../../shared/paymentMethod";
 
 export interface OrderDetailModalProps {
   order: Order;
@@ -25,6 +26,7 @@ export const OrderDetailModal = ({
   const [isPaying, setIsPaying] = useState(false);
   const [balanceChargedInSession, setBalanceChargedInSession] = useState(false);
   const { districts } = useDistrictsSettings();
+  const isBalancePaymentMethod = isBalancePaymentMethodName(order.payment_method || "");
   const handleEditClick = () => {
     setIsEditing(true);
   };
@@ -237,7 +239,12 @@ export const OrderDetailModal = ({
         <button
           type="button"
           onClick={handlePayFromBalance}
-          disabled={isPaying || balanceChargedInSession || Boolean(order.is_paid)}
+          disabled={
+            isPaying ||
+            balanceChargedInSession ||
+            Boolean(order.is_paid) ||
+            isBalancePaymentMethod
+          }
           className="w-full py-4 mb-3 rounded-2xl font-semibold transition-colors bg-emerald-600 hover:bg-emerald-700 disabled:bg-gray-200 disabled:text-gray-500 disabled:cursor-not-allowed text-white"
         >
           Списати з балансу

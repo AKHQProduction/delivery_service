@@ -4,6 +4,7 @@ from datetime import date, time, timedelta
 
 from backend.application.common import ensure_exists
 from backend.application.dto.coordinates import CoordinatesDTO
+from backend.application.dto.idp import CurrentUserDTO
 from backend.application.errors import DateMustBeGreaterThanError
 from backend.application.policies.access import (
     ensure_can_manage,
@@ -19,6 +20,12 @@ from backend.application.services.order import (
     create_order_item,
     resolve_address,
     resolve_phone,
+)
+from backend.application.services.order_payment import (
+    apply_balance_payment,
+)
+from backend.application.services.payment_method import (
+    is_balance_payment_method,
 )
 from backend.application.services.route_builder import (
     create_route_plan,
@@ -49,6 +56,11 @@ from backend.infrastructure.persistence.tables import (
     Order as OrderModel,
     Product,
 )
+from backend.infrastructure.persistence.tables.base import DeliveryAddressDTO
+from backend.infrastructure.persistence.tables.clients import Client
+from backend.infrastructure.persistence.tables.shops import (
+    ShopDeliveryTimeSlot,
+)
 from backend.infrastructure.transaction_manager import TransactionManager
 
 logger = logging.getLogger(__name__)
@@ -58,6 +70,13 @@ logger = logging.getLogger(__name__)
 class OrderProductInput:
     product_id: ProductId
     quantity: int
+
+
+@dataclass(frozen=True)
+class ResolvedDeliveryDetails:
+    client: Client
+    delivery_phone: str
+    delivery_address: DeliveryAddressDTO
 
 
 @dataclass(frozen=True)
@@ -116,62 +135,28 @@ class CreateOrderCommandHandler:
             command.client_id,
         )
 
-        client = ensure_exists(
-            await self._client_gateway.load(command.client_id),
-            "Client",
+        delivery = await self._resolve_delivery_details(
+            client_id=command.client_id,
+            address_id=command.address_id,
+            phone_id=command.phone_id,
+            shop_id=current_user.shop_id,
+            current_user=current_user,
         )
-        ensure_related_to_shop(current_user, client.shop_id)
-
-        delivery_phone = resolve_phone(client, command.phone_id)
-        delivery_address = resolve_address(client, command.address_id)
-
-        time_slot = ensure_exists(
-            await self._time_slot_gateway.load(command.time_slot_id),
-            "TimeSlot",
+        time_slot = await self._load_time_slot(
+            command.time_slot_id, current_user
         )
-        ensure_related_to_shop(current_user, time_slot.shop_id)
-
-        product_ids = [p.product_id for p in command.products]
-        loaded_products = await self._product_gateway.load_many(product_ids)
-        products_map = {p.id: p for p in loaded_products}
-
-        for pid in product_ids:
-            ensure_exists(
-                products_map.get(pid),
-                "Product",
-            )
-
-        products: list[tuple[Product, int]] = [
-            (products_map[p.product_id], p.quantity) for p in command.products
-        ]
-
-        if delivery_address.coordinates is None:
-            shop = await self._shop_gateway.load_shop(current_user.shop_id)
-            shop_city = shop.city if shop else None
-            coords = await self._geocoder.geocode_if_missing(
-                street=delivery_address.street,
-                house=delivery_address.house,
-                coordinates=None,
-                shop_city=shop_city,
-                require_house=False,
-            )
-            if coords is not None:
-                delivery_address.coordinates = coords
-                addr_obj = next(
-                    a for a in client.addresses if a.id == command.address_id
-                )
-                coords.apply_to(addr_obj)
+        products = await self._resolve_products(command.products)
 
         order_id = self._order_gateway.next_id()
         order = create_order(
             order_id=order_id,
             shop_id=current_user.shop_id,
-            client_id=client.id,
+            client_id=delivery.client.id,
             delivery_date=command.delivery_date,
             delivery_start_time=time_slot.start_time,
             delivery_end_time=time_slot.end_time,
-            delivery_phone=delivery_phone,
-            delivery_address=delivery_address,
+            delivery_phone=delivery.delivery_phone,
+            delivery_address=delivery.delivery_address,
             payment_method=command.payment_method,
             comment=command.comment,
         )
@@ -189,6 +174,13 @@ class CreateOrderCommandHandler:
         self._order_gateway.save(order)
         await self._tr_manager.flush()
 
+        if is_balance_payment_method(name=order.payment_method):
+            client_for_update = ensure_exists(
+                await self._client_gateway.load_for_update(delivery.client.id),
+                "Client",
+            )
+            apply_balance_payment(order, client_for_update)
+
         await self._auto_insert_into_route(
             shop_id=current_user.shop_id,
             order=order,
@@ -200,6 +192,75 @@ class CreateOrderCommandHandler:
         await self._tr_manager.commit()
 
         return order_id
+
+    async def _resolve_delivery_details(
+        self,
+        *,
+        client_id: ClientId,
+        address_id: AddressId,
+        phone_id: PhoneId,
+        shop_id: ShopId,
+        current_user: CurrentUserDTO,
+    ) -> ResolvedDeliveryDetails:
+        client = ensure_exists(
+            await self._client_gateway.load(client_id),
+            "Client",
+        )
+        ensure_related_to_shop(current_user, client.shop_id)
+
+        delivery_address = resolve_address(client, address_id)
+        if delivery_address.coordinates is None:
+            shop = await self._shop_gateway.load_shop(shop_id)
+            shop_city = shop.city if shop else None
+            coords = await self._geocoder.geocode_if_missing(
+                street=delivery_address.street,
+                house=delivery_address.house,
+                coordinates=None,
+                shop_city=shop_city,
+                require_house=False,
+            )
+            if coords is not None:
+                delivery_address.coordinates = coords
+                addr_obj = next(
+                    address
+                    for address in client.addresses
+                    if address.id == address_id
+                )
+                coords.apply_to(addr_obj)
+
+        return ResolvedDeliveryDetails(
+            client=client,
+            delivery_phone=resolve_phone(client, phone_id),
+            delivery_address=delivery_address,
+        )
+
+    async def _load_time_slot(
+        self,
+        time_slot_id: TimeSlotId,
+        current_user: CurrentUserDTO,
+    ) -> ShopDeliveryTimeSlot:
+        time_slot = ensure_exists(
+            await self._time_slot_gateway.load(time_slot_id),
+            "TimeSlot",
+        )
+        ensure_related_to_shop(current_user, time_slot.shop_id)
+        return time_slot
+
+    async def _resolve_products(
+        self,
+        products: list[OrderProductInput],
+    ) -> list[tuple[Product, int]]:
+        product_ids = [product.product_id for product in products]
+        loaded_products = await self._product_gateway.load_many(product_ids)
+        products_map = {product.id: product for product in loaded_products}
+
+        for product_id in product_ids:
+            ensure_exists(products_map.get(product_id), "Product")
+
+        return [
+            (products_map[product.product_id], product.quantity)
+            for product in products
+        ]
 
     async def _auto_insert_into_route(
         self,

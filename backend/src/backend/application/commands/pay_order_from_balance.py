@@ -1,15 +1,15 @@
 from dataclasses import dataclass
-from decimal import Decimal
 
 from backend.application.common import ensure_exists
 from backend.application.errors import (
     AccessDeniedError,
-    InvalidOrderTotalError,
-    OrderAlreadyPaidError,
 )
 from backend.application.policies.access import (
     ensure_can_manage,
     ensure_related_to_shop,
+)
+from backend.application.services.order_payment import (
+    apply_balance_payment,
 )
 from backend.application.vars import OrderId
 from backend.infrastructure.idp import IdentityProvider
@@ -50,16 +50,6 @@ class PayOrderFromBalanceCommandHandler:
         )
         ensure_related_to_shop(current_user, order.shop_id)
 
-        if order.is_paid:
-            raise OrderAlreadyPaidError
-
-        total = sum(
-            (item.price_per_item * item.quantity for item in order.items),
-            start=Decimal(0),
-        )
-        if total <= 0:
-            raise InvalidOrderTotalError
-
         client = ensure_exists(
             await self._client_gateway.load_for_update(order.client_id),
             "Client",
@@ -67,7 +57,6 @@ class PayOrderFromBalanceCommandHandler:
         if client.shop_id != order.shop_id:
             raise AccessDeniedError
 
-        client.balance -= total
-        order.is_paid = True
+        apply_balance_payment(order, client)
 
         await self._tr_manager.commit()

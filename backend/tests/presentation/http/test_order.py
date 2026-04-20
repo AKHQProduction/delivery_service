@@ -272,6 +272,78 @@ async def test_create_order_without_comment(
 
 
 @pytest.mark.asyncio()
+async def test_create_order_with_balance_payment_charges_client(
+    http_client: AsyncClient,
+    session: AsyncSession,
+    customer_headers: Callable[[int], dict[str, Any]],
+    setup_full_test_user_with_shop,
+    setup_test_client,
+    setup_test_product,
+    setup_test_time_slot,
+) -> None:
+    telegram_id = 5003
+    _, shop_id = await setup_full_test_user_with_shop(telegram_id=telegram_id)
+
+    client_id = await setup_test_client(
+        shop_id=shop_id,
+        phones=["+380501234567"],
+        addresses=[
+            {
+                "street": "Хрещатик",
+                "house": "10",
+            }
+        ],
+        balance=Decimal(300),
+    )
+
+    product_id, _, _, _ = await setup_test_product(shop_id)
+    time_slot_id = await setup_test_time_slot(shop_id=shop_id)
+
+    await session.commit()
+
+    headers = customer_headers(telegram_id)
+
+    client_response = await http_client.get(
+        url=f"/api/v1/clients/{client_id}", headers=headers
+    )
+    client_data = client_response.json()
+    phone_id = client_data["phones"][0]["id"]
+    address_id = client_data["addresses"][0]["id"]
+
+    delivery_date = (datetime.now(UTC).date() + timedelta(days=1)).isoformat()
+
+    response = await http_client.post(
+        url=BASE_URL,
+        headers=headers,
+        json={
+            "client_id": str(client_id),
+            "delivery_date": delivery_date,
+            "time_slot_id": str(time_slot_id),
+            "address_id": address_id,
+            "phone_id": phone_id,
+            "payment_method": "Баланс",
+            "products": [
+                {
+                    "product_id": str(product_id),
+                    "quantity": 2,
+                }
+            ],
+        },
+    )
+
+    assert response.status_code == status.HTTP_201_CREATED
+
+    order = await session.get(Order, uuid.UUID(response.json()))
+    client = await session.get(Client, client_id)
+
+    assert order is not None
+    assert client is not None
+    assert order.is_paid is True
+    assert order.payment_method == "Баланс"
+    assert client.balance == Decimal(100)
+
+
+@pytest.mark.asyncio()
 async def test_create_order_with_different_time_slots(
     http_client: AsyncClient,
     session: AsyncSession,
@@ -873,6 +945,158 @@ async def test_update_order_payment_method(
 
 
 @pytest.mark.asyncio()
+async def test_update_order_payment_method_to_balance_charges_client(
+    http_client: AsyncClient,
+    session: AsyncSession,
+    customer_headers: Callable[[int], dict[str, Any]],
+    setup_full_test_user_with_shop,
+    setup_test_client,
+    setup_test_order,
+) -> None:
+    telegram_id = 5055
+    _, shop_id = await setup_full_test_user_with_shop(telegram_id=telegram_id)
+
+    client_id = await setup_test_client(shop_id=shop_id, balance=Decimal(200))
+    order_id = await setup_test_order(
+        shop_id=shop_id,
+        client_id=client_id,
+        payment_method="Готівка",
+        items=[
+            {
+                "name": "Water 19L",
+                "quantity": 2,
+                "price_per_item": Decimal(100),
+            },
+        ],
+    )
+    await session.commit()
+
+    headers = customer_headers(telegram_id)
+
+    response = await http_client.patch(
+        url=f"{BASE_URL}/{order_id}",
+        headers=headers,
+        json={"payment_method": "Баланс"},
+    )
+
+    assert response.status_code == status.HTTP_200_OK
+
+    client = await session.get(Client, client_id)
+    order = await session.get(Order, order_id)
+
+    assert client is not None
+    assert order is not None
+    assert client.balance == Decimal(0)
+    assert order.is_paid is True
+    assert order.payment_method == "Баланс"
+
+
+@pytest.mark.asyncio()
+async def test_update_order_payment_method_from_balance_refunds_client(
+    http_client: AsyncClient,
+    session: AsyncSession,
+    customer_headers: Callable[[int], dict[str, Any]],
+    setup_full_test_user_with_shop,
+    setup_test_client,
+    setup_test_order,
+) -> None:
+    telegram_id = 5056
+    _, shop_id = await setup_full_test_user_with_shop(telegram_id=telegram_id)
+
+    client_id = await setup_test_client(shop_id=shop_id, balance=Decimal(0))
+    order_id = await setup_test_order(
+        shop_id=shop_id,
+        client_id=client_id,
+        is_paid=True,
+        payment_method="Баланс",
+        items=[
+            {
+                "name": "Water 19L",
+                "quantity": 2,
+                "price_per_item": Decimal(100),
+            },
+            {"name": "Pump", "quantity": 1, "price_per_item": Decimal(50)},
+        ],
+    )
+    await session.commit()
+
+    headers = customer_headers(telegram_id)
+
+    response = await http_client.patch(
+        url=f"{BASE_URL}/{order_id}",
+        headers=headers,
+        json={"payment_method": "Готівка"},
+    )
+
+    assert response.status_code == status.HTTP_200_OK
+
+    client = await session.get(Client, client_id)
+    order = await session.get(Order, order_id)
+
+    assert client is not None
+    assert order is not None
+    assert client.balance == Decimal(250)
+    assert order.is_paid is False
+    assert order.payment_method == "Готівка"
+
+
+@pytest.mark.asyncio()
+async def test_update_balance_paid_order_items_adjusts_client_balance(
+    http_client: AsyncClient,
+    session: AsyncSession,
+    customer_headers: Callable[[int], dict[str, Any]],
+    setup_full_test_user_with_shop,
+    setup_test_client,
+    setup_test_order,
+) -> None:
+    telegram_id = 5057
+    _, shop_id = await setup_full_test_user_with_shop(telegram_id=telegram_id)
+
+    client_id = await setup_test_client(shop_id=shop_id, balance=Decimal(0))
+    order_id = await setup_test_order(
+        shop_id=shop_id,
+        client_id=client_id,
+        is_paid=True,
+        payment_method="Баланс",
+        items=[
+            {
+                "name": "Water 19L",
+                "quantity": 2,
+                "price_per_item": Decimal(100),
+            },
+        ],
+    )
+    await session.commit()
+
+    items_result = await session.execute(
+        select(OrderItem).where(OrderItem.order_id == order_id)
+    )
+    item = items_result.scalar_one()
+    item_id = item.id
+    headers = customer_headers(telegram_id)
+
+    response = await http_client.patch(
+        url=f"{BASE_URL}/{order_id}",
+        headers=headers,
+        json={
+            "payment_method": "Баланс",
+            "items": [{"id": item_id, "quantity": 3}],
+        },
+    )
+
+    assert response.status_code == status.HTTP_200_OK
+
+    client = await session.get(Client, client_id)
+    order = await session.get(Order, order_id)
+
+    assert client is not None
+    assert order is not None
+    assert client.balance == Decimal(-100)
+    assert order.is_paid is True
+    assert order.payment_method == "Баланс"
+
+
+@pytest.mark.asyncio()
 async def test_update_order_time_slot(
     http_client: AsyncClient,
     session: AsyncSession,
@@ -1341,6 +1565,93 @@ async def test_delete_order(
 
 
 @pytest.mark.asyncio()
+async def test_delete_future_balance_paid_order_refunds_client_balance(
+    http_client: AsyncClient,
+    session: AsyncSession,
+    customer_headers: Callable[[int], dict[str, Any]],
+    setup_full_test_user_with_shop,
+    setup_test_client,
+    setup_test_order,
+) -> None:
+    telegram_id = 5101
+    _, shop_id = await setup_full_test_user_with_shop(telegram_id=telegram_id)
+
+    client_id = await setup_test_client(shop_id=shop_id, balance=Decimal(200))
+    order_id = await setup_test_order(
+        shop_id=shop_id,
+        client_id=client_id,
+        payment_method="Баланс",
+        is_paid=True,
+    )
+    await session.commit()
+
+    headers = customer_headers(telegram_id)
+
+    delete_response = await http_client.delete(
+        url=f"{BASE_URL}/{order_id}", headers=headers
+    )
+
+    assert delete_response.status_code == status.HTTP_204_NO_CONTENT
+
+    await session.flush()
+
+    order_result = await session.execute(
+        select(Order).where(Order.id == order_id)
+    )
+    assert order_result.scalar_one_or_none() is None
+
+    client_result = await session.execute(
+        select(Client).where(Client.id == client_id)
+    )
+    client = client_result.scalar_one()
+    assert client.balance == Decimal(300)
+
+
+@pytest.mark.asyncio()
+async def test_delete_past_balance_paid_order_does_not_refund_client_balance(
+    http_client: AsyncClient,
+    session: AsyncSession,
+    customer_headers: Callable[[int], dict[str, Any]],
+    setup_full_test_user_with_shop,
+    setup_test_client,
+    setup_test_order,
+) -> None:
+    telegram_id = 5103
+    _, shop_id = await setup_full_test_user_with_shop(telegram_id=telegram_id)
+
+    client_id = await setup_test_client(shop_id=shop_id, balance=Decimal(200))
+    order_id = await setup_test_order(
+        shop_id=shop_id,
+        client_id=client_id,
+        delivery_date=datetime.now(UTC).date() - timedelta(days=1),
+        payment_method="Баланс",
+        is_paid=True,
+    )
+    await session.commit()
+
+    headers = customer_headers(telegram_id)
+
+    delete_response = await http_client.delete(
+        url=f"{BASE_URL}/{order_id}", headers=headers
+    )
+
+    assert delete_response.status_code == status.HTTP_204_NO_CONTENT
+
+    await session.flush()
+
+    order_result = await session.execute(
+        select(Order).where(Order.id == order_id)
+    )
+    assert order_result.scalar_one_or_none() is None
+
+    client_result = await session.execute(
+        select(Client).where(Client.id == client_id)
+    )
+    client = client_result.scalar_one()
+    assert client.balance == Decimal(200)
+
+
+@pytest.mark.asyncio()
 async def test_delete_order_as_courier_forbidden(
     http_client: AsyncClient,
     session: AsyncSession,
@@ -1510,6 +1821,7 @@ async def test_pay_order_from_balance(
     assert order is not None
     assert client.balance == Decimal(0)
     assert order.is_paid is True
+    assert order.payment_method == "Баланс"
 
 
 @pytest.mark.asyncio()
@@ -1555,6 +1867,7 @@ async def test_pay_order_from_balance_allows_negative_balance(
     assert order is not None
     assert client.balance == Decimal(-150)
     assert order.is_paid is True
+    assert order.payment_method == "Баланс"
 
 
 @pytest.mark.asyncio()

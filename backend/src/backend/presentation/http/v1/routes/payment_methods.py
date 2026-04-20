@@ -72,7 +72,7 @@ async def update_payment_method(
     await handler.handle(
         EditPaymentMethodCommand(
             payment_method_id=payment_method_id,
-            name=body.name,
+            payment_method_name=body.name,
         )
     )
 
@@ -84,6 +84,7 @@ async def update_payment_method(
         status.HTTP_401_UNAUTHORIZED: {"model": ErrorSchema},
         status.HTTP_403_FORBIDDEN: {"model": ErrorSchema},
         status.HTTP_404_NOT_FOUND: {"model": ErrorSchema},
+        status.HTTP_409_CONFLICT: {"model": ErrorSchema},
     },
     dependencies=[Depends(HTTPBearer(auto_error=False))],
 )

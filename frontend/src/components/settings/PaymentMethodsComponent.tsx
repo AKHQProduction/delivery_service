@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { usePaymentMethodsSettings } from "../../hooks/settings/usePaymentMethodsSettings";
+import { isBalancePaymentMethodName } from "../../shared/paymentMethod";
 import { SettingsItemSkeleton } from "../ui/Skeleton";
 
 interface PaymentMethod {
@@ -86,6 +87,8 @@ export const PaymentMethodsComponent = () => {
     return method.name;
   };
 
+  const isProtectedMethod = (method: PaymentMethod) => isBalancePaymentMethodName(method.name);
+
   const isMethodEdited = (methodId: string) => {
     const edited = editedMethods[methodId];
     if (!edited) return false;
@@ -120,7 +123,9 @@ export const PaymentMethodsComponent = () => {
               placeholder="Назва"
               value={getMethodName(method)}
               onChange={(e) => handleFieldChange(method.payment_method_id, e.target.value)}
-              className="flex-1 min-w-0 px-4 py-3 border-2 border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+              disabled={isProtectedMethod(method)}
+              readOnly={isProtectedMethod(method)}
+              className="flex-1 min-w-0 px-4 py-3 border-2 border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent disabled:bg-gray-100 disabled:text-gray-500 disabled:cursor-not-allowed"
             />
 
             {isMethodEdited(method.payment_method_id) ? (
@@ -139,7 +144,7 @@ export const PaymentMethodsComponent = () => {
                   <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
                 </svg>
               </button>
-            ) : (
+            ) : !isProtectedMethod(method) ? (
               <button
                 onClick={async () => {
                   try {
@@ -165,7 +170,7 @@ export const PaymentMethodsComponent = () => {
                   />
                 </svg>
               </button>
-            )}
+            ) : null}
           </div>
         ))}
 

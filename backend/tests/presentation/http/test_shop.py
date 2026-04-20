@@ -12,6 +12,7 @@ from backend.infrastructure.persistence.tables.shops import (
     Shop,
     ShopDeliveryTimeSlot,
     ShopMembership,
+    ShopPaymentMethod,
 )
 
 BASE_URL = "/api/v1/shop"
@@ -62,6 +63,15 @@ async def test_create_shop(
         )
     )
     assert len(time_slots.fetchall()) == 2
+
+    payment_methods = await session.execute(
+        select(ShopPaymentMethod.name).where(
+            ShopPaymentMethod.shop_id == shop.id
+        )
+    )
+    payment_method_names = list(payment_methods.scalars())
+    assert len(payment_method_names) == 4
+    assert "Баланс" in payment_method_names
 
 
 @pytest.mark.asyncio()

@@ -311,6 +311,7 @@ def setup_full_test_user_with_shop(
         await setup_test_payment_method(shop_id=shop_id, name="Готівка")
         await setup_test_payment_method(shop_id=shop_id, name="На рахунок")
         await setup_test_payment_method(shop_id=shop_id, name="Інше")
+        await setup_test_payment_method(shop_id=shop_id, name="Баланс")
         return user_id, shop_id
 
     return _setup_user
