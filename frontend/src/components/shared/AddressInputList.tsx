@@ -28,6 +28,23 @@ interface AddressRowState {
   nextKey: number;
 }
 
+const areAddressRowStatesEqual = (left: AddressRowState, right: AddressRowState) => {
+  if (left.nextKey !== right.nextKey || left.entries.length !== right.entries.length) {
+    return false;
+  }
+
+  return left.entries.every((entry, index) => {
+    const otherEntry = right.entries[index];
+
+    return (
+      otherEntry &&
+      entry.key === otherEntry.key &&
+      entry.fingerprint === otherEntry.fingerprint &&
+      entry.persistentId === otherEntry.persistentId
+    );
+  });
+};
+
 export interface District {
   district_id: string;
   name: string;
@@ -562,14 +579,18 @@ export const AddressInputList: React.FC<AddressInputListProps> = ({
   const [addressRowState, setAddressRowState] = useState<AddressRowState>(() =>
     createInitialAddressRowState(addresses),
   );
+  const renderedAddressRowState = React.useMemo(
+    () => syncAddressRowEntries(addresses, addressRowState),
+    [addresses, addressRowState],
+  );
 
   useLayoutEffect(() => {
-    queueMicrotask(() => {
-      setAddressRowState((previousState) => syncAddressRowEntries(addresses, previousState));
-    });
-  }, [addresses]);
+    if (!areAddressRowStatesEqual(addressRowState, renderedAddressRowState)) {
+      setAddressRowState(renderedAddressRowState);
+    }
+  }, [addressRowState, renderedAddressRowState]);
 
-  const addressRowEntries = addressRowState.entries;
+  const addressRowEntries = renderedAddressRowState.entries;
   const addressRowKeys = React.useMemo(
     () => addressRowEntries.map((entry) => entry.key),
     [addressRowEntries],
