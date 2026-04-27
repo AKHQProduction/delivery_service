@@ -9,6 +9,7 @@ import {
 export const useClientForm = (initialData?: Partial<Client>) => {
   const [formData, setFormData] = useState(() => ({
     full_name: initialData?.full_name || "",
+    preferred_time_slot_id: initialData?.preferred_time_slot_id || "",
     phones: initialData?.phones || ([{ number: "", is_primary: true, id: 0 }] as Phone[]),
     addresses:
       initialData?.addresses ||
@@ -31,6 +32,7 @@ export const useClientForm = (initialData?: Partial<Client>) => {
   const initializeForm = (client: Client) => {
     setFormData({
       full_name: client.full_name || "",
+      preferred_time_slot_id: client.preferred_time_slot_id || "",
       phones:
         client.phones && client.phones.length > 0
           ? client.phones.map((phone) => ({
@@ -73,6 +75,7 @@ export const useClientForm = (initialData?: Partial<Client>) => {
   const resetForm = () => {
     setFormData({
       full_name: "",
+      preferred_time_slot_id: "",
       phones: [{ number: "", is_primary: true }],
       addresses: [
         {

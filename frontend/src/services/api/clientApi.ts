@@ -3,6 +3,7 @@ import { type Phone, type Address } from "../../types/entities/Client";
 
 interface UpdateClientPayload {
   full_name?: string;
+  preferred_time_slot_id?: string | null;
   balance?: number;
   phones?: Phone[];
   addresses?: Address[];
@@ -10,6 +11,7 @@ interface UpdateClientPayload {
 
 interface CreateClientPayload {
   full_name: string;
+  preferred_time_slot_id?: string | null;
   phones: Phone[];
   addresses: Address[];
 }

@@ -1,12 +1,14 @@
 import React, { useEffect, useState } from "react";
 import { FormWrapper } from "../../shared/FormWrapper";
 import { FormInput } from "../../shared/FormInput";
+import { FormSelect } from "../../shared/FormSelect";
 import { AddressInputList } from "../../shared/AddressInputList";
 import { PhoneInputList } from "../../shared/PhoneInputList";
 import { type Client } from "../../../types/entities/Client";
-import { useClient } from "../../../hooks/clients/useClients";
 import { useClientForm } from "../../../hooks/clients/useClientForm";
 import { useDistrictsSettings } from "../../../hooks/settings/useDistrictsSettings";
+import { useTimeSlotsSettings } from "../../../hooks/settings/useTimeSlotsSettings";
+import { updateExistingClientById } from "../../../services/api/clientApi";
 import { DuplicatePhoneToast } from "../../ui/PhoneDuplicateErrorPopup";
 
 interface ExistingClient {
@@ -40,8 +42,8 @@ export const EditClientForm: React.FC<EditClientFormProps> = ({ client, onClose,
     setPrimaryAddress,
     initializeForm,
   } = useClientForm();
-  const { updateClient } = useClient();
   const { districts } = useDistrictsSettings();
+  const { timeSlots } = useTimeSlotsSettings();
   const [balance, setBalance] = useState("");
   const [balanceError, setBalanceError] = useState<string | null>(null);
   const [phoneErrors, setPhoneErrors] = useState<Record<string, string>>({});
@@ -62,6 +64,21 @@ export const EditClientForm: React.FC<EditClientFormProps> = ({ client, onClose,
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
   };
+
+  const timeSlotOptions = timeSlots.map((slot) => ({
+    value: slot.time_slot_id,
+    label: slot.label
+      ? `${slot.label} (${slot.start_time} - ${slot.end_time})`
+      : `${slot.start_time} - ${slot.end_time}`,
+  }));
+
+  const buildPayload = (clientData: typeof formData, nextBalance: number) => ({
+    full_name: clientData.full_name,
+    preferred_time_slot_id: clientData.preferred_time_slot_id || null,
+    balance: nextBalance,
+    phones: clientData.phones.filter((p) => p.number.trim() !== ""),
+    addresses: clientData.addresses.filter((a) => a.street.trim() !== ""),
+  });
 
   const handlePhoneChange = (index: number, value: string) => {
     const oldNumber = formData.phones[index]?.number;
@@ -87,10 +104,7 @@ export const EditClientForm: React.FC<EditClientFormProps> = ({ client, onClose,
     }
 
     try {
-      await updateClient(client.client_id, {
-        ...formData,
-        balance: nextBalance,
-      });
+      await updateExistingClientById(client.client_id, buildPayload(formData, nextBalance));
       await onSave?.();
     } catch (err: unknown) {
       if (
@@ -126,12 +140,9 @@ export const EditClientForm: React.FC<EditClientFormProps> = ({ client, onClose,
     }
 
     try {
-      await updateClient(
+      await updateExistingClientById(
         client.client_id,
-        {
-          ...formData,
-          balance: nextBalance,
-        },
+        buildPayload(pendingClientData, nextBalance),
         true,
       );
       await onSave?.();
@@ -178,6 +189,14 @@ export const EditClientForm: React.FC<EditClientFormProps> = ({ client, onClose,
           required
         />
         {balanceError && <p className="text-sm text-red-600">{balanceError}</p>}
+
+        <FormSelect
+          label="Бажаний час доставки"
+          name="preferred_time_slot_id"
+          value={formData.preferred_time_slot_id}
+          onChange={handleChange}
+          options={timeSlotOptions}
+        />
 
         <PhoneInputList
           phones={formData.phones}

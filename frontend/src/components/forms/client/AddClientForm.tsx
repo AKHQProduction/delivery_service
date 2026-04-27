@@ -1,11 +1,13 @@
 import React, { useState } from "react";
 import { FormWrapper } from "../../shared/FormWrapper";
 import { FormInput } from "../../shared/FormInput";
+import { FormSelect } from "../../shared/FormSelect";
 import { PhoneInputList } from "../../shared/PhoneInputList";
 import { AddressInputList } from "../../shared/AddressInputList";
-import { useClient } from "../../../hooks/clients/useClients";
 import { useClientForm } from "../../../hooks/clients/useClientForm";
 import { useDistrictsSettings } from "../../../hooks/settings/useDistrictsSettings";
+import { useTimeSlotsSettings } from "../../../hooks/settings/useTimeSlotsSettings";
+import { createNewClient } from "../../../services/api/clientApi";
 import { type Client } from "../../../types/entities/Client";
 import { DuplicatePhoneToast } from "../../ui/PhoneDuplicateErrorPopup";
 
@@ -39,8 +41,8 @@ export const AddClientForm: React.FC<AddClientFormProps> = ({ onClose, onSuccess
     setPrimaryAddress,
   } = useClientForm();
 
-  const { createClient } = useClient();
   const { districts } = useDistrictsSettings();
+  const { timeSlots } = useTimeSlotsSettings();
   const [phoneErrors, setPhoneErrors] = useState<Record<string, string>>({});
   const [duplicateError, setDuplicateError] = useState<{
     code: string;
@@ -48,7 +50,21 @@ export const AddClientForm: React.FC<AddClientFormProps> = ({ onClose, onSuccess
   } | null>(null);
   const [pendingClientData, setPendingClientData] = useState<typeof formData | null>(null);
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const timeSlotOptions = timeSlots.map((slot) => ({
+    value: slot.time_slot_id,
+    label: slot.label
+      ? `${slot.label} (${slot.start_time} - ${slot.end_time})`
+      : `${slot.start_time} - ${slot.end_time}`,
+  }));
+
+  const buildPayload = (clientData: typeof formData) => ({
+    full_name: clientData.full_name,
+    preferred_time_slot_id: clientData.preferred_time_slot_id || null,
+    phones: clientData.phones.filter((p) => p.number.trim() !== ""),
+    addresses: clientData.addresses.filter((a) => a.street.trim() !== ""),
+  });
+
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
   };
 
@@ -69,15 +85,14 @@ export const AddClientForm: React.FC<AddClientFormProps> = ({ onClose, onSuccess
     setPhoneErrors({});
 
     try {
-      const response = await createClient(formData, false);
+      const payload = buildPayload(formData);
+      const response = await createNewClient(payload, false);
 
       const clientId =
         typeof response === "string" ? response : (response?.client_id ?? response?.id);
       const fullClient: Client = {
         client_id: clientId,
-        full_name: formData.full_name,
-        phones: formData.phones.filter((p) => p.number.trim() !== ""),
-        addresses: formData.addresses.filter((a) => a.street.trim() !== ""),
+        ...payload,
       };
       onSuccess?.(fullClient);
       onClose();
@@ -110,15 +125,14 @@ export const AddClientForm: React.FC<AddClientFormProps> = ({ onClose, onSuccess
     if (!pendingClientData) return;
 
     try {
-      const response = await createClient(pendingClientData, true);
+      const payload = buildPayload(pendingClientData);
+      const response = await createNewClient(payload, true);
 
       const clientId =
         typeof response === "string" ? response : (response?.client_id ?? response?.id);
       const fullClient: Client = {
         client_id: clientId,
-        full_name: pendingClientData.full_name,
-        phones: pendingClientData.phones.filter((p) => p.number.trim() !== ""),
-        addresses: pendingClientData.addresses.filter((a) => a.street.trim() !== ""),
+        ...payload,
       };
 
       setDuplicateError(null);
@@ -147,6 +161,14 @@ export const AddClientForm: React.FC<AddClientFormProps> = ({ onClose, onSuccess
           onChange={handleChange}
           placeholder="Введіть повне ім'я..."
           required
+        />
+
+        <FormSelect
+          label="Бажаний час доставки"
+          name="preferred_time_slot_id"
+          value={formData.preferred_time_slot_id}
+          onChange={handleChange}
+          options={timeSlotOptions}
         />
 
         <PhoneInputList

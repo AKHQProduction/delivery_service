@@ -26,6 +26,7 @@ export interface Address {
 export interface Client {
   client_id: string;
   full_name?: string;
+  preferred_time_slot_id?: string | null;
   phones?: Phone[];
   addresses?: Address[];
   balance?: number;
