@@ -5,6 +5,7 @@ import leftArrowIcon from "../../../assets/icons/left_arrow.svg";
 import { EditClientForm } from "../../forms/client/EditClientForm";
 import { type Client } from "../../../types/entities/Client";
 import { useDistrictsSettings } from "../../../hooks/settings/useDistrictsSettings";
+import { useTimeSlotsSettings } from "../../../hooks/settings/useTimeSlotsSettings";
 
 interface ClientDetailModalProps {
   client: Client;
@@ -21,11 +22,27 @@ export const ClientDetailModal: React.FC<ClientDetailModalProps> = ({
 }) => {
   const [isEditing, setIsEditing] = useState(false);
   const { districts } = useDistrictsSettings();
+  const { timeSlots, isLoading: timeSlotsLoading } = useTimeSlotsSettings();
 
   const getDistrictName = (districtId: string | null | undefined) => {
     if (!districtId) return null;
     const district = districts.find((d) => d.district_id === districtId);
     return district?.name || null;
+  };
+
+  const getPreferredTimeSlotLabel = () => {
+    if (!client.preferred_time_slot_id) {
+      return "Не вказано";
+    }
+
+    const timeSlot = timeSlots.find((slot) => slot.time_slot_id === client.preferred_time_slot_id);
+    if (!timeSlot) {
+      return timeSlotsLoading ? "Завантаження..." : "Не знайдено";
+    }
+
+    return timeSlot.label
+      ? `${timeSlot.label} (${timeSlot.start_time} - ${timeSlot.end_time})`
+      : `${timeSlot.start_time} - ${timeSlot.end_time}`;
   };
 
   const handleEditClick = () => {
@@ -92,6 +109,10 @@ export const ClientDetailModal: React.FC<ClientDetailModalProps> = ({
           <ItemElement
             descriptionText="Баланс"
             elementText={`₴${(client.balance ?? 0).toFixed(2)}`}
+          />
+          <ItemElement
+            descriptionText="Бажаний час доставки"
+            elementText={getPreferredTimeSlotLabel()}
           />
           {client.phones?.map((phone, index) => (
             <ItemElement
