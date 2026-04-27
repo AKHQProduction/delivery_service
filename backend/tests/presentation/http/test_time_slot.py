@@ -10,6 +10,7 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from backend.application.vars import ShopRole
+from backend.infrastructure.persistence.tables.clients import Client
 from backend.infrastructure.persistence.tables.shops import (
     ShopDeliveryTimeSlot,
 )
@@ -296,6 +297,61 @@ async def test_delete_time_slot(
         )
     )
     assert result.scalar_one_or_none() is None
+
+
+@pytest.mark.asyncio()
+async def test_delete_time_slot_clears_client_preference(
+    http_client: AsyncClient,
+    session: AsyncSession,
+    customer_headers: Callable[[int], dict[str, Any]],
+    create_user,
+    create_telegram_account,
+    create_shop,
+    create_role,
+    create_shop_membership,
+    setup_test_client,
+    setup_test_time_slot,
+) -> None:
+    telegram_id = 7204
+    user_id = await create_user()
+    await create_telegram_account(
+        user_id=user_id, telegram_id=telegram_id, full_name="Test User"
+    )
+    role_id = await create_role(name=ShopRole.OWNER)
+    shop_id = await create_shop()
+    await create_shop_membership(
+        user_id=user_id, shop_id=shop_id, role_id=role_id
+    )
+    preferred_time_slot_id = await setup_test_time_slot(
+        shop_id=shop_id,
+        start_time=time(6, 0),
+        end_time=time(9, 0),
+        label="Preferred slot",
+    )
+    await setup_test_time_slot(
+        shop_id=shop_id,
+        start_time=time(14, 0),
+        end_time=time(20, 0),
+        label="Remaining slot",
+    )
+    client_id = await setup_test_client(
+        shop_id=shop_id,
+        preferred_time_slot_id=preferred_time_slot_id,
+    )
+    await session.commit()
+
+    response = await http_client.delete(
+        url=f"{BASE_URL}/{preferred_time_slot_id}",
+        headers=customer_headers(telegram_id),
+    )
+
+    assert response.status_code == status.HTTP_204_NO_CONTENT
+
+    await session.flush()
+
+    client = await session.get(Client, client_id)
+    assert client is not None
+    assert client.preferred_time_slot_id is None
 
 
 @pytest.mark.asyncio()

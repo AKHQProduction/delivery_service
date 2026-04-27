@@ -1,6 +1,6 @@
 import uuid
 from collections.abc import Callable
-from datetime import UTC, datetime, timedelta
+from datetime import UTC, datetime, time, timedelta
 from decimal import Decimal
 from typing import Any
 from unittest.mock import AsyncMock, patch
@@ -363,6 +363,49 @@ async def test_create_client_without_phones_and_addresses(
 
 
 @pytest.mark.asyncio()
+async def test_create_client_with_preferred_time_slot(
+    http_client: AsyncClient,
+    session: AsyncSession,
+    customer_headers: Callable[[int], dict[str, Any]],
+    setup_full_test_user_with_shop,
+    setup_test_time_slot,
+) -> None:
+    telegram_id = 1005
+    _, shop_id = await setup_full_test_user_with_shop(telegram_id=telegram_id)
+    time_slot_id = await setup_test_time_slot(
+        shop_id=shop_id,
+        start_time=time(6, 0),
+        end_time=time(8, 0),
+        label="Ранній слот",
+    )
+    await session.commit()
+
+    headers = customer_headers(telegram_id)
+
+    response = await http_client.post(
+        url=BASE_URL,
+        headers=headers,
+        json={
+            "full_name": "Клієнт з улюбленим слотом",
+            "phones": [{"number": "+380501234567"}],
+            "addresses": [],
+            "preferred_time_slot_id": str(time_slot_id),
+        },
+    )
+
+    assert response.status_code == status.HTTP_201_CREATED
+    client_id = response.json()
+
+    client_response = await http_client.get(
+        url=f"{BASE_URL}/{client_id}", headers=headers
+    )
+    assert client_response.status_code == status.HTTP_200_OK
+    assert client_response.json()["preferred_time_slot_id"] == str(
+        time_slot_id
+    )
+
+
+@pytest.mark.asyncio()
 async def test_create_client_unauthorized(
     http_client: AsyncClient,
 ) -> None:
@@ -694,6 +737,40 @@ async def test_get_all_clients(
 
 
 @pytest.mark.asyncio()
+async def test_get_all_clients_returns_preferred_time_slot(
+    http_client: AsyncClient,
+    session: AsyncSession,
+    customer_headers: Callable[[int], dict[str, Any]],
+    setup_full_test_user_with_shop,
+    setup_test_client,
+    setup_test_time_slot,
+) -> None:
+    telegram_id = 2104
+    _, shop_id = await setup_full_test_user_with_shop(telegram_id=telegram_id)
+    time_slot_id = await setup_test_time_slot(
+        shop_id=shop_id,
+        start_time=time(6, 0),
+        end_time=time(8, 0),
+        label="Ранній слот",
+    )
+    await setup_test_client(
+        shop_id=shop_id,
+        full_name="Клієнт зі слотом",
+        preferred_time_slot_id=time_slot_id,
+    )
+    await session.commit()
+
+    response = await http_client.get(
+        url=f"{BASE_URL}/all", headers=customer_headers(telegram_id)
+    )
+
+    assert response.status_code == status.HTTP_200_OK
+    data = response.json()
+    assert len(data) == 1
+    assert data[0]["preferred_time_slot_id"] == str(time_slot_id)
+
+
+@pytest.mark.asyncio()
 async def test_get_all_clients_filter_by_full_name(
     http_client: AsyncClient,
     session: AsyncSession,
@@ -973,6 +1050,118 @@ async def test_edit_client_balance(
     )
     assert client_response.status_code == status.HTTP_200_OK
     assert client_response.json()["balance"] == -250.75
+
+
+@pytest.mark.asyncio()
+async def test_edit_client_preferred_time_slot_set_change_and_clear(
+    http_client: AsyncClient,
+    session: AsyncSession,
+    customer_headers: Callable[[int], dict[str, Any]],
+    setup_full_test_user_with_shop,
+    setup_test_client,
+    setup_test_time_slot,
+) -> None:
+    telegram_id = 3012
+    _, shop_id = await setup_full_test_user_with_shop(telegram_id=telegram_id)
+    morning_slot_id = await setup_test_time_slot(
+        shop_id=shop_id,
+        start_time=time(6, 0),
+        end_time=time(8, 0),
+        label="Ранній слот",
+    )
+    evening_slot_id = await setup_test_time_slot(
+        shop_id=shop_id,
+        start_time=time(21, 0),
+        end_time=time(23, 0),
+        label="Пізній слот",
+    )
+    client_id = await setup_test_client(shop_id=shop_id)
+    await session.commit()
+
+    headers = customer_headers(telegram_id)
+
+    response = await http_client.patch(
+        url=f"{BASE_URL}/{client_id}",
+        headers=headers,
+        json={"preferred_time_slot_id": str(morning_slot_id)},
+    )
+    assert response.status_code == status.HTTP_200_OK
+    client_response = await http_client.get(
+        url=f"{BASE_URL}/{client_id}", headers=headers
+    )
+    assert client_response.status_code == status.HTTP_200_OK
+    assert client_response.json()["preferred_time_slot_id"] == str(
+        morning_slot_id
+    )
+
+    response = await http_client.patch(
+        url=f"{BASE_URL}/{client_id}",
+        headers=headers,
+        json={"preferred_time_slot_id": str(evening_slot_id)},
+    )
+    assert response.status_code == status.HTTP_200_OK
+    client_response = await http_client.get(
+        url=f"{BASE_URL}/{client_id}", headers=headers
+    )
+    assert client_response.status_code == status.HTTP_200_OK
+    assert client_response.json()["preferred_time_slot_id"] == str(
+        evening_slot_id
+    )
+
+    response = await http_client.patch(
+        url=f"{BASE_URL}/{client_id}",
+        headers=headers,
+        json={"preferred_time_slot_id": None},
+    )
+    assert response.status_code == status.HTTP_200_OK
+    client_response = await http_client.get(
+        url=f"{BASE_URL}/{client_id}", headers=headers
+    )
+    assert client_response.status_code == status.HTTP_200_OK
+    assert client_response.json()["preferred_time_slot_id"] is None
+
+
+@pytest.mark.asyncio()
+async def test_edit_client_rejects_preferred_time_slot_from_another_shop(
+    http_client: AsyncClient,
+    session: AsyncSession,
+    customer_headers: Callable[[int], dict[str, Any]],
+    setup_full_test_user_with_shop,
+    setup_test_client,
+    setup_test_time_slot,
+    create_user,
+    create_telegram_account,
+    create_shop,
+    create_shop_membership,
+) -> None:
+    telegram_id = 3013
+    _, shop_id = await setup_full_test_user_with_shop(telegram_id=telegram_id)
+    client_id = await setup_test_client(shop_id=shop_id)
+
+    other_user_id = await create_user()
+    await create_telegram_account(
+        user_id=other_user_id, telegram_id=3014, full_name="Other User"
+    )
+    other_shop_id = await create_shop()
+    await create_shop_membership(user_id=other_user_id, shop_id=other_shop_id)
+    other_time_slot_id = await setup_test_time_slot(
+        shop_id=other_shop_id,
+        start_time=time(6, 0),
+        end_time=time(8, 0),
+        label="Чужий слот",
+    )
+    await session.commit()
+
+    response = await http_client.patch(
+        url=f"{BASE_URL}/{client_id}",
+        headers=customer_headers(telegram_id),
+        json={"preferred_time_slot_id": str(other_time_slot_id)},
+    )
+
+    assert response.status_code == status.HTTP_403_FORBIDDEN
+    stored_client = await session.get(Client, client_id)
+    assert stored_client is not None
+    assert stored_client.preferred_time_slot_id is None
 
 
 @pytest.mark.asyncio()
