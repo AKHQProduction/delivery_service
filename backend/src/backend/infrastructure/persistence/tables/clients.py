@@ -10,6 +10,7 @@ from backend.application.vars import (
     DistrictId,
     PhoneId,
     ShopId,
+    TimeSlotId,
     UserId,
 )
 from backend.infrastructure.persistence.tables.base import (
@@ -21,7 +22,10 @@ from backend.infrastructure.persistence.tables.base import (
 if TYPE_CHECKING:
     from backend.infrastructure.persistence.tables.districts import District
     from backend.infrastructure.persistence.tables.orders import Order
-    from backend.infrastructure.persistence.tables.shops import Shop
+    from backend.infrastructure.persistence.tables.shops import (
+        Shop,
+        ShopDeliveryTimeSlot,
+    )
     from backend.infrastructure.persistence.tables.users import User
 
 
@@ -43,9 +47,16 @@ class Client(Base, CreatedAt, UpdatedAt):
     user_id: Mapped[UserId | None] = mapped_column(
         sa.ForeignKey("users.id", ondelete="SET NULL"), nullable=True
     )
+    preferred_time_slot_id: Mapped[TimeSlotId | None] = mapped_column(
+        sa.ForeignKey("shop_delivery_time_slots.id", ondelete="SET NULL"),
+        nullable=True,
+    )
 
     shop: Mapped["Shop"] = relationship(back_populates="clients", lazy="raise")
     user: Mapped["User"] = relationship(lazy="raise")
+    preferred_time_slot: Mapped["ShopDeliveryTimeSlot | None"] = relationship(
+        lazy="raise"
+    )
     phones: Mapped[list["ClientPhone"]] = relationship(
         back_populates="client", cascade="all, delete-orphan", lazy="raise"
     )

@@ -53,7 +53,14 @@ from backend.application.queries.preview_import_xlsx import (
     PreviewImportXlsxQuery,
     PreviewImportXlsxQueryHandler,
 )
-from backend.application.vars import AddressId, ClientId, DistrictId, PhoneId
+from backend.application.vars import (
+    AddressId,
+    ClientId,
+    DistrictId,
+    Empty,
+    PhoneId,
+    TimeSlotId,
+)
 from backend.infrastructure.persistence.gateways import RedisFileStorage
 from backend.infrastructure.xlsx.client_xlsx_preview import PreviewResult
 from backend.infrastructure.xlsx.column_mapping import (
@@ -285,11 +292,20 @@ async def update_client(
     ],
     handler: FromDishka[EditClientCommandHandler],
 ) -> None:
+    preferred_time_slot_id: TimeSlotId | Empty | None = Empty.EMPTY
+    if "preferred_time_slot_id" in body.model_fields_set:
+        preferred_time_slot_id = (
+            TimeSlotId(body.preferred_time_slot_id)
+            if body.preferred_time_slot_id is not None
+            else None
+        )
+
     await handler.handle(
         EditClientCommand(
             client_id=client_id,
             full_name=body.full_name,
             balance=body.balance,
+            preferred_time_slot_id=preferred_time_slot_id,
             confirm_duplicate_phones=body.confirm_duplicate_phones,
             phones=[
                 Phone(

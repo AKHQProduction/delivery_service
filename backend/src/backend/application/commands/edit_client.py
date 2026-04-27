@@ -2,9 +2,11 @@ import datetime
 import logging
 from dataclasses import dataclass
 from decimal import Decimal
+from typing import cast
 
 from backend.application.common import ensure_exists
 from backend.application.dto.coordinates import CoordinatesDTO
+from backend.application.dto.idp import CurrentUserDTO
 from backend.application.errors import InvalidPrimaryFlagError
 from backend.application.policies.access import (
     ensure_can_manage,
@@ -21,11 +23,19 @@ from backend.application.services.client import (
 from backend.application.services.geocoder import Geocoder
 from backend.application.validators import normalize_ukraine_phone
 from backend.application.validators.phone import validate_no_duplicate_phones
-from backend.application.vars import AddressId, ClientId, DistrictId, PhoneId
+from backend.application.vars import (
+    AddressId,
+    ClientId,
+    DistrictId,
+    Empty,
+    PhoneId,
+    TimeSlotId,
+)
 from backend.infrastructure.idp import IdentityProvider
 from backend.infrastructure.persistence.gateways import (
     SQLAlchemyClientGateway,
     SQLAlchemyShopGateway,
+    SQLAlchemyTimeSlotGateway,
 )
 from backend.infrastructure.persistence.gateways.order_gateway import (
     SQLAlchemyOrderGateway,
@@ -64,6 +74,7 @@ class EditClientCommand:
     balance: Decimal | None = None
     phones: list[Phone] | None = None
     addresses: list[Address] | None = None
+    preferred_time_slot_id: TimeSlotId | Empty | None = Empty.EMPTY
     confirm_duplicate_phones: bool = False
 
     def __post_init__(self) -> None:
@@ -90,6 +101,7 @@ class EditClientCommandHandler:
         idp: IdentityProvider,
         client_gateway: SQLAlchemyClientGateway,
         shop_gateway: SQLAlchemyShopGateway,
+        time_slot_gateway: SQLAlchemyTimeSlotGateway,
         order_gateway: SQLAlchemyOrderGateway,
         geocoder: Geocoder,
         tr_manager: TransactionManager,
@@ -97,6 +109,7 @@ class EditClientCommandHandler:
         self._idp = idp
         self._client_gateway = client_gateway
         self._shop_gateway = shop_gateway
+        self._time_slot_gateway = time_slot_gateway
         self._order_gateway = order_gateway
         self._geocoder = geocoder
         self._tr_manager = tr_manager
@@ -122,11 +135,25 @@ class EditClientCommandHandler:
 
         updates = []
 
-        if command.full_name is not None or command.balance is not None:
+        await self._ensure_preferred_time_slot_related_to_shop(
+            current_user, command.preferred_time_slot_id
+        )
+
+        if command.preferred_time_slot_id is not Empty.EMPTY:
+            updates.append(
+                f"preferred_time_slot_id={command.preferred_time_slot_id}"
+            )
+
+        if (
+            command.full_name is not None
+            or command.balance is not None
+            or command.preferred_time_slot_id is not Empty.EMPTY
+        ):
             update_client(
                 client,
                 full_name=command.full_name,
                 balance=command.balance,
+                preferred_time_slot_id=command.preferred_time_slot_id,
             )
             if command.full_name is not None:
                 updates.append(f"full_name={command.full_name}")
@@ -241,3 +268,19 @@ class EditClientCommandHandler:
             client.shop_id,
             ", ".join(updates),
         )
+
+    async def _ensure_preferred_time_slot_related_to_shop(
+        self,
+        current_user: CurrentUserDTO,
+        preferred_time_slot_id: TimeSlotId | Empty | None,
+    ) -> None:
+        if preferred_time_slot_id in {Empty.EMPTY, None}:
+            return
+
+        time_slot = ensure_exists(
+            await self._time_slot_gateway.load(
+                cast("TimeSlotId", preferred_time_slot_id)
+            ),
+            "TimeSlot",
+        )
+        ensure_related_to_shop(current_user, time_slot.shop_id)

@@ -42,6 +42,7 @@ from backend.application.vars import (
     ClientId,
     PhoneId,
     ShopId,
+    TimeSlotId,
 )
 from backend.infrastructure.persistence.tables.clients import (
     Client,
@@ -73,6 +74,7 @@ class SQLAlchemyClientGateway:
                 "shop_id": client.shop_id,
                 "full_name": client.full_name,
                 "user_id": client.user_id or None,
+                "preferred_time_slot_id": client.preferred_time_slot_id,
                 "balance": (
                     client.balance
                     if client.balance is not None
@@ -243,6 +245,9 @@ class SQLAlchemyClientGateway:
                 )
                 for address in client.addresses
             ],
+            preferred_time_slot_id=TimeSlotId(client.preferred_time_slot_id)
+            if client.preferred_time_slot_id is not None
+            else None,
             balance=client.balance,
         )
 

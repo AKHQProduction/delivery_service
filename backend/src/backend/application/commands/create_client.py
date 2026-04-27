@@ -1,8 +1,12 @@
 import logging
 from dataclasses import dataclass, field
 
+from backend.application.common import ensure_exists
 from backend.application.dto.coordinates import CoordinatesDTO
-from backend.application.policies.access import ensure_can_manage
+from backend.application.policies.access import (
+    ensure_can_manage,
+    ensure_related_to_shop,
+)
 from backend.application.services.client import (
     check_phone_duplicates,
     create_address,
@@ -12,11 +16,12 @@ from backend.application.services.client import (
 from backend.application.services.geocoder import Geocoder
 from backend.application.validators import normalize_ukraine_phone
 from backend.application.validators.phone import validate_no_duplicate_phones
-from backend.application.vars import ClientId, DistrictId
+from backend.application.vars import ClientId, DistrictId, TimeSlotId
 from backend.infrastructure.idp import IdentityProvider
 from backend.infrastructure.persistence.gateways import (
     SQLAlchemyClientGateway,
     SQLAlchemyShopGateway,
+    SQLAlchemyTimeSlotGateway,
 )
 from backend.infrastructure.transaction_manager import TransactionManager
 
@@ -46,6 +51,7 @@ class CreateClientCommand:
     full_name: str
     phones: list[Phone] = field(default_factory=list)
     addresses: list[Address] = field(default_factory=list)
+    preferred_time_slot_id: TimeSlotId | None = None
     confirm_duplicate_phones: bool = False
 
 
@@ -55,12 +61,14 @@ class CreateClientCommandHandler:
         idp: IdentityProvider,
         client_gateway: SQLAlchemyClientGateway,
         shop_gateway: SQLAlchemyShopGateway,
+        time_slot_gateway: SQLAlchemyTimeSlotGateway,
         geocoder: Geocoder,
         tr_manager: TransactionManager,
     ) -> None:
         self._idp = idp
         self._client_gateway = client_gateway
         self._shop_gateway = shop_gateway
+        self._time_slot_gateway = time_slot_gateway
         self._geocoder = geocoder
         self._tr_manager = tr_manager
 
@@ -90,11 +98,21 @@ class CreateClientCommandHandler:
                 phone_numbers=normalized_numbers,
             )
 
+        if command.preferred_time_slot_id is not None:
+            time_slot = ensure_exists(
+                await self._time_slot_gateway.load(
+                    command.preferred_time_slot_id
+                ),
+                "TimeSlot",
+            )
+            ensure_related_to_shop(current_user, time_slot.shop_id)
+
         client_id = self._client_gateway.next_id()
         client = create_client(
             client_id=client_id,
             shop_id=current_user.shop_id,
             full_name=command.full_name,
+            preferred_time_slot_id=command.preferred_time_slot_id,
         )
 
         client.phones = [

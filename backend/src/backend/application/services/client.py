@@ -11,8 +11,10 @@ from backend.application.vars import (
     AddressId,
     ClientId,
     DistrictId,
+    Empty,
     PhoneId,
     ShopId,
+    TimeSlotId,
 )
 from backend.infrastructure.persistence.gateways.client_gateway import (
     SQLAlchemyClientGateway,
@@ -51,11 +53,13 @@ def create_client(
     client_id: ClientId,
     shop_id: ShopId,
     full_name: str,
+    preferred_time_slot_id: TimeSlotId | None = None,
 ) -> Client:
     return Client(
         id=client_id,
         shop_id=shop_id,
         full_name=full_name,
+        preferred_time_slot_id=preferred_time_slot_id,
         balance=Decimal(0),
     )
 
@@ -65,11 +69,18 @@ def update_client(
     *,
     full_name: str | None = None,
     balance: Decimal | None = None,
+    preferred_time_slot_id: TimeSlotId | Empty | None = Empty.EMPTY,
 ) -> None:
     if full_name is not None:
         client.full_name = full_name
     if balance is not None:
         client.balance = balance
+    if preferred_time_slot_id is not Empty.EMPTY:
+        client.preferred_time_slot_id = (
+            None
+            if preferred_time_slot_id is None
+            else TimeSlotId(preferred_time_slot_id)
+        )
 
 
 def set_client_balance(client: Client, *, balance: Decimal) -> None:
