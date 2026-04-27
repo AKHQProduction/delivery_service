@@ -216,8 +216,9 @@ export const useOrderForm = (options: UseOrderFormOptions = {}) => {
       client,
       deliveryPhone: client.phones?.[0] || null,
       deliveryAddress: client.addresses?.[0] || null,
+      timeSlotId: initialOrder ? prev.timeSlotId : client.preferred_time_slot_id || "",
     }));
-  }, []);
+  }, [initialOrder]);
 
   const handleProductToggle = (product: Product) => {
     const exists = formData.products.find((p) => p.product.product_id === product.product_id);
