@@ -5,11 +5,10 @@ import { useProducts } from "../../../hooks/products/useProducts";
 import { DynamicFormSelect } from "../../shared/DynamicFormSelect";
 import { useCategoriesForm } from "../../../hooks/products/useCategoriesForm";
 import { CategoryManagementModal } from "../../features/AddCategoryComponent";
-import { type Product } from "../../../types/entities/Product";
 
 interface AddProductFormProps {
   onClose: () => void;
-  onSuccess?: (product: Product) => void;
+  onSuccess?: (productId?: string) => void;
 }
 
 export const AddProductForm: React.FC<AddProductFormProps> = ({ onClose, onSuccess }) => {
@@ -43,9 +42,9 @@ export const AddProductForm: React.FC<AddProductFormProps> = ({ onClose, onSucce
     e.preventDefault();
 
     try {
-      const newProduct = await addProduct(formData.name, parseFloat(formData.price), category);
-      if (onSuccess && newProduct) {
-        onSuccess(newProduct);
+      const productId = await addProduct(formData.name, parseFloat(formData.price), category);
+      if (onSuccess) {
+        onSuccess(productId);
       }
 
       onClose();

@@ -14,19 +14,19 @@ export const FormWrapper: React.FC<FormWrapperProps> = ({
   children,
 }) => {
   return (
-    <form onSubmit={onSubmit} className="space-y-4">
-      {children}
-      <div className="flex gap-3 mt-6 sticky bottom-0 bg-white pt-4 pb-4">
+    <form onSubmit={onSubmit} className="flex min-h-full flex-col">
+      <div className="space-y-4">{children}</div>
+      <div className="mt-auto flex gap-3 bg-white pt-8">
         <button
           type="button"
           onClick={onClose}
-          className="flex-1 py-3 bg-gray-100 hover:bg-gray-200 text-gray-700 font-semibold rounded-xl transition-colors"
+          className="flex-1 rounded-md bg-slate-100 py-3 font-medium text-slate-700 transition-colors hover:bg-slate-200"
         >
           Скасувати
         </button>
         <button
           type="submit"
-          className="flex-1 py-3 bg-indigo-600 hover:bg-indigo-700 text-white font-semibold rounded-xl transition-colors"
+          className="flex-1 rounded-md bg-blue-600 py-3 font-medium text-white transition-colors hover:bg-blue-700"
         >
           {submitLabel}
         </button>

@@ -8,7 +8,6 @@ import { AddOrderForm } from "../forms/orders/AddOrderForm";
 import { InviteUserForm } from "../forms/employees/InviteUserForm";
 import { useUserShopStore } from "../../context/useUserShopStore";
 import { InviteLinkModal } from "../modals/InviteLinkModal";
-import type { Product } from "../../types/entities/Product";
 import type { Client } from "../../types/entities/Client";
 
 export const AddItemComponent = () => {
@@ -24,6 +23,10 @@ export const AddItemComponent = () => {
 
   const hasAccess = currentConfig && user ? currentConfig.allowedRoles.includes(user.role) : false;
 
+  if (location.pathname === "/products") {
+    return null;
+  }
+
   if (!hasAccess || !currentConfig) {
     return null;
   }
@@ -34,10 +37,9 @@ export const AddItemComponent = () => {
         return (
           <AddProductForm
             onClose={() => setIsModalOpen(false)}
-            onSuccess={(product: Product) => {
-              const id = product.product_id;
-              if (id) {
-                sessionStorage.setItem("openProductId", id);
+            onSuccess={(productId?: string) => {
+              if (productId) {
+                sessionStorage.setItem("openProductId", productId);
               }
               window.location.reload();
             }}

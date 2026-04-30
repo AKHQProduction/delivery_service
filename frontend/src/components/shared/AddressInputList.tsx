@@ -1,4 +1,4 @@
-import React, { useEffect, useLayoutEffect, useRef, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { MapPicker, type MapConfirmData } from "./MapPicker";
 import { MapButton } from "./MapButton";
 import { Toast } from "../ui/Toast";
@@ -18,32 +18,8 @@ interface AddressFieldError {
 }
 
 interface AddressRowEntry {
-  fingerprint: string;
   key: string;
-  persistentId?: string;
 }
-
-interface AddressRowState {
-  entries: AddressRowEntry[];
-  nextKey: number;
-}
-
-const areAddressRowStatesEqual = (left: AddressRowState, right: AddressRowState) => {
-  if (left.nextKey !== right.nextKey || left.entries.length !== right.entries.length) {
-    return false;
-  }
-
-  return left.entries.every((entry, index) => {
-    const otherEntry = right.entries[index];
-
-    return (
-      otherEntry &&
-      entry.key === otherEntry.key &&
-      entry.fingerprint === otherEntry.fingerprint &&
-      entry.persistentId === otherEntry.persistentId
-    );
-  });
-};
 
 export interface District {
   district_id: string;
@@ -135,133 +111,11 @@ const findMatchingDistrictId = (districtName: string | undefined, districts: Dis
   return match?.district_id ?? "";
 };
 
-const getAddressFingerprint = (address: Address) =>
-  JSON.stringify({
-    apartment: address.apartment || "",
-    comment: address.comment || "",
-    coordinates: address.coordinates
-      ? {
-          latitude: address.coordinates.latitude,
-          longitude: address.coordinates.longitude,
-        }
-      : null,
-    district_id: address.district_id || "",
-    entrance: address.entrance || "",
-    floor: address.floor || "",
-    house: address.house || "",
-    id: address.id ?? null,
-    intercom: address.intercom || "",
-    is_primary: address.is_primary,
-    street: address.street || "",
-  });
+const getAddressRowKey = (address: Address, index: number) =>
+  address.id !== undefined && address.id !== null ? `address-row-${address.id}` : `address-row-new-${index}`;
 
-const syncAddressRowEntries = (
-  addresses: Address[],
-  previousState: AddressRowState,
-): AddressRowState => {
-  const previousEntries = previousState.entries;
-  const nextEntries = new Array<AddressRowEntry>(addresses.length);
-  const usedPreviousEntries = new Array(previousEntries.length).fill(false);
-  let nextKey = previousState.nextKey;
-  const fingerprints = addresses.map(getAddressFingerprint);
-  const persistentIds = addresses.map((address) =>
-    address.id !== undefined && address.id !== null ? `address:${address.id}` : undefined,
-  );
-
-  const assignFromPrevious = (nextIndex: number, previousIndex: number) => {
-    const previousEntry = previousEntries[previousIndex];
-
-    nextEntries[nextIndex] = {
-      key: previousEntry.key,
-      persistentId: persistentIds[nextIndex],
-      fingerprint: fingerprints[nextIndex],
-    };
-    usedPreviousEntries[previousIndex] = true;
-  };
-
-  addresses.forEach((_, index) => {
-    const persistentId = persistentIds[index];
-
-    if (!persistentId) {
-      return;
-    }
-
-    const previousIndex = previousEntries.findIndex(
-      (entry, entryIndex) =>
-        !usedPreviousEntries[entryIndex] && entry.persistentId === persistentId,
-    );
-
-    if (previousIndex !== -1) {
-      assignFromPrevious(index, previousIndex);
-    }
-  });
-
-  addresses.forEach((_, index) => {
-    if (nextEntries[index]) {
-      return;
-    }
-
-    const previousEntry = previousEntries[index];
-
-    if (!previousEntry || usedPreviousEntries[index]) {
-      return;
-    }
-
-    if (previousEntry.fingerprint === fingerprints[index]) {
-      assignFromPrevious(index, index);
-    }
-  });
-
-  addresses.forEach((_, index) => {
-    if (nextEntries[index]) {
-      return;
-    }
-
-    const previousIndex = previousEntries.findIndex(
-      (entry, entryIndex) =>
-        !usedPreviousEntries[entryIndex] && entry.fingerprint === fingerprints[index],
-    );
-
-    if (previousIndex !== -1) {
-      assignFromPrevious(index, previousIndex);
-    }
-  });
-
-  if (previousEntries.length === addresses.length) {
-    addresses.forEach((_, index) => {
-      if (nextEntries[index]) {
-        return;
-      }
-
-      const previousEntry = previousEntries[index];
-
-      if (!previousEntry || usedPreviousEntries[index]) {
-        return;
-      }
-
-      assignFromPrevious(index, index);
-    });
-  }
-
-  addresses.forEach((_, index) => {
-    if (!nextEntries[index]) {
-      nextEntries[index] = {
-        key: `address-row-${nextKey}`,
-        persistentId: persistentIds[index],
-        fingerprint: fingerprints[index],
-      };
-      nextKey += 1;
-    }
-  });
-
-  return {
-    entries: nextEntries,
-    nextKey,
-  };
-};
-
-const createInitialAddressRowState = (addresses: Address[]): AddressRowState =>
-  syncAddressRowEntries(addresses, { entries: [], nextKey: 0 });
+const getAddressRowEntries = (addresses: Address[]): AddressRowEntry[] =>
+  addresses.map((address, index) => ({ key: getAddressRowKey(address, index) }));
 
 const pruneRecord = <T,>(record: Record<string, T>, activeRowKeys: Set<string>) => {
   let changed = false;
@@ -576,21 +430,7 @@ export const AddressInputList: React.FC<AddressInputListProps> = ({
 
   const debounceTimers = useRef<Record<string, ReturnType<typeof setTimeout>>>({});
   const validationTokens = useRef<Record<string, number>>({});
-  const [addressRowState, setAddressRowState] = useState<AddressRowState>(() =>
-    createInitialAddressRowState(addresses),
-  );
-  const renderedAddressRowState = React.useMemo(
-    () => syncAddressRowEntries(addresses, addressRowState),
-    [addresses, addressRowState],
-  );
-
-  useLayoutEffect(() => {
-    if (!areAddressRowStatesEqual(addressRowState, renderedAddressRowState)) {
-      setAddressRowState(renderedAddressRowState);
-    }
-  }, [addressRowState, renderedAddressRowState]);
-
-  const addressRowEntries = renderedAddressRowState.entries;
+  const addressRowEntries = React.useMemo(() => getAddressRowEntries(addresses), [addresses]);
   const addressRowKeys = React.useMemo(
     () => addressRowEntries.map((entry) => entry.key),
     [addressRowEntries],

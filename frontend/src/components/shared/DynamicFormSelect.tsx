@@ -54,7 +54,7 @@ export const DynamicFormSelect: React.FC<FormSelectProps> = ({
 
   return (
     <div>
-      <label htmlFor={name} className="block text-sm font-medium text-gray-700 mb-2">
+      <label htmlFor={name} className="mb-2 block text-sm font-medium text-slate-700">
         {label}
       </label>
       <div className="relative" ref={dropdownRef}>
@@ -62,13 +62,13 @@ export const DynamicFormSelect: React.FC<FormSelectProps> = ({
         <button
           type="button"
           onClick={() => setIsOpen(!isOpen)}
-          className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent text-left flex items-center justify-between"
+          className="flex w-full items-center justify-between rounded-md border border-slate-300 bg-white px-4 py-3 text-left focus:border-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-100"
         >
-          <span className={selectedOption ? "text-gray-900" : "text-gray-400"}>
+          <span className={selectedOption ? "text-slate-950" : "text-slate-400"}>
             {selectedOption ? selectedOption.label : "Оберіть..."}
           </span>
           <svg
-            className={`w-5 h-5 text-gray-400 transition-transform ${isOpen ? "rotate-180" : ""}`}
+            className={`h-5 w-5 text-slate-500 transition-transform ${isOpen ? "rotate-180" : ""}`}
             fill="none"
             stroke="currentColor"
             viewBox="0 0 24 24"
@@ -79,29 +79,29 @@ export const DynamicFormSelect: React.FC<FormSelectProps> = ({
 
         {/* Dropdown */}
         {isOpen && (
-          <div className="absolute z-50 w-full mt-2 bg-white border border-gray-200 rounded-xl shadow-lg overflow-hidden">
+          <div className="relative z-50 mt-2 w-full overflow-hidden rounded-md border border-slate-200 bg-white shadow-lg">
             {/* Search input */}
-            <div className="p-3 border-b border-gray-100">
+            <div className="border-b border-slate-100 p-3">
               <input
                 type="text"
                 placeholder="Пошук категорії..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                className="w-full px-3 py-2 text-sm bg-gray-50 border-0 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                className="w-full rounded-md bg-slate-50 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-100"
                 onClick={(e) => e.stopPropagation()}
               />
             </div>
 
             {/* Options list */}
-            <div className="max-h-60 overflow-y-auto">
+            <div className="max-h-40 overflow-y-auto">
               {filteredOptions.length > 0 ? (
                 filteredOptions.map((option) => (
                   <button
                     key={option.value}
                     type="button"
                     onClick={() => handleSelect(option.value)}
-                    className={`w-full px-4 py-3 text-left hover:bg-gray-50 transition-colors ${
-                      value === option.value ? "bg-indigo-50 text-indigo-600" : "text-gray-700"
+                    className={`w-full px-4 py-3 text-left transition-colors hover:bg-slate-50 ${
+                      value === option.value ? "bg-blue-50 text-blue-700" : "text-slate-700"
                     }`}
                   >
                     {option.label}
@@ -116,7 +116,7 @@ export const DynamicFormSelect: React.FC<FormSelectProps> = ({
 
             {/* Add new category button */}
             {onAddCategory && (
-              <div className="border-t border-gray-100">
+              <div className="border-t border-slate-100">
                 <button
                   type="button"
                   onClick={() => {
@@ -124,9 +124,9 @@ export const DynamicFormSelect: React.FC<FormSelectProps> = ({
                     setIsOpen(false);
                     setSearchTerm("");
                   }}
-                  className="w-full px-4 py-3 text-left text-indigo-600 hover:bg-indigo-50 transition-colors flex items-center gap-2 font-medium"
+                  className="flex w-full items-center gap-2 px-4 py-3 text-left font-medium text-blue-700 transition-colors hover:bg-blue-50"
                 >
-                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path
                       strokeLinecap="round"
                       strokeLinejoin="round"

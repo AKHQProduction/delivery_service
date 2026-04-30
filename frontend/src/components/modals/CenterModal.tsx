@@ -9,7 +9,13 @@ interface CenterModalProps {
   size?: "md" | "lg" | "xl" | "2xl" | "3xl" | "4xl" | "5xl";
 }
 
-export const CenterModal: React.FC<CenterModalProps> = ({ isOpen, onClose, title, children, size = "md" }) => {
+export const CenterModal: React.FC<CenterModalProps> = ({
+  isOpen,
+  onClose,
+  title,
+  children,
+  size = "md",
+}) => {
   const [isVisible, setIsVisible] = useState(false);
 
   useEffect(() => {
@@ -64,7 +70,7 @@ export const CenterModal: React.FC<CenterModalProps> = ({ isOpen, onClose, title
           </button>
         </div>
 
-        <div className="px-6 pt-4 overflow-y-auto flex-1">{children}</div>
+        <div className="flex-1 overflow-y-auto px-6 py-5">{children}</div>
       </div>
     </>
   );
