@@ -103,6 +103,16 @@ export const getRoutesForRole = (role: UserRole): RouteConfig[] => {
   return routeConfig.filter((route) => route.allowedRoles.includes(role));
 };
 
+export const getShellRoutesForRole = (role: UserRole): RouteConfig[] => {
+  return getRoutesForRole(role).filter(
+    (route) => route.path !== "/stats" && route.path !== "/settings",
+  );
+};
+
+export const getBottomNavRoutesForRole = (role: UserRole): RouteConfig[] => {
+  return getRoutesForRole(role).filter((route) => route.showInNav !== false);
+};
+
 export const hasAccessToPath = (role: UserRole, path: string): boolean => {
   const route = routeConfig.find((r) => r.path === path);
   return route ? route.allowedRoles.includes(role) : false;

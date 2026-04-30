@@ -13,14 +13,14 @@ export const SearchBar = ({ placeholder, searchTerm, setSearchTerm }: SearchBarP
         <img
           src={SearchIcon}
           alt="Search"
-          className="absolute left-4 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400"
+          className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 opacity-55"
         />
         <input
           type="text"
           placeholder={placeholder}
           value={searchTerm}
           onChange={(e) => setSearchTerm(e.target.value)}
-          className="w-full pl-12 pr-4 py-3 border border-gray-300 bg-white  rounded-xl text-base placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+          className="h-10 w-full rounded-md border border-slate-300 bg-white pl-9 pr-3 text-sm leading-5 text-slate-950 placeholder:text-slate-400 focus:border-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-100"
         />
       </div>
     </>

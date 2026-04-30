@@ -13,8 +13,18 @@ export const AppLayout: React.FC<AppLayoutProps> = ({ children }) => {
   return (
     <>
       <SidebarNav />
-      <div className={showSidebar ? "md:pl-64" : ""}>
-        <div className={showSidebar ? "md:max-w-5xl md:mx-auto" : ""}>{children}</div>
+      <div
+        className={
+          showSidebar ? "min-h-screen bg-slate-50 md:pl-[17rem]" : "min-h-screen bg-slate-50"
+        }
+      >
+        <div
+          className={
+            showSidebar ? "min-h-screen pb-24 md:mx-auto md:max-w-[1440px] md:pb-0" : "min-h-screen"
+          }
+        >
+          {children}
+        </div>
       </div>
     </>
   );

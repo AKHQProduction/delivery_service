@@ -1,6 +1,6 @@
 import { useUserShopStore } from "../../context/useUserShopStore";
 import { useNavigate, useLocation } from "react-router-dom";
-import { getRoutesForRole } from "../../config/roles.config";
+import { getShellRoutesForRole } from "../../config/roles.config";
 import { logout } from "../../services/api/authApi";
 import { usePlatform } from "../../platforms/usePlatform";
 
@@ -23,62 +23,64 @@ export const SidebarNav = () => {
 
   if (!user) return null;
 
-  const allRoutes = getRoutesForRole(user.role);
+  const allRoutes = getShellRoutesForRole(user.role);
 
   return (
-    <aside className="hidden md:flex md:flex-col md:w-64 md:fixed md:inset-y-0 md:left-0 bg-white border-r border-gray-200 z-40">
-      {/* Logo / Brand */}
-      <div className="px-6 py-6 border-b border-gray-100 cursor-pointer" onClick={() => navigate("/")}>
-        <h1 className="text-xl font-bold text-gray-900 tracking-tight">Water Delivery</h1>
+    <aside className="hidden md:fixed md:inset-y-0 md:left-0 md:z-40 md:flex md:w-[17rem] md:flex-col border-r border-slate-200 bg-white">
+      <div
+        className="border-b border-slate-200 px-5 py-5 cursor-pointer"
+        onClick={() => navigate("/")}
+      >
+        <h1 className="text-[18px] font-semibold leading-7 text-slate-950">Water Delivery</h1>
       </div>
 
-      {/* Navigation */}
-      <nav className="flex-1 px-3 py-4 space-y-1 overflow-y-auto">
+      <nav className="flex-1 space-y-1 overflow-y-auto px-3 py-4">
         {allRoutes.map((route) => {
-          const isActive = location.pathname === route.path;
+          const isActive =
+            location.pathname === route.path ||
+            (route.path !== "/" && location.pathname.startsWith(route.path));
 
           return (
             <button
               key={route.path}
               type="button"
               onClick={() => navigate(route.path)}
-              className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-left transition-all duration-150 ${
+              className={`w-full flex items-center gap-3 rounded-md px-3 py-2.5 text-left text-sm leading-5 transition-colors ${
                 isActive
-                  ? "bg-indigo-50 text-indigo-700"
-                  : "text-gray-600 hover:bg-gray-50 hover:text-gray-900"
+                  ? "bg-blue-50 text-blue-700"
+                  : "text-slate-600 hover:bg-slate-100 hover:text-slate-950"
               }`}
             >
               <img
                 src={route.icon}
                 alt={route.label}
-                className={`w-5 h-5 object-contain ${isActive ? "opacity-100" : "opacity-60"}`}
+                className={`h-5 w-5 object-contain ${isActive ? "opacity-100" : "opacity-65"}`}
               />
-              <span className={`text-sm ${isActive ? "font-semibold" : "font-medium"}`}>
-                {route.label}
-              </span>
+              <span className={isActive ? "font-semibold" : "font-medium"}>{route.label}</span>
             </button>
           );
         })}
       </nav>
 
-      {/* Footer */}
-      <div className="px-4 py-4 border-t border-gray-100">
-        <div className="flex items-center gap-3 px-2">
-          <div className="w-8 h-8 rounded-full bg-indigo-100 flex items-center justify-center text-indigo-700 font-bold text-sm">
+      <div className="border-t border-slate-200 px-4 py-4">
+        <div className="flex items-center gap-3 rounded-md px-2">
+          <div className="flex h-8 w-8 items-center justify-center rounded-md bg-blue-100 text-sm font-semibold text-blue-700">
             {user.full_name?.[0] ?? "?"}
           </div>
           <div className="min-w-0 flex-1">
-            <p className="text-sm font-medium text-gray-900 truncate">{user.full_name}</p>
-            <p className="text-xs text-gray-500">{user.role}</p>
+            <p className="truncate text-sm font-medium leading-5 text-slate-950">
+              {user.full_name}
+            </p>
+            <p className="text-xs leading-4 text-slate-500">{user.role}</p>
           </div>
           {type === "web" && (
             <button
               type="button"
               onClick={handleLogout}
-              className="text-gray-400 hover:text-red-500 transition-colors shrink-0"
+              className="shrink-0 rounded-md p-1.5 text-slate-400 transition-colors hover:bg-red-50 hover:text-red-600"
               title="Вийти"
             >
-              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path
                   strokeLinecap="round"
                   strokeLinejoin="round"

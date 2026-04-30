@@ -1,6 +1,6 @@
 import { useUserShopStore } from "../../context/useUserShopStore";
 import { useNavigate, useLocation } from "react-router-dom";
-import { getRoutesForRole } from "../../config/roles.config";
+import { getBottomNavRoutesForRole } from "../../config/roles.config";
 
 export const BottomNavPanel = () => {
   const user = useUserShopStore((s) => s.user);
@@ -8,38 +8,35 @@ export const BottomNavPanel = () => {
   const location = useLocation();
 
   if (!user) return null;
-  const userRoutes = getRoutesForRole(user.role).filter((route) => route.showInNav !== false);
+  const userRoutes = getBottomNavRoutesForRole(user.role);
 
   return (
-    <div className="flex items-center justify-center fixed bottom-0 w-full md:hidden">
-      <div className="w-full max-w-md">
-        <nav className="bg-white shadow-lg px-4 py-4 border border-gray-200 rounded-lg">
-          <div className="flex items-center justify-around w-full">
+    <div className="fixed inset-x-0 bottom-0 z-40 md:hidden">
+      <div className="border-t border-slate-200 bg-white/95 px-2 pb-[calc(env(safe-area-inset-bottom)+0.5rem)] pt-2 shadow-[0_-8px_24px_rgba(15,23,42,0.08)] backdrop-blur">
+        <nav aria-label="Основна навігація">
+          <div className="mx-auto grid max-w-md grid-cols-4 gap-1">
             {userRoutes?.map((route) => {
-              const isActive = location.pathname === route.path;
+              const isActive =
+                location.pathname === route.path ||
+                (route.path !== "/" && location.pathname.startsWith(route.path));
 
               return (
                 <button
                   key={route.path}
+                  type="button"
                   onClick={() => navigate(route.path)}
-                  className="
-                    flex flex-col items-center justify-center
-                    gap-1 py-1 px-2
-                    transition
-                  "
+                  className={`flex min-h-14 flex-col items-center justify-center gap-1 rounded-md px-1 py-1.5 text-xs leading-4 transition-colors ${
+                    isActive
+                      ? "bg-blue-50 text-blue-700"
+                      : "text-slate-500 hover:bg-slate-100 hover:text-slate-950"
+                  }`}
                 >
                   <img
                     src={route.icon}
                     alt={route.label}
-                    className={`w-6 h-6 object-contain ${isActive ? "opacity-100" : "opacity-70"}`}
+                    className={`h-5 w-5 object-contain ${isActive ? "opacity-100" : "opacity-65"}`}
                   />
-                  <span
-                    className={`text-xs ${
-                      isActive ? "text-blue-600 font-medium" : "text-gray-600"
-                    }`}
-                  >
-                    {route.label}
-                  </span>
+                  <span className={isActive ? "font-semibold" : "font-medium"}>{route.label}</span>
                 </button>
               );
             })}
