@@ -2,6 +2,7 @@ import { useState } from "react";
 import { useTimeSlotsSettings } from "../../hooks/settings/useTimeSlotsSettings";
 import { TimeInput } from "../ui/TimeInput";
 import { SettingsItemSkeleton } from "../ui/Skeleton";
+import { DeleteConfirmation } from "./DeleteConfirmation";
 
 interface NewSlot {
   id: string;
@@ -23,6 +24,7 @@ export const TimeSlotsComponent = () => {
     useTimeSlotsSettings();
   const [editedSlots, setEditedSlots] = useState<Record<string, Partial<TimeSlot>>>({});
   const [newSlots, setNewSlots] = useState<NewSlot[]>([]);
+  const [deleteConfirmationId, setDeleteConfirmationId] = useState<string | null>(null);
 
   const handleFieldChange = (
     slotId: string,
@@ -119,6 +121,15 @@ export const TimeSlotsComponent = () => {
     }
   };
 
+  const handleDeleteExisting = async (slotId: string) => {
+    try {
+      await deleteTimeSlotById(slotId);
+      setDeleteConfirmationId(null);
+    } catch (error) {
+      console.error("Error deleting timeslot:", error);
+    }
+  };
+
   const handleDeleteNew = (tempId: string) => {
     setNewSlots((prev) => prev.filter((s) => s.id !== tempId));
   };
@@ -193,9 +204,9 @@ export const TimeSlotsComponent = () => {
   );
 
   return (
-    <div className="bg-white rounded-xl shadow-sm p-6">
-      <div className="flex items-center justify-between mb-4">
-        <h2 className="text-lg font-semibold text-gray-900">Часові проміжки</h2>
+    <div className="rounded-lg border border-slate-200 bg-white p-5">
+      <div className="flex items-center justify-between gap-3 mb-4">
+        <h2 className="text-base font-semibold text-slate-950">Часові проміжки</h2>
       </div>
 
       <div className="space-y-3">
@@ -213,100 +224,110 @@ export const TimeSlotsComponent = () => {
           const endTimeValue = formatTimeValue(getSlotValue(slot, "end_time") as string);
 
           return (
-            <div key={slot.time_slot_id} className="flex items-center gap-2">
-              <input
-                type="text"
-                placeholder="Назва"
-                value={currentLabel}
-                onChange={(e) => handleFieldChange(slot.time_slot_id, "label", e.target.value)}
-                className="flex-1 min-w-0 px-4 py-3 border-2 border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
-              />
-              <TimeInput
-                value={startTimeValue}
-                onChange={(value) => {
-                  handleFieldChange(slot.time_slot_id, "start_time", value);
-                }}
-              />
-              <TimeInput
-                value={endTimeValue}
-                onChange={(value) => {
-                  handleFieldChange(slot.time_slot_id, "end_time", value);
-                }}
-              />
-
-              {isSlotEdited(slot.time_slot_id) ? (
-                <button
-                  onClick={() => handleSaveExisting(slot.time_slot_id)}
-                  className="w-10 h-10 flex-shrink-0 flex items-center justify-center rounded-xl bg-green-500 hover:bg-green-600 text-white transition-colors"
-                  aria-label="Зберегти таймслот"
-                >
-                  <svg
-                    className="w-5 h-5"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                    strokeWidth={2}
-                  >
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
-                  </svg>
-                </button>
-              ) : (
-                <button
-                  onClick={async () => {
-                    try {
-                      await deleteTimeSlotById(slot.time_slot_id);
-                    } catch (error) {
-                      console.error("Error deleting timeslot:", error);
-                    }
+            <div key={slot.time_slot_id} className="space-y-2">
+              <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
+                <input
+                  type="text"
+                  placeholder="Назва"
+                  value={currentLabel}
+                  onChange={(e) => handleFieldChange(slot.time_slot_id, "label", e.target.value)}
+                  className="flex-1 min-w-0 px-4 py-3 border border-slate-300 rounded-md focus:border-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-100"
+                />
+                <TimeInput
+                  value={startTimeValue}
+                  onChange={(value) => {
+                    handleFieldChange(slot.time_slot_id, "start_time", value);
                   }}
-                  className="w-10 h-10 flex-shrink-0 flex items-center justify-center rounded-xl hover:bg-red-50 text-red-500 transition-colors"
-                  aria-label="Видалити таймслот"
-                >
-                  <svg
-                    className="w-5 h-5"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                    strokeWidth={2}
+                  className="w-full sm:w-24"
+                />
+                <TimeInput
+                  value={endTimeValue}
+                  onChange={(value) => {
+                    handleFieldChange(slot.time_slot_id, "end_time", value);
+                  }}
+                  className="w-full sm:w-24"
+                />
+
+                {isSlotEdited(slot.time_slot_id) ? (
+                  <button
+                    onClick={() => handleSaveExisting(slot.time_slot_id)}
+                    className="flex h-10 w-10 self-end flex-shrink-0 items-center justify-center rounded-md bg-emerald-600 text-white transition-colors hover:bg-emerald-700 sm:w-10"
+                    aria-label="Зберегти таймслот"
                   >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
-                    />
-                  </svg>
-                </button>
+                    <svg
+                      className="w-5 h-5"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                      strokeWidth={2}
+                    >
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+                    </svg>
+                  </button>
+                ) : (
+                  <button
+                    onClick={() => setDeleteConfirmationId(slot.time_slot_id)}
+                    className="flex h-10 w-10 self-end flex-shrink-0 items-center justify-center rounded-md text-red-600 transition-colors hover:bg-red-50 sm:w-10"
+                    aria-label="Видалити таймслот"
+                  >
+                    <svg
+                      className="w-5 h-5"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                      strokeWidth={2}
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
+                      />
+                    </svg>
+                  </button>
+                )}
+              </div>
+              {deleteConfirmationId === slot.time_slot_id && (
+                <DeleteConfirmation
+                  title="Видалити часовий проміжок?"
+                  onCancel={() => setDeleteConfirmationId(null)}
+                  onConfirm={() => handleDeleteExisting(slot.time_slot_id)}
+                />
               )}
             </div>
           );
         })}
 
         {newSlots.map((slot) => (
-          <div key={slot.id} className="space-y-2 border-2 border-dashed border-gray-200 rounded-xl p-3">
+          <div
+            key={slot.id}
+            className="space-y-2 border-2 border-dashed border-slate-200 rounded-md p-3"
+          >
             <input
               type="text"
               placeholder="Назва таймслоту"
               value={slot.label}
               onChange={(e) => handleNewSlotChange(slot.id, "label", e.target.value)}
-              className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+              className="w-full px-4 py-3 border border-slate-300 rounded-md focus:border-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-100"
             />
-            <div className="flex items-center gap-2">
+            <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
               <TimeInput
                 value={slot.start_time}
                 onChange={(value) => handleNewSlotChange(slot.id, "start_time", value)}
+                className="w-full sm:w-24"
               />
               <TimeInput
                 value={slot.end_time}
                 onChange={(value) => handleNewSlotChange(slot.id, "end_time", value)}
+                className="w-full sm:w-24"
               />
-              <div className="flex-1" />
+              <div className="hidden flex-1 sm:block" />
               <button
                 onClick={() => handleSaveNew(slot.id)}
                 disabled={!isNewSlotValid(slot)}
-                className={`w-10 h-10 flex-shrink-0 flex items-center justify-center rounded-xl transition-colors ${
+                className={`flex h-10 w-10 self-end flex-shrink-0 items-center justify-center rounded-md transition-colors ${
                   isNewSlotValid(slot)
-                    ? "bg-green-500 hover:bg-green-600 text-white"
-                    : "bg-gray-200 text-gray-400 cursor-not-allowed"
+                    ? "bg-emerald-600 hover:bg-emerald-700 text-white"
+                    : "bg-slate-100 text-slate-400 cursor-not-allowed"
                 }`}
                 aria-label="Зберегти новий таймслот"
               >
@@ -322,7 +343,7 @@ export const TimeSlotsComponent = () => {
               </button>
               <button
                 onClick={() => handleDeleteNew(slot.id)}
-                className="w-10 h-10 flex-shrink-0 flex items-center justify-center rounded-xl hover:bg-red-200 bg-red-100 text-red-500 transition-colors"
+                className="flex h-10 w-10 self-end flex-shrink-0 items-center justify-center rounded-md bg-red-50 text-red-600 transition-colors hover:bg-red-100 sm:w-10"
                 aria-label="Скасувати"
               >
                 <svg
@@ -340,7 +361,7 @@ export const TimeSlotsComponent = () => {
         ))}
 
         {validTimeSlots.length === 0 && newSlots.length === 0 && (
-          <div className="text-center py-8 text-gray-500">
+          <div className="text-center py-8 text-slate-500">
             <p>Часові проміжки не додані</p>
             <p className="text-sm mt-1">Натисніть "+ Додати таймслот" щоб створити новий</p>
           </div>
@@ -348,7 +369,7 @@ export const TimeSlotsComponent = () => {
 
         <button
           onClick={handleAddNewSlot}
-          className="text-indigo-600 hover:text-indigo-700 text-sm font-medium transition-colors"
+          className="text-blue-600 hover:text-blue-700 text-sm font-medium transition-colors"
         >
           + Додати таймслот
         </button>

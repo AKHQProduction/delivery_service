@@ -1,8 +1,10 @@
-import { useEffect, useMemo, useRef, useState } from "react";
-import { useLocation, useNavigate } from "react-router-dom";
-import { useUserShopStore } from "../context/useUserShopStore";
-import { getOrderStats, type OrderStats, type OrderStatsRecentOrder } from "../services/api/ordersApi";
-import { getShellRoutesForRole } from "../config/roles.config";
+import { useEffect, useMemo, useState } from "react";
+import { useNavigate } from "react-router-dom";
+import {
+  getOrderStats,
+  type OrderStats,
+  type OrderStatsRecentOrder,
+} from "../services/api/ordersApi";
 import { SkeletonBlock } from "../components/ui/Skeleton";
 
 type PeriodMode = "today" | "week" | "month" | "custom";
@@ -64,14 +66,10 @@ const getInitials = (name?: string) => {
 
 export const MainPage = () => {
   const navigate = useNavigate();
-  const location = useLocation();
-  const user = useUserShopStore((state) => state.user);
   const [{ startDate, endDate }, setRange] = useState(() => getPeriodRange("today"));
   const [periodMode, setPeriodMode] = useState<PeriodMode>("today");
   const [stats, setStats] = useState<OrderStats | null>(null);
   const [loading, setLoading] = useState(true);
-  const [isDrawerOpen, setIsDrawerOpen] = useState(false);
-  const menuButtonRef = useRef<HTMLButtonElement | null>(null);
 
   useEffect(() => {
     let cancelled = false;
@@ -107,8 +105,6 @@ export const MainPage = () => {
     return `${formatDate(startDate)} - ${formatDate(endDate)}`;
   }, [startDate, endDate]);
 
-  const drawerRoutes = useMemo(() => (user ? getShellRoutesForRole(user.role) : []), [user]);
-
   const handlePeriodChange = (mode: PeriodMode) => {
     setPeriodMode(mode);
     if (mode !== "custom") {
@@ -121,28 +117,12 @@ export const MainPage = () => {
     setRange((current) => ({ ...current, [field]: value }));
   };
 
-  const closeDrawer = () => {
-    menuButtonRef.current?.focus();
-    setIsDrawerOpen(false);
-  };
-
   return (
     <div className="min-h-screen bg-slate-50 px-4 pb-28 pt-6 sm:px-6 md:px-8 md:pb-10">
       <div className="flex flex-col gap-4 xl:flex-row xl:items-start xl:justify-between">
-        <div className="flex items-start gap-3">
-          <button
-            type="button"
-            ref={menuButtonRef}
-            onClick={() => setIsDrawerOpen(true)}
-            className="mt-0.5 inline-flex h-9 w-9 items-center justify-center rounded-md text-slate-700 hover:bg-slate-100 md:hidden"
-            aria-label="Відкрити меню"
-          >
-            <MenuIcon className="h-5 w-5" />
-          </button>
-          <div>
-            <h1 className="text-2xl font-semibold leading-8 text-slate-950">Головна</h1>
-            <p className="mt-1 text-sm text-slate-500">Огляд замовлень і статистика</p>
-          </div>
+        <div>
+          <h1 className="text-2xl font-semibold leading-8 text-slate-950">Головна</h1>
+          <p className="mt-1 text-sm text-slate-500">Огляд замовлень і статистика</p>
         </div>
 
         <div className="grid gap-2 sm:grid-cols-[auto_auto]">
@@ -176,25 +156,24 @@ export const MainPage = () => {
 
       {periodMode === "custom" && (
         <div className="mt-4 grid gap-2 sm:grid-cols-2 md:max-w-lg">
-          <DateField label="Від" value={startDate} onChange={(value) => handleCustomDateChange("startDate", value)} />
-          <DateField label="До" value={endDate} onChange={(value) => handleCustomDateChange("endDate", value)} />
+          <DateField
+            label="Від"
+            value={startDate}
+            onChange={(value) => handleCustomDateChange("startDate", value)}
+          />
+          <DateField
+            label="До"
+            value={endDate}
+            onChange={(value) => handleCustomDateChange("endDate", value)}
+          />
         </div>
       )}
 
-      {loading ? <HomeSkeleton /> : <DashboardContent stats={stats} onOpenOrders={() => navigate("/orders")} />}
-
-      <MobileDrawer
-        isOpen={isDrawerOpen}
-        routes={drawerRoutes}
-        userName={user?.full_name || ""}
-        userRole={user?.role || ""}
-        activePath={location.pathname}
-        onClose={closeDrawer}
-        onNavigate={(path) => {
-          closeDrawer();
-          navigate(path);
-        }}
-      />
+      {loading ? (
+        <HomeSkeleton />
+      ) : (
+        <DashboardContent stats={stats} onOpenOrders={() => navigate("/orders")} />
+      )}
     </div>
   );
 };
@@ -219,13 +198,21 @@ const DashboardContent = ({
     <>
       <div className="mt-4 grid grid-cols-2 gap-2 lg:grid-cols-4">
         <MetricCard label="Замовлень" value={String(stats.total_orders)} helper="за період" />
-        <MetricCard label="Сума замовлень" value={formatMoney(stats.total_orders_sum)} helper="за період" />
+        <MetricCard
+          label="Сума замовлень"
+          value={formatMoney(stats.total_orders_sum)}
+          helper="за період"
+        />
         <MetricCard
           label="Товарів у замовленнях"
           value={String(stats.total_products_quantity)}
           helper="позицій"
         />
-        <MetricCard label="Середній чек" value={formatMoney(stats.average_order_value)} helper="на замовлення" />
+        <MetricCard
+          label="Середній чек"
+          value={formatMoney(stats.average_order_value)}
+          helper="на замовлення"
+        />
       </div>
 
       <div className="mt-4 grid gap-4 xl:grid-cols-[minmax(0,1fr)_minmax(0,1fr)_minmax(0,1fr)]">
@@ -258,7 +245,11 @@ const DashboardContent = ({
         />
       </div>
 
-      <RecentOrdersTable orders={stats.recent_orders} total={stats.total_orders} onOpenOrders={onOpenOrders} />
+      <RecentOrdersTable
+        orders={stats.recent_orders}
+        total={stats.total_orders}
+        onOpenOrders={onOpenOrders}
+      />
     </>
   );
 };
@@ -301,7 +292,9 @@ const BreakdownCard = ({
                     style={{ width: `${percent}%` }}
                   />
                 </div>
-                <span className="w-10 text-right text-xs font-medium text-slate-500">{percent}%</span>
+                <span className="w-10 text-right text-xs font-medium text-slate-500">
+                  {percent}%
+                </span>
               </div>
             </div>
           );
@@ -356,7 +349,9 @@ const RecentOrdersTable = ({
                       <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-blue-100 text-xs font-semibold text-blue-700">
                         {getInitials(order.client_name)}
                       </span>
-                      <span className="truncate font-medium text-slate-950">{order.client_name}</span>
+                      <span className="truncate font-medium text-slate-950">
+                        {order.client_name}
+                      </span>
                     </div>
                   </td>
                   <td className="px-4 py-3 text-slate-700">{order.time_slot}</td>
@@ -371,7 +366,9 @@ const RecentOrdersTable = ({
                   <td className="px-4 py-3 text-right font-semibold text-slate-950">
                     {formatMoney(getOrderTotal(order))}
                   </td>
-                  <td className="px-4 py-3 text-slate-600">{order.payment_method || "Не вказано"}</td>
+                  <td className="px-4 py-3 text-slate-600">
+                    {order.payment_method || "Не вказано"}
+                  </td>
                 </tr>
               ))}
             </tbody>
@@ -383,10 +380,14 @@ const RecentOrdersTable = ({
             <div key={order.order_id} className="rounded-lg border border-slate-200 p-4">
               <div className="flex items-start justify-between gap-3">
                 <div className="min-w-0">
-                  <p className="truncate text-sm font-semibold text-slate-950">{order.client_name}</p>
+                  <p className="truncate text-sm font-semibold text-slate-950">
+                    {order.client_name}
+                  </p>
                   <p className="mt-1 text-xs text-slate-500">{order.time_slot}</p>
                 </div>
-                <p className="shrink-0 text-sm font-semibold text-slate-950">{formatMoney(getOrderTotal(order))}</p>
+                <p className="shrink-0 text-sm font-semibold text-slate-950">
+                  {formatMoney(getOrderTotal(order))}
+                </p>
               </div>
               <p className="mt-3 truncate text-sm text-slate-600">{getAddressText(order)}</p>
               <p className="mt-2 truncate text-sm text-slate-500">
@@ -478,105 +479,3 @@ const CalendarIcon = ({ className }: { className?: string }) => (
     />
   </svg>
 );
-
-const MenuIcon = ({ className }: { className?: string }) => (
-  <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24">
-    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 7h16M4 12h16M4 17h10" />
-  </svg>
-);
-
-const CloseIcon = ({ className }: { className?: string }) => (
-  <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24">
-    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18 18 6M6 6l12 12" />
-  </svg>
-);
-
-const MobileDrawer = ({
-  isOpen,
-  routes,
-  userName,
-  userRole,
-  activePath,
-  onClose,
-  onNavigate,
-}: {
-  isOpen: boolean;
-  routes: ReturnType<typeof getShellRoutesForRole>;
-  userName: string;
-  userRole: string;
-  activePath: string;
-  onClose: () => void;
-  onNavigate: (path: string) => void;
-}) => {
-  return (
-    <div
-      className={`fixed inset-0 z-[10000] transition-[visibility] duration-300 md:hidden ${
-        isOpen ? "visible pointer-events-auto" : "invisible pointer-events-none"
-      }`}
-    >
-      <button
-        type="button"
-        className={`absolute inset-0 bg-slate-950/45 transition-opacity duration-300 ease-out ${
-          isOpen ? "opacity-100" : "opacity-0"
-        }`}
-        onClick={onClose}
-        aria-label="Закрити меню фоном"
-        tabIndex={isOpen ? 0 : -1}
-      />
-      <aside
-        className={`relative flex h-full w-[82vw] max-w-sm flex-col border-r border-slate-200 bg-white shadow-xl transition-transform duration-300 ease-out ${
-          isOpen ? "translate-x-0" : "-translate-x-full"
-        }`}
-      >
-        <div className="flex items-center justify-between border-b border-slate-200 px-5 py-5">
-          <h2 className="text-lg font-semibold text-slate-950">Water Delivery</h2>
-          <button
-            type="button"
-            onClick={onClose}
-            className="rounded-md p-2 text-slate-500 hover:bg-slate-100 hover:text-slate-950"
-            aria-label="Закрити меню"
-          >
-            <CloseIcon className="h-5 w-5" />
-          </button>
-        </div>
-
-        <nav className="flex-1 space-y-1 px-3 py-4">
-          {routes.map((route) => {
-            const isActive = route.path === activePath;
-            return (
-              <button
-                key={route.path}
-                type="button"
-                onClick={() => onNavigate(route.path)}
-                className={`flex w-full items-center gap-3 rounded-md px-3 py-3 text-left text-sm font-medium ${
-                  isActive
-                    ? "bg-blue-50 text-blue-700"
-                    : "text-slate-700 hover:bg-slate-100 hover:text-slate-950"
-                }`}
-              >
-                <img
-                  src={route.icon}
-                  alt={route.label}
-                  className={`h-5 w-5 object-contain ${isActive ? "opacity-100" : "opacity-70"}`}
-                />
-                <span>{route.label}</span>
-              </button>
-            );
-          })}
-        </nav>
-
-        <div className="border-t border-slate-200 p-4">
-          <div className="flex items-center gap-3 rounded-lg border border-slate-200 p-3">
-            <span className="flex h-10 w-10 items-center justify-center rounded-full bg-blue-100 font-semibold text-blue-700">
-              {userName?.[0] ?? "?"}
-            </span>
-            <div className="min-w-0">
-              <p className="truncate text-sm font-semibold text-slate-950">{userName}</p>
-              <p className="text-xs text-slate-500">{userRole}</p>
-            </div>
-          </div>
-        </div>
-      </aside>
-    </div>
-  );
-};

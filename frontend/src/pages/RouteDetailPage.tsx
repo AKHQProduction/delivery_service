@@ -81,7 +81,7 @@ export const RouteDetailPage = () => {
   }
 
   return (
-    <div className="flex h-dvh flex-col bg-slate-50 md:h-screen">
+    <div className="flex h-[calc(100dvh-3.5rem)] flex-col bg-slate-50 md:h-screen">
       <RouteDetailHeader
         routePlan={routePlan}
         pointCount={points.length}

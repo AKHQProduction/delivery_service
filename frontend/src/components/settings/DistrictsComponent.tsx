@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useDistrictsSettings, type District } from "../../hooks/settings/useDistrictsSettings";
 import { SettingsItemSkeleton } from "../ui/Skeleton";
+import { DeleteConfirmation } from "./DeleteConfirmation";
 
 interface NewDistrict {
   id: string;
@@ -13,6 +14,7 @@ export const DistrictsComponent = () => {
     useDistrictsSettings();
   const [editedDistricts, setEditedDistricts] = useState<Record<string, Partial<District>>>({});
   const [newDistricts, setNewDistricts] = useState<NewDistrict[]>([]);
+  const [deleteConfirmationId, setDeleteConfirmationId] = useState<string | null>(null);
 
   const handleFieldChange = (districtId: string, value: string) => {
     setEditedDistricts((prev) => {
@@ -62,6 +64,15 @@ export const DistrictsComponent = () => {
     }
   };
 
+  const handleDeleteExisting = async (districtId: string) => {
+    try {
+      await deleteDistrictById(districtId);
+      setDeleteConfirmationId(null);
+    } catch (error) {
+      console.error("Error deleting district:", error);
+    }
+  };
+
   const handleDeleteNew = (tempId: string) => {
     setNewDistricts((prev) => prev.filter((d) => d.id !== tempId));
   };
@@ -108,9 +119,9 @@ export const DistrictsComponent = () => {
   );
 
   return (
-    <div className="bg-white rounded-xl shadow-sm p-6">
-      <div className="flex items-center justify-between mb-4">
-        <h2 className="text-lg font-semibold text-gray-900">Райони доставки</h2>
+    <div className="rounded-lg border border-slate-200 bg-white p-5">
+      <div className="flex items-center justify-between gap-3 mb-4">
+        <h2 className="text-base font-semibold text-slate-950">Райони доставки</h2>
       </div>
 
       <div className="space-y-3">
@@ -126,57 +137,60 @@ export const DistrictsComponent = () => {
           const currentName = getDistrictValue(district) || "";
 
           return (
-            <div key={district.district_id} className="flex items-center gap-2">
-              <input
-                type="text"
-                placeholder="Назва району"
-                value={currentName}
-                onChange={(e) => handleFieldChange(district.district_id, e.target.value)}
-                className="flex-1 min-w-0 px-4 py-3 border-2 border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
-              />
+            <div key={district.district_id} className="space-y-2">
+              <div className="flex items-center gap-2">
+                <input
+                  type="text"
+                  placeholder="Назва району"
+                  value={currentName}
+                  onChange={(e) => handleFieldChange(district.district_id, e.target.value)}
+                  className="flex-1 min-w-0 px-4 py-3 border border-slate-300 rounded-md focus:border-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-100"
+                />
 
-              {isDistrictEdited(district.district_id) ? (
-                <button
-                  onClick={() => handleSaveExisting(district.district_id)}
-                  className="w-10 h-10 flex-shrink-0 flex items-center justify-center rounded-xl bg-green-500 hover:bg-green-600 text-white transition-colors"
-                  aria-label="Зберегти район"
-                >
-                  <svg
-                    className="w-5 h-5"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                    strokeWidth={2}
+                {isDistrictEdited(district.district_id) ? (
+                  <button
+                    onClick={() => handleSaveExisting(district.district_id)}
+                    className="w-10 h-10 flex-shrink-0 flex items-center justify-center rounded-md bg-emerald-600 hover:bg-emerald-700 text-white transition-colors"
+                    aria-label="Зберегти район"
                   >
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
-                  </svg>
-                </button>
-              ) : (
-                <button
-                  onClick={async () => {
-                    try {
-                      await deleteDistrictById(district.district_id);
-                    } catch (error) {
-                      console.error("Error deleting district:", error);
-                    }
-                  }}
-                  className="w-10 h-10 flex-shrink-0 flex items-center justify-center rounded-xl hover:bg-red-50 text-red-500 transition-colors"
-                  aria-label="Видалити район"
-                >
-                  <svg
-                    className="w-5 h-5"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                    strokeWidth={2}
+                    <svg
+                      className="w-5 h-5"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                      strokeWidth={2}
+                    >
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+                    </svg>
+                  </button>
+                ) : (
+                  <button
+                    onClick={() => setDeleteConfirmationId(district.district_id)}
+                    className="w-10 h-10 flex-shrink-0 flex items-center justify-center rounded-md hover:bg-red-50 text-red-600 transition-colors"
+                    aria-label="Видалити район"
                   >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
-                    />
-                  </svg>
-                </button>
+                    <svg
+                      className="w-5 h-5"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                      strokeWidth={2}
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
+                      />
+                    </svg>
+                  </button>
+                )}
+              </div>
+              {deleteConfirmationId === district.district_id && (
+                <DeleteConfirmation
+                  title="Видалити район?"
+                  onCancel={() => setDeleteConfirmationId(null)}
+                  onConfirm={() => handleDeleteExisting(district.district_id)}
+                />
               )}
             </div>
           );
@@ -189,15 +203,15 @@ export const DistrictsComponent = () => {
               placeholder="Назва району"
               value={district.name}
               onChange={(e) => handleNewDistrictChange(district.id, e.target.value)}
-              className="flex-1 min-w-0 px-4 py-3 border-2 border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+              className="flex-1 min-w-0 px-4 py-3 border border-slate-300 rounded-md focus:border-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-100"
             />
             <button
               onClick={() => handleSaveNew(district.id)}
               disabled={!isNewDistrictValid(district)}
-              className={`w-10 h-10 flex-shrink-0 flex items-center justify-center rounded-xl transition-colors ${
+              className={`w-10 h-10 flex-shrink-0 flex items-center justify-center rounded-md transition-colors ${
                 isNewDistrictValid(district)
-                  ? "bg-green-500 hover:bg-green-600 text-white"
-                  : "bg-gray-200 text-gray-400 cursor-not-allowed"
+                  ? "bg-emerald-600 hover:bg-emerald-700 text-white"
+                  : "bg-slate-100 text-slate-400 cursor-not-allowed"
               }`}
               aria-label="Зберегти новий район"
             >
@@ -213,7 +227,7 @@ export const DistrictsComponent = () => {
             </button>
             <button
               onClick={() => handleDeleteNew(district.id)}
-              className="w-10 h-10 flex-shrink-0 flex items-center justify-center rounded-xl hover:bg-red-200 bg-red-100 text-red-500 transition-colors"
+              className="w-10 h-10 flex-shrink-0 flex items-center justify-center rounded-md hover:bg-red-100 bg-red-50 text-red-600 transition-colors"
               aria-label="Скасувати"
             >
               <svg
@@ -230,7 +244,7 @@ export const DistrictsComponent = () => {
         ))}
 
         {validDistricts.length === 0 && newDistricts.length === 0 && (
-          <div className="text-center py-8 text-gray-500">
+          <div className="text-center py-8 text-slate-500">
             <p>Райони доставки не додані</p>
             <p className="text-sm mt-1">Натисніть "+ Додати район" щоб створити новий</p>
           </div>
@@ -238,7 +252,7 @@ export const DistrictsComponent = () => {
 
         <button
           onClick={handleAddNewDistrict}
-          className="text-indigo-600 hover:text-indigo-700 text-sm font-medium transition-colors"
+          className="text-blue-600 hover:text-blue-700 text-sm font-medium transition-colors"
         >
           + Додати район
         </button>
