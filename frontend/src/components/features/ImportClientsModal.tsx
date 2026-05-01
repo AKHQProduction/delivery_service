@@ -19,7 +19,11 @@ interface ImportClientsModalProps {
   onSuccess: () => void;
 }
 
-export const ImportClientsModal: React.FC<ImportClientsModalProps> = ({ isOpen, onClose, onSuccess }) => {
+export const ImportClientsModal: React.FC<ImportClientsModalProps> = ({
+  isOpen,
+  onClose,
+  onSuccess,
+}) => {
   const [step, setStep] = useState<1 | 2 | 3>(1);
   const [file, setFile] = useState<File | null>(null);
   const [error, setError] = useState("");
@@ -45,9 +49,7 @@ export const ImportClientsModal: React.FC<ImportClientsModalProps> = ({ isOpen, 
     onClose();
   };
 
-  const isMappingValid = REQUIRED_SYSTEM_FIELDS.every((f) =>
-    Object.values(mapping).includes(f),
-  );
+  const isMappingValid = REQUIRED_SYSTEM_FIELDS.every((f) => Object.values(mapping).includes(f));
 
   const handlePreview = async () => {
     if (!file) return;
@@ -80,16 +82,12 @@ export const ImportClientsModal: React.FC<ImportClientsModalProps> = ({ isOpen, 
     setError("");
     setLoading(true);
     try {
-      const originalHeaders = firstRowIsHeader && preview
-        ? preview.columns.map((c) => c.header ?? `Стовпець ${c.index}`)
-        : undefined;
+      const originalHeaders =
+        firstRowIsHeader && preview
+          ? preview.columns.map((c) => c.header ?? `Стовпець ${c.index}`)
+          : undefined;
 
-      const data = await importClientsFromXlsx(
-        file,
-        mapping,
-        firstRowIsHeader,
-        originalHeaders,
-      );
+      const data = await importClientsFromXlsx(file, mapping, firstRowIsHeader, originalHeaders);
       setResult(data);
       setStep(3);
       onSuccess();
@@ -113,7 +111,7 @@ export const ImportClientsModal: React.FC<ImportClientsModalProps> = ({ isOpen, 
 
   return (
     <Modal isOpen={isOpen} onClose={handleClose} title="Імпорт клієнтів" size={modalSize}>
-      <div className="space-y-4 pb-4">
+      <div className="space-y-4 pb-1">
         {step < 3 && <ProgressSteps currentStep={step} totalSteps={2} />}
 
         {step === 1 && (
@@ -128,13 +126,25 @@ export const ImportClientsModal: React.FC<ImportClientsModalProps> = ({ isOpen, 
               type="button"
               onClick={handlePreview}
               disabled={!file || loading}
-              className="w-full py-3 bg-linear-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 text-white font-semibold rounded-xl transition-colors flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+              className="flex h-12 w-full items-center justify-center gap-2 rounded-md bg-blue-600 px-4 text-sm font-medium text-white transition-colors hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-50"
             >
               {loading ? (
                 <>
                   <svg className="animate-spin h-5 w-5" viewBox="0 0 24 24">
-                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
-                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
+                    <circle
+                      className="opacity-25"
+                      cx="12"
+                      cy="12"
+                      r="10"
+                      stroke="currentColor"
+                      strokeWidth="4"
+                      fill="none"
+                    />
+                    <path
+                      className="opacity-75"
+                      fill="currentColor"
+                      d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                    />
                   </svg>
                   Завантаження...
                 </>
@@ -157,21 +167,34 @@ export const ImportClientsModal: React.FC<ImportClientsModalProps> = ({ isOpen, 
             />
 
             {error && (
-              <div className="flex items-center gap-3 px-4 py-3 bg-red-50 border border-red-100 text-red-600 rounded-xl">
+              <div className="flex items-center gap-3 rounded-md border border-red-100 bg-red-50 px-4 py-3 text-red-600">
                 <div className="w-8 h-8 rounded-full bg-red-100 flex items-center justify-center shrink-0">
-                  <svg className="w-4 h-4 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                  <svg
+                    className="w-4 h-4 text-red-500"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M6 18L18 6M6 6l12 12"
+                    />
                   </svg>
                 </div>
                 <p className="text-sm font-medium">{error}</p>
               </div>
             )}
 
-            <div className="flex gap-3">
+            <div className="flex gap-3 border-t border-slate-200 bg-white pt-4">
               <button
                 type="button"
-                onClick={() => { setStep(1); setError(""); }}
-                className="flex-1 py-3 border border-gray-300 text-gray-700 font-semibold rounded-xl hover:bg-gray-50 transition-colors"
+                onClick={() => {
+                  setStep(1);
+                  setError("");
+                }}
+                className="flex-1 rounded-md bg-slate-100 px-4 py-3 text-sm font-medium text-slate-700 transition-colors hover:bg-slate-200"
               >
                 Назад
               </button>
@@ -179,13 +202,25 @@ export const ImportClientsModal: React.FC<ImportClientsModalProps> = ({ isOpen, 
                 type="button"
                 onClick={handleImport}
                 disabled={!isMappingValid || loading}
-                className="flex-1 py-3 bg-linear-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 text-white font-semibold rounded-xl transition-colors flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+                className="flex-1 rounded-md bg-blue-600 px-4 py-3 text-sm font-medium text-white transition-colors hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-50"
               >
                 {loading ? (
                   <>
                     <svg className="animate-spin h-5 w-5" viewBox="0 0 24 24">
-                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
-                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
+                      <circle
+                        className="opacity-25"
+                        cx="12"
+                        cy="12"
+                        r="10"
+                        stroke="currentColor"
+                        strokeWidth="4"
+                        fill="none"
+                      />
+                      <path
+                        className="opacity-75"
+                        fill="currentColor"
+                        d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                      />
                     </svg>
                     Імпорт...
                   </>
@@ -203,7 +238,7 @@ export const ImportClientsModal: React.FC<ImportClientsModalProps> = ({ isOpen, 
             <button
               type="button"
               onClick={handleClose}
-              className="w-full py-3 bg-indigo-600 hover:bg-indigo-700 text-white font-semibold rounded-xl transition-colors"
+              className="h-12 w-full rounded-md bg-blue-600 px-4 text-sm font-medium text-white transition-colors hover:bg-blue-700"
             >
               Закрити
             </button>

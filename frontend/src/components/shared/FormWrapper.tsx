@@ -15,8 +15,8 @@ export const FormWrapper: React.FC<FormWrapperProps> = ({
 }) => {
   return (
     <form onSubmit={onSubmit} className="flex min-h-full flex-col">
-      <div className="space-y-4">{children}</div>
-      <div className="mt-auto flex gap-3 bg-white pt-8">
+      <div className="space-y-4 pb-24">{children}</div>
+      <div className="sticky bottom-0 -mx-6 mt-auto flex gap-3 border-t border-slate-200 bg-white px-6 py-4">
         <button
           type="button"
           onClick={onClose}

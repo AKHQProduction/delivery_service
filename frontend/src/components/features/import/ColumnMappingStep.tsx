@@ -48,43 +48,43 @@ export const ColumnMappingStep: React.FC<ColumnMappingStepProps> = ({
             type="checkbox"
             checked={firstRowIsHeader}
             onChange={(e) => onFirstRowIsHeaderChange(e.target.checked)}
-            className="w-4 h-4 text-indigo-600 rounded border-gray-300 focus:ring-indigo-500"
+            className="h-4 w-4 rounded border-slate-300 text-blue-600 focus:ring-blue-500"
           />
-          <span className="text-sm text-gray-700">Перший рядок — заголовки</span>
+          <span className="text-sm text-slate-700">Перший рядок — заголовки</span>
         </label>
-        <span className="text-xs text-gray-400">~{totalRows} рядків</span>
+        <span className="text-xs text-slate-400">~{totalRows} рядків</span>
       </div>
 
       {/* Desktop table */}
-      <div className="hidden md:block max-h-[50vh] overflow-y-auto rounded-xl border border-gray-200">
+      <div className="hidden max-h-[50vh] overflow-y-auto rounded-md border border-slate-200 md:block">
         <table className="w-full text-sm">
-          <thead className="bg-gray-50 sticky top-0">
+          <thead className="sticky top-0 bg-slate-50">
             <tr>
-              <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 w-16">Стовпець</th>
+              <th className="w-16 px-3 py-2 text-left text-xs font-medium text-slate-500">Стовпець</th>
               {firstRowIsHeader && (
-                <th className="px-3 py-2 text-left text-xs font-medium text-gray-500">Заголовок</th>
+                <th className="px-3 py-2 text-left text-xs font-medium text-slate-500">Заголовок</th>
               )}
-              <th className="px-3 py-2 text-left text-xs font-medium text-gray-500">Приклади</th>
-              <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 w-52">Поле системи</th>
+              <th className="px-3 py-2 text-left text-xs font-medium text-slate-500">Приклади</th>
+              <th className="w-52 px-3 py-2 text-left text-xs font-medium text-slate-500">Поле системи</th>
             </tr>
           </thead>
-          <tbody className="divide-y divide-gray-100">
+          <tbody className="divide-y divide-slate-100">
             {columns.map((col) => {
               const currentField = mapping[col.index] ?? "";
               const fieldDef = SYSTEM_FIELDS.find((f) => f.value === currentField);
               const isRequired = fieldDef?.required;
 
               return (
-                <tr key={col.index} className="hover:bg-gray-50">
-                  <td className="px-3 py-2 text-gray-500 font-mono text-xs">
+                <tr key={col.index} className="hover:bg-slate-50">
+                  <td className="px-3 py-2 font-mono text-xs text-slate-500">
                     {getColumnLetter(col.index)}
                   </td>
                   {firstRowIsHeader && (
-                    <td className="px-3 py-2 text-gray-900 font-medium truncate max-w-[200px]">
+                    <td className="max-w-[200px] truncate px-3 py-2 font-medium text-slate-900">
                       {col.header || "—"}
                     </td>
                   )}
-                  <td className="px-3 py-2 text-gray-400 text-xs truncate max-w-[250px]">
+                  <td className="max-w-[250px] truncate px-3 py-2 text-xs text-slate-400">
                     {(firstRowIsHeader ? col.sample_values : [col.header, ...col.sample_values].filter(Boolean))
                       .slice(0, 3)
                       .join(", ") || "—"}
@@ -94,10 +94,10 @@ export const ColumnMappingStep: React.FC<ColumnMappingStepProps> = ({
                       title="Поле системи"
                       value={currentField}
                       onChange={(e) => handleFieldChange(col.index, e.target.value)}
-                      className={`w-full px-2 py-1.5 border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 ${
+                      className={`w-full rounded-md border px-2 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 ${
                         isRequired
-                          ? "border-indigo-300 bg-indigo-50"
-                          : "border-gray-200 bg-white"
+                          ? "border-blue-300 bg-blue-50"
+                          : "border-slate-200 bg-white"
                       }`}
                     >
                       <option value="">— Пропустити</option>
@@ -116,7 +116,7 @@ export const ColumnMappingStep: React.FC<ColumnMappingStepProps> = ({
       </div>
 
       {/* Mobile cards */}
-      <div className="md:hidden max-h-[50vh] overflow-y-auto space-y-2">
+      <div className="max-h-[50vh] space-y-2 overflow-y-auto md:hidden">
         {columns.map((col) => {
           const currentField = mapping[col.index] ?? "";
           const fieldDef = SYSTEM_FIELDS.find((f) => f.value === currentField);
@@ -125,21 +125,21 @@ export const ColumnMappingStep: React.FC<ColumnMappingStepProps> = ({
           return (
             <div
               key={col.index}
-              className={`p-3 rounded-xl border ${
-                isRequired ? "border-indigo-200 bg-indigo-50/50" : "border-gray-200 bg-gray-50"
+              className={`rounded-md border p-3 ${
+                isRequired ? "border-blue-200 bg-blue-50/50" : "border-slate-200 bg-slate-50"
               }`}
             >
-              <div className="flex items-center gap-2 mb-1">
-                <span className="text-xs font-mono text-gray-400">
+              <div className="mb-1 flex items-center gap-2">
+                <span className="font-mono text-xs text-slate-400">
                   {getColumnLetter(col.index)}
                 </span>
                 {firstRowIsHeader && col.header && (
-                  <span className="text-sm font-medium text-gray-900 truncate">
+                  <span className="truncate text-sm font-medium text-slate-900">
                     {col.header}
                   </span>
                 )}
               </div>
-              <p className="text-xs text-gray-400 mb-2 truncate">
+              <p className="mb-2 truncate text-xs text-slate-400">
                 {(firstRowIsHeader ? col.sample_values : [col.header, ...col.sample_values].filter(Boolean))
                   .slice(0, 3)
                   .join(", ") || "—"}
@@ -148,10 +148,10 @@ export const ColumnMappingStep: React.FC<ColumnMappingStepProps> = ({
                 title="Поле системи"
                 value={currentField}
                 onChange={(e) => handleFieldChange(col.index, e.target.value)}
-                className={`w-full px-3 py-2 border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 ${
+                className={`w-full rounded-md border px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 ${
                   isRequired
-                    ? "border-indigo-300 bg-white"
-                    : "border-gray-200 bg-white"
+                    ? "border-blue-300 bg-white"
+                    : "border-slate-200 bg-white"
                 }`}
               >
                 <option value="">— Пропустити</option>
@@ -167,8 +167,8 @@ export const ColumnMappingStep: React.FC<ColumnMappingStepProps> = ({
       </div>
 
       {unmappedRequired.length > 0 && (
-        <div className="px-3 py-2 bg-red-50 border border-red-100 rounded-xl">
-          <p className="text-xs text-red-600 font-medium">
+        <div className="rounded-md border border-red-100 bg-red-50 px-3 py-2">
+          <p className="text-xs font-medium text-red-600">
             Не призначено:{" "}
             {unmappedRequired
               .map((f) => SYSTEM_FIELDS.find((sf) => sf.value === f)?.label ?? f)
