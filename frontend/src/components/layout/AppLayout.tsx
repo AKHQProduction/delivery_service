@@ -13,7 +13,8 @@ export const AppLayout: React.FC<AppLayoutProps> = ({ children }) => {
   const user = useUserShopStore((s) => s.user);
   const navigate = useNavigate();
   const location = useLocation();
-  const showSidebar = !!user;
+  const isOnboardingRoute = location.pathname === "/login" || location.pathname === "/create-shop";
+  const showSidebar = !!user && !isOnboardingRoute;
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
   const menuButtonRef = useRef<HTMLButtonElement | null>(null);
   const drawerRoutes = useMemo(() => (user ? getShellRoutesForRole(user.role) : []), [user]);

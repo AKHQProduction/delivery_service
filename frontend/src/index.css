@@ -113,3 +113,7 @@ button:disabled {
   background-size: 200% 100%;
   animation: shimmer 1.5s ease-in-out infinite;
 }
+
+.telegram-widget-host iframe {
+  display: block !important;
+}

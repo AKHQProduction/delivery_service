@@ -6,8 +6,9 @@ export const BottomNavPanel = () => {
   const user = useUserShopStore((s) => s.user);
   const navigate = useNavigate();
   const location = useLocation();
+  const isOnboardingRoute = location.pathname === "/login" || location.pathname === "/create-shop";
 
-  if (!user) return null;
+  if (!user || isOnboardingRoute) return null;
   const userRoutes = getBottomNavRoutesForRole(user.role);
 
   return (

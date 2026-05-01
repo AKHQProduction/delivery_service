@@ -9,6 +9,7 @@ export const SidebarNav = () => {
   const { type } = usePlatform();
   const navigate = useNavigate();
   const location = useLocation();
+  const isOnboardingRoute = location.pathname === "/login" || location.pathname === "/create-shop";
 
   const handleLogout = async () => {
     try {
@@ -21,7 +22,7 @@ export const SidebarNav = () => {
     }
   };
 
-  if (!user) return null;
+  if (!user || isOnboardingRoute) return null;
 
   const allRoutes = getShellRoutesForRole(user.role);
 

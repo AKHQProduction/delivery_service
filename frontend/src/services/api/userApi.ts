@@ -7,10 +7,10 @@ export const getUserShopData = async () => {
 
 export const createNewShop = async (name: string) => {
   const response = await api.post(`v1/shop`, {
-    name
+    name,
   });
   return response.data;
-}
+};
 
 export const createInviteUserLink = async (role: string, full_name: string) => {
   const response = await api.post(`v1/links`, {
