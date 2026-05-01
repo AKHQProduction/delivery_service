@@ -38,8 +38,8 @@ export const RouteDetailPage = () => {
   } = useRouteDetail(routePlan, timeSlotId);
 
   const { toast, showToast, hideToast } = useToast();
-  const { previewPdf, loading: isExporting } = useOrdersPdfPreview(
-    (msg) => showToast(msg, "error"),
+  const { previewPdf, loading: isExporting } = useOrdersPdfPreview((msg) =>
+    showToast(msg, "error"),
   );
 
   const handleExportDocument = () => {
@@ -53,10 +53,22 @@ export const RouteDetailPage = () => {
   if (!routePlan || points.length === 0) {
     return (
       <div className="flex min-h-screen flex-col items-center justify-center gap-4 bg-slate-50 px-6">
-        <svg className="h-16 w-16 text-slate-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7" />
+        <svg
+          className="h-16 w-16 text-slate-300"
+          fill="none"
+          stroke="currentColor"
+          viewBox="0 0 24 24"
+        >
+          <path
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            strokeWidth={1.5}
+            d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7"
+          />
         </svg>
-        <p className="text-lg font-medium text-slate-500">{routePlan ? "Маршрут порожній" : "Маршрут не знайдено"}</p>
+        <p className="text-lg font-medium text-slate-500">
+          {routePlan ? "Маршрут порожній" : "Маршрут не знайдено"}
+        </p>
         <button
           type="button"
           onClick={() => navigate("/routes")}
@@ -69,7 +81,7 @@ export const RouteDetailPage = () => {
   }
 
   return (
-    <div className="flex h-dvh flex-col bg-white md:h-screen">
+    <div className="flex h-dvh flex-col bg-slate-50 md:h-screen">
       <RouteDetailHeader
         routePlan={routePlan}
         pointCount={points.length}
@@ -99,31 +111,38 @@ export const RouteDetailPage = () => {
           onReorder={reorderByIndex}
         />
 
-        {/* Map */}
         <div className={`${!showList ? "flex" : "hidden"} relative min-h-0 flex-1 md:flex`}>
           {editingOrderId && (
-            <div className="absolute left-1/2 top-3 z-[1000] flex -translate-x-1/2 items-center gap-2 rounded-full bg-amber-500 px-4 py-2 text-sm font-medium text-white shadow-lg">
-              <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
-                />
-              </svg>
-              Натисніть на карту для нової позиції
-              <button
-                title="cancelButton"
-                type="button"
-                onClick={cancelEditMarker}
-                className="ml-1 flex h-5 w-5 items-center justify-center rounded-full bg-white/20 hover:bg-white/30"
-              >
-                <svg className="h-3 w-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <div className="absolute left-3 right-3 top-3 z-[1000] flex items-center gap-3 rounded-lg border border-amber-200 bg-white px-3 py-3 text-sm shadow-lg sm:left-1/2 sm:right-auto sm:w-[28rem] sm:-translate-x-1/2">
+              <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-amber-100 text-amber-700">
+                <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path
                     strokeLinecap="round"
                     strokeLinejoin="round"
-                    strokeWidth={3}
-                    d="M6 18L18 6M6 6l12 12"
+                    strokeWidth={2}
+                    d="M12 9v4m0 4h.01M10.29 3.86 2.82 17a2 2 0 0 0 1.71 3h14.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0Z"
+                  />
+                </svg>
+              </span>
+              <div className="min-w-0 flex-1">
+                <p className="font-semibold text-slate-950">Редагування координат</p>
+                <p className="mt-0.5 text-slate-600">
+                  Натисніть на карту, щоб поставити маркер у нову позицію.
+                </p>
+              </div>
+              <button
+                title="Скасувати редагування координат"
+                type="button"
+                onClick={cancelEditMarker}
+                className="flex h-8 w-8 shrink-0 items-center justify-center rounded-md text-slate-500 hover:bg-slate-100 hover:text-slate-950"
+                aria-label="Скасувати редагування координат"
+              >
+                <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2.5}
+                    d="M6 18 18 6M6 6l12 12"
                   />
                 </svg>
               </button>
@@ -136,12 +155,9 @@ export const RouteDetailPage = () => {
           />
         </div>
       </div>
-      {/* Spacer for bottom nav on mobile */}
-      <div className="h-20 shrink-0 md:hidden" />
+      <div className="h-20 shrink-0 bg-slate-50 md:hidden" />
 
-      {toast.isVisible && (
-        <Toast message={toast.message} type={toast.type} onClose={hideToast} />
-      )}
+      {toast.isVisible && <Toast message={toast.message} type={toast.type} onClose={hideToast} />}
     </div>
   );
 };

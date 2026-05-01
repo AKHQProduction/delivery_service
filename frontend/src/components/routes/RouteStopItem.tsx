@@ -1,7 +1,6 @@
 import React, { useState } from "react";
 import { type RoutePoint } from "../../types/entities/Route";
 
-
 interface RouteStopItemProps {
   point: RoutePoint;
   index: number;
@@ -53,13 +52,12 @@ export const RouteStopItem: React.FC<RouteStopItemProps> = ({
       onDragOver={canEdit ? (e) => onDragOver(e, index) : undefined}
       onDrop={canEdit ? () => onDrop(index) : undefined}
       onDragEnd={canEdit ? onDragEnd : undefined}
-      className={`border-b border-slate-200 bg-white transition-all ${
+      className={`rounded-lg border bg-white transition-all ${
         isDragging ? "opacity-40" : ""
-      } ${isOver ? "border-t-2 border-t-blue-600" : ""}`}
+      } ${isOver ? "border-blue-400 ring-2 ring-blue-100" : "border-slate-200"}`}
     >
-      <div className="flex items-start gap-3 px-4 py-3">
-        {/* Number + drag handle */}
-        <div className="flex flex-col items-center gap-1 pt-0.5 shrink-0">
+      <div className="flex items-start gap-3 p-3">
+        <div className="flex shrink-0 flex-col items-center gap-1 pt-0.5">
           {canEdit && editingNumber ? (
             <input
               type="number"
@@ -74,77 +72,138 @@ export const RouteStopItem: React.FC<RouteStopItemProps> = ({
                 if (e.key === "Escape") setEditingNumber(false);
               }}
               onBlur={handleNumberSubmit}
-              className="h-7 w-7 rounded-full bg-blue-600 text-center text-xs font-bold text-white outline-none [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none"
+              className="h-8 w-8 rounded-full bg-blue-600 text-center text-sm font-bold text-white outline-none [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none"
             />
           ) : (
-            <div
-              onClick={canEdit ? () => { setInputValue(String(index + 1)); setEditingNumber(true); } : undefined}
-              className={`flex h-7 w-7 items-center justify-center rounded-full bg-blue-600 text-xs font-bold text-white ${canEdit ? "cursor-pointer hover:bg-blue-700" : ""}`}
+            <button
+              type="button"
+              onClick={
+                canEdit
+                  ? () => {
+                      setInputValue(String(index + 1));
+                      setEditingNumber(true);
+                    }
+                  : undefined
+              }
+              className={`flex h-8 w-8 items-center justify-center rounded-full bg-blue-600 text-sm font-bold text-white ${canEdit ? "hover:bg-blue-700" : "cursor-default"}`}
+              title={canEdit ? "Змінити позицію" : undefined}
+              aria-label={`Зупинка ${index + 1}`}
             >
               {index + 1}
-            </div>
+            </button>
           )}
           {canEdit && (
-            <svg className="h-4 w-4 cursor-grab text-slate-300 active:cursor-grabbing" fill="currentColor" viewBox="0 0 24 24">
+            <svg
+              className="h-4 w-4 cursor-grab text-slate-300 active:cursor-grabbing"
+              fill="currentColor"
+              viewBox="0 0 24 24"
+              aria-hidden="true"
+            >
               <path d="M8 6h2v2H8V6zm6 0h2v2h-2V6zM8 11h2v2H8v-2zm6 0h2v2h-2v-2zm-6 5h2v2H8v-2zm6 0h2v2h-2v-2z" />
             </svg>
           )}
         </div>
 
-        {/* Point info */}
-        <div className="flex-1 min-w-0">
-          <p className="truncate text-sm font-semibold text-slate-950">{point.client_name}</p>
-          <p className="mt-0.5 truncate text-xs text-slate-500">{point.address}</p>
-          {point.comment && (
-            <p className="mt-1 truncate text-xs text-amber-600">{point.comment}</p>
+        <div className="min-w-0 flex-1">
+          <div className="flex items-start justify-between gap-3">
+            <div className="min-w-0">
+              <p className="truncate text-sm font-semibold text-slate-950">{point.client_name}</p>
+              <p className="mt-0.5 truncate text-sm text-slate-500">{point.address}</p>
+            </div>
+            <span className="shrink-0 text-sm font-semibold text-slate-950">
+              {point.total_price} ₴
+            </span>
+          </div>
+          {point.delivery_phone && (
+            <p className="mt-1 truncate text-xs text-slate-500">{point.delivery_phone}</p>
           )}
-          <div className="mt-1.5 flex flex-wrap items-center gap-2">
-            <span className="text-xs text-slate-500">{point.items_summary}</span>
-            <span className="text-xs text-slate-300">·</span>
-            <span className="text-xs text-slate-500">{point.total_price} ₴</span>
-            <span className="text-xs text-slate-300">·</span>
-            <span className="text-xs text-slate-500">{point.payment_method}</span>
+          {point.comment && (
+            <p className="mt-2 rounded-md bg-amber-50 px-2 py-1 text-xs text-amber-700">
+              {point.comment}
+            </p>
+          )}
+          <div className="mt-2 flex flex-wrap items-center gap-2">
+            <span className="rounded bg-slate-100 px-2 py-1 text-xs font-medium text-slate-600">
+              {point.items_summary}
+            </span>
+            <span className="rounded bg-slate-100 px-2 py-1 text-xs font-medium text-slate-600">
+              {point.payment_method}
+            </span>
           </div>
         </div>
 
-        {/* Actions (owner only) */}
         {canEdit && (
-          <div className="flex flex-col gap-1 shrink-0">
-            <button
-              type="button"
-              title="Вгору"
-              onClick={() => onMoveUp(index)}
-              disabled={index === 0}
-              className="flex h-7 w-7 items-center justify-center rounded bg-slate-100 transition-colors hover:bg-slate-200 disabled:opacity-30 md:hidden"
-            >
-              <svg className="h-4 w-4 text-slate-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 15l7-7 7 7" />
-              </svg>
-            </button>
-            <button
-              type="button"
-              title="Вниз"
-              onClick={() => onMoveDown(index)}
-              disabled={index === totalCount - 1}
-              className="flex h-7 w-7 items-center justify-center rounded bg-slate-100 transition-colors hover:bg-slate-200 disabled:opacity-30 md:hidden"
-            >
-              <svg className="h-4 w-4 text-slate-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-              </svg>
-            </button>
+          <div className="flex shrink-0 flex-col gap-1">
+            {index > 0 && (
+              <button
+                type="button"
+                title="Вгору"
+                onClick={() => onMoveUp(index)}
+                className="flex h-8 w-8 items-center justify-center rounded-md bg-slate-100 transition-colors hover:bg-slate-200 md:hidden"
+                aria-label="Перемістити вище"
+              >
+                <svg
+                  className="h-4 w-4 text-slate-600"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M5 15l7-7 7 7"
+                  />
+                </svg>
+              </button>
+            )}
+            {index < totalCount - 1 && (
+              <button
+                type="button"
+                title="Вниз"
+                onClick={() => onMoveDown(index)}
+                className="flex h-8 w-8 items-center justify-center rounded-md bg-slate-100 transition-colors hover:bg-slate-200 md:hidden"
+                aria-label="Перемістити нижче"
+              >
+                <svg
+                  className="h-4 w-4 text-slate-600"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M19 9l-7 7-7-7"
+                  />
+                </svg>
+              </button>
+            )}
             <button
               type="button"
               onClick={() => onToggleEditMarker(point.order_id)}
               title="Редагувати маркер"
-              className={`w-7 h-7 rounded flex items-center justify-center transition-colors ${
+              className={`flex h-8 w-8 items-center justify-center rounded-md transition-colors ${
                 isEditingMarker
                   ? "bg-blue-600 text-white"
                   : "bg-slate-100 text-slate-600 hover:bg-slate-200"
               }`}
+              aria-label="Редагувати маркер"
             >
-              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+              <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"
+                />
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"
+                />
               </svg>
             </button>
           </div>
