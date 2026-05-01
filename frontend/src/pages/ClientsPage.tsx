@@ -298,7 +298,7 @@ export const ClientsPage = () => {
             ))}
           </section>
 
-          <aside className="hidden rounded-lg border border-slate-200 bg-white p-6 xl:block">
+          <aside className="hidden max-h-[calc(100vh-3rem)] overflow-y-auto rounded-lg border border-slate-200 bg-white p-6 xl:sticky xl:top-6 xl:block xl:self-start">
             {selectedClient ? (
               <ClientSidePanel
                 client={selectedClient}
