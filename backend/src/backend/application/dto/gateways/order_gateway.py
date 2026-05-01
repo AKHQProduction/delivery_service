@@ -70,18 +70,31 @@ class GetOrdersFilters:
 class ProductStatsReadModel:
     name: str
     quantity: int
+    orders_sum: int
+
+
+@dataclass(frozen=True)
+class CategoryStatsReadModel:
+    name: str
+    quantity: int
+    orders_sum: int
 
 
 @dataclass(frozen=True)
 class TimeSlotStatsReadModel:
     time_slot: str
     total: int
+    orders_sum: int
 
 
 @dataclass(frozen=True)
 class OrderStatsReadModel:
     total_orders: int
     total_orders_sum: int
+    total_products_quantity: int
+    average_order_value: int
     time_slot_stats: list[TimeSlotStatsReadModel]
     product_stats: list[ProductStatsReadModel]
+    category_stats: list[CategoryStatsReadModel]
     payment_method_stats: list[PaymentMethodStatsReadModel]
+    recent_orders: list[OrderReadModel]

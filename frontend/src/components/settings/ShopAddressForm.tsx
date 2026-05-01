@@ -100,9 +100,7 @@ export const ShopAddressForm: React.FC<ShopAddressFormProps> = ({ onSuccess }) =
     setShopAddress((prev) => ({
       ...prev,
       [field]: value,
-      ...(field === "street" || field === "house" || field === "city"
-        ? { coordinates: null }
-        : {}),
+      ...(field === "street" || field === "house" || field === "city" ? { coordinates: null } : {}),
     }));
     setAddressError(null);
     setPendingCoordinates(null);
@@ -202,10 +200,10 @@ export const ShopAddressForm: React.FC<ShopAddressFormProps> = ({ onSuccess }) =
 
   const getInputClassName = (field: "city" | "street") => {
     const baseClass =
-      "w-full px-4 py-3 border-2 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent";
+      "w-full px-4 py-3 border rounded-md focus:border-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-100";
     const isEmpty = !shopAddress[field].trim();
     const hasError = addressError === "missing_fields" && isEmpty;
-    return `${baseClass} ${hasError ? "border-red-300 bg-red-50" : "border-gray-200"}`;
+    return `${baseClass} ${hasError ? "border-red-300 bg-red-50" : "border-slate-300"}`;
   };
 
   const showSuggestions = isSuggestionsOpen && suggestionQuery.length > 0;
@@ -213,14 +211,14 @@ export const ShopAddressForm: React.FC<ShopAddressFormProps> = ({ onSuccess }) =
 
   return (
     <>
-      <div className="bg-white rounded-xl shadow-sm p-6">
-        <div className="flex items-center justify-between mb-4">
-          <h2 className="text-lg font-semibold text-gray-900">Адреса магазину</h2>
+      <div className="rounded-lg border border-slate-200 bg-white p-5">
+        <div className="flex items-center justify-between gap-3 mb-4">
+          <h2 className="text-base font-semibold text-slate-950">Адреса магазину</h2>
         </div>
 
         <div className="space-y-4">
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">Місто *</label>
+            <label className="mb-2 block text-sm font-medium text-slate-700">Місто *</label>
             <div className="flex items-center gap-2">
               <input
                 type="text"
@@ -233,7 +231,7 @@ export const ShopAddressForm: React.FC<ShopAddressFormProps> = ({ onSuccess }) =
               <MapButton onClick={openMap} />
             </div>
             {hasConfirmedCoordinates ? (
-              <p className="text-xs text-green-600 mt-1 flex items-center gap-1">
+              <p className="text-xs text-emerald-600 mt-1 flex items-center gap-1">
                 <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path
                     strokeLinecap="round"
@@ -249,13 +247,13 @@ export const ShopAddressForm: React.FC<ShopAddressFormProps> = ({ onSuccess }) =
                 Координати знайдено. Підтвердіть адресу на карті, щоб зберегти її
               </p>
             ) : (
-              <p className="text-xs text-gray-500 mt-1">
+              <p className="text-xs text-slate-500 mt-1">
                 Виберіть точку на карті, щоб автоматично заповнити адресу та зберегти координати
               </p>
             )}
 
             {addressError === "not_found" && (
-              <div className="mt-2 p-3 bg-red-50 border border-red-200 rounded-lg flex items-start gap-2">
+              <div className="mt-2 p-3 bg-red-50 border border-red-200 rounded-md flex items-start gap-2">
                 <svg
                   className="w-5 h-5 text-red-500 shrink-0 mt-0.5"
                   fill="none"
@@ -277,7 +275,7 @@ export const ShopAddressForm: React.FC<ShopAddressFormProps> = ({ onSuccess }) =
                   <button
                     type="button"
                     onClick={openMap}
-                    className="mt-2 text-xs text-indigo-600 hover:text-indigo-800 font-medium"
+                    className="mt-2 text-xs text-blue-600 hover:text-blue-800 font-medium"
                   >
                     Відкрити карту
                   </button>
@@ -286,7 +284,7 @@ export const ShopAddressForm: React.FC<ShopAddressFormProps> = ({ onSuccess }) =
             )}
 
             {addressError === "needs_verification" && pendingCoordinates && (
-              <div className="mt-2 p-3 bg-amber-50 border border-amber-200 rounded-lg flex items-start gap-2">
+              <div className="mt-2 p-3 bg-amber-50 border border-amber-200 rounded-md flex items-start gap-2">
                 <svg
                   className="w-5 h-5 text-amber-500 shrink-0 mt-0.5"
                   fill="none"
@@ -308,7 +306,7 @@ export const ShopAddressForm: React.FC<ShopAddressFormProps> = ({ onSuccess }) =
                   <button
                     type="button"
                     onClick={openMap}
-                    className="mt-2 text-xs text-indigo-600 hover:text-indigo-800 font-medium"
+                    className="mt-2 text-xs text-blue-600 hover:text-blue-800 font-medium"
                   >
                     Перевірити на карті
                   </button>
@@ -317,7 +315,7 @@ export const ShopAddressForm: React.FC<ShopAddressFormProps> = ({ onSuccess }) =
             )}
 
             {addressError === "missing_fields" && (
-              <div className="mt-2 p-3 bg-red-50 border border-red-200 rounded-lg flex items-start gap-2">
+              <div className="mt-2 p-3 bg-red-50 border border-red-200 rounded-md flex items-start gap-2">
                 <svg
                   className="w-5 h-5 text-red-500 shrink-0 mt-0.5"
                   fill="none"
@@ -343,9 +341,9 @@ export const ShopAddressForm: React.FC<ShopAddressFormProps> = ({ onSuccess }) =
 
           <div className="flex items-start gap-2">
             <div className="relative flex-1" ref={suggestionDropdownRef}>
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid gap-4 sm:grid-cols-2">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">Вулиця *</label>
+                  <label className="mb-2 block text-sm font-medium text-slate-700">Вулиця *</label>
                   <input
                     type="text"
                     value={shopAddress.street}
@@ -358,22 +356,22 @@ export const ShopAddressForm: React.FC<ShopAddressFormProps> = ({ onSuccess }) =
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">Будинок</label>
+                  <label className="mb-2 block text-sm font-medium text-slate-700">Будинок</label>
                   <input
                     type="text"
                     value={shopAddress.house}
                     onChange={(e) => handleStreetHouseChange("house", e.target.value)}
                     onFocus={openSuggestions}
-                    className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+                    className="w-full px-4 py-3 border border-slate-300 rounded-md focus:border-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-100"
                     placeholder="1"
                   />
                 </div>
               </div>
 
               {showSuggestions && (
-                <div className="absolute z-50 mt-2 w-full rounded-xl border border-gray-200 bg-white shadow-lg overflow-hidden">
+                <div className="absolute z-50 mt-2 w-full rounded-md border border-slate-300 bg-white shadow-lg overflow-hidden">
                   {isSuggestionsLoading && (
-                    <div className="px-4 py-3 text-sm text-gray-500">Пошук адрес...</div>
+                    <div className="px-4 py-3 text-sm text-slate-500">Пошук адрес...</div>
                   )}
 
                   {!isSuggestionsLoading && suggestionsError && (
@@ -397,13 +395,13 @@ export const ShopAddressForm: React.FC<ShopAddressFormProps> = ({ onSuccess }) =
                           type="button"
                           onMouseDown={(event) => event.preventDefault()}
                           onClick={() => handleSuggestionSelect(suggestion)}
-                          className="w-full px-4 py-3 text-left hover:bg-gray-50 transition-colors"
+                          className="w-full px-4 py-3 text-left hover:bg-slate-50 transition-colors"
                         >
-                          <div className="text-sm font-medium text-gray-900">
+                          <div className="text-sm font-medium text-slate-950">
                             {buildSuggestionTitle(suggestion) || suggestion.label}
                           </div>
                           {buildSuggestionSubtitle(suggestion) && (
-                            <div className="text-xs text-gray-500">
+                            <div className="text-xs text-slate-500">
                               {buildSuggestionSubtitle(suggestion)}
                             </div>
                           )}
@@ -413,7 +411,7 @@ export const ShopAddressForm: React.FC<ShopAddressFormProps> = ({ onSuccess }) =
                   )}
 
                   {!isSuggestionsLoading && !suggestionsError && suggestionItems.length === 0 && (
-                    <div className="px-4 py-3 text-sm text-gray-500">
+                    <div className="px-4 py-3 text-sm text-slate-500">
                       Підказки не знайдено. Спробуйте уточнити адресу або вибрати точку на карті.
                     </div>
                   )}
@@ -427,7 +425,7 @@ export const ShopAddressForm: React.FC<ShopAddressFormProps> = ({ onSuccess }) =
           <button
             onClick={handleSave}
             disabled={loading || isLoading}
-            className="w-full px-6 py-3 bg-indigo-600 text-white rounded-xl font-medium hover:bg-indigo-700 transition-colors disabled:bg-gray-400 disabled:cursor-not-allowed"
+            className="w-full px-6 py-3 bg-blue-600 text-white rounded-md font-medium hover:bg-blue-700 transition-colors disabled:bg-slate-300 disabled:cursor-not-allowed"
           >
             {loading ? "Зберігаємо..." : isLoading ? "Перевіряємо адресу..." : "Зберегти адресу"}
           </button>

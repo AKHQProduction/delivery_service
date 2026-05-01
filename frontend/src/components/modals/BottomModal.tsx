@@ -40,23 +40,24 @@ export const BottomModal: React.FC<BottomModalProps> = ({ isOpen, onClose, title
       />
 
       <div
-        className={`fixed bottom-0 left-0 right-0 bg-white rounded-t-3xl shadow-2xl transition-transform duration-300 z-9999 max-h-[90vh] flex flex-col ${
+        className={`fixed bottom-0 left-0 right-0 bg-white rounded-t-lg shadow-xl transition-transform duration-300 z-9999 max-h-[90vh] flex flex-col ${
           isVisible ? "translate-y-0" : "translate-y-full"
         }`}
       >
-        <div className="flex justify-center pt-3 pb-2 shrink-0">
-          <div className="w-12 h-1 bg-gray-300 rounded-full" />
+        <div className="flex shrink-0 justify-center pb-2 pt-3">
+          <div className="h-1 w-12 rounded-full bg-slate-300" />
         </div>
 
-        <div className="flex items-center justify-between px-6 py-4 border-b border-gray-200 shrink-0">
-          <h2 className="text-xl font-bold">{title}</h2>
+        <div className="flex shrink-0 items-center justify-between border-b border-slate-200 px-6 py-4">
+          <h2 className="text-xl font-bold text-slate-950">{title}</h2>
           <button
+            type="button"
             onClick={handleClose}
-            className="w-8 h-8 flex items-center justify-center rounded-full hover:bg-gray-100 transition-colors"
-            aria-label="Close modal"
+            className="flex h-8 w-8 items-center justify-center rounded-md text-slate-500 transition-colors hover:bg-slate-100 hover:text-slate-900"
+            aria-label="Закрити модальне вікно"
           >
             <svg
-              className="w-5 h-5 text-gray-500"
+              className="h-5 w-5"
               fill="none"
               stroke="currentColor"
               viewBox="0 0 24 24"

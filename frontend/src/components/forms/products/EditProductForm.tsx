@@ -5,6 +5,7 @@ import { type Product } from "../../../types/entities/Product";
 import { DynamicFormSelect } from "../../shared/DynamicFormSelect";
 import { useCategoriesForm } from "../../../hooks/products/useCategoriesForm";
 import { CategoryManagementModal } from "../../features/AddCategoryComponent";
+import { FormSkeleton } from "../../ui/Skeleton";
 
 interface EditProductFormProps {
   product: Product;
@@ -23,6 +24,7 @@ export const EditProductForm: React.FC<EditProductFormProps> = ({ product, onClo
     handleAddCategory,
     handleUpdateCategory,
     handleDeleteCategory,
+    loading,
   } = useCategoriesForm(product.category_id);
 
   const [formData, setFormData] = useState({
@@ -60,7 +62,9 @@ export const EditProductForm: React.FC<EditProductFormProps> = ({ product, onClo
     onSave(updatedProduct);
   };
 
-  return (
+  return loading ? (
+    <FormSkeleton fields={3} />
+  ) : (
     <FormWrapper onSubmit={handleSubmit} onClose={onClose} submitLabel="Зберегти зміни">
       <FormInput
         label="Назва товару"

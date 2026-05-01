@@ -1,11 +1,28 @@
 import React, { useMemo, useEffect, useCallback, useRef } from "react";
-import { MapContainer, TileLayer, Marker, Polyline, Tooltip, useMap, useMapEvents } from "react-leaflet";
+import {
+  MapContainer,
+  TileLayer,
+  Marker,
+  Polyline,
+  Tooltip,
+  useMap,
+  useMapEvents,
+} from "react-leaflet";
 import L from "leaflet";
 import "leaflet/dist/leaflet.css";
 import { type RoutePoint } from "../../types/entities/Route";
 
+const MAP_TILE_URL =
+  import.meta.env.VITE_MAP_TILE_URL || "https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png";
+const MAP_TILE_SUBDOMAINS = import.meta.env.VITE_MAP_TILE_URL
+  ? ["mt0", "mt1", "mt2", "mt3"]
+  : ["a", "b", "c"];
+
+const hasValidCoordinates = (point: RoutePoint) =>
+  Number.isFinite(point.coordinates?.latitude) && Number.isFinite(point.coordinates?.longitude);
+
 const createNumberedIcon = (num: number, isEditing: boolean) => {
-  const color = isEditing ? "#f59e0b" : "#4f46e5";
+  const color = isEditing ? "#f59e0b" : "#2563eb";
   return L.divIcon({
     className: "custom-marker",
     html: `<div style="
@@ -20,7 +37,7 @@ const createNumberedIcon = (num: number, isEditing: boolean) => {
       font-weight: 700;
       font-size: 14px;
       border: 3px solid white;
-      box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+      box-shadow: 0 6px 16px rgba(15,23,42,0.22);
     ">${num}</div>`,
     iconSize: [32, 32],
     iconAnchor: [16, 16],
@@ -50,7 +67,9 @@ const FitBounds: React.FC<{ points: RoutePoint[] }> = ({ points }) => {
 
   useEffect(() => {
     map.on("resize", fitBounds);
-    return () => { map.off("resize", fitBounds); };
+    return () => {
+      map.off("resize", fitBounds);
+    };
   }, [map, fitBounds]);
 
   return null;
@@ -116,16 +135,18 @@ interface RouteMapProps {
 }
 
 export const RouteMap: React.FC<RouteMapProps> = ({ points, editingOrderId, onMarkerMove }) => {
+  const validPoints = useMemo(() => points.filter(hasValidCoordinates), [points]);
   const polylinePositions = useMemo(
-    () => points.map((p) => [p.coordinates.latitude, p.coordinates.longitude] as [number, number]),
-    [points],
+    () =>
+      validPoints.map((p) => [p.coordinates.latitude, p.coordinates.longitude] as [number, number]),
+    [validPoints],
   );
 
-  const markerPositions = useMemo(() => spreadDuplicates(points), [points]);
+  const markerPositions = useMemo(() => spreadDuplicates(validPoints), [validPoints]);
 
   const defaultCenter: [number, number] =
-    points.length > 0
-      ? [points[0].coordinates.latitude, points[0].coordinates.longitude]
+    validPoints.length > 0
+      ? [validPoints[0].coordinates.latitude, validPoints[0].coordinates.longitude]
       : [50.4501, 30.5234];
 
   return (
@@ -135,28 +156,24 @@ export const RouteMap: React.FC<RouteMapProps> = ({ points, editingOrderId, onMa
       style={{ height: "100%", width: "100%" }}
       scrollWheelZoom={true}
     >
-      <TileLayer
-        url={import.meta.env.VITE_MAP_TILE_URL}
-        subdomains={["mt0", "mt1", "mt2", "mt3"]}
-        maxZoom={21}
-      />
+      <TileLayer url={MAP_TILE_URL} subdomains={MAP_TILE_SUBDOMAINS} maxZoom={21} />
       <InvalidateSize />
-      <FitBounds points={points} />
+      <FitBounds points={validPoints} />
       <MapClickHandler editingOrderId={editingOrderId} onMarkerMove={onMarkerMove} />
 
       {polylinePositions.length >= 2 && (
         <Polyline
           positions={polylinePositions}
           pathOptions={{
-            color: "#4f46e5",
+            color: "#2563eb",
             weight: 4,
-            opacity: 0.8,
-            dashArray: "12, 8",
+            opacity: 0.85,
+            dashArray: "10, 8",
           }}
         />
       )}
 
-      {points.map((point, index) => {
+      {validPoints.map((point, index) => {
         const pos = markerPositions.get(point.order_id) ?? [
           point.coordinates.latitude,
           point.coordinates.longitude,

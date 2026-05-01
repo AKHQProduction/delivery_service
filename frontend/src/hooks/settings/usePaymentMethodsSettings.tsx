@@ -13,7 +13,8 @@ interface PaymentMethod {
 
 export const usePaymentMethodsSettings = () => {
   const [paymentMethods, setPaymentMethods] = useState<PaymentMethod[]>([]);
-  const [isLoading, setIsLoading] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
+  const [isLoaded, setIsLoaded] = useState(false);
 
   const fetchPaymentMethods = async () => {
     try {
@@ -24,6 +25,7 @@ export const usePaymentMethodsSettings = () => {
       console.error("Error fetching payment methods:", error);
     } finally {
       setIsLoading(false);
+      setIsLoaded(true);
     }
   };
 
@@ -67,6 +69,7 @@ export const usePaymentMethodsSettings = () => {
     updatePaymentMethodById,
     deletePaymentMethodById,
     isLoading,
+    isLoaded,
     refetch: fetchPaymentMethods,
   };
 };

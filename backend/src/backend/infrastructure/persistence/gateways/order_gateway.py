@@ -12,6 +12,7 @@ from uuid_utils.compat import uuid7
 from backend.application.dto.coordinates import CoordinatesDTO
 from backend.application.dto.gateways import Pagination, SortOrder
 from backend.application.dto.gateways.order_gateway import (
+    CategoryStatsReadModel,
     GetOrdersFilters,
     OrderItemReadModel,
     OrderReadModel,
@@ -34,11 +35,13 @@ from backend.application.vars import (
     ProductId,
     ShopId,
 )
+from backend.infrastructure.persistence.tables.categories import Category
 from backend.infrastructure.persistence.tables.clients import Client
 from backend.infrastructure.persistence.tables.orders import (
     Order,
     OrderItem,
 )
+from backend.infrastructure.persistence.tables.products import Product
 from backend.infrastructure.persistence.utils.cast import mapped_cast
 from backend.infrastructure.persistence.utils.escape import escape_like
 
@@ -223,8 +226,12 @@ class SQLAlchemyOrderGateway:
         time_slots_filter: list[TimeSlotFilter],
     ) -> OrderStatsReadModel:
         payment_method_stats = await self._get_payment_method_stats(filters)
+        product_stats = await self._get_product_stats(filters)
 
         total_orders_sum = sum(pm.orders_sum for pm in payment_method_stats)
+        total_products_quantity = sum(
+            product.quantity for product in product_stats
+        )
 
         total_orders_query = select(
             func.count(Order.id).label("total_orders"),
@@ -238,11 +245,20 @@ class SQLAlchemyOrderGateway:
         return OrderStatsReadModel(
             total_orders=total_orders,
             total_orders_sum=int(total_orders_sum),
+            total_products_quantity=total_products_quantity,
+            average_order_value=(
+                int(total_orders_sum / total_orders) if total_orders else 0
+            ),
             time_slot_stats=await self._get_time_slot_stats(
                 filters, time_slots_filter
             ),
-            product_stats=await self._get_product_stats(filters),
+            product_stats=product_stats,
+            category_stats=await self._get_category_stats(filters),
             payment_method_stats=payment_method_stats,
+            recent_orders=await self.read_all(
+                filters=filters,
+                pagination=Pagination(limit=6, offset=0, order=SortOrder.DESC),
+            ),
         )
 
     async def _get_time_slot_stats(
@@ -274,8 +290,13 @@ class SQLAlchemyOrderGateway:
             select(
                 time_slot_case,
                 func.count(func.distinct(Order.id)).label("total"),
+                func.coalesce(
+                    func.sum(OrderItem.quantity * OrderItem.price_per_item),
+                    0,
+                ).label("orders_sum"),
             )
             .select_from(Order)
+            .outerjoin(OrderItem, Order.id == OrderItem.order_id)
             .where(
                 or_(*[
                     (Order.delivery_start_time == slot.start_time)
@@ -288,12 +309,19 @@ class SQLAlchemyOrderGateway:
         query = self._apply_order_filters(query, filters)
 
         result = await self._session.execute(query)
-        totals_by_slot = {row.time_slot: row.total for row in result.all()}
+        rows_by_slot = {row.time_slot: row for row in result.all()}
 
         return [
             TimeSlotStatsReadModel(
                 time_slot=label,
-                total=totals_by_slot.get(label, 0),
+                total=(
+                    rows_by_slot[label].total if label in rows_by_slot else 0
+                ),
+                orders_sum=(
+                    int(rows_by_slot[label].orders_sum or 0)
+                    if label in rows_by_slot
+                    else 0
+                ),
             )
             for label in slot_labels
         ]
@@ -307,10 +335,15 @@ class SQLAlchemyOrderGateway:
                 func.coalesce(func.sum(OrderItem.quantity), 0).label(
                     "total_quantity"
                 ),
+                func.coalesce(
+                    func.sum(OrderItem.quantity * OrderItem.price_per_item),
+                    0,
+                ).label("orders_sum"),
             )
             .select_from(Order)
             .join(OrderItem, Order.id == OrderItem.order_id)
             .group_by(OrderItem.name)
+            .order_by(asc(OrderItem.name))
         )
         query = self._apply_order_filters(query, filters)
 
@@ -319,6 +352,41 @@ class SQLAlchemyOrderGateway:
             ProductStatsReadModel(
                 name=mapped_cast(str, row.product_name),
                 quantity=int(row.total_quantity or 0),
+                orders_sum=int(row.orders_sum or 0),
+            )
+            for row in result.all()
+        ]
+
+    async def _get_category_stats(
+        self, filters: GetOrdersFilters
+    ) -> list[CategoryStatsReadModel]:
+        category_name = func.coalesce(Category.name, "Без категорії")
+        query = (
+            select(
+                category_name.label("category_name"),
+                func.coalesce(func.sum(OrderItem.quantity), 0).label(
+                    "total_quantity"
+                ),
+                func.coalesce(
+                    func.sum(OrderItem.quantity * OrderItem.price_per_item),
+                    0,
+                ).label("orders_sum"),
+            )
+            .select_from(Order)
+            .join(OrderItem, Order.id == OrderItem.order_id)
+            .outerjoin(Product, OrderItem.product_id == Product.id)
+            .outerjoin(Category, Product.category_id == Category.id)
+            .group_by(category_name)
+            .order_by(asc(category_name))
+        )
+        query = self._apply_order_filters(query, filters)
+
+        result = await self._session.execute(query)
+        return [
+            CategoryStatsReadModel(
+                name=mapped_cast(str, row.category_name),
+                quantity=int(row.total_quantity or 0),
+                orders_sum=int(row.orders_sum or 0),
             )
             for row in result.all()
         ]

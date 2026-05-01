@@ -4,6 +4,7 @@ from dataclasses import dataclass
 
 from backend.application.dto.gateways.order_gateway import (
     GetOrdersFilters,
+    OrderReadModel,
     TimeSlotFilter,
 )
 from backend.infrastructure.idp import IdentityProvider
@@ -25,6 +26,14 @@ class GetOrderStatsQuery:
 class OrderStatsByProduct:
     name: str
     quantity: int
+    orders_sum: int
+
+
+@dataclass(frozen=True)
+class OrderStatsByCategory:
+    name: str
+    quantity: int
+    orders_sum: int
 
 
 @dataclass(frozen=True)
@@ -37,15 +46,20 @@ class OrderStatsByPaymentMethod:
 class OrderStatsByTimeSlot:
     time_slot: str
     total: int
+    orders_sum: int
 
 
 @dataclass(frozen=True)
 class GetOrderStatsResponse:
     total_orders: int
     total_orders_sum: int
+    total_products_quantity: int
+    average_order_value: int
     time_slot_stats: list[OrderStatsByTimeSlot]
     product_stats: list[OrderStatsByProduct]
+    category_stats: list[OrderStatsByCategory]
     payment_method_stats: list[OrderStatsByPaymentMethod]
+    recent_orders: list[OrderReadModel]
 
 
 class GetOrderStatsQueryHandler:
@@ -98,16 +112,31 @@ class GetOrderStatsQueryHandler:
         return GetOrderStatsResponse(
             total_orders=stats.total_orders,
             total_orders_sum=stats.total_orders_sum,
+            total_products_quantity=stats.total_products_quantity,
+            average_order_value=stats.average_order_value,
             time_slot_stats=[
                 OrderStatsByTimeSlot(
                     time_slot=slot.time_slot,
                     total=slot.total,
+                    orders_sum=slot.orders_sum,
                 )
                 for slot in stats.time_slot_stats
             ],
             product_stats=[
-                OrderStatsByProduct(name=p.name, quantity=p.quantity)
+                OrderStatsByProduct(
+                    name=p.name,
+                    quantity=p.quantity,
+                    orders_sum=p.orders_sum,
+                )
                 for p in stats.product_stats
+            ],
+            category_stats=[
+                OrderStatsByCategory(
+                    name=category.name,
+                    quantity=category.quantity,
+                    orders_sum=category.orders_sum,
+                )
+                for category in stats.category_stats
             ],
             payment_method_stats=[
                 OrderStatsByPaymentMethod(
@@ -115,4 +144,5 @@ class GetOrderStatsQueryHandler:
                 )
                 for pm in stats.payment_method_stats
             ],
+            recent_orders=stats.recent_orders,
         )

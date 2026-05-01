@@ -28,13 +28,13 @@ export const DateInput: React.FC<DateInputProps> = ({
   const getBorderColor = () => {
     if (error) return "border-red-500";
     if (variant === "amber") return "border-amber-300";
-    return "border-indigo-200";
+    return "border-blue-200";
   };
 
   const getFocusRingColor = () => {
     if (error) return "focus:ring-red-400";
     if (variant === "amber") return "focus:ring-amber-400";
-    return "focus:ring-indigo-500";
+    return "focus:ring-blue-500";
   };
 
   return (
@@ -53,7 +53,7 @@ export const DateInput: React.FC<DateInputProps> = ({
         min={minDate}
         onChange={(e) => onChange(e.target.value)}
         required={required}
-        className={`w-full h-12 px-3 sm:px-4 border-2 rounded-lg sm:rounded-xl bg-white
+        className={`w-full h-12 px-3 sm:px-4 border rounded-lg sm:rounded-md bg-white
                    focus:outline-none focus:ring-2 focus:border-transparent
                    text-gray-900 font-medium transition-all text-sm sm:text-base
                    ${getBorderColor()} ${getFocusRingColor()}`}

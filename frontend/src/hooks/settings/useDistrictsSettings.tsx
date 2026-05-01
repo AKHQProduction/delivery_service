@@ -13,7 +13,8 @@ export interface District {
 
 export const useDistrictsSettings = () => {
   const [districts, setDistricts] = useState<District[]>([]);
-  const [isLoading, setIsLoading] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
+  const [isLoaded, setIsLoaded] = useState(false);
 
   const fetchDistricts = async () => {
     try {
@@ -24,6 +25,7 @@ export const useDistrictsSettings = () => {
       console.error("Error fetching districts:", error);
     } finally {
       setIsLoading(false);
+      setIsLoaded(true);
     }
   };
 
@@ -72,6 +74,7 @@ export const useDistrictsSettings = () => {
     updateDistrictById,
     deleteDistrictById,
     isLoading,
+    isLoaded,
     refetch: fetchDistricts,
   };
 };

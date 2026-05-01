@@ -1,5 +1,54 @@
 import api from "../../config/api.config";
 
+export interface OrderStatsItem {
+  name: string;
+  quantity: number;
+  orders_sum: number;
+}
+
+export interface OrderStatsTimeSlot {
+  time_slot: string;
+  total: number;
+  orders_sum: number;
+}
+
+export interface OrderStatsPaymentMethod {
+  method: string;
+  orders_sum: number;
+}
+
+export interface OrderStatsRecentOrder {
+  order_id: string;
+  date: string;
+  time_slot: string;
+  delivery_phone: string;
+  delivery_address: {
+    street?: string;
+    house?: string;
+    apartment?: string;
+  };
+  client_name: string;
+  items: Array<{
+    name: string;
+    quantity: number;
+    price_per_item: number;
+  }>;
+  payment_method: string;
+  is_paid: boolean;
+}
+
+export interface OrderStats {
+  total_orders: number;
+  total_orders_sum: number;
+  total_products_quantity: number;
+  average_order_value: number;
+  time_slot_stats: OrderStatsTimeSlot[];
+  product_stats: OrderStatsItem[];
+  category_stats: OrderStatsItem[];
+  payment_method_stats: OrderStatsPaymentMethod[];
+  recent_orders: OrderStatsRecentOrder[];
+}
+
 export const getAllOrders = async (
   client_name: string,
   start_date: string,
@@ -66,8 +115,8 @@ export const generateOrdersPdfLink = async (
   return response.data as { file_id: string; filename: string };
 };
 
-export const getOrderStats = async (start_date: string, end_date: string) => {
-  const response = await api.get(`/api/v1/orders/stats`, {
+export const getOrderStats = async (start_date: string, end_date: string): Promise<OrderStats> => {
+  const response = await api.get(`v1/orders/stats`, {
     params: {
       start_date,
       end_date,

@@ -13,6 +13,7 @@ import { DateInput } from "../../shared/DateInput";
 import { FormSelect } from "../../shared/FormSelect";
 import { convertDateToISO } from "../../../utils/dateUtils";
 import { useError } from "../../../context/ErrorContext";
+import { FormSkeleton, InlineListSkeleton } from "../../ui/Skeleton";
 
 interface OrderItem {
   id?: number;
@@ -58,6 +59,7 @@ export const EditOrderForm: React.FC<EditOrderFormProps> = ({ onClose, onSave, o
     clients,
     getClients,
     loadMoreClients,
+    loading: clientsLoading,
     loadingMore: clientsLoadingMore,
     hasMore: clientsHasMore,
   } = useClient();
@@ -65,11 +67,12 @@ export const EditOrderForm: React.FC<EditOrderFormProps> = ({ onClose, onSave, o
     products,
     getProducts,
     loadMoreProducts,
+    loading: productsLoading,
     loadingMore: productsLoadingMore,
     hasMore: productsHasMore,
   } = useProducts();
-  const { timeSlots } = useTimeSlotsSettings();
-  const { paymentMethods } = usePaymentMethodsSettings();
+  const { timeSlots, isLoaded: timeSlotsLoaded } = useTimeSlotsSettings();
+  const { paymentMethods, isLoaded: paymentMethodsLoaded } = usePaymentMethodsSettings();
 
   // Form state
   const [selectedClient, setSelectedClient] = useState<Client | null>(null);
@@ -337,13 +340,17 @@ export const EditOrderForm: React.FC<EditOrderFormProps> = ({ onClose, onSave, o
     }
   };
 
+  if (!loadedOrder || !timeSlotsLoaded || !paymentMethodsLoaded) {
+    return <FormSkeleton fields={6} />;
+  }
+
   return (
     <div className="space-y-5">
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
         <div className="space-y-5">
-          <section className="bg-gray-50 rounded-2xl p-4 border border-gray-200">
+          <section className="bg-gray-50 rounded-lg p-4 border border-gray-200">
             <div className="flex items-center gap-2.5 mb-3">
-              <span className="w-6 h-6 rounded-full bg-indigo-600 text-white flex items-center justify-center text-xs font-bold shrink-0">
+              <span className="w-6 h-6 rounded-full bg-blue-600 text-white flex items-center justify-center text-xs font-bold shrink-0">
                 1
               </span>
               <h3 className="text-sm font-bold text-gray-900">Клієнт</h3>
@@ -355,9 +362,9 @@ export const EditOrderForm: React.FC<EditOrderFormProps> = ({ onClose, onSave, o
             </div>
 
             {selectedClient && !showClientSearch ? (
-              <div className="p-3 rounded-xl border-2 border-indigo-600 bg-white flex items-center justify-between">
+              <div className="p-3 rounded-md border border-blue-600 bg-white flex items-center justify-between">
                 <div className="flex items-center gap-3">
-                  <div className="w-9 h-9 rounded-full bg-indigo-600 text-white flex items-center justify-center font-bold text-sm">
+                  <div className="w-9 h-9 rounded-full bg-blue-600 text-white flex items-center justify-center font-bold text-sm">
                     {(selectedClient.full_name || "")
                       .split(" ")
                       .map((n) => n[0])
@@ -377,7 +384,7 @@ export const EditOrderForm: React.FC<EditOrderFormProps> = ({ onClose, onSave, o
                 <button
                   type="button"
                   onClick={() => setShowClientSearch(true)}
-                  className="text-xs text-indigo-600 hover:text-indigo-800 font-medium"
+                  className="text-xs text-blue-600 hover:text-blue-800 font-medium"
                 >
                   Змінити
                 </button>
@@ -394,14 +401,16 @@ export const EditOrderForm: React.FC<EditOrderFormProps> = ({ onClose, onSave, o
                   onScroll={handleClientScroll}
                   className="mt-2 space-y-1.5 max-h-48 overflow-y-auto"
                 >
-                  {clients.length === 0 ? (
+                  {clientsLoading && clients.length === 0 ? (
+                    <InlineListSkeleton rows={3} variant="client" />
+                  ) : clients.length === 0 ? (
                     <p className="text-sm text-gray-400 text-center py-4">Клієнтів не знайдено</p>
                   ) : (
                     clients.map((client) => (
                       <div
                         key={client.client_id}
                         onClick={() => handleClientSelect(client)}
-                        className="p-3 rounded-xl border border-gray-200 hover:border-indigo-300 bg-white cursor-pointer transition-colors flex items-center gap-3"
+                        className="p-3 rounded-md border border-gray-200 hover:border-blue-300 bg-white cursor-pointer transition-colors flex items-center gap-3"
                       >
                         <div className="w-8 h-8 rounded-full bg-gray-200 text-gray-600 flex items-center justify-center font-bold text-xs">
                           {(client.full_name || "")
@@ -422,21 +431,14 @@ export const EditOrderForm: React.FC<EditOrderFormProps> = ({ onClose, onSave, o
                       </div>
                     ))
                   )}
-                  {clientsLoadingMore && (
-                    <div className="flex justify-center py-2">
-                      <svg className="animate-spin h-5 w-5 text-indigo-600" viewBox="0 0 24 24">
-                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
-                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
-                      </svg>
-                    </div>
-                  )}
+                  {clientsLoadingMore && <InlineListSkeleton rows={2} variant="client" />}
                 </div>
               </>
             )}
           </section>
 
           {selectedClient && (
-            <section className="bg-gray-50 rounded-2xl p-4 border border-gray-200">
+            <section className="bg-gray-50 rounded-lg p-4 border border-gray-200">
               <div className="flex items-center gap-2.5 mb-3">
                 <h3 className="text-sm font-bold text-gray-900">Контактна інформація</h3>
                 {selectedPhoneId && selectedAddressId && (
@@ -456,7 +458,7 @@ export const EditOrderForm: React.FC<EditOrderFormProps> = ({ onClose, onSave, o
                       title="Select phone"
                       value={selectedPhoneId || ""}
                       onChange={(e) => setSelectedPhoneId(Number(e.target.value))}
-                      className="w-full px-3 py-2.5 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500 text-sm bg-white"
+                      className="w-full px-3 py-2.5 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm bg-white"
                     >
                       <option value="">Оберіть телефон...</option>
                       {selectedClient.phones.map((phone) => (
@@ -466,7 +468,7 @@ export const EditOrderForm: React.FC<EditOrderFormProps> = ({ onClose, onSave, o
                       ))}
                     </select>
                   ) : (
-                    <div className="px-3 py-2.5 bg-white border border-gray-200 rounded-xl text-sm text-gray-900 font-medium">
+                    <div className="px-3 py-2.5 bg-white border border-gray-200 rounded-md text-sm text-gray-900 font-medium">
                       {selectedClient.phones?.[0]?.number || "—"}
                     </div>
                   )}
@@ -481,7 +483,7 @@ export const EditOrderForm: React.FC<EditOrderFormProps> = ({ onClose, onSave, o
                       title="Address select"
                       value={selectedAddressId || ""}
                       onChange={(e) => setSelectedAddressId(Number(e.target.value))}
-                      className="w-full px-3 py-2.5 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500 text-sm bg-white"
+                      className="w-full px-3 py-2.5 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm bg-white"
                     >
                       <option value="">Оберіть адресу...</option>
                       {selectedClient.addresses.map((addr) => (
@@ -491,7 +493,7 @@ export const EditOrderForm: React.FC<EditOrderFormProps> = ({ onClose, onSave, o
                       ))}
                     </select>
                   ) : (
-                    <div className="px-3 py-2.5 bg-white border border-gray-200 rounded-xl text-sm text-gray-900 font-medium">
+                    <div className="px-3 py-2.5 bg-white border border-gray-200 rounded-md text-sm text-gray-900 font-medium">
                       {selectedClient.addresses?.[0]?.street} {selectedClient.addresses?.[0]?.house}
                     </div>
                   )}
@@ -501,9 +503,9 @@ export const EditOrderForm: React.FC<EditOrderFormProps> = ({ onClose, onSave, o
           )}
         </div>
 
-        <section className="bg-gray-50 rounded-2xl p-4 border border-gray-200">
+        <section className="bg-gray-50 rounded-lg p-4 border border-gray-200">
           <div className="flex items-center gap-2.5 mb-3">
-            <span className="w-6 h-6 rounded-full bg-indigo-600 text-white flex items-center justify-center text-xs font-bold shrink-0">
+            <span className="w-6 h-6 rounded-full bg-blue-600 text-white flex items-center justify-center text-xs font-bold shrink-0">
               2
             </span>
             <h3 className="text-sm font-bold text-gray-900">Товари</h3>
@@ -526,12 +528,12 @@ export const EditOrderForm: React.FC<EditOrderFormProps> = ({ onClose, onSave, o
               orderItems.map((item, index) => (
                 <div
                   key={`${item.product_id}-${index}`}
-                  className="p-3 rounded-xl border-2 border-indigo-600 bg-white"
+                  className="p-3 rounded-md border border-blue-600 bg-white"
                 >
                   <div className="flex items-center gap-3">
                     <div className="flex-1 min-w-0">
                       <div className="font-medium text-gray-900 text-sm truncate">{item.name}</div>
-                      <div className="text-xs font-semibold text-indigo-600">{item.price} ₴</div>
+                      <div className="text-xs font-semibold text-blue-600">{item.price} ₴</div>
                     </div>
 
                     <div className="flex items-center shrink-0">
@@ -549,7 +551,7 @@ export const EditOrderForm: React.FC<EditOrderFormProps> = ({ onClose, onSave, o
                       <button
                         onClick={() => handleQuantityChange(index, 1)}
                         type="button"
-                        className="w-7 h-7 rounded-lg bg-indigo-600 hover:bg-indigo-700 text-white flex items-center justify-center transition-colors font-bold text-sm"
+                        className="w-7 h-7 rounded-lg bg-blue-600 hover:bg-blue-700 text-white flex items-center justify-center transition-colors font-bold text-sm"
                       >
                         +
                       </button>
@@ -574,7 +576,7 @@ export const EditOrderForm: React.FC<EditOrderFormProps> = ({ onClose, onSave, o
             <button
               type="button"
               onClick={() => setShowAddProduct(true)}
-              className="mt-2 w-full py-2.5 border-2 border-dashed border-gray-300 rounded-xl text-gray-600 hover:border-indigo-400 hover:text-indigo-600 transition-all font-medium text-sm flex items-center justify-center gap-2"
+              className="mt-2 w-full py-2.5 border border-dashed border-gray-300 rounded-md text-gray-600 hover:border-blue-400 hover:text-blue-600 transition-all font-medium text-sm flex items-center justify-center gap-2"
             >
               <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
@@ -611,45 +613,40 @@ export const EditOrderForm: React.FC<EditOrderFormProps> = ({ onClose, onSave, o
                 onScroll={handleProductScroll}
                 className="max-h-48 overflow-y-auto space-y-1.5"
               >
-                {availableProducts.length === 0 ? (
+                {productsLoading && availableProducts.length === 0 ? (
+                  <InlineListSkeleton rows={3} />
+                ) : availableProducts.length === 0 ? (
                   <p className="text-sm text-gray-400 text-center py-4">Товарів не знайдено</p>
                 ) : (
                   availableProducts.map((product) => (
                     <div
                       key={product.product_id}
                       onClick={() => handleAddProduct(product)}
-                      className="p-3 rounded-xl border border-gray-200 hover:border-indigo-300 bg-white cursor-pointer transition-colors flex items-center gap-3"
+                      className="p-3 rounded-md border border-gray-200 hover:border-blue-300 bg-white cursor-pointer transition-colors flex items-center gap-3"
                     >
                       <div className="flex-1 min-w-0">
                         <div className="font-medium text-gray-900 text-sm truncate">{product.name}</div>
-                        <div className="text-xs font-semibold text-indigo-600">{product.price} ₴</div>
+                        <div className="text-xs font-semibold text-blue-600">{product.price} ₴</div>
                       </div>
                       <button
                         type="button"
-                        className="px-3 py-1.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg font-medium transition-colors text-xs"
+                        className="px-3 py-1.5 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-medium transition-colors text-xs"
                       >
                         Додати
                       </button>
                     </div>
                   ))
                 )}
-                {productsLoadingMore && (
-                  <div className="flex justify-center py-2">
-                    <svg className="animate-spin h-5 w-5 text-indigo-600" viewBox="0 0 24 24">
-                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
-                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
-                    </svg>
-                  </div>
-                )}
+                {productsLoadingMore && <InlineListSkeleton rows={2} />}
               </div>
             </div>
           )}
 
           {orderItems.length > 0 && (
-            <div className="mt-3 p-3 bg-indigo-100 rounded-xl flex items-center justify-between">
+            <div className="mt-3 p-3 bg-blue-100 rounded-md flex items-center justify-between">
               <div>
                 <div className="text-xs text-gray-600">Всього до сплати</div>
-                <div className="text-lg font-bold text-indigo-600">{totalAmount} ₴</div>
+                <div className="text-lg font-bold text-blue-600">{totalAmount} ₴</div>
               </div>
               <div className="text-right">
                 <div className="text-xs text-gray-600">Кількість</div>
@@ -661,9 +658,9 @@ export const EditOrderForm: React.FC<EditOrderFormProps> = ({ onClose, onSave, o
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
-        <section className="bg-gray-50 rounded-2xl p-4 border border-gray-200">
+        <section className="bg-gray-50 rounded-lg p-4 border border-gray-200">
           <div className="flex items-center gap-2.5 mb-3">
-            <span className="w-6 h-6 rounded-full bg-indigo-600 text-white flex items-center justify-center text-xs font-bold shrink-0">
+            <span className="w-6 h-6 rounded-full bg-blue-600 text-white flex items-center justify-center text-xs font-bold shrink-0">
               3
             </span>
             <h3 className="text-sm font-bold text-gray-900">Дата доставки</h3>
@@ -697,9 +694,9 @@ export const EditOrderForm: React.FC<EditOrderFormProps> = ({ onClose, onSave, o
           </div>
         </section>
 
-        <section className="bg-gray-50 rounded-2xl p-4 border border-gray-200">
+        <section className="bg-gray-50 rounded-lg p-4 border border-gray-200">
           <div className="flex items-center gap-2.5 mb-3">
-            <span className="w-6 h-6 rounded-full bg-indigo-600 text-white flex items-center justify-center text-xs font-bold shrink-0">
+            <span className="w-6 h-6 rounded-full bg-blue-600 text-white flex items-center justify-center text-xs font-bold shrink-0">
               4
             </span>
             <h3 className="text-sm font-bold text-gray-900">Оплата</h3>
@@ -730,7 +727,7 @@ export const EditOrderForm: React.FC<EditOrderFormProps> = ({ onClose, onSave, o
                 onChange={(e) => setNote(e.target.value)}
                 placeholder="Примітка до замовлення..."
                 rows={2}
-                className="w-full px-3 py-2.5 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500 resize-none text-sm bg-white"
+                className="w-full px-3 py-2.5 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none text-sm bg-white"
               />
             </div>
           </div>
@@ -742,7 +739,7 @@ export const EditOrderForm: React.FC<EditOrderFormProps> = ({ onClose, onSave, o
           <button
             type="button"
             onClick={onClose}
-            className="flex-1 py-3.5 rounded-xl font-semibold text-gray-700 bg-gray-100 hover:bg-gray-200 transition-colors"
+            className="flex-1 py-3.5 rounded-md font-semibold text-gray-700 bg-gray-100 hover:bg-gray-200 transition-colors"
           >
             Скасувати
           </button>
@@ -750,19 +747,13 @@ export const EditOrderForm: React.FC<EditOrderFormProps> = ({ onClose, onSave, o
             type="button"
             onClick={handleSubmit}
             disabled={isSubmitting || !selectedClient || orderItems.length === 0}
-            className={`flex-1 py-3.5 rounded-xl font-semibold text-white transition-colors flex items-center justify-center gap-2 ${
+            className={`flex-1 py-3.5 rounded-md font-semibold text-white transition-colors flex items-center justify-center gap-2 ${
               !isSubmitting && selectedClient && orderItems.length > 0
-                ? "bg-indigo-600 hover:bg-indigo-700"
+                ? "bg-blue-600 hover:bg-blue-700"
                 : "bg-gray-300 cursor-not-allowed"
             }`}
           >
-            {isSubmitting ? (
-              <svg className="animate-spin h-5 w-5" viewBox="0 0 24 24">
-                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
-                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
-              </svg>
-            ) : null}
-            Зберегти
+            {isSubmitting ? "Зберігаємо..." : "Зберегти"}
           </button>
         </div>
       </div>

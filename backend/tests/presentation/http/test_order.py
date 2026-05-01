@@ -2522,8 +2522,25 @@ async def test_get_order_stats(
     assert stats["time_slot_stats"][0]["total"] == 2
     assert stats["time_slot_stats"][1]["time_slot"] == "14:00-21:00"
     assert stats["time_slot_stats"][1]["total"] == 1
+    assert stats["time_slot_stats"][0]["orders_sum"] == 350
+    assert stats["time_slot_stats"][1]["orders_sum"] == 200
     # 2*100 + 3*50 + 1*200 = 200 + 150 + 200 = 550
     assert stats["total_orders_sum"] == 550
+    assert stats["total_products_quantity"] == 6
+    assert stats["average_order_value"] == 183
+    assert stats["product_stats"] == [
+        {"name": "Product 1", "quantity": 2, "orders_sum": 200},
+        {"name": "Product 2", "quantity": 3, "orders_sum": 150},
+        {"name": "Product 3", "quantity": 1, "orders_sum": 200},
+    ]
+    assert stats["category_stats"] == [
+        {"name": "Без категорії", "quantity": 6, "orders_sum": 550}
+    ]
+    assert len(stats["recent_orders"]) == 3
+    assert stats["recent_orders"][0]["client_name"]
+    assert sorted(
+        order["items"][0]["name"] for order in stats["recent_orders"]
+    ) == ["Product 1", "Product 2", "Product 3"]
 
 
 @pytest.mark.asyncio()
@@ -2578,6 +2595,8 @@ async def test_get_order_stats_with_multiple_items_per_order(
     assert stats["time_slot_stats"][1]["total"] == 0
     # 2*100 + 1*200 + 3*50 = 200 + 200 + 150 = 550
     assert stats["total_orders_sum"] == 550
+    assert stats["total_products_quantity"] == 6
+    assert stats["average_order_value"] == 550
 
 
 @pytest.mark.asyncio()

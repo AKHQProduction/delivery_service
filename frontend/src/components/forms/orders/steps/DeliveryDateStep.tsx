@@ -78,7 +78,7 @@ export const DeliveryDateStep: React.FC<DeliveryDateStepProps> = ({
         minDate={new Date().toISOString().split("T")[0]}
         icon={
           <svg
-            className="w-5 h-5 text-indigo-600"
+            className="w-5 h-5 text-blue-600"
             fill="none"
             stroke="currentColor"
             viewBox="0 0 24 24"
@@ -121,7 +121,7 @@ export const DeliveryDateStep: React.FC<DeliveryDateStepProps> = ({
 
       <div>
         {deliveryDate && (
-          <div className="flex items-center gap-2 text-sm text-indigo-600 mt-2">
+          <div className="flex items-center gap-2 text-sm text-blue-600 mt-2">
             <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
               <path
                 fillRule="evenodd"
@@ -142,7 +142,7 @@ export const DeliveryDateStep: React.FC<DeliveryDateStepProps> = ({
       <div className="border-t border-gray-200 pt-4">
         <h4 className="font-bold text-gray-900 mb-4 flex items-center gap-2">
           <svg
-            className="w-5 h-5 text-indigo-600"
+            className="w-5 h-5 text-blue-600"
             fill="none"
             stroke="currentColor"
             viewBox="0 0 24 24"
@@ -158,9 +158,9 @@ export const DeliveryDateStep: React.FC<DeliveryDateStepProps> = ({
         </h4>
 
         <div className="space-y-4">
-          <div className="p-4 bg-linear-to-r from-indigo-50 to-purple-50 rounded-xl border border-indigo-100">
+          <div className="p-4 bg-blue-50 rounded-md border border-blue-100">
             <div className="flex items-start gap-3 mb-3">
-              <div className="w-10 h-10 rounded-full bg-indigo-600 text-white flex items-center justify-center font-bold shrink-0">
+              <div className="w-10 h-10 rounded-full bg-blue-600 text-white flex items-center justify-center font-bold shrink-0">
                 {(client?.full_name || "")
                   .split(" ")
                   .map((n) => n[0])
@@ -177,7 +177,7 @@ export const DeliveryDateStep: React.FC<DeliveryDateStepProps> = ({
             <div className="space-y-2 text-sm">
               <div className="flex items-center gap-2 text-gray-700">
                 <svg
-                  className="w-4 h-4 text-indigo-600"
+                  className="w-4 h-4 text-blue-600"
                   fill="none"
                   stroke="currentColor"
                   viewBox="0 0 24 24"
@@ -193,7 +193,7 @@ export const DeliveryDateStep: React.FC<DeliveryDateStepProps> = ({
               </div>
               <div className="flex items-start gap-2 text-gray-700">
                 <svg
-                  className="w-4 h-4 text-indigo-600 mt-0.5"
+                  className="w-4 h-4 text-blue-600 mt-0.5"
                   fill="none"
                   stroke="currentColor"
                   viewBox="0 0 24 24"
@@ -240,7 +240,7 @@ export const DeliveryDateStep: React.FC<DeliveryDateStepProps> = ({
             ))}
           </div>
 
-          <div className="p-4 bg-linear-to-r from-indigo-600 to-purple-600 rounded-xl text-white">
+          <div className="p-4 bg-blue-600 rounded-md text-white">
             <div className="flex items-center justify-between mb-2">
               <div>
                 <div className="text-sm opacity-90">Всього товарів</div>
@@ -260,7 +260,7 @@ export const DeliveryDateStep: React.FC<DeliveryDateStepProps> = ({
         onChange={(e) => onNoteChange(e.target.value)}
         placeholder="Примітка до замовлення..."
         rows={2}
-        className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500 resize-none text-sm"
+        className="w-full px-4 py-3 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none text-sm"
       />
 
       <div>

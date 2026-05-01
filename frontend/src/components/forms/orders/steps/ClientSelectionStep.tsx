@@ -1,6 +1,7 @@
 import React, { useRef, useEffect, useCallback } from "react";
 import { type Client } from "../../../../types/entities/Client";
 import { SearchBar } from "../../../ui/SearchBar";
+import { InlineListSkeleton } from "../../../ui/Skeleton";
 
 interface ClientSelectionStepProps {
   clients: Client[];
@@ -10,6 +11,7 @@ interface ClientSelectionStepProps {
   onClientSelect: (client: Client) => void;
   onAddNewClient?: () => void;
   loadMore?: () => void;
+  loading?: boolean;
   loadingMore?: boolean;
   hasMore?: boolean;
 }
@@ -22,6 +24,7 @@ export const ClientSelectionStep: React.FC<ClientSelectionStepProps> = ({
   onClientSelect,
   onAddNewClient,
   loadMore,
+  loading,
   loadingMore,
   hasMore,
 }) => {
@@ -72,7 +75,9 @@ export const ClientSelectionStep: React.FC<ClientSelectionStepProps> = ({
       />
 
       <div ref={scrollContainerRef} className="space-y-2 max-h-96 overflow-y-auto">
-        {clients.length === 0 ? (
+        {loading && clients.length === 0 ? (
+          <InlineListSkeleton rows={4} variant="client" />
+        ) : clients.length === 0 ? (
           <div className="text-center py-8 text-gray-500">
             <svg
               className="w-12 h-12 mx-auto mb-3 text-gray-300"
@@ -96,17 +101,17 @@ export const ClientSelectionStep: React.FC<ClientSelectionStepProps> = ({
               <div
                 key={client.client_id}
                 onClick={() => onClientSelect(client)}
-                className={`p-4 rounded-xl border-2 cursor-pointer transition-all ${
+                className={`p-4 rounded-md border cursor-pointer transition-all ${
                   selectedClient?.client_id === client.client_id
-                    ? "border-indigo-600 bg-indigo-50"
-                    : "border-gray-200 hover:border-indigo-300 bg-white"
+                    ? "border-blue-600 bg-blue-50"
+                    : "border-gray-200 hover:border-blue-300 bg-white"
                 }`}
               >
                 <div className="flex items-center gap-3">
                   <div
                     className={`w-10 h-10 rounded-full flex items-center justify-center font-bold text-sm ${
                       selectedClient?.client_id === client.client_id
-                        ? "bg-indigo-600 text-white"
+                        ? "bg-blue-600 text-white"
                         : "bg-gray-200 text-gray-600"
                     }`}
                   >
@@ -142,7 +147,7 @@ export const ClientSelectionStep: React.FC<ClientSelectionStepProps> = ({
 
                   {selectedClient?.client_id === client.client_id && (
                     <svg
-                      className="w-6 h-6 text-indigo-600"
+                      className="w-6 h-6 text-blue-600"
                       fill="currentColor"
                       viewBox="0 0 20 20"
                     >
@@ -157,27 +162,7 @@ export const ClientSelectionStep: React.FC<ClientSelectionStepProps> = ({
               </div>
             ))}
             <div ref={loadMoreRef} className="py-2 flex justify-center">
-              {loadingMore && (
-                <div className="flex items-center gap-2 text-gray-500">
-                  <svg className="animate-spin h-5 w-5" viewBox="0 0 24 24">
-                    <circle
-                      className="opacity-25"
-                      cx="12"
-                      cy="12"
-                      r="10"
-                      stroke="currentColor"
-                      strokeWidth="4"
-                      fill="none"
-                    />
-                    <path
-                      className="opacity-75"
-                      fill="currentColor"
-                      d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
-                    />
-                  </svg>
-                  <span className="text-sm">Завантаження...</span>
-                </div>
-              )}
+              {loadingMore && <InlineListSkeleton rows={2} variant="client" />}
             </div>
           </>
         )}
@@ -187,7 +172,7 @@ export const ClientSelectionStep: React.FC<ClientSelectionStepProps> = ({
         <button
           onClick={onAddNewClient}
           type="button"
-          className="w-full py-3 border-2 border-dashed border-gray-300 rounded-xl text-gray-600 hover:border-indigo-400 hover:text-indigo-600 transition-all font-medium flex items-center justify-center gap-2"
+          className="w-full py-3 border border-dashed border-gray-300 rounded-md text-gray-600 hover:border-blue-400 hover:text-blue-600 transition-all font-medium flex items-center justify-center gap-2"
         >
           <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />

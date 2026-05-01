@@ -6,82 +6,86 @@ interface ClientCardProps {
   onClick: (employee: Client) => void;
 }
 
+const getPrimaryPhone = (client: Client) =>
+  client.phones?.find((phone) => phone.is_primary) ?? client.phones?.[0];
+
+const getPrimaryAddress = (client: Client) =>
+  client.addresses?.find((address) => address.is_primary) ?? client.addresses?.[0];
+
+const getAddressText = (client: Client) => {
+  const address = getPrimaryAddress(client);
+  if (!address) return "Адресу не вказано";
+
+  return [address.street, address.house, address.apartment ? `кв. ${address.apartment}` : ""]
+    .filter(Boolean)
+    .join(", ");
+};
+
+const getClientInitials = (name?: string) => {
+  const parts = (name || "Клієнт").trim().split(/\s+/).filter(Boolean);
+  return parts
+    .slice(0, 2)
+    .map((part) => part[0])
+    .join("")
+    .toLocaleUpperCase("uk-UA");
+};
+
+const formatBalance = (balance: Client["balance"] | null | undefined) => {
+  const numericBalance = Number(balance ?? 0);
+  return Number.isFinite(numericBalance) ? `${numericBalance.toLocaleString("uk-UA")} ₴` : "0 ₴";
+};
+
 export const ClientCard: React.FC<ClientCardProps> = ({ client, onClick }) => {
-  const primaryPhone = client.phones?.find((p) => p.is_primary) ?? client.phones?.[0];
-  const primaryAddress = client.addresses?.find((a) => a.is_primary) ?? client.addresses?.[0];
+  const balance = Number(client.balance ?? 0);
 
   return (
-    <div
+    <button
+      type="button"
       onClick={() => onClick(client)}
-      className="group relative bg-white rounded-2xl p-5 shadow-sm cursor-pointer
-        hover:shadow-2xl hover:-translate-y-2 transition-all duration-300
-        border border-gray-100 overflow-hidden"
+      className="w-full rounded-lg border border-slate-200 bg-white p-4 text-left shadow-sm transition-colors hover:bg-slate-50"
     >
-      <div className="relative flex items-start gap-4">
-        <div className="flex-1 min-w-0">
-          <div className="mb-2">
-            <h3 className="text-lg font-bold text-gray-900 group-hover:text-indigo-600 transition-colors">
-              {client.full_name}
-            </h3>
-          </div>
-
-          <div className="space-y-2">
-            <div className="flex items-start gap-2">
-              <svg
-                className="w-4 h-4 text-indigo-500 mt-0.5 shrink-0"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z"
-                />
-              </svg>
-              <div className="flex flex-wrap gap-1.5">
-                <span
-                  className="text-sm text-gray-700 bg-indigo-50 px-2.5 py-0.5 rounded-lg font-medium
-                      group-hover:bg-indigo-100 transition-colors"
-                >
-                  {primaryPhone?.number}
-                </span>
+      <div className="flex items-start gap-3">
+        <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-blue-100 text-sm font-semibold text-blue-700">
+          {getClientInitials(client.full_name)}
+        </span>
+        <div className="min-w-0 flex-1">
+          <div className="flex items-start justify-between gap-3">
+            <div className="min-w-0">
+              <div className="flex flex-wrap items-center gap-2">
+                <h3 className="truncate text-base font-semibold text-slate-950">
+                  {client.full_name || "Без імені"}
+                </h3>
               </div>
+              <p className="mt-1 text-sm text-slate-600">
+                {getPrimaryPhone(client)?.number || "Телефон не вказано"}
+              </p>
             </div>
-
-            {primaryAddress && (
-              <div className="flex items-start gap-2">
-                <svg
-                  className="w-4 h-4 text-purple-500 mt-0.5 shrink-0"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"
-                  />
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"
-                  />
-                </svg>
-                <span
-                  className="text-sm text-gray-700 bg-purple-50 px-2.5 py-0.5 rounded-lg font-medium
-                      group-hover:bg-purple-100 transition-colors"
-                >
-                  {primaryAddress.street} {primaryAddress.house}
-                </span>
-              </div>
-            )}
+            <span
+              className={`shrink-0 text-sm font-semibold ${
+                balance < 0 ? "text-red-600" : balance > 0 ? "text-emerald-600" : "text-slate-700"
+              }`}
+            >
+              {formatBalance(client.balance)}
+            </span>
+          </div>
+          <div className="mt-2 flex items-end justify-between gap-3">
+            <p className="line-clamp-2 text-sm leading-5 text-slate-500">{getAddressText(client)}</p>
+            <span className="shrink-0 text-xs text-slate-500">— замовлень</span>
           </div>
         </div>
+        <MoreIcon className="mt-1 h-5 w-5 shrink-0 text-slate-500" />
       </div>
-    </div>
+    </button>
   );
 };
+
+const MoreIcon = ({ className }: { className?: string }) => (
+  <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+    <path
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      strokeWidth={2}
+      d="M12 6.75h.008v.008H12zm0 5.25h.008v.008H12zm0 5.25h.008v.008H12z"
+    />
+  </svg>
+);

@@ -10,6 +10,7 @@ import { useDistrictsSettings } from "../../../hooks/settings/useDistrictsSettin
 import { useTimeSlotsSettings } from "../../../hooks/settings/useTimeSlotsSettings";
 import { updateExistingClientById } from "../../../services/api/clientApi";
 import { DuplicatePhoneToast } from "../../ui/PhoneDuplicateErrorPopup";
+import { FormSkeleton } from "../../ui/Skeleton";
 
 interface ExistingClient {
   id: string;
@@ -42,8 +43,8 @@ export const EditClientForm: React.FC<EditClientFormProps> = ({ client, onClose,
     setPrimaryAddress,
     initializeForm,
   } = useClientForm();
-  const { districts } = useDistrictsSettings();
-  const { timeSlots } = useTimeSlotsSettings();
+  const { districts, isLoading: districtsLoading, isLoaded: districtsLoaded } = useDistrictsSettings();
+  const { timeSlots, isLoading: timeSlotsLoading, isLoaded: timeSlotsLoaded } = useTimeSlotsSettings();
   const [balance, setBalance] = useState("");
   const [balanceError, setBalanceError] = useState<string | null>(null);
   const [phoneErrors, setPhoneErrors] = useState<Record<string, string>>({});
@@ -162,6 +163,17 @@ export const EditClientForm: React.FC<EditClientFormProps> = ({ client, onClose,
     setDuplicateError(null);
     setPendingClientData(null);
   };
+
+  const isReferenceLoading =
+    !districtsLoaded ||
+    !timeSlotsLoaded ||
+    (districtsLoading && districts.length === 0) ||
+    (timeSlotsLoading && timeSlots.length === 0);
+
+  if (isReferenceLoading) {
+    return <FormSkeleton fields={6} />;
+  }
+
   return (
     <>
       <FormWrapper onSubmit={handleSubmit} onClose={onClose} submitLabel="Зберегти зміни">

@@ -9,6 +9,19 @@ import { type Product } from "../../types/entities/Product";
 
 const PAGE_SIZE = 20;
 
+const getCreatedProductId = (value: unknown): string | undefined => {
+  if (typeof value === "string") {
+    return value;
+  }
+
+  if (value && typeof value === "object" && "product_id" in value) {
+    const productId = (value as { product_id?: unknown }).product_id;
+    return typeof productId === "string" ? productId : undefined;
+  }
+
+  return undefined;
+};
+
 export const useProducts = () => {
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState<boolean>(false);
@@ -22,9 +35,8 @@ export const useProducts = () => {
     setLoading(true);
     setError(null);
     try {
-      const newProduct = (await createNewProduct(name, price, category)) as Product;
-      setProducts((prevProducts) => [newProduct, ...prevProducts]);
-      return newProduct;
+      const createdProduct = await createNewProduct(name, price, category);
+      return getCreatedProductId(createdProduct);
     } catch (error) {
       setError("Не вдалося додати товар.");
       throw error;

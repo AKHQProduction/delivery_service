@@ -8,15 +8,10 @@ interface EmptyStateProps {
 
 export const EmptyState: React.FC<EmptyStateProps> = ({ title, description, icon }) => {
   return (
-    <div className="flex flex-col items-center justify-center mt-20 py-12">
-      <div className="w-24 h-24 bg-gradient-to-br from-gray-100 to-gray-200 rounded-full flex items-center justify-center mb-6">
+    <div className="flex min-h-80 flex-col items-center justify-center rounded-lg border border-slate-200 bg-white px-6 py-12 text-center">
+      <div className="mb-5 flex h-14 w-14 items-center justify-center rounded-full bg-slate-100 text-slate-400">
         {icon || (
-          <svg
-            className="w-12 h-12 text-gray-400"
-            fill="none"
-            stroke="currentColor"
-            viewBox="0 0 24 24"
-          >
+          <svg className="h-7 w-7" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path
               strokeLinecap="round"
               strokeLinejoin="round"
@@ -26,8 +21,10 @@ export const EmptyState: React.FC<EmptyStateProps> = ({ title, description, icon
           </svg>
         )}
       </div>
-      <p className="text-gray-500 text-lg font-semibold mb-2">{title}</p>
-      {description && <p className="text-gray-400 text-sm text-center max-w-sm">{description}</p>}
+      <p className="text-lg font-semibold text-slate-950">{title}</p>
+      {description && (
+        <p className="mt-2 max-w-sm text-sm leading-5 text-slate-500">{description}</p>
+      )}
     </div>
   );
 };

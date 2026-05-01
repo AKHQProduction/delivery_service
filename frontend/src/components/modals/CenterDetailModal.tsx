@@ -8,7 +8,12 @@ interface CenterDetailModalProps {
   size?: "xl" | "2xl" | "3xl" | "4xl" | "5xl";
 }
 
-export const CenterDetailModal: React.FC<CenterDetailModalProps> = ({ isOpen, onClose, children, size = "xl" }) => {
+export const CenterDetailModal: React.FC<CenterDetailModalProps> = ({
+  isOpen,
+  onClose,
+  children,
+  size = "xl",
+}) => {
   const [isVisible, setIsVisible] = useState(false);
   const [shouldRender, setShouldRender] = useState(false);
 
@@ -63,24 +68,6 @@ export const CenterDetailModal: React.FC<CenterDetailModalProps> = ({ isOpen, on
             : "opacity-0 -translate-y-[45%] scale-[0.97]"
         }`}
       >
-        {/* Close button overlaid on top-right */}
-        <button
-          type="button"
-          onClick={handleClose}
-          className="absolute top-4 right-4 z-10 w-9 h-9 rounded-full bg-white/20 backdrop-blur-sm flex items-center justify-center hover:bg-white/40 transition-colors cursor-pointer"
-          aria-label="Close"
-        >
-          <svg
-            className="w-5 h-5 text-white drop-shadow-sm"
-            fill="none"
-            stroke="currentColor"
-            viewBox="0 0 24 24"
-            strokeWidth={2.5}
-          >
-            <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
-          </svg>
-        </button>
-
         {children}
       </div>
     </>

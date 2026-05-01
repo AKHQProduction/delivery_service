@@ -164,4 +164,6 @@ cython_debug/
 tunnel-keys/
 osrm-data/
 dumps/
-
+.DS_Store
+output/
+.playwright-cli/

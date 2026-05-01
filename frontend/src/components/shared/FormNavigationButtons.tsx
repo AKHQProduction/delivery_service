@@ -32,7 +32,7 @@ export const FormNavigationButtons: React.FC<FormNavigationButtonsProps> = ({
         <button
           onClick={onBack}
           type="button"
-          className="flex-1 py-3 border-2 border-gray-300 rounded-xl font-bold text-gray-700 hover:bg-gray-50 transition-all"
+          className="flex-1 py-3 border border-gray-300 rounded-md font-bold text-gray-700 hover:bg-gray-50 transition-all"
         >
           {backLabel}
         </button>
@@ -41,9 +41,9 @@ export const FormNavigationButtons: React.FC<FormNavigationButtonsProps> = ({
         onClick={isLastStep ? onSubmit : onNext}
         disabled={!canProceed}
         type="button"
-        className={`${isFirstStep ? "w-full" : "flex-1"} py-3 rounded-xl font-bold transition-all ${
+        className={`${isFirstStep ? "w-full" : "flex-1"} py-3 rounded-md font-bold transition-all ${
           canProceed
-            ? "bg-indigo-600 hover:bg-indigo-700 text-white"
+            ? "bg-blue-600 hover:bg-blue-700 text-white"
             : "bg-gray-300 text-gray-500 cursor-not-allowed"
         }`}
       >

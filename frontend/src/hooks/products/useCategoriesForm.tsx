@@ -5,7 +5,8 @@ export const useCategoriesForm = (initialCategoryId?: string | null) => {
   const { categories, fetchCategories, addCategory, updateCategory, deleteCategory } =
     useCategories();
 
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(true);
+  const [loaded, setLoaded] = useState(false);
   const [selectedCategory, setSelectedCategory] = useState<string | null>(
     initialCategoryId || "EMPTY",
   );
@@ -14,8 +15,12 @@ export const useCategoriesForm = (initialCategoryId?: string | null) => {
   useEffect(() => {
     const loadCategories = async () => {
       setLoading(true);
-      await fetchCategories();
-      setLoading(false);
+      try {
+        await fetchCategories();
+      } finally {
+        setLoading(false);
+        setLoaded(true);
+      }
     };
     loadCategories();
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -76,6 +81,7 @@ export const useCategoriesForm = (initialCategoryId?: string | null) => {
 
   return {
     loading,
+    loaded,
     selectedCategory,
     setSelectedCategory,
     categoryOptions,
