@@ -35,10 +35,8 @@ export const ErrorProvider: React.FC<{ children: React.ReactNode }> = ({ childre
 
   const addToast = useCallback((type: Toast["type"], message: string, details?: string) => {
     const id = Math.random().toString(36).substring(2, 9);
-    console.log("Adding toast:", { type, message, details });
     setToasts((prev) => [...prev, { id, type, message, details }]);
 
-    // Auto-dismiss after 5 seconds
     setTimeout(() => {
       setToasts((prev) => prev.filter((toast) => toast.id !== id));
     }, 5000);
@@ -46,7 +44,6 @@ export const ErrorProvider: React.FC<{ children: React.ReactNode }> = ({ childre
 
   const showError = useCallback(
     (message: string, details?: string) => {
-      console.log("showError called:", { message, details });
       addToast("error", message, details);
     },
     [addToast],
@@ -66,18 +63,14 @@ export const ErrorProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     [addToast],
   );
 
-  // Use ref to keep the latest showError function
   const showErrorRef = useRef(showError);
 
   useEffect(() => {
     showErrorRef.current = showError;
   }, [showError]);
 
-  // Connect API error handler on mount only once
   useEffect(() => {
-    console.log("Setting up API error handler");
     const handler: ApiErrorHandler = (message: string, details?: string) => {
-      console.log("API error handler called:", { message, details });
       showErrorRef.current(message, details);
     };
     setApiErrorHandler(handler);
@@ -95,106 +88,117 @@ export const ErrorProvider: React.FC<{ children: React.ReactNode }> = ({ childre
   );
 };
 
-// Toast Component - now using Portal
 interface ToastContainerProps {
   toasts: Toast[];
   onRemove: (id: string) => void;
 }
 
+const toastStyles: Record<
+  Toast["type"],
+  { shell: string; icon: string; Icon: React.FC<{ className?: string }> }
+> = {
+  success: {
+    shell: "border-green-200 bg-green-50",
+    icon: "bg-green-100 text-green-600",
+    Icon: SuccessIcon,
+  },
+  error: {
+    shell: "border-red-200 bg-red-50",
+    icon: "bg-red-100 text-red-600",
+    Icon: ErrorIcon,
+  },
+  warning: {
+    shell: "border-amber-200 bg-amber-50",
+    icon: "bg-amber-100 text-amber-600",
+    Icon: WarningIcon,
+  },
+};
+
 const ToastContainer: React.FC<ToastContainerProps> = ({ toasts, onRemove }) => {
   if (toasts.length === 0) return null;
 
-  // Render toasts in a portal attached to document.body
   return createPortal(
-    <div
-      style={{
-        position: "fixed",
-        top: "16px",
-        right: "16px",
-        zIndex: 999999, // Very high z-index
-        display: "flex",
-        flexDirection: "column",
-        gap: "8px",
-        maxWidth: "400px",
-        pointerEvents: "none", // Allow clicks through container
-      }}
-    >
+    <div className="pointer-events-none fixed inset-x-4 top-4 z-[99999] flex flex-col gap-3 sm:left-auto sm:right-4 sm:w-[380px]">
       {toasts.map((toast) => {
-        const bgColor =
-          toast.type === "error" ? "#ef4444" : toast.type === "success" ? "#22c55e" : "#eab308";
+        const style = toastStyles[toast.type];
+        const Icon = style.Icon;
 
         return (
           <div
             key={toast.id}
-            style={{
-              backgroundColor: bgColor,
-              color: "white",
-              padding: "16px",
-              borderRadius: "8px",
-              boxShadow: "0 10px 40px rgba(0,0,0,0.3)",
-              minWidth: "300px",
-              animation: "slideIn 0.3s ease-out",
-              pointerEvents: "auto", // Re-enable clicks on toast itself
-            }}
+            className={`pointer-events-auto animate-slide-in rounded-lg border px-4 py-3 shadow-lg shadow-slate-900/10 ${style.shell}`}
           >
-            <div style={{ display: "flex", justifyContent: "space-between", gap: "12px" }}>
-              <div style={{ flex: 1 }}>
-                <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
-                  <p style={{ fontWeight: 600, wordBreak: "break-word", margin: 0 }}>
-                    {toast.message}
-                  </p>
-                </div>
+            <div className="flex gap-3">
+              <span
+                className={`mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-full ${style.icon}`}
+              >
+                <Icon className="h-4 w-4" />
+              </span>
+              <div className="min-w-0 flex-1">
+                <p className="break-words text-sm font-semibold leading-5 text-slate-950">
+                  {toast.message}
+                </p>
                 {toast.details && (
-                  <p
-                    style={{
-                      fontSize: "14px",
-                      marginTop: "8px",
-                      marginBottom: 0,
-                      marginLeft: "28px",
-                      opacity: 0.9,
-                      wordBreak: "break-word",
-                    }}
-                  >
+                  <p className="mt-1 break-words text-sm leading-5 text-slate-600">
                     {toast.details}
                   </p>
                 )}
               </div>
               <button
+                type="button"
                 onClick={() => onRemove(toast.id)}
-                style={{
-                  color: "white",
-                  background: "none",
-                  border: "none",
-                  cursor: "pointer",
-                  padding: "4px",
-                  fontSize: "20px",
-                  lineHeight: "1",
-                  opacity: 1,
-                  transition: "opacity 0.2s",
-                }}
-                onMouseEnter={(e) => (e.currentTarget.style.opacity = "0.75")}
-                onMouseLeave={(e) => (e.currentTarget.style.opacity = "1")}
-                aria-label="Close"
+                className="-mr-1 -mt-1 flex h-8 w-8 shrink-0 items-center justify-center rounded-md text-slate-500 hover:bg-white/70 hover:text-slate-700"
+                aria-label="Закрити повідомлення"
               >
-                ✕
+                <CloseIcon className="h-4 w-4" />
               </button>
             </div>
           </div>
         );
       })}
-      <style>{`
-        @keyframes slideIn {
-          from {
-            transform: translateX(100%);
-            opacity: 0;
-          }
-          to {
-            transform: translateX(0);
-            opacity: 1;
-          }
-        }
-      `}</style>
     </div>,
-    document.body, // Render directly to body
+    document.body,
   );
 };
+
+function SuccessIcon({ className }: { className?: string }) {
+  return (
+    <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <path
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        strokeWidth={2}
+        d="m4.5 12.75 6 6 9-13.5"
+      />
+    </svg>
+  );
+}
+
+function ErrorIcon({ className }: { className?: string }) {
+  return (
+    <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18 18 6M6 6l12 12" />
+    </svg>
+  );
+}
+
+function WarningIcon({ className }: { className?: string }) {
+  return (
+    <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <path
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        strokeWidth={2}
+        d="M12 9v4m0 4h.01M10.3 4.5 2.9 17.25A1.5 1.5 0 0 0 4.2 19.5h15.6a1.5 1.5 0 0 0 1.3-2.25L13.7 4.5a1.5 1.5 0 0 0-2.6 0Z"
+      />
+    </svg>
+  );
+}
+
+function CloseIcon({ className }: { className?: string }) {
+  return (
+    <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18 18 6M6 6l12 12" />
+    </svg>
+  );
+}

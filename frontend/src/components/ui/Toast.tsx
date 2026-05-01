@@ -44,17 +44,17 @@ const icons: Record<ToastType, React.ReactNode> = {
 };
 
 const styles: Record<ToastType, string> = {
-  success: "bg-green-50 border-green-200 text-green-800",
-  error: "bg-red-50 border-red-200 text-red-800",
-  warning: "bg-amber-50 border-amber-200 text-amber-800",
-  info: "bg-blue-50 border-blue-200 text-blue-800",
+  success: "bg-green-50 border-green-200",
+  error: "bg-red-50 border-red-200",
+  warning: "bg-amber-50 border-amber-200",
+  info: "bg-blue-50 border-blue-200",
 };
 
 const iconStyles: Record<ToastType, string> = {
-  success: "text-green-500",
-  error: "text-red-500",
-  warning: "text-amber-500",
-  info: "text-blue-500",
+  success: "bg-green-100 text-green-600",
+  error: "bg-red-100 text-red-600",
+  warning: "bg-amber-100 text-amber-600",
+  info: "bg-blue-100 text-blue-600",
 };
 
 export const Toast: React.FC<ToastProps> = ({
@@ -69,17 +69,23 @@ export const Toast: React.FC<ToastProps> = ({
   }, [duration, onClose]);
 
   return createPortal(
-    <div className="fixed top-4 right-4 z-9999 animate-slide-in">
+    <div className="fixed inset-x-4 top-4 z-[99999] animate-slide-in sm:left-auto sm:right-4 sm:w-[380px]">
       <div
-        className={`flex items-center gap-3 px-4 py-3 rounded-xl border shadow-lg ${styles[type]}`}
+        className={`flex items-start gap-3 rounded-lg border px-4 py-3 shadow-lg shadow-slate-900/10 ${styles[type]}`}
       >
-        <span className={iconStyles[type]}>{icons[type]}</span>
-        <p className="text-sm font-medium">{message}</p>
+        <span
+          className={`mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-full ${iconStyles[type]}`}
+        >
+          {icons[type]}
+        </span>
+        <p className="min-w-0 flex-1 break-words text-sm font-semibold leading-5 text-slate-950">
+          {message}
+        </p>
         <button
           type="button"
           title="close"
           onClick={onClose}
-          className="ml-2 opacity-70 hover:opacity-100 transition-opacity"
+          className="-mr-1 -mt-1 flex h-8 w-8 shrink-0 items-center justify-center rounded-md text-slate-500 transition-colors hover:bg-white/70 hover:text-slate-700"
         >
           <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path

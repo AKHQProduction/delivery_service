@@ -6,6 +6,7 @@ import { DetailModal } from "../components/modals/DetailModal";
 import { ClientDetailModal } from "../components/modals/detailsModals/ClientDetailModal";
 import { ClientCard } from "../components/ui/ClientsCard";
 import { ClientCardSkeleton, SidePanelSkeleton, TableSkeleton } from "../components/ui/Skeleton";
+import { ConfirmDeleteModal } from "../components/ui/ConfirmDeleteModal";
 import { useClient } from "../hooks/clients/useClients";
 import { useInfiniteScroll } from "../hooks/useInfiniteScroll";
 import { getClientById } from "../services/api/clientApi";
@@ -629,60 +630,6 @@ const ClientAvatar = ({ name, size = "md" }: { name?: string; size?: "md" | "lg"
     {getClientInitials(name)}
   </span>
 );
-
-const ConfirmDeleteModal = ({
-  isOpen,
-  title,
-  message,
-  warning,
-  confirmLabel,
-  onCancel,
-  onConfirm,
-}: {
-  isOpen: boolean;
-  title: string;
-  message: string;
-  warning?: string;
-  confirmLabel: string;
-  onCancel: () => void;
-  onConfirm: () => void;
-}) => {
-  if (!isOpen) return null;
-
-  return (
-    <div className="fixed inset-0 z-9999 flex items-center justify-center bg-slate-950/45 px-4">
-      <div className="w-full max-w-md rounded-lg bg-white shadow-xl">
-        <div className="border-b border-slate-200 px-6 py-5">
-          <h2 className="text-xl font-semibold text-slate-950">{title}</h2>
-        </div>
-        <div className="px-6 py-5">
-          <p className="text-sm leading-6 text-slate-600">{message}</p>
-          {warning && (
-            <div className="mt-4 rounded-md border border-amber-200 bg-amber-50 px-3 py-2 text-sm font-medium leading-5 text-amber-800">
-              {warning}
-            </div>
-          )}
-        </div>
-        <div className="flex gap-3 border-t border-slate-200 px-6 py-5">
-          <button
-            type="button"
-            onClick={onCancel}
-            className="flex-1 rounded-md bg-slate-100 px-4 py-3 text-sm font-medium text-slate-700 hover:bg-slate-200"
-          >
-            Скасувати
-          </button>
-          <button
-            type="button"
-            onClick={onConfirm}
-            className="flex-1 rounded-md bg-red-600 px-4 py-3 text-sm font-medium text-white hover:bg-red-700"
-          >
-            {confirmLabel}
-          </button>
-        </div>
-      </div>
-    </div>
-  );
-};
 
 const SearchIcon = ({ className }: { className?: string }) => (
   <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24">
