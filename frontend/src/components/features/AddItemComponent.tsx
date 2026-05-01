@@ -26,7 +26,8 @@ export const AddItemComponent = () => {
   if (
     location.pathname === "/products" ||
     location.pathname === "/clients" ||
-    location.pathname === "/orders"
+    location.pathname === "/orders" ||
+    location.pathname === "/staff"
   ) {
     return null;
   }

@@ -7,25 +7,49 @@ interface EmployeeCardProps {
   onClick: (employee: Employee) => void;
 }
 
+const roleClasses: Record<string, string> = {
+  OWNER: "bg-blue-50 text-blue-700",
+  MANAGER: "bg-emerald-50 text-emerald-700",
+  COURIER: "bg-amber-50 text-amber-700",
+};
+
 export const EmployeeCard: React.FC<EmployeeCardProps> = ({ employee, onClick }) => {
+  const initials = employee.full_name
+    .split(" ")
+    .filter(Boolean)
+    .slice(0, 2)
+    .map((part) => part[0])
+    .join("")
+    .toUpperCase();
+
   return (
-    <div
+    <button
+      type="button"
       onClick={() => onClick(employee)}
-      className="
-    bg-white rounded-2xl p-5 shadow-sm cursor-pointer
-    hover:shadow-2xl hover:-translate-y-2 transition-all duration-300
-    border border-gray-100 flex items-center gap-4
-  "
+      className="group w-full rounded-lg border border-slate-200 bg-white p-4 text-left transition-colors hover:border-blue-300 hover:bg-blue-50/30"
     >
-      <div className="w-12 h-12 shrink-0 rounded-full bg-linear-to-br from-blue-500 to-blue-600 flex items-center justify-center text-white font-bold text-lg">
-        {employee.full_name[0]}
-      </div>
+      <div className="flex items-center gap-3">
+        <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-blue-100 text-sm font-semibold text-blue-700">
+          {initials || "?"}
+        </div>
 
-      <div>
-        <h3 className="text-lg font-semibold leading-tight">{employee.full_name}</h3>
+        <div className="min-w-0 flex-1">
+          <h3 className="truncate text-base font-semibold text-slate-950">{employee.full_name}</h3>
+          <div className="mt-2 flex items-center gap-2">
+            <span
+              className={`rounded px-2 py-1 text-xs font-medium ${roleClasses[employee.role] ?? "bg-slate-100 text-slate-600"}`}
+            >
+              {roleMap[employee.role] ?? employee.role}
+            </span>
+          </div>
+        </div>
 
-        <p className="text-sm text-gray-500">{roleMap[employee.role]}</p>
+        <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-md text-slate-400 group-hover:bg-blue-50 group-hover:text-blue-600">
+          <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="m9 5 7 7-7 7" />
+          </svg>
+        </span>
       </div>
-    </div>
+    </button>
   );
 };
