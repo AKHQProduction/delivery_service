@@ -53,9 +53,9 @@ export const RouteStopItem: React.FC<RouteStopItemProps> = ({
       onDragOver={canEdit ? (e) => onDragOver(e, index) : undefined}
       onDrop={canEdit ? () => onDrop(index) : undefined}
       onDragEnd={canEdit ? onDragEnd : undefined}
-      className={`border-b border-gray-200 bg-white transition-all ${
+      className={`border-b border-slate-200 bg-white transition-all ${
         isDragging ? "opacity-40" : ""
-      } ${isOver ? "border-t-2 border-t-indigo-500" : ""}`}
+      } ${isOver ? "border-t-2 border-t-blue-600" : ""}`}
     >
       <div className="flex items-start gap-3 px-4 py-3">
         {/* Number + drag handle */}
@@ -74,18 +74,18 @@ export const RouteStopItem: React.FC<RouteStopItemProps> = ({
                 if (e.key === "Escape") setEditingNumber(false);
               }}
               onBlur={handleNumberSubmit}
-              className="w-7 h-7 rounded-full bg-indigo-600 text-white text-xs font-bold text-center outline-none [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+              className="h-7 w-7 rounded-full bg-blue-600 text-center text-xs font-bold text-white outline-none [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none"
             />
           ) : (
             <div
               onClick={canEdit ? () => { setInputValue(String(index + 1)); setEditingNumber(true); } : undefined}
-              className={`w-7 h-7 rounded-full bg-indigo-600 text-white flex items-center justify-center text-xs font-bold ${canEdit ? "cursor-pointer hover:bg-indigo-700" : ""}`}
+              className={`flex h-7 w-7 items-center justify-center rounded-full bg-blue-600 text-xs font-bold text-white ${canEdit ? "cursor-pointer hover:bg-blue-700" : ""}`}
             >
               {index + 1}
             </div>
           )}
           {canEdit && (
-            <svg className="w-4 h-4 text-gray-300 cursor-grab active:cursor-grabbing" fill="currentColor" viewBox="0 0 24 24">
+            <svg className="h-4 w-4 cursor-grab text-slate-300 active:cursor-grabbing" fill="currentColor" viewBox="0 0 24 24">
               <path d="M8 6h2v2H8V6zm6 0h2v2h-2V6zM8 11h2v2H8v-2zm6 0h2v2h-2v-2zm-6 5h2v2H8v-2zm6 0h2v2h-2v-2z" />
             </svg>
           )}
@@ -93,17 +93,17 @@ export const RouteStopItem: React.FC<RouteStopItemProps> = ({
 
         {/* Point info */}
         <div className="flex-1 min-w-0">
-          <p className="font-semibold text-gray-900 text-sm truncate">{point.client_name}</p>
-          <p className="text-xs text-gray-500 mt-0.5 truncate">{point.address}</p>
+          <p className="truncate text-sm font-semibold text-slate-950">{point.client_name}</p>
+          <p className="mt-0.5 truncate text-xs text-slate-500">{point.address}</p>
           {point.comment && (
-            <p className="text-xs text-amber-600 mt-1 truncate">{point.comment}</p>
+            <p className="mt-1 truncate text-xs text-amber-600">{point.comment}</p>
           )}
-          <div className="flex items-center gap-2 mt-1.5 flex-wrap">
-            <span className="text-xs text-gray-400">{point.items_summary}</span>
-            <span className="text-xs text-gray-300">·</span>
-            <span className="text-xs text-gray-400">{point.total_price} ₴</span>
-            <span className="text-xs text-gray-300">·</span>
-            <span className="text-xs text-gray-400">{point.payment_method}</span>
+          <div className="mt-1.5 flex flex-wrap items-center gap-2">
+            <span className="text-xs text-slate-500">{point.items_summary}</span>
+            <span className="text-xs text-slate-300">·</span>
+            <span className="text-xs text-slate-500">{point.total_price} ₴</span>
+            <span className="text-xs text-slate-300">·</span>
+            <span className="text-xs text-slate-500">{point.payment_method}</span>
           </div>
         </div>
 
@@ -115,9 +115,9 @@ export const RouteStopItem: React.FC<RouteStopItemProps> = ({
               title="Вгору"
               onClick={() => onMoveUp(index)}
               disabled={index === 0}
-              className="md:hidden w-7 h-7 rounded bg-gray-100 hover:bg-gray-200 disabled:opacity-30 flex items-center justify-center transition-colors"
+              className="flex h-7 w-7 items-center justify-center rounded bg-slate-100 transition-colors hover:bg-slate-200 disabled:opacity-30 md:hidden"
             >
-              <svg className="w-4 h-4 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <svg className="h-4 w-4 text-slate-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 15l7-7 7 7" />
               </svg>
             </button>
@@ -126,9 +126,9 @@ export const RouteStopItem: React.FC<RouteStopItemProps> = ({
               title="Вниз"
               onClick={() => onMoveDown(index)}
               disabled={index === totalCount - 1}
-              className="md:hidden w-7 h-7 rounded bg-gray-100 hover:bg-gray-200 disabled:opacity-30 flex items-center justify-center transition-colors"
+              className="flex h-7 w-7 items-center justify-center rounded bg-slate-100 transition-colors hover:bg-slate-200 disabled:opacity-30 md:hidden"
             >
-              <svg className="w-4 h-4 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <svg className="h-4 w-4 text-slate-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
               </svg>
             </button>
@@ -138,8 +138,8 @@ export const RouteStopItem: React.FC<RouteStopItemProps> = ({
               title="Редагувати маркер"
               className={`w-7 h-7 rounded flex items-center justify-center transition-colors ${
                 isEditingMarker
-                  ? "bg-indigo-600 text-white"
-                  : "bg-gray-100 hover:bg-gray-200 text-gray-600"
+                  ? "bg-blue-600 text-white"
+                  : "bg-slate-100 text-slate-600 hover:bg-slate-200"
               }`}
             >
               <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">

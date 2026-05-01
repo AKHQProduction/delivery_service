@@ -52,15 +52,15 @@ export const RouteDetailPage = () => {
 
   if (!routePlan || points.length === 0) {
     return (
-      <div className="min-h-screen flex flex-col items-center justify-center gap-4 px-6">
-        <svg className="w-16 h-16 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <div className="flex min-h-screen flex-col items-center justify-center gap-4 bg-slate-50 px-6">
+        <svg className="h-16 w-16 text-slate-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7" />
         </svg>
-        <p className="text-gray-500 text-lg">{routePlan ? "Маршрут порожній" : "Маршрут не знайдено"}</p>
+        <p className="text-lg font-medium text-slate-500">{routePlan ? "Маршрут порожній" : "Маршрут не знайдено"}</p>
         <button
           type="button"
           onClick={() => navigate("/routes")}
-          className="px-5 py-2.5 bg-indigo-600 text-white rounded-xl font-medium hover:bg-indigo-700 transition-colors"
+          className="rounded-md bg-blue-600 px-5 py-2.5 font-medium text-white transition-colors hover:bg-blue-700"
         >
           До списку маршрутів
         </button>
@@ -69,7 +69,7 @@ export const RouteDetailPage = () => {
   }
 
   return (
-    <div className="flex flex-col h-dvh md:h-screen bg-white">
+    <div className="flex h-dvh flex-col bg-white md:h-screen">
       <RouteDetailHeader
         routePlan={routePlan}
         pointCount={points.length}
@@ -82,7 +82,7 @@ export const RouteDetailPage = () => {
         onExportDocument={handleExportDocument}
       />
 
-      <div className="flex-1 min-h-0 flex flex-col md:flex-row">
+      <div className="flex min-h-0 flex-1 flex-col md:flex-row">
         <RouteStopsList
           points={points}
           canEdit={canEdit}
@@ -100,10 +100,10 @@ export const RouteDetailPage = () => {
         />
 
         {/* Map */}
-        <div className={`${!showList ? "flex" : "hidden"} md:flex flex-1 min-h-0 relative`}>
+        <div className={`${!showList ? "flex" : "hidden"} relative min-h-0 flex-1 md:flex`}>
           {editingOrderId && (
-            <div className="absolute top-3 left-1/2 -translate-x-1/2 z-[1000] bg-amber-500 text-white text-sm font-medium px-4 py-2 rounded-full shadow-lg flex items-center gap-2">
-              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <div className="absolute left-1/2 top-3 z-[1000] flex -translate-x-1/2 items-center gap-2 rounded-full bg-amber-500 px-4 py-2 text-sm font-medium text-white shadow-lg">
+              <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path
                   strokeLinecap="round"
                   strokeLinejoin="round"
@@ -116,9 +116,9 @@ export const RouteDetailPage = () => {
                 title="cancelButton"
                 type="button"
                 onClick={cancelEditMarker}
-                className="ml-1 w-5 h-5 rounded-full bg-white/20 hover:bg-white/30 flex items-center justify-center"
+                className="ml-1 flex h-5 w-5 items-center justify-center rounded-full bg-white/20 hover:bg-white/30"
               >
-                <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <svg className="h-3 w-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path
                     strokeLinecap="round"
                     strokeLinejoin="round"

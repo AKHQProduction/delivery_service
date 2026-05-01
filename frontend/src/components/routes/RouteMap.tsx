@@ -4,6 +4,15 @@ import L from "leaflet";
 import "leaflet/dist/leaflet.css";
 import { type RoutePoint } from "../../types/entities/Route";
 
+const MAP_TILE_URL =
+  import.meta.env.VITE_MAP_TILE_URL || "https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png";
+const MAP_TILE_SUBDOMAINS = import.meta.env.VITE_MAP_TILE_URL
+  ? ["mt0", "mt1", "mt2", "mt3"]
+  : ["a", "b", "c"];
+
+const hasValidCoordinates = (point: RoutePoint) =>
+  Number.isFinite(point.coordinates?.latitude) && Number.isFinite(point.coordinates?.longitude);
+
 const createNumberedIcon = (num: number, isEditing: boolean) => {
   const color = isEditing ? "#f59e0b" : "#4f46e5";
   return L.divIcon({
@@ -116,16 +125,17 @@ interface RouteMapProps {
 }
 
 export const RouteMap: React.FC<RouteMapProps> = ({ points, editingOrderId, onMarkerMove }) => {
+  const validPoints = useMemo(() => points.filter(hasValidCoordinates), [points]);
   const polylinePositions = useMemo(
-    () => points.map((p) => [p.coordinates.latitude, p.coordinates.longitude] as [number, number]),
-    [points],
+    () => validPoints.map((p) => [p.coordinates.latitude, p.coordinates.longitude] as [number, number]),
+    [validPoints],
   );
 
-  const markerPositions = useMemo(() => spreadDuplicates(points), [points]);
+  const markerPositions = useMemo(() => spreadDuplicates(validPoints), [validPoints]);
 
   const defaultCenter: [number, number] =
-    points.length > 0
-      ? [points[0].coordinates.latitude, points[0].coordinates.longitude]
+    validPoints.length > 0
+      ? [validPoints[0].coordinates.latitude, validPoints[0].coordinates.longitude]
       : [50.4501, 30.5234];
 
   return (
@@ -136,12 +146,12 @@ export const RouteMap: React.FC<RouteMapProps> = ({ points, editingOrderId, onMa
       scrollWheelZoom={true}
     >
       <TileLayer
-        url={import.meta.env.VITE_MAP_TILE_URL}
-        subdomains={["mt0", "mt1", "mt2", "mt3"]}
+        url={MAP_TILE_URL}
+        subdomains={MAP_TILE_SUBDOMAINS}
         maxZoom={21}
       />
       <InvalidateSize />
-      <FitBounds points={points} />
+      <FitBounds points={validPoints} />
       <MapClickHandler editingOrderId={editingOrderId} onMarkerMove={onMarkerMove} />
 
       {polylinePositions.length >= 2 && (
@@ -156,7 +166,7 @@ export const RouteMap: React.FC<RouteMapProps> = ({ points, editingOrderId, onMa
         />
       )}
 
-      {points.map((point, index) => {
+      {validPoints.map((point, index) => {
         const pos = markerPositions.get(point.order_id) ?? [
           point.coordinates.latitude,
           point.coordinates.longitude,

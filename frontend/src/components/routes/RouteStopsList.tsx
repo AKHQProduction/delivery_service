@@ -34,11 +34,11 @@ export const RouteStopsList: React.FC<RouteStopsListProps> = ({
   onReorder,
 }) => {
   return (
-    <div className={`${showList ? "flex" : "hidden"} md:flex flex-col w-full md:w-80 lg:w-96 border-r border-gray-200 bg-gray-50 min-h-0 md:shrink-0 overflow-hidden`}>
-      <div className="px-4 py-3 border-b border-gray-200 bg-white">
-        <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider">Порядок зупинок</p>
+    <div className={`${showList ? "flex" : "hidden"} min-h-0 w-full flex-col overflow-hidden border-r border-slate-200 bg-slate-50 md:flex md:w-80 md:shrink-0 lg:w-96`}>
+      <div className="border-b border-slate-200 bg-white px-4 py-3">
+        <p className="text-xs font-semibold uppercase tracking-wider text-slate-500">Порядок зупинок</p>
         {canEdit && (
-          <p className="text-xs text-gray-400 mt-0.5">Перетягніть або натисніть на номер для зміни порядку</p>
+          <p className="mt-0.5 text-xs text-slate-400">Перетягніть або натисніть на номер для зміни порядку</p>
         )}
       </div>
 
@@ -70,7 +70,7 @@ export const RouteStopsList: React.FC<RouteStopsListProps> = ({
             onDragOver={(e) => { e.preventDefault(); onDragOver(e, points.length); }}
             onDrop={() => onDrop(points.length)}
           >
-            <div className={`h-0.5 mx-4 transition-colors ${overIndex === points.length ? "bg-indigo-500" : "bg-transparent"}`} />
+            <div className={`mx-4 h-0.5 transition-colors ${overIndex === points.length ? "bg-blue-600" : "bg-transparent"}`} />
           </div>
         )}
       </div>

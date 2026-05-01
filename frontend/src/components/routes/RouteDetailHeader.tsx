@@ -25,15 +25,15 @@ export const RouteDetailHeader: React.FC<RouteDetailHeaderProps> = ({
   onExportDocument,
 }) => {
   return (
-    <div className="shrink-0 bg-white border-b border-gray-200 px-4 py-3 md:px-6 md:py-4 flex items-center gap-3 z-10">
+    <div className="z-10 flex shrink-0 items-center gap-3 border-b border-slate-200 bg-white px-4 py-3 md:px-6 md:py-4">
       <button
         title="Назад до списку маршрутів"
         type="button"
         onClick={onBack}
-        className="w-9 h-9 rounded-full bg-gray-100 hover:bg-gray-200 flex items-center justify-center transition-colors shrink-0"
+        className="flex h-9 w-9 shrink-0 items-center justify-center rounded-md text-slate-600 transition-colors hover:bg-slate-100"
       >
         <svg
-          className="w-5 h-5 text-gray-600"
+          className="h-5 w-5"
           fill="none"
           stroke="currentColor"
           viewBox="0 0 24 24"
@@ -46,13 +46,13 @@ export const RouteDetailHeader: React.FC<RouteDetailHeaderProps> = ({
         type="button"
         onClick={onExportDocument}
         disabled={isExporting}
-        className="w-9 h-9 rounded-full bg-amber-100 hover:bg-amber-200 flex items-center justify-center transition-colors shrink-0 disabled:opacity-50 disabled:cursor-not-allowed"
+        className="hidden h-9 items-center justify-center gap-2 rounded-md border border-slate-200 bg-white px-3 text-sm font-medium text-slate-700 transition-colors hover:bg-slate-100 disabled:cursor-not-allowed disabled:opacity-50 sm:inline-flex"
       >
         {isExporting ? (
-          <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-amber-600" />
+          <div className="h-4 w-4 animate-spin rounded-full border-2 border-slate-200 border-t-blue-600" />
         ) : (
           <svg
-            className="w-5 h-5 text-amber-600"
+            className="h-4 w-4"
             fill="none"
             stroke="currentColor"
             viewBox="0 0 24 24"
@@ -65,36 +65,37 @@ export const RouteDetailHeader: React.FC<RouteDetailHeaderProps> = ({
             />
           </svg>
         )}
+        <span>{isExporting ? "Формування" : "Експорт"}</span>
       </button>
-      <div className="flex-1 min-w-0">
-        <h1 className="font-bold text-gray-900 text-lg truncate">
+      <div className="min-w-0 flex-1">
+        <h1 className="truncate text-lg font-semibold text-slate-950">Маршрут</h1>
+        <p className="text-xs text-slate-500">
           {routePlan.delivery_date}
-          {routePlan.time_slot ? ` · ${routePlan.time_slot}` : ""}
-        </h1>
-        <p className="text-xs text-gray-500">{pointCount} зупинок</p>
+          {routePlan.time_slot ? ` · ${routePlan.time_slot}` : ""} · {pointCount} зупинок
+        </p>
       </div>
-      {/* Reverse route */}
       {canEdit && (
         <button
           type="button"
           title="Розвернути маршрут"
           onClick={onReverseRoute}
-          className="w-9 h-9 rounded-full bg-gray-100 hover:bg-gray-200 flex items-center justify-center transition-colors shrink-0"
+          className="flex h-9 shrink-0 items-center justify-center gap-2 rounded-md border border-slate-200 bg-white px-3 text-sm font-medium text-slate-700 transition-colors hover:bg-slate-100"
         >
-          <svg className="w-5 h-5 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16V4m0 0L3 8m4-4l4 4m6 0v12m0 0l4-4m-4 4l-4-4" />
           </svg>
+          <span className="hidden lg:inline">Перевернути</span>
         </button>
       )}
-      {/* Toggle list/map on mobile */}
       <button
         type="button"
         onClick={onToggleList}
-        className="md:hidden w-9 h-9 rounded-full bg-indigo-100 hover:bg-indigo-200 flex items-center justify-center transition-colors"
+        aria-label={showList ? "Показати карту" : "Показати список"}
+        className="flex h-9 w-9 items-center justify-center rounded-md bg-blue-50 text-blue-700 transition-colors hover:bg-blue-100 md:hidden"
       >
         {showList ? (
           <svg
-            className="w-5 h-5 text-indigo-600"
+            className="h-5 w-5"
             fill="none"
             stroke="currentColor"
             viewBox="0 0 24 24"
@@ -108,7 +109,7 @@ export const RouteDetailHeader: React.FC<RouteDetailHeaderProps> = ({
           </svg>
         ) : (
           <svg
-            className="w-5 h-5 text-indigo-600"
+            className="h-5 w-5"
             fill="none"
             stroke="currentColor"
             viewBox="0 0 24 24"

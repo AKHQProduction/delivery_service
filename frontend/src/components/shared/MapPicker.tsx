@@ -62,6 +62,7 @@ const MapCenterController: React.FC<{ center: Coordinates }> = ({ center }) => {
   const map = useMapEvents({});
 
   useEffect(() => {
+    if (!isValidCoordinates(center)) return;
     map.setView([center.lat, center.lng], 17.5);
   }, [center, map]);
 
@@ -72,6 +73,13 @@ const MapCenterController: React.FC<{ center: Coordinates }> = ({ center }) => {
  * Map picker component with marker placement
  */
 const DEFAULT_CENTER: Coordinates = { lat: 50.4501, lng: 30.5234 }; // Kyiv, Ukraine
+const MAP_TILE_URL =
+  import.meta.env.VITE_MAP_TILE_URL || "https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png";
+const MAP_TILE_SUBDOMAINS = import.meta.env.VITE_MAP_TILE_URL
+  ? ["mt0", "mt1", "mt2", "mt3"]
+  : ["a", "b", "c"];
+const isValidCoordinates = (coordinates: Coordinates | null | undefined): coordinates is Coordinates =>
+  Number.isFinite(coordinates?.lat) && Number.isFinite(coordinates?.lng);
 
 export const MapPicker: React.FC<MapPickerProps> = ({
   isOpen,
@@ -98,9 +106,16 @@ export const MapPicker: React.FC<MapPickerProps> = ({
   const [isSearching, setIsSearching] = useState(false);
   const [showValidation, setShowValidation] = useState(false);
 
+  useEffect(() => {
+    if (!isOpen) return;
+    setAddressCity(city ?? "");
+    setAddressStreet(initialStreet);
+    setAddressHouse(initialHouse);
+  }, [isOpen, city, initialStreet, initialHouse]);
+
   // Update map center when defaultCenter changes and map opens
   useEffect(() => {
-    if (isOpen && defaultCenter) {
+    if (isOpen && isValidCoordinates(defaultCenter)) {
       setMapCenter(defaultCenter);
       const latLng = L.latLng(defaultCenter.lat, defaultCenter.lng);
       setMarkerPosition(latLng);
@@ -116,14 +131,14 @@ export const MapPicker: React.FC<MapPickerProps> = ({
       if (initialStreet) {
         // Geocode the full address with city
         onGeocode(initialStreet, initialHouse, city).then((coords) => {
-          if (coords) {
+          if (isValidCoordinates(coords)) {
             const latLng = L.latLng(coords.lat, coords.lng);
             setMarkerPosition(latLng);
             setMapCenter(coords);
           } else if (city) {
             // If address not found, at least center on the city
             onGeocode(city).then((cityCoords) => {
-              if (cityCoords) {
+              if (isValidCoordinates(cityCoords)) {
                 setMapCenter(cityCoords);
               }
             });
@@ -132,7 +147,7 @@ export const MapPicker: React.FC<MapPickerProps> = ({
       } else if (city) {
         // No address, just center on the city
         onGeocode(city).then((coords) => {
-          if (coords) {
+          if (isValidCoordinates(coords)) {
             setMapCenter(coords);
           }
         });
@@ -160,7 +175,7 @@ export const MapPicker: React.FC<MapPickerProps> = ({
     setSearchError(false);
     const house = hasDigit(addressHouse) ? addressHouse : undefined;
     const coords = await onGeocode(addressStreet, house, addressCity);
-    if (coords) {
+    if (isValidCoordinates(coords)) {
       setMarkerPosition(L.latLng(coords.lat, coords.lng));
       setMapCenter(coords);
     } else {
@@ -184,22 +199,21 @@ export const MapPicker: React.FC<MapPickerProps> = ({
   };
 
   return createPortal(
-    <div className="fixed inset-0 z-9999 flex items-center justify-center bg-black/50 p-4">
-      <div className="bg-white rounded-xl shadow-xl w-full max-w-4xl h-full max-h-[95vh] overflow-hidden flex flex-col">
-        {/* Header */}
-        <div className="px-6 py-4 border-b border-gray-200 flex items-center justify-between">
+    <div className="fixed inset-0 z-[9999] flex items-end justify-center bg-slate-950/45 p-0 sm:items-center sm:p-4">
+      <div className="flex max-h-[94vh] w-full max-w-4xl flex-col overflow-hidden rounded-t-2xl bg-white shadow-xl sm:rounded-lg">
+        <div className="flex items-start justify-between border-b border-slate-200 px-5 py-4 sm:px-6">
           <div>
-            <h2 className="text-xl font-semibold text-gray-900">Виберіть адресу на карті</h2>
-            <p className="text-sm text-gray-600 mt-1">Натисніть на карту, щоб розмістити маркер</p>
+            <h2 className="text-xl font-semibold text-slate-950">Встановлення координат</h2>
+            <p className="mt-1 text-sm text-slate-500">Знайдіть адресу або натисніть на карту</p>
           </div>
           <button
             type="button"
-            title="mapPicker"
+            aria-label="Закрити карту"
             onClick={onClose}
-            className="text-gray-400 hover:text-gray-600 transition-colors"
+            className="rounded-md p-2 text-slate-500 transition-colors hover:bg-slate-100 hover:text-slate-950"
             disabled={isLoading}
           >
-            <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path
                 strokeLinecap="round"
                 strokeLinejoin="round"
@@ -212,46 +226,45 @@ export const MapPicker: React.FC<MapPickerProps> = ({
 
         {/* Address search */}
         {onGeocode && (
-          <div className="px-6 py-3 border-b border-gray-200 bg-gray-50">
-            <div className="flex flex-col sm:flex-row gap-2">
+          <div className="border-b border-slate-200 bg-slate-50 px-5 py-4 sm:px-6">
+            <div className="grid gap-2 sm:grid-cols-[9rem_minmax(0,1fr)_7rem_auto]">
               <input
                 type="text"
                 value={addressCity}
                 onChange={(e) => { setAddressCity(e.target.value); setSearchError(false); setShowValidation(false); }}
                 placeholder="Місто"
-                className="px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 sm:w-36"
+                className="h-11 rounded-md border border-slate-300 bg-white px-3 text-sm text-slate-950 focus:border-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-100"
               />
               <input
                 type="text"
                 value={addressStreet}
                 onChange={(e) => { setAddressStreet(e.target.value); setSearchError(false); setShowValidation(false); }}
                 placeholder="Вулиця"
-                className={`px-3 py-2 border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 flex-1 ${showValidation && addressStreet.trim() && !hasLetter(addressStreet) ? "border-red-400 bg-red-50" : "border-gray-300"}`}
+                className={`h-11 rounded-md border bg-white px-3 text-sm text-slate-950 focus:border-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-100 ${showValidation && addressStreet.trim() && !hasLetter(addressStreet) ? "border-red-400 bg-red-50" : "border-slate-300"}`}
               />
               <input
                 type="text"
                 value={addressHouse}
                 onChange={(e) => { setAddressHouse(e.target.value); setSearchError(false); setShowValidation(false); }}
                 placeholder="Будинок"
-                className={`px-3 py-2 border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 sm:w-24 ${showValidation && addressHouse.trim() && !hasDigit(addressHouse) ? "border-red-400 bg-red-50" : "border-gray-300"}`}
+                className={`h-11 rounded-md border bg-white px-3 text-sm text-slate-950 focus:border-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-100 ${showValidation && addressHouse.trim() && !hasDigit(addressHouse) ? "border-red-400 bg-red-50" : "border-slate-300"}`}
               />
               <button
                 type="button"
                 onClick={handleAddressSearch}
                 disabled={isSearching || !addressStreet.trim() || !addressCity.trim() || !hasLetter(addressStreet)}
-                className="px-4 py-2 bg-indigo-600 text-white text-sm font-medium rounded-lg hover:bg-indigo-700 disabled:bg-gray-300 disabled:cursor-not-allowed transition-colors whitespace-nowrap"
+                className="inline-flex h-11 items-center justify-center rounded-md bg-blue-600 px-4 text-sm font-medium text-white transition-colors hover:bg-blue-700 disabled:cursor-not-allowed disabled:bg-slate-300"
               >
                 {isSearching ? "Пошук..." : "Знайти"}
               </button>
             </div>
             {searchError && (
-              <p className="text-xs text-red-600 mt-1">Адресу не знайдено. Спробуйте інший запит або виберіть точку на карті.</p>
+              <p className="mt-2 text-xs text-red-600">Адресу не знайдено. Спробуйте інший запит або виберіть точку на карті.</p>
             )}
           </div>
         )}
 
-        {/* Map */}
-        <div className="relative flex-1 min-h-0 w-full">
+        <div className="relative h-[24rem] min-h-0 w-full sm:h-[32rem]">
           <MapContainer
             center={[mapCenter.lat, mapCenter.lng]}
             zoom={17.5}
@@ -259,8 +272,8 @@ export const MapPicker: React.FC<MapPickerProps> = ({
             scrollWheelZoom={true}
           >
             <TileLayer
-              url={import.meta.env.VITE_MAP_TILE_URL}
-              subdomains={["mt0", "mt1", "mt2", "mt3"]}
+              url={MAP_TILE_URL}
+              subdomains={MAP_TILE_SUBDOMAINS}
               maxZoom={21}
             />
             <MapCenterController center={mapCenter} />
@@ -281,33 +294,32 @@ export const MapPicker: React.FC<MapPickerProps> = ({
 
           {/* Loading overlay */}
           {isLoading && (
-            <div className="absolute inset-0 bg-white bg-opacity-80 flex items-center justify-center z-[1000]">
+            <div className="absolute inset-0 z-[1000] flex items-center justify-center bg-white/80">
               <div className="text-center">
-                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-600 mx-auto mb-3"></div>
-                <p className="text-gray-700 font-medium">Визначення адреси...</p>
+                <div className="mx-auto mb-3 h-10 w-10 animate-spin rounded-full border-2 border-blue-100 border-t-blue-600" />
+                <p className="font-medium text-slate-700">Визначення адреси...</p>
               </div>
             </div>
           )}
         </div>
 
-        {/* Footer */}
-        <div className="px-6 py-4 border-t border-gray-200 flex items-center justify-center bg-gray-50">
-          <div className="flex items-center gap-4">
-            <button
-              onClick={onClose}
-              className="px-6 py-2 bg-red-600 text-white rounded-lg font-medium hover:bg-red-700 transition-colors"
-              disabled={isLoading}
-            >
-              Скасувати
-            </button>
-            <button
-              onClick={handleConfirm}
-              disabled={!markerPosition || isLoading}
-              className="px-6 py-2 bg-indigo-600 text-white rounded-lg font-medium hover:bg-indigo-700 disabled:bg-gray-300 disabled:cursor-not-allowed transition-colors"
-            >
-              Підтвердити
-            </button>
-          </div>
+        <div className="grid grid-cols-2 gap-3 border-t border-slate-200 bg-white px-5 py-4 sm:px-6">
+          <button
+            type="button"
+            onClick={onClose}
+            className="h-12 rounded-md bg-slate-100 px-5 font-medium text-slate-700 transition-colors hover:bg-slate-200"
+            disabled={isLoading}
+          >
+            Скасувати
+          </button>
+          <button
+            type="button"
+            onClick={handleConfirm}
+            disabled={!markerPosition || isLoading}
+            className="h-12 rounded-md bg-blue-600 px-5 font-medium text-white transition-colors hover:bg-blue-700 disabled:cursor-not-allowed disabled:bg-slate-300"
+          >
+            Зберегти координати
+          </button>
         </div>
       </div>
     </div>,

@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { useUserShopStore } from "../context/useUserShopStore";
 import { getOrderStats, type OrderStats, type OrderStatsRecentOrder } from "../services/api/ordersApi";
@@ -71,6 +71,7 @@ export const MainPage = () => {
   const [stats, setStats] = useState<OrderStats | null>(null);
   const [loading, setLoading] = useState(true);
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
+  const menuButtonRef = useRef<HTMLButtonElement | null>(null);
 
   useEffect(() => {
     let cancelled = false;
@@ -120,12 +121,18 @@ export const MainPage = () => {
     setRange((current) => ({ ...current, [field]: value }));
   };
 
+  const closeDrawer = () => {
+    menuButtonRef.current?.focus();
+    setIsDrawerOpen(false);
+  };
+
   return (
     <div className="min-h-screen bg-slate-50 px-4 pb-28 pt-6 sm:px-6 md:px-8 md:pb-10">
       <div className="flex flex-col gap-4 xl:flex-row xl:items-start xl:justify-between">
         <div className="flex items-start gap-3">
           <button
             type="button"
+            ref={menuButtonRef}
             onClick={() => setIsDrawerOpen(true)}
             className="mt-0.5 inline-flex h-9 w-9 items-center justify-center rounded-md text-slate-700 hover:bg-slate-100 md:hidden"
             aria-label="Відкрити меню"
@@ -182,9 +189,9 @@ export const MainPage = () => {
         userName={user?.full_name || ""}
         userRole={user?.role || ""}
         activePath={location.pathname}
-        onClose={() => setIsDrawerOpen(false)}
+        onClose={closeDrawer}
         onNavigate={(path) => {
-          setIsDrawerOpen(false);
+          closeDrawer();
           navigate(path);
         }}
       />
@@ -504,9 +511,8 @@ const MobileDrawer = ({
   return (
     <div
       className={`fixed inset-0 z-[10000] transition-[visibility] duration-300 md:hidden ${
-        isOpen ? "visible" : "invisible"
+        isOpen ? "visible pointer-events-auto" : "invisible pointer-events-none"
       }`}
-      aria-hidden={!isOpen}
     >
       <button
         type="button"
