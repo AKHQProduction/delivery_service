@@ -2538,7 +2538,9 @@ async def test_get_order_stats(
     ]
     assert len(stats["recent_orders"]) == 3
     assert stats["recent_orders"][0]["client_name"]
-    assert stats["recent_orders"][0]["items"][0]["name"] == "Product 1"
+    assert sorted(
+        order["items"][0]["name"] for order in stats["recent_orders"]
+    ) == ["Product 1", "Product 2", "Product 3"]
 
 
 @pytest.mark.asyncio()

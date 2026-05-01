@@ -343,6 +343,7 @@ class SQLAlchemyOrderGateway:
             .select_from(Order)
             .join(OrderItem, Order.id == OrderItem.order_id)
             .group_by(OrderItem.name)
+            .order_by(asc(OrderItem.name))
         )
         query = self._apply_order_filters(query, filters)
 
@@ -376,6 +377,7 @@ class SQLAlchemyOrderGateway:
             .outerjoin(Product, OrderItem.product_id == Product.id)
             .outerjoin(Category, Product.category_id == Category.id)
             .group_by(category_name)
+            .order_by(asc(category_name))
         )
         query = self._apply_order_filters(query, filters)
 

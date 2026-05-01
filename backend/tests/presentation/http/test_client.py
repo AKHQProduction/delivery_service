@@ -396,6 +396,8 @@ async def test_create_client_with_preferred_time_slot(
     assert response.status_code == status.HTTP_201_CREATED
     client_id = response.json()
 
+    await session.flush()
+
     client_response = await http_client.get(
         url=f"{BASE_URL}/{client_id}", headers=headers
     )
