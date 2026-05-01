@@ -94,10 +94,10 @@ export const ExportPdfModal: React.FC<ExportPdfModalProps> = ({ isOpen, onClose 
 
   return (
     <Modal isOpen={isOpen} onClose={onClose} title="Сформувати документ">
-      <div className="space-y-4 pb-4">
+      <div className="space-y-4 pb-1">
         {/* Date picker */}
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-2">Дата доставки</label>
+          <label className="mb-2 block text-sm font-medium text-slate-700">Дата доставки</label>
           <DateInput
             title="export date"
             value={exportDate}
@@ -111,15 +111,15 @@ export const ExportPdfModal: React.FC<ExportPdfModalProps> = ({ isOpen, onClose 
 
         {/* Doc type selector */}
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-2">Тип документа</label>
+          <label className="mb-2 block text-sm font-medium text-slate-700">Тип документа</label>
           <div className="grid grid-cols-2 gap-2">
             <button
               type="button"
               onClick={() => setDocType("ORDER_LIST")}
-              className={`px-4 py-3 rounded-xl font-medium text-sm transition-colors ${
+              className={`rounded-md px-4 py-3 text-sm font-medium transition-colors ${
                 docType === "ORDER_LIST"
-                  ? "bg-indigo-600 text-white"
-                  : "bg-gray-100 text-gray-700 hover:bg-gray-200"
+                  ? "bg-blue-600 text-white"
+                  : "bg-slate-100 text-slate-700 hover:bg-slate-200"
               }`}
             >
               Список замовлень
@@ -127,10 +127,10 @@ export const ExportPdfModal: React.FC<ExportPdfModalProps> = ({ isOpen, onClose 
             <button
               type="button"
               onClick={() => setDocType("STATISTICS")}
-              className={`px-4 py-3 rounded-xl font-medium text-sm transition-colors ${
+              className={`rounded-md px-4 py-3 text-sm font-medium transition-colors ${
                 docType === "STATISTICS"
-                  ? "bg-indigo-600 text-white"
-                  : "bg-gray-100 text-gray-700 hover:bg-gray-200"
+                  ? "bg-blue-600 text-white"
+                  : "bg-slate-100 text-slate-700 hover:bg-slate-200"
               }`}
             >
               Статистика
@@ -140,12 +140,12 @@ export const ExportPdfModal: React.FC<ExportPdfModalProps> = ({ isOpen, onClose 
 
         {/* Time slot selector */}
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-2">Часовий проміжок</label>
+          <label className="mb-2 block text-sm font-medium text-slate-700">Часовий проміжок</label>
           <select
             title="Часовий слот"
             value={selectedTimeSlotId}
             onChange={(e) => setSelectedTimeSlotId(e.target.value)}
-            className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+            className="h-12 w-full rounded-md border border-slate-300 bg-white px-4 text-sm font-medium text-slate-950 focus:border-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-100"
           >
             <option value="">Усі проміжки</option>
             {timeSlots.map((slot) => (
@@ -159,10 +159,10 @@ export const ExportPdfModal: React.FC<ExportPdfModalProps> = ({ isOpen, onClose 
         {/* Routing mode selector — visible for ORDER_LIST, disabled without shop address */}
         {docType === "ORDER_LIST" && (
           <div className={!shopHasAddress ? "opacity-50" : ""}>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
+            <label className="mb-2 block text-sm font-medium text-slate-700">
               Маршрутизація
               {!shopHasAddress && (
-                <span className="text-xs text-gray-400 ml-1">(додайте адресу магазину)</span>
+                <span className="ml-1 text-xs text-slate-400">(додайте адресу магазину)</span>
               )}
             </label>
             <div className="grid grid-cols-2 gap-2">
@@ -175,10 +175,10 @@ export const ExportPdfModal: React.FC<ExportPdfModalProps> = ({ isOpen, onClose 
                   type="button"
                   disabled={!shopHasAddress}
                   onClick={() => setRoutingMode(option.value)}
-                  className={`px-3 py-3 rounded-xl font-medium text-sm transition-colors disabled:cursor-not-allowed ${
+                  className={`rounded-md px-3 py-3 text-sm font-medium transition-colors disabled:cursor-not-allowed ${
                     routingMode === option.value && shopHasAddress
-                      ? "bg-indigo-600 text-white"
-                      : "bg-gray-100 text-gray-700 hover:bg-gray-200 disabled:hover:bg-gray-100"
+                      ? "bg-blue-600 text-white"
+                      : "bg-slate-100 text-slate-700 hover:bg-slate-200 disabled:hover:bg-slate-100"
                   }`}
                 >
                   {option.label}
@@ -188,15 +188,19 @@ export const ExportPdfModal: React.FC<ExportPdfModalProps> = ({ isOpen, onClose 
           </div>
         )}
 
-        {exportError && <p className="text-red-500 text-sm text-center">Помилка формування документа</p>}
+        {exportError && (
+          <div className="rounded-md border border-red-100 bg-red-50 px-3 py-2 text-sm font-medium text-red-700">
+            Помилка формування документа
+          </div>
+        )}
 
         {/* Action buttons */}
-        <div className="flex gap-3 pt-2">
+        <div className="flex gap-3 border-t border-slate-200 pt-4">
           <button
             type="button"
             onClick={handlePreviewPdf}
             disabled={exporting || previewLoading}
-            className="flex-1 py-3 bg-gray-100 hover:bg-gray-200 text-gray-700 font-semibold rounded-xl transition-colors flex items-center justify-center gap-2 disabled:opacity-50"
+            className="flex flex-1 items-center justify-center gap-2 rounded-md bg-slate-100 py-3 text-sm font-medium text-slate-700 transition-colors hover:bg-slate-200 disabled:opacity-50"
           >
             <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path
@@ -218,7 +222,7 @@ export const ExportPdfModal: React.FC<ExportPdfModalProps> = ({ isOpen, onClose 
             type="button"
             onClick={handleExportPdf}
             disabled={exporting}
-            className="flex-1 py-3 bg-linear-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 text-white font-semibold rounded-xl transition-colors flex items-center justify-center gap-2 disabled:opacity-50"
+            className="flex flex-1 items-center justify-center gap-2 rounded-md bg-blue-600 py-3 text-sm font-medium text-white transition-colors hover:bg-blue-700 disabled:opacity-50"
           >
             <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path

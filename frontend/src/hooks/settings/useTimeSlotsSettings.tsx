@@ -15,7 +15,8 @@ interface TimeSlot {
 
 export const useTimeSlotsSettings = () => {
   const [timeSlots, setTimeSlots] = useState<TimeSlot[]>([]);
-  const [isLoading, setIsLoading] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
+  const [isLoaded, setIsLoaded] = useState(false);
 
   const fetchTimeSlots = async () => {
     try {
@@ -26,6 +27,7 @@ export const useTimeSlotsSettings = () => {
       console.error("Error fetching time slots:", error);
     } finally {
       setIsLoading(false);
+      setIsLoaded(true);
     }
   };
 
@@ -83,6 +85,7 @@ export const useTimeSlotsSettings = () => {
     updateTimeSlotById,
     deleteTimeSlotById,
     isLoading,
+    isLoaded,
     refetch: fetchTimeSlots,
   };
 };

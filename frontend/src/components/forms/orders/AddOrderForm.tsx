@@ -11,6 +11,7 @@ import { AddClientForm } from "../client/AddClientForm";
 import { type Client } from "../../../types/entities/Client";
 import { usePlatform } from "../../../platforms/usePlatform";
 import { AddOrderFormWeb } from "./AddOrderFormWeb";
+import { FormSkeleton } from "../../ui/Skeleton";
 
 interface AddOrderFormProps {
   onClose: () => void;
@@ -41,6 +42,9 @@ const AddOrderFormNative: React.FC<AddOrderFormProps> = ({ onClose, onSave }) =>
     timeSlots,
     paymentMethods,
     products,
+    referencesReady,
+    clientsLoading,
+    productsLoading,
     loadMoreClients,
     clientsLoadingMore,
     clientsHasMore,
@@ -114,6 +118,10 @@ const AddOrderFormNative: React.FC<AddOrderFormProps> = ({ onClose, onSave }) =>
     );
   }
 
+  if (!referencesReady) {
+    return <FormSkeleton fields={6} />;
+  }
+
   return (
     <div className="flex flex-col h-full max-h-[85vh]">
       <ProgressSteps currentStep={step} totalSteps={4} />
@@ -128,6 +136,7 @@ const AddOrderFormNative: React.FC<AddOrderFormProps> = ({ onClose, onSave }) =>
             onClientSelect={handleClientSelect}
             onAddNewClient={handleAddNewClient}
             loadMore={loadMoreClients}
+            loading={clientsLoading}
             loadingMore={clientsLoadingMore}
             hasMore={clientsHasMore}
           />
@@ -142,6 +151,7 @@ const AddOrderFormNative: React.FC<AddOrderFormProps> = ({ onClose, onSave }) =>
             onProductToggle={handleProductToggle}
             onQuantityChange={handleQuantityChange}
             loadMore={loadMoreProducts}
+            loading={productsLoading}
             loadingMore={productsLoadingMore}
             hasMore={productsHasMore}
           />

@@ -6,6 +6,7 @@ import { DateInput } from "../../shared/DateInput";
 import { FormSelect } from "../../shared/FormSelect";
 import { AddClientForm } from "../client/AddClientForm";
 import { type Client } from "../../../types/entities/Client";
+import { FormSkeleton, InlineListSkeleton } from "../../ui/Skeleton";
 
 interface AddOrderFormWebProps {
   onClose: () => void;
@@ -26,6 +27,9 @@ export const AddOrderFormWeb: React.FC<AddOrderFormWebProps> = ({ onClose, onSav
     products,
     timeSlots,
     paymentMethods,
+    referencesReady,
+    clientsLoading,
+    productsLoading,
     loadMoreClients,
     clientsLoadingMore,
     clientsHasMore,
@@ -107,14 +111,18 @@ export const AddOrderFormWeb: React.FC<AddOrderFormWebProps> = ({ onClose, onSav
     );
   }
 
+  if (!referencesReady) {
+    return <FormSkeleton fields={6} />;
+  }
+
   return (
     <div className="space-y-5">
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
         {/* Top-left: Client */}
         <div className="space-y-5">
-          <section className="bg-gray-50 rounded-2xl p-4 border border-gray-200">
+          <section className="bg-gray-50 rounded-lg p-4 border border-gray-200">
             <div className="flex items-center gap-2.5 mb-3">
-              <span className="w-6 h-6 rounded-full bg-indigo-600 text-white flex items-center justify-center text-xs font-bold shrink-0">
+              <span className="w-6 h-6 rounded-full bg-blue-600 text-white flex items-center justify-center text-xs font-bold shrink-0">
                 1
               </span>
               <h3 className="text-sm font-bold text-gray-900">Клієнт</h3>
@@ -126,9 +134,9 @@ export const AddOrderFormWeb: React.FC<AddOrderFormWebProps> = ({ onClose, onSav
             </div>
 
             {formData.client && !isChangingClient ? (
-              <div className="p-3 rounded-xl border-2 border-indigo-600 bg-white flex items-center justify-between">
+              <div className="p-3 rounded-md border border-blue-600 bg-white flex items-center justify-between">
                 <div className="flex items-center gap-3">
-                  <div className="w-9 h-9 rounded-full bg-indigo-600 text-white flex items-center justify-center font-bold text-sm">
+                  <div className="w-9 h-9 rounded-full bg-blue-600 text-white flex items-center justify-center font-bold text-sm">
                     {(formData.client.full_name || "")
                       .split(" ")
                       .map((n) => n[0])
@@ -148,7 +156,7 @@ export const AddOrderFormWeb: React.FC<AddOrderFormWebProps> = ({ onClose, onSav
                 <button
                   type="button"
                   onClick={() => setIsChangingClient(true)}
-                  className="text-xs text-indigo-600 hover:text-indigo-800 font-medium"
+                  className="text-xs text-blue-600 hover:text-blue-800 font-medium"
                 >
                   Змінити
                 </button>
@@ -161,7 +169,9 @@ export const AddOrderFormWeb: React.FC<AddOrderFormWebProps> = ({ onClose, onSav
                   placeholder="Пошук за ім'ям або телефоном..."
                 />
                 <div className="mt-2 space-y-1.5 max-h-48 overflow-y-auto">
-                  {clients.length === 0 ? (
+                  {clientsLoading && clients.length === 0 ? (
+                    <InlineListSkeleton rows={3} variant="client" />
+                  ) : clients.length === 0 ? (
                     <p className="text-sm text-gray-400 text-center py-4">Клієнтів не знайдено</p>
                   ) : (
                     clients.map((client) => (
@@ -171,7 +181,7 @@ export const AddOrderFormWeb: React.FC<AddOrderFormWebProps> = ({ onClose, onSav
                           handleClientSelect(client);
                           setIsChangingClient(false);
                         }}
-                        className="p-3 rounded-xl border border-gray-200 hover:border-indigo-300 bg-white cursor-pointer transition-colors flex items-center gap-3"
+                        className="p-3 rounded-md border border-gray-200 hover:border-blue-300 bg-white cursor-pointer transition-colors flex items-center gap-3"
                       >
                         <div className="w-8 h-8 rounded-full bg-gray-200 text-gray-600 flex items-center justify-center font-bold text-xs">
                           {(client.full_name || "")
@@ -192,21 +202,22 @@ export const AddOrderFormWeb: React.FC<AddOrderFormWebProps> = ({ onClose, onSav
                       </div>
                     ))
                   )}
-                  {clientsHasMore && (
+                  {clientsLoadingMore ? (
+                    <InlineListSkeleton rows={2} variant="client" />
+                  ) : clientsHasMore && (
                     <button
                       type="button"
                       onClick={loadMoreClients}
-                      disabled={clientsLoadingMore}
-                      className="w-full py-2 text-xs text-indigo-600 hover:text-indigo-800 font-medium"
+                      className="w-full py-2 text-xs text-blue-600 hover:text-blue-800 font-medium"
                     >
-                      {clientsLoadingMore ? "Завантаження..." : "Показати більше"}
+                      Показати більше
                     </button>
                   )}
                 </div>
                 <button
                   onClick={() => setShowAddClient(true)}
                   type="button"
-                  className="mt-2 w-full py-2.5 border-2 border-dashed border-gray-300 rounded-xl text-gray-600 hover:border-indigo-400 hover:text-indigo-600 transition-all font-medium text-sm flex items-center justify-center gap-2"
+                  className="mt-2 w-full py-2.5 border border-dashed border-gray-300 rounded-md text-gray-600 hover:border-blue-400 hover:text-blue-600 transition-all font-medium text-sm flex items-center justify-center gap-2"
                 >
                   <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path
@@ -223,7 +234,7 @@ export const AddOrderFormWeb: React.FC<AddOrderFormWebProps> = ({ onClose, onSav
           </section>
 
           {formData.client && (
-            <section className="bg-gray-50 rounded-2xl p-4 border border-gray-200">
+            <section className="bg-gray-50 rounded-lg p-4 border border-gray-200">
               <div className="flex items-center gap-2.5 mb-3">
                 <h3 className="text-sm font-bold text-gray-900">Контактна інформація</h3>
                 {formData.deliveryPhone && formData.deliveryAddress && (
@@ -243,7 +254,7 @@ export const AddOrderFormWeb: React.FC<AddOrderFormWebProps> = ({ onClose, onSav
                       title="Phone select"
                       value={getPhoneString()}
                       onChange={(e) => handlePhoneChange(e.target.value)}
-                      className="w-full px-3 py-2.5 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500 text-sm bg-white"
+                      className="w-full px-3 py-2.5 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm bg-white"
                     >
                       <option value="">Оберіть телефон...</option>
                       {formData.client.phones.map((phone, idx) => (
@@ -253,7 +264,7 @@ export const AddOrderFormWeb: React.FC<AddOrderFormWebProps> = ({ onClose, onSav
                       ))}
                     </select>
                   ) : (
-                    <div className="px-3 py-2.5 bg-white border border-gray-200 rounded-xl text-sm text-gray-900 font-medium">
+                    <div className="px-3 py-2.5 bg-white border border-gray-200 rounded-md text-sm text-gray-900 font-medium">
                       {formData.client.phones?.[0]?.number || "—"}
                     </div>
                   )}
@@ -268,7 +279,7 @@ export const AddOrderFormWeb: React.FC<AddOrderFormWebProps> = ({ onClose, onSav
                       title="Select address"
                       value={getAddressId()}
                       onChange={(e) => handleAddressChange(e.target.value)}
-                      className="w-full px-3 py-2.5 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500 text-sm bg-white"
+                      className="w-full px-3 py-2.5 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm bg-white"
                     >
                       <option value="">Оберіть адресу...</option>
                       {formData.client.addresses.map((addr) => (
@@ -278,7 +289,7 @@ export const AddOrderFormWeb: React.FC<AddOrderFormWebProps> = ({ onClose, onSav
                       ))}
                     </select>
                   ) : (
-                    <div className="px-3 py-2.5 bg-white border border-gray-200 rounded-xl text-sm text-gray-900 font-medium">
+                    <div className="px-3 py-2.5 bg-white border border-gray-200 rounded-md text-sm text-gray-900 font-medium">
                       {formData.client.addresses?.[0]?.street} {formData.client.addresses?.[0]?.house}
                     </div>
                   )}
@@ -289,9 +300,9 @@ export const AddOrderFormWeb: React.FC<AddOrderFormWebProps> = ({ onClose, onSav
         </div>
 
         {/* Top-right: Products */}
-        <section className="bg-gray-50 rounded-2xl p-4 border border-gray-200">
+        <section className="bg-gray-50 rounded-lg p-4 border border-gray-200">
           <div className="flex items-center gap-2.5 mb-3">
-            <span className="w-6 h-6 rounded-full bg-indigo-600 text-white flex items-center justify-center text-xs font-bold shrink-0">
+            <span className="w-6 h-6 rounded-full bg-blue-600 text-white flex items-center justify-center text-xs font-bold shrink-0">
               2
             </span>
             <h3 className="text-sm font-bold text-gray-900">Товари</h3>
@@ -314,7 +325,9 @@ export const AddOrderFormWeb: React.FC<AddOrderFormWebProps> = ({ onClose, onSav
           />
 
           <div className="mt-2 space-y-1.5 max-h-48 overflow-y-auto">
-            {products.length === 0 ? (
+            {productsLoading && products.length === 0 ? (
+              <InlineListSkeleton rows={3} />
+            ) : products.length === 0 ? (
               <p className="text-sm text-gray-400 text-center py-4">Товарів не знайдено</p>
             ) : (
               products.map((product) => {
@@ -324,10 +337,10 @@ export const AddOrderFormWeb: React.FC<AddOrderFormWebProps> = ({ onClose, onSav
                 return (
                   <div
                     key={product.product_id}
-                    className={`p-3 rounded-xl border transition-colors ${
+                    className={`p-3 rounded-md border transition-colors ${
                       selected
-                        ? "border-indigo-600 bg-white"
-                        : "border-gray-200 hover:border-indigo-300 bg-white"
+                        ? "border-blue-600 bg-white"
+                        : "border-gray-200 hover:border-blue-300 bg-white"
                     }`}
                   >
                     <div className="flex items-center gap-3">
@@ -335,7 +348,7 @@ export const AddOrderFormWeb: React.FC<AddOrderFormWebProps> = ({ onClose, onSav
                         <div className="font-medium text-gray-900 text-sm truncate">
                           {product.name}
                         </div>
-                        <div className="text-xs font-semibold text-indigo-600">{product.price} ₴</div>
+                        <div className="text-xs font-semibold text-blue-600">{product.price} ₴</div>
                       </div>
 
                       {selected ? (
@@ -361,7 +374,7 @@ export const AddOrderFormWeb: React.FC<AddOrderFormWebProps> = ({ onClose, onSav
                               handleQuantityChange(product.product_id, selected.quantity + 1)
                             }
                             type="button"
-                            className="w-7 h-7 rounded-lg bg-indigo-600 hover:bg-indigo-700 text-white flex items-center justify-center transition-colors font-bold text-sm"
+                            className="w-7 h-7 rounded-lg bg-blue-600 hover:bg-blue-700 text-white flex items-center justify-center transition-colors font-bold text-sm"
                           >
                             +
                           </button>
@@ -390,7 +403,7 @@ export const AddOrderFormWeb: React.FC<AddOrderFormWebProps> = ({ onClose, onSav
                         <button
                           onClick={() => handleProductToggle(product)}
                           type="button"
-                          className="px-3 py-1.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg font-medium transition-colors text-xs"
+                          className="px-3 py-1.5 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-medium transition-colors text-xs"
                         >
                           Додати
                         </button>
@@ -400,23 +413,24 @@ export const AddOrderFormWeb: React.FC<AddOrderFormWebProps> = ({ onClose, onSav
                 );
               })
             )}
-            {productsHasMore && (
+            {productsLoadingMore ? (
+              <InlineListSkeleton rows={2} />
+            ) : productsHasMore && (
               <button
                 type="button"
                 onClick={loadMoreProducts}
-                disabled={productsLoadingMore}
-                className="w-full py-2 text-xs text-indigo-600 hover:text-indigo-800 font-medium"
+                className="w-full py-2 text-xs text-blue-600 hover:text-blue-800 font-medium"
               >
-                {productsLoadingMore ? "Завантаження..." : "Показати більше"}
+                Показати більше
               </button>
             )}
           </div>
 
           {formData.products.length > 0 && (
-            <div className="mt-3 p-3 bg-indigo-100 rounded-xl flex items-center justify-between">
+            <div className="mt-3 p-3 bg-blue-100 rounded-md flex items-center justify-between">
               <div>
                 <div className="text-xs text-gray-600">Всього до сплати</div>
-                <div className="text-lg font-bold text-indigo-600">{totalAmount} ₴</div>
+                <div className="text-lg font-bold text-blue-600">{totalAmount} ₴</div>
               </div>
               <div className="text-right">
                 <div className="text-xs text-gray-600">Кількість</div>
@@ -429,9 +443,9 @@ export const AddOrderFormWeb: React.FC<AddOrderFormWebProps> = ({ onClose, onSav
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
         {/* Bottom-left: Delivery date & time */}
-        <section className="bg-gray-50 rounded-2xl p-4 border border-gray-200">
+        <section className="bg-gray-50 rounded-lg p-4 border border-gray-200">
           <div className="flex items-center gap-2.5 mb-3">
-            <span className="w-6 h-6 rounded-full bg-indigo-600 text-white flex items-center justify-center text-xs font-bold shrink-0">
+            <span className="w-6 h-6 rounded-full bg-blue-600 text-white flex items-center justify-center text-xs font-bold shrink-0">
               3
             </span>
             <h3 className="text-sm font-bold text-gray-900">Дата доставки</h3>
@@ -468,9 +482,9 @@ export const AddOrderFormWeb: React.FC<AddOrderFormWebProps> = ({ onClose, onSav
         </section>
 
         {/* Bottom-right: Payment & note */}
-        <section className="bg-gray-50 rounded-2xl p-4 border border-gray-200">
+        <section className="bg-gray-50 rounded-lg p-4 border border-gray-200">
           <div className="flex items-center gap-2.5 mb-3">
-            <span className="w-6 h-6 rounded-full bg-indigo-600 text-white flex items-center justify-center text-xs font-bold shrink-0">
+            <span className="w-6 h-6 rounded-full bg-blue-600 text-white flex items-center justify-center text-xs font-bold shrink-0">
               4
             </span>
             <h3 className="text-sm font-bold text-gray-900">Оплата</h3>
@@ -501,7 +515,7 @@ export const AddOrderFormWeb: React.FC<AddOrderFormWebProps> = ({ onClose, onSav
                 onChange={(e) => handleNoteChange(e.target.value)}
                 placeholder="Примітка до замовлення..."
                 rows={2}
-                className="w-full px-3 py-2.5 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500 resize-none text-sm bg-white"
+                className="w-full px-3 py-2.5 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none text-sm bg-white"
               />
             </div>
           </div>
@@ -514,9 +528,9 @@ export const AddOrderFormWeb: React.FC<AddOrderFormWebProps> = ({ onClose, onSav
           onClick={handleSubmit}
           disabled={!isFormValid || isSubmitting}
           type="button"
-          className={`w-full py-3.5 rounded-xl font-semibold text-white transition-colors ${
+          className={`w-full py-3.5 rounded-md font-semibold text-white transition-colors ${
             isFormValid && !isSubmitting
-              ? "bg-indigo-600 hover:bg-indigo-700"
+              ? "bg-blue-600 hover:bg-blue-700"
               : "bg-gray-300 cursor-not-allowed"
           }`}
         >

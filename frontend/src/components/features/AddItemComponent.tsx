@@ -23,7 +23,11 @@ export const AddItemComponent = () => {
 
   const hasAccess = currentConfig && user ? currentConfig.allowedRoles.includes(user.role) : false;
 
-  if (location.pathname === "/products" || location.pathname === "/clients") {
+  if (
+    location.pathname === "/products" ||
+    location.pathname === "/clients" ||
+    location.pathname === "/orders"
+  ) {
     return null;
   }
 

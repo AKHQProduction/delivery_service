@@ -1,6 +1,7 @@
 import React, { useRef, useEffect, useCallback } from "react";
 import { type Product } from "../../../../types/entities/Product";
 import { SearchBar } from "../../../ui/SearchBar";
+import { InlineListSkeleton } from "../../../ui/Skeleton";
 
 interface SelectedProduct {
   product: Product;
@@ -15,6 +16,7 @@ interface ProductSelectionStepProps {
   onProductToggle: (product: Product) => void;
   onQuantityChange: (productId: string, quantity: number) => void;
   loadMore?: () => void;
+  loading?: boolean;
   loadingMore?: boolean;
   hasMore?: boolean;
 }
@@ -27,6 +29,7 @@ export const ProductSelectionStep: React.FC<ProductSelectionStepProps> = ({
   onProductToggle,
   onQuantityChange,
   loadMore,
+  loading,
   loadingMore,
   hasMore,
 }) => {
@@ -76,10 +79,10 @@ export const ProductSelectionStep: React.FC<ProductSelectionStepProps> = ({
         <h3 className="text-xl font-bold text-gray-900">Вибір товарів</h3>
         {selectedProducts.length > 0 && (
           <div className="text-sm">
-            <span className="font-semibold text-indigo-600">{selectedProducts.length}</span>
+            <span className="font-semibold text-blue-600">{selectedProducts.length}</span>
             <span className="text-gray-600"> товарів</span>
             <span className="mx-1 text-gray-400">•</span>
-            <span className="font-semibold text-indigo-600">{totalSelectedItems}</span>
+            <span className="font-semibold text-blue-600">{totalSelectedItems}</span>
             <span className="text-gray-600"> шт.</span>
           </div>
         )}
@@ -92,7 +95,9 @@ export const ProductSelectionStep: React.FC<ProductSelectionStepProps> = ({
       />
 
       <div ref={scrollContainerRef} className="space-y-2 max-h-96 overflow-y-auto">
-        {products.length === 0 ? (
+        {loading && products.length === 0 ? (
+          <InlineListSkeleton rows={4} />
+        ) : products.length === 0 ? (
           <div className="text-center py-8 text-gray-500">
             <svg
               className="w-12 h-12 mx-auto mb-3 text-gray-300"
@@ -119,17 +124,17 @@ export const ProductSelectionStep: React.FC<ProductSelectionStepProps> = ({
               return (
                 <div
                   key={product.product_id}
-                  className={`p-4 rounded-xl border-2 transition-all ${
+                  className={`p-4 rounded-md border transition-all ${
                     selected
-                      ? "border-indigo-600 bg-indigo-50"
-                      : "border-gray-200 hover:border-indigo-300 bg-white"
+                      ? "border-blue-600 bg-blue-50"
+                      : "border-gray-200 hover:border-blue-300 bg-white"
                   }`}
                 >
                   <div className="flex items-center gap-3">
                     <div className="flex-1 min-w-0">
                       <div className="font-semibold text-gray-900 truncate">{product.name}</div>
                       <div className="flex items-center gap-2 mt-1">
-                        <span className="text-base font-bold text-indigo-600">
+                        <span className="text-base font-bold text-blue-600">
                           {product.price} ₴
                         </span>
                       </div>
@@ -160,7 +165,7 @@ export const ProductSelectionStep: React.FC<ProductSelectionStepProps> = ({
                             onQuantityChange(product.product_id, selected.quantity + 1)
                           }
                           type="button"
-                          className="w-9 h-9 rounded-lg bg-indigo-600 hover:bg-indigo-700 text-white flex items-center justify-center transition-colors font-bold text-lg"
+                          className="w-9 h-9 rounded-lg bg-blue-600 hover:bg-blue-700 text-white flex items-center justify-center transition-colors font-bold text-lg"
                         >
                           +
                         </button>
@@ -189,7 +194,7 @@ export const ProductSelectionStep: React.FC<ProductSelectionStepProps> = ({
                       <button
                         onClick={() => onProductToggle(product)}
                         type="button"
-                        className="px-5 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg font-medium transition-colors flex items-center gap-2"
+                        className="px-5 py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-medium transition-colors flex items-center gap-2"
                       >
                         <svg
                           className="w-5 h-5"
@@ -212,27 +217,7 @@ export const ProductSelectionStep: React.FC<ProductSelectionStepProps> = ({
               );
             })}
             <div ref={loadMoreRef} className="py-2 flex justify-center">
-              {loadingMore && (
-                <div className="flex items-center gap-2 text-gray-500">
-                  <svg className="animate-spin h-5 w-5" viewBox="0 0 24 24">
-                    <circle
-                      className="opacity-25"
-                      cx="12"
-                      cy="12"
-                      r="10"
-                      stroke="currentColor"
-                      strokeWidth="4"
-                      fill="none"
-                    />
-                    <path
-                      className="opacity-75"
-                      fill="currentColor"
-                      d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
-                    />
-                  </svg>
-                  <span className="text-sm">Завантаження...</span>
-                </div>
-              )}
+              {loadingMore && <InlineListSkeleton rows={2} />}
             </div>
           </>
         )}
@@ -240,10 +225,10 @@ export const ProductSelectionStep: React.FC<ProductSelectionStepProps> = ({
 
       {selectedProducts.length > 0 && (
         <div className="pt-4 border-t border-gray-200">
-          <div className="flex items-center justify-between p-4 bg-indigo-50 rounded-xl">
+          <div className="flex items-center justify-between p-4 bg-blue-50 rounded-md">
             <div>
               <div className="text-sm text-gray-600">Всього до сплати</div>
-              <div className="text-2xl font-bold text-indigo-600">{totalAmount} ₴</div>
+              <div className="text-2xl font-bold text-blue-600">{totalAmount} ₴</div>
             </div>
             <div className="text-right">
               <div className="text-sm text-gray-600">Обрано товарів</div>

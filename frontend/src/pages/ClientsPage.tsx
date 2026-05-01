@@ -5,7 +5,7 @@ import { Modal } from "../components/modals/Modal";
 import { DetailModal } from "../components/modals/DetailModal";
 import { ClientDetailModal } from "../components/modals/detailsModals/ClientDetailModal";
 import { ClientCard } from "../components/ui/ClientsCard";
-import { ClientCardSkeleton } from "../components/ui/Skeleton";
+import { ClientCardSkeleton, SidePanelSkeleton, TableSkeleton } from "../components/ui/Skeleton";
 import { useClient } from "../hooks/clients/useClients";
 import { useInfiniteScroll } from "../hooks/useInfiniteScroll";
 import { getClientById } from "../services/api/clientApi";
@@ -46,6 +46,7 @@ export const ClientsPage = () => {
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedClient, setSelectedClient] = useState<Client | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isDetailEditing, setIsDetailEditing] = useState(false);
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [isImportModalOpen, setIsImportModalOpen] = useState(false);
   const [clientPendingDelete, setClientPendingDelete] = useState<Client | null>(null);
@@ -151,13 +152,15 @@ export const ClientsPage = () => {
     }
   }, [clients, selectedClient, visibleClients]);
 
-  const handleClientClick = (client: Client) => {
+  const handleClientClick = (client: Client, edit = false) => {
     setSelectedClient(client);
+    setIsDetailEditing(edit);
     setIsModalOpen(true);
   };
 
   const handleCloseModal = () => {
     setIsModalOpen(false);
+    setIsDetailEditing(false);
     setTimeout(() => setSelectedClient(null), 300);
   };
 
@@ -299,7 +302,7 @@ export const ClientsPage = () => {
               <ClientSidePanel
                 client={selectedClient}
                 onClose={() => setSelectedClient(null)}
-                onOpen={() => handleClientClick(selectedClient)}
+                onEdit={() => handleClientClick(selectedClient, true)}
                 onDelete={() => requestDeleteClient(selectedClient)}
               />
             ) : (
@@ -310,12 +313,7 @@ export const ClientsPage = () => {
           </aside>
 
           <div ref={sentinelRef} className="py-4 xl:col-span-2">
-            {loadingMore && (
-              <div className="flex items-center justify-center gap-2 text-sm text-slate-500">
-                <span className="h-4 w-4 animate-spin rounded-full border-2 border-slate-300 border-t-blue-600" />
-                <span>Завантаження...</span>
-              </div>
-            )}
+            {loadingMore && <ClientLoadingMoreState />}
           </div>
         </div>
       )}
@@ -332,10 +330,13 @@ export const ClientsPage = () => {
       <DetailModal isOpen={isModalOpen} onClose={handleCloseModal}>
         {selectedClient && (
           <ClientDetailModal
+            key={`${selectedClient.client_id}-${isDetailEditing ? "edit" : "view"}`}
             client={selectedClient}
             onClose={handleCloseModal}
             onDelete={() => requestDeleteClient(selectedClient)}
             onSave={handleSave}
+            initialEditing={isDetailEditing}
+            initialEditReturnTarget={isDetailEditing ? "close" : "view"}
           />
         )}
       </DetailModal>
@@ -450,9 +451,6 @@ const ClientTable = ({
                     <p className="truncate font-medium text-slate-950">
                       {client.full_name || "Без імені"}
                     </p>
-                    <span className="mt-1 inline-flex rounded bg-slate-100 px-2 py-0.5 text-xs text-slate-500">
-                      Постійний
-                    </span>
                   </div>
                 </div>
               </td>
@@ -503,12 +501,12 @@ const ClientTableFooter = ({ shown, total }: { shown: number; total: number }) =
 const ClientSidePanel = ({
   client,
   onClose,
-  onOpen,
+  onEdit,
   onDelete,
 }: {
   client: Client;
   onClose: () => void;
-  onOpen: () => void;
+  onEdit: () => void;
   onDelete: () => void;
 }) => (
   <div className="flex h-full flex-col">
@@ -519,9 +517,6 @@ const ClientSidePanel = ({
           <h2 className="text-xl font-semibold leading-7 text-slate-950">
             {client.full_name || "Без імені"}
           </h2>
-          <span className="mt-1 inline-flex rounded bg-slate-100 px-2 py-0.5 text-xs text-slate-500">
-            Постійний клієнт
-          </span>
         </div>
       </div>
       <button
@@ -561,7 +556,7 @@ const ClientSidePanel = ({
     <div className="mt-7 space-y-3">
       <button
         type="button"
-        onClick={onOpen}
+        onClick={onEdit}
         className="inline-flex h-12 w-full items-center justify-center gap-2 rounded-md border border-slate-300 bg-white text-sm font-medium text-slate-950 hover:bg-slate-100"
       >
         <EditIcon className="h-5 w-5" />
@@ -580,11 +575,26 @@ const ClientSidePanel = ({
 );
 
 const ClientLoadingState = () => (
-  <div className="mt-4 grid grid-cols-1 gap-3 sm:grid-cols-2 lg:hidden">
-    {Array.from({ length: 5 }).map((_, index) => (
-      <ClientCardSkeleton key={index} />
-    ))}
+  <div className="mt-4 grid items-start gap-4 xl:grid-cols-[minmax(0,1fr)_25rem]">
+    <TableSkeleton columns={7} rows={6} />
+    <section className="grid grid-cols-1 gap-3 lg:hidden">
+      {Array.from({ length: 5 }).map((_, index) => (
+        <ClientCardSkeleton key={index} />
+      ))}
+    </section>
+    <SidePanelSkeleton />
   </div>
+);
+
+const ClientLoadingMoreState = () => (
+  <>
+    <TableSkeleton columns={7} rows={2} />
+    <div className="grid grid-cols-1 gap-3 lg:hidden">
+      {Array.from({ length: 2 }).map((_, index) => (
+        <ClientCardSkeleton key={index} />
+      ))}
+    </div>
+  </>
 );
 
 const ClientEmptyState = ({

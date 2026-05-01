@@ -63,18 +63,28 @@ export const useOrderForm = (options: UseOrderFormOptions = {}) => {
   const [searchClient, setSearchClient] = useState("");
   const [searchProduct, setSearchProduct] = useState("");
   const [newlyCreatedClients, setNewlyCreatedClients] = useState<Client[]>([]);
+  const [initialListsLoaded, setInitialListsLoaded] = useState(false);
 
   const {
     clients: fetchedClients,
     getClients,
     loadMoreClients,
+    loading: clientsLoading,
     loadingMore: clientsLoadingMore,
     hasMore: clientsHasMore,
   } = useClient();
 
   // Get time slots and payment methods
-  const { timeSlots } = useTimeSlotsSettings();
-  const { paymentMethods } = usePaymentMethodsSettings();
+  const {
+    timeSlots,
+    isLoading: timeSlotsLoading,
+    isLoaded: timeSlotsLoaded,
+  } = useTimeSlotsSettings();
+  const {
+    paymentMethods,
+    isLoading: paymentMethodsLoading,
+    isLoaded: paymentMethodsLoaded,
+  } = usePaymentMethodsSettings();
 
   // Merge newly created clients (at the top) with fetched clients
   const clients = useMemo(
@@ -91,6 +101,7 @@ export const useOrderForm = (options: UseOrderFormOptions = {}) => {
     products,
     getProducts,
     loadMoreProducts,
+    loading: productsLoading,
     loadingMore: productsLoadingMore,
     hasMore: productsHasMore,
   } = useProducts();
@@ -111,8 +122,14 @@ export const useOrderForm = (options: UseOrderFormOptions = {}) => {
 
   // Initial load
   useEffect(() => {
-    getClients();
-    getProducts();
+    const loadInitialLists = async () => {
+      try {
+        await Promise.all([getClients(), getProducts()]);
+      } finally {
+        setInitialListsLoaded(true);
+      }
+    };
+    loadInitialLists();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
@@ -398,6 +415,11 @@ export const useOrderForm = (options: UseOrderFormOptions = {}) => {
     products,
     timeSlots,
     paymentMethods,
+    clientsLoading,
+    productsLoading,
+    timeSlotsLoading,
+    paymentMethodsLoading,
+    referencesReady: initialListsLoaded && timeSlotsLoaded && paymentMethodsLoaded,
 
     // Infinite scroll for clients
     loadMoreClients,

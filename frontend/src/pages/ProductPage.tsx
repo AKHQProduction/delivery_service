@@ -11,7 +11,12 @@ import { useCategories } from "../hooks/products/useCategories";
 import { getProductById } from "../services/api/productApi";
 import { type Product } from "../types/entities/Product";
 import { useInfiniteScroll } from "../hooks/useInfiniteScroll";
-import { ProductCardSkeleton } from "../components/ui/Skeleton";
+import {
+  ProductCardSkeleton,
+  SidePanelSkeleton,
+  SkeletonBlock,
+  TableSkeleton,
+} from "../components/ui/Skeleton";
 
 const getCategoryName = (product: Product) => product.category_name || "Без категорії";
 
@@ -54,8 +59,14 @@ export const ProductPage = () => {
     loadingMore,
     hasMore,
   } = useProducts();
-  const { categories, fetchCategories, addCategory, updateCategory, deleteCategory } =
-    useCategories();
+  const {
+    categories,
+    isLoaded: categoriesLoaded,
+    fetchCategories,
+    addCategory,
+    updateCategory,
+    deleteCategory,
+  } = useCategories();
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const initialLoadRef = useRef(false);
 
@@ -277,6 +288,7 @@ export const ProductPage = () => {
   const emptyDescription = searchTerm
     ? "Спробуйте інший пошуковий запит або змініть категорію."
     : "Додайте перший товар, щоб почати роботу.";
+  const isInitialLoading = (loading && products.length === 0) || !categoriesLoaded;
 
   return (
     <div className="min-h-screen bg-slate-50 px-4 pb-28 pt-6 sm:px-6 md:px-8 md:pb-10">
@@ -316,30 +328,34 @@ export const ProductPage = () => {
         <ProductSearchInput searchTerm={searchTerm} setSearchTerm={setSearchTerm} />
       </div>
 
-      <div className="mt-4 flex gap-2 overflow-x-auto pb-1">
-        {categoryChips.map((category) => {
-          const isActive = selectedCategoryId === category.id;
-          return (
-            <button
-              key={category.key}
-              type="button"
-              onClick={() => setSelectedCategoryId(category.id)}
-              className={`inline-flex shrink-0 items-center gap-2 rounded-full border px-3 py-2 text-sm leading-5 transition-colors ${
-                isActive
-                  ? "border-blue-300 bg-blue-50 text-blue-700"
-                  : "border-slate-200 bg-white text-slate-700 hover:bg-slate-100"
-              }`}
-            >
-              <span className="font-medium">{category.name}</span>
-              <span className={isActive ? "text-blue-600" : "text-slate-500"}>
-                {category.count}
-              </span>
-            </button>
-          );
-        })}
-      </div>
+      {isInitialLoading ? (
+        <ProductChipSkeleton />
+      ) : (
+        <div className="mt-4 flex gap-2 overflow-x-auto pb-1">
+          {categoryChips.map((category) => {
+            const isActive = selectedCategoryId === category.id;
+            return (
+              <button
+                key={category.key}
+                type="button"
+                onClick={() => setSelectedCategoryId(category.id)}
+                className={`inline-flex shrink-0 items-center gap-2 rounded-full border px-3 py-2 text-sm leading-5 transition-colors ${
+                  isActive
+                    ? "border-blue-300 bg-blue-50 text-blue-700"
+                    : "border-slate-200 bg-white text-slate-700 hover:bg-slate-100"
+                }`}
+              >
+                <span className="font-medium">{category.name}</span>
+                <span className={isActive ? "text-blue-600" : "text-slate-500"}>
+                  {category.count}
+                </span>
+              </button>
+            );
+          })}
+        </div>
+      )}
 
-      {loading && products.length === 0 ? (
+      {isInitialLoading ? (
         <ProductLoadingState />
       ) : visibleProducts.length === 0 ? (
         <ProductEmptyState
@@ -388,12 +404,7 @@ export const ProductPage = () => {
           </aside>
 
           <div ref={sentinelRef} className="py-4 xl:col-span-2">
-            {loadingMore && (
-              <div className="flex items-center justify-center gap-2 text-sm text-slate-500">
-                <span className="h-4 w-4 animate-spin rounded-full border-2 border-slate-300 border-t-blue-600" />
-                <span>Завантаження...</span>
-              </div>
-            )}
+            {loadingMore && <ProductLoadingMoreState />}
           </div>
         </div>
       )}
@@ -654,11 +665,36 @@ const ProductSidePanel = ({
 );
 
 const ProductLoadingState = () => (
-  <div className="mt-4 grid grid-cols-1 gap-3 sm:grid-cols-2 lg:hidden">
-    {Array.from({ length: 5 }).map((_, index) => (
-      <ProductCardSkeleton key={index} />
+  <div className="mt-4 grid gap-4 xl:grid-cols-[minmax(0,1fr)_25rem]">
+    <TableSkeleton columns={5} rows={6} />
+    <section className="grid grid-cols-1 gap-3 lg:hidden">
+      {Array.from({ length: 5 }).map((_, index) => (
+        <ProductCardSkeleton key={index} />
+      ))}
+    </section>
+    <SidePanelSkeleton />
+  </div>
+);
+
+const ProductChipSkeleton = () => (
+  <div className="mt-4 flex gap-2 overflow-x-auto pb-1">
+    {Array.from({ length: 4 }).map((_, index) => (
+      <SkeletonBlock key={index} className="h-10 w-24 shrink-0 rounded-full" />
     ))}
   </div>
+);
+
+const ProductLoadingMoreState = () => (
+  <>
+    <div className="hidden lg:block">
+      <TableSkeleton columns={5} rows={2} />
+    </div>
+    <div className="grid grid-cols-1 gap-3 lg:hidden">
+      {Array.from({ length: 2 }).map((_, index) => (
+        <ProductCardSkeleton key={index} />
+      ))}
+    </div>
+  </>
 );
 
 const ProductEmptyState = ({

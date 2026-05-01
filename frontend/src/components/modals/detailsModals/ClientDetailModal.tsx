@@ -9,6 +9,8 @@ interface ClientDetailModalProps {
   onClose: () => void;
   onDelete: () => void;
   onSave: () => Promise<void> | void;
+  initialEditing?: boolean;
+  initialEditReturnTarget?: "view" | "close";
 }
 
 const formatBalance = (balance: Client["balance"] | null | undefined) => {
@@ -30,8 +32,11 @@ export const ClientDetailModal: React.FC<ClientDetailModalProps> = ({
   onClose,
   onDelete,
   onSave,
+  initialEditing = false,
+  initialEditReturnTarget = "view",
 }) => {
-  const [isEditing, setIsEditing] = useState(false);
+  const [isEditing, setIsEditing] = useState(initialEditing);
+  const [editReturnTarget, setEditReturnTarget] = useState<"view" | "close">(initialEditReturnTarget);
   const { districts } = useDistrictsSettings();
   const { timeSlots, isLoading: timeSlotsLoading } = useTimeSlotsSettings();
 
@@ -58,6 +63,18 @@ export const ClientDetailModal: React.FC<ClientDetailModalProps> = ({
 
   const handleSaveEdit = async () => {
     await onSave();
+    if (editReturnTarget === "close") {
+      onClose();
+      return;
+    }
+    setIsEditing(false);
+  };
+
+  const handleCancelEdit = () => {
+    if (editReturnTarget === "close") {
+      onClose();
+      return;
+    }
     setIsEditing(false);
   };
 
@@ -70,7 +87,7 @@ export const ClientDetailModal: React.FC<ClientDetailModalProps> = ({
             <h1 className="text-xl font-semibold text-slate-950">Редагувати клієнта</h1>
           </div>
           <button
-            onClick={() => setIsEditing(false)}
+            onClick={handleCancelEdit}
             type="button"
             className="rounded-md p-2 text-slate-500 hover:bg-slate-100 hover:text-slate-950"
             aria-label="Закрити редагування"
@@ -79,8 +96,8 @@ export const ClientDetailModal: React.FC<ClientDetailModalProps> = ({
           </button>
         </div>
 
-        <div className="flex-1 overflow-y-auto px-6 py-5">
-          <EditClientForm client={client} onClose={() => setIsEditing(false)} onSave={handleSaveEdit} />
+        <div className="flex-1 overflow-y-auto px-6 pt-5">
+          <EditClientForm client={client} onClose={handleCancelEdit} onSave={handleSaveEdit} />
         </div>
       </div>
     );
@@ -99,9 +116,6 @@ export const ClientDetailModal: React.FC<ClientDetailModalProps> = ({
             <h1 className="truncate text-xl font-semibold text-slate-950">
               {client.full_name || "Без імені"}
             </h1>
-            <span className="mt-1 inline-flex rounded bg-slate-100 px-2 py-0.5 text-xs text-slate-500">
-              Постійний клієнт
-            </span>
           </div>
         </div>
         <button
@@ -214,7 +228,10 @@ export const ClientDetailModal: React.FC<ClientDetailModalProps> = ({
       <div className="space-y-3 border-t border-slate-200 px-6 py-5">
         <button
           type="button"
-          onClick={() => setIsEditing(true)}
+          onClick={() => {
+            setEditReturnTarget("view");
+            setIsEditing(true);
+          }}
           className="inline-flex h-12 w-full items-center justify-center gap-2 rounded-md border border-slate-300 bg-white text-sm font-medium text-slate-950 hover:bg-slate-100"
         >
           <EditIcon className="h-5 w-5" />

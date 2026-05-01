@@ -55,9 +55,6 @@ export const ClientCard: React.FC<ClientCardProps> = ({ client, onClick }) => {
                 <h3 className="truncate text-base font-semibold text-slate-950">
                   {client.full_name || "Без імені"}
                 </h3>
-                <span className="rounded bg-slate-100 px-2 py-0.5 text-xs text-slate-500">
-                  Постійний
-                </span>
               </div>
               <p className="mt-1 text-sm text-slate-600">
                 {getPrimaryPhone(client)?.number || "Телефон не вказано"}

@@ -5,6 +5,7 @@ import { useProducts } from "../../../hooks/products/useProducts";
 import { DynamicFormSelect } from "../../shared/DynamicFormSelect";
 import { useCategoriesForm } from "../../../hooks/products/useCategoriesForm";
 import { CategoryManagementModal } from "../../features/AddCategoryComponent";
+import { FormSkeleton } from "../../ui/Skeleton";
 
 interface AddProductFormProps {
   onClose: () => void;
@@ -22,6 +23,7 @@ export const AddProductForm: React.FC<AddProductFormProps> = ({ onClose, onSucce
     handleAddCategory,
     handleUpdateCategory,
     handleDeleteCategory,
+    loading,
   } = useCategoriesForm();
 
   const { addProduct } = useProducts();
@@ -53,7 +55,9 @@ export const AddProductForm: React.FC<AddProductFormProps> = ({ onClose, onSucce
     }
   };
 
-  return (
+  return loading ? (
+    <FormSkeleton fields={3} />
+  ) : (
     <FormWrapper onSubmit={handleSubmit} onClose={onClose} submitLabel="Додати товар">
       <FormInput
         label="Назва товару"

@@ -22,9 +22,9 @@ export const ContactInfoStep: React.FC<ContactInfoStepProps> = ({
       <h3 className="text-xl font-bold text-gray-900">Контактна інформація</h3>
 
       {client && (
-        <div className="p-4 bg-linear-to-r from-indigo-50 to-purple-50 rounded-xl border border-indigo-100">
+        <div className="p-4 bg-blue-50 rounded-md border border-blue-100">
           <div className="flex items-center gap-3">
-            <div className="w-12 h-12 rounded-full bg-indigo-600 text-white flex items-center justify-center font-bold text-lg">
+            <div className="w-12 h-12 rounded-full bg-blue-600 text-white flex items-center justify-center font-bold text-lg">
               {(client.full_name || "")
                 .split(" ")
                 .map((n) => n[0])
@@ -43,7 +43,7 @@ export const ContactInfoStep: React.FC<ContactInfoStepProps> = ({
       <div className="space-y-2">
         <label className="text-sm font-medium text-gray-700 flex items-center gap-2">
           <svg
-            className="w-5 h-5 text-indigo-600"
+            className="w-5 h-5 text-blue-600"
             fill="none"
             stroke="currentColor"
             viewBox="0 0 24 24"
@@ -64,7 +64,7 @@ export const ContactInfoStep: React.FC<ContactInfoStepProps> = ({
               title="Phone select"
               value={selectedPhone}
               onChange={(e) => onPhoneChange(e.target.value)}
-              className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500 appearance-none bg-white pr-10 font-medium"
+              className="w-full px-4 py-3 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 appearance-none bg-white pr-10 font-medium"
             >
               <option value="">Оберіть телефон...</option>
               {client.phones.map((phone, idx) => (
@@ -88,10 +88,10 @@ export const ContactInfoStep: React.FC<ContactInfoStepProps> = ({
             </svg>
           </div>
         ) : client?.phones && client.phones.length === 1 ? (
-          <div className="p-4 rounded-xl border-2 border-indigo-600 bg-indigo-50">
+          <div className="p-4 rounded-md border border-blue-600 bg-blue-50">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-full bg-indigo-600 flex items-center justify-center">
+                <div className="w-10 h-10 rounded-full bg-blue-600 flex items-center justify-center">
                   <svg
                     className="w-5 h-5 text-white"
                     fill="none"
@@ -110,7 +110,7 @@ export const ContactInfoStep: React.FC<ContactInfoStepProps> = ({
                   {client.phones?.[0]?.number || "—"}
                 </span>
               </div>
-              <svg className="w-6 h-6 text-indigo-600" fill="currentColor" viewBox="0 0 20 20">
+              <svg className="w-6 h-6 text-blue-600" fill="currentColor" viewBox="0 0 20 20">
                 <path
                   fillRule="evenodd"
                   d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z"
@@ -125,7 +125,7 @@ export const ContactInfoStep: React.FC<ContactInfoStepProps> = ({
             value={selectedPhone}
             onChange={(e) => onPhoneChange(e.target.value)}
             placeholder="+380..."
-            className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500"
+            className="w-full px-4 py-3 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
           />
         )}
       </div>
@@ -133,7 +133,7 @@ export const ContactInfoStep: React.FC<ContactInfoStepProps> = ({
       <div className="space-y-2">
         <label className="text-sm font-medium text-gray-700 flex items-center gap-2">
           <svg
-            className="w-5 h-5 text-indigo-600"
+            className="w-5 h-5 text-blue-600"
             fill="none"
             stroke="currentColor"
             viewBox="0 0 24 24"
@@ -160,7 +160,7 @@ export const ContactInfoStep: React.FC<ContactInfoStepProps> = ({
               title="Select address"
               value={selectedAddress}
               onChange={(e) => onAddressChange(e.target.value)}
-              className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500 appearance-none bg-white pr-10 font-medium"
+              className="w-full px-4 py-3 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 appearance-none bg-white pr-10 font-medium"
             >
               <option value="">Оберіть адресу...</option>
               {client.addresses.map((addr) => (
@@ -184,10 +184,10 @@ export const ContactInfoStep: React.FC<ContactInfoStepProps> = ({
             </svg>
           </div>
         ) : client?.addresses && client.addresses.length === 1 ? (
-          <div className="p-4 rounded-xl border-2 border-indigo-600 bg-indigo-50">
+          <div className="p-4 rounded-md border border-blue-600 bg-blue-50">
             <div className="flex items-start justify-between gap-3">
               <div className="flex items-start gap-3 flex-1">
-                <div className="w-10 h-10 rounded-full bg-indigo-600 flex items-center justify-center shrink-0">
+                <div className="w-10 h-10 rounded-full bg-blue-600 flex items-center justify-center shrink-0">
                   <svg
                     className="w-5 h-5 text-white"
                     fill="none"
@@ -213,7 +213,7 @@ export const ContactInfoStep: React.FC<ContactInfoStepProps> = ({
                 </span>
               </div>
               <svg
-                className="w-6 h-6 text-indigo-600 shrink-0"
+                className="w-6 h-6 text-blue-600 shrink-0"
                 fill="currentColor"
                 viewBox="0 0 20 20"
               >
@@ -231,7 +231,7 @@ export const ContactInfoStep: React.FC<ContactInfoStepProps> = ({
             onChange={(e) => onAddressChange(e.target.value)}
             placeholder="Введіть адресу доставки..."
             rows={3}
-            className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500 resize-none"
+            className="w-full px-4 py-3 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none"
           />
         )}
       </div>
