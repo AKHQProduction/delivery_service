@@ -162,7 +162,6 @@ export const ClientsPage = () => {
   const handleCloseModal = () => {
     setIsModalOpen(false);
     setIsDetailEditing(false);
-    setTimeout(() => setSelectedClient(null), 300);
   };
 
   const handleSave = async () => {
