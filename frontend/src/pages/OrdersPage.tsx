@@ -12,6 +12,7 @@ import {
 } from "../components/ui/Skeleton";
 import { ConfirmDeleteModal } from "../components/ui/ConfirmDeleteModal";
 import { DateRangePicker } from "../components/ui/DateRangePicker";
+import { FloatingAddButton } from "../components/ui/FloatingAddButton";
 import { useInfiniteScroll } from "../hooks/useInfiniteScroll";
 import { useOrders } from "../hooks/orders/useOrders";
 import { getOrderById } from "../services/api/ordersApi";
@@ -378,6 +379,8 @@ export const OrdersPage = () => {
       >
         <AddOrderForm onClose={() => setIsAddModalOpen(false)} onSave={handleOrderCreated} />
       </Modal>
+
+      <FloatingAddButton label="Нове замовлення" onClick={() => setIsAddModalOpen(true)} />
 
       <DetailModal isOpen={isDetailModalOpen} onClose={handleCloseDetail} size="5xl">
         {selectedOrder && (

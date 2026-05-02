@@ -18,6 +18,7 @@ import {
   TableSkeleton,
 } from "../components/ui/Skeleton";
 import { ConfirmDeleteModal } from "../components/ui/ConfirmDeleteModal";
+import { FloatingAddButton } from "../components/ui/FloatingAddButton";
 
 const getCategoryName = (product: Product) => product.category_name || "Без категорії";
 
@@ -437,6 +438,8 @@ export const ProductPage = () => {
       >
         <AddProductForm onClose={() => setIsAddModalOpen(false)} onSuccess={handleProductCreated} />
       </Modal>
+
+      <FloatingAddButton label="Додати товар" onClick={() => setIsAddModalOpen(true)} />
 
       <DetailModal isOpen={isProductModalOpen} onClose={handleCloseProductModal}>
         {selectedProduct && (

@@ -7,6 +7,7 @@ import { ClientDetailModal } from "../components/modals/detailsModals/ClientDeta
 import { ClientCard } from "../components/ui/ClientsCard";
 import { ClientCardSkeleton, SidePanelSkeleton, TableSkeleton } from "../components/ui/Skeleton";
 import { ConfirmDeleteModal } from "../components/ui/ConfirmDeleteModal";
+import { FloatingAddButton } from "../components/ui/FloatingAddButton";
 import { useClient } from "../hooks/clients/useClients";
 import { useInfiniteScroll } from "../hooks/useInfiniteScroll";
 import { getClientById } from "../services/api/clientApi";
@@ -315,6 +316,8 @@ export const ClientsPage = () => {
       >
         <AddClientForm onClose={() => setIsAddModalOpen(false)} onSuccess={handleClientCreated} />
       </Modal>
+
+      <FloatingAddButton label="Додати клієнта" onClick={() => setIsAddModalOpen(true)} />
 
       <DetailModal isOpen={isModalOpen} onClose={handleCloseModal}>
         {selectedClient && (
