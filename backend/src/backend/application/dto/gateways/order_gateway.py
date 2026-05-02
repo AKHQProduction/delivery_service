@@ -52,6 +52,14 @@ class OrderReadModel:
 
 
 @dataclass(frozen=True)
+class OrderSummaryReadModel:
+    total_count: int
+    today_count: int
+    tomorrow_count: int
+    total_amount: int
+
+
+@dataclass(frozen=True)
 class TimeSlotFilter:
     start_time: time
     end_time: time

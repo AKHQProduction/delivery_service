@@ -49,6 +49,13 @@ export interface OrderStats {
   recent_orders: OrderStatsRecentOrder[];
 }
 
+export interface OrderSummary {
+  total_count: number;
+  today_count: number;
+  tomorrow_count: number;
+  total_amount: number;
+}
+
 export const getAllOrders = async (
   client_name: string,
   start_date: string,
@@ -66,9 +73,26 @@ export const getAllOrders = async (
   if (client_name) params.client_name = client_name;
   if (start_date) params.start_date = start_date;
   if (end_date) params.end_date = end_date;
-  if (time_preference) params.time_preference = time_preference;
+  if (time_preference) params.delivery_start_time = time_preference;
 
   const response = await api.get(`v1/orders/all`, { params });
+  return response.data;
+};
+
+export const getOrderSummary = async (
+  client_name: string,
+  start_date: string,
+  end_date: string,
+  time_preference: string,
+): Promise<OrderSummary> => {
+  const params: Record<string, string> = {};
+
+  if (client_name) params.client_name = client_name;
+  if (start_date) params.start_date = start_date;
+  if (end_date) params.end_date = end_date;
+  if (time_preference) params.delivery_start_time = time_preference;
+
+  const response = await api.get(`v1/orders/summary`, { params });
   return response.data;
 };
 

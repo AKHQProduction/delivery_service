@@ -1,10 +1,11 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import {
   getOrderStats,
   type OrderStats,
   type OrderStatsRecentOrder,
 } from "../services/api/ordersApi";
+import { DateRangePicker } from "../components/ui/DateRangePicker";
 import { SkeletonBlock } from "../components/ui/Skeleton";
 
 type PeriodMode = "today" | "week" | "month" | "custom";
@@ -34,11 +35,6 @@ const getPeriodRange = (mode: PeriodMode) => {
     startDate: formatDateKey(start),
     endDate: formatDateKey(end),
   };
-};
-
-const formatDate = (value: string) => {
-  const [year, month, day] = value.split("-");
-  return `${day}.${month}.${year}`;
 };
 
 const formatMoney = (value: number | null | undefined) =>
@@ -100,11 +96,6 @@ export const MainPage = () => {
     };
   }, [startDate, endDate]);
 
-  const periodLabel = useMemo(() => {
-    if (startDate === endDate) return formatDate(startDate);
-    return `${formatDate(startDate)} - ${formatDate(endDate)}`;
-  }, [startDate, endDate]);
-
   const handlePeriodChange = (mode: PeriodMode) => {
     setPeriodMode(mode);
     if (mode !== "custom") {
@@ -112,9 +103,9 @@ export const MainPage = () => {
     }
   };
 
-  const handleCustomDateChange = (field: "startDate" | "endDate", value: string) => {
+  const handleCustomDateChange = (range: { startDate: string; endDate: string }) => {
     setPeriodMode("custom");
-    setRange((current) => ({ ...current, [field]: value }));
+    setRange(range);
   };
 
   return (
@@ -147,27 +138,14 @@ export const MainPage = () => {
               </button>
             ))}
           </div>
-          <div className="inline-flex h-11 items-center gap-2 rounded-md border border-slate-200 bg-white px-3 text-sm font-medium text-slate-700">
-            <CalendarIcon className="h-4 w-4 text-slate-500" />
-            <span>{periodLabel}</span>
-          </div>
+          <DateRangePicker
+            startDate={startDate}
+            endDate={endDate}
+            onChange={handleCustomDateChange}
+            className="w-full sm:w-64"
+          />
         </div>
       </div>
-
-      {periodMode === "custom" && (
-        <div className="mt-4 grid gap-2 sm:grid-cols-2 md:max-w-lg">
-          <DateField
-            label="Від"
-            value={startDate}
-            onChange={(value) => handleCustomDateChange("startDate", value)}
-          />
-          <DateField
-            label="До"
-            value={endDate}
-            onChange={(value) => handleCustomDateChange("endDate", value)}
-          />
-        </div>
-      )}
 
       {loading ? (
         <HomeSkeleton />
@@ -447,35 +425,4 @@ const HomeSkeleton = () => (
       </div>
     </section>
   </>
-);
-
-const DateField = ({
-  label,
-  value,
-  onChange,
-}: {
-  label: string;
-  value: string;
-  onChange: (value: string) => void;
-}) => (
-  <label className="grid gap-1 text-xs font-medium text-slate-600">
-    {label}
-    <input
-      type="date"
-      value={value}
-      onChange={(event) => onChange(event.target.value)}
-      className="h-10 rounded-md border border-slate-300 bg-white px-3 text-sm font-medium text-slate-950 focus:border-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-100"
-    />
-  </label>
-);
-
-const CalendarIcon = ({ className }: { className?: string }) => (
-  <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24">
-    <path
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      strokeWidth={2}
-      d="M8 7V3m8 4V3M5 11h14M5 7h14a2 2 0 0 1 2 2v10a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V9a2 2 0 0 1 2-2Z"
-    />
-  </svg>
 );

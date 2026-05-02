@@ -33,6 +33,7 @@ from backend.application.commands.pay_order_from_balance import (
 from backend.application.dto.gateways import Pagination, SortOrder
 from backend.application.dto.gateways.order_gateway import (
     OrderReadModel,
+    OrderSummaryReadModel,
 )
 from backend.application.queries.get_order import GetOrderQueryHandler
 from backend.application.queries.get_order_stats import (
@@ -41,6 +42,7 @@ from backend.application.queries.get_order_stats import (
     GetOrderStatsResponse,
 )
 from backend.application.queries.get_orders import (
+    GetOrderSummaryQuery,
     GetOrdersQuery,
     GetOrdersQueryHandler,
 )
@@ -404,6 +406,31 @@ async def get_all_orders(
             delivery_start_time=delivery_start_time,
             client_name=client_name,
             pagination=Pagination(limit=limit, offset=offset, order=order),
+        )
+    )
+
+
+@router.get(
+    "/summary",
+    status_code=status.HTTP_200_OK,
+    responses={
+        status.HTTP_401_UNAUTHORIZED: {"model": ErrorSchema},
+    },
+    dependencies=[Depends(HTTPBearer(auto_error=False))],
+)
+async def get_order_summary(
+    handler: FromDishka[GetOrdersQueryHandler],
+    start_date: date | None = None,
+    end_date: date | None = None,
+    delivery_start_time: time | None = None,
+    client_name: str | None = None,
+) -> OrderSummaryReadModel:
+    return await handler.summary(
+        GetOrderSummaryQuery(
+            start_date=start_date,
+            end_date=end_date,
+            delivery_start_time=delivery_start_time,
+            client_name=client_name,
         )
     )
 

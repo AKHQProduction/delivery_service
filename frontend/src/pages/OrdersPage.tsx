@@ -11,6 +11,7 @@ import {
   TableSkeleton,
 } from "../components/ui/Skeleton";
 import { ConfirmDeleteModal } from "../components/ui/ConfirmDeleteModal";
+import { DateRangePicker } from "../components/ui/DateRangePicker";
 import { useInfiniteScroll } from "../hooks/useInfiniteScroll";
 import { useOrders } from "../hooks/orders/useOrders";
 import { getOrderById } from "../services/api/ordersApi";
@@ -30,33 +31,6 @@ const formatDate = (value?: string) => {
     month: "2-digit",
     year: "numeric",
   });
-};
-
-const normalizeDateKey = (value?: string) => {
-  if (!value) return "";
-  const isoMatch = value.match(/^(\d{4})-(\d{2})-(\d{2})/);
-  if (isoMatch) return `${isoMatch[1]}-${isoMatch[2]}-${isoMatch[3]}`;
-
-  const localizedMatch = value.match(/^(\d{2})\.(\d{2})\.(\d{4})$/);
-  if (localizedMatch) return `${localizedMatch[3]}-${localizedMatch[2]}-${localizedMatch[1]}`;
-
-  const date = new Date(value);
-  return Number.isNaN(date.getTime()) ? value : formatDateKey(date);
-};
-
-const formatDateKey = (date: Date) => {
-  const year = date.getFullYear();
-  const month = String(date.getMonth() + 1).padStart(2, "0");
-  const day = String(date.getDate()).padStart(2, "0");
-  return `${year}-${month}-${day}`;
-};
-
-const getTodayKey = () => formatDateKey(new Date());
-
-const getTomorrowKey = () => {
-  const tomorrow = new Date();
-  tomorrow.setDate(tomorrow.getDate() + 1);
-  return formatDateKey(tomorrow);
 };
 
 const getOrderTotal = (order: Order) =>
@@ -96,6 +70,7 @@ export const OrdersPage = () => {
   const {
     getOrders,
     orders,
+    summary,
     deleteOrder,
     payFromBalance,
     loadMoreOrders,
@@ -150,7 +125,7 @@ export const OrdersPage = () => {
     }
 
     debounceRef.current = setTimeout(() => {
-      getOrders(searchTerm);
+      getOrders(searchTerm, selectedFilter);
     }, 200);
 
     return () => {
@@ -159,47 +134,28 @@ export const OrdersPage = () => {
       }
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [searchTerm]);
+  }, [searchTerm, selectedFilter]);
 
-  const filteredOrders = useMemo(() => {
-    const todayKey = getTodayKey();
-    const tomorrowKey = getTomorrowKey();
-
-    if (selectedFilter === "today") {
-      return orderList.filter((order) => normalizeDateKey(order.date) === todayKey);
-    }
-
-    if (selectedFilter === "tomorrow") {
-      return orderList.filter((order) => normalizeDateKey(order.date) === tomorrowKey);
-    }
-
-    return orderList;
-  }, [orderList, selectedFilter]);
+  useEffect(() => {
+    if (!hasInitializedSearchRef.current) return;
+    getOrders(searchTerm, selectedFilter);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [startDate, endDate]);
 
   const filterChips = useMemo(() => {
-    const todayKey = getTodayKey();
-    const tomorrowKey = getTomorrowKey();
-    const todayCount = orderList.filter((order) => normalizeDateKey(order.date) === todayKey).length;
-    const tomorrowCount = orderList.filter((order) => normalizeDateKey(order.date) === tomorrowKey).length;
-
     return [
-      { id: "all" as const, label: "Усі", count: orderList.length },
-      { id: "today" as const, label: "Сьогодні", count: todayCount },
-      { id: "tomorrow" as const, label: "Завтра", count: tomorrowCount },
+      { id: "all" as const, label: "Усі", count: summary.total_count },
+      { id: "today" as const, label: "Сьогодні", count: summary.today_count },
+      { id: "tomorrow" as const, label: "Завтра", count: summary.tomorrow_count },
     ];
-  }, [orderList]);
+  }, [summary]);
 
-  const summary = useMemo(() => {
-    const todayKey = getTodayKey();
-    const tomorrowKey = getTomorrowKey();
-    const totalAmount = orderList.reduce((sum, order) => sum + getOrderTotal(order), 0);
-    return {
-      count: orderList.length,
-      todayCount: orderList.filter((order) => normalizeDateKey(order.date) === todayKey).length,
-      tomorrowCount: orderList.filter((order) => normalizeDateKey(order.date) === tomorrowKey).length,
-      totalAmount,
-    };
-  }, [orderList]);
+  const selectedOrderTotal =
+    selectedFilter === "today"
+      ? summary.today_count
+      : selectedFilter === "tomorrow"
+        ? summary.tomorrow_count
+        : summary.total_count;
 
   useEffect(() => {
     if (selectedOrder) {
@@ -207,13 +163,13 @@ export const OrdersPage = () => {
       if (updatedSelection) {
         setSelectedOrder(updatedSelection);
       }
-    } else if (filteredOrders.length > 0) {
-      setSelectedOrder(filteredOrders[0]);
+    } else if (orderList.length > 0) {
+      setSelectedOrder(orderList[0]);
     }
-  }, [filteredOrders, orderList, selectedOrder]);
+  }, [orderList, selectedOrder]);
 
   const refreshOrders = async () => {
-    const refreshedOrders = await getOrders(searchTerm);
+    const refreshedOrders = await getOrders(searchTerm, selectedFilter);
     return refreshedOrders as Order[];
   };
 
@@ -279,15 +235,27 @@ export const OrdersPage = () => {
     : "Створіть перше замовлення для клієнта.";
   const isInitialLoading = loading && orderList.length === 0;
 
+  const handleDateRangeChange = (range: { startDate: string; endDate: string }) => {
+    setSelectedFilter("all");
+    setStartDate(range.startDate);
+    setEndDate(range.endDate);
+  };
+
+  const handleFilterChange = (filter: OrderFilter) => {
+    setSelectedFilter(filter);
+  };
+
   return (
     <div className="min-h-screen bg-slate-50 px-4 pb-28 pt-6 sm:px-6 md:px-8 md:pb-10">
       <div className="flex flex-col gap-4 xl:flex-row xl:items-center xl:justify-between">
         <div className="flex flex-wrap items-center gap-3">
           <h1 className="text-2xl font-semibold leading-8 text-slate-950">Замовлення</h1>
-          <div className="inline-flex h-9 items-center gap-2 rounded-md border border-slate-200 bg-white px-3 text-sm text-slate-600">
-            <CalendarIcon className="h-4 w-4 text-slate-500" />
-            <span>{formatDate(startDate)} - {formatDate(endDate)}</span>
-          </div>
+          <DateRangePicker
+            startDate={startDate}
+            endDate={endDate}
+            onChange={handleDateRangeChange}
+            className="w-64"
+          />
         </div>
 
         <div className="grid grid-cols-2 gap-2 sm:grid-cols-[minmax(0,1fr)_auto_auto] xl:min-w-[760px]">
@@ -318,22 +286,22 @@ export const OrdersPage = () => {
         <SummaryCardsSkeleton />
       ) : (
         <div className="mt-4 grid grid-cols-2 gap-2 md:grid-cols-[repeat(4,minmax(0,1fr))]">
-          <SummaryCard label="Замовлень" value={summary.count.toString()} />
-          <SummaryCard label="Сьогодні" value={summary.todayCount.toString()} tone="success" />
-          <SummaryCard label="Завтра" value={summary.tomorrowCount.toString()} />
-          <SummaryCard label="Сума" value={formatMoney(summary.totalAmount)} />
+          <SummaryCard label="Замовлень" value={summary.total_count.toString()} />
+          <SummaryCard label="Сьогодні" value={summary.today_count.toString()} tone="success" />
+          <SummaryCard label="Завтра" value={summary.tomorrow_count.toString()} />
+          <SummaryCard label="Сума" value={formatMoney(summary.total_amount)} />
         </div>
       )}
 
-      <div className="mt-4 grid grid-cols-2 gap-2 md:grid-cols-[1fr_auto_auto] md:items-end">
-        <div className="col-span-2 flex gap-2 overflow-x-auto pb-1 md:col-span-1">
+      <div className="mt-4">
+        <div className="flex gap-2 overflow-x-auto pb-1">
           {filterChips.map((filter) => {
             const isActive = selectedFilter === filter.id;
             return (
               <button
                 key={filter.id}
                 type="button"
-                onClick={() => setSelectedFilter(filter.id)}
+                onClick={() => handleFilterChange(filter.id)}
                 className={`inline-flex shrink-0 items-center gap-2 rounded-md border px-3 py-2 text-sm leading-5 transition-colors ${
                   isActive
                     ? "border-blue-300 bg-blue-50 text-blue-700"
@@ -349,13 +317,11 @@ export const OrdersPage = () => {
           })}
         </div>
 
-        <DateField label="Від" value={startDate} onChange={setStartDate} onBlur={() => getOrders(searchTerm)} />
-        <DateField label="До" value={endDate} onChange={setEndDate} onBlur={() => getOrders(searchTerm)} />
       </div>
 
       {isInitialLoading ? (
         <OrderLoadingState />
-      ) : filteredOrders.length === 0 ? (
+      ) : orderList.length === 0 ? (
         <OrderEmptyState
           title={emptyTitle}
           description={emptyDescription}
@@ -365,16 +331,16 @@ export const OrdersPage = () => {
         <div className="mt-4 grid items-start gap-4 xl:grid-cols-[minmax(0,1fr)_25rem]">
           <section className="hidden overflow-hidden rounded-lg border border-slate-200 bg-white lg:block">
             <OrdersTable
-              orders={filteredOrders}
+              orders={orderList}
               selectedOrder={selectedOrder}
               onSelect={setSelectedOrder}
               onOpen={handleOpenOrder}
             />
-            <OrdersTableFooter shown={filteredOrders.length} total={orderList.length} />
+            <OrdersTableFooter shown={orderList.length} total={selectedOrderTotal} />
           </section>
 
           <section className="grid grid-cols-1 gap-3 lg:hidden">
-            {filteredOrders.map((order) => (
+            {orderList.map((order) => (
               <OrderCard
                 key={order.order_id}
                 order={order}
@@ -461,29 +427,6 @@ const OrderSearchInput = ({
       className="h-10 w-full rounded-md border border-slate-300 bg-white pl-10 pr-3 text-sm leading-5 text-slate-950 placeholder:text-slate-400 focus:border-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-100"
     />
   </div>
-);
-
-const DateField = ({
-  label,
-  value,
-  onChange,
-  onBlur,
-}: {
-  label: string;
-  value: string;
-  onChange: (value: string) => void;
-  onBlur?: () => void;
-}) => (
-  <label className="grid gap-1 text-xs font-medium text-slate-600">
-    {label}
-    <input
-      type="date"
-      value={value}
-      onChange={(event) => onChange(event.target.value)}
-      onBlur={onBlur}
-      className="h-10 rounded-md border border-slate-300 bg-white px-3 text-sm font-medium text-slate-950 focus:border-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-100"
-    />
-  </label>
 );
 
 const SummaryCard = ({
@@ -785,12 +728,6 @@ const PlusIcon = ({ className }: { className?: string }) => (
 const DocumentIcon = ({ className }: { className?: string }) => (
   <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24">
     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5.586a1 1 0 0 1 .707.293l5.414 5.414A1 1 0 0 1 19 8.414V19a2 2 0 0 1-2 2Z" />
-  </svg>
-);
-
-const CalendarIcon = ({ className }: { className?: string }) => (
-  <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24">
-    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6.75 3v2.25m10.5-2.25v2.25M3.75 8.25h16.5m-15 12h13.5A1.5 1.5 0 0 0 20.25 18.75V6.75a1.5 1.5 0 0 0-1.5-1.5H5.25a1.5 1.5 0 0 0-1.5 1.5v12a1.5 1.5 0 0 0 1.5 1.5Z" />
   </svg>
 );
 

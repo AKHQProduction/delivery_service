@@ -2,6 +2,8 @@ import { useState, useCallback } from "react";
 import { type Order } from "../../types/entities/Order";
 import {
   getAllOrders,
+  getOrderSummary,
+  type OrderSummary,
   createOrder,
   updateOrder,
   deleteOrderById,
@@ -9,6 +11,36 @@ import {
 } from "../../services/api/ordersApi";
 
 const PAGE_SIZE = 20;
+type OrderFilter = "all" | "today" | "tomorrow";
+
+const formatDateKey = (date: Date) => {
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, "0");
+  const day = String(date.getDate()).padStart(2, "0");
+  return `${year}-${month}-${day}`;
+};
+
+const getTodayKey = () => formatDateKey(new Date());
+
+const getTomorrowKey = () => {
+  const tomorrow = new Date();
+  tomorrow.setDate(tomorrow.getDate() + 1);
+  return formatDateKey(tomorrow);
+};
+
+const getListDateRange = (filter: OrderFilter, startDate: string, endDate: string) => {
+  if (filter === "today") {
+    const today = getTodayKey();
+    return { startDate: today, endDate: today };
+  }
+
+  if (filter === "tomorrow") {
+    const tomorrow = getTomorrowKey();
+    return { startDate: tomorrow, endDate: tomorrow };
+  }
+
+  return { startDate, endDate };
+};
 
 export const useOrders = () => {
   const [orders, setOrders] = useState<Order[]>();
@@ -18,6 +50,13 @@ export const useOrders = () => {
   const [hasMore, setHasMore] = useState(true);
   const [offset, setOffset] = useState(0);
   const [currentSearch, setCurrentSearch] = useState("");
+  const [currentFilter, setCurrentFilter] = useState<OrderFilter>("all");
+  const [summary, setSummary] = useState<OrderSummary>({
+    total_count: 0,
+    today_count: 0,
+    tomorrow_count: 0,
+    total_amount: 0,
+  });
 
   const [startDate, setStartDate] = useState(() => {
     const today = new Date();
@@ -29,14 +68,20 @@ export const useOrders = () => {
     return date.toISOString().split("T")[0];
   });
 
-  const getOrders = async (search: string = "") => {
+  const getOrders = async (search: string = "", filter: OrderFilter = "all") => {
     setLoading(true);
     setError(null);
     setCurrentSearch(search);
+    setCurrentFilter(filter);
     setOffset(0);
     try {
-      const fetchedOrders = await getAllOrders(search, startDate, endDate, "", PAGE_SIZE, 0);
+      const listRange = getListDateRange(filter, startDate, endDate);
+      const [fetchedOrders, fetchedSummary] = await Promise.all([
+        getAllOrders(search, listRange.startDate, listRange.endDate, "", PAGE_SIZE, 0),
+        getOrderSummary(search, startDate, endDate, ""),
+      ]);
       setOrders(fetchedOrders);
+      setSummary(fetchedSummary);
       setHasMore(fetchedOrders.length >= PAGE_SIZE);
       setOffset(PAGE_SIZE);
       return fetchedOrders;
@@ -53,10 +98,11 @@ export const useOrders = () => {
 
     setLoadingMore(true);
     try {
+      const listRange = getListDateRange(currentFilter, startDate, endDate);
       const fetchedOrders = await getAllOrders(
         currentSearch,
-        startDate,
-        endDate,
+        listRange.startDate,
+        listRange.endDate,
         "",
         PAGE_SIZE,
         offset,
@@ -69,7 +115,7 @@ export const useOrders = () => {
     } finally {
       setLoadingMore(false);
     }
-  }, [loadingMore, loading, hasMore, offset, currentSearch, startDate, endDate]);
+  }, [loadingMore, loading, hasMore, offset, currentSearch, currentFilter, startDate, endDate]);
 
   const createNewOrder = async (orderData: Record<string, unknown>) => {
     setLoading(true);
@@ -140,6 +186,7 @@ export const useOrders = () => {
 
   return {
     orders,
+    summary,
     loading,
     loadingMore,
     error,

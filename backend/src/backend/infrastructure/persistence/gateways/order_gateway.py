@@ -17,6 +17,7 @@ from backend.application.dto.gateways.order_gateway import (
     OrderItemReadModel,
     OrderReadModel,
     OrderStatsReadModel,
+    OrderSummaryReadModel,
     PaymentMethodStatsReadModel,
     ProductStatsReadModel,
     TimeSlotFilter,
@@ -34,6 +35,7 @@ from backend.application.vars import (
     OrderId,
     ProductId,
     ShopId,
+    today,
 )
 from backend.infrastructure.persistence.tables.categories import Category
 from backend.infrastructure.persistence.tables.clients import Client
@@ -150,6 +152,52 @@ class SQLAlchemyOrderGateway:
         rows = result.scalars().all()
 
         return [self._to_read_model(row) for row in rows]
+
+    async def read_summary(
+        self, filters: GetOrdersFilters
+    ) -> OrderSummaryReadModel:
+        today_date = today()
+        tomorrow_date = today_date + datetime.timedelta(days=1)
+        today_order = case((Order.date == today_date, Order.id))
+        tomorrow_order = case((Order.date == tomorrow_date, Order.id))
+
+        query = (
+            select(
+                func.count(func.distinct(Order.id)).label("total_count"),
+                func.count(func.distinct(today_order)).label("today_count"),
+                func.count(func.distinct(tomorrow_order)).label(
+                    "tomorrow_count"
+                ),
+                func.coalesce(
+                    func.sum(OrderItem.quantity * OrderItem.price_per_item),
+                    0,
+                ).label("total_amount"),
+            )
+            .select_from(Order)
+            .outerjoin(OrderItem, Order.id == OrderItem.order_id)
+        )
+
+        query = self._apply_order_filters(query, filters)
+
+        if filters.delivery_start_time:
+            query = query.where(
+                Order.delivery_start_time == filters.delivery_start_time
+            )
+        if filters.client_name:
+            query = query.join(Client)
+            query = query.where(
+                Client.full_name.ilike(f"%{escape_like(filters.client_name)}%")
+            )
+
+        result = await self._session.execute(query)
+        row = result.one()
+
+        return OrderSummaryReadModel(
+            total_count=int(row.total_count or 0),
+            today_count=int(row.today_count or 0),
+            tomorrow_count=int(row.tomorrow_count or 0),
+            total_amount=int(row.total_amount or 0),
+        )
 
     def _to_read_model(self, row: Order) -> OrderReadModel:
         time_slot = (

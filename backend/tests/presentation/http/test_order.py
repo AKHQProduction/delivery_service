@@ -14,6 +14,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from backend.application.dto.coordinates import CoordinatesDTO
 from backend.application.vars import (
     ShopRole,
+    today,
 )
 from backend.infrastructure.persistence.tables.clients import (
     Client,
@@ -2170,6 +2171,107 @@ async def test_get_all_orders_with_date_filter(
     assert all(
         order["date"] == tomorrow.strftime("%d.%m.%Y") for order in orders
     )
+
+
+@pytest.mark.asyncio()
+async def test_get_order_summary_counts_all_matching_orders(
+    http_client: AsyncClient,
+    session: AsyncSession,
+    customer_headers: Callable[[int], dict[str, Any]],
+    setup_full_test_user_with_shop,
+    setup_test_client,
+    setup_test_order,
+) -> None:
+    telegram_id = 5310
+    _, shop_id = await setup_full_test_user_with_shop(telegram_id=telegram_id)
+    client_id = await setup_test_client(shop_id=shop_id)
+    current_date = today()
+    tomorrow = current_date + timedelta(days=1)
+
+    await setup_test_order(
+        shop_id=shop_id,
+        client_id=client_id,
+        delivery_date=current_date,
+        items=[
+            {"name": "Water", "quantity": 2, "price_per_item": Decimal(100)}
+        ],
+    )
+    await setup_test_order(
+        shop_id=shop_id,
+        client_id=client_id,
+        delivery_date=tomorrow,
+        items=[
+            {"name": "Water", "quantity": 3, "price_per_item": Decimal(50)}
+        ],
+    )
+    await setup_test_order(
+        shop_id=shop_id,
+        client_id=client_id,
+        delivery_date=tomorrow + timedelta(days=1),
+    )
+    await session.commit()
+
+    response = await http_client.get(
+        url=f"{BASE_URL}/summary",
+        headers=customer_headers(telegram_id),
+        params={
+            "start_date": current_date.isoformat(),
+            "end_date": tomorrow.isoformat(),
+        },
+    )
+
+    assert response.status_code == status.HTTP_200_OK
+    data = response.json()
+    assert data["total_count"] == 2
+    assert data["today_count"] == 1
+    assert data["tomorrow_count"] == 1
+    assert data["total_amount"] == 350
+
+
+@pytest.mark.asyncio()
+async def test_get_order_summary_ignores_pagination(
+    http_client: AsyncClient,
+    session: AsyncSession,
+    customer_headers: Callable[[int], dict[str, Any]],
+    setup_full_test_user_with_shop,
+    setup_test_client,
+    setup_test_order,
+) -> None:
+    telegram_id = 5311
+    _, shop_id = await setup_full_test_user_with_shop(telegram_id=telegram_id)
+    client_id = await setup_test_client(shop_id=shop_id)
+    delivery_date = today()
+
+    for _ in range(25):
+        await setup_test_order(
+            shop_id=shop_id,
+            client_id=client_id,
+            delivery_date=delivery_date,
+        )
+    await session.commit()
+
+    list_response = await http_client.get(
+        url=f"{BASE_URL}/all",
+        headers=customer_headers(telegram_id),
+        params={
+            "start_date": delivery_date.isoformat(),
+            "end_date": delivery_date.isoformat(),
+            "limit": 20,
+        },
+    )
+    summary_response = await http_client.get(
+        url=f"{BASE_URL}/summary",
+        headers=customer_headers(telegram_id),
+        params={
+            "start_date": delivery_date.isoformat(),
+            "end_date": delivery_date.isoformat(),
+        },
+    )
+
+    assert list_response.status_code == status.HTTP_200_OK
+    assert summary_response.status_code == status.HTTP_200_OK
+    assert len(list_response.json()) == 20
+    assert summary_response.json()["total_count"] == 25
 
 
 @pytest.mark.asyncio()
