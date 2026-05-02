@@ -16,3 +16,16 @@ class ProductReadModel:
 class GetProductsFilters:
     shop_id: ShopId | None = None
     name: str | None = None
+    category_id: CategoryId | None = None
+
+
+@dataclass(frozen=True)
+class ProductCategoryCountReadModel:
+    category_id: CategoryId | None
+    count: int
+
+
+@dataclass(frozen=True)
+class ProductSummaryReadModel:
+    total_count: int
+    category_counts: list[ProductCategoryCountReadModel]

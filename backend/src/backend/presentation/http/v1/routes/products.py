@@ -22,9 +22,11 @@ from backend.application.commands.edit_product import (
 from backend.application.dto.gateways import Pagination, SortOrder
 from backend.application.dto.gateways.product_gateway import (
     ProductReadModel,
+    ProductSummaryReadModel,
 )
 from backend.application.queries.get_product import GetProductQueryHandler
 from backend.application.queries.get_products import (
+    GetProductSummaryQuery,
     GetProductsQuery,
     GetProductsQueryHandler,
 )
@@ -157,6 +159,7 @@ async def delete_product(
 async def get_all_products(
     handler: FromDishka[GetProductsQueryHandler],
     name: str | None = None,
+    category_id: CategoryId | None = None,
     limit: int = 100,
     offset: int = 0,
     order: SortOrder = SortOrder.ASC,
@@ -164,9 +167,25 @@ async def get_all_products(
     return await handler.handle(
         GetProductsQuery(
             name=name,
+            category_id=category_id,
             pagination=Pagination(limit=limit, offset=offset, order=order),
         )
     )
+
+
+@router.get(
+    "/summary",
+    status_code=status.HTTP_200_OK,
+    responses={
+        status.HTTP_401_UNAUTHORIZED: {"model": ErrorSchema},
+    },
+    dependencies=[Depends(HTTPBearer(auto_error=False))],
+)
+async def get_product_summary(
+    handler: FromDishka[GetProductsQueryHandler],
+    name: str | None = None,
+) -> ProductSummaryReadModel:
+    return await handler.summary(GetProductSummaryQuery(name=name))
 
 
 @router.get(

@@ -36,6 +36,12 @@ export interface PreviewResult {
 
 export type ColumnMapping = Record<number, string>;
 
+export interface ClientSummary {
+  total_count: number;
+  debt_count: number;
+  positive_balance_count: number;
+}
+
 export const createNewClient = async (
   body: CreateClientPayload,
   confirmDuplicate: boolean = false,
@@ -112,6 +118,8 @@ export const getAllClients = async (
   clientsLimit: number,
   offset: number,
   order: string,
+  hasDebt?: boolean,
+  hasPositiveBalance?: boolean,
 ) => {
   const params: Record<string, string | number> = {
     limit: clientsLimit,
@@ -121,7 +129,24 @@ export const getAllClients = async (
 
   if (full_name) params.full_name = full_name;
   if (phone) params.phone = phone;
+  if (hasDebt !== undefined) params.has_debt = String(hasDebt);
+  if (hasPositiveBalance !== undefined) {
+    params.has_positive_balance = String(hasPositiveBalance);
+  }
 
   const response = await api.get(`v1/clients/all`, { params });
+  return response.data;
+};
+
+export const getClientSummary = async (
+  full_name: string,
+  phone: string,
+): Promise<ClientSummary> => {
+  const params: Record<string, string> = {};
+
+  if (full_name) params.full_name = full_name;
+  if (phone) params.phone = phone;
+
+  const response = await api.get(`v1/clients/summary`, { params });
   return response.data;
 };

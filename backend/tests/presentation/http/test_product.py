@@ -345,6 +345,101 @@ async def test_get_all_products_with_name_filter(
 
 
 @pytest.mark.asyncio()
+async def test_get_all_products_with_category_filter(
+    http_client: AsyncClient,
+    session: AsyncSession,
+    customer_headers: Callable[[int], dict[str, Any]],
+    setup_full_test_user_with_shop,
+    setup_test_category,
+) -> None:
+    telegram_id = 1000
+    _, shop_id = await setup_full_test_user_with_shop(telegram_id=telegram_id)
+    water_category_id = await setup_test_category(
+        shop_id=shop_id, name="Water"
+    )
+    soda_category_id = await setup_test_category(shop_id=shop_id, name="Soda")
+
+    for name, category_id in [
+        ("Water Bottle", water_category_id),
+        ("Soda Can", soda_category_id),
+        ("No Category", None),
+    ]:
+        await session.execute(
+            insert(Product).values(
+                id=ProductId(uuid.uuid4()),
+                shop_id=shop_id,
+                name=name,
+                price=100,
+                category_id=category_id,
+            )
+        )
+    await session.commit()
+
+    response = await http_client.get(
+        url=BASE_URL + "/all",
+        headers=customer_headers(telegram_id),
+        params={"category_id": str(water_category_id)},
+    )
+
+    assert response.status_code == status.HTTP_200_OK
+    result = response.json()
+    assert len(result) == 1
+    assert result[0]["name"] == "Water Bottle"
+    assert result[0]["category_id"] == str(water_category_id)
+
+
+@pytest.mark.asyncio()
+async def test_get_product_summary_counts_all_matching_products(
+    http_client: AsyncClient,
+    session: AsyncSession,
+    customer_headers: Callable[[int], dict[str, Any]],
+    setup_full_test_user_with_shop,
+    setup_test_category,
+) -> None:
+    telegram_id = 1000
+    _, shop_id = await setup_full_test_user_with_shop(telegram_id=telegram_id)
+    water_category_id = await setup_test_category(
+        shop_id=shop_id, name="Water"
+    )
+    soda_category_id = await setup_test_category(shop_id=shop_id, name="Soda")
+
+    for name, category_id in [
+        ("Water Bottle", water_category_id),
+        ("Water Gallon", water_category_id),
+        ("Soda Can", soda_category_id),
+        ("Water Without Category", None),
+    ]:
+        await session.execute(
+            insert(Product).values(
+                id=ProductId(uuid.uuid4()),
+                shop_id=shop_id,
+                name=name,
+                price=100,
+                category_id=category_id,
+            )
+        )
+    await session.commit()
+
+    response = await http_client.get(
+        url=BASE_URL + "/summary",
+        headers=customer_headers(telegram_id),
+        params={"name": "Water"},
+    )
+
+    assert response.status_code == status.HTTP_200_OK
+    result = response.json()
+    counts = {
+        item["category_id"]: item["count"]
+        for item in result["category_counts"]
+    }
+
+    assert result["total_count"] == 3
+    assert counts[str(water_category_id)] == 2
+    assert counts[None] == 1
+    assert str(soda_category_id) not in counts
+
+
+@pytest.mark.asyncio()
 async def test_get_all_products_with_pagination(
     http_client: AsyncClient,
     session: AsyncSession,

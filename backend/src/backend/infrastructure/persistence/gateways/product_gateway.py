@@ -1,6 +1,6 @@
 from uuid import UUID
 
-from sqlalchemy import select
+from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 from uuid_utils.compat import uuid7
@@ -8,7 +8,9 @@ from uuid_utils.compat import uuid7
 from backend.application.dto.gateways import Pagination
 from backend.application.dto.gateways.product_gateway import (
     GetProductsFilters,
+    ProductCategoryCountReadModel,
     ProductReadModel,
+    ProductSummaryReadModel,
 )
 from backend.application.vars import CategoryId, ProductId, ShopId
 from backend.infrastructure.persistence.tables import Product
@@ -76,6 +78,8 @@ class SQLAlchemyProductGateway:
             query = query.where(
                 Product.name.ilike(f"%{escape_like(filters.name)}%")
             )
+        if filters.category_id:
+            query = query.where(Product.category_id == filters.category_id)
 
         query = apply_sorting(query, Product.name, Product.id, pagination)
 
@@ -94,3 +98,42 @@ class SQLAlchemyProductGateway:
             )
             for row in rows
         ]
+
+    async def read_summary(
+        self, filters: GetProductsFilters
+    ) -> ProductSummaryReadModel:
+        total_query = select(func.count()).select_from(Product)
+        counts_query = (
+            select(
+                Product.category_id,
+                func.count(Product.id).label("product_count"),
+            )
+            .select_from(Product)
+            .group_by(Product.category_id)
+        )
+
+        if filters.shop_id:
+            total_query = total_query.where(Product.shop_id == filters.shop_id)
+            counts_query = counts_query.where(
+                Product.shop_id == filters.shop_id
+            )
+        if filters.name:
+            name_filter = Product.name.ilike(f"%{escape_like(filters.name)}%")
+            total_query = total_query.where(name_filter)
+            counts_query = counts_query.where(name_filter)
+
+        total_result = await self._session.execute(total_query)
+        counts_result = await self._session.execute(counts_query)
+
+        return ProductSummaryReadModel(
+            total_count=total_result.scalar_one(),
+            category_counts=[
+                ProductCategoryCountReadModel(
+                    category_id=CategoryId(row.category_id)
+                    if row.category_id
+                    else None,
+                    count=int(row.product_count),
+                )
+                for row in counts_result.all()
+            ],
+        )

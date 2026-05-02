@@ -12,7 +12,7 @@ import { useInfiniteScroll } from "../hooks/useInfiniteScroll";
 import { getClientById } from "../services/api/clientApi";
 import { type Client } from "../types/entities/Client";
 
-type ClientFilter = "all" | "active" | "debt" | "inactive";
+type ClientFilter = "all" | "debt" | "positive";
 
 const formatBalance = (balance: Client["balance"] | null | undefined) => {
   const numericBalance = Number(balance ?? 0);
@@ -54,6 +54,7 @@ export const ClientsPage = () => {
   const [selectedFilter, setSelectedFilter] = useState<ClientFilter>("all");
   const {
     clients,
+    summary,
     getClients,
     deleteClient,
     loadMoreClients,
@@ -75,7 +76,7 @@ export const ClientsPage = () => {
     initialLoadRef.current = true;
 
     const initClients = async () => {
-      await getClients();
+      await getClients("", selectedFilter);
 
       const openClientId = sessionStorage.getItem("openClientId");
       if (openClientId) {
@@ -99,7 +100,7 @@ export const ClientsPage = () => {
     }
 
     debounceRef.current = setTimeout(() => {
-      getClients(searchTerm);
+      getClients(searchTerm, selectedFilter);
     }, 300);
 
     return () => {
@@ -108,39 +109,27 @@ export const ClientsPage = () => {
       }
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [searchTerm]);
+  }, [searchTerm, selectedFilter]);
 
   const filterChips = useMemo(() => {
-    const debtCount = clients.filter((client) => Number(client.balance ?? 0) < 0).length;
-    const activeCount = clients.filter((client) => (client.phones?.length ?? 0) > 0).length;
-
     return [
-      { id: "all" as const, label: "Усі", count: clients.length },
-      { id: "active" as const, label: "Активні", count: activeCount },
-      { id: "debt" as const, label: "З боргом", count: debtCount },
+      { id: "all" as const, label: "Усі", count: summary.total_count },
+      { id: "debt" as const, label: "З боргом", count: summary.debt_count },
       {
-        id: "inactive" as const,
-        label: "Неактивні",
-        count: Math.max(clients.length - activeCount, 0),
+        id: "positive" as const,
+        label: "З балансом",
+        count: summary.positive_balance_count,
       },
     ];
-  }, [clients]);
+  }, [summary]);
 
-  const visibleClients = useMemo(() => {
-    if (selectedFilter === "debt") {
-      return clients.filter((client) => Number(client.balance ?? 0) < 0);
-    }
-
-    if (selectedFilter === "active") {
-      return clients.filter((client) => (client.phones?.length ?? 0) > 0);
-    }
-
-    if (selectedFilter === "inactive") {
-      return clients.filter((client) => (client.phones?.length ?? 0) === 0);
-    }
-
-    return clients;
-  }, [clients, selectedFilter]);
+  const visibleClients = clients;
+  const selectedClientTotal =
+    selectedFilter === "debt"
+      ? summary.debt_count
+      : selectedFilter === "positive"
+        ? summary.positive_balance_count
+        : summary.total_count;
 
   useEffect(() => {
     if (selectedClient) {
@@ -165,7 +154,7 @@ export const ClientsPage = () => {
   };
 
   const handleSave = async () => {
-    const updatedClients = await getClients(searchTerm);
+    const updatedClients = await getClients(searchTerm, selectedFilter);
     if (selectedClient) {
       const updated = updatedClients.find((client: Client) => client.client_id === selectedClient.client_id);
       if (updated) {
@@ -176,7 +165,7 @@ export const ClientsPage = () => {
 
   const handleClientCreated = async (client?: Client) => {
     setIsAddModalOpen(false);
-    const refreshedClients = await getClients(searchTerm);
+    const refreshedClients = await getClients(searchTerm, selectedFilter);
     const createdClient = client?.client_id
       ? refreshedClients.find((item: Client) => item.client_id === client.client_id)
       : null;
@@ -197,7 +186,7 @@ export const ClientsPage = () => {
       setIsModalOpen(false);
     }
     setClientPendingDelete(null);
-    await getClients(searchTerm);
+    await getClients(searchTerm, selectedFilter);
   };
 
   const emptyTitle = searchTerm ? "Клієнтів не знайдено" : "Клієнтів поки немає";
@@ -211,7 +200,7 @@ export const ClientsPage = () => {
         <div className="flex items-center gap-2">
           <h1 className="text-2xl font-semibold leading-8 text-slate-950">Клієнти</h1>
           <span className="rounded bg-slate-100 px-2 py-1 text-sm font-medium leading-5 text-slate-500">
-            {clients.length}
+            {selectedClientTotal}
           </span>
         </div>
 
@@ -284,7 +273,7 @@ export const ClientsPage = () => {
               selectedClient={selectedClient}
               onSelect={setSelectedClient}
             />
-            <ClientTableFooter shown={visibleClients.length} total={clients.length} />
+            <ClientTableFooter shown={visibleClients.length} total={selectedClientTotal} />
           </section>
 
           <section className="grid grid-cols-1 gap-3 lg:hidden">

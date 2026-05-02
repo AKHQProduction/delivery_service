@@ -43,9 +43,11 @@ from backend.application.dto.coordinates import CoordinatesDTO
 from backend.application.dto.gateways import Pagination, SortOrder
 from backend.application.dto.gateways.client_gateway import (
     ClientReadModel,
+    ClientSummaryReadModel,
 )
 from backend.application.queries.get_client import GetClientQueryHandler
 from backend.application.queries.get_clients import (
+    GetClientSummaryQuery,
     GetClientsQuery,
     GetClientsQueryHandler,
 )
@@ -489,6 +491,8 @@ async def get_all_clients(
     handler: FromDishka[GetClientsQueryHandler],
     full_name: str | None = None,
     phone: str | None = None,
+    has_debt: bool | None = None,
+    has_positive_balance: bool | None = None,
     limit: int = 100,
     offset: int = 0,
     order: SortOrder = SortOrder.ASC,
@@ -497,8 +501,28 @@ async def get_all_clients(
         GetClientsQuery(
             full_name=full_name,
             phone=phone,
+            has_debt=has_debt,
+            has_positive_balance=has_positive_balance,
             pagination=Pagination(limit=limit, offset=offset, order=order),
         )
+    )
+
+
+@router.get(
+    "/summary",
+    status_code=status.HTTP_200_OK,
+    responses={
+        status.HTTP_401_UNAUTHORIZED: {"model": ErrorSchema},
+    },
+    dependencies=[Depends(HTTPBearer(auto_error=False))],
+)
+async def get_client_summary(
+    handler: FromDishka[GetClientsQueryHandler],
+    full_name: str | None = None,
+    phone: str | None = None,
+) -> ClientSummaryReadModel:
+    return await handler.summary(
+        GetClientSummaryQuery(full_name=full_name, phone=phone)
     )
 
 

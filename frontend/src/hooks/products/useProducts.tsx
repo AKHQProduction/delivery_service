@@ -2,8 +2,10 @@ import { useState, useCallback } from "react";
 import {
   createNewProduct,
   getAllProducts,
+  getProductSummary,
   deleteProductById,
   updateExistingProductById,
+  type ProductSummary,
 } from "../../services/api/productApi";
 import { type Product } from "../../types/entities/Product";
 
@@ -30,6 +32,11 @@ export const useProducts = () => {
   const [hasMore, setHasMore] = useState<boolean>(true);
   const [offset, setOffset] = useState<number>(0);
   const [currentSearch, setCurrentSearch] = useState<string>("");
+  const [currentCategoryId, setCurrentCategoryId] = useState<string>("all");
+  const [summary, setSummary] = useState<ProductSummary>({
+    total_count: 0,
+    category_counts: [],
+  });
 
   const addProduct = async (name: string, price: number, category?: string) => {
     setLoading(true);
@@ -45,14 +52,19 @@ export const useProducts = () => {
     }
   };
 
-  const getProducts = async (search: string = "") => {
+  const getProducts = async (search: string = "", categoryId = "all") => {
     setLoading(true);
     setError(null);
     setCurrentSearch(search);
+    setCurrentCategoryId(categoryId);
     setOffset(0);
     try {
-      const fetchedProducts = (await getAllProducts(search, PAGE_SIZE, 0, "ASC")) as Product[];
+      const [fetchedProducts, fetchedSummary] = await Promise.all([
+        getAllProducts(search, PAGE_SIZE, 0, "ASC", categoryId) as Promise<Product[]>,
+        getProductSummary(search),
+      ]);
       setProducts(fetchedProducts);
+      setSummary(fetchedSummary);
       setHasMore(fetchedProducts.length >= PAGE_SIZE);
       setOffset(PAGE_SIZE);
       return fetchedProducts;
@@ -69,7 +81,13 @@ export const useProducts = () => {
 
     setLoadingMore(true);
     try {
-      const fetchedProducts = await getAllProducts(currentSearch, PAGE_SIZE, offset, "ASC");
+      const fetchedProducts = await getAllProducts(
+        currentSearch,
+        PAGE_SIZE,
+        offset,
+        "ASC",
+        currentCategoryId,
+      );
       setProducts((prev) => [...prev, ...fetchedProducts]);
       setHasMore(fetchedProducts.length >= PAGE_SIZE);
       setOffset((prev) => prev + PAGE_SIZE);
@@ -78,7 +96,7 @@ export const useProducts = () => {
     } finally {
       setLoadingMore(false);
     }
-  }, [loadingMore, loading, hasMore, offset, currentSearch]);
+  }, [loadingMore, loading, hasMore, offset, currentSearch, currentCategoryId]);
 
   const deleteProduct = async (productId: string) => {
     setLoading(true);
@@ -109,11 +127,14 @@ export const useProducts = () => {
       );
     } catch {
       setError("Не вдалося оновити товар.");
+    } finally {
+      setLoading(false);
     }
   };
 
   return {
     products,
+    summary,
     addProduct,
     getProducts,
     loadMoreProducts,

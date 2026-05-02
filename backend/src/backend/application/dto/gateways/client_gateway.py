@@ -71,3 +71,12 @@ class GetClientsFilters:
     shop_id: ShopId | None = None
     full_name: str | None = None
     phone: str | None = None
+    has_debt: bool | None = None
+    has_positive_balance: bool | None = None
+
+
+@dataclass(frozen=True)
+class ClientSummaryReadModel:
+    total_count: int
+    debt_count: int
+    positive_balance_count: int

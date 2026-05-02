@@ -847,6 +847,133 @@ async def test_get_all_clients_filter_by_phone(
 
 
 @pytest.mark.asyncio()
+async def test_get_all_clients_filter_by_debt(
+    http_client: AsyncClient,
+    session: AsyncSession,
+    customer_headers: Callable[[int], dict[str, Any]],
+    setup_full_test_user_with_shop,
+    setup_test_client,
+) -> None:
+    telegram_id = 2107
+    _, shop_id = await setup_full_test_user_with_shop(telegram_id=telegram_id)
+
+    await setup_test_client(
+        shop_id=shop_id,
+        full_name="Анна Борг",
+        balance=Decimal("-14.50"),
+    )
+    await setup_test_client(
+        shop_id=shop_id,
+        full_name="Борис Без Боргу",
+        balance=Decimal(0),
+    )
+    await session.commit()
+
+    response = await http_client.get(
+        url=f"{BASE_URL}/all",
+        headers=customer_headers(telegram_id),
+        params={"has_debt": "true"},
+    )
+
+    assert response.status_code == status.HTTP_200_OK
+    data = response.json()
+    assert len(data) == 1
+    assert data[0]["full_name"] == "Анна Борг"
+    assert data[0]["balance"] == -14.5
+
+
+@pytest.mark.asyncio()
+async def test_get_all_clients_filter_by_positive_balance(
+    http_client: AsyncClient,
+    session: AsyncSession,
+    customer_headers: Callable[[int], dict[str, Any]],
+    setup_full_test_user_with_shop,
+    setup_test_client,
+) -> None:
+    telegram_id = 2109
+    _, shop_id = await setup_full_test_user_with_shop(telegram_id=telegram_id)
+
+    await setup_test_client(
+        shop_id=shop_id,
+        full_name="Анна Баланс",
+        balance=Decimal("25.50"),
+    )
+    await setup_test_client(
+        shop_id=shop_id,
+        full_name="Борис Нуль",
+        balance=Decimal(0),
+    )
+    await setup_test_client(
+        shop_id=shop_id,
+        full_name="Віктор Борг",
+        balance=Decimal(-10),
+    )
+    await session.commit()
+
+    response = await http_client.get(
+        url=f"{BASE_URL}/all",
+        headers=customer_headers(telegram_id),
+        params={"has_positive_balance": "true"},
+    )
+
+    assert response.status_code == status.HTTP_200_OK
+    data = response.json()
+    assert len(data) == 1
+    assert data[0]["full_name"] == "Анна Баланс"
+    assert data[0]["balance"] == 25.5
+
+
+@pytest.mark.asyncio()
+async def test_get_client_summary_counts_all_matching_clients(
+    http_client: AsyncClient,
+    session: AsyncSession,
+    customer_headers: Callable[[int], dict[str, Any]],
+    setup_full_test_user_with_shop,
+    setup_test_client,
+) -> None:
+    telegram_id = 2108
+    _, shop_id = await setup_full_test_user_with_shop(telegram_id=telegram_id)
+
+    await setup_test_client(
+        shop_id=shop_id,
+        full_name="Анна Борг",
+        balance=Decimal("-14.50"),
+        phones=["+380501111111"],
+    )
+    await setup_test_client(
+        shop_id=shop_id,
+        full_name="Анна Нуль",
+        balance=Decimal(0),
+        phones=["+380502222222"],
+    )
+    await setup_test_client(
+        shop_id=shop_id,
+        full_name="Анна Баланс",
+        balance=Decimal("12.75"),
+        phones=["+380504444444"],
+    )
+    await setup_test_client(
+        shop_id=shop_id,
+        full_name="Борис Борг",
+        balance=Decimal(-20),
+        phones=["+380503333333"],
+    )
+    await session.commit()
+
+    response = await http_client.get(
+        url=f"{BASE_URL}/summary",
+        headers=customer_headers(telegram_id),
+        params={"full_name": "Анна"},
+    )
+
+    assert response.status_code == status.HTTP_200_OK
+    data = response.json()
+    assert data["total_count"] == 3
+    assert data["debt_count"] == 1
+    assert data["positive_balance_count"] == 1
+
+
+@pytest.mark.asyncio()
 async def test_get_all_clients_with_pagination(
     http_client: AsyncClient,
     session: AsyncSession,

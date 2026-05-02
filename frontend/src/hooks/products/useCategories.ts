@@ -12,6 +12,18 @@ interface Category {
   product_count?: number;
 }
 
+const isCategory = (value: unknown): value is Category => {
+  if (!value || typeof value !== "object") return false;
+
+  const category = value as Partial<Category>;
+  return typeof category.category_id === "string" && typeof category.name === "string";
+};
+
+const normalizeCategories = (value: unknown): Category[] => {
+  if (!Array.isArray(value)) return [];
+  return value.filter(isCategory);
+};
+
 export const useCategories = () => {
   const [categories, setCategories] = useState<Category[]>([]);
   const [loading, setLoading] = useState(false);
@@ -31,7 +43,7 @@ export const useCategories = () => {
       setError(null);
       try {
         const response = await getAllCategories(searchName, limit, offset, order);
-        const fetchedCategories = response.categories || response;
+        const fetchedCategories = normalizeCategories(response.categories || response);
         setCategories(fetchedCategories);
         hasFetchedRef.current = true;
         console.log("Fetched categories:", fetchedCategories);
@@ -53,8 +65,11 @@ export const useCategories = () => {
       setError(null);
       try {
         const newCategory = await createCategory(name);
-        // Optimistically update the state
-        setCategories((prev) => [...prev, newCategory]);
+        if (isCategory(newCategory)) {
+          setCategories((prev) => [...prev, newCategory]);
+        } else if (hasFetchedRef.current) {
+          await fetchCategories();
+        }
         return newCategory;
       } catch (err: unknown) {
         const message = err instanceof Error ? err.message : "Failed to create category";

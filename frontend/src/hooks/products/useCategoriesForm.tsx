@@ -11,6 +11,9 @@ export const useCategoriesForm = (initialCategoryId?: string | null) => {
     initialCategoryId || "EMPTY",
   );
   const [isCategoryModalOpen, setIsCategoryModalOpen] = useState(false);
+  const validCategories = categories.filter(
+    (cat) => cat && typeof cat.category_id === "string" && typeof cat.name === "string",
+  );
 
   useEffect(() => {
     const loadCategories = async () => {
@@ -32,14 +35,14 @@ export const useCategoriesForm = (initialCategoryId?: string | null) => {
       value: "EMPTY",
       label: "Без категорії",
     },
-    ...categories.map((cat) => ({
+    ...validCategories.map((cat) => ({
       value: cat.category_id,
       label: `${cat.name}`,
     })),
   ];
 
   // Transform categories for management modal (excluding "No Category")
-  const transformedCategories = categories.map((cat) => ({
+  const transformedCategories = validCategories.map((cat) => ({
     id: cat.category_id,
     name: cat.name,
     emoji: "📁",

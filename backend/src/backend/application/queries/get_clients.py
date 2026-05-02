@@ -3,6 +3,7 @@ from dataclasses import dataclass
 from backend.application.dto.gateways import Pagination
 from backend.application.dto.gateways.client_gateway import (
     ClientReadModel,
+    ClientSummaryReadModel,
     GetClientsFilters,
 )
 from backend.infrastructure.idp import IdentityProvider
@@ -12,6 +13,14 @@ from backend.infrastructure.persistence.gateways import SQLAlchemyClientGateway
 @dataclass(frozen=True)
 class GetClientsQuery:
     pagination: Pagination
+    full_name: str | None = None
+    phone: str | None = None
+    has_debt: bool | None = None
+    has_positive_balance: bool | None = None
+
+
+@dataclass(frozen=True)
+class GetClientSummaryQuery:
     full_name: str | None = None
     phone: str | None = None
 
@@ -33,6 +42,21 @@ class GetClientsQueryHandler:
                 shop_id=current_user.shop_id,
                 full_name=query.full_name,
                 phone=query.phone,
+                has_debt=query.has_debt,
+                has_positive_balance=query.has_positive_balance,
             ),
             pagination=query.pagination,
+        )
+
+    async def summary(
+        self, query: GetClientSummaryQuery
+    ) -> ClientSummaryReadModel:
+        current_user = await self._idp.current_user()
+
+        return await self._client_gateway.read_summary(
+            filters=GetClientsFilters(
+                shop_id=current_user.shop_id,
+                full_name=query.full_name,
+                phone=query.phone,
+            ),
         )

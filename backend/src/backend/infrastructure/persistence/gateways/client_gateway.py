@@ -25,6 +25,7 @@ from backend.application.dto.gateways import Pagination, SortOrder
 from backend.application.dto.gateways.client_gateway import (
     AddressDTO,
     ClientReadModel,
+    ClientSummaryReadModel,
     DuplicatePhoneEntry,
     DuplicatePhoneOwner,
     GetClientsFilters,
@@ -166,6 +167,10 @@ class SQLAlchemyClientGateway:
 
         if filters.shop_id:
             query = query.where(Client.shop_id == filters.shop_id)
+        if filters.has_debt is True:
+            query = query.where(Client.balance < 0)
+        if filters.has_positive_balance is True:
+            query = query.where(Client.balance > 0)
 
         search_conditions: list[ColumnElement[bool]] = []
         if filters.full_name:
@@ -209,6 +214,52 @@ class SQLAlchemyClientGateway:
         clients = result.scalars().all()
 
         return [self._to_read_model(client) for client in clients]
+
+    async def read_summary(
+        self, filters: GetClientsFilters
+    ) -> ClientSummaryReadModel:
+        query = select(
+            func.count(Client.id).label("total_count"),
+            func.coalesce(
+                func.sum(case((Client.balance < 0, 1), else_=0)),
+                0,
+            ).label("debt_count"),
+            func.coalesce(
+                func.sum(case((Client.balance > 0, 1), else_=0)),
+                0,
+            ).label("positive_balance_count"),
+        ).select_from(Client)
+
+        if filters.shop_id:
+            query = query.where(Client.shop_id == filters.shop_id)
+
+        search_conditions: list[ColumnElement[bool]] = []
+        if filters.full_name:
+            search_conditions.append(
+                Client.full_name.ilike(f"%{escape_like(filters.full_name)}%")
+            )
+        if filters.phone:
+            phone_exists = exists(
+                select(ClientPhone.id).where(
+                    ClientPhone.client_id == Client.id,
+                    ClientPhone.number.ilike(
+                        f"%{escape_like(filters.phone)}%"
+                    ),
+                )
+            )
+            search_conditions.append(phone_exists)
+
+        if search_conditions:
+            query = query.where(or_(*search_conditions))
+
+        result = await self._session.execute(query)
+        row = result.one()
+
+        return ClientSummaryReadModel(
+            total_count=int(row.total_count or 0),
+            debt_count=int(row.debt_count or 0),
+            positive_balance_count=int(row.positive_balance_count or 0),
+        )
 
     @staticmethod
     def _to_read_model(client: Client) -> ClientReadModel:

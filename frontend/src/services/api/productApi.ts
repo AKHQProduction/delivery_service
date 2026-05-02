@@ -1,5 +1,13 @@
 import api from "../../config/api.config";
 
+export interface ProductSummary {
+  total_count: number;
+  category_counts: Array<{
+    category_id: string | null;
+    count: number;
+  }>;
+}
+
 export const createNewProduct = async (
   productName: string,
   productPrice: number,
@@ -42,6 +50,7 @@ export const getAllProducts = async (
   productLimit: number,
   offset: number,
   order: string,
+  categoryId?: string,
 ) => {
   const params: Record<string, string | number> = {
     limit: productLimit,
@@ -50,8 +59,19 @@ export const getAllProducts = async (
   };
 
   if (productName) params.name = productName;
+  if (categoryId && categoryId !== "all") params.category_id = categoryId;
 
   const response = await api.get(`v1/products/all`, { params });
+  return response.data;
+};
+
+export const getProductSummary = async (
+  productName: string,
+): Promise<ProductSummary> => {
+  const params: Record<string, string> = {};
+  if (productName) params.name = productName;
+
+  const response = await api.get(`v1/products/summary`, { params });
   return response.data;
 };
 

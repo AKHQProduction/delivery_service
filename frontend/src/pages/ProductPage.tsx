@@ -55,6 +55,7 @@ export const ProductPage = () => {
     deleteProduct,
     updateProduct,
     products,
+    summary,
     loadMoreProducts,
     loading,
     loadingMore,
@@ -82,7 +83,7 @@ export const ProductPage = () => {
     initialLoadRef.current = true;
 
     const initProducts = async () => {
-      await getProducts();
+      await getProducts("", selectedCategoryId);
       await fetchCategories();
 
       const openProductId = sessionStorage.getItem("openProductId");
@@ -107,7 +108,7 @@ export const ProductPage = () => {
     }
 
     debounceRef.current = setTimeout(() => {
-      getProducts(searchTerm);
+      getProducts(searchTerm, selectedCategoryId);
     }, 300);
 
     return () => {
@@ -116,26 +117,42 @@ export const ProductPage = () => {
       }
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [searchTerm]);
+  }, [searchTerm, selectedCategoryId]);
 
   const categoryChips = useMemo(() => {
-    const counts = products.reduce<Record<string, number>>((acc, product) => {
-      if (product.category_id) {
-        acc[product.category_id] = (acc[product.category_id] ?? 0) + 1;
+    const counts = summary.category_counts.reduce<Record<string, number>>((acc, item) => {
+      if (item.category_id) {
+        acc[item.category_id] = item.count;
       }
       return acc;
     }, {});
+    const validCategories = categories.filter(
+      (category) =>
+        category &&
+        typeof category.category_id === "string" &&
+        typeof category.name === "string",
+    );
 
     return [
-      { key: "all", id: "all", name: "Усі", count: products.length },
-      ...categories.map((category, index) => ({
+      { key: "all", id: "all", name: "Усі", count: summary.total_count },
+      ...validCategories.map((category, index) => ({
         key: category.category_id || `${category.name}-${index}`,
         id: category.category_id || `${category.name}-${index}`,
         name: category.name,
         count: counts[category.category_id] ?? 0,
       })),
     ];
-  }, [categories, products]);
+  }, [categories, summary]);
+
+  const selectedProductTotal = useMemo(() => {
+    if (selectedCategoryId === "all") {
+      return summary.total_count;
+    }
+
+    return (
+      summary.category_counts.find((item) => item.category_id === selectedCategoryId)?.count ?? 0
+    );
+  }, [selectedCategoryId, summary]);
 
   const visibleProducts = useMemo(() => {
     if (selectedCategoryId === "all") {
@@ -164,10 +181,12 @@ export const ProductPage = () => {
       id: null,
       name: "Без категорії",
     },
-    ...categories.map((cat) => ({
-      id: cat.category_id,
-      name: cat.name,
-    })),
+    ...categories
+      .filter((cat) => cat && typeof cat.category_id === "string" && typeof cat.name === "string")
+      .map((cat) => ({
+        id: cat.category_id,
+        name: cat.name,
+      })),
   ];
 
   const openProductDetail = (product: Product) => {
@@ -205,11 +224,11 @@ export const ProductPage = () => {
       updateData.price,
       updateData.category_id ?? "",
     );
-    await getProducts(searchTerm);
+    await getProducts(searchTerm, selectedCategoryId);
     await fetchCategories();
 
     const categoryName = updatedProduct.category_id
-      ? categories.find((cat) => cat.category_id === updatedProduct.category_id)?.name ||
+      ? categories.find((cat) => cat && cat.category_id === updatedProduct.category_id)?.name ||
         "Без категорії"
       : "Без категорії";
 
@@ -250,7 +269,7 @@ export const ProductPage = () => {
     try {
       await updateCategory(id, name);
       await fetchCategories();
-      await getProducts(searchTerm);
+      await getProducts(searchTerm, selectedCategoryId);
     } catch (error) {
       console.error("Failed to update category:", error);
     }
@@ -260,7 +279,7 @@ export const ProductPage = () => {
     try {
       await deleteCategory(id);
       await fetchCategories();
-      await getProducts(searchTerm);
+      await getProducts(searchTerm, selectedCategoryId);
       if (selectedCategoryId === id) {
         setSelectedCategoryId("all");
       }
@@ -271,7 +290,7 @@ export const ProductPage = () => {
 
   const handleProductCreated = async (productId?: string) => {
     setIsAddModalOpen(false);
-    const refreshedProducts = await getProducts(searchTerm);
+    const refreshedProducts = await getProducts(searchTerm, selectedCategoryId);
     await fetchCategories();
 
     if (productId) {
@@ -297,7 +316,7 @@ export const ProductPage = () => {
         <div className="flex items-center gap-2">
           <h1 className="text-2xl font-semibold leading-8 text-slate-950">Товари</h1>
           <span className="rounded bg-slate-100 px-2 py-1 text-sm font-medium leading-5 text-slate-500">
-            {products.length}
+            {selectedProductTotal}
           </span>
         </div>
 
@@ -374,7 +393,7 @@ export const ProductPage = () => {
               onEdit={openProductEditor}
               onDelete={requestDeleteProduct}
             />
-            <ProductTableFooter shown={visibleProducts.length} total={products.length} />
+            <ProductTableFooter shown={visibleProducts.length} total={selectedProductTotal} />
           </section>
 
           <section className="grid grid-cols-1 gap-3 lg:hidden">

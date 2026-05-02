@@ -4,12 +4,15 @@ import {
   getAllClients,
   createNewClient,
   getClientById,
+  getClientSummary,
+  type ClientSummary,
   updateExistingClientById,
   deleteClientById,
   setClientBalance as setClientBalanceApi,
 } from "../../services/api/clientApi";
 
 const PAGE_SIZE = 20;
+type ClientFilter = "all" | "debt" | "positive";
 
 export const useClient = () => {
   const [clients, setClients] = useState<Client[]>([]);
@@ -19,15 +22,34 @@ export const useClient = () => {
   const [hasMore, setHasMore] = useState(true);
   const [offset, setOffset] = useState(0);
   const [currentSearch, setCurrentSearch] = useState("");
+  const [currentFilter, setCurrentFilter] = useState<ClientFilter>("all");
+  const [summary, setSummary] = useState<ClientSummary>({
+    total_count: 0,
+    debt_count: 0,
+    positive_balance_count: 0,
+  });
 
-  const getClients = async (search: string = "") => {
+  const getClients = async (search: string = "", filter: ClientFilter = "all") => {
     setLoading(true);
     setError(null);
     setCurrentSearch(search);
+    setCurrentFilter(filter);
     setOffset(0);
     try {
-      const fetchedClients = await getAllClients(search, search, PAGE_SIZE, 0, "ASC");
+      const [fetchedClients, fetchedSummary] = await Promise.all([
+        getAllClients(
+          search,
+          search,
+          PAGE_SIZE,
+          0,
+          "ASC",
+          filter === "debt" ? true : undefined,
+          filter === "positive" ? true : undefined,
+        ),
+        getClientSummary(search, search),
+      ]);
       setClients(fetchedClients);
+      setSummary(fetchedSummary);
       setHasMore(fetchedClients.length >= PAGE_SIZE);
       setOffset(PAGE_SIZE);
       return fetchedClients;
@@ -50,6 +72,8 @@ export const useClient = () => {
         PAGE_SIZE,
         offset,
         "ASC",
+        currentFilter === "debt" ? true : undefined,
+        currentFilter === "positive" ? true : undefined,
       );
       setClients((prev) => [...prev, ...fetchedClients]);
       setHasMore(fetchedClients.length >= PAGE_SIZE);
@@ -59,7 +83,7 @@ export const useClient = () => {
     } finally {
       setLoadingMore(false);
     }
-  }, [loadingMore, loading, hasMore, offset, currentSearch]);
+  }, [loadingMore, loading, hasMore, offset, currentSearch, currentFilter]);
 
   const deleteClient = async (clientId: string) => {
     setLoading(true);
@@ -175,6 +199,7 @@ export const useClient = () => {
 
   return {
     clients,
+    summary,
     loading,
     loadingMore,
     error,
