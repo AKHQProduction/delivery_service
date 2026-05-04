@@ -3,6 +3,8 @@ import { PageHeader } from "../components/ui/PageHeader";
 import { getOrderStats } from "../services/api/ordersApi";
 
 import { DateInput } from "../components/shared/DateInput";
+import { formatLocalDateKey } from "../utils/dateUtils";
+import { useUserShopStore } from "../context/useUserShopStore";
 
 interface OrderStats {
   total_orders: number;
@@ -22,13 +24,13 @@ interface OrderStats {
 }
 
 export const OrdersStatsPage = () => {
+  const currentDate = useUserShopStore((s) => s.currentDate);
+  const todayKey = currentDate ?? formatLocalDateKey();
   const [startDate, setStartDate] = useState(() => {
-    const today = new Date();
-    return today.toISOString().split("T")[0];
+    return todayKey;
   });
   const [endDate, setEndDate] = useState(() => {
-    const today = new Date();
-    return today.toISOString().split("T")[0];
+    return todayKey;
   });
   const [stats, setStats] = useState<OrderStats | null>(null);
   const [loading, setLoading] = useState(false);

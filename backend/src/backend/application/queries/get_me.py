@@ -2,7 +2,7 @@ import logging
 from dataclasses import dataclass
 
 from backend.application.errors import AuthorizationError
-from backend.application.vars import ShopId, ShopRole, UserId
+from backend.application.vars import ShopId, ShopRole, UserId, today
 from backend.infrastructure.idp import IdentityProvider
 from backend.infrastructure.persistence.gateways import SQLAlchemyShopGateway
 
@@ -29,6 +29,7 @@ class MeShop:
 class GetMeResponse:
     user: MeUser
     shop: MeShop | None
+    current_date: str
 
 
 class GetMeQueryHandler:
@@ -52,6 +53,7 @@ class GetMeQueryHandler:
             return GetMeResponse(
                 user=MeUser(user_id=user_id, full_name=None, role=None),
                 shop=None,
+                current_date=today().isoformat(),
             )
 
         shop = await self._shop_gateway.load_shop(membership.shop_id)
@@ -74,4 +76,5 @@ class GetMeQueryHandler:
                 street=shop.street if shop else None,
                 house=shop.house if shop else None,
             ),
+            current_date=today().isoformat(),
         )

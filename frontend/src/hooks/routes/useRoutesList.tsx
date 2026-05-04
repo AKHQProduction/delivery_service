@@ -3,11 +3,14 @@ import { getAllRoutes, updateOrderCoordinates } from "../../services/api/routesA
 import { type RoutePlan, type RoutePoint } from "../../types/entities/Route";
 import { useMapPicker } from "../useMapPicker";
 import { type MapConfirmData } from "../../components/shared/MapPicker";
+import { formatLocalDateKey } from "../../utils/dateUtils";
+import { useUserShopStore } from "../../context/useUserShopStore";
 
 let savedDeliveryDate: string | null = null;
 
 export const useRoutesList = () => {
-  const today = new Date().toISOString().split("T")[0];
+  const currentDate = useUserShopStore((s) => s.currentDate);
+  const today = currentDate ?? formatLocalDateKey();
   const [deliveryDate, setDeliveryDate] = useState(savedDeliveryDate || today);
 
   useEffect(() => { savedDeliveryDate = deliveryDate; }, [deliveryDate]);

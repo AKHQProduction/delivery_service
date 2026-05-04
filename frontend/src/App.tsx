@@ -30,6 +30,7 @@ function App() {
       try {
         const data = await getUserShopData();
         store.setUserAndShop(data.user, data.shop);
+        store.setCurrentDate(data.current_date ?? null);
         store.setAuthStatus("authenticated");
       } catch (error) {
         console.error("Failed to fetch user:", error);

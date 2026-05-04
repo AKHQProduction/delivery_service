@@ -6,7 +6,7 @@ from fastapi import status
 from httpx import AsyncClient
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from backend.application.vars import ShopRole
+from backend.application.vars import ShopRole, today
 
 BASE_URL = "/api/v1/auth"
 
@@ -52,6 +52,7 @@ async def test_me_return_correct_id_and_role(
             "street": None,
             "house": None,
         },
+        "current_date": today().isoformat(),
     }
 
 
@@ -98,3 +99,4 @@ async def test_me_without_shop_membership(
     data = response.json()
     assert data["user"]["user_id"] is not None
     assert data["shop"] is None
+    assert data["current_date"] == today().isoformat()

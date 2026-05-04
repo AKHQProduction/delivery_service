@@ -1,6 +1,13 @@
 import api from "../../config/api.config";
+import type { Shop, User } from "../../types/entities/user";
 
-export const getUserShopData = async () => {
+export interface UserShopData {
+  user: User;
+  shop: Shop | null;
+  current_date?: string;
+}
+
+export const getUserShopData = async (): Promise<UserShopData> => {
   const response = await api.get(`v1/auth/me`);
   return response.data;
 };

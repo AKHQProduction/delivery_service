@@ -11,9 +11,10 @@ import { type Product } from "../../../types/entities/Product";
 import { SearchBar } from "../../ui/SearchBar";
 import { DateInput } from "../../shared/DateInput";
 import { FormSelect } from "../../shared/FormSelect";
-import { convertDateToISO } from "../../../utils/dateUtils";
+import { convertDateToISO, formatLocalDateKey } from "../../../utils/dateUtils";
 import { useError } from "../../../context/ErrorContext";
 import { FormSkeleton, InlineListSkeleton } from "../../ui/Skeleton";
+import { useUserShopStore } from "../../../context/useUserShopStore";
 
 interface OrderItem {
   id?: number;
@@ -55,6 +56,7 @@ interface EditOrderFormProps {
 export const EditOrderForm: React.FC<EditOrderFormProps> = ({ onClose, onSave, order }) => {
   const { updateCurrentOrder } = useOrders();
   const { showWarning } = useError();
+  const currentDate = useUserShopStore((s) => s.currentDate);
   const {
     clients,
     getClients,
@@ -677,7 +679,7 @@ export const EditOrderForm: React.FC<EditOrderFormProps> = ({ onClose, onSave, o
               value={deliveryDate}
               onChange={setDeliveryDate}
               required
-              minDate={new Date().toISOString().split("T")[0]}
+              minDate={currentDate ?? formatLocalDateKey()}
             />
 
             <FormSelect

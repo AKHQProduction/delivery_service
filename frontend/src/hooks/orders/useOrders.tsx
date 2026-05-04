@@ -9,33 +9,24 @@ import {
   deleteOrderById,
   payOrderFromBalance,
 } from "../../services/api/ordersApi";
+import { useUserShopStore } from "../../context/useUserShopStore";
+import { addDaysToDateKey, formatLocalDateKey } from "../../utils/dateUtils";
 
 const PAGE_SIZE = 20;
 type OrderFilter = "all" | "today" | "tomorrow";
 
-const formatDateKey = (date: Date) => {
-  const year = date.getFullYear();
-  const month = String(date.getMonth() + 1).padStart(2, "0");
-  const day = String(date.getDate()).padStart(2, "0");
-  return `${year}-${month}-${day}`;
-};
-
-const getTodayKey = () => formatDateKey(new Date());
-
-const getTomorrowKey = () => {
-  const tomorrow = new Date();
-  tomorrow.setDate(tomorrow.getDate() + 1);
-  return formatDateKey(tomorrow);
-};
-
-const getListDateRange = (filter: OrderFilter, startDate: string, endDate: string) => {
+const getListDateRange = (
+  filter: OrderFilter,
+  startDate: string,
+  endDate: string,
+  todayKey: string,
+) => {
   if (filter === "today") {
-    const today = getTodayKey();
-    return { startDate: today, endDate: today };
+    return { startDate: todayKey, endDate: todayKey };
   }
 
   if (filter === "tomorrow") {
-    const tomorrow = getTomorrowKey();
+    const tomorrow = addDaysToDateKey(todayKey, 1);
     return { startDate: tomorrow, endDate: tomorrow };
   }
 
@@ -43,6 +34,8 @@ const getListDateRange = (filter: OrderFilter, startDate: string, endDate: strin
 };
 
 export const useOrders = () => {
+  const currentDate = useUserShopStore((s) => s.currentDate);
+  const todayKey = currentDate ?? formatLocalDateKey();
   const [orders, setOrders] = useState<Order[]>();
   const [loading, setLoading] = useState(false);
   const [loadingMore, setLoadingMore] = useState(false);
@@ -59,13 +52,10 @@ export const useOrders = () => {
   });
 
   const [startDate, setStartDate] = useState(() => {
-    const today = new Date();
-    return today.toISOString().split("T")[0];
+    return todayKey;
   });
   const [endDate, setEndDate] = useState(() => {
-    const date = new Date();
-    date.setDate(date.getDate() + 7);
-    return date.toISOString().split("T")[0];
+    return addDaysToDateKey(todayKey, 7);
   });
 
   const getOrders = async (search: string = "", filter: OrderFilter = "all") => {
@@ -75,7 +65,7 @@ export const useOrders = () => {
     setCurrentFilter(filter);
     setOffset(0);
     try {
-      const listRange = getListDateRange(filter, startDate, endDate);
+      const listRange = getListDateRange(filter, startDate, endDate, todayKey);
       const [fetchedOrders, fetchedSummary] = await Promise.all([
         getAllOrders(search, listRange.startDate, listRange.endDate, "", PAGE_SIZE, 0),
         getOrderSummary(search, startDate, endDate, ""),
@@ -98,7 +88,7 @@ export const useOrders = () => {
 
     setLoadingMore(true);
     try {
-      const listRange = getListDateRange(currentFilter, startDate, endDate);
+      const listRange = getListDateRange(currentFilter, startDate, endDate, todayKey);
       const fetchedOrders = await getAllOrders(
         currentSearch,
         listRange.startDate,
@@ -115,7 +105,17 @@ export const useOrders = () => {
     } finally {
       setLoadingMore(false);
     }
-  }, [loadingMore, loading, hasMore, offset, currentSearch, currentFilter, startDate, endDate]);
+  }, [
+    loadingMore,
+    loading,
+    hasMore,
+    offset,
+    currentSearch,
+    currentFilter,
+    startDate,
+    endDate,
+    todayKey,
+  ]);
 
   const createNewOrder = async (orderData: Record<string, unknown>) => {
     setLoading(true);

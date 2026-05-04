@@ -4,6 +4,8 @@ import { type Product } from "../../../../types/entities/Product";
 import { Tooltip } from "../../../ui/Tooltip";
 import { DateInput } from "../../../shared/DateInput";
 import { FormSelect } from "../../../shared/FormSelect";
+import { formatLocalDateKey } from "../../../../utils/dateUtils";
+import { useUserShopStore } from "../../../../context/useUserShopStore";
 
 interface SelectedProduct {
   product: Product;
@@ -51,6 +53,7 @@ export const DeliveryDateStep: React.FC<DeliveryDateStepProps> = ({
   onPaymentMethodChange,
   onNoteChange,
 }) => {
+  const currentDate = useUserShopStore((s) => s.currentDate);
   const totalAmount = selectedProducts.reduce((sum, p) => sum + p.product.price * p.quantity, 0);
 
   const totalItems = selectedProducts.reduce((sum, p) => sum + p.quantity, 0);
@@ -75,7 +78,7 @@ export const DeliveryDateStep: React.FC<DeliveryDateStepProps> = ({
         value={deliveryDate}
         onChange={onDateChange}
         required
-        minDate={new Date().toISOString().split("T")[0]}
+        minDate={currentDate ?? formatLocalDateKey()}
         icon={
           <svg
             className="w-5 h-5 text-blue-600"

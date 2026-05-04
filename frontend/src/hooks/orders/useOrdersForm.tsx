@@ -5,6 +5,8 @@ import { useTimeSlotsSettings } from "../settings/useTimeSlotsSettings";
 import { usePaymentMethodsSettings } from "../settings/usePaymentMethodsSettings";
 import { type Client } from "../../types/entities/Client";
 import { type Product } from "../../types/entities/Product";
+import { formatLocalDateKey } from "../../utils/dateUtils";
+import { useUserShopStore } from "../../context/useUserShopStore";
 
 interface OrderFormProduct {
   product: Product;
@@ -59,6 +61,8 @@ interface UseOrderFormOptions {
 
 export const useOrderForm = (options: UseOrderFormOptions = {}) => {
   const { initialOrder } = options;
+  const currentDate = useUserShopStore((s) => s.currentDate);
+  const todayKey = currentDate ?? formatLocalDateKey();
   const [step, setStep] = useState(1);
   const [searchClient, setSearchClient] = useState("");
   const [searchProduct, setSearchProduct] = useState("");
@@ -114,7 +118,7 @@ export const useOrderForm = (options: UseOrderFormOptions = {}) => {
     products: [],
     deliveryPhone: null,
     deliveryAddress: null,
-    deliveryDate: new Date().toISOString().split("T")[0],
+    deliveryDate: todayKey,
     timeSlotId: "",
     paymentMethod: "",
     note: "",

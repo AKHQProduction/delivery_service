@@ -7,33 +7,30 @@ import {
 } from "../services/api/ordersApi";
 import { DateRangePicker } from "../components/ui/DateRangePicker";
 import { SkeletonBlock } from "../components/ui/Skeleton";
+import { useUserShopStore } from "../context/useUserShopStore";
+import { addDaysToDateKey, formatLocalDateKey } from "../utils/dateUtils";
 
 type PeriodMode = "today" | "week" | "month" | "custom";
 
-const formatDateKey = (date: Date) => {
-  const year = date.getFullYear();
-  const month = String(date.getMonth() + 1).padStart(2, "0");
-  const day = String(date.getDate()).padStart(2, "0");
-  return `${year}-${month}-${day}`;
-};
-
-const getPeriodRange = (mode: PeriodMode) => {
-  const today = new Date();
-  const start = new Date(today);
-  const end = new Date(today);
+const getPeriodRange = (mode: PeriodMode, todayKey: string) => {
+  const start = new Date(`${todayKey}T00:00:00`);
+  const end = new Date(start);
 
   if (mode === "week") {
-    end.setDate(today.getDate() + 6);
+    return {
+      startDate: todayKey,
+      endDate: addDaysToDateKey(todayKey, 6),
+    };
   }
 
   if (mode === "month") {
     start.setDate(1);
-    end.setMonth(today.getMonth() + 1, 0);
+    end.setMonth(start.getMonth() + 1, 0);
   }
 
   return {
-    startDate: formatDateKey(start),
-    endDate: formatDateKey(end),
+    startDate: formatLocalDateKey(start),
+    endDate: formatLocalDateKey(end),
   };
 };
 
@@ -62,7 +59,9 @@ const getInitials = (name?: string) => {
 
 export const MainPage = () => {
   const navigate = useNavigate();
-  const [{ startDate, endDate }, setRange] = useState(() => getPeriodRange("today"));
+  const currentDate = useUserShopStore((s) => s.currentDate);
+  const todayKey = currentDate ?? formatLocalDateKey();
+  const [{ startDate, endDate }, setRange] = useState(() => getPeriodRange("today", todayKey));
   const [periodMode, setPeriodMode] = useState<PeriodMode>("today");
   const [stats, setStats] = useState<OrderStats | null>(null);
   const [loading, setLoading] = useState(true);
@@ -99,7 +98,7 @@ export const MainPage = () => {
   const handlePeriodChange = (mode: PeriodMode) => {
     setPeriodMode(mode);
     if (mode !== "custom") {
-      setRange(getPeriodRange(mode));
+      setRange(getPeriodRange(mode, todayKey));
     }
   };
 

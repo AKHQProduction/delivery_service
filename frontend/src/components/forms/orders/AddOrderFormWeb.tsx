@@ -7,6 +7,8 @@ import { FormSelect } from "../../shared/FormSelect";
 import { AddClientForm } from "../client/AddClientForm";
 import { type Client } from "../../../types/entities/Client";
 import { FormSkeleton, InlineListSkeleton } from "../../ui/Skeleton";
+import { formatLocalDateKey } from "../../../utils/dateUtils";
+import { useUserShopStore } from "../../../context/useUserShopStore";
 
 interface AddOrderFormWebProps {
   onClose: () => void;
@@ -15,6 +17,7 @@ interface AddOrderFormWebProps {
 
 export const AddOrderFormWeb: React.FC<AddOrderFormWebProps> = ({ onClose, onSave }) => {
   const { createNewOrder } = useOrders();
+  const currentDate = useUserShopStore((s) => s.currentDate);
   const [showAddClient, setShowAddClient] = useState(false);
   const [isChangingClient, setIsChangingClient] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -462,7 +465,7 @@ export const AddOrderFormWeb: React.FC<AddOrderFormWebProps> = ({ onClose, onSav
               value={formData.deliveryDate}
               onChange={handleDateChange}
               required
-              minDate={new Date().toISOString().split("T")[0]}
+              minDate={currentDate ?? formatLocalDateKey()}
             />
 
             <FormSelect

@@ -6,6 +6,7 @@ import { getAllTimeSlots } from "../../services/api/settingsApi";
 import { useUserShopStore } from "../../context/useUserShopStore";
 import { usePlatform } from "../../platforms/usePlatform";
 import { useOrdersPdfPreview } from "../../hooks/useOrdersPdfPreview";
+import { formatLocalDateKey } from "../../utils/dateUtils";
 
 type DocType = "ORDER_LIST" | "STATISTICS";
 type RoutingMode = "NONE" | "OPTIMIZED";
@@ -29,9 +30,10 @@ const getDownloadUrl = (fileId: string): string => {
 
 export const ExportPdfModal: React.FC<ExportPdfModalProps> = ({ isOpen, onClose }) => {
   const { files } = usePlatform();
+  const currentDate = useUserShopStore((s) => s.currentDate);
+  const todayKey = currentDate ?? formatLocalDateKey();
   const [exportDate, setExportDate] = useState(() => {
-    const today = new Date();
-    return today.toISOString().split("T")[0];
+    return todayKey;
   });
   const [exportError, setExportError] = useState(false);
   const [docType, setDocType] = useState<DocType>("ORDER_LIST");
