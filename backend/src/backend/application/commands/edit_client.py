@@ -2,7 +2,6 @@ import datetime
 import logging
 from dataclasses import dataclass
 from decimal import Decimal
-from typing import cast
 
 from backend.application.common import ensure_exists
 from backend.application.dto.coordinates import CoordinatesDTO
@@ -27,7 +26,6 @@ from backend.application.vars import (
     AddressId,
     ClientId,
     DistrictId,
-    Empty,
     PhoneId,
     TimeSlotId,
 )
@@ -65,6 +63,7 @@ class Address:
     is_primary: bool = False
     id: AddressId | None = None
     district_id: DistrictId | None = None
+    preferred_time_slot_id: TimeSlotId | None = None
 
 
 @dataclass(frozen=True)
@@ -74,7 +73,6 @@ class EditClientCommand:
     balance: Decimal | None = None
     phones: list[Phone] | None = None
     addresses: list[Address] | None = None
-    preferred_time_slot_id: TimeSlotId | Empty | None = Empty.EMPTY
     confirm_duplicate_phones: bool = False
 
     def __post_init__(self) -> None:
@@ -135,25 +133,11 @@ class EditClientCommandHandler:
 
         updates = []
 
-        await self._ensure_preferred_time_slot_related_to_shop(
-            current_user, command.preferred_time_slot_id
-        )
-
-        if command.preferred_time_slot_id is not Empty.EMPTY:
-            updates.append(
-                f"preferred_time_slot_id={command.preferred_time_slot_id}"
-            )
-
-        if (
-            command.full_name is not None
-            or command.balance is not None
-            or command.preferred_time_slot_id is not Empty.EMPTY
-        ):
+        if command.full_name is not None or command.balance is not None:
             update_client(
                 client,
                 full_name=command.full_name,
                 balance=command.balance,
-                preferred_time_slot_id=command.preferred_time_slot_id,
             )
             if command.full_name is not None:
                 updates.append(f"full_name={command.full_name}")
@@ -191,6 +175,9 @@ class EditClientCommandHandler:
             updates.append(f"phones={len(command.phones)}")
 
         if command.addresses is not None:
+            await self._ensure_address_time_slots_related_to_shop(
+                current_user, command.addresses
+            )
             shop = await self._shop_gateway.load_shop(client.shop_id)
             shop_city = shop.city if shop else None
 
@@ -220,6 +207,7 @@ class EditClientCommandHandler:
                         is_primary=a.is_primary,
                         district_id=a.district_id,
                         id=a.id,
+                        preferred_time_slot_id=a.preferred_time_slot_id,
                     )
                 )
 
@@ -269,18 +257,18 @@ class EditClientCommandHandler:
             ", ".join(updates),
         )
 
-    async def _ensure_preferred_time_slot_related_to_shop(
+    async def _ensure_address_time_slots_related_to_shop(
         self,
         current_user: CurrentUserDTO,
-        preferred_time_slot_id: TimeSlotId | Empty | None,
+        addresses: list[Address],
     ) -> None:
-        if preferred_time_slot_id in {Empty.EMPTY, None}:
-            return
-
-        time_slot = ensure_exists(
-            await self._time_slot_gateway.load(
-                cast("TimeSlotId", preferred_time_slot_id)
-            ),
-            "TimeSlot",
-        )
-        ensure_related_to_shop(current_user, time_slot.shop_id)
+        for address in addresses:
+            if address.preferred_time_slot_id is None:
+                continue
+            time_slot = ensure_exists(
+                await self._time_slot_gateway.load(
+                    address.preferred_time_slot_id
+                ),
+                "TimeSlot",
+            )
+            ensure_related_to_shop(current_user, time_slot.shop_id)

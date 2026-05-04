@@ -46,12 +46,12 @@ export const ClientDetailModal: React.FC<ClientDetailModalProps> = ({
     return district?.name || null;
   };
 
-  const getPreferredTimeSlotLabel = () => {
-    if (!client.preferred_time_slot_id) {
+  const getPreferredTimeSlotLabel = (preferredTimeSlotId?: string | null) => {
+    if (!preferredTimeSlotId) {
       return "Не вказано";
     }
 
-    const timeSlot = timeSlots.find((slot) => slot.time_slot_id === client.preferred_time_slot_id);
+    const timeSlot = timeSlots.find((slot) => slot.time_slot_id === preferredTimeSlotId);
     if (!timeSlot) {
       return timeSlotsLoading ? "Завантаження..." : "Не знайдено";
     }
@@ -155,7 +155,6 @@ export const ClientDetailModal: React.FC<ClientDetailModalProps> = ({
         </div>
 
         <dl className="divide-y divide-slate-200 rounded-lg border border-slate-200 text-sm">
-          <DetailRow label="Бажаний час доставки" value={getPreferredTimeSlotLabel()} />
           <DetailRow label="Телефонів" value={String(client.phones?.length ?? 0)} />
           <DetailRow label="Адрес" value={String(client.addresses?.length ?? 0)} />
         </dl>
@@ -209,6 +208,9 @@ export const ClientDetailModal: React.FC<ClientDetailModalProps> = ({
                         </span>
                       )}
                     </div>
+                    <p className="mt-1 text-sm text-slate-500">
+                      Бажаний час доставки: {getPreferredTimeSlotLabel(address.preferred_time_slot_id)}
+                    </p>
                     {districtName && <p className="mt-1 text-sm text-slate-500">{districtName}</p>}
                     {address.comment && (
                       <p className="mt-2 rounded-md bg-slate-50 px-3 py-2 text-sm leading-5 text-slate-600">

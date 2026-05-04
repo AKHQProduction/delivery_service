@@ -31,6 +31,7 @@ interface OrderFormData {
     comment?: string;
     coordinates?: { latitude: number; longitude: number } | null;
     district_id?: string | null;
+    preferred_time_slot_id?: string | null;
   } | null;
   deliveryDate: string;
   timeSlotId: string;
@@ -58,6 +59,10 @@ interface UseOrderFormOptions {
     }>;
   };
 }
+
+const getAddressPreferredTimeSlot = (
+  address: OrderFormData["deliveryAddress"],
+) => address?.preferred_time_slot_id || "";
 
 export const useOrderForm = (options: UseOrderFormOptions = {}) => {
   const { initialOrder } = options;
@@ -182,9 +187,11 @@ export const useOrderForm = (options: UseOrderFormOptions = {}) => {
         }));
       }
       if (formData.client.addresses?.length === 1) {
+        const address = formData.client.addresses[0] || null;
         setFormData((prev) => ({
           ...prev,
-          deliveryAddress: formData.client?.addresses?.[0] || null,
+          deliveryAddress: address,
+          timeSlotId: getAddressPreferredTimeSlot(address) || prev.timeSlotId,
         }));
       }
     }
@@ -232,12 +239,13 @@ export const useOrderForm = (options: UseOrderFormOptions = {}) => {
   }, [initialOrder, clients, products]);
 
   const handleClientSelect = useCallback((client: Client) => {
+    const address = client.addresses?.[0] || null;
     setFormData((prev) => ({
       ...prev,
       client,
       deliveryPhone: client.phones?.[0] || null,
-      deliveryAddress: client.addresses?.[0] || null,
-      timeSlotId: initialOrder ? prev.timeSlotId : client.preferred_time_slot_id || "",
+      deliveryAddress: address,
+      timeSlotId: initialOrder ? prev.timeSlotId : getAddressPreferredTimeSlot(address),
     }));
   }, [initialOrder]);
 
@@ -292,14 +300,27 @@ export const useOrderForm = (options: UseOrderFormOptions = {}) => {
           comment?: string;
           coordinates?: { latitude: number; longitude: number } | null;
           district_id?: string | null;
+          preferred_time_slot_id?: string | null;
         },
   ) => {
     if (typeof address === "string" || typeof address === "number") {
       const addressId = typeof address === "string" ? parseInt(address, 10) : address;
       const addressObj = formData.client?.addresses?.find((a) => a.id === addressId);
-      setFormData({ ...formData, deliveryAddress: addressObj || null });
+      setFormData({
+        ...formData,
+        deliveryAddress: addressObj || null,
+        timeSlotId: initialOrder
+          ? formData.timeSlotId
+          : getAddressPreferredTimeSlot(addressObj || null),
+      });
     } else {
-      setFormData({ ...formData, deliveryAddress: address });
+      setFormData({
+        ...formData,
+        deliveryAddress: address,
+        timeSlotId: initialOrder
+          ? formData.timeSlotId
+          : getAddressPreferredTimeSlot(address),
+      });
     }
   };
 

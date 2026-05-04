@@ -3,6 +3,7 @@ from dataclasses import dataclass, field
 
 from backend.application.common import ensure_exists
 from backend.application.dto.coordinates import CoordinatesDTO
+from backend.application.dto.idp import CurrentUserDTO
 from backend.application.policies.access import (
     ensure_can_manage,
     ensure_related_to_shop,
@@ -39,6 +40,7 @@ class Address:
     comment: str | None = None
     coordinates: CoordinatesDTO | None = None
     district_id: DistrictId | None = None
+    preferred_time_slot_id: TimeSlotId | None = None
 
 
 @dataclass(frozen=True)
@@ -51,7 +53,6 @@ class CreateClientCommand:
     full_name: str
     phones: list[Phone] = field(default_factory=list)
     addresses: list[Address] = field(default_factory=list)
-    preferred_time_slot_id: TimeSlotId | None = None
     confirm_duplicate_phones: bool = False
 
 
@@ -98,21 +99,15 @@ class CreateClientCommandHandler:
                 phone_numbers=normalized_numbers,
             )
 
-        if command.preferred_time_slot_id is not None:
-            time_slot = ensure_exists(
-                await self._time_slot_gateway.load(
-                    command.preferred_time_slot_id
-                ),
-                "TimeSlot",
-            )
-            ensure_related_to_shop(current_user, time_slot.shop_id)
+        await self._ensure_address_time_slots_related_to_shop(
+            current_user, command.addresses
+        )
 
         client_id = self._client_gateway.next_id()
         client = create_client(
             client_id=client_id,
             shop_id=current_user.shop_id,
             full_name=command.full_name,
-            preferred_time_slot_id=command.preferred_time_slot_id,
         )
 
         client.phones = [
@@ -147,6 +142,7 @@ class CreateClientCommandHandler:
                     coordinates=coordinates,
                     is_primary=(idx == 0),
                     district_id=addr.district_id,
+                    preferred_time_slot_id=addr.preferred_time_slot_id,
                 )
             )
 
@@ -163,3 +159,19 @@ class CreateClientCommandHandler:
         )
 
         return client_id
+
+    async def _ensure_address_time_slots_related_to_shop(
+        self,
+        current_user: CurrentUserDTO,
+        addresses: list[Address],
+    ) -> None:
+        for address in addresses:
+            if address.preferred_time_slot_id is None:
+                continue
+            time_slot = ensure_exists(
+                await self._time_slot_gateway.load(
+                    address.preferred_time_slot_id
+                ),
+                "TimeSlot",
+            )
+            ensure_related_to_shop(current_user, time_slot.shop_id)

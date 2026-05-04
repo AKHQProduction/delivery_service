@@ -11,7 +11,6 @@ from backend.application.vars import (
     AddressId,
     ClientId,
     DistrictId,
-    Empty,
     PhoneId,
     ShopId,
     TimeSlotId,
@@ -46,6 +45,7 @@ class AddressSyncItem:
     is_primary: bool = False
     district_id: DistrictId | None = None
     id: AddressId | None = None
+    preferred_time_slot_id: TimeSlotId | None = None
 
 
 def create_client(
@@ -53,13 +53,11 @@ def create_client(
     client_id: ClientId,
     shop_id: ShopId,
     full_name: str,
-    preferred_time_slot_id: TimeSlotId | None = None,
 ) -> Client:
     return Client(
         id=client_id,
         shop_id=shop_id,
         full_name=full_name,
-        preferred_time_slot_id=preferred_time_slot_id,
         balance=Decimal(0),
     )
 
@@ -69,18 +67,11 @@ def update_client(
     *,
     full_name: str | None = None,
     balance: Decimal | None = None,
-    preferred_time_slot_id: TimeSlotId | Empty | None = Empty.EMPTY,
 ) -> None:
     if full_name is not None:
         client.full_name = full_name
     if balance is not None:
         client.balance = balance
-    if preferred_time_slot_id is not Empty.EMPTY:
-        client.preferred_time_slot_id = (
-            None
-            if preferred_time_slot_id is None
-            else TimeSlotId(preferred_time_slot_id)
-        )
 
 
 def set_client_balance(client: Client, *, balance: Decimal) -> None:
@@ -124,6 +115,7 @@ def create_address(
     coordinates: CoordinatesDTO | None = None,
     is_primary: bool = False,
     district_id: DistrictId | None = None,
+    preferred_time_slot_id: TimeSlotId | None = None,
 ) -> ClientAddress:
     return ClientAddress(
         street=street,
@@ -137,6 +129,7 @@ def create_address(
         longitude=coordinates.longitude if coordinates else None,
         is_primary=is_primary,
         district_id=district_id,
+        preferred_time_slot_id=preferred_time_slot_id,
     )
 
 
@@ -153,6 +146,7 @@ def update_address(
     coordinates: CoordinatesDTO | None = None,
     is_primary: bool | None = None,
     district_id: DistrictId | None = None,
+    preferred_time_slot_id: TimeSlotId | None = None,
 ) -> None:
     if street is not None:
         address.street = street
@@ -174,6 +168,7 @@ def update_address(
         address.is_primary = is_primary
     if district_id is not None:
         address.district_id = district_id
+    address.preferred_time_slot_id = preferred_time_slot_id
 
 
 async def check_phone_duplicates(
@@ -258,6 +253,7 @@ def sync_addresses(
                 coordinates=item.coordinates,
                 is_primary=item.is_primary,
                 district_id=item.district_id,
+                preferred_time_slot_id=item.preferred_time_slot_id,
             )
         else:
             client.addresses.append(
@@ -272,6 +268,7 @@ def sync_addresses(
                     coordinates=item.coordinates,
                     is_primary=item.is_primary,
                     district_id=item.district_id,
+                    preferred_time_slot_id=item.preferred_time_slot_id,
                 )
             )
 

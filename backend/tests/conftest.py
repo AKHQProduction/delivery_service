@@ -396,7 +396,6 @@ def setup_test_client(session: AsyncSession):
         phones: list[str] | None = None,
         addresses: list[dict[str, Any]] | None = None,
         balance: Decimal = Decimal(0),
-        preferred_time_slot_id: TimeSlotId | None = None,
     ) -> ClientId:
         client_id = ClientId(uuid.uuid4())
         client_values = {
@@ -405,9 +404,6 @@ def setup_test_client(session: AsyncSession):
             "balance": balance,
             "shop_id": shop_id,
         }
-        if preferred_time_slot_id is not None:
-            client_values["preferred_time_slot_id"] = preferred_time_slot_id
-
         await session.execute(insert(Client).values(client_values))
 
         if phones:
@@ -435,6 +431,9 @@ def setup_test_client(session: AsyncSession):
                         latitude=address.get("latitude"),
                         longitude=address.get("longitude"),
                         district_id=address.get("district_id"),
+                        preferred_time_slot_id=address.get(
+                            "preferred_time_slot_id"
+                        ),
                         is_primary=(idx == 0),
                         client_id=client_id,
                     )

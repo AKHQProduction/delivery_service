@@ -27,6 +27,7 @@ class AddressSchema(BaseModel):
     is_primary: bool = False
     id: int | None = None
     district_id: UUID | None = None
+    preferred_time_slot_id: UUID | None = None
 
 
 class EditClientSchema(BaseModel):
@@ -36,7 +37,6 @@ class EditClientSchema(BaseModel):
     )
     phones: list[PhoneSchema] | None = None
     addresses: list[AddressSchema] | None = None
-    preferred_time_slot_id: UUID | None = None
     confirm_duplicate_phones: bool = False
 
 

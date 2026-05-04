@@ -39,6 +39,7 @@ class AddressDTO:
     is_primary: bool = False
     id: AddressId | None = None
     district_id: DistrictId | None = None
+    preferred_time_slot_id: TimeSlotId | None = None
 
 
 @dataclass(frozen=True)
@@ -47,7 +48,6 @@ class ClientReadModel:
     full_name: str
     phones: list[PhoneDTO]
     addresses: list[AddressDTO]
-    preferred_time_slot_id: TimeSlotId | None
     balance: Annotated[
         Decimal,
         PlainSerializer(serialize_decimal_as_float, return_type=float),

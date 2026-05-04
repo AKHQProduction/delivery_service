@@ -59,7 +59,6 @@ from backend.application.vars import (
     AddressId,
     ClientId,
     DistrictId,
-    Empty,
     PhoneId,
     TimeSlotId,
 )
@@ -294,20 +293,11 @@ async def update_client(
     ],
     handler: FromDishka[EditClientCommandHandler],
 ) -> None:
-    preferred_time_slot_id: TimeSlotId | Empty | None = Empty.EMPTY
-    if "preferred_time_slot_id" in body.model_fields_set:
-        preferred_time_slot_id = (
-            TimeSlotId(body.preferred_time_slot_id)
-            if body.preferred_time_slot_id is not None
-            else None
-        )
-
     await handler.handle(
         EditClientCommand(
             client_id=client_id,
             full_name=body.full_name,
             balance=body.balance,
-            preferred_time_slot_id=preferred_time_slot_id,
             confirm_duplicate_phones=body.confirm_duplicate_phones,
             phones=[
                 Phone(
@@ -340,6 +330,11 @@ async def update_client(
                     else None,
                     district_id=DistrictId(address.district_id)
                     if address.district_id is not None
+                    else None,
+                    preferred_time_slot_id=TimeSlotId(
+                        address.preferred_time_slot_id
+                    )
+                    if address.preferred_time_slot_id is not None
                     else None,
                 )
                 for address in body.addresses

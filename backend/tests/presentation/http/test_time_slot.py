@@ -10,7 +10,7 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from backend.application.vars import ShopRole
-from backend.infrastructure.persistence.tables.clients import Client
+from backend.infrastructure.persistence.tables.clients import ClientAddress
 from backend.infrastructure.persistence.tables.shops import (
     ShopDeliveryTimeSlot,
 )
@@ -300,7 +300,7 @@ async def test_delete_time_slot(
 
 
 @pytest.mark.asyncio()
-async def test_delete_time_slot_clears_client_preference(
+async def test_delete_time_slot_clears_address_preference(
     http_client: AsyncClient,
     session: AsyncSession,
     customer_headers: Callable[[int], dict[str, Any]],
@@ -336,7 +336,13 @@ async def test_delete_time_slot_clears_client_preference(
     )
     client_id = await setup_test_client(
         shop_id=shop_id,
-        preferred_time_slot_id=preferred_time_slot_id,
+        addresses=[
+            {
+                "street": "Хрещатик",
+                "house": "10",
+                "preferred_time_slot_id": preferred_time_slot_id,
+            }
+        ],
     )
     await session.commit()
 
@@ -349,9 +355,12 @@ async def test_delete_time_slot_clears_client_preference(
 
     await session.flush()
 
-    client = await session.get(Client, client_id)
-    assert client is not None
-    assert client.preferred_time_slot_id is None
+    address = (
+        await session.execute(
+            select(ClientAddress).where(ClientAddress.client_id == client_id)
+        )
+    ).scalar_one()
+    assert address.preferred_time_slot_id is None
 
 
 @pytest.mark.asyncio()

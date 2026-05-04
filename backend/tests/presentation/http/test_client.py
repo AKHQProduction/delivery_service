@@ -363,7 +363,7 @@ async def test_create_client_without_phones_and_addresses(
 
 
 @pytest.mark.asyncio()
-async def test_create_client_with_preferred_time_slot(
+async def test_create_client_with_address_preferred_time_slot(
     http_client: AsyncClient,
     session: AsyncSession,
     customer_headers: Callable[[int], dict[str, Any]],
@@ -388,8 +388,13 @@ async def test_create_client_with_preferred_time_slot(
         json={
             "full_name": "Клієнт з улюбленим слотом",
             "phones": [{"number": "+380501234567"}],
-            "addresses": [],
-            "preferred_time_slot_id": str(time_slot_id),
+            "addresses": [
+                {
+                    "street": "Хрещатик",
+                    "house": "10",
+                    "preferred_time_slot_id": str(time_slot_id),
+                }
+            ],
         },
     )
 
@@ -402,9 +407,8 @@ async def test_create_client_with_preferred_time_slot(
         url=f"{BASE_URL}/{client_id}", headers=headers
     )
     assert client_response.status_code == status.HTTP_200_OK
-    assert client_response.json()["preferred_time_slot_id"] == str(
-        time_slot_id
-    )
+    address = client_response.json()["addresses"][0]
+    assert address["preferred_time_slot_id"] == str(time_slot_id)
 
 
 @pytest.mark.asyncio()
@@ -739,7 +743,7 @@ async def test_get_all_clients(
 
 
 @pytest.mark.asyncio()
-async def test_get_all_clients_returns_preferred_time_slot(
+async def test_get_all_clients_returns_address_preferred_time_slot(
     http_client: AsyncClient,
     session: AsyncSession,
     customer_headers: Callable[[int], dict[str, Any]],
@@ -758,7 +762,13 @@ async def test_get_all_clients_returns_preferred_time_slot(
     await setup_test_client(
         shop_id=shop_id,
         full_name="Клієнт зі слотом",
-        preferred_time_slot_id=time_slot_id,
+        addresses=[
+            {
+                "street": "Хрещатик",
+                "house": "10",
+                "preferred_time_slot_id": time_slot_id,
+            }
+        ],
     )
     await session.commit()
 
@@ -769,7 +779,9 @@ async def test_get_all_clients_returns_preferred_time_slot(
     assert response.status_code == status.HTTP_200_OK
     data = response.json()
     assert len(data) == 1
-    assert data[0]["preferred_time_slot_id"] == str(time_slot_id)
+    assert data[0]["addresses"][0]["preferred_time_slot_id"] == str(
+        time_slot_id
+    )
 
 
 @pytest.mark.asyncio()
@@ -1182,7 +1194,7 @@ async def test_edit_client_balance(
 
 
 @pytest.mark.asyncio()
-async def test_edit_client_preferred_time_slot_set_change_and_clear(
+async def test_edit_client_address_preferred_time_slot_set_change_and_clear(
     http_client: AsyncClient,
     session: AsyncSession,
     customer_headers: Callable[[int], dict[str, Any]],
@@ -1212,46 +1224,75 @@ async def test_edit_client_preferred_time_slot_set_change_and_clear(
     response = await http_client.patch(
         url=f"{BASE_URL}/{client_id}",
         headers=headers,
-        json={"preferred_time_slot_id": str(morning_slot_id)},
+        json={
+            "addresses": [
+                {
+                    "street": "Хрещатик",
+                    "house": "10",
+                    "is_primary": True,
+                    "preferred_time_slot_id": str(morning_slot_id),
+                }
+            ]
+        },
     )
     assert response.status_code == status.HTTP_200_OK
     client_response = await http_client.get(
         url=f"{BASE_URL}/{client_id}", headers=headers
     )
     assert client_response.status_code == status.HTTP_200_OK
-    assert client_response.json()["preferred_time_slot_id"] == str(
-        morning_slot_id
+    address = client_response.json()["addresses"][0]
+    assert address["preferred_time_slot_id"] == str(morning_slot_id)
+
+    address_id = address["id"]
+    response = await http_client.patch(
+        url=f"{BASE_URL}/{client_id}",
+        headers=headers,
+        json={
+            "addresses": [
+                {
+                    "id": address_id,
+                    "street": "Хрещатик",
+                    "house": "10",
+                    "is_primary": True,
+                    "preferred_time_slot_id": str(evening_slot_id),
+                }
+            ]
+        },
     )
+    assert response.status_code == status.HTTP_200_OK
+    client_response = await http_client.get(
+        url=f"{BASE_URL}/{client_id}", headers=headers
+    )
+    assert client_response.status_code == status.HTTP_200_OK
+    address = client_response.json()["addresses"][0]
+    assert address["preferred_time_slot_id"] == str(evening_slot_id)
 
     response = await http_client.patch(
         url=f"{BASE_URL}/{client_id}",
         headers=headers,
-        json={"preferred_time_slot_id": str(evening_slot_id)},
+        json={
+            "addresses": [
+                {
+                    "id": address_id,
+                    "street": "Хрещатик",
+                    "house": "10",
+                    "is_primary": True,
+                    "preferred_time_slot_id": None,
+                }
+            ]
+        },
     )
     assert response.status_code == status.HTTP_200_OK
     client_response = await http_client.get(
         url=f"{BASE_URL}/{client_id}", headers=headers
     )
     assert client_response.status_code == status.HTTP_200_OK
-    assert client_response.json()["preferred_time_slot_id"] == str(
-        evening_slot_id
-    )
-
-    response = await http_client.patch(
-        url=f"{BASE_URL}/{client_id}",
-        headers=headers,
-        json={"preferred_time_slot_id": None},
-    )
-    assert response.status_code == status.HTTP_200_OK
-    client_response = await http_client.get(
-        url=f"{BASE_URL}/{client_id}", headers=headers
-    )
-    assert client_response.status_code == status.HTTP_200_OK
-    assert client_response.json()["preferred_time_slot_id"] is None
+    address = client_response.json()["addresses"][0]
+    assert address["preferred_time_slot_id"] is None
 
 
 @pytest.mark.asyncio()
-async def test_edit_client_rejects_preferred_time_slot_from_another_shop(
+async def test_edit_client_rejects_address_preferred_slot_from_other_shop(
     http_client: AsyncClient,
     session: AsyncSession,
     customer_headers: Callable[[int], dict[str, Any]],
@@ -1284,13 +1325,31 @@ async def test_edit_client_rejects_preferred_time_slot_from_another_shop(
     response = await http_client.patch(
         url=f"{BASE_URL}/{client_id}",
         headers=customer_headers(telegram_id),
-        json={"preferred_time_slot_id": str(other_time_slot_id)},
+        json={
+            "addresses": [
+                {
+                    "street": "Хрещатик",
+                    "house": "10",
+                    "is_primary": True,
+                    "preferred_time_slot_id": str(other_time_slot_id),
+                }
+            ]
+        },
     )
 
     assert response.status_code == status.HTTP_403_FORBIDDEN
-    stored_client = await session.get(Client, client_id)
-    assert stored_client is not None
-    assert stored_client.preferred_time_slot_id is None
+    stored_addresses = (
+        (
+            await session.execute(
+                select(ClientAddress).where(
+                    ClientAddress.client_id == client_id
+                )
+            )
+        )
+        .scalars()
+        .all()
+    )
+    assert stored_addresses == []
 
 
 @pytest.mark.asyncio()

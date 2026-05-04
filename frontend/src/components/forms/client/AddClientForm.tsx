@@ -1,7 +1,6 @@
 import React, { useState } from "react";
 import { FormWrapper } from "../../shared/FormWrapper";
 import { FormInput } from "../../shared/FormInput";
-import { FormSelect } from "../../shared/FormSelect";
 import { PhoneInputList } from "../../shared/PhoneInputList";
 import { AddressInputList } from "../../shared/AddressInputList";
 import { useClientForm } from "../../../hooks/clients/useClientForm";
@@ -60,7 +59,6 @@ export const AddClientForm: React.FC<AddClientFormProps> = ({ onClose, onSuccess
 
   const buildPayload = (clientData: typeof formData) => ({
     full_name: clientData.full_name,
-    preferred_time_slot_id: clientData.preferred_time_slot_id || null,
     phones: clientData.phones.filter((p) => p.number.trim() !== ""),
     addresses: clientData.addresses.filter((a) => a.street.trim() !== ""),
   });
@@ -174,14 +172,6 @@ export const AddClientForm: React.FC<AddClientFormProps> = ({ onClose, onSuccess
           required
         />
 
-        <FormSelect
-          label="Бажаний час доставки"
-          name="preferred_time_slot_id"
-          value={formData.preferred_time_slot_id}
-          onChange={handleChange}
-          options={timeSlotOptions}
-        />
-
         <PhoneInputList
           phones={formData.phones}
           onPhoneChange={handlePhoneChange}
@@ -199,6 +189,7 @@ export const AddClientForm: React.FC<AddClientFormProps> = ({ onClose, onSuccess
           onRemove={removeAddress}
           onAdd={addAddress}
           districts={districts}
+          timeSlotOptions={timeSlotOptions}
         />
       </FormWrapper>
 

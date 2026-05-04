@@ -21,12 +21,12 @@ export interface Address {
   comment?: string;
   coordinates?: AddressCoordinates | null;
   district_id?: string | null;
+  preferred_time_slot_id?: string | null;
 }
 
 export interface Client {
   client_id: string;
   full_name?: string;
-  preferred_time_slot_id?: string | null;
   phones?: Phone[];
   addresses?: Address[];
   balance?: number;

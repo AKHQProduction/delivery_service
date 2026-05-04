@@ -34,6 +34,7 @@ interface AddressInputListProps {
   onRemove: (index: number) => void;
   onAdd: () => void;
   districts?: District[];
+  timeSlotOptions?: { value: string; label: string }[];
 }
 
 interface AddressRowProps {
@@ -43,6 +44,7 @@ interface AddressRowProps {
   addressStatus: AddressValidationStatus;
   fieldError?: AddressFieldError;
   districts: District[];
+  timeSlotOptions: { value: string; label: string }[];
   shopCity: string;
   onSetPrimary: (index: number) => void;
   onAddressFieldChange: (rowKey: string, field: keyof Address, value: string) => void;
@@ -140,6 +142,7 @@ const AddressRow: React.FC<AddressRowProps> = ({
   addressStatus,
   fieldError,
   districts,
+  timeSlotOptions,
   shopCity,
   onSetPrimary,
   onAddressFieldChange,
@@ -368,6 +371,25 @@ const AddressRow: React.FC<AddressRowProps> = ({
           </div>
         )}
 
+        <div>
+          <label className="block text-xs font-medium text-gray-600 mb-1">
+            Бажаний час доставки
+          </label>
+          <select
+            value={address.preferred_time_slot_id || ""}
+            onChange={(e) => onAddressChange(index, "preferred_time_slot_id", e.target.value)}
+            title="Бажаний час доставки для адреси"
+            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500 bg-white"
+          >
+            <option value="">Не вказано</option>
+            {timeSlotOptions.map((slot) => (
+              <option key={slot.value} value={slot.value}>
+                {slot.label}
+              </option>
+            ))}
+          </select>
+        </div>
+
         <div className="pt-2">
           <label className="flex items-center gap-2 text-xs font-medium text-gray-600 mb-2">
             <svg
@@ -408,6 +430,7 @@ export const AddressInputList: React.FC<AddressInputListProps> = ({
   onRemove,
   onAdd,
   districts = [],
+  timeSlotOptions = [],
 }) => {
   const shop = useUserShopStore((state) => state.shop);
   const { toast, showToast, hideToast } = useToast();
@@ -730,6 +753,7 @@ export const AddressInputList: React.FC<AddressInputListProps> = ({
             addressStatus={addressStatus[rowKey] ?? null}
             fieldError={fieldErrors[rowKey]}
             districts={districts}
+            timeSlotOptions={timeSlotOptions}
             shopCity={shop?.city ?? ""}
             onSetPrimary={onSetPrimary}
             onAddressFieldChange={handleAddressFieldChange}

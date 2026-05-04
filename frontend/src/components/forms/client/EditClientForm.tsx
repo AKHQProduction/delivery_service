@@ -1,7 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { FormWrapper } from "../../shared/FormWrapper";
 import { FormInput } from "../../shared/FormInput";
-import { FormSelect } from "../../shared/FormSelect";
 import { AddressInputList } from "../../shared/AddressInputList";
 import { PhoneInputList } from "../../shared/PhoneInputList";
 import { type Client } from "../../../types/entities/Client";
@@ -75,7 +74,6 @@ export const EditClientForm: React.FC<EditClientFormProps> = ({ client, onClose,
 
   const buildPayload = (clientData: typeof formData, nextBalance: number) => ({
     full_name: clientData.full_name,
-    preferred_time_slot_id: clientData.preferred_time_slot_id || null,
     balance: nextBalance,
     phones: clientData.phones.filter((p) => p.number.trim() !== ""),
     addresses: clientData.addresses.filter((a) => a.street.trim() !== ""),
@@ -202,14 +200,6 @@ export const EditClientForm: React.FC<EditClientFormProps> = ({ client, onClose,
         />
         {balanceError && <p className="text-sm text-red-600">{balanceError}</p>}
 
-        <FormSelect
-          label="Бажаний час доставки"
-          name="preferred_time_slot_id"
-          value={formData.preferred_time_slot_id}
-          onChange={handleChange}
-          options={timeSlotOptions}
-        />
-
         <PhoneInputList
           phones={formData.phones}
           onPhoneChange={handlePhoneChange}
@@ -227,6 +217,7 @@ export const EditClientForm: React.FC<EditClientFormProps> = ({ client, onClose,
           onRemove={removeAddress}
           onAdd={addAddress}
           districts={districts}
+          timeSlotOptions={timeSlotOptions}
         />
       </FormWrapper>
       {duplicateError && duplicateError.duplicates && (

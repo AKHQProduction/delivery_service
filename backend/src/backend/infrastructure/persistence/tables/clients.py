@@ -47,16 +47,9 @@ class Client(Base, CreatedAt, UpdatedAt):
     user_id: Mapped[UserId | None] = mapped_column(
         sa.ForeignKey("users.id", ondelete="SET NULL"), nullable=True
     )
-    preferred_time_slot_id: Mapped[TimeSlotId | None] = mapped_column(
-        sa.ForeignKey("shop_delivery_time_slots.id", ondelete="SET NULL"),
-        nullable=True,
-    )
 
     shop: Mapped["Shop"] = relationship(back_populates="clients", lazy="raise")
     user: Mapped["User"] = relationship(lazy="raise")
-    preferred_time_slot: Mapped["ShopDeliveryTimeSlot | None"] = relationship(
-        lazy="raise"
-    )
     phones: Mapped[list["ClientPhone"]] = relationship(
         back_populates="client", cascade="all, delete-orphan", lazy="raise"
     )
@@ -142,11 +135,18 @@ class ClientAddress(Base, CreatedAt, UpdatedAt):
     district_id: Mapped[DistrictId | None] = mapped_column(
         sa.ForeignKey("districts.id", ondelete="SET NULL"), nullable=True
     )
+    preferred_time_slot_id: Mapped[TimeSlotId | None] = mapped_column(
+        sa.ForeignKey("shop_delivery_time_slots.id", ondelete="SET NULL"),
+        nullable=True,
+    )
 
     client: Mapped["Client"] = relationship(
         back_populates="addresses", lazy="raise"
     )
     district: Mapped["District | None"] = relationship(lazy="raise")
+    preferred_time_slot: Mapped["ShopDeliveryTimeSlot | None"] = relationship(
+        lazy="raise"
+    )
 
     __table_args__ = (
         sa.CheckConstraint(

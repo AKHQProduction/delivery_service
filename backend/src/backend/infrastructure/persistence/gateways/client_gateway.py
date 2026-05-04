@@ -75,7 +75,6 @@ class SQLAlchemyClientGateway:
                 "shop_id": client.shop_id,
                 "full_name": client.full_name,
                 "user_id": client.user_id or None,
-                "preferred_time_slot_id": client.preferred_time_slot_id,
                 "balance": (
                     client.balance
                     if client.balance is not None
@@ -105,6 +104,7 @@ class SQLAlchemyClientGateway:
                     "is_primary": addr.is_primary,
                     "client_id": client.id,
                     "district_id": addr.district_id,
+                    "preferred_time_slot_id": addr.preferred_time_slot_id,
                 }
                 for addr in client.addresses
             )
@@ -293,12 +293,14 @@ class SQLAlchemyClientGateway:
                     is_primary=address.is_primary,
                     id=AddressId(address.id),
                     district_id=address.district_id,
+                    preferred_time_slot_id=TimeSlotId(
+                        address.preferred_time_slot_id
+                    )
+                    if address.preferred_time_slot_id is not None
+                    else None,
                 )
                 for address in client.addresses
             ],
-            preferred_time_slot_id=TimeSlotId(client.preferred_time_slot_id)
-            if client.preferred_time_slot_id is not None
-            else None,
             balance=client.balance,
         )
 
