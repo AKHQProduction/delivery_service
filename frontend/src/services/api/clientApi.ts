@@ -14,6 +14,31 @@ interface CreateClientPayload {
   addresses: Address[];
 }
 
+const normalizeOptionalUuid = (value: string | null | undefined) => {
+  if (value === undefined || value === null || value.trim() === "") {
+    return null;
+  }
+
+  return value;
+};
+
+const normalizeAddresses = (addresses: Address[]) =>
+  addresses.map((address) => ({
+    ...address,
+    district_id: normalizeOptionalUuid(address.district_id),
+    preferred_time_slot_id: normalizeOptionalUuid(address.preferred_time_slot_id),
+  }));
+
+const normalizeCreateClientPayload = (body: CreateClientPayload): CreateClientPayload => ({
+  ...body,
+  addresses: normalizeAddresses(body.addresses),
+});
+
+const normalizeUpdateClientPayload = (payload: UpdateClientPayload): UpdateClientPayload => ({
+  ...payload,
+  addresses: payload.addresses ? normalizeAddresses(payload.addresses) : undefined,
+});
+
 export interface ImportResult {
   imported: number;
   skipped: number;
@@ -44,8 +69,9 @@ export const createNewClient = async (
   body: CreateClientPayload,
   confirmDuplicate: boolean = false,
 ) => {
+  const payload = normalizeCreateClientPayload(body);
   const response = await api.post(`v1/clients`, {
-    ...body,
+    ...payload,
     ...(confirmDuplicate && { confirm_duplicate_phones: true }),
   });
   return response.data;
@@ -56,8 +82,9 @@ export const updateExistingClientById = async (
   payload: UpdateClientPayload,
   confirmDuplicate: boolean = false,
 ) => {
+  const normalizedPayload = normalizeUpdateClientPayload(payload);
   const response = await api.patch(`v1/clients/${clientId}`, {
-    ...payload,
+    ...normalizedPayload,
     ...(confirmDuplicate && { confirm_duplicate_phones: true }),
   });
   return response.data;
