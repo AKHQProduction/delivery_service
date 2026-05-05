@@ -8,7 +8,7 @@ import {
 import { DateRangePicker } from "../components/ui/DateRangePicker";
 import { SkeletonBlock } from "../components/ui/Skeleton";
 import { useUserShopStore } from "../context/useUserShopStore";
-import { addDaysToDateKey, formatLocalDateKey } from "../utils/dateUtils";
+import { formatLocalDateKey } from "../utils/dateUtils";
 
 type PeriodMode = "today" | "week" | "month" | "custom";
 
@@ -17,10 +17,10 @@ const getPeriodRange = (mode: PeriodMode, todayKey: string) => {
   const end = new Date(start);
 
   if (mode === "week") {
-    return {
-      startDate: todayKey,
-      endDate: addDaysToDateKey(todayKey, 6),
-    };
+    const daysFromMonday = (start.getDay() + 6) % 7;
+    start.setDate(start.getDate() - daysFromMonday);
+    end.setTime(start.getTime());
+    end.setDate(start.getDate() + 6);
   }
 
   if (mode === "month") {
