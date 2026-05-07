@@ -1,9 +1,7 @@
 import { useEffect, useState } from "react";
-import { useNavigate } from "react-router-dom";
 import {
   getOrderStats,
   type OrderStats,
-  type OrderStatsRecentOrder,
 } from "../services/api/ordersApi";
 import { DateRangePicker } from "../components/ui/DateRangePicker";
 import { SkeletonBlock } from "../components/ui/Skeleton";
@@ -37,28 +35,7 @@ const getPeriodRange = (mode: PeriodMode, todayKey: string) => {
 const formatMoney = (value: number | null | undefined) =>
   `${Number(value ?? 0).toLocaleString("uk-UA")} ₴`;
 
-const getOrderTotal = (order: OrderStatsRecentOrder) =>
-  order.items.reduce((sum, item) => sum + item.quantity * item.price_per_item, 0);
-
-const getAddressText = (order: OrderStatsRecentOrder) => {
-  const address = order.delivery_address;
-  if (!address) return "Адресу не вказано";
-  return [address.street, address.house, address.apartment ? `кв. ${address.apartment}` : ""]
-    .filter(Boolean)
-    .join(", ");
-};
-
-const getInitials = (name?: string) => {
-  const parts = (name || "Клієнт").trim().split(/\s+/).filter(Boolean);
-  return parts
-    .slice(0, 2)
-    .map((part) => part[0])
-    .join("")
-    .toLocaleUpperCase("uk-UA");
-};
-
 export const MainPage = () => {
-  const navigate = useNavigate();
   const currentDate = useUserShopStore((s) => s.currentDate);
   const todayKey = currentDate ?? formatLocalDateKey();
   const [{ startDate, endDate }, setRange] = useState(() => getPeriodRange("today", todayKey));
@@ -149,7 +126,7 @@ export const MainPage = () => {
       {loading ? (
         <HomeSkeleton />
       ) : (
-        <DashboardContent stats={stats} onOpenOrders={() => navigate("/orders")} />
+        <DashboardContent stats={stats} />
       )}
     </div>
   );
@@ -157,10 +134,8 @@ export const MainPage = () => {
 
 const DashboardContent = ({
   stats,
-  onOpenOrders,
 }: {
   stats: OrderStats | null;
-  onOpenOrders: () => void;
 }) => {
   if (!stats) {
     return (
@@ -192,7 +167,7 @@ const DashboardContent = ({
         />
       </div>
 
-      <div className="mt-4 grid gap-4 xl:grid-cols-[minmax(0,1fr)_minmax(0,1fr)_minmax(0,1fr)]">
+      <div className="mt-4 grid gap-4 xl:grid-cols-3">
         <BreakdownCard
           title="Способи оплати"
           rows={stats.payment_method_stats.map((item) => ({
@@ -222,11 +197,7 @@ const DashboardContent = ({
         />
       </div>
 
-      <RecentOrdersTable
-        orders={stats.recent_orders}
-        total={stats.total_orders}
-        onOpenOrders={onOpenOrders}
-      />
+      <ProductStatsTable products={stats.product_stats} total={stats.total_orders_sum} />
     </>
   );
 };
@@ -283,103 +254,50 @@ const BreakdownCard = ({
   </section>
 );
 
-const RecentOrdersTable = ({
-  orders,
+const ProductStatsTable = ({
+  products,
   total,
-  onOpenOrders,
 }: {
-  orders: OrderStatsRecentOrder[];
+  products: OrderStats["product_stats"];
   total: number;
-  onOpenOrders: () => void;
 }) => (
   <section className="mt-4 overflow-hidden rounded-lg border border-slate-200 bg-white">
-    <div className="flex items-center justify-between gap-4 border-b border-slate-200 px-4 py-3">
-      <h2 className="text-base font-semibold text-slate-950">Останні замовлення</h2>
-      <button
-        type="button"
-        onClick={onOpenOrders}
-        className="text-sm font-medium text-blue-600 hover:text-blue-700"
-      >
-        Перейти до замовлень
-      </button>
+    <div className="border-b border-slate-200 px-4 py-3">
+      <h2 className="text-base font-semibold text-slate-950">Товари</h2>
     </div>
 
-    {orders.length > 0 ? (
-      <>
-        <div className="hidden overflow-x-auto lg:block">
-          <table className="min-w-full table-fixed divide-y divide-slate-200 text-sm">
-            <thead className="bg-white text-left text-xs font-medium text-slate-500">
-              <tr>
-                <th className="w-[22%] px-4 py-3">Клієнт</th>
-                <th className="w-[12%] px-4 py-3">Час</th>
-                <th className="w-[28%] px-4 py-3">Адреса</th>
-                <th className="w-[20%] px-4 py-3">Товари</th>
-                <th className="w-[10%] px-4 py-3 text-right">Сума</th>
-                <th className="w-[12%] px-4 py-3">Оплата</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-slate-200">
-              {orders.map((order) => (
-                <tr key={order.order_id} className="hover:bg-slate-50">
-                  <td className="px-4 py-3">
-                    <div className="flex items-center gap-3">
-                      <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-blue-100 text-xs font-semibold text-blue-700">
-                        {getInitials(order.client_name)}
-                      </span>
-                      <span className="truncate font-medium text-slate-950">
-                        {order.client_name}
-                      </span>
-                    </div>
+    {products.length > 0 ? (
+      <div className="max-h-80 overflow-auto">
+        <table className="min-w-full table-fixed divide-y divide-slate-200 text-sm">
+          <thead className="sticky top-0 z-10 bg-white text-left text-xs font-medium text-slate-500 shadow-[0_1px_0_0_#e2e8f0]">
+            <tr>
+              <th className="w-[46%] px-4 py-3">Товар</th>
+              <th className="w-[18%] px-4 py-3 text-right">Кількість</th>
+              <th className="w-[18%] px-4 py-3 text-right">Сума</th>
+              <th className="w-[18%] px-4 py-3 text-right">Частка</th>
+            </tr>
+          </thead>
+          <tbody className="divide-y divide-slate-200">
+            {products.map((product) => {
+              const percent = total > 0 ? Math.round((product.orders_sum / total) * 100) : 0;
+              return (
+                <tr key={product.name} className="hover:bg-slate-50">
+                  <td className="px-4 py-3 font-medium text-slate-950">
+                    <span className="line-clamp-2">{product.name}</span>
                   </td>
-                  <td className="px-4 py-3 text-slate-700">{order.time_slot}</td>
-                  <td className="px-4 py-3 text-slate-600">
-                    <span className="line-clamp-2">{getAddressText(order)}</span>
-                  </td>
-                  <td className="px-4 py-3 text-slate-600">
-                    <span className="line-clamp-2">
-                      {order.items.map((item) => `${item.name} x ${item.quantity}`).join(", ")}
-                    </span>
-                  </td>
+                  <td className="px-4 py-3 text-right text-slate-600">{product.quantity} поз.</td>
                   <td className="px-4 py-3 text-right font-semibold text-slate-950">
-                    {formatMoney(getOrderTotal(order))}
+                    {formatMoney(product.orders_sum)}
                   </td>
-                  <td className="px-4 py-3 text-slate-600">
-                    {order.payment_method || "Не вказано"}
-                  </td>
+                  <td className="px-4 py-3 text-right text-slate-600">{percent}%</td>
                 </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-
-        <div className="grid gap-3 p-3 lg:hidden">
-          {orders.map((order) => (
-            <div key={order.order_id} className="rounded-lg border border-slate-200 p-4">
-              <div className="flex items-start justify-between gap-3">
-                <div className="min-w-0">
-                  <p className="truncate text-sm font-semibold text-slate-950">
-                    {order.client_name}
-                  </p>
-                  <p className="mt-1 text-xs text-slate-500">{order.time_slot}</p>
-                </div>
-                <p className="shrink-0 text-sm font-semibold text-slate-950">
-                  {formatMoney(getOrderTotal(order))}
-                </p>
-              </div>
-              <p className="mt-3 truncate text-sm text-slate-600">{getAddressText(order)}</p>
-              <p className="mt-2 truncate text-sm text-slate-500">
-                {order.items.map((item) => `${item.name} x ${item.quantity}`).join(", ")}
-              </p>
-            </div>
-          ))}
-        </div>
-
-        <div className="border-t border-slate-200 px-4 py-3 text-sm text-slate-500">
-          Всього замовлень: {total}
-        </div>
-      </>
+              );
+            })}
+          </tbody>
+        </table>
+      </div>
     ) : (
-      <p className="px-4 py-8 text-sm text-slate-500">Замовлень за період немає.</p>
+      <p className="px-4 py-8 text-sm text-slate-500">Даних за період немає.</p>
     )}
   </section>
 );
@@ -415,11 +333,15 @@ const HomeSkeleton = () => (
         </section>
       ))}
     </div>
-    <section className="mt-4 rounded-lg border border-slate-200 bg-white p-4">
-      <SkeletonBlock className="h-5 w-40" />
-      <div className="mt-4 space-y-4">
-        {Array.from({ length: 5 }).map((_, index) => (
-          <SkeletonBlock key={index} className="h-10 w-full" />
+    <section className="mt-4 overflow-hidden rounded-lg border border-slate-200 bg-white">
+      <div className="border-b border-slate-200 px-4 py-3">
+        <SkeletonBlock className="h-5 w-24" />
+      </div>
+      <div className="max-h-80 space-y-0 overflow-hidden">
+        {Array.from({ length: 6 }).map((_, index) => (
+          <div key={index} className="border-b border-slate-200 px-4 py-3">
+            <SkeletonBlock className="h-5 w-full" />
+          </div>
         ))}
       </div>
     </section>
