@@ -1,22 +1,25 @@
 import { useEffect, useMemo, useState } from "react";
 import { Modal } from "../modals/Modal";
 import { AddOrderForm } from "../forms/orders/AddOrderForm";
-import { getRecentOrdersByClient } from "../../services/api/ordersApi";
+import { fetchRecentOrdersForClient } from "../../services/clientPlanningData";
 import { type Client } from "../../types/entities/Client";
 import { type Order } from "../../types/entities/Order";
 import { addDaysToDateKey, formatLocalDateKey } from "../../utils/dateUtils";
 import { useUserShopStore } from "../../context/useUserShopStore";
+import {
+  buildRecurringTemplateSeed,
+  type RecurringTemplateSeed,
+} from "../../utils/recurringOrderFormModel";
+import {
+  buildRepeatOrderDraft,
+  getOrderItemsSummary,
+} from "../../utils/orderDraft";
 
 interface ClientRecentOrdersSectionProps {
   client: Client;
   limit: number;
-  onCreateRegular?: (order: Order) => void;
+  onCreateRegular?: (seed: RecurringTemplateSeed) => void;
 }
-
-const getItemsSummary = (order: Order) => {
-  const quantity = order.items?.reduce((sum, item) => sum + item.quantity, 0);
-  return `${quantity || 0} товарів`;
-};
 
 export const ClientRecentOrdersSection = ({
   client,
@@ -31,40 +34,20 @@ export const ClientRecentOrdersSection = ({
 
   useEffect(() => {
     const loadOrders = async () => {
-      if (!client.full_name) return;
-
       setIsLoading(true);
       try {
-        const data = (await getRecentOrdersByClient(
-          client.full_name,
-          limit,
-        )) as Order[];
-        setOrders(data.filter((order) => order.client_id === client.client_id));
+        setOrders(await fetchRecentOrdersForClient(client, limit));
       } finally {
         setIsLoading(false);
       }
     };
     loadOrders();
-  }, [client.client_id, client.full_name, limit]);
+  }, [client, limit]);
 
   const initialRepeatOrder = useMemo(() => {
     if (!repeatOrder) return undefined;
 
-    return {
-      client_id: repeatOrder.client_id,
-      delivery_date: tomorrow,
-      payment_method: repeatOrder.payment_method,
-      comment: repeatOrder.comment || repeatOrder.note || "",
-      items: repeatOrder.items
-        .filter((item) => item.product_id)
-        .map((item) => ({
-          id: item.id,
-          product_id: item.product_id as string,
-          name: item.name,
-          price_per_item: item.price_per_item,
-          quantity: item.quantity,
-        })),
-    };
+    return buildRepeatOrderDraft(repeatOrder, tomorrow);
   }, [repeatOrder, tomorrow]);
 
   return (
@@ -90,7 +73,7 @@ export const ClientRecentOrdersSection = ({
                     {order.date} · {order.time_slot || order.time_preference}
                   </p>
                   <p className="mt-1 text-sm text-slate-500">
-                    {getItemsSummary(order)}
+                    {getOrderItemsSummary(order)}
                   </p>
                 </div>
                 <span
@@ -114,7 +97,7 @@ export const ClientRecentOrdersSection = ({
                 {onCreateRegular && (
                   <button
                     type="button"
-                    onClick={() => onCreateRegular(order)}
+                    onClick={() => onCreateRegular(buildRecurringTemplateSeed(order))}
                     className="h-8 rounded-md border border-blue-300 px-3 text-xs font-medium text-blue-700 hover:bg-blue-50"
                   >
                     Створити регулярне

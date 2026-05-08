@@ -17,7 +17,7 @@ interface RecurringOrderFilters {
   month_day?: number;
 }
 
-export const getRecurringOrders = async (
+export const listRecurringOrders = async (
   filters: RecurringOrderFilters = {},
 ): Promise<RecurringOrder[]> => {
   const response = await api.get("v1/recurring-orders", { params: filters });
@@ -31,7 +31,7 @@ export const getRecurringOrderById = async (
   return response.data;
 };
 
-export const createRecurringOrder = async (
+export const createRecurringOrderTemplate = async (
   payload: CreateRecurringOrderPayload,
 ): Promise<string> => {
   const response = await api.post("v1/recurring-orders", payload);
@@ -52,7 +52,7 @@ export const resumeRecurringOrder = async (recurringOrderId: string) => {
   return response.data;
 };
 
-export const runRecurringOrder = async (
+export const runRecurringOrderWithPolicy = async (
   recurringOrderId: string,
   payload: RunRecurringOrderPayload,
 ): Promise<RunRecurringOrderResult> => {

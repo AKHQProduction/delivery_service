@@ -6,7 +6,7 @@ import { useDistrictsSettings } from "../../../hooks/settings/useDistrictsSettin
 import { useTimeSlotsSettings } from "../../../hooks/settings/useTimeSlotsSettings";
 import { ClientRecentOrdersSection } from "../../features/ClientRecentOrdersSection";
 import { ClientPlanningSummarySection } from "../../features/ClientPlanningSummarySection";
-import { type Order } from "../../../types/entities/Order";
+import { type RecurringTemplateSeed } from "../../../utils/recurringOrderFormModel";
 
 interface ClientDetailModalProps {
   client: Client;
@@ -83,10 +83,10 @@ export const ClientDetailModal: React.FC<ClientDetailModalProps> = ({
     setIsEditing(false);
   };
 
-  const openPlanning = (seedOrder?: Order) => {
+  const openPlanning = (recurringSeed?: RecurringTemplateSeed) => {
     onClose();
     navigate(`/planning?client_id=${client.client_id}`, {
-      state: seedOrder ? { seedOrder } : undefined,
+      state: recurringSeed ? { recurringSeed } : undefined,
     });
   };
 

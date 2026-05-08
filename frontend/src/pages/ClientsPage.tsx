@@ -555,9 +555,9 @@ const ClientSidePanel = ({
       <ClientRecentOrdersSection
         client={client}
         limit={10}
-        onCreateRegular={(order) =>
+        onCreateRegular={(recurringSeed) =>
           navigate(`/planning?client_id=${client.client_id}`, {
-            state: { seedOrder: order },
+            state: { recurringSeed },
           })
         }
       />

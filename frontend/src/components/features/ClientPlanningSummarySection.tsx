@@ -1,8 +1,13 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { getRecurringOrders } from "../../services/api/recurringOrderApi";
+import { fetchRecurringOrdersForClient } from "../../services/clientPlanningData";
 import { type Client } from "../../types/entities/Client";
 import { type RecurringOrder } from "../../types/entities/RecurringOrder";
+import {
+  formatRecurringOrderItemsCount,
+  formatRecurringOrderTimeSlotLabel,
+  formatScheduleSummaryLabel,
+} from "../../utils/recurringOrderPresentation";
 
 interface ClientPlanningSummarySectionProps {
   client: Client;
@@ -21,18 +26,13 @@ export const ClientPlanningSummarySection = ({
     const loadOrders = async () => {
       setIsLoading(true);
       try {
-        const data = await getRecurringOrders({
-          client_name: client.full_name || "",
-        });
-        setOrders(
-          data.filter((order) => order.client_id === client.client_id),
-        );
+        setOrders(await fetchRecurringOrdersForClient(client));
       } finally {
         setIsLoading(false);
       }
     };
     loadOrders();
-  }, [client.client_id, client.full_name]);
+  }, [client]);
 
   const activeCount = orders.filter((order) => order.status === "ACTIVE").length;
   const pausedCount = orders.filter((order) => order.status === "PAUSED").length;
@@ -64,14 +64,11 @@ export const ClientPlanningSummarySection = ({
       {orders[0] && (
         <div className="border-t border-slate-200 px-4 py-3">
           <p className="text-sm font-medium text-slate-950">
-            {orders[0].schedule_type === "WEEKLY"
-              ? "Щотижневе замовлення"
-              : "Щомісячне замовлення"}
+            {formatScheduleSummaryLabel(orders[0])}
           </p>
           <p className="mt-1 text-sm text-slate-500">
-            {orders[0].time_slot_label ||
-              `${orders[0].delivery_start_time}-${orders[0].delivery_end_time}`}{" "}
-            · {orders[0].items_count} товарів
+            {formatRecurringOrderTimeSlotLabel(orders[0])} ·{" "}
+            {formatRecurringOrderItemsCount(orders[0].items_count)}
           </p>
         </div>
       )}

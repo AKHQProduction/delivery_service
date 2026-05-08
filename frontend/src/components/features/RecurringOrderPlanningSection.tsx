@@ -1,253 +1,73 @@
-import { type ReactNode, useEffect, useMemo, useState } from "react";
-import { usePaymentMethodsSettings } from "../../hooks/settings/usePaymentMethodsSettings";
-import { useTimeSlotsSettings } from "../../hooks/settings/useTimeSlotsSettings";
-import { useProducts } from "../../hooks/products/useProducts";
-import {
-  createRecurringOrder,
-  deleteRecurringOrder,
-  getRecurringOrders,
-  pauseRecurringOrder,
-  resumeRecurringOrder,
-  runRecurringOrder,
-} from "../../services/api/recurringOrderApi";
+import { type ReactNode } from "react";
+import { useRecurringOrderPlanning } from "../../hooks/recurringOrders/useRecurringOrderPlanning";
 import { type Client } from "../../types/entities/Client";
-import { type Order } from "../../types/entities/Order";
+import { type RecurringTemplateSeed } from "../../utils/recurringOrderFormModel";
 import {
-  type RecurringOrder,
-  type RunRecurringOrderResult,
-  type ScheduleType,
-} from "../../types/entities/RecurringOrder";
+  formatRecurringOrderItemsCount,
+  formatRecurringOrderStatusLabel,
+  formatRecurringOrderTimeSlotLabel,
+  formatRunSummaryLines,
+  formatScheduleLabel,
+  getRecurringOrderStatusClassName,
+  WEEKDAYS,
+} from "../../utils/recurringOrderPresentation";
 import { Modal } from "../modals/Modal";
 
 interface RecurringOrderPlanningSectionProps {
   client: Client;
   compact?: boolean;
-  seedOrder?: Order | null;
+  seed?: RecurringTemplateSeed | null;
   onSeedConsumed?: () => void;
 }
-
-type RunDialogState =
-  | { step: "activate"; order: RecurringOrder }
-  | { step: "today"; order: RecurringOrder; activate: boolean }
-  | {
-      step: "summary";
-      order: RecurringOrder;
-      result: RunRecurringOrderResult;
-    };
-
-const WEEKDAYS = [
-  { value: 1, label: "Пн" },
-  { value: 2, label: "Вт" },
-  { value: 3, label: "Ср" },
-  { value: 4, label: "Чт" },
-  { value: 5, label: "Пт" },
-  { value: 6, label: "Сб" },
-  { value: 7, label: "Нд" },
-];
-
-const scheduleLabel = (order: RecurringOrder) => {
-  if (order.schedule_type === "WEEKLY") {
-    const days = order.weekdays
-      ?.map((day) => WEEKDAYS.find((item) => item.value === day)?.label)
-      .filter(Boolean)
-      .join(", ");
-    return days ? `Щотижня: ${days}` : "Щотижня";
-  }
-
-  return order.month_days?.length
-    ? `Щомісяця: ${order.month_days.join(", ")}`
-    : "Щомісяця";
-};
-
-const timeSlotLabel = (order: RecurringOrder) =>
-  order.time_slot_label
-    ? `${order.time_slot_label} (${order.delivery_start_time}-${order.delivery_end_time})`
-    : `${order.delivery_start_time}-${order.delivery_end_time}`;
 
 const selectClassName =
   "h-10 w-full appearance-none rounded-md border border-slate-300 bg-white px-3 pr-10 text-sm text-slate-950";
 
-const getPrimaryPhone = (client: Client) =>
-  client.phones?.find((phone) => phone.is_primary) ?? client.phones?.[0];
-
-const getPrimaryAddress = (client: Client) =>
-  client.addresses?.find((address) => address.is_primary) ??
-  client.addresses?.[0];
-
-const formatRunSummary = (result: RunRecurringOrderResult) => {
-  if (result.paused) {
-    return "Шаблон поставлено на паузу. Перевірте адресу, телефон, слот або товари.";
-  }
-
-  const parts = [
-    result.created_dates.length
-      ? `Створено: ${result.created_dates.length}`
-      : null,
-    result.already_scheduled_dates.length
-      ? `Вже заплановано: ${result.already_scheduled_dates.length}`
-      : null,
-    result.cancelled_dates.length
-      ? `Скасовано раніше: ${result.cancelled_dates.length}`
-      : null,
-  ].filter(Boolean);
-
-  return parts.length ? parts.join("\n") : "Нових дат для планування немає.";
-};
-
 export const RecurringOrderPlanningSection = ({
   client,
   compact = false,
-  seedOrder = null,
+  seed = null,
   onSeedConsumed,
 }: RecurringOrderPlanningSectionProps) => {
-  const [orders, setOrders] = useState<RecurringOrder[]>([]);
-  const [isLoading, setIsLoading] = useState(false);
-  const [isFormOpen, setIsFormOpen] = useState(false);
-  const [scheduleType, setScheduleType] = useState<ScheduleType>("WEEKLY");
-  const [weekdays, setWeekdays] = useState<number[]>([1]);
-  const [monthDays, setMonthDays] = useState("1");
-  const [phoneId, setPhoneId] = useState<number | "">("");
-  const [addressId, setAddressId] = useState<number | "">("");
-  const [timeSlotId, setTimeSlotId] = useState("");
-  const [paymentMethod, setPaymentMethod] = useState("");
-  const [productId, setProductId] = useState("");
-  const [quantity, setQuantity] = useState(1);
-  const [comment, setComment] = useState("");
-  const [runDialog, setRunDialog] = useState<RunDialogState | null>(null);
-  const [isRunning, setIsRunning] = useState(false);
-
-  const { timeSlots } = useTimeSlotsSettings();
-  const { paymentMethods } = usePaymentMethodsSettings();
-  const { products, getProducts } = useProducts();
-
-  const clientOrders = useMemo(
-    () => orders.filter((order) => order.client_id === client.client_id),
-    [client.client_id, orders],
-  );
-
-  const refresh = async () => {
-    setIsLoading(true);
-    try {
-      const data = await getRecurringOrders({
-        client_name: client.full_name || "",
-      });
-      setOrders(data);
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  const handleRunClick = (order: RecurringOrder) => {
-    if (order.status === "PAUSED") {
-      setRunDialog({ step: "activate", order });
-      return;
-    }
-
-    setRunDialog({ step: "today", order, activate: false });
-  };
-
-  const executeRun = async (
-    order: RecurringOrder,
-    options: { includeToday: boolean; activate: boolean },
-  ) => {
-    setIsRunning(true);
-    const result = await runRecurringOrder(order.recurring_order_id, {
-      include_today: options.includeToday,
-      activate: options.activate,
-    });
-    await refresh();
-    setRunDialog({ step: "summary", order, result });
-    setIsRunning(false);
-  };
-
-  const closeRunDialog = () => {
-    if (isRunning) {
-      return;
-    }
-    setRunDialog(null);
-  };
-
-  useEffect(() => {
-    refresh();
-    getProducts();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [client.client_id]);
-
-  useEffect(() => {
-    setPhoneId(getPrimaryPhone(client)?.id ?? "");
-    setAddressId(getPrimaryAddress(client)?.id ?? "");
-  }, [client]);
-
-  useEffect(() => {
-    if (!timeSlotId && timeSlots[0]) {
-      setTimeSlotId(timeSlots[0].time_slot_id);
-    }
-  }, [timeSlotId, timeSlots]);
-
-  useEffect(() => {
-    if (!paymentMethod && paymentMethods[0]) {
-      setPaymentMethod(paymentMethods[0].name);
-    }
-  }, [paymentMethod, paymentMethods]);
-
-  useEffect(() => {
-    if (!productId && products[0]) {
-      setProductId(products[0].product_id);
-    }
-  }, [productId, products]);
-
-  useEffect(() => {
-    if (!seedOrder) return;
-
-    const seedItem = seedOrder.items.find((item) => item.product_id);
-    if (seedItem?.product_id) {
-      setProductId(seedItem.product_id);
-      setQuantity(seedItem.quantity);
-    }
-    if (seedOrder.payment_method) {
-      setPaymentMethod(seedOrder.payment_method);
-    }
-    setComment(seedOrder.comment || seedOrder.note || "");
-    setScheduleType("WEEKLY");
-    setWeekdays([1]);
-    setIsFormOpen(true);
-    onSeedConsumed?.();
-  }, [onSeedConsumed, seedOrder]);
-
-  const toggleWeekday = (day: number) => {
-    setWeekdays((current) =>
-      current.includes(day)
-        ? current.filter((value) => value !== day)
-        : [...current, day].sort((a, b) => a - b),
-    );
-  };
-
-  const handleCreate = async () => {
-    if (!phoneId || !addressId || !timeSlotId || !paymentMethod || !productId) {
-      return;
-    }
-
-    const parsedMonthDays = monthDays
-      .split(",")
-      .map((value) => Number(value.trim()))
-      .filter((value) => Number.isInteger(value));
-
-    await createRecurringOrder({
-      client_id: client.client_id,
-      address_id: addressId,
-      phone_id: phoneId,
-      time_slot_id: timeSlotId,
-      items: [{ product_id: productId, quantity }],
-      payment_method: paymentMethod,
-      comment: comment.trim() || null,
-      schedule_type: scheduleType,
-      weekdays: scheduleType === "WEEKLY" ? weekdays : null,
-      month_days: scheduleType === "MONTHLY_BY_DAY" ? parsedMonthDays : null,
-    });
-
-    setIsFormOpen(false);
-    await refresh();
-  };
+  const planning = useRecurringOrderPlanning(client, seed, onSeedConsumed);
+  const {
+    addressId,
+    clientOrders,
+    closeRunDialog,
+    comment,
+    continueAfterActivation,
+    deleteOrder,
+    executeRun,
+    handleCreate,
+    handleRunClick,
+    isFormOpen,
+    isLoading,
+    isRunning,
+    monthDays,
+    paymentMethod,
+    paymentMethods,
+    phoneId,
+    productId,
+    products,
+    quantity,
+    runDialog,
+    scheduleType,
+    setAddressId,
+    setComment,
+    setIsFormOpen,
+    setMonthDays,
+    setPaymentMethod,
+    setPhoneId,
+    setProductId,
+    setQuantity,
+    setScheduleType,
+    setTimeSlotId,
+    timeSlotId,
+    timeSlots,
+    toggleStatus,
+    toggleWeekday,
+    weekdays,
+  } = planning;
 
   return (
     <section className="rounded-lg border border-slate-200 bg-white">
@@ -428,10 +248,11 @@ export const RecurringOrderPlanningSection = ({
               <div className="flex items-start justify-between gap-3">
                 <div className="min-w-0">
                   <p className="text-sm font-medium text-slate-950">
-                    {scheduleLabel(order)}
+                    {formatScheduleLabel(order)}
                   </p>
                   <p className="mt-1 text-sm text-slate-500">
-                    {timeSlotLabel(order)} · {order.items_count} товарів
+                    {formatRecurringOrderTimeSlotLabel(order)} ·{" "}
+                    {formatRecurringOrderItemsCount(order.items_count)}
                   </p>
                   <p className="mt-1 text-xs text-slate-500">
                     {order.address_summary || "Адресу не знайдено"}
@@ -439,12 +260,10 @@ export const RecurringOrderPlanningSection = ({
                 </div>
                 <span
                   className={`shrink-0 rounded px-2 py-1 text-xs font-medium ${
-                    order.status === "ACTIVE"
-                      ? "bg-emerald-50 text-emerald-700"
-                      : "bg-slate-100 text-slate-600"
+                    getRecurringOrderStatusClassName(order.status)
                   }`}
                 >
-                  {order.status === "ACTIVE" ? "Активний" : "Пауза"}
+                  {formatRecurringOrderStatusLabel(order.status)}
                 </span>
               </div>
               <div className="mt-3 flex gap-2">
@@ -457,24 +276,14 @@ export const RecurringOrderPlanningSection = ({
                 </button>
                 <button
                   type="button"
-                  onClick={async () => {
-                    if (order.status === "ACTIVE") {
-                      await pauseRecurringOrder(order.recurring_order_id);
-                    } else {
-                      await resumeRecurringOrder(order.recurring_order_id);
-                    }
-                    await refresh();
-                  }}
+                  onClick={() => toggleStatus(order)}
                   className="h-8 rounded-md border border-slate-300 px-3 text-xs font-medium text-slate-700 hover:bg-slate-100"
                 >
                   {order.status === "ACTIVE" ? "Пауза" : "Активувати"}
                 </button>
                 <button
                   type="button"
-                  onClick={async () => {
-                    await deleteRecurringOrder(order.recurring_order_id);
-                    await refresh();
-                  }}
+                  onClick={() => deleteOrder(order)}
                   className="h-8 rounded-md border border-red-300 px-3 text-xs font-medium text-red-600 hover:bg-red-50"
                 >
                   Видалити
@@ -506,10 +315,10 @@ export const RecurringOrderPlanningSection = ({
                 активуйте його.
               </p>
               <p className="mt-3 text-sm font-medium text-slate-950">
-                {scheduleLabel(runDialog.order)}
+                {formatScheduleLabel(runDialog.order)}
               </p>
               <p className="mt-1 text-sm text-slate-500">
-                {timeSlotLabel(runDialog.order)}
+                {formatRecurringOrderTimeSlotLabel(runDialog.order)}
               </p>
             </div>
             <div className="grid gap-3 sm:grid-cols-2">
@@ -522,13 +331,7 @@ export const RecurringOrderPlanningSection = ({
               </button>
               <button
                 type="button"
-                onClick={() =>
-                  setRunDialog({
-                    step: "today",
-                    order: runDialog.order,
-                    activate: true,
-                  })
-                }
+                onClick={continueAfterActivation}
                 className="h-11 rounded-md bg-slate-900 px-4 text-sm font-medium text-white hover:bg-slate-700"
               >
                 Активувати
@@ -546,10 +349,10 @@ export const RecurringOrderPlanningSection = ({
                 до наступних 14 днів.
               </p>
               <p className="mt-3 text-sm font-medium text-slate-950">
-                {scheduleLabel(runDialog.order)}
+                {formatScheduleLabel(runDialog.order)}
               </p>
               <p className="mt-1 text-sm text-slate-500">
-                {timeSlotLabel(runDialog.order)}
+                {formatRecurringOrderTimeSlotLabel(runDialog.order)}
               </p>
             </div>
             <div className="grid gap-3 sm:grid-cols-2">
@@ -586,13 +389,11 @@ export const RecurringOrderPlanningSection = ({
         {runDialog?.step === "summary" && (
           <div className="space-y-5">
             <div className="rounded-md border border-slate-200 bg-slate-50 px-4 py-3">
-              {formatRunSummary(runDialog.result)
-                .split("\n")
-                .map((line) => (
-                  <p key={line} className="text-sm leading-6 text-slate-700">
-                    {line}
-                  </p>
-                ))}
+              {formatRunSummaryLines(runDialog.result).map((line) => (
+                <p key={line} className="text-sm leading-6 text-slate-700">
+                  {line}
+                </p>
+              ))}
             </div>
             <button
               type="button"

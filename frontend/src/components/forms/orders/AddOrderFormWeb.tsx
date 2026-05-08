@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import { useOrderForm } from "../../../hooks/orders/useOrdersForm";
 import { useOrders } from "../../../hooks/orders/useOrders";
-import { type InitialOrderFormData } from "./AddOrderForm";
+import { type RegularOrderDraft } from "../../../utils/orderDraft";
 import { SearchBar } from "../../ui/SearchBar";
 import { DateInput } from "../../shared/DateInput";
 import { FormSelect } from "../../shared/FormSelect";
@@ -14,7 +14,7 @@ import { useUserShopStore } from "../../../context/useUserShopStore";
 interface AddOrderFormWebProps {
   onClose: () => void;
   onSave?: (order?: unknown) => void;
-  initialOrder?: InitialOrderFormData;
+  initialOrder?: RegularOrderDraft;
 }
 
 export const AddOrderFormWeb: React.FC<AddOrderFormWebProps> = ({

@@ -7,6 +7,7 @@ import { type Client } from "../../types/entities/Client";
 import { type Product } from "../../types/entities/Product";
 import { formatLocalDateKey } from "../../utils/dateUtils";
 import { useUserShopStore } from "../../context/useUserShopStore";
+import { type RegularOrderDraft } from "../../utils/orderDraft";
 
 interface OrderFormProduct {
   product: Product;
@@ -40,24 +41,7 @@ interface OrderFormData {
 }
 
 interface UseOrderFormOptions {
-  initialOrder?: {
-    client_id?: string;
-    phone_id?: number;
-    address_id?: number;
-    delivery_date?: string;
-    date?: string;
-    time_slot_id?: string;
-    payment_method?: string;
-    comment?: string;
-    note?: string;
-    items?: Array<{
-      id: number;
-      product_id: string;
-      name?: string;
-      price_per_item?: number;
-      quantity: number;
-    }>;
-  };
+  initialOrder?: RegularOrderDraft;
 }
 
 const getAddressPreferredTimeSlot = (

@@ -3,41 +3,25 @@ import { useLocation, useSearchParams } from "react-router-dom";
 import { ClientRecentOrdersSection } from "../components/features/ClientRecentOrdersSection";
 import { RecurringOrderPlanningSection } from "../components/features/RecurringOrderPlanningSection";
 import { useClient } from "../hooks/clients/useClients";
-import { getRecurringOrders } from "../services/api/recurringOrderApi";
+import { listRecurringOrders } from "../services/api/recurringOrderApi";
 import { type Client } from "../types/entities/Client";
 import {
   type RecurringOrder,
   type RecurringOrderStatus,
   type ScheduleType,
 } from "../types/entities/RecurringOrder";
-import { type Order } from "../types/entities/Order";
+import {
+  formatRecurringOrderItemsCount,
+  formatRecurringOrderStatusLabel,
+  formatRecurringOrderTimeSlotLabel,
+  formatScheduleLabel,
+  getRecurringOrderStatusClassName,
+  WEEKDAYS,
+} from "../utils/recurringOrderPresentation";
+import { type RecurringTemplateSeed } from "../utils/recurringOrderFormModel";
 
 const selectClassName =
   "h-10 w-full appearance-none rounded-md border border-slate-300 bg-white px-3 pr-10 text-sm text-slate-950";
-
-const WEEKDAYS = [
-  { value: 1, label: "Пн" },
-  { value: 2, label: "Вт" },
-  { value: 3, label: "Ср" },
-  { value: 4, label: "Чт" },
-  { value: 5, label: "Пт" },
-  { value: 6, label: "Сб" },
-  { value: 7, label: "Нд" },
-];
-
-const scheduleLabel = (order: RecurringOrder) => {
-  if (order.schedule_type === "WEEKLY") {
-    const days = order.weekdays
-      ?.map((day) => WEEKDAYS.find((item) => item.value === day)?.label)
-      .filter(Boolean)
-      .join(", ");
-    return days ? `Щотижня: ${days}` : "Щотижня";
-  }
-
-  return order.month_days?.length
-    ? `Щомісяця: ${order.month_days.join(", ")}`
-    : "Щомісяця";
-};
 
 export const PlanningPage = () => {
   const location = useLocation();
@@ -53,13 +37,14 @@ export const PlanningPage = () => {
   const [scheduleType, setScheduleType] = useState<ScheduleType | "">("");
   const [weekday, setWeekday] = useState<number | "">("");
   const [monthDay, setMonthDay] = useState("");
-  const [regularSeedOrder, setRegularSeedOrder] = useState<Order | null>(null);
+  const [recurringSeed, setRecurringSeed] =
+    useState<RecurringTemplateSeed | null>(null);
 
   const { clients, getClients, loading } = useClient();
 
   const refreshOrders = async () => {
     const parsedMonthDay = Number(monthDay);
-    const data = await getRecurringOrders({
+    const data = await listRecurringOrders({
       client_name: searchTerm || undefined,
       status: statusFilter || undefined,
       schedule_type: scheduleType || undefined,
@@ -97,9 +82,9 @@ export const PlanningPage = () => {
 
   useEffect(() => {
     if (routeSeedConsumedRef.current) return;
-    const state = location.state as { seedOrder?: Order } | null;
-    if (state?.seedOrder) {
-      setRegularSeedOrder(state.seedOrder);
+    const state = location.state as { recurringSeed?: RecurringTemplateSeed } | null;
+    if (state?.recurringSeed) {
+      setRecurringSeed(state.recurringSeed);
       routeSeedConsumedRef.current = true;
     }
   }, [location.state]);
@@ -240,23 +225,20 @@ export const PlanningPage = () => {
                         {order.phone_number || "Телефон не знайдено"}
                       </p>
                     </div>
-                  <span
-                    className={`h-7 justify-self-start whitespace-nowrap rounded px-2 py-1 text-xs font-medium ${
-                      order.status === "ACTIVE"
-                        ? "bg-emerald-50 text-emerald-700"
-                        : "bg-slate-100 text-slate-600"
-                    }`}
-                  >
-                    {order.status === "ACTIVE" ? "Активний" : "Пауза"}
-                  </span>
+                    <span
+                      className={`h-7 justify-self-start whitespace-nowrap rounded px-2 py-1 text-xs font-medium ${getRecurringOrderStatusClassName(
+                        order.status,
+                      )}`}
+                    >
+                      {formatRecurringOrderStatusLabel(order.status)}
+                    </span>
                   </div>
                   <p className="mt-3 text-sm text-slate-950">
-                    {scheduleLabel(order)}
+                    {formatScheduleLabel(order)}
                   </p>
                   <p className="mt-1 text-sm text-slate-500">
-                    {order.time_slot_label ||
-                      `${order.delivery_start_time}-${order.delivery_end_time}`}{" "}
-                    · {order.items_count} товарів
+                    {formatRecurringOrderTimeSlotLabel(order)} ·{" "}
+                    {formatRecurringOrderItemsCount(order.items_count)}
                   </p>
                 </div>
               ))
@@ -274,13 +256,13 @@ export const PlanningPage = () => {
               <RecurringOrderPlanningSection
                 client={selectedClient}
                 compact
-                seedOrder={regularSeedOrder}
-                onSeedConsumed={() => setRegularSeedOrder(null)}
+                seed={recurringSeed}
+                onSeedConsumed={() => setRecurringSeed(null)}
               />
               <ClientRecentOrdersSection
                 client={selectedClient}
                 limit={10}
-                onCreateRegular={setRegularSeedOrder}
+                onCreateRegular={setRecurringSeed}
               />
             </>
           ) : (
