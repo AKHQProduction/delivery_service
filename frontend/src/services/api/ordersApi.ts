@@ -121,6 +121,21 @@ export const getOrderById = async (orderId: string) => {
   return response.data;
 };
 
+export const getRecentOrdersByClient = async (
+  clientName: string,
+  limit: number,
+) => {
+  const response = await api.get(`v1/orders/all`, {
+    params: {
+      client_name: clientName,
+      limit,
+      offset: 0,
+      order: "DESC",
+    },
+  });
+  return response.data;
+};
+
 export const generateOrdersPdfLink = async (
   deliveryDate: string,
   docType: "ORDER_LIST" | "STATISTICS",

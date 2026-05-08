@@ -18,6 +18,8 @@ CategoryId = NewType("CategoryId", UUID)
 ClientId = NewType("ClientId", UUID)
 OrderId = NewType("OrderId", UUID)
 OrderItemId = NewType("OrderItemId", int)
+RecurringOrderId = NewType("RecurringOrderId", UUID)
+RecurringOrderItemId = NewType("RecurringOrderItemId", int)
 AddressId = NewType("AddressId", int)
 PhoneId = NewType("PhoneId", int)
 TimeSlotId = NewType("TimeSlotId", UUID)
@@ -41,6 +43,16 @@ class ExportDocType(StrEnum):
 class RoutingMode(StrEnum):
     NONE = "NONE"
     OPTIMIZED = "OPTIMIZED"
+
+
+class ScheduleType(StrEnum):
+    WEEKLY = "WEEKLY"
+    MONTHLY_BY_DAY = "MONTHLY_BY_DAY"
+
+
+class RecurringOrderStatus(StrEnum):
+    ACTIVE = "ACTIVE"
+    PAUSED = "PAUSED"
 
 
 class Empty(StrEnum):

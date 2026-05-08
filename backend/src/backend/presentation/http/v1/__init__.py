@@ -26,6 +26,9 @@ from backend.presentation.http.v1.routes.payment_methods import (
 from backend.presentation.http.v1.routes.products import (
     router as product_router,
 )
+from backend.presentation.http.v1.routes.recurring_orders import (
+    router as recurring_order_router,
+)
 from backend.presentation.http.v1.routes.route import router as route_router
 from backend.presentation.http.v1.routes.shop import router as shop_router
 from backend.presentation.http.v1.routes.time_slots import (
@@ -44,6 +47,7 @@ def setup_v1_router(app: FastAPI) -> None:
     v1_router.include_router(employee_router)
     v1_router.include_router(client_router)
     v1_router.include_router(order_router)
+    v1_router.include_router(recurring_order_router)
     v1_router.include_router(route_router)
     v1_router.include_router(time_slot_router)
     v1_router.include_router(payment_method_router)

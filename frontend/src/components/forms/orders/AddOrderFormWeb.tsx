@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import { useOrderForm } from "../../../hooks/orders/useOrdersForm";
 import { useOrders } from "../../../hooks/orders/useOrders";
+import { type InitialOrderFormData } from "./AddOrderForm";
 import { SearchBar } from "../../ui/SearchBar";
 import { DateInput } from "../../shared/DateInput";
 import { FormSelect } from "../../shared/FormSelect";
@@ -13,9 +14,14 @@ import { useUserShopStore } from "../../../context/useUserShopStore";
 interface AddOrderFormWebProps {
   onClose: () => void;
   onSave?: (order?: unknown) => void;
+  initialOrder?: InitialOrderFormData;
 }
 
-export const AddOrderFormWeb: React.FC<AddOrderFormWebProps> = ({ onClose, onSave }) => {
+export const AddOrderFormWeb: React.FC<AddOrderFormWebProps> = ({
+  onClose,
+  onSave,
+  initialOrder,
+}) => {
   const { createNewOrder } = useOrders();
   const currentDate = useUserShopStore((s) => s.currentDate);
   const [showAddClient, setShowAddClient] = useState(false);
@@ -53,7 +59,7 @@ export const AddOrderFormWeb: React.FC<AddOrderFormWebProps> = ({ onClose, onSav
     getPhoneString,
     getAddressId,
     addAndSelectNewClient,
-  } = useOrderForm();
+  } = useOrderForm({ initialOrder });
 
   const isFormValid =
     formData.client !== null &&

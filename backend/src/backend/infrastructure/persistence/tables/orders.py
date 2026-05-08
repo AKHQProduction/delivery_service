@@ -10,6 +10,7 @@ from backend.application.vars import (
     OrderId,
     OrderItemId,
     ProductId,
+    RecurringOrderId,
     ShopId,
 )
 from backend.infrastructure.persistence.tables.base import (
@@ -53,6 +54,10 @@ class Order(Base, CreatedAt, UpdatedAt):
     )
     client_id: Mapped[ClientId] = mapped_column(
         sa.ForeignKey("clients.id", ondelete="CASCADE"), nullable=False
+    )
+    recurring_order_id: Mapped[RecurringOrderId | None] = mapped_column(
+        sa.ForeignKey("recurring_orders.id", ondelete="SET NULL"),
+        nullable=True,
     )
 
     shop: Mapped["Shop"] = relationship(back_populates="orders", lazy="raise")

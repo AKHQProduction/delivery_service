@@ -7,6 +7,7 @@ import { MainPage } from "../pages/MainPage";
 import { SettingsPage } from "../pages/SettingsPage";
 import { ShopSettingsPage } from "../pages/ShopSettingsPage";
 import { RoutesListPage } from "../pages/RoutesListPage";
+import { PlanningPage } from "../pages/PlanningPage";
 import goodsIcon from "../assets/icons/goods.svg";
 import clientsIcon from "../assets/icons/client.svg";
 import ordersIcon from "../assets/icons/order.svg";
@@ -62,6 +63,13 @@ export const routeConfig: RouteConfig[] = [
     icon: ordersIcon,
     component: OrdersPage,
     allowedRoles: [UserRole.COURIER, UserRole.MANAGER, UserRole.OWNER],
+  },
+  {
+    path: "/planning",
+    label: "Планування",
+    icon: ordersIcon,
+    component: PlanningPage,
+    allowedRoles: [UserRole.MANAGER, UserRole.OWNER],
   },
   {
     path: "/routes",

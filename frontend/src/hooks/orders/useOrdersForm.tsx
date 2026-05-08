@@ -68,6 +68,11 @@ export const useOrderForm = (options: UseOrderFormOptions = {}) => {
   const { initialOrder } = options;
   const currentDate = useUserShopStore((s) => s.currentDate);
   const todayKey = currentDate ?? formatLocalDateKey();
+  const tomorrowKey = useMemo(() => {
+    const date = new Date(`${todayKey}T00:00:00`);
+    date.setDate(date.getDate() + 1);
+    return formatLocalDateKey(date);
+  }, [todayKey]);
   const [step, setStep] = useState(1);
   const [searchClient, setSearchClient] = useState("");
   const [searchProduct, setSearchProduct] = useState("");
@@ -230,13 +235,14 @@ export const useOrderForm = (options: UseOrderFormOptions = {}) => {
         products: orderProducts,
         deliveryPhone: phone || null,
         deliveryAddress: address || null,
-        deliveryDate: initialOrder.delivery_date || initialOrder.date || "",
+        deliveryDate:
+          initialOrder.delivery_date || initialOrder.date || tomorrowKey,
         timeSlotId: initialOrder.time_slot_id || "",
         paymentMethod: initialOrder.payment_method || "",
         note: initialOrder.comment || initialOrder.note || "",
       });
     }
-  }, [initialOrder, clients, products]);
+  }, [initialOrder, clients, products, tomorrowKey]);
 
   const handleClientSelect = useCallback((client: Client) => {
     const address = client.addresses?.[0] || null;

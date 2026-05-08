@@ -1,8 +1,12 @@
 import React, { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { EditClientForm } from "../../forms/client/EditClientForm";
 import { type Client } from "../../../types/entities/Client";
 import { useDistrictsSettings } from "../../../hooks/settings/useDistrictsSettings";
 import { useTimeSlotsSettings } from "../../../hooks/settings/useTimeSlotsSettings";
+import { ClientRecentOrdersSection } from "../../features/ClientRecentOrdersSection";
+import { ClientPlanningSummarySection } from "../../features/ClientPlanningSummarySection";
+import { type Order } from "../../../types/entities/Order";
 
 interface ClientDetailModalProps {
   client: Client;
@@ -35,6 +39,7 @@ export const ClientDetailModal: React.FC<ClientDetailModalProps> = ({
   initialEditing = false,
   initialEditReturnTarget = "view",
 }) => {
+  const navigate = useNavigate();
   const [isEditing, setIsEditing] = useState(initialEditing);
   const [editReturnTarget, setEditReturnTarget] = useState<"view" | "close">(initialEditReturnTarget);
   const { districts } = useDistrictsSettings();
@@ -76,6 +81,13 @@ export const ClientDetailModal: React.FC<ClientDetailModalProps> = ({
       return;
     }
     setIsEditing(false);
+  };
+
+  const openPlanning = (seedOrder?: Order) => {
+    onClose();
+    navigate(`/planning?client_id=${client.client_id}`, {
+      state: seedOrder ? { seedOrder } : undefined,
+    });
   };
 
   if (isEditing) {
@@ -225,6 +237,17 @@ export const ClientDetailModal: React.FC<ClientDetailModalProps> = ({
             )}
           </div>
         </section>
+
+        <ClientRecentOrdersSection
+          client={client}
+          limit={5}
+          onCreateRegular={openPlanning}
+        />
+
+        <ClientPlanningSummarySection
+          client={client}
+          onNavigate={onClose}
+        />
       </div>
 
       <div className="space-y-3 border-t border-slate-200 px-6 py-5">

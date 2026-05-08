@@ -32,6 +32,9 @@ from backend.application.commands.create_payment_method import (
 from backend.application.commands.create_product import (
     CreateProductCommandHandler,
 )
+from backend.application.commands.create_recurring_order import (
+    CreateRecurringOrderCommandHandler,
+)
 from backend.application.commands.create_time_slot import (
     CreateTimeSlotCommandHandler,
 )
@@ -50,6 +53,9 @@ from backend.application.commands.delete_payment_method import (
 )
 from backend.application.commands.delete_product import (
     DeleteProductCommandHandler,
+)
+from backend.application.commands.delete_recurring_order import (
+    DeleteRecurringOrderCommandHandler,
 )
 from backend.application.commands.delete_time_slot import (
     DeleteTimeSlotCommandHandler,
@@ -80,11 +86,17 @@ from backend.application.commands.login_telegram import (
     LoginTelegramCommandHandler,
 )
 from backend.application.commands.logout import LogoutCommandHandler
+from backend.application.commands.pause_recurring_order import (
+    PauseRecurringOrderCommandHandler,
+)
 from backend.application.commands.pay_order_from_balance import (
     PayOrderFromBalanceCommandHandler,
 )
 from backend.application.commands.reorder_route import (
     ReorderRouteCommandHandler,
+)
+from backend.application.commands.resume_recurring_order import (
+    ResumeRecurringOrderCommandHandler,
 )
 from backend.application.commands.reverse_route import (
     ReverseRouteCommandHandler,
@@ -116,6 +128,12 @@ from backend.application.queries.get_payment_methods import (
 )
 from backend.application.queries.get_product import GetProductQueryHandler
 from backend.application.queries.get_products import GetProductsQueryHandler
+from backend.application.queries.get_recurring_order import (
+    GetRecurringOrderQueryHandler,
+)
+from backend.application.queries.get_recurring_orders import (
+    GetRecurringOrdersQueryHandler,
+)
 from backend.application.queries.get_route import GetRouteQueryHandler
 from backend.application.queries.get_routes import GetRoutesQueryHandler
 from backend.application.queries.get_shared_route import (
@@ -234,6 +252,12 @@ class APIInteractorsProvider(Provider):
         DeleteProductCommandHandler,
         GetProductQueryHandler,
         GetProductsQueryHandler,
+        CreateRecurringOrderCommandHandler,
+        DeleteRecurringOrderCommandHandler,
+        PauseRecurringOrderCommandHandler,
+        ResumeRecurringOrderCommandHandler,
+        GetRecurringOrderQueryHandler,
+        GetRecurringOrdersQueryHandler,
         CreateCategoryCommandHandler,
         EditCategoryCommandHandler,
         DeleteCategoryCommandHandler,
