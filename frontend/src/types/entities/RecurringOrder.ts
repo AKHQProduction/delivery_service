@@ -45,3 +45,15 @@ export interface CreateRecurringOrderPayload {
   weekdays?: number[] | null;
   month_days?: number[] | null;
 }
+
+export interface RunRecurringOrderPayload {
+  include_today?: boolean;
+  activate?: boolean;
+}
+
+export interface RunRecurringOrderResult {
+  created_dates: string[];
+  already_scheduled_dates: string[];
+  cancelled_dates: string[];
+  paused: boolean;
+}

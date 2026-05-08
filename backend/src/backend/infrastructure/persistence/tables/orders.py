@@ -12,6 +12,7 @@ from backend.application.vars import (
     ProductId,
     RecurringOrderId,
     ShopId,
+    TimeSlotId,
 )
 from backend.infrastructure.persistence.tables.base import (
     Base,
@@ -57,6 +58,10 @@ class Order(Base, CreatedAt, UpdatedAt):
     )
     recurring_order_id: Mapped[RecurringOrderId | None] = mapped_column(
         sa.ForeignKey("recurring_orders.id", ondelete="SET NULL"),
+        nullable=True,
+    )
+    time_slot_id: Mapped[TimeSlotId | None] = mapped_column(
+        sa.ForeignKey("shop_delivery_time_slots.id", ondelete="SET NULL"),
         nullable=True,
     )
 

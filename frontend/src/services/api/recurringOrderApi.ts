@@ -4,6 +4,8 @@ import {
   type RecurringOrder,
   type RecurringOrderDetail,
   type RecurringOrderStatus,
+  type RunRecurringOrderPayload,
+  type RunRecurringOrderResult,
   type ScheduleType,
 } from "../../types/entities/RecurringOrder";
 
@@ -46,6 +48,17 @@ export const pauseRecurringOrder = async (recurringOrderId: string) => {
 export const resumeRecurringOrder = async (recurringOrderId: string) => {
   const response = await api.post(
     `v1/recurring-orders/${recurringOrderId}/resume`,
+  );
+  return response.data;
+};
+
+export const runRecurringOrder = async (
+  recurringOrderId: string,
+  payload: RunRecurringOrderPayload,
+): Promise<RunRecurringOrderResult> => {
+  const response = await api.post(
+    `v1/recurring-orders/${recurringOrderId}/run`,
+    payload,
   );
   return response.data;
 };

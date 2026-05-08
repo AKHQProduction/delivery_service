@@ -30,8 +30,15 @@ def upgrade() -> None:
         name="recurring_order_status",
         create_type=False,
     )
+    recurring_order_occurrence_status = ENUM(
+        "SCHEDULED",
+        "CANCELLED",
+        name="recurring_order_occurrence_status",
+        create_type=False,
+    )
     schedule_type.create(op.get_bind(), checkfirst=True)
     recurring_order_status.create(op.get_bind(), checkfirst=True)
+    recurring_order_occurrence_status.create(op.get_bind(), checkfirst=True)
 
     op.create_table(
         "recurring_orders",
@@ -163,9 +170,69 @@ def upgrade() -> None:
         ["recurring_order_id"],
     )
 
+    op.create_table(
+        "recurring_order_occurrences",
+        sa.Column("id", sa.BIGINT(), autoincrement=True, nullable=False),
+        sa.Column("recurring_order_id", sa.UUID(), nullable=False),
+        sa.Column("scheduled_for", sa.Date(), nullable=False),
+        sa.Column("status", recurring_order_occurrence_status, nullable=False),
+        sa.Column("order_id", sa.UUID(), nullable=True),
+        sa.Column(
+            "created_at",
+            sa.DateTime(),
+            server_default=sa.text("now()"),
+            nullable=False,
+        ),
+        sa.Column(
+            "updated_at",
+            sa.DateTime(),
+            server_default=sa.text("now()"),
+            nullable=False,
+        ),
+        sa.CheckConstraint(
+            """
+            (
+                status = 'SCHEDULED'
+                AND order_id IS NOT NULL
+            )
+            OR
+            (
+                status = 'CANCELLED'
+                AND order_id IS NULL
+            )
+            """,
+            name="ck_recurring_order_occurrences_status_order",
+        ),
+        sa.ForeignKeyConstraint(
+            ["recurring_order_id"],
+            ["recurring_orders.id"],
+            ondelete="CASCADE",
+        ),
+        sa.ForeignKeyConstraint(
+            ["order_id"],
+            ["orders.id"],
+            ondelete="SET NULL",
+        ),
+        sa.PrimaryKeyConstraint("id"),
+        sa.UniqueConstraint(
+            "recurring_order_id",
+            "scheduled_for",
+            name="uq_recurring_order_occurrences_schedule",
+        ),
+    )
+    op.create_index(
+        "ix_recurring_order_occurrences_recurring_order",
+        "recurring_order_occurrences",
+        ["recurring_order_id"],
+    )
+
     op.add_column(
         "orders",
         sa.Column("recurring_order_id", sa.UUID(), nullable=True),
+    )
+    op.add_column(
+        "orders",
+        sa.Column("time_slot_id", sa.UUID(), nullable=True),
     )
     op.create_foreign_key(
         "orders_recurring_order_id_fkey",
@@ -175,19 +242,43 @@ def upgrade() -> None:
         ["id"],
         ondelete="SET NULL",
     )
+    op.create_foreign_key(
+        "orders_time_slot_id_fkey",
+        "orders",
+        "shop_delivery_time_slots",
+        ["time_slot_id"],
+        ["id"],
+        ondelete="SET NULL",
+    )
     op.create_index(
         "ix_orders_recurring_order_id",
         "orders",
         ["recurring_order_id"],
     )
+    op.create_index(
+        "ix_orders_time_slot_id",
+        "orders",
+        ["time_slot_id"],
+    )
 
 
 def downgrade() -> None:
+    op.drop_index("ix_orders_time_slot_id", table_name="orders")
     op.drop_index("ix_orders_recurring_order_id", table_name="orders")
+    op.drop_constraint(
+        "orders_time_slot_id_fkey", "orders", type_="foreignkey"
+    )
     op.drop_constraint(
         "orders_recurring_order_id_fkey", "orders", type_="foreignkey"
     )
+    op.drop_column("orders", "time_slot_id")
     op.drop_column("orders", "recurring_order_id")
+
+    op.drop_index(
+        "ix_recurring_order_occurrences_recurring_order",
+        table_name="recurring_order_occurrences",
+    )
+    op.drop_table("recurring_order_occurrences")
 
     op.drop_index(
         "ix_recurring_order_items_recurring_order",
@@ -209,5 +300,8 @@ def downgrade() -> None:
     )
     op.drop_table("recurring_orders")
 
+    sa.Enum(name="recurring_order_occurrence_status").drop(
+        op.get_bind(), checkfirst=True
+    )
     sa.Enum(name="recurring_order_status").drop(op.get_bind(), checkfirst=True)
     sa.Enum(name="schedule_type").drop(op.get_bind(), checkfirst=True)

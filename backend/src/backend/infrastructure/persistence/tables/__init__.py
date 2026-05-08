@@ -4,7 +4,11 @@ from .clients import Client
 from .districts import District
 from .orders import Order, OrderItem
 from .products import Product
-from .recurring_orders import RecurringOrder, RecurringOrderItem
+from .recurring_orders import (
+    RecurringOrder,
+    RecurringOrderItem,
+    RecurringOrderOccurrence,
+)
 from .route_edge_history import RouteEdgeHistory
 from .route_plans import RoutePlan
 from .shops import Role, Shop, ShopMembership
@@ -20,6 +24,7 @@ __all__ = [
     "Product",
     "RecurringOrder",
     "RecurringOrderItem",
+    "RecurringOrderOccurrence",
     "Role",
     "RouteEdgeHistory",
     "RoutePlan",

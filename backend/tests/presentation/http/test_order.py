@@ -333,6 +333,7 @@ async def test_create_order_with_balance_payment_charges_client(
     )
 
     assert response.status_code == status.HTTP_201_CREATED
+    await session.flush()
 
     order = await session.get(Order, uuid.UUID(response.json()))
     client = await session.get(Client, client_id)
@@ -1225,6 +1226,7 @@ async def test_update_order_items_add_new(
         select(OrderItem).where(OrderItem.order_id == order_id)
     )
     existing_item = items_result.scalars().first()
+    assert existing_item is not None
 
     response = await http_client.patch(
         url=f"{BASE_URL}/{order_id}",

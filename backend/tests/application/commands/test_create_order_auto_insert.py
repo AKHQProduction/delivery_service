@@ -4,7 +4,7 @@ from uuid import uuid4
 
 import pytest
 
-from backend.application.commands.create_order import CreateOrderCommandHandler
+from backend.application.services.order_intake import OrderIntake
 from backend.application.vars import OrderId, ShopId, TimeSlotId
 
 
@@ -28,7 +28,7 @@ def _make_handler(
     shop_lat=50.45,
     shop_lon=30.52,
 ):
-    handler = CreateOrderCommandHandler.__new__(CreateOrderCommandHandler)
+    handler = OrderIntake.__new__(OrderIntake)
 
     handler._route_plan_gateway = AsyncMock()
     handler._route_plan_gateway.load_by_date.return_value = route_plan
@@ -55,7 +55,7 @@ def _make_handler(
 
 class TestAutoInsertNoExistingPlan:
     @pytest.mark.asyncio()
-    async def test_skips_when_no_orders(self):
+    async def test_creates_route_plan_with_pending_order(self):
         handler = _make_handler(route_plan=None, existing_orders=[])
         order = _make_order(OrderId(uuid4()))
 
@@ -67,7 +67,7 @@ class TestAutoInsertNoExistingPlan:
             end_time=time(14, 0),
         )
 
-        handler._route_plan_gateway.save.assert_not_called()
+        handler._route_plan_gateway.save.assert_called_once()
 
     @pytest.mark.asyncio()
     async def test_creates_route_plan_with_single_order(self):

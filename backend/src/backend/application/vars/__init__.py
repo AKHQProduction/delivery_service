@@ -20,6 +20,7 @@ OrderId = NewType("OrderId", UUID)
 OrderItemId = NewType("OrderItemId", int)
 RecurringOrderId = NewType("RecurringOrderId", UUID)
 RecurringOrderItemId = NewType("RecurringOrderItemId", int)
+RecurringOrderOccurrenceId = NewType("RecurringOrderOccurrenceId", int)
 AddressId = NewType("AddressId", int)
 PhoneId = NewType("PhoneId", int)
 TimeSlotId = NewType("TimeSlotId", UUID)
@@ -53,6 +54,11 @@ class ScheduleType(StrEnum):
 class RecurringOrderStatus(StrEnum):
     ACTIVE = "ACTIVE"
     PAUSED = "PAUSED"
+
+
+class RecurringOrderOccurrenceStatus(StrEnum):
+    SCHEDULED = "SCHEDULED"
+    CANCELLED = "CANCELLED"
 
 
 class Empty(StrEnum):

@@ -1,3 +1,4 @@
+from dataclasses import dataclass
 from typing import Annotated
 
 from dishka import FromDishka
@@ -21,6 +22,11 @@ from backend.application.commands.resume_recurring_order import (
     ResumeRecurringOrderCommand,
     ResumeRecurringOrderCommandHandler,
 )
+from backend.application.commands.run_recurring_order import (
+    RunRecurringOrderCommand,
+    RunRecurringOrderCommandHandler,
+    RunRecurringOrderResult,
+)
 from backend.application.dto.gateways.recurring_order_gateway import (
     RecurringOrderDetailReadModel,
     RecurringOrderReadModel,
@@ -39,6 +45,13 @@ from backend.application.vars import (
     ScheduleType,
 )
 from backend.presentation.http.v1.schemas.error import ErrorSchema
+
+
+@dataclass(frozen=True)
+class RunRecurringOrderRequest:
+    include_today: bool = False
+    activate: bool = False
+
 
 router = APIRouter(
     prefix="/recurring-orders",
@@ -138,6 +151,30 @@ async def resume_recurring_order(
     handler: FromDishka[ResumeRecurringOrderCommandHandler],
 ) -> None:
     await handler.handle(ResumeRecurringOrderCommand(recurring_order_id))
+
+
+@router.post(
+    "/{recurring_order_id}/run",
+    status_code=status.HTTP_200_OK,
+    responses={
+        status.HTTP_401_UNAUTHORIZED: {"model": ErrorSchema},
+        status.HTTP_404_NOT_FOUND: {"model": ErrorSchema},
+        status.HTTP_422_UNPROCESSABLE_ENTITY: {"model": ErrorSchema},
+    },
+    dependencies=[Depends(HTTPBearer(auto_error=False))],
+)
+async def run_recurring_order(
+    recurring_order_id: RecurringOrderId,
+    body: Annotated[RunRecurringOrderRequest, Body()],
+    handler: FromDishka[RunRecurringOrderCommandHandler],
+) -> RunRecurringOrderResult:
+    return await handler.handle(
+        RunRecurringOrderCommand(
+            recurring_order_id=recurring_order_id,
+            include_today=body.include_today,
+            activate=body.activate,
+        )
+    )
 
 
 @router.delete(

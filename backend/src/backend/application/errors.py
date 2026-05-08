@@ -195,3 +195,9 @@ class RecurringOrderItemQuantityError(ValidationError):
     @property
     def message(self) -> str:
         return "Recurring order item quantity must be greater than 0"
+
+
+class RecurringOrderPausedError(ValidationError):
+    @property
+    def message(self) -> str:
+        return "Recurring order is paused"

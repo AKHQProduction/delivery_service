@@ -8,13 +8,16 @@ import {
   getRecurringOrders,
   pauseRecurringOrder,
   resumeRecurringOrder,
+  runRecurringOrder,
 } from "../../services/api/recurringOrderApi";
 import { type Client } from "../../types/entities/Client";
 import { type Order } from "../../types/entities/Order";
 import {
   type RecurringOrder,
+  type RunRecurringOrderResult,
   type ScheduleType,
 } from "../../types/entities/RecurringOrder";
+import { Modal } from "../modals/Modal";
 
 interface RecurringOrderPlanningSectionProps {
   client: Client;
@@ -22,6 +25,15 @@ interface RecurringOrderPlanningSectionProps {
   seedOrder?: Order | null;
   onSeedConsumed?: () => void;
 }
+
+type RunDialogState =
+  | { step: "activate"; order: RecurringOrder }
+  | { step: "today"; order: RecurringOrder; activate: boolean }
+  | {
+      step: "summary";
+      order: RecurringOrder;
+      result: RunRecurringOrderResult;
+    };
 
 const WEEKDAYS = [
   { value: 1, label: "Пн" },
@@ -62,6 +74,26 @@ const getPrimaryAddress = (client: Client) =>
   client.addresses?.find((address) => address.is_primary) ??
   client.addresses?.[0];
 
+const formatRunSummary = (result: RunRecurringOrderResult) => {
+  if (result.paused) {
+    return "Шаблон поставлено на паузу. Перевірте адресу, телефон, слот або товари.";
+  }
+
+  const parts = [
+    result.created_dates.length
+      ? `Створено: ${result.created_dates.length}`
+      : null,
+    result.already_scheduled_dates.length
+      ? `Вже заплановано: ${result.already_scheduled_dates.length}`
+      : null,
+    result.cancelled_dates.length
+      ? `Скасовано раніше: ${result.cancelled_dates.length}`
+      : null,
+  ].filter(Boolean);
+
+  return parts.length ? parts.join("\n") : "Нових дат для планування немає.";
+};
+
 export const RecurringOrderPlanningSection = ({
   client,
   compact = false,
@@ -81,6 +113,8 @@ export const RecurringOrderPlanningSection = ({
   const [productId, setProductId] = useState("");
   const [quantity, setQuantity] = useState(1);
   const [comment, setComment] = useState("");
+  const [runDialog, setRunDialog] = useState<RunDialogState | null>(null);
+  const [isRunning, setIsRunning] = useState(false);
 
   const { timeSlots } = useTimeSlotsSettings();
   const { paymentMethods } = usePaymentMethodsSettings();
@@ -101,6 +135,36 @@ export const RecurringOrderPlanningSection = ({
     } finally {
       setIsLoading(false);
     }
+  };
+
+  const handleRunClick = (order: RecurringOrder) => {
+    if (order.status === "PAUSED") {
+      setRunDialog({ step: "activate", order });
+      return;
+    }
+
+    setRunDialog({ step: "today", order, activate: false });
+  };
+
+  const executeRun = async (
+    order: RecurringOrder,
+    options: { includeToday: boolean; activate: boolean },
+  ) => {
+    setIsRunning(true);
+    const result = await runRecurringOrder(order.recurring_order_id, {
+      include_today: options.includeToday,
+      activate: options.activate,
+    });
+    await refresh();
+    setRunDialog({ step: "summary", order, result });
+    setIsRunning(false);
+  };
+
+  const closeRunDialog = () => {
+    if (isRunning) {
+      return;
+    }
+    setRunDialog(null);
   };
 
   useEffect(() => {
@@ -386,6 +450,13 @@ export const RecurringOrderPlanningSection = ({
               <div className="mt-3 flex gap-2">
                 <button
                   type="button"
+                  onClick={() => handleRunClick(order)}
+                  className="h-8 rounded-md bg-slate-900 px-3 text-xs font-medium text-white hover:bg-slate-700"
+                >
+                  Запустити
+                </button>
+                <button
+                  type="button"
                   onClick={async () => {
                     if (order.status === "ACTIVE") {
                       await pauseRecurringOrder(order.recurring_order_id);
@@ -417,6 +488,122 @@ export const RecurringOrderPlanningSection = ({
           </p>
         )}
       </div>
+
+      <Modal
+        isOpen={runDialog !== null}
+        onClose={closeRunDialog}
+        title={
+          runDialog?.step === "summary"
+            ? "Планування виконано"
+            : "Запустити планування"
+        }
+      >
+        {runDialog?.step === "activate" && (
+          <div className="space-y-5">
+            <div>
+              <p className="text-sm leading-6 text-slate-700">
+                Шаблон зараз на паузі. Щоб створити замовлення, спочатку
+                активуйте його.
+              </p>
+              <p className="mt-3 text-sm font-medium text-slate-950">
+                {scheduleLabel(runDialog.order)}
+              </p>
+              <p className="mt-1 text-sm text-slate-500">
+                {timeSlotLabel(runDialog.order)}
+              </p>
+            </div>
+            <div className="grid gap-3 sm:grid-cols-2">
+              <button
+                type="button"
+                onClick={closeRunDialog}
+                className="h-11 rounded-md bg-slate-100 px-4 text-sm font-medium text-slate-700 hover:bg-slate-200"
+              >
+                Скасувати
+              </button>
+              <button
+                type="button"
+                onClick={() =>
+                  setRunDialog({
+                    step: "today",
+                    order: runDialog.order,
+                    activate: true,
+                  })
+                }
+                className="h-11 rounded-md bg-slate-900 px-4 text-sm font-medium text-white hover:bg-slate-700"
+              >
+                Активувати
+              </button>
+            </div>
+          </div>
+        )}
+
+        {runDialog?.step === "today" && (
+          <div className="space-y-5">
+            <div>
+              <p className="text-sm leading-6 text-slate-700">
+                Створити замовлення на сьогодні, якщо сьогоднішній день
+                входить у розклад? Без цього будуть заплановані дати з завтра
+                до наступних 14 днів.
+              </p>
+              <p className="mt-3 text-sm font-medium text-slate-950">
+                {scheduleLabel(runDialog.order)}
+              </p>
+              <p className="mt-1 text-sm text-slate-500">
+                {timeSlotLabel(runDialog.order)}
+              </p>
+            </div>
+            <div className="grid gap-3 sm:grid-cols-2">
+              <button
+                type="button"
+                disabled={isRunning}
+                onClick={() =>
+                  executeRun(runDialog.order, {
+                    includeToday: false,
+                    activate: runDialog.activate,
+                  })
+                }
+                className="h-11 rounded-md bg-slate-100 px-4 text-sm font-medium text-slate-700 hover:bg-slate-200 disabled:cursor-not-allowed disabled:opacity-60"
+              >
+                З завтра
+              </button>
+              <button
+                type="button"
+                disabled={isRunning}
+                onClick={() =>
+                  executeRun(runDialog.order, {
+                    includeToday: true,
+                    activate: runDialog.activate,
+                  })
+                }
+                className="h-11 rounded-md bg-slate-900 px-4 text-sm font-medium text-white hover:bg-slate-700 disabled:cursor-not-allowed disabled:opacity-60"
+              >
+                Включити сьогодні
+              </button>
+            </div>
+          </div>
+        )}
+
+        {runDialog?.step === "summary" && (
+          <div className="space-y-5">
+            <div className="rounded-md border border-slate-200 bg-slate-50 px-4 py-3">
+              {formatRunSummary(runDialog.result)
+                .split("\n")
+                .map((line) => (
+                  <p key={line} className="text-sm leading-6 text-slate-700">
+                    {line}
+                  </p>
+                ))}
+            </div>
+            <button
+              type="button"
+              onClick={closeRunDialog}
+              className="h-11 w-full rounded-md bg-slate-900 px-4 text-sm font-medium text-white hover:bg-slate-700"
+            >
+              Готово
+            </button>
+          </div>
+        )}
+      </Modal>
     </section>
   );
 };

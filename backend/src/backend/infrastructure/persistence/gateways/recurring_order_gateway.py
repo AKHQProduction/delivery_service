@@ -1,4 +1,4 @@
-from datetime import time
+from datetime import date, time
 from typing import Any
 from uuid import UUID
 
@@ -29,6 +29,7 @@ from backend.infrastructure.persistence.tables.products import Product
 from backend.infrastructure.persistence.tables.recurring_orders import (
     RecurringOrder,
     RecurringOrderItem,
+    RecurringOrderOccurrence,
 )
 from backend.infrastructure.persistence.tables.shops import (
     ShopDeliveryTimeSlot,
@@ -47,6 +48,9 @@ class SQLAlchemyRecurringOrderGateway:
     def save(self, recurring_order: RecurringOrder) -> None:
         self._session.add(recurring_order)
 
+    def save_occurrence(self, occurrence: RecurringOrderOccurrence) -> None:
+        self._session.add(occurrence)
+
     async def load(
         self, recurring_order_id: RecurringOrderId
     ) -> RecurringOrder | None:
@@ -62,6 +66,21 @@ class SQLAlchemyRecurringOrderGateway:
         )
         result = await self._session.execute(query)
         return result.scalar_one_or_none()
+
+    async def load_occurrences_for_dates(
+        self,
+        recurring_order_id: RecurringOrderId,
+        dates: list[date],
+    ) -> list[RecurringOrderOccurrence]:
+        if not dates:
+            return []
+
+        query = select(RecurringOrderOccurrence).where(
+            RecurringOrderOccurrence.recurring_order_id == recurring_order_id,
+            RecurringOrderOccurrence.scheduled_for.in_(dates),
+        )
+        result = await self._session.execute(query)
+        return list(result.scalars().all())
 
     async def load_by_client_refs(
         self,

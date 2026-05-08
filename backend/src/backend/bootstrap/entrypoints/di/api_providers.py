@@ -101,6 +101,9 @@ from backend.application.commands.resume_recurring_order import (
 from backend.application.commands.reverse_route import (
     ReverseRouteCommandHandler,
 )
+from backend.application.commands.run_recurring_order import (
+    RunRecurringOrderCommandHandler,
+)
 from backend.application.commands.set_client_balance import (
     SetClientBalanceCommandHandler,
 )
@@ -144,6 +147,10 @@ from backend.application.queries.preview_import_xlsx import (
     PreviewImportXlsxQueryHandler,
 )
 from backend.application.services.geocoder import Geocoder
+from backend.application.services.order_intake import OrderIntake
+from backend.application.services.recurring_order_execution import (
+    RecurringOrderExecution,
+)
 from backend.application.services.tsp_solvers import RouteOptimizer
 from backend.application.usecases.invite_employee.generate_invite_link import (
     GenerateInviteLinkCommandHandler,
@@ -256,6 +263,7 @@ class APIInteractorsProvider(Provider):
         DeleteRecurringOrderCommandHandler,
         PauseRecurringOrderCommandHandler,
         ResumeRecurringOrderCommandHandler,
+        RunRecurringOrderCommandHandler,
         GetRecurringOrderQueryHandler,
         GetRecurringOrdersQueryHandler,
         CreateCategoryCommandHandler,
@@ -306,6 +314,8 @@ class APIInteractorsProvider(Provider):
         LoginTelegramCommandHandler,
         LogoutCommandHandler,
     )
+
+    services = provide_all(OrderIntake, RecurringOrderExecution)
 
     add_employee = provide_all(GenerateInviteLinkCommandHandler)
 
