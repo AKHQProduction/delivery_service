@@ -151,6 +151,9 @@ from backend.application.services.order_intake import OrderIntake
 from backend.application.services.recurring_order_execution import (
     RecurringOrderExecution,
 )
+from backend.application.services.recurring_order_occurrence_ledger import (
+    RecurringOrderOccurrenceLedger,
+)
 from backend.application.services.tsp_solvers import RouteOptimizer
 from backend.application.usecases.invite_employee.generate_invite_link import (
     GenerateInviteLinkCommandHandler,
@@ -315,7 +318,11 @@ class APIInteractorsProvider(Provider):
         LogoutCommandHandler,
     )
 
-    services = provide_all(OrderIntake, RecurringOrderExecution)
+    services = provide_all(
+        OrderIntake,
+        RecurringOrderExecution,
+        RecurringOrderOccurrenceLedger,
+    )
 
     add_employee = provide_all(GenerateInviteLinkCommandHandler)
 

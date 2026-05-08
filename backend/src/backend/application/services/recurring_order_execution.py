@@ -11,12 +11,14 @@ from backend.application.services.order_intake import (
     OrderIntakeItem,
     OrderIntakeRequest,
 )
+from backend.application.services.recurring_order_occurrence_ledger import (
+    RecurringOrderOccurrenceLedger,
+)
 from backend.application.services.recurring_order_schedule import (
     iter_recurring_order_dates,
 )
 from backend.application.vars import (
     RecurringOrderId,
-    RecurringOrderOccurrenceStatus,
     RecurringOrderStatus,
     ShopId,
     today,
@@ -29,7 +31,6 @@ from backend.infrastructure.persistence.gateways import (
 )
 from backend.infrastructure.persistence.tables.recurring_orders import (
     RecurringOrder,
-    RecurringOrderOccurrence,
 )
 
 
@@ -57,12 +58,14 @@ class RecurringOrderExecution:
         recurring_order_gateway: SQLAlchemyRecurringOrderGateway,
         time_slot_gateway: SQLAlchemyTimeSlotGateway,
         order_intake: OrderIntake,
+        occurrence_ledger: RecurringOrderOccurrenceLedger,
     ) -> None:
         self._client_gateway = client_gateway
         self._product_gateway = product_gateway
         self._recurring_order_gateway = recurring_order_gateway
         self._time_slot_gateway = time_slot_gateway
         self._order_intake = order_intake
+        self._occurrence_ledger = occurrence_ledger
 
     async def run(
         self, request: RecurringOrderExecutionRequest
@@ -97,34 +100,19 @@ class RecurringOrderExecution:
             base_date=today(),
             include_today=request.include_today,
         )
-        existing_occurrences = {
-            occurrence.scheduled_for: occurrence
-            for occurrence in (
-                await self._recurring_order_gateway.load_occurrences_for_dates(
-                    recurring_order.id, scheduled_dates
-                )
-            )
-        }
+        occurrence_plan = await self._occurrence_ledger.plan_dates(
+            recurring_order.id, scheduled_dates
+        )
 
         created_dates: list[date] = []
-        already_scheduled_dates: list[date] = []
-        cancelled_dates: list[date] = []
-        for scheduled_for in scheduled_dates:
-            existing = existing_occurrences.get(scheduled_for)
-            if existing is not None:
-                if existing.status == RecurringOrderOccurrenceStatus.CANCELLED:
-                    cancelled_dates.append(scheduled_for)
-                else:
-                    already_scheduled_dates.append(scheduled_for)
-                continue
-
+        for scheduled_for in occurrence_plan.dates_to_create:
             await self._create_order_for_date(recurring_order, scheduled_for)
             created_dates.append(scheduled_for)
 
         return RecurringOrderExecutionResult(
             created_dates=created_dates,
-            already_scheduled_dates=already_scheduled_dates,
-            cancelled_dates=cancelled_dates,
+            already_scheduled_dates=occurrence_plan.already_scheduled_dates,
+            cancelled_dates=occurrence_plan.cancelled_dates,
             paused=False,
         )
 
@@ -157,13 +145,10 @@ class RecurringOrderExecution:
             ),
         )
 
-        self._recurring_order_gateway.save_occurrence(
-            RecurringOrderOccurrence(
-                recurring_order_id=recurring_order.id,
-                scheduled_for=scheduled_for,
-                status=RecurringOrderOccurrenceStatus.SCHEDULED,
-                order_id=order.id,
-            )
+        self._occurrence_ledger.mark_scheduled(
+            recurring_order_id=recurring_order.id,
+            scheduled_for=scheduled_for,
+            order_id=order.id,
         )
 
     async def _has_required_links(
