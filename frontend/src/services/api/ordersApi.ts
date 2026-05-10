@@ -126,10 +126,7 @@ export const getOrderById = async (orderId: string) => {
   return response.data;
 };
 
-export const getRecentOrdersByClient = async (
-  clientName: string,
-  limit: number,
-) => {
+export const getRecentOrdersByClient = async (clientName: string, limit: number) => {
   const response = await api.get(`v1/orders/all`, {
     params: {
       client_name: clientName,

@@ -1,7 +1,11 @@
-import React, { useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import { useOrderForm } from "../../../hooks/orders/useOrdersForm";
 import { useOrders } from "../../../hooks/orders/useOrders";
 import { type RegularOrderDraft } from "../../../utils/orderDraft";
+import {
+  buildOrderRepeatSuggestion,
+  type AvailableOrderRepeatSuggestion,
+} from "../../../utils/orderRepeatSuggestion";
 import { SearchBar } from "../../ui/SearchBar";
 import { DateInput } from "../../shared/DateInput";
 import { FormSelect } from "../../shared/FormSelect";
@@ -10,6 +14,10 @@ import { type Client } from "../../../types/entities/Client";
 import { FormSkeleton, InlineListSkeleton } from "../../ui/Skeleton";
 import { formatLocalDateKey } from "../../../utils/dateUtils";
 import { useUserShopStore } from "../../../context/useUserShopStore";
+import { getRecentOrdersByClient } from "../../../services/api/ordersApi";
+import { Modal } from "../../modals/Modal";
+import { useError } from "../../../context/ErrorContext";
+import { type Order } from "../../../types/entities/Order";
 
 interface AddOrderFormWebProps {
   onClose: () => void;
@@ -24,9 +32,16 @@ export const AddOrderFormWeb: React.FC<AddOrderFormWebProps> = ({
 }) => {
   const { createNewOrder } = useOrders();
   const currentDate = useUserShopStore((s) => s.currentDate);
+  const { showSuccess, showWarning } = useError();
   const [showAddClient, setShowAddClient] = useState(false);
   const [isChangingClient, setIsChangingClient] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [repeatSuggestion, setRepeatSuggestion] = useState<AvailableOrderRepeatSuggestion | null>(
+    null,
+  );
+  const [rejectedRepeatClientIds, setRejectedRepeatClientIds] = useState<Set<string>>(
+    () => new Set(),
+  );
 
   const {
     formData,
@@ -37,6 +52,7 @@ export const AddOrderFormWeb: React.FC<AddOrderFormWebProps> = ({
     timeSlots,
     paymentMethods,
     referencesReady,
+    canSuggestRepeatOrder,
     clientsLoading,
     productsLoading,
     loadMoreClients,
@@ -55,11 +71,17 @@ export const AddOrderFormWeb: React.FC<AddOrderFormWebProps> = ({
     handleDateChange,
     handleTimeSlotChange,
     handlePaymentMethodChange,
+    applyRepeatOrderDraft,
     handleNoteChange,
     getPhoneString,
     getAddressId,
     addAndSelectNewClient,
   } = useOrderForm({ initialOrder });
+
+  const paymentMethodNames = useMemo(
+    () => paymentMethods.map((method) => method.name),
+    [paymentMethods],
+  );
 
   const isFormValid =
     formData.client !== null &&
@@ -70,12 +92,88 @@ export const AddOrderFormWeb: React.FC<AddOrderFormWebProps> = ({
     formData.timeSlotId !== "" &&
     formData.paymentMethod !== "";
 
-  const totalAmount = formData.products.reduce(
-    (sum, p) => sum + p.product.price * p.quantity,
-    0,
-  );
+  const totalAmount = formData.products.reduce((sum, p) => sum + p.product.price * p.quantity, 0);
 
   const totalItems = formData.products.reduce((sum, p) => sum + p.quantity, 0);
+
+  useEffect(() => {
+    const client = formData.client;
+    if (
+      !client ||
+      !referencesReady ||
+      !canSuggestRepeatOrder ||
+      rejectedRepeatClientIds.has(client.client_id)
+    ) {
+      return;
+    }
+
+    let isCancelled = false;
+
+    const loadRepeatSuggestion = async () => {
+      try {
+        const recentOrders = client.full_name
+          ? ((await getRecentOrdersByClient(client.full_name, 1)) as Order[]).filter(
+              (order) => order.client_id === client.client_id,
+            )
+          : [];
+        if (isCancelled) return;
+
+        const suggestion = buildOrderRepeatSuggestion({
+          client,
+          lastOrder: recentOrders[0],
+          products,
+          todayKey: currentDate ?? formatLocalDateKey(),
+          paymentMethodNames,
+        });
+
+        setRepeatSuggestion(suggestion.kind === "available" ? suggestion : null);
+      } catch (error) {
+        console.error("Failed to load latest order for repeat suggestion:", error);
+      }
+    };
+
+    loadRepeatSuggestion();
+
+    return () => {
+      isCancelled = true;
+    };
+  }, [
+    canSuggestRepeatOrder,
+    currentDate,
+    formData.client,
+    paymentMethodNames,
+    products,
+    referencesReady,
+    rejectedRepeatClientIds,
+  ]);
+
+  const handleRejectRepeatSuggestion = () => {
+    const clientId = repeatSuggestion?.draft.client.client_id;
+    if (clientId) {
+      setRejectedRepeatClientIds((prev) => new Set(prev).add(clientId));
+    }
+    setRepeatSuggestion(null);
+  };
+
+  const handleApplyRepeatSuggestion = () => {
+    if (!repeatSuggestion) return;
+
+    applyRepeatOrderDraft(repeatSuggestion.draft);
+    setRepeatSuggestion(null);
+
+    if (repeatSuggestion.skippedItems.length > 0) {
+      showWarning("Деякі товари з останнього замовлення недоступні");
+    }
+    if (repeatSuggestion.missingRequiredFields.length > 0) {
+      showWarning("Заповніть відсутні поля перед створенням");
+    }
+    if (
+      repeatSuggestion.skippedItems.length === 0 &&
+      repeatSuggestion.missingRequiredFields.length === 0
+    ) {
+      showSuccess("Останнє замовлення застосовано");
+    }
+  };
 
   const handleSubmit = async () => {
     if (isSubmitting || !isFormValid) return;
@@ -136,8 +234,16 @@ export const AddOrderFormWeb: React.FC<AddOrderFormWebProps> = ({
               </span>
               <h3 className="text-sm font-bold text-gray-900">Клієнт</h3>
               {formData.client && !isChangingClient && (
-                <svg className="w-5 h-5 text-green-500 ml-auto" fill="currentColor" viewBox="0 0 20 20">
-                  <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+                <svg
+                  className="w-5 h-5 text-green-500 ml-auto"
+                  fill="currentColor"
+                  viewBox="0 0 20 20"
+                >
+                  <path
+                    fillRule="evenodd"
+                    d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z"
+                    clipRule="evenodd"
+                  />
                 </svg>
               )}
             </div>
@@ -213,14 +319,16 @@ export const AddOrderFormWeb: React.FC<AddOrderFormWebProps> = ({
                   )}
                   {clientsLoadingMore ? (
                     <InlineListSkeleton rows={2} variant="client" />
-                  ) : clientsHasMore && (
-                    <button
-                      type="button"
-                      onClick={loadMoreClients}
-                      className="w-full py-2 text-xs text-blue-600 hover:text-blue-800 font-medium"
-                    >
-                      Показати більше
-                    </button>
+                  ) : (
+                    clientsHasMore && (
+                      <button
+                        type="button"
+                        onClick={loadMoreClients}
+                        className="w-full py-2 text-xs text-blue-600 hover:text-blue-800 font-medium"
+                      >
+                        Показати більше
+                      </button>
+                    )
                   )}
                 </div>
                 <button
@@ -247,8 +355,16 @@ export const AddOrderFormWeb: React.FC<AddOrderFormWebProps> = ({
               <div className="flex items-center gap-2.5 mb-3">
                 <h3 className="text-sm font-bold text-gray-900">Контактна інформація</h3>
                 {formData.deliveryPhone && formData.deliveryAddress && (
-                  <svg className="w-5 h-5 text-green-500 ml-auto" fill="currentColor" viewBox="0 0 20 20">
-                    <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+                  <svg
+                    className="w-5 h-5 text-green-500 ml-auto"
+                    fill="currentColor"
+                    viewBox="0 0 20 20"
+                  >
+                    <path
+                      fillRule="evenodd"
+                      d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z"
+                      clipRule="evenodd"
+                    />
                   </svg>
                 )}
               </div>
@@ -299,7 +415,8 @@ export const AddOrderFormWeb: React.FC<AddOrderFormWebProps> = ({
                     </select>
                   ) : (
                     <div className="px-3 py-2.5 bg-white border border-gray-200 rounded-md text-sm text-gray-900 font-medium">
-                      {formData.client.addresses?.[0]?.street} {formData.client.addresses?.[0]?.house}
+                      {formData.client.addresses?.[0]?.street}{" "}
+                      {formData.client.addresses?.[0]?.house}
                     </div>
                   )}
                 </div>
@@ -317,8 +434,16 @@ export const AddOrderFormWeb: React.FC<AddOrderFormWebProps> = ({
             <h3 className="text-sm font-bold text-gray-900">Товари</h3>
             {formData.products.length > 0 && (
               <>
-                <svg className="w-5 h-5 text-green-500 ml-auto" fill="currentColor" viewBox="0 0 20 20">
-                  <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+                <svg
+                  className="w-5 h-5 text-green-500 ml-auto"
+                  fill="currentColor"
+                  viewBox="0 0 20 20"
+                >
+                  <path
+                    fillRule="evenodd"
+                    d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z"
+                    clipRule="evenodd"
+                  />
                 </svg>
                 <span className="text-xs text-gray-500 font-medium">
                   {formData.products.length} / {totalItems} шт.
@@ -424,14 +549,16 @@ export const AddOrderFormWeb: React.FC<AddOrderFormWebProps> = ({
             )}
             {productsLoadingMore ? (
               <InlineListSkeleton rows={2} />
-            ) : productsHasMore && (
-              <button
-                type="button"
-                onClick={loadMoreProducts}
-                className="w-full py-2 text-xs text-blue-600 hover:text-blue-800 font-medium"
-              >
-                Показати більше
-              </button>
+            ) : (
+              productsHasMore && (
+                <button
+                  type="button"
+                  onClick={loadMoreProducts}
+                  className="w-full py-2 text-xs text-blue-600 hover:text-blue-800 font-medium"
+                >
+                  Показати більше
+                </button>
+              )
             )}
           </div>
 
@@ -459,8 +586,16 @@ export const AddOrderFormWeb: React.FC<AddOrderFormWebProps> = ({
             </span>
             <h3 className="text-sm font-bold text-gray-900">Дата доставки</h3>
             {formData.deliveryDate && formData.timeSlotId && (
-              <svg className="w-5 h-5 text-green-500 ml-auto" fill="currentColor" viewBox="0 0 20 20">
-                <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+              <svg
+                className="w-5 h-5 text-green-500 ml-auto"
+                fill="currentColor"
+                viewBox="0 0 20 20"
+              >
+                <path
+                  fillRule="evenodd"
+                  d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z"
+                  clipRule="evenodd"
+                />
               </svg>
             )}
           </div>
@@ -498,8 +633,16 @@ export const AddOrderFormWeb: React.FC<AddOrderFormWebProps> = ({
             </span>
             <h3 className="text-sm font-bold text-gray-900">Оплата</h3>
             {formData.paymentMethod && (
-              <svg className="w-5 h-5 text-green-500 ml-auto" fill="currentColor" viewBox="0 0 20 20">
-                <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+              <svg
+                className="w-5 h-5 text-green-500 ml-auto"
+                fill="currentColor"
+                viewBox="0 0 20 20"
+              >
+                <path
+                  fillRule="evenodd"
+                  d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z"
+                  clipRule="evenodd"
+                />
               </svg>
             )}
           </div>
@@ -546,6 +689,98 @@ export const AddOrderFormWeb: React.FC<AddOrderFormWebProps> = ({
           {isSubmitting ? "Створення..." : "Створити замовлення"}
         </button>
       </div>
+
+      <RepeatOrderSuggestionModal
+        suggestion={repeatSuggestion}
+        onReject={handleRejectRepeatSuggestion}
+        onConfirm={handleApplyRepeatSuggestion}
+      />
     </div>
+  );
+};
+
+const formatMoney = (value: number) => `${value.toLocaleString("uk-UA")} ₴`;
+
+const getSuggestionTotal = (suggestion: AvailableOrderRepeatSuggestion) =>
+  suggestion.draft.products.reduce((sum, item) => sum + item.product.price * item.quantity, 0);
+
+const RepeatOrderSuggestionModal = ({
+  suggestion,
+  onReject,
+  onConfirm,
+}: {
+  suggestion: AvailableOrderRepeatSuggestion | null;
+  onReject: () => void;
+  onConfirm: () => void;
+}) => {
+  if (!suggestion) return null;
+
+  const orderTime =
+    suggestion.order.time_slot || suggestion.order.time_preference || "Час не вказано";
+  const comment = suggestion.order.comment || suggestion.order.note || "";
+
+  return (
+    <Modal isOpen={!!suggestion} onClose={onReject} title="Повторити останнє замовлення?" size="lg">
+      <div className="space-y-5">
+        <div className="rounded-lg border border-slate-200 bg-slate-50 px-4 py-3">
+          <p className="text-xs font-medium text-slate-500">Останнє замовлення</p>
+          <p className="mt-1 text-sm font-semibold text-slate-950">
+            {suggestion.order.date} · {orderTime}
+          </p>
+        </div>
+
+        <section className="rounded-lg border border-slate-200">
+          <div className="flex items-center justify-between border-b border-slate-200 px-4 py-3">
+            <h3 className="text-sm font-semibold text-slate-950">Товари</h3>
+            <span className="text-sm font-semibold text-slate-950">
+              {formatMoney(getSuggestionTotal(suggestion))}
+            </span>
+          </div>
+          <div className="divide-y divide-slate-200">
+            {suggestion.draft.products.map((item) => (
+              <div
+                key={item.product.product_id}
+                className="flex items-center justify-between gap-4 px-4 py-3 text-sm"
+              >
+                <span className="font-medium text-slate-950">{item.product.name}</span>
+                <span className="text-slate-600">× {item.quantity}</span>
+              </div>
+            ))}
+          </div>
+        </section>
+
+        <dl className="divide-y divide-slate-200 rounded-lg border border-slate-200 text-sm">
+          <div className="flex items-center justify-between gap-4 px-4 py-3">
+            <dt className="text-slate-500">Спосіб оплати</dt>
+            <dd className="font-medium text-slate-950">
+              {suggestion.draft.paymentMethod || suggestion.order.payment_method || "Не вказано"}
+            </dd>
+          </div>
+          {comment && (
+            <div className="px-4 py-3">
+              <dt className="text-slate-500">Коментар</dt>
+              <dd className="mt-1 text-sm leading-5 text-slate-950">{comment}</dd>
+            </div>
+          )}
+        </dl>
+
+        <div className="grid gap-3 sm:grid-cols-2">
+          <button
+            type="button"
+            onClick={onReject}
+            className="min-h-11 rounded-md bg-slate-100 px-4 py-2.5 text-sm font-medium text-slate-700 hover:bg-slate-200"
+          >
+            Відхилити
+          </button>
+          <button
+            type="button"
+            onClick={onConfirm}
+            className="min-h-11 rounded-md bg-blue-600 px-4 py-2.5 text-sm font-medium text-white hover:bg-blue-700"
+          >
+            Підтвердити
+          </button>
+        </div>
+      </div>
+    </Modal>
   );
 };
