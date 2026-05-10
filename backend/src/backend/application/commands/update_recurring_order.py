@@ -1,21 +1,11 @@
 import logging
 from dataclasses import dataclass
 
-from backend.application.common import ensure_exists
-from backend.application.errors import (
-    AccessDeniedError,
-    RecurringOrderPausedError,
+from backend.application.services.recurring.lifecycle import (
+    RecurringOrderLifecycle,
 )
-from backend.application.policies.access import ensure_can_manage
-from backend.application.services.generated_order_lifecycle import (
-    GeneratedOrderLifecycle,
-)
-from backend.application.services.recurring.execution import (
-    RecurringOrderExecution,
-    RecurringOrderExecutionRequest,
-)
-from backend.application.services.recurring.scheduling_clock import (
-    RecurringOrderSchedulingClock,
+from backend.application.services.recurring.management_context import (
+    RecurringOrderManagementContext,
 )
 from backend.application.services.recurring.template_write import (
     RecurringOrderProductInput,
@@ -26,13 +16,8 @@ from backend.application.vars import (
     AddressId,
     PhoneId,
     RecurringOrderId,
-    RecurringOrderStatus,
     ScheduleType,
     TimeSlotId,
-)
-from backend.infrastructure.idp import IdentityProvider
-from backend.infrastructure.persistence.gateways import (
-    SQLAlchemyRecurringOrderGateway,
 )
 from backend.infrastructure.transaction_manager import TransactionManager
 
@@ -57,39 +42,26 @@ class UpdateRecurringOrderCommand:
 class UpdateRecurringOrderCommandHandler:
     def __init__(
         self,
-        idp: IdentityProvider,
-        recurring_order_gateway: SQLAlchemyRecurringOrderGateway,
+        management_context: RecurringOrderManagementContext,
         template_write: RecurringOrderTemplateWritePolicy,
-        recurring_order_execution: RecurringOrderExecution,
-        generated_order_lifecycle: GeneratedOrderLifecycle,
-        scheduling_clock: RecurringOrderSchedulingClock,
+        recurring_order_lifecycle: RecurringOrderLifecycle,
         tr_manager: TransactionManager,
     ) -> None:
-        self._idp = idp
-        self._recurring_order_gateway = recurring_order_gateway
+        self._management_context = management_context
         self._template_write = template_write
-        self._recurring_order_execution = recurring_order_execution
-        self._generated_order_lifecycle = generated_order_lifecycle
-        self._scheduling_clock = scheduling_clock
+        self._recurring_order_lifecycle = recurring_order_lifecycle
         self._tr_manager = tr_manager
 
     async def handle(self, command: UpdateRecurringOrderCommand) -> None:
-        current_user = await self._idp.current_user()
-        ensure_can_manage(current_user)
-
-        recurring_order = ensure_exists(
-            await self._recurring_order_gateway.load_with_items(
-                command.recurring_order_id
-            ),
-            "RecurringOrder",
+        current_user = await self._management_context.current_manager()
+        recurring_order = await self._management_context.load_owned_with_items(
+            command.recurring_order_id,
+            current_user,
         )
-        if recurring_order.shop_id != current_user.shop_id:
-            raise AccessDeniedError
-        if (
-            command.rebuild_future_orders
-            and recurring_order.status == RecurringOrderStatus.PAUSED
-        ):
-            raise RecurringOrderPausedError
+        if command.rebuild_future_orders:
+            self._recurring_order_lifecycle.ensure_can_rebuild_future_orders(
+                recurring_order
+            )
 
         await self._template_write.apply(
             recurring_order,
@@ -108,23 +80,10 @@ class UpdateRecurringOrderCommandHandler:
             ),
         )
 
-        if (
-            recurring_order.status == RecurringOrderStatus.ACTIVE
-            and command.rebuild_future_orders
-        ):
-            lifecycle = self._generated_order_lifecycle
-            await lifecycle.delete_future_orders_for_rebuild(
-                recurring_order.id,
-                self._scheduling_clock.future_order_cutoff(),
+        if command.rebuild_future_orders:
+            await self._recurring_order_lifecycle.rebuild_future_orders(
+                recurring_order,
                 current_user,
-            )
-            await self._tr_manager.flush()
-            await self._recurring_order_execution.run(
-                RecurringOrderExecutionRequest(
-                    recurring_order_id=recurring_order.id,
-                    shop_id=current_user.shop_id,
-                    include_today=False,
-                )
             )
 
         await self._tr_manager.commit()

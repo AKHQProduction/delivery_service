@@ -161,6 +161,9 @@ from backend.application.services.order_intake import OrderIntake
 from backend.application.services.recurring.execution import (
     RecurringOrderExecution,
 )
+from backend.application.services.recurring.lifecycle import (
+    RecurringOrderLifecycle,
+)
 from backend.application.services.recurring.management_context import (
     RecurringOrderManagementContext,
 )
@@ -353,6 +356,7 @@ class APIInteractorsProvider(Provider):
         OrderDeletion,
         GeneratedOrderLifecycle,
         RecurringOrderExecution,
+        RecurringOrderLifecycle,
         RecurringOrderManagementContext,
         RecurringOrderOccurrenceLedger,
         RecurringOrderPlanningRead,

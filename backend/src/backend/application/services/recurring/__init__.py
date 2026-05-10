@@ -1,4 +1,5 @@
 from .execution import RecurringOrderExecution
+from .lifecycle import RecurringOrderLifecycle
 from .management_context import RecurringOrderManagementContext
 from .occurrence_ledger import RecurringOrderOccurrenceLedger
 from .planning_read import RecurringOrderPlanningRead
@@ -9,6 +10,7 @@ from .template_write import RecurringOrderTemplateWritePolicy
 
 __all__ = [
     "RecurringOrderExecution",
+    "RecurringOrderLifecycle",
     "RecurringOrderManagementContext",
     "RecurringOrderOccurrenceLedger",
     "RecurringOrderPlanningRead",

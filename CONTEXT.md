@@ -39,6 +39,16 @@ payment method availability, product ownership, and applying the resulting
 state to a template. It does not commit transactions and does not decide whether
 future generated orders should be rebuilt.
 
+## Regular Order lifecycle
+
+Regular Order lifecycle is the backend path that changes an existing regular
+order template after it has been created.
+
+It owns current lifecycle policies: pausing a template, resuming a runnable
+template, deleting a template, deleting future generated orders, and rebuilding
+future generated orders from the current template. It does not commit
+transactions; command handlers still own transaction completion.
+
 ## Regular Order management context
 
 Regular Order management context is the backend access path for commands that
