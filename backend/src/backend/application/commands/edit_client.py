@@ -27,16 +27,23 @@ from backend.application.vars import (
     ClientId,
     DistrictId,
     PhoneId,
+    RecurringOrderStatus,
     TimeSlotId,
 )
 from backend.infrastructure.idp import IdentityProvider
 from backend.infrastructure.persistence.gateways import (
+    RecurringOrderFilters,
     SQLAlchemyClientGateway,
+    SQLAlchemyRecurringOrderGateway,
     SQLAlchemyShopGateway,
     SQLAlchemyTimeSlotGateway,
 )
 from backend.infrastructure.persistence.gateways.order_gateway import (
     SQLAlchemyOrderGateway,
+)
+from backend.infrastructure.persistence.tables.clients import ClientAddress
+from backend.infrastructure.persistence.tables.recurring_orders import (
+    RecurringOrder,
 )
 from backend.infrastructure.transaction_manager import TransactionManager
 
@@ -101,6 +108,7 @@ class EditClientCommandHandler:
         shop_gateway: SQLAlchemyShopGateway,
         time_slot_gateway: SQLAlchemyTimeSlotGateway,
         order_gateway: SQLAlchemyOrderGateway,
+        recurring_order_gateway: SQLAlchemyRecurringOrderGateway,
         geocoder: Geocoder,
         tr_manager: TransactionManager,
     ) -> None:
@@ -109,10 +117,11 @@ class EditClientCommandHandler:
         self._shop_gateway = shop_gateway
         self._time_slot_gateway = time_slot_gateway
         self._order_gateway = order_gateway
+        self._recurring_order_gateway = recurring_order_gateway
         self._geocoder = geocoder
         self._tr_manager = tr_manager
 
-    async def handle(self, command: EditClientCommand) -> None:
+    async def handle(self, command: EditClientCommand) -> None:  # noqa: PLR0914
         logger.info(
             "Editing client: client_id=%s, new_full_name=%s, "
             "phones=%s, addresses=%s",
@@ -132,6 +141,24 @@ class EditClientCommandHandler:
         ensure_related_to_shop(current_user, client.shop_id)
 
         updates = []
+        old_phone_numbers = {phone.id: phone.number for phone in client.phones}
+        old_address_keys = {
+            address.id: self._address_key_from_model(address)
+            for address in client.addresses
+        }
+        recurring_orders_to_repoint = (
+            await self._recurring_order_gateway.load_by_filters(
+                RecurringOrderFilters(
+                    client_id=client.id,
+                    phone_ids=set(old_phone_numbers)
+                    if command.phones is not None
+                    else set(),
+                    address_ids=set(old_address_keys)
+                    if command.addresses is not None
+                    else set(),
+                )
+            )
+        )
 
         if command.full_name is not None or command.balance is not None:
             update_client(
@@ -248,6 +275,29 @@ class EditClientCommandHandler:
 
             updates.append(f"addresses={len(command.addresses)}")
 
+        if command.phones is not None or command.addresses is not None:
+            await self._tr_manager.flush()
+            self._repoint_recurring_order_refs(
+                recurring_orders_to_repoint,
+                old_phone_numbers=old_phone_numbers
+                if command.phones is not None
+                else {},
+                old_address_keys=old_address_keys
+                if command.addresses is not None
+                else {},
+                current_phone_ids={phone.id for phone in client.phones},
+                current_address_ids={
+                    address.id for address in client.addresses
+                },
+                new_phone_by_number={
+                    phone.number: phone.id for phone in client.phones
+                },
+                new_address_by_key={
+                    self._address_key_from_model(address): address.id
+                    for address in client.addresses
+                },
+            )
+
         await self._tr_manager.commit()
 
         logger.info(
@@ -272,3 +322,50 @@ class EditClientCommandHandler:
                 "TimeSlot",
             )
             ensure_related_to_shop(current_user, time_slot.shop_id)
+
+    def _repoint_recurring_order_refs(
+        self,
+        recurring_orders: list[RecurringOrder],
+        *,
+        old_phone_numbers: dict[PhoneId, str],
+        old_address_keys: dict[AddressId, tuple[str, ...]],
+        current_phone_ids: set[PhoneId],
+        current_address_ids: set[AddressId],
+        new_phone_by_number: dict[str, PhoneId],
+        new_address_by_key: dict[tuple[str, ...], AddressId],
+    ) -> None:
+        for recurring_order in recurring_orders:
+            if (
+                recurring_order.phone_id in old_phone_numbers
+                and recurring_order.phone_id not in current_phone_ids
+            ):
+                new_phone_id = new_phone_by_number.get(
+                    old_phone_numbers[recurring_order.phone_id]
+                )
+                recurring_order.phone_id = new_phone_id
+                if new_phone_id is None:
+                    recurring_order.status = RecurringOrderStatus.PAUSED
+
+            if (
+                recurring_order.address_id in old_address_keys
+                and recurring_order.address_id not in current_address_ids
+            ):
+                new_address_id = new_address_by_key.get(
+                    old_address_keys[recurring_order.address_id]
+                )
+                recurring_order.address_id = new_address_id
+                if new_address_id is None:
+                    recurring_order.status = RecurringOrderStatus.PAUSED
+
+    def _address_key_from_model(
+        self, address: ClientAddress
+    ) -> tuple[str, ...]:
+        return (
+            address.street,
+            address.house,
+            address.apartment or "",
+            address.entrance or "",
+            address.floor or "",
+            address.intercom or "",
+            address.comment or "",
+        )

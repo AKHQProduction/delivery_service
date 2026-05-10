@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef, useCallback } from "react";
+import React, { useState, useEffect, useRef, useCallback, useMemo } from "react";
 import { useOrders } from "../../../hooks/orders/useOrders";
 import { useClient } from "../../../hooks/clients/useClients";
 import { useProducts } from "../../../hooks/products/useProducts";
@@ -15,6 +15,7 @@ import { convertDateToISO, formatLocalDateKey } from "../../../utils/dateUtils";
 import { useError } from "../../../context/ErrorContext";
 import { FormSkeleton, InlineListSkeleton } from "../../ui/Skeleton";
 import { useUserShopStore } from "../../../context/useUserShopStore";
+import { resolveAvailablePaymentMethodName } from "../../../shared/paymentMethod";
 
 interface OrderItem {
   id?: number;
@@ -75,6 +76,10 @@ export const EditOrderForm: React.FC<EditOrderFormProps> = ({ onClose, onSave, o
   } = useProducts();
   const { timeSlots, isLoaded: timeSlotsLoaded } = useTimeSlotsSettings();
   const { paymentMethods, isLoaded: paymentMethodsLoaded } = usePaymentMethodsSettings();
+  const paymentMethodNames = useMemo(
+    () => paymentMethods.map((method) => method.name),
+    [paymentMethods],
+  );
 
   // Form state
   const [selectedClient, setSelectedClient] = useState<Client | null>(null);
@@ -159,7 +164,9 @@ export const EditOrderForm: React.FC<EditOrderFormProps> = ({ onClose, onSave, o
           setTimeSlot(matchingSlot?.time_slot_id || "");
         }
 
-        setPaymentMethod(orderData.payment_method || "");
+        setPaymentMethod(
+          resolveAvailablePaymentMethodName(orderData.payment_method, paymentMethodNames),
+        );
 
         setNote(orderData.note || orderData.comment || "");
       } catch (error) {
@@ -168,7 +175,14 @@ export const EditOrderForm: React.FC<EditOrderFormProps> = ({ onClose, onSave, o
     };
     loadData();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [order.order_id, timeSlots]);
+  }, [order.order_id, timeSlots, paymentMethodNames]);
+
+  useEffect(() => {
+    const nextPaymentMethod = resolveAvailablePaymentMethodName(paymentMethod, paymentMethodNames);
+    if (nextPaymentMethod && nextPaymentMethod !== paymentMethod) {
+      setPaymentMethod(nextPaymentMethod);
+    }
+  }, [paymentMethod, paymentMethodNames]);
 
   const productDebounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   useEffect(() => {
@@ -290,7 +304,8 @@ export const EditOrderForm: React.FC<EditOrderFormProps> = ({ onClose, onSave, o
       !selectedAddressId ||
       orderItems.length === 0 ||
       !loadedOrder ||
-      !timeSlot
+      !timeSlot ||
+      !paymentMethodNames.includes(paymentMethod)
     ) {
       showWarning("Будь ласка, заповніть всі обов'язкові поля");
       return;
@@ -357,8 +372,16 @@ export const EditOrderForm: React.FC<EditOrderFormProps> = ({ onClose, onSave, o
               </span>
               <h3 className="text-sm font-bold text-gray-900">Клієнт</h3>
               {selectedClient && !showClientSearch && (
-                <svg className="w-5 h-5 text-green-500 ml-auto" fill="currentColor" viewBox="0 0 20 20">
-                  <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+                <svg
+                  className="w-5 h-5 text-green-500 ml-auto"
+                  fill="currentColor"
+                  viewBox="0 0 20 20"
+                >
+                  <path
+                    fillRule="evenodd"
+                    d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z"
+                    clipRule="evenodd"
+                  />
                 </svg>
               )}
             </div>
@@ -444,8 +467,16 @@ export const EditOrderForm: React.FC<EditOrderFormProps> = ({ onClose, onSave, o
               <div className="flex items-center gap-2.5 mb-3">
                 <h3 className="text-sm font-bold text-gray-900">Контактна інформація</h3>
                 {selectedPhoneId && selectedAddressId && (
-                  <svg className="w-5 h-5 text-green-500 ml-auto" fill="currentColor" viewBox="0 0 20 20">
-                    <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+                  <svg
+                    className="w-5 h-5 text-green-500 ml-auto"
+                    fill="currentColor"
+                    viewBox="0 0 20 20"
+                  >
+                    <path
+                      fillRule="evenodd"
+                      d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z"
+                      clipRule="evenodd"
+                    />
                   </svg>
                 )}
               </div>
@@ -513,8 +544,16 @@ export const EditOrderForm: React.FC<EditOrderFormProps> = ({ onClose, onSave, o
             <h3 className="text-sm font-bold text-gray-900">Товари</h3>
             {orderItems.length > 0 && (
               <>
-                <svg className="w-5 h-5 text-green-500 ml-auto" fill="currentColor" viewBox="0 0 20 20">
-                  <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+                <svg
+                  className="w-5 h-5 text-green-500 ml-auto"
+                  fill="currentColor"
+                  viewBox="0 0 20 20"
+                >
+                  <path
+                    fillRule="evenodd"
+                    d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z"
+                    clipRule="evenodd"
+                  />
                 </svg>
                 <span className="text-xs text-gray-500 font-medium">
                   {orderItems.length} / {totalItems} шт.
@@ -563,8 +602,18 @@ export const EditOrderForm: React.FC<EditOrderFormProps> = ({ onClose, onSave, o
                         type="button"
                         className="ml-1.5 w-7 h-7 rounded-lg bg-red-100 hover:bg-red-200 text-red-600 flex items-center justify-center transition-colors"
                       >
-                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                        <svg
+                          className="w-4 h-4"
+                          fill="none"
+                          stroke="currentColor"
+                          viewBox="0 0 24 24"
+                        >
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth={2}
+                            d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
+                          />
                         </svg>
                       </button>
                     </div>
@@ -581,7 +630,12 @@ export const EditOrderForm: React.FC<EditOrderFormProps> = ({ onClose, onSave, o
               className="mt-2 w-full py-2.5 border border-dashed border-gray-300 rounded-md text-gray-600 hover:border-blue-400 hover:text-blue-600 transition-all font-medium text-sm flex items-center justify-center gap-2"
             >
               <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M12 4v16m8-8H4"
+                />
               </svg>
               Додати товар
             </button>
@@ -599,7 +653,12 @@ export const EditOrderForm: React.FC<EditOrderFormProps> = ({ onClose, onSave, o
                   className="text-gray-400 hover:text-gray-600"
                 >
                   <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M6 18L18 6M6 6l12 12"
+                    />
                   </svg>
                 </button>
               </div>
@@ -627,7 +686,9 @@ export const EditOrderForm: React.FC<EditOrderFormProps> = ({ onClose, onSave, o
                       className="p-3 rounded-md border border-gray-200 hover:border-blue-300 bg-white cursor-pointer transition-colors flex items-center gap-3"
                     >
                       <div className="flex-1 min-w-0">
-                        <div className="font-medium text-gray-900 text-sm truncate">{product.name}</div>
+                        <div className="font-medium text-gray-900 text-sm truncate">
+                          {product.name}
+                        </div>
                         <div className="text-xs font-semibold text-blue-600">{product.price} ₴</div>
                       </div>
                       <button
@@ -667,8 +728,16 @@ export const EditOrderForm: React.FC<EditOrderFormProps> = ({ onClose, onSave, o
             </span>
             <h3 className="text-sm font-bold text-gray-900">Дата доставки</h3>
             {deliveryDate && timeSlot && (
-              <svg className="w-5 h-5 text-green-500 ml-auto" fill="currentColor" viewBox="0 0 20 20">
-                <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+              <svg
+                className="w-5 h-5 text-green-500 ml-auto"
+                fill="currentColor"
+                viewBox="0 0 20 20"
+              >
+                <path
+                  fillRule="evenodd"
+                  d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z"
+                  clipRule="evenodd"
+                />
               </svg>
             )}
           </div>
@@ -703,8 +772,16 @@ export const EditOrderForm: React.FC<EditOrderFormProps> = ({ onClose, onSave, o
             </span>
             <h3 className="text-sm font-bold text-gray-900">Оплата</h3>
             {paymentMethod && (
-              <svg className="w-5 h-5 text-green-500 ml-auto" fill="currentColor" viewBox="0 0 20 20">
-                <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+              <svg
+                className="w-5 h-5 text-green-500 ml-auto"
+                fill="currentColor"
+                viewBox="0 0 20 20"
+              >
+                <path
+                  fillRule="evenodd"
+                  d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z"
+                  clipRule="evenodd"
+                />
               </svg>
             )}
           </div>

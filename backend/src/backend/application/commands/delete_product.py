@@ -5,6 +5,9 @@ from backend.application.policies.access import (
     ensure_can_manage,
     ensure_related_to_shop,
 )
+from backend.application.services.recurring.resource_impact import (
+    RecurringOrderResourceImpact,
+)
 from backend.application.vars import ProductId
 from backend.infrastructure.idp import IdentityProvider
 from backend.infrastructure.persistence.gateways import (
@@ -25,10 +28,12 @@ class DeleteProductCommandHandler:
         self,
         idp: IdentityProvider,
         product_gateway: SQLAlchemyProductGateway,
+        recurring_order_impact: RecurringOrderResourceImpact,
         tr_manager: TransactionManager,
     ) -> None:
         self._idp = idp
         self._product_gateway = product_gateway
+        self._recurring_order_impact = recurring_order_impact
         self._tr_manager = tr_manager
 
     async def handle(self, command: DeleteProductCommand) -> None:
@@ -45,6 +50,10 @@ class DeleteProductCommandHandler:
             return
 
         ensure_related_to_shop(current_user, product.shop_id)
+
+        await self._recurring_order_impact.pause_for_deleted_product(
+            product.id, current_user
+        )
 
         await self._product_gateway.delete(product)
         await self._tr_manager.commit()

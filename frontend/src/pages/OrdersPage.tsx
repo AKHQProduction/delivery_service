@@ -66,6 +66,7 @@ export const OrdersPage = () => {
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [isExportModalOpen, setIsExportModalOpen] = useState(false);
   const [orderPendingDelete, setOrderPendingDelete] = useState<Order | null>(null);
+  const [pausePlanningAfterDelete, setPausePlanningAfterDelete] = useState(false);
   const [selectedFilter, setSelectedFilter] = useState<OrderFilter>("all");
   const [paymentError, setPaymentError] = useState("");
   const {
@@ -191,12 +192,16 @@ export const OrdersPage = () => {
     if (!orderPendingDelete) return;
 
     const order = orderPendingDelete;
-    await deleteOrder(order.order_id);
+    await deleteOrder(order.order_id, {
+      pause_recurring_order:
+        pausePlanningAfterDelete && Boolean(order.recurring_order_id),
+    });
     if (selectedOrder?.order_id === order.order_id) {
       setSelectedOrder(null);
       setIsDetailModalOpen(false);
     }
     setOrderPendingDelete(null);
+    setPausePlanningAfterDelete(false);
     await refreshOrders();
   };
 
@@ -400,15 +405,68 @@ export const OrdersPage = () => {
 
       <ExportPdfModal isOpen={isExportModalOpen} onClose={() => setIsExportModalOpen(false)} />
 
-      <ConfirmDeleteModal
-        isOpen={!!orderPendingDelete}
-        title="Підтвердити видалення"
-        message={orderPendingDelete ? `Видалити замовлення для "${orderPendingDelete.client_name}"?` : ""}
-        warning="Цю дію не можна скасувати."
-        confirmLabel="Видалити замовлення"
-        onCancel={() => setOrderPendingDelete(null)}
-        onConfirm={handleDelete}
-      />
+      {orderPendingDelete?.recurring_order_id ? (
+        <Modal
+          isOpen
+          onClose={() => {
+            setOrderPendingDelete(null);
+            setPausePlanningAfterDelete(false);
+          }}
+          title="Видалити заплановане замовлення"
+        >
+          <div className="space-y-5">
+            <div>
+              <p className="text-sm leading-6 text-slate-700">
+                Видалити замовлення для "{orderPendingDelete.client_name}"?
+                Повторне створення цієї дати буде скасовано.
+              </p>
+              <label className="mt-4 flex items-start gap-3 rounded-md border border-slate-200 p-3 text-sm text-slate-700">
+                <input
+                  type="checkbox"
+                  checked={pausePlanningAfterDelete}
+                  onChange={(event) =>
+                    setPausePlanningAfterDelete(event.target.checked)
+                  }
+                  className="mt-1 h-4 w-4 rounded border-slate-300 text-blue-600"
+                />
+                <span>Також поставити планування на паузу</span>
+              </label>
+            </div>
+            <div className="grid gap-3 sm:grid-cols-2">
+              <button
+                type="button"
+                onClick={() => {
+                  setOrderPendingDelete(null);
+                  setPausePlanningAfterDelete(false);
+                }}
+                className="min-h-11 rounded-md bg-slate-100 px-4 py-2.5 text-sm font-medium leading-5 text-slate-700 hover:bg-slate-200"
+              >
+                Скасувати
+              </button>
+              <button
+                type="button"
+                onClick={handleDelete}
+                className="min-h-11 rounded-md bg-red-600 px-4 py-2.5 text-sm font-medium leading-5 text-white hover:bg-red-700"
+              >
+                Видалити замовлення
+              </button>
+            </div>
+          </div>
+        </Modal>
+      ) : (
+        <ConfirmDeleteModal
+          isOpen={!!orderPendingDelete}
+          title="Підтвердити видалення"
+          message={orderPendingDelete ? `Видалити замовлення для "${orderPendingDelete.client_name}"?` : ""}
+          warning="Цю дію не можна скасувати."
+          confirmLabel="Видалити замовлення"
+          onCancel={() => {
+            setOrderPendingDelete(null);
+            setPausePlanningAfterDelete(false);
+          }}
+          onConfirm={handleDelete}
+        />
+      )}
     </div>
   );
 };

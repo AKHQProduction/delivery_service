@@ -177,3 +177,33 @@ class InvalidOrderTotalError(ValidationError):
     @property
     def message(self) -> str:
         return "Order total must be greater than 0"
+
+
+class InvalidRecurringOrderScheduleError(ValidationError):
+    @property
+    def message(self) -> str:
+        return "Recurring order schedule is invalid"
+
+
+class RecurringOrderHasNoItemsError(ValidationError):
+    @property
+    def message(self) -> str:
+        return "Recurring order must have at least one item"
+
+
+class RecurringOrderItemQuantityError(ValidationError):
+    @property
+    def message(self) -> str:
+        return "Recurring order item quantity must be greater than 0"
+
+
+class RecurringOrderPausedError(ValidationError):
+    @property
+    def message(self) -> str:
+        return "Recurring order is paused"
+
+
+class RecurringOrderTemplateInvalidError(ValidationError):
+    @property
+    def message(self) -> str:
+        return "Recurring order template is invalid"

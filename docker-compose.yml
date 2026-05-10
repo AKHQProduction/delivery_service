@@ -34,6 +34,46 @@ services:
       postgres:
         condition: service_healthy
 
+  taskiq_worker:
+    container_name: "water_delivery-taskiq_worker"
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    env_file:
+      - .env
+    restart: on-failure
+    volumes:
+      - ./backend/src:/usr/src/app/src
+    command: >
+      taskiq worker --ack-type when_saved
+      backend.bootstrap.entrypoints.taskiq:setup_taskiq_broker
+      backend.infrastructure.tasks
+    depends_on:
+      redis:
+        condition: service_healthy
+      postgres:
+        condition: service_healthy
+
+  taskiq_scheduler:
+    container_name: "water_delivery-taskiq_scheduler"
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    env_file:
+      - .env
+    restart: on-failure
+    volumes:
+      - ./backend/src:/usr/src/app/src
+    command: >
+      taskiq scheduler --skip-first-run --update-interval 300
+      backend.bootstrap.entrypoints.taskiq:setup_taskiq_scheduler
+      backend.infrastructure.tasks
+    depends_on:
+      redis:
+        condition: service_healthy
+      taskiq_worker:
+        condition: service_started
+
   redis:
     container_name: "water_delivery-redis"
     image: redis:8-alpine

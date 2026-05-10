@@ -111,8 +111,13 @@ export const payOrderFromBalance = async (orderId: string) => {
   return response.data;
 };
 
-export const deleteOrderById = async (orderId: string) => {
-  const response = await api.delete(`v1/orders/${orderId}`);
+export const deleteOrderById = async (
+  orderId: string,
+  options: { pause_recurring_order?: boolean } = {},
+) => {
+  const response = await api.delete(`v1/orders/${orderId}`, {
+    params: options,
+  });
   return response.data;
 };
 

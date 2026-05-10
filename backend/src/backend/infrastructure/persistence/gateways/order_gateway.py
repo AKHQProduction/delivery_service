@@ -34,6 +34,7 @@ from backend.application.vars import (
     ClientId,
     OrderId,
     ProductId,
+    RecurringOrderId,
     ShopId,
     today,
 )
@@ -216,6 +217,11 @@ class SQLAlchemyOrderGateway:
             items=[self._to_item_read_model(item) for item in row.items],
             payment_method=mapped_cast(str, row.payment_method),
             is_paid=mapped_cast(bool, row.is_paid),
+            recurring_order_id=(
+                RecurringOrderId(mapped_cast(UUID, row.recurring_order_id))
+                if row.recurring_order_id
+                else None
+            ),
         )
 
     @staticmethod

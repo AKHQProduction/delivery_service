@@ -1,6 +1,7 @@
 import React, { useEffect, useMemo, useState } from "react";
 import { useOrderForm } from "../../../hooks/orders/useOrdersForm";
 import { useOrders } from "../../../hooks/orders/useOrders";
+import { type RegularOrderDraft } from "../../../utils/orderDraft";
 import {
   buildOrderRepeatSuggestion,
   type AvailableOrderRepeatSuggestion,
@@ -21,9 +22,14 @@ import { type Order } from "../../../types/entities/Order";
 interface AddOrderFormWebProps {
   onClose: () => void;
   onSave?: (order?: unknown) => void;
+  initialOrder?: RegularOrderDraft;
 }
 
-export const AddOrderFormWeb: React.FC<AddOrderFormWebProps> = ({ onClose, onSave }) => {
+export const AddOrderFormWeb: React.FC<AddOrderFormWebProps> = ({
+  onClose,
+  onSave,
+  initialOrder,
+}) => {
   const { createNewOrder } = useOrders();
   const currentDate = useUserShopStore((s) => s.currentDate);
   const { showSuccess, showWarning } = useError();
@@ -70,7 +76,7 @@ export const AddOrderFormWeb: React.FC<AddOrderFormWebProps> = ({ onClose, onSav
     getPhoneString,
     getAddressId,
     addAndSelectNewClient,
-  } = useOrderForm();
+  } = useOrderForm({ initialOrder });
 
   const paymentMethodNames = useMemo(
     () => paymentMethods.map((method) => method.name),

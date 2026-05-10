@@ -7,6 +7,8 @@ import { type Client } from "../../types/entities/Client";
 import { type Product } from "../../types/entities/Product";
 import { formatLocalDateKey } from "../../utils/dateUtils";
 import { useUserShopStore } from "../../context/useUserShopStore";
+import { type RegularOrderDraft } from "../../utils/orderDraft";
+import { resolveAvailablePaymentMethodName } from "../../shared/paymentMethod";
 import { type RepeatOrderDraft } from "../../utils/orderRepeatSuggestion";
 
 interface OrderFormProduct {
@@ -41,24 +43,7 @@ interface OrderFormData {
 }
 
 interface UseOrderFormOptions {
-  initialOrder?: {
-    client_id?: string;
-    phone_id?: number;
-    address_id?: number;
-    delivery_date?: string;
-    date?: string;
-    time_slot_id?: string;
-    payment_method?: string;
-    comment?: string;
-    note?: string;
-    items?: Array<{
-      id: number;
-      product_id: string;
-      name?: string;
-      price_per_item?: number;
-      quantity: number;
-    }>;
-  };
+  initialOrder?: RegularOrderDraft;
 }
 
 const getAddressPreferredTimeSlot = (address: OrderFormData["deliveryAddress"]) =>
@@ -68,6 +53,11 @@ export const useOrderForm = (options: UseOrderFormOptions = {}) => {
   const { initialOrder } = options;
   const currentDate = useUserShopStore((s) => s.currentDate);
   const todayKey = currentDate ?? formatLocalDateKey();
+  const tomorrowKey = useMemo(() => {
+    const date = new Date(`${todayKey}T00:00:00`);
+    date.setDate(date.getDate() + 1);
+    return formatLocalDateKey(date);
+  }, [todayKey]);
   const [step, setStep] = useState(1);
   const [searchClient, setSearchClient] = useState("");
   const [searchProduct, setSearchProduct] = useState("");
@@ -105,6 +95,10 @@ export const useOrderForm = (options: UseOrderFormOptions = {}) => {
       ...fetchedClients,
     ],
     [newlyCreatedClients, fetchedClients],
+  );
+  const paymentMethodNames = useMemo(
+    () => paymentMethods.map((method) => method.name),
+    [paymentMethods],
   );
 
   const {
@@ -231,13 +225,26 @@ export const useOrderForm = (options: UseOrderFormOptions = {}) => {
         products: orderProducts,
         deliveryPhone: phone || null,
         deliveryAddress: address || null,
-        deliveryDate: initialOrder.delivery_date || initialOrder.date || "",
+        deliveryDate: initialOrder.delivery_date || initialOrder.date || tomorrowKey,
         timeSlotId: initialOrder.time_slot_id || "",
-        paymentMethod: initialOrder.payment_method || "",
+        paymentMethod: resolveAvailablePaymentMethodName(
+          initialOrder.payment_method,
+          paymentMethodNames,
+        ),
         note: initialOrder.comment || initialOrder.note || "",
       });
     }
-  }, [initialOrder, clients, products]);
+  }, [initialOrder, clients, products, tomorrowKey, paymentMethodNames]);
+
+  useEffect(() => {
+    const paymentMethod = resolveAvailablePaymentMethodName(
+      formData.paymentMethod,
+      paymentMethodNames,
+    );
+    if (paymentMethod && paymentMethod !== formData.paymentMethod) {
+      setFormData((prev) => ({ ...prev, paymentMethod }));
+    }
+  }, [formData.paymentMethod, paymentMethodNames]);
 
   const handleClientSelect = useCallback(
     (client: Client) => {
@@ -384,7 +391,8 @@ export const useOrderForm = (options: UseOrderFormOptions = {}) => {
         return (
           formData.deliveryDate !== "" &&
           formData.timeSlotId !== "" &&
-          formData.paymentMethod !== ""
+          formData.paymentMethod !== "" &&
+          paymentMethodNames.includes(formData.paymentMethod)
         );
       default:
         return false;

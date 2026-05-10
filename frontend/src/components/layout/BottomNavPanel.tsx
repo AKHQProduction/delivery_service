@@ -15,7 +15,12 @@ export const BottomNavPanel = () => {
     <div className="fixed inset-x-0 bottom-0 z-40 md:hidden">
       <div className="border-t border-slate-200 bg-white/95 px-2 pb-[calc(env(safe-area-inset-bottom)+0.5rem)] pt-2 shadow-[0_-8px_24px_rgba(15,23,42,0.08)] backdrop-blur">
         <nav aria-label="Основна навігація">
-          <div className="mx-auto grid max-w-md grid-cols-4 gap-1">
+          <div
+            className="mx-auto grid max-w-md gap-1"
+            style={{
+              gridTemplateColumns: `repeat(${userRoutes.length}, minmax(0, 1fr))`,
+            }}
+          >
             {userRoutes?.map((route) => {
               const isActive =
                 location.pathname === route.path ||

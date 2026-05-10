@@ -32,6 +32,9 @@ from backend.application.commands.create_payment_method import (
 from backend.application.commands.create_product import (
     CreateProductCommandHandler,
 )
+from backend.application.commands.create_recurring_order import (
+    CreateRecurringOrderCommandHandler,
+)
 from backend.application.commands.create_time_slot import (
     CreateTimeSlotCommandHandler,
 )
@@ -50,6 +53,9 @@ from backend.application.commands.delete_payment_method import (
 )
 from backend.application.commands.delete_product import (
     DeleteProductCommandHandler,
+)
+from backend.application.commands.delete_recurring_order import (
+    DeleteRecurringOrderCommandHandler,
 )
 from backend.application.commands.delete_time_slot import (
     DeleteTimeSlotCommandHandler,
@@ -80,20 +86,35 @@ from backend.application.commands.login_telegram import (
     LoginTelegramCommandHandler,
 )
 from backend.application.commands.logout import LogoutCommandHandler
+from backend.application.commands.pause_recurring_order import (
+    PauseRecurringOrderCommandHandler,
+)
 from backend.application.commands.pay_order_from_balance import (
     PayOrderFromBalanceCommandHandler,
 )
 from backend.application.commands.reorder_route import (
     ReorderRouteCommandHandler,
 )
+from backend.application.commands.resume_recurring_order import (
+    ResumeRecurringOrderCommandHandler,
+)
 from backend.application.commands.reverse_route import (
     ReverseRouteCommandHandler,
+)
+from backend.application.commands.run_recurring_order import (
+    RunRecurringOrderCommandHandler,
+)
+from backend.application.commands.run_recurring_order_automation import (
+    RunRecurringOrderAutomationCommandHandler,
 )
 from backend.application.commands.set_client_balance import (
     SetClientBalanceCommandHandler,
 )
 from backend.application.commands.update_order_coordinates import (
     UpdateOrderCoordinatesCommandHandler,
+)
+from backend.application.commands.update_recurring_order import (
+    UpdateRecurringOrderCommandHandler,
 )
 from backend.application.queries.get_categories import (
     GetCategoriesQueryHandler,
@@ -116,6 +137,12 @@ from backend.application.queries.get_payment_methods import (
 )
 from backend.application.queries.get_product import GetProductQueryHandler
 from backend.application.queries.get_products import GetProductsQueryHandler
+from backend.application.queries.get_recurring_order import (
+    GetRecurringOrderQueryHandler,
+)
+from backend.application.queries.get_recurring_orders import (
+    GetRecurringOrdersQueryHandler,
+)
 from backend.application.queries.get_route import GetRouteQueryHandler
 from backend.application.queries.get_routes import GetRoutesQueryHandler
 from backend.application.queries.get_shared_route import (
@@ -125,7 +152,39 @@ from backend.application.queries.get_time_slots import GetTimeSlotsQueryHandler
 from backend.application.queries.preview_import_xlsx import (
     PreviewImportXlsxQueryHandler,
 )
+from backend.application.services.generated_order_lifecycle import (
+    GeneratedOrderLifecycle,
+)
 from backend.application.services.geocoder import Geocoder
+from backend.application.services.order_deletion import OrderDeletion
+from backend.application.services.order_intake import OrderIntake
+from backend.application.services.recurring.execution import (
+    RecurringOrderExecution,
+)
+from backend.application.services.recurring.lifecycle import (
+    RecurringOrderLifecycle,
+)
+from backend.application.services.recurring.management_context import (
+    RecurringOrderManagementContext,
+)
+from backend.application.services.recurring.occurrence_ledger import (
+    RecurringOrderOccurrenceLedger,
+)
+from backend.application.services.recurring.planning_read import (
+    RecurringOrderPlanningRead,
+)
+from backend.application.services.recurring.resource_impact import (
+    RecurringOrderResourceImpact,
+)
+from backend.application.services.recurring.scheduling_clock import (
+    RecurringOrderSchedulingClock,
+)
+from backend.application.services.recurring.template_integrity import (
+    RecurringOrderTemplateIntegrity,
+)
+from backend.application.services.recurring.template_write import (
+    RecurringOrderTemplateWritePolicy,
+)
 from backend.application.services.tsp_solvers import RouteOptimizer
 from backend.application.usecases.invite_employee.generate_invite_link import (
     GenerateInviteLinkCommandHandler,
@@ -234,6 +293,15 @@ class APIInteractorsProvider(Provider):
         DeleteProductCommandHandler,
         GetProductQueryHandler,
         GetProductsQueryHandler,
+        CreateRecurringOrderCommandHandler,
+        DeleteRecurringOrderCommandHandler,
+        PauseRecurringOrderCommandHandler,
+        ResumeRecurringOrderCommandHandler,
+        RunRecurringOrderCommandHandler,
+        RunRecurringOrderAutomationCommandHandler,
+        UpdateRecurringOrderCommandHandler,
+        GetRecurringOrderQueryHandler,
+        GetRecurringOrdersQueryHandler,
         CreateCategoryCommandHandler,
         EditCategoryCommandHandler,
         DeleteCategoryCommandHandler,
@@ -281,6 +349,21 @@ class APIInteractorsProvider(Provider):
         PreviewImportXlsxQueryHandler,
         LoginTelegramCommandHandler,
         LogoutCommandHandler,
+    )
+
+    services = provide_all(
+        OrderIntake,
+        OrderDeletion,
+        GeneratedOrderLifecycle,
+        RecurringOrderExecution,
+        RecurringOrderLifecycle,
+        RecurringOrderManagementContext,
+        RecurringOrderOccurrenceLedger,
+        RecurringOrderPlanningRead,
+        RecurringOrderResourceImpact,
+        RecurringOrderSchedulingClock,
+        RecurringOrderTemplateIntegrity,
+        RecurringOrderTemplateWritePolicy,
     )
 
     add_employee = provide_all(GenerateInviteLinkCommandHandler)

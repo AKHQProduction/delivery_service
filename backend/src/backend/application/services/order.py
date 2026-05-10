@@ -12,7 +12,9 @@ from backend.application.vars import (
     OrderItemId,
     PhoneId,
     ProductId,
+    RecurringOrderId,
     ShopId,
+    TimeSlotId,
 )
 from backend.infrastructure.persistence.tables.base import DeliveryAddressDTO
 from backend.infrastructure.persistence.tables.clients import (
@@ -98,6 +100,8 @@ def create_order(
     delivery_address: DeliveryAddressDTO,
     payment_method: str,
     comment: str | None,
+    time_slot_id: TimeSlotId | None = None,
+    recurring_order_id: RecurringOrderId | None = None,
 ) -> Order:
     return Order(
         id=order_id,
@@ -110,6 +114,8 @@ def create_order(
         shop_id=shop_id,
         client_id=client_id,
         payment_method=payment_method,
+        time_slot_id=time_slot_id,
+        recurring_order_id=recurring_order_id,
     )
 
 
@@ -151,6 +157,8 @@ def update_order_items(
     new_ids = {dto.id for dto in item_dtos if dto.id is not None}
 
     removed = [item for item in order.items if item.id not in new_ids]
+    for item in removed:
+        order.items.remove(item)
 
     for dto in item_dtos:
         if dto.id is not None and dto.id in existing_items_map:
