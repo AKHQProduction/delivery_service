@@ -57,6 +57,21 @@ class GeneratedOrderLifecycle:
         current_user: CurrentUserDTO,
     ) -> None:
         gateway = self._recurring_order_gateway
+        occurrences = await gateway.load_occurrences_from(
+            recurring_order_id,
+            from_date,
+        )
+        for occurrence in occurrences:
+            if occurrence.order_id is not None:
+                await self.delete_order(occurrence.order_id, current_user)
+
+    async def delete_future_orders_for_rebuild(
+        self,
+        recurring_order_id: RecurringOrderId,
+        from_date: date,
+        current_user: CurrentUserDTO,
+    ) -> None:
+        gateway = self._recurring_order_gateway
         occurrences = await gateway.load_scheduled_occurrences_from(
             recurring_order_id,
             from_date,
@@ -64,3 +79,5 @@ class GeneratedOrderLifecycle:
         for occurrence in occurrences:
             if occurrence.order_id is not None:
                 await self.delete_order(occurrence.order_id, current_user)
+
+        await gateway.delete_occurrences_from(recurring_order_id, from_date)

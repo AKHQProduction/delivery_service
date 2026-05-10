@@ -7,6 +7,7 @@ import {
   type RunRecurringOrderPayload,
   type RunRecurringOrderResult,
   type ScheduleType,
+  type UpdateRecurringOrderOptions,
   type UpdateRecurringOrderPayload,
 } from "../../types/entities/RecurringOrder";
 
@@ -43,8 +44,11 @@ export const createRecurringOrderTemplate = async (
 export const updateRecurringOrderTemplate = async (
   recurringOrderId: string,
   payload: UpdateRecurringOrderPayload,
+  options: UpdateRecurringOrderOptions = {},
 ) => {
-  const response = await api.patch(`v1/recurring-orders/${recurringOrderId}`, payload);
+  const response = await api.patch(`v1/recurring-orders/${recurringOrderId}`, payload, {
+    params: options,
+  });
   return response.data;
 };
 

@@ -157,6 +157,8 @@ def update_order_items(
     new_ids = {dto.id for dto in item_dtos if dto.id is not None}
 
     removed = [item for item in order.items if item.id not in new_ids]
+    for item in removed:
+        order.items.remove(item)
 
     for dto in item_dtos:
         if dto.id is not None and dto.id in existing_items_map:

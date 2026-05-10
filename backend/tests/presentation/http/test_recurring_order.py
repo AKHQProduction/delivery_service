@@ -1,6 +1,7 @@
 import uuid
 from collections.abc import Callable
-from datetime import date
+from datetime import date, time
+from decimal import Decimal
 from typing import Any
 
 import pytest
@@ -378,6 +379,493 @@ async def test_update_recurring_order_template(
         (product_id, 2),
         (second_product_id, 1),
     ]
+
+
+@pytest.mark.asyncio()
+async def test_update_active_without_flags_keeps_existing_orders(
+    http_client: AsyncClient,
+    session: AsyncSession,
+    customer_headers: Callable[[int], dict[str, Any]],
+    setup_full_test_user_with_shop,
+    setup_test_client,
+    setup_test_product,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    monkeypatch.setattr(
+        "backend.application.services.recurring_order_scheduling_clock.today",
+        lambda: date(2026, 5, 8),
+    )
+    telegram_id = 9117
+    _, shop_id = await setup_full_test_user_with_shop(telegram_id=telegram_id)
+    headers = customer_headers(telegram_id)
+    client_id = await setup_test_client(
+        shop_id=shop_id,
+        phones=["+380501111111"],
+        addresses=[{"street": "Хрещатик", "house": "10"}],
+    )
+    product_id, _, _, _ = await setup_test_product(shop_id=shop_id)
+    phone_id, address_id = await _client_refs(session, client_id)
+    time_slot_id = await _time_slot_id(session, shop_id)
+    await session.commit()
+    recurring_order_id = await _create_recurring_order(
+        http_client,
+        headers,
+        client_id=client_id,
+        address_id=address_id,
+        phone_id=phone_id,
+        time_slot_id=time_slot_id,
+        product_id=product_id,
+        weekdays=[1],
+    )
+    run_response = await http_client.post(
+        f"{BASE_URL}/{recurring_order_id}/run",
+        headers=headers,
+        json={"include_today": False},
+    )
+    assert run_response.status_code == status.HTTP_200_OK
+    await session.flush()
+
+    update_response = await http_client.patch(
+        f"{BASE_URL}/{recurring_order_id}",
+        headers=headers,
+        json={
+            "address_id": address_id,
+            "phone_id": phone_id,
+            "time_slot_id": str(time_slot_id),
+            "items": [{"product_id": str(product_id), "quantity": 2}],
+            "payment_method": "Готівка",
+            "comment": "Новий коментар",
+            "schedule_type": "WEEKLY",
+            "weekdays": [1, 3],
+            "month_days": None,
+        },
+    )
+
+    assert update_response.status_code == status.HTTP_200_OK
+    await session.flush()
+    orders = (
+        (
+            await session.execute(
+                select(Order)
+                .where(Order.recurring_order_id == recurring_order_id)
+                .order_by(Order.date)
+            )
+        )
+        .scalars()
+        .all()
+    )
+    assert [order.date for order in orders] == [
+        date(2026, 5, 11),
+        date(2026, 5, 18),
+    ]
+    existing_order = next(
+        order for order in orders if order.date == date(2026, 5, 11)
+    )
+    assert existing_order.comment is None
+    existing_item = (
+        await session.execute(
+            select(OrderItem).where(OrderItem.order_id == existing_order.id)
+        )
+    ).scalar_one()
+    assert existing_item.quantity == 1
+
+
+@pytest.mark.asyncio()
+async def test_update_active_rebuilds_future_orders_and_balance(
+    http_client: AsyncClient,
+    session: AsyncSession,
+    customer_headers: Callable[[int], dict[str, Any]],
+    setup_full_test_user_with_shop,
+    setup_test_client,
+    setup_test_product,
+    setup_test_time_slot,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    monkeypatch.setattr(
+        "backend.application.services.recurring_order_scheduling_clock.today",
+        lambda: date(2026, 5, 8),
+    )
+    telegram_id = 9118
+    _, shop_id = await setup_full_test_user_with_shop(telegram_id=telegram_id)
+    headers = customer_headers(telegram_id)
+    client_id = await setup_test_client(
+        shop_id=shop_id,
+        phones=["+380501111111"],
+        addresses=[{"street": "Хрещатик", "house": "10"}],
+        balance=Decimal(0),
+    )
+    product_id, _, product_price, _ = await setup_test_product(shop_id=shop_id)
+    phone_id, address_id = await _client_refs(session, client_id)
+    time_slot_id = await _time_slot_id(session, shop_id)
+    next_time_slot_id = await setup_test_time_slot(
+        shop_id=shop_id,
+        start_time=time(15, 0),
+        end_time=time(21, 0),
+        label="Вечір",
+    )
+    await session.commit()
+    recurring_order_id = await _create_recurring_order(
+        http_client,
+        headers,
+        client_id=client_id,
+        address_id=address_id,
+        phone_id=phone_id,
+        time_slot_id=time_slot_id,
+        product_id=product_id,
+        weekdays=[1],
+        payment_method="Баланс",
+    )
+    run_response = await http_client.post(
+        f"{BASE_URL}/{recurring_order_id}/run",
+        headers=headers,
+        json={"include_today": False},
+    )
+    assert run_response.status_code == status.HTTP_200_OK
+    await session.flush()
+    original_orders = (
+        (
+            await session.execute(
+                select(Order).where(
+                    Order.recurring_order_id == recurring_order_id
+                )
+            )
+        )
+        .scalars()
+        .all()
+    )
+    original_order_ids = {order.id for order in original_orders}
+
+    update_response = await http_client.patch(
+        f"{BASE_URL}/{recurring_order_id}",
+        headers=headers,
+        params={"rebuild_future_orders": True},
+        json={
+            "address_id": address_id,
+            "phone_id": phone_id,
+            "time_slot_id": str(next_time_slot_id),
+            "items": [{"product_id": str(product_id), "quantity": 2}],
+            "payment_method": "Баланс",
+            "comment": "Оновлено",
+            "schedule_type": "WEEKLY",
+            "weekdays": [1],
+            "month_days": None,
+        },
+    )
+
+    assert update_response.status_code == status.HTTP_200_OK
+    await session.flush()
+    orders = (
+        (
+            await session.execute(
+                select(Order)
+                .where(Order.recurring_order_id == recurring_order_id)
+                .order_by(Order.date)
+            )
+        )
+        .scalars()
+        .all()
+    )
+    assert [order.date for order in orders] == [
+        date(2026, 5, 11),
+        date(2026, 5, 18),
+    ]
+    assert {order.time_slot_id for order in orders} == {next_time_slot_id}
+    assert {order.delivery_start_time for order in orders} == {time(15, 0)}
+    assert {order.comment for order in orders} == {"Оновлено"}
+    assert {order.id for order in orders}.isdisjoint(original_order_ids)
+    items = (
+        (
+            await session.execute(
+                select(OrderItem).where(
+                    OrderItem.order_id.in_([order.id for order in orders])
+                )
+            )
+        )
+        .scalars()
+        .all()
+    )
+    assert {item.quantity for item in items} == {2}
+    client = await session.get(Client, client_id)
+    assert client is not None
+    assert client.balance == -(product_price * 4)
+
+
+@pytest.mark.asyncio()
+async def test_update_active_rebuild_keeps_today_and_removes_old_future_dates(
+    http_client: AsyncClient,
+    session: AsyncSession,
+    customer_headers: Callable[[int], dict[str, Any]],
+    setup_full_test_user_with_shop,
+    setup_test_client,
+    setup_test_product,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    monkeypatch.setattr(
+        "backend.application.services.recurring_order_scheduling_clock.today",
+        lambda: date(2026, 5, 8),
+    )
+    telegram_id = 9119
+    _, shop_id = await setup_full_test_user_with_shop(telegram_id=telegram_id)
+    headers = customer_headers(telegram_id)
+    client_id = await setup_test_client(
+        shop_id=shop_id,
+        phones=["+380501111111"],
+        addresses=[{"street": "Хрещатик", "house": "10"}],
+    )
+    product_id, _, _, _ = await setup_test_product(shop_id=shop_id)
+    phone_id, address_id = await _client_refs(session, client_id)
+    time_slot_id = await _time_slot_id(session, shop_id)
+    await session.commit()
+    recurring_order_id = await _create_recurring_order(
+        http_client,
+        headers,
+        client_id=client_id,
+        address_id=address_id,
+        phone_id=phone_id,
+        time_slot_id=time_slot_id,
+        product_id=product_id,
+        weekdays=[5, 1],
+    )
+    run_response = await http_client.post(
+        f"{BASE_URL}/{recurring_order_id}/run",
+        headers=headers,
+        json={"include_today": True},
+    )
+    assert run_response.status_code == status.HTTP_200_OK
+    await session.flush()
+
+    update_response = await http_client.patch(
+        f"{BASE_URL}/{recurring_order_id}",
+        headers=headers,
+        params={"rebuild_future_orders": True},
+        json={
+            "address_id": address_id,
+            "phone_id": phone_id,
+            "time_slot_id": str(time_slot_id),
+            "items": [{"product_id": str(product_id), "quantity": 1}],
+            "payment_method": "Готівка",
+            "schedule_type": "WEEKLY",
+            "weekdays": [1],
+            "month_days": None,
+        },
+    )
+
+    assert update_response.status_code == status.HTTP_200_OK
+    await session.flush()
+    orders = (
+        (
+            await session.execute(
+                select(Order)
+                .where(Order.recurring_order_id == recurring_order_id)
+                .order_by(Order.date)
+            )
+        )
+        .scalars()
+        .all()
+    )
+    assert [order.date for order in orders] == [
+        date(2026, 5, 8),
+        date(2026, 5, 11),
+        date(2026, 5, 18),
+    ]
+    occurrences = (
+        (
+            await session.execute(
+                select(RecurringOrderOccurrence)
+                .where(
+                    RecurringOrderOccurrence.recurring_order_id
+                    == recurring_order_id
+                )
+                .order_by(RecurringOrderOccurrence.scheduled_for)
+            )
+        )
+        .scalars()
+        .all()
+    )
+    cancelled = [
+        row.scheduled_for
+        for row in occurrences
+        if row.status == RecurringOrderOccurrenceStatus.CANCELLED
+    ]
+    assert cancelled == []
+
+
+@pytest.mark.asyncio()
+async def test_update_active_rebuild_recreates_previously_cancelled_dates(
+    http_client: AsyncClient,
+    session: AsyncSession,
+    customer_headers: Callable[[int], dict[str, Any]],
+    setup_full_test_user_with_shop,
+    setup_test_client,
+    setup_test_product,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    monkeypatch.setattr(
+        "backend.application.services.recurring_order_scheduling_clock.today",
+        lambda: date(2026, 5, 8),
+    )
+    telegram_id = 9121
+    _, shop_id = await setup_full_test_user_with_shop(telegram_id=telegram_id)
+    headers = customer_headers(telegram_id)
+    client_id = await setup_test_client(
+        shop_id=shop_id,
+        phones=["+380501111111"],
+        addresses=[{"street": "Хрещатик", "house": "10"}],
+    )
+    product_id, _, _, _ = await setup_test_product(shop_id=shop_id)
+    phone_id, address_id = await _client_refs(session, client_id)
+    time_slot_id = await _time_slot_id(session, shop_id)
+    await session.commit()
+    recurring_order_id = await _create_recurring_order(
+        http_client,
+        headers,
+        client_id=client_id,
+        address_id=address_id,
+        phone_id=phone_id,
+        time_slot_id=time_slot_id,
+        product_id=product_id,
+        weekdays=[1],
+    )
+    run_response = await http_client.post(
+        f"{BASE_URL}/{recurring_order_id}/run",
+        headers=headers,
+        json={"include_today": False},
+    )
+    assert run_response.status_code == status.HTTP_200_OK
+    await session.flush()
+
+    occurrence = (
+        await session.execute(
+            select(RecurringOrderOccurrence).where(
+                RecurringOrderOccurrence.recurring_order_id
+                == recurring_order_id,
+                RecurringOrderOccurrence.scheduled_for == date(2026, 5, 11),
+            )
+        )
+    ).scalar_one()
+    assert occurrence.order_id is not None
+    delete_response = await http_client.delete(
+        f"/api/v1/orders/{occurrence.order_id}",
+        headers=headers,
+    )
+    assert delete_response.status_code == status.HTTP_204_NO_CONTENT
+    await session.flush()
+
+    update_response = await http_client.patch(
+        f"{BASE_URL}/{recurring_order_id}",
+        headers=headers,
+        params={"rebuild_future_orders": True},
+        json={
+            "address_id": address_id,
+            "phone_id": phone_id,
+            "time_slot_id": str(time_slot_id),
+            "items": [{"product_id": str(product_id), "quantity": 1}],
+            "payment_method": "Готівка",
+            "schedule_type": "WEEKLY",
+            "weekdays": [1],
+            "month_days": None,
+        },
+    )
+
+    assert update_response.status_code == status.HTTP_200_OK
+    await session.flush()
+    orders = (
+        (
+            await session.execute(
+                select(Order)
+                .where(Order.recurring_order_id == recurring_order_id)
+                .order_by(Order.date)
+            )
+        )
+        .scalars()
+        .all()
+    )
+    assert [order.date for order in orders] == [
+        date(2026, 5, 11),
+        date(2026, 5, 18),
+    ]
+    occurrences = (
+        (
+            await session.execute(
+                select(RecurringOrderOccurrence)
+                .where(
+                    RecurringOrderOccurrence.recurring_order_id
+                    == recurring_order_id
+                )
+                .order_by(RecurringOrderOccurrence.scheduled_for)
+            )
+        )
+        .scalars()
+        .all()
+    )
+    assert [row.scheduled_for for row in occurrences] == [
+        date(2026, 5, 11),
+        date(2026, 5, 18),
+    ]
+    assert {row.status for row in occurrences} == {
+        RecurringOrderOccurrenceStatus.SCHEDULED
+    }
+
+
+@pytest.mark.asyncio()
+async def test_update_paused_rejects_future_reconciliation_flags(
+    http_client: AsyncClient,
+    session: AsyncSession,
+    customer_headers: Callable[[int], dict[str, Any]],
+    setup_full_test_user_with_shop,
+    setup_test_client,
+    setup_test_product,
+) -> None:
+    telegram_id = 9120
+    _, shop_id = await setup_full_test_user_with_shop(telegram_id=telegram_id)
+    headers = customer_headers(telegram_id)
+    client_id = await setup_test_client(
+        shop_id=shop_id,
+        phones=["+380501111111"],
+        addresses=[{"street": "Хрещатик", "house": "10"}],
+    )
+    product_id, _, _, _ = await setup_test_product(shop_id=shop_id)
+    phone_id, address_id = await _client_refs(session, client_id)
+    time_slot_id = await _time_slot_id(session, shop_id)
+    await session.commit()
+    recurring_order_id = await _create_recurring_order(
+        http_client,
+        headers,
+        client_id=client_id,
+        address_id=address_id,
+        phone_id=phone_id,
+        time_slot_id=time_slot_id,
+        product_id=product_id,
+        weekdays=[1],
+    )
+    pause_response = await http_client.post(
+        f"{BASE_URL}/{recurring_order_id}/pause",
+        headers=headers,
+    )
+    assert pause_response.status_code == status.HTTP_200_OK
+
+    update_response = await http_client.patch(
+        f"{BASE_URL}/{recurring_order_id}",
+        headers=headers,
+        params={"rebuild_future_orders": True},
+        json={
+            "address_id": address_id,
+            "phone_id": phone_id,
+            "time_slot_id": str(time_slot_id),
+            "items": [{"product_id": str(product_id), "quantity": 2}],
+            "payment_method": "Готівка",
+            "schedule_type": "WEEKLY",
+            "weekdays": [1, 3],
+            "month_days": None,
+        },
+    )
+
+    assert update_response.status_code == status.HTTP_422_UNPROCESSABLE_ENTITY
+    assert update_response.json()["detail"] == "Recurring order is paused"
+    await session.flush()
+    recurring_order = await session.get(RecurringOrder, recurring_order_id)
+    assert recurring_order is not None
+    assert recurring_order.weekdays == [1]
 
 
 @pytest.mark.asyncio()

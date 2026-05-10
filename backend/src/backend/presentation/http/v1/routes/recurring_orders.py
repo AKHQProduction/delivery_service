@@ -160,6 +160,7 @@ async def update_recurring_order(
     recurring_order_id: RecurringOrderId,
     body: Annotated[UpdateRecurringOrderRequest, Body()],
     handler: FromDishka[UpdateRecurringOrderCommandHandler],
+    rebuild_future_orders: bool = False,
 ) -> None:
     await handler.handle(
         UpdateRecurringOrderCommand(
@@ -173,6 +174,7 @@ async def update_recurring_order(
             weekdays=body.weekdays,
             month_days=body.month_days,
             comment=body.comment,
+            rebuild_future_orders=rebuild_future_orders,
         )
     )
 

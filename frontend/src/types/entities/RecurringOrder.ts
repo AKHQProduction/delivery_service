@@ -48,6 +48,10 @@ export interface CreateRecurringOrderPayload {
 
 export type UpdateRecurringOrderPayload = Omit<CreateRecurringOrderPayload, "client_id">;
 
+export interface UpdateRecurringOrderOptions {
+  rebuild_future_orders?: boolean;
+}
+
 export interface RunRecurringOrderPayload {
   include_today?: boolean;
   activate?: boolean;

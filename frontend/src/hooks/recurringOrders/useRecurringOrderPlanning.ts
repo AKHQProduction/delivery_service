@@ -12,6 +12,7 @@ import { type Client } from "../../types/entities/Client";
 import {
   type RecurringOrder,
   type RecurringOrderDetail,
+  type UpdateRecurringOrderOptions,
 } from "../../types/entities/RecurringOrder";
 import { resolveAvailablePaymentMethodName } from "../../shared/paymentMethod";
 import {
@@ -91,14 +92,14 @@ export const useRecurringOrderPlanning = (
     dispatchForm({ type: "toggleWeekday", day });
   };
 
-  const handleCreate = async () => {
+  const handleCreate = async (options: UpdateRecurringOrderOptions = {}) => {
     if (editingOrderId) {
       const payload = buildUpdateRecurringOrderPayload(form);
       if (!payload) {
         return;
       }
 
-      await updateRecurringOrderTemplate(editingOrderId, payload);
+      await updateRecurringOrderTemplate(editingOrderId, payload, options);
       setIsFormOpen(false);
       setEditingOrderId(null);
       await refresh();

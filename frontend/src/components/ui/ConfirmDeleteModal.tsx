@@ -55,14 +55,14 @@ export const ConfirmDeleteModal = ({
           <button
             type="button"
             onClick={onCancel}
-            className="h-11 rounded-md bg-slate-100 px-4 text-sm font-medium text-slate-700 hover:bg-slate-200"
+            className="min-h-11 rounded-md bg-slate-100 px-4 py-2.5 text-sm font-medium leading-5 text-slate-700 hover:bg-slate-200"
           >
             Скасувати
           </button>
           <button
             type="button"
             onClick={onConfirm}
-            className="h-11 rounded-md bg-red-600 px-4 text-sm font-medium text-white hover:bg-red-700"
+            className="min-h-11 rounded-md bg-red-600 px-4 py-2.5 text-sm font-medium leading-5 text-white hover:bg-red-700"
           >
             {confirmLabel}
           </button>

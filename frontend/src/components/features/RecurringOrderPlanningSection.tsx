@@ -43,6 +43,7 @@ export const RecurringOrderPlanningSection = ({
   const [recentOrders, setRecentOrders] = useState<Order[]>([]);
   const [selectedRecentOrderId, setSelectedRecentOrderId] = useState<string | null>(null);
   const [isRecentOrdersLoading, setIsRecentOrdersLoading] = useState(false);
+  const [rebuildFutureOrders, setRebuildFutureOrders] = useState(false);
   const { clientOrders, form, formActions, isLoading, options, workflow } = planning;
   const {
     addressId,
@@ -93,11 +94,13 @@ export const RecurringOrderPlanningSection = ({
   const handleOpenCreate = () => {
     setSettingsOrder(null);
     setSelectedRecentOrderId(null);
+    setRebuildFutureOrders(false);
     formActions.open();
   };
 
   const handleCloseForm = () => {
     setSettingsOrder(null);
+    setRebuildFutureOrders(false);
     formActions.close();
   };
 
@@ -105,6 +108,7 @@ export const RecurringOrderPlanningSection = ({
     const detail = await getRecurringOrderById(order.recurring_order_id);
     setSettingsOrder(detail);
     setSelectedRecentOrderId(null);
+    setRebuildFutureOrders(false);
     formActions.startEdit(detail);
   };
 
@@ -372,10 +376,43 @@ export const RecurringOrderPlanningSection = ({
             placeholder="Коментар"
             className="h-10 rounded-md border border-slate-300 bg-white px-3 text-sm"
           />
+          {form.mode === "edit" && settingsOrder && (
+            <div className="rounded-md border border-slate-200 bg-slate-50 p-4">
+              <p className="text-sm font-semibold text-slate-950">Майбутні замовлення</p>
+              {settingsOrder.status === "PAUSED" ? (
+                <p className="mt-2 text-sm leading-6 text-slate-600">
+                  Шаблон на паузі. Зміни збережуться тільки в шаблоні; щоб застосувати їх до
+                  майбутніх замовлень, спочатку активуйте планування.
+                </p>
+              ) : (
+                <div className="mt-3 grid gap-3">
+                  <label className="flex items-start gap-3 text-sm text-slate-700">
+                    <input
+                      type="checkbox"
+                      checked={rebuildFutureOrders}
+                      onChange={(event) => setRebuildFutureOrders(event.target.checked)}
+                      className="mt-1 h-4 w-4 rounded border-slate-300"
+                    />
+                    <span>
+                      Перебудувати майбутні замовлення з завтра
+                    </span>
+                  </label>
+                  <p className="pl-7 text-xs leading-5 text-slate-500">
+                    Майбутні замовлення, створені цим плануванням, будуть видалені і створені
+                    заново за новими налаштуваннями.
+                  </p>
+                </div>
+              )}
+            </div>
+          )}
           <button
             type="button"
             disabled={!form.canSubmit}
-            onClick={formActions.create}
+            onClick={() =>
+              formActions.create({
+                rebuild_future_orders: rebuildFutureOrders,
+              })
+            }
             className="h-11 rounded-md bg-blue-600 text-sm font-medium text-white hover:bg-blue-700 disabled:cursor-not-allowed disabled:bg-slate-300"
           >
             {form.mode === "edit" ? "Зберегти" : "Створити регулярне"}

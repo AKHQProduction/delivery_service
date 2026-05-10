@@ -1,6 +1,6 @@
 from datetime import date
 
-from sqlalchemy import asc, or_, select
+from sqlalchemy import asc, delete, or_, select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 from uuid_utils.compat import uuid7
@@ -33,6 +33,24 @@ class SQLAlchemyRecurringOrderGateway:
 
     def save_occurrence(self, occurrence: RecurringOrderOccurrence) -> None:
         self._session.add(occurrence)
+
+    async def delete_occurrence(
+        self, occurrence: RecurringOrderOccurrence
+    ) -> None:
+        await self._session.delete(occurrence)
+
+    async def delete_occurrences_from(
+        self,
+        recurring_order_id: RecurringOrderId,
+        from_date: date,
+    ) -> None:
+        await self._session.execute(
+            delete(RecurringOrderOccurrence).where(
+                RecurringOrderOccurrence.recurring_order_id
+                == recurring_order_id,
+                RecurringOrderOccurrence.scheduled_for >= from_date,
+            )
+        )
 
     async def load(
         self, recurring_order_id: RecurringOrderId
@@ -86,6 +104,23 @@ class SQLAlchemyRecurringOrderGateway:
                 == recurring_order_id,
                 RecurringOrderOccurrence.scheduled_for >= from_date,
                 RecurringOrderOccurrence.order_id.is_not(None),
+            )
+            .order_by(asc(RecurringOrderOccurrence.scheduled_for))
+        )
+        result = await self._session.execute(query)
+        return list(result.scalars().all())
+
+    async def load_occurrences_from(
+        self,
+        recurring_order_id: RecurringOrderId,
+        from_date: date,
+    ) -> list[RecurringOrderOccurrence]:
+        query = (
+            select(RecurringOrderOccurrence)
+            .where(
+                RecurringOrderOccurrence.recurring_order_id
+                == recurring_order_id,
+                RecurringOrderOccurrence.scheduled_for >= from_date,
             )
             .order_by(asc(RecurringOrderOccurrence.scheduled_for))
         )

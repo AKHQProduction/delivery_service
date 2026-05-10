@@ -5,19 +5,34 @@ from backend.application.commands.create_recurring_order import (
     RecurringOrderProductInput,
 )
 from backend.application.common import ensure_exists
-from backend.application.errors import AccessDeniedError, EntityNotFoundError
+from backend.application.errors import (
+    AccessDeniedError,
+    EntityNotFoundError,
+    RecurringOrderPausedError,
+)
 from backend.application.policies.access import (
     ensure_can_manage,
     ensure_related_to_shop,
+)
+from backend.application.services.generated_order_lifecycle import (
+    GeneratedOrderLifecycle,
 )
 from backend.application.services.recurring_order import (
     normalize_schedule,
     validate_items,
 )
+from backend.application.services.recurring_order_execution import (
+    RecurringOrderExecution,
+    RecurringOrderExecutionRequest,
+)
+from backend.application.services.recurring_order_scheduling_clock import (
+    RecurringOrderSchedulingClock,
+)
 from backend.application.vars import (
     AddressId,
     PhoneId,
     RecurringOrderId,
+    RecurringOrderStatus,
     ScheduleType,
     TimeSlotId,
 )
@@ -49,6 +64,7 @@ class UpdateRecurringOrderCommand:
     weekdays: list[int] | None = None
     month_days: list[int] | None = None
     comment: str | None = None
+    rebuild_future_orders: bool = False
 
 
 class UpdateRecurringOrderCommandHandler:
@@ -60,6 +76,9 @@ class UpdateRecurringOrderCommandHandler:
         recurring_order_gateway: SQLAlchemyRecurringOrderGateway,
         time_slot_gateway: SQLAlchemyTimeSlotGateway,
         payment_method_gateway: SQLAlchemyPaymentMethodGateway,
+        recurring_order_execution: RecurringOrderExecution,
+        generated_order_lifecycle: GeneratedOrderLifecycle,
+        scheduling_clock: RecurringOrderSchedulingClock,
         tr_manager: TransactionManager,
     ) -> None:
         self._idp = idp
@@ -68,6 +87,9 @@ class UpdateRecurringOrderCommandHandler:
         self._recurring_order_gateway = recurring_order_gateway
         self._time_slot_gateway = time_slot_gateway
         self._payment_method_gateway = payment_method_gateway
+        self._recurring_order_execution = recurring_order_execution
+        self._generated_order_lifecycle = generated_order_lifecycle
+        self._scheduling_clock = scheduling_clock
         self._tr_manager = tr_manager
 
     async def handle(self, command: UpdateRecurringOrderCommand) -> None:
@@ -81,6 +103,11 @@ class UpdateRecurringOrderCommandHandler:
             "RecurringOrder",
         )
         ensure_related_to_shop(current_user, recurring_order.shop_id)
+        if (
+            command.rebuild_future_orders
+            and recurring_order.status == RecurringOrderStatus.PAUSED
+        ):
+            raise RecurringOrderPausedError
 
         weekdays, month_days = normalize_schedule(
             schedule_type=command.schedule_type,
@@ -143,6 +170,25 @@ class UpdateRecurringOrderCommandHandler:
             )
             for item in command.items
         ]
+
+        if (
+            recurring_order.status == RecurringOrderStatus.ACTIVE
+            and command.rebuild_future_orders
+        ):
+            lifecycle = self._generated_order_lifecycle
+            await lifecycle.delete_future_orders_for_rebuild(
+                recurring_order.id,
+                self._scheduling_clock.future_order_cutoff(),
+                current_user,
+            )
+            await self._tr_manager.flush()
+            await self._recurring_order_execution.run(
+                RecurringOrderExecutionRequest(
+                    recurring_order_id=recurring_order.id,
+                    shop_id=current_user.shop_id,
+                    include_today=False,
+                )
+            )
 
         await self._tr_manager.commit()
         logger.info("Recurring order %s updated", recurring_order.id)
