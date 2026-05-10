@@ -14,20 +14,19 @@ from backend.application.services.order_intake import (
 from backend.application.services.recurring_order_occurrence_ledger import (
     RecurringOrderOccurrenceLedger,
 )
-from backend.application.services.recurring_order_schedule import (
-    iter_recurring_order_dates,
+from backend.application.services.recurring_order_scheduling_clock import (
+    RecurringOrderSchedulingClock,
+)
+from backend.application.services.recurring_order_template_integrity import (
+    RecurringOrderTemplateIntegrity,
 )
 from backend.application.vars import (
     RecurringOrderId,
     RecurringOrderStatus,
     ShopId,
-    today,
 )
 from backend.infrastructure.persistence.gateways import (
-    SQLAlchemyClientGateway,
-    SQLAlchemyProductGateway,
     SQLAlchemyRecurringOrderGateway,
-    SQLAlchemyTimeSlotGateway,
 )
 from backend.infrastructure.persistence.tables.recurring_orders import (
     RecurringOrder,
@@ -53,19 +52,17 @@ class RecurringOrderExecutionResult:
 class RecurringOrderExecution:
     def __init__(
         self,
-        client_gateway: SQLAlchemyClientGateway,
-        product_gateway: SQLAlchemyProductGateway,
         recurring_order_gateway: SQLAlchemyRecurringOrderGateway,
-        time_slot_gateway: SQLAlchemyTimeSlotGateway,
         order_intake: OrderIntake,
         occurrence_ledger: RecurringOrderOccurrenceLedger,
+        scheduling_clock: RecurringOrderSchedulingClock,
+        template_integrity: RecurringOrderTemplateIntegrity,
     ) -> None:
-        self._client_gateway = client_gateway
-        self._product_gateway = product_gateway
         self._recurring_order_gateway = recurring_order_gateway
-        self._time_slot_gateway = time_slot_gateway
         self._order_intake = order_intake
         self._occurrence_ledger = occurrence_ledger
+        self._scheduling_clock = scheduling_clock
+        self._template_integrity = template_integrity
 
     async def run(
         self, request: RecurringOrderExecutionRequest
@@ -84,7 +81,7 @@ class RecurringOrderExecution:
                 raise RecurringOrderPausedError
             recurring_order.status = RecurringOrderStatus.ACTIVE
 
-        if not await self._has_required_links(recurring_order):
+        if not await self._template_integrity.is_runnable(recurring_order):
             recurring_order.status = RecurringOrderStatus.PAUSED
             return RecurringOrderExecutionResult(
                 created_dates=[],
@@ -93,11 +90,10 @@ class RecurringOrderExecution:
                 paused=True,
             )
 
-        scheduled_dates = iter_recurring_order_dates(
+        scheduled_dates = self._scheduling_clock.run_dates(
             schedule_type=recurring_order.schedule_type,
             weekdays=recurring_order.weekdays,
             month_days=recurring_order.month_days,
-            base_date=today(),
             include_today=request.include_today,
         )
         occurrence_plan = await self._occurrence_ledger.plan_dates(
@@ -123,6 +119,7 @@ class RecurringOrderExecution:
     ) -> None:
         assert recurring_order.address_id is not None
         assert recurring_order.phone_id is not None
+        assert recurring_order.time_slot_id is not None
 
         order = await self._order_intake.create(
             recurring_order.shop_id,
@@ -150,35 +147,3 @@ class RecurringOrderExecution:
             scheduled_for=scheduled_for,
             order_id=order.id,
         )
-
-    async def _has_required_links(
-        self, recurring_order: RecurringOrder
-    ) -> bool:
-        if (
-            recurring_order.address_id is None
-            or recurring_order.phone_id is None
-        ):
-            return False
-
-        client = await self._client_gateway.load(recurring_order.client_id)
-        if client is None:
-            return False
-        if not any(
-            address.id == recurring_order.address_id
-            for address in client.addresses
-        ):
-            return False
-        if not any(
-            phone.id == recurring_order.phone_id for phone in client.phones
-        ):
-            return False
-
-        time_slot = await self._time_slot_gateway.load(
-            recurring_order.time_slot_id
-        )
-        if time_slot is None:
-            return False
-
-        product_ids = {item.product_id for item in recurring_order.items}
-        products = await self._product_gateway.load_many(list(product_ids))
-        return {product.id for product in products} == product_ids

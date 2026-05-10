@@ -49,9 +49,11 @@ export const formatScheduleSummaryLabel = (order: RecurringOrder) =>
     : "Щомісячне замовлення";
 
 export const formatRecurringOrderTimeSlotLabel = (order: RecurringOrder) =>
-  order.time_slot_label
-    ? `${order.time_slot_label} (${order.delivery_start_time}-${order.delivery_end_time})`
-    : `${order.delivery_start_time}-${order.delivery_end_time}`;
+  !order.delivery_start_time || !order.delivery_end_time
+    ? "Слот видалено"
+    : order.time_slot_label
+      ? `${order.time_slot_label} (${order.delivery_start_time}-${order.delivery_end_time})`
+      : `${order.delivery_start_time}-${order.delivery_end_time}`;
 
 export const formatRecurringOrderItemsCount = (itemsCount: number) =>
   `${itemsCount} товарів`;

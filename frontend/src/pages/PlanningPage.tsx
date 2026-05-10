@@ -1,6 +1,5 @@
-import { type ReactNode, useEffect, useRef, useState } from "react";
+import { type ReactNode, useEffect, useMemo, useRef, useState } from "react";
 import { useLocation, useSearchParams } from "react-router-dom";
-import { ClientRecentOrdersSection } from "../components/features/ClientRecentOrdersSection";
 import { RecurringOrderPlanningSection } from "../components/features/RecurringOrderPlanningSection";
 import { useClient } from "../hooks/clients/useClients";
 import { listRecurringOrders } from "../services/api/recurringOrderApi";
@@ -10,14 +9,7 @@ import {
   type RecurringOrderStatus,
   type ScheduleType,
 } from "../types/entities/RecurringOrder";
-import {
-  formatRecurringOrderItemsCount,
-  formatRecurringOrderStatusLabel,
-  formatRecurringOrderTimeSlotLabel,
-  formatScheduleLabel,
-  getRecurringOrderStatusClassName,
-  WEEKDAYS,
-} from "../utils/recurringOrderPresentation";
+import { WEEKDAYS } from "../utils/recurringOrderPresentation";
 import { type RecurringTemplateSeed } from "../utils/recurringOrderFormModel";
 
 const selectClassName =
@@ -31,25 +23,31 @@ export const PlanningPage = () => {
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedClient, setSelectedClient] = useState<Client | null>(null);
   const [orders, setOrders] = useState<RecurringOrder[]>([]);
-  const [statusFilter, setStatusFilter] = useState<RecurringOrderStatus | "">(
-    "",
-  );
+  const [statusFilter, setStatusFilter] = useState<RecurringOrderStatus | "">("");
   const [scheduleType, setScheduleType] = useState<ScheduleType | "">("");
   const [weekday, setWeekday] = useState<number | "">("");
   const [monthDay, setMonthDay] = useState("");
-  const [recurringSeed, setRecurringSeed] =
-    useState<RecurringTemplateSeed | null>(null);
+  const [recurringSeed, setRecurringSeed] = useState<RecurringTemplateSeed | null>(null);
 
   const { clients, getClients, loading } = useClient();
 
-  const refreshOrders = async () => {
-    const parsedMonthDay = Number(monthDay);
-    const data = await listRecurringOrders({
-      client_name: searchTerm || undefined,
+  const filters = useMemo(() => {
+    const parsedMonthDay = monthDay ? Number(monthDay) : undefined;
+    return {
       status: statusFilter || undefined,
       schedule_type: scheduleType || undefined,
-      weekday: weekday || undefined,
-      month_day: Number.isInteger(parsedMonthDay) ? parsedMonthDay : undefined,
+      weekday: scheduleType === "WEEKLY" ? weekday || undefined : undefined,
+      month_day:
+        scheduleType === "MONTHLY_BY_DAY" && parsedMonthDay && Number.isInteger(parsedMonthDay)
+          ? parsedMonthDay
+          : undefined,
+    };
+  }, [monthDay, scheduleType, statusFilter, weekday]);
+
+  const refreshOrders = async () => {
+    const data = await listRecurringOrders({
+      client_name: searchTerm || undefined,
+      ...filters,
     });
     setOrders(data);
   };
@@ -62,13 +60,20 @@ export const PlanningPage = () => {
   useEffect(() => {
     refreshOrders();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [searchTerm, statusFilter, scheduleType, weekday, monthDay]);
+  }, [searchTerm, filters]);
+
+  useEffect(() => {
+    if (scheduleType !== "WEEKLY" && weekday !== "") {
+      setWeekday("");
+    }
+    if (scheduleType !== "MONTHLY_BY_DAY" && monthDay !== "") {
+      setMonthDay("");
+    }
+  }, [monthDay, scheduleType, weekday]);
 
   useEffect(() => {
     if (targetClientId) {
-      const targetClient = clients.find(
-        (client) => client.client_id === targetClientId,
-      );
+      const targetClient = clients.find((client) => client.client_id === targetClientId);
       if (targetClient && selectedClient?.client_id !== targetClientId) {
         setSelectedClient(targetClient);
       }
@@ -93,22 +98,14 @@ export const PlanningPage = () => {
     <div className="min-h-screen bg-slate-50 px-4 pb-28 pt-6 sm:px-6 md:px-8 md:pb-10">
       <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
         <div>
-          <h1 className="text-2xl font-semibold leading-8 text-slate-950">
-            Планування
-          </h1>
-          <p className="mt-1 text-sm text-slate-500">
-            Регулярні замовлення, клієнти та історія повторень
-          </p>
+          <h1 className="text-2xl font-semibold leading-8 text-slate-950">Планування</h1>
+          <p className="mt-1 text-sm text-slate-500">Регулярні замовлення клієнтів</p>
         </div>
-        <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-4">
+        <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
           <SelectShell>
             <select
               value={statusFilter}
-              onChange={(event) =>
-                setStatusFilter(
-                  event.target.value as RecurringOrderStatus | "",
-                )
-              }
+              onChange={(event) => setStatusFilter(event.target.value as RecurringOrderStatus | "")}
               className={selectClassName}
             >
               <option value="">Усі статуси</option>
@@ -119,9 +116,16 @@ export const PlanningPage = () => {
           <SelectShell>
             <select
               value={scheduleType}
-              onChange={(event) =>
-                setScheduleType(event.target.value as ScheduleType | "")
-              }
+              onChange={(event) => {
+                const nextScheduleType = event.target.value as ScheduleType | "";
+                setScheduleType(nextScheduleType);
+                if (nextScheduleType !== "WEEKLY") {
+                  setWeekday("");
+                }
+                if (nextScheduleType !== "MONTHLY_BY_DAY") {
+                  setMonthDay("");
+                }
+              }}
               className={selectClassName}
             >
               <option value="">Усі типи</option>
@@ -129,32 +133,44 @@ export const PlanningPage = () => {
               <option value="MONTHLY_BY_DAY">Місяць</option>
             </select>
           </SelectShell>
-          <SelectShell>
-            <select
-              value={weekday}
-              onChange={(event) =>
-                setWeekday(event.target.value ? Number(event.target.value) : "")
-              }
-              className={selectClassName}
-            >
-              <option value="">День тижня</option>
-              {WEEKDAYS.map((day) => (
-                <option key={day.value} value={day.value}>
-                  {day.label}
-                </option>
-              ))}
-            </select>
-          </SelectShell>
-          <input
-            value={monthDay}
-            onChange={(event) => setMonthDay(event.target.value)}
-            placeholder="День місяця"
-            className="h-10 rounded-md border border-slate-300 bg-white px-3 text-sm"
-          />
+          {scheduleType === "MONTHLY_BY_DAY" ? (
+            <SelectShell>
+              <select
+                value={monthDay}
+                onChange={(event) => setMonthDay(event.target.value)}
+                className={selectClassName}
+              >
+                <option value="">Оберіть день місяця</option>
+                {Array.from({ length: 31 }, (_, index) => index + 1).map((day) => (
+                  <option key={day} value={day}>
+                    {day}
+                  </option>
+                ))}
+              </select>
+            </SelectShell>
+          ) : (
+            <SelectShell>
+              <select
+                value={weekday}
+                disabled={scheduleType !== "WEEKLY"}
+                onChange={(event) =>
+                  setWeekday(event.target.value ? Number(event.target.value) : "")
+                }
+                className={`${selectClassName} disabled:text-slate-400`}
+              >
+                <option value="">{scheduleType === "WEEKLY" ? "День тижня" : "Оберіть тип"}</option>
+                {WEEKDAYS.map((day) => (
+                  <option key={day.value} value={day.value}>
+                    {day.label}
+                  </option>
+                ))}
+              </select>
+            </SelectShell>
+          )}
         </div>
       </div>
 
-      <div className="mt-5 grid gap-4 xl:grid-cols-[20rem_minmax(0,1fr)_22rem]">
+      <div className="mt-5 grid gap-4 xl:grid-cols-[20rem_minmax(0,1fr)]">
         <aside className="rounded-lg border border-slate-200 bg-white">
           <div className="border-b border-slate-200 p-4">
             <input
@@ -172,8 +188,7 @@ export const PlanningPage = () => {
                 const clientOrdersCount = orders.filter(
                   (order) => order.client_id === client.client_id,
                 ).length;
-                const isSelected =
-                  selectedClient?.client_id === client.client_id;
+                const isSelected = selectedClient?.client_id === client.client_id;
                 return (
                   <button
                     key={client.client_id}
@@ -203,74 +218,20 @@ export const PlanningPage = () => {
           </div>
         </aside>
 
-        <section className="rounded-lg border border-slate-200 bg-white">
-          <div className="flex items-center justify-between border-b border-slate-200 px-4 py-3">
-            <h2 className="text-sm font-semibold text-slate-950">
-              Регулярні замовлення
-            </h2>
-            <span className="rounded bg-slate-100 px-2 py-1 text-xs text-slate-500">
-              {orders.length}
-            </span>
-          </div>
-          <div className="divide-y divide-slate-200">
-            {orders.length ? (
-              orders.map((order) => (
-                <div key={order.recurring_order_id} className="px-4 py-3">
-                  <div className="flex items-start justify-between gap-3">
-                    <div className="min-w-0">
-                      <p className="truncate text-sm font-medium text-slate-950">
-                        {order.client_name}
-                      </p>
-                      <p className="mt-1 truncate text-sm text-slate-500">
-                        {order.phone_number || "Телефон не знайдено"}
-                      </p>
-                    </div>
-                    <span
-                      className={`h-7 justify-self-start whitespace-nowrap rounded px-2 py-1 text-xs font-medium ${getRecurringOrderStatusClassName(
-                        order.status,
-                      )}`}
-                    >
-                      {formatRecurringOrderStatusLabel(order.status)}
-                    </span>
-                  </div>
-                  <p className="mt-3 text-sm text-slate-950">
-                    {formatScheduleLabel(order)}
-                  </p>
-                  <p className="mt-1 text-sm text-slate-500">
-                    {formatRecurringOrderTimeSlotLabel(order)} ·{" "}
-                    {formatRecurringOrderItemsCount(order.items_count)}
-                  </p>
-                </div>
-              ))
-            ) : (
-              <p className="px-4 py-8 text-center text-sm text-slate-500">
-                Планувань не знайдено.
-              </p>
-            )}
-          </div>
-        </section>
-
-        <aside className="space-y-4">
+        <main>
           {selectedClient ? (
-            <>
-              <RecurringOrderPlanningSection
-                client={selectedClient}
-                compact
-                seed={recurringSeed}
-                onSeedConsumed={() => setRecurringSeed(null)}
-              />
-              <ClientRecentOrdersSection
-                client={selectedClient}
-                limit={10}
-                onCreateRegular={setRecurringSeed}
-              />
-            </>
+            <RecurringOrderPlanningSection
+              client={selectedClient}
+              seed={recurringSeed}
+              onSeedConsumed={() => setRecurringSeed(null)}
+              filters={filters}
+            />
           ) : (
             <div className="rounded-lg border border-slate-200 bg-white p-6 text-center text-sm text-slate-500">
               Оберіть клієнта для перегляду деталей.
             </div>
           )}
-        </aside>
+        </main>
       </div>
     </div>
   );
@@ -284,17 +245,7 @@ const SelectShell = ({ children }: { children: ReactNode }) => (
 );
 
 const ChevronDownIcon = ({ className }: { className?: string }) => (
-  <svg
-    className={className}
-    fill="none"
-    stroke="currentColor"
-    viewBox="0 0 24 24"
-  >
-    <path
-      d="m6 9 6 6 6-6"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      strokeWidth={2}
-    />
+  <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+    <path d="m6 9 6 6 6-6" strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} />
   </svg>
 );

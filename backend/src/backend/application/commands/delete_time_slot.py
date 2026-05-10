@@ -7,6 +7,9 @@ from backend.application.policies.access import (
     ensure_is_owner,
     ensure_related_to_shop,
 )
+from backend.application.services.recurring_order_resource_impact import (
+    RecurringOrderResourceImpact,
+)
 from backend.application.vars import TimeSlotId
 from backend.infrastructure.idp import IdentityProvider
 from backend.infrastructure.persistence.gateways import (
@@ -27,10 +30,12 @@ class DeleteTimeSlotCommandHandler:
         self,
         idp: IdentityProvider,
         time_slot_gateway: SQLAlchemyTimeSlotGateway,
+        recurring_order_impact: RecurringOrderResourceImpact,
         tr_manager: TransactionManager,
     ) -> None:
         self._idp = idp
         self._time_slot_gateway = time_slot_gateway
+        self._recurring_order_impact = recurring_order_impact
         self._tr_manager = tr_manager
 
     async def handle(self, command: DeleteTimeSlotCommand) -> None:
@@ -48,6 +53,10 @@ class DeleteTimeSlotCommandHandler:
         )
         if time_slots_count <= 1:
             raise LastTimeSlotError
+
+        await self._recurring_order_impact.pause_for_deleted_time_slot(
+            time_slot.id, current_user
+        )
 
         await self._time_slot_gateway.delete(time_slot)
 

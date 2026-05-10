@@ -167,11 +167,14 @@ export const useOrders = () => {
     }
   };
 
-  const deleteOrder = async (orderId: string) => {
+  const deleteOrder = async (
+    orderId: string,
+    options: { pause_recurring_order?: boolean } = {},
+  ) => {
     setLoading(true);
     setError(null);
     try {
-      await deleteOrderById(orderId);
+      await deleteOrderById(orderId, options);
     } catch (err: unknown) {
       const error = err as {
         response?: { data?: { detail?: string } };

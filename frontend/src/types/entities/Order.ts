@@ -22,4 +22,5 @@ export interface Order {
   comment?: string;
   note?: string;
   is_paid: boolean;
+  recurring_order_id?: string | null;
 }

@@ -376,9 +376,16 @@ async def update_order(
     dependencies=[Depends(HTTPBearer(auto_error=False))],
 )
 async def delete_order(
-    order_id: OrderId, handler: FromDishka[DeleteOrderCommandHandler]
+    order_id: OrderId,
+    handler: FromDishka[DeleteOrderCommandHandler],
+    pause_recurring_order: bool = False,
 ) -> None:
-    await handler.handle(DeleteOrderCommand(order_id=order_id))
+    await handler.handle(
+        DeleteOrderCommand(
+            order_id=order_id,
+            pause_recurring_order=pause_recurring_order,
+        )
+    )
 
 
 @router.get(

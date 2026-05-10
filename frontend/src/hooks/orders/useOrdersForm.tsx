@@ -8,6 +8,7 @@ import { type Product } from "../../types/entities/Product";
 import { formatLocalDateKey } from "../../utils/dateUtils";
 import { useUserShopStore } from "../../context/useUserShopStore";
 import { type RegularOrderDraft } from "../../utils/orderDraft";
+import { resolveAvailablePaymentMethodName } from "../../shared/paymentMethod";
 
 interface OrderFormProduct {
   product: Product;
@@ -44,9 +45,8 @@ interface UseOrderFormOptions {
   initialOrder?: RegularOrderDraft;
 }
 
-const getAddressPreferredTimeSlot = (
-  address: OrderFormData["deliveryAddress"],
-) => address?.preferred_time_slot_id || "";
+const getAddressPreferredTimeSlot = (address: OrderFormData["deliveryAddress"]) =>
+  address?.preferred_time_slot_id || "";
 
 export const useOrderForm = (options: UseOrderFormOptions = {}) => {
   const { initialOrder } = options;
@@ -93,6 +93,10 @@ export const useOrderForm = (options: UseOrderFormOptions = {}) => {
       ...fetchedClients,
     ],
     [newlyCreatedClients, fetchedClients],
+  );
+  const paymentMethodNames = useMemo(
+    () => paymentMethods.map((method) => method.name),
+    [paymentMethods],
   );
 
   const {
@@ -219,25 +223,40 @@ export const useOrderForm = (options: UseOrderFormOptions = {}) => {
         products: orderProducts,
         deliveryPhone: phone || null,
         deliveryAddress: address || null,
-        deliveryDate:
-          initialOrder.delivery_date || initialOrder.date || tomorrowKey,
+        deliveryDate: initialOrder.delivery_date || initialOrder.date || tomorrowKey,
         timeSlotId: initialOrder.time_slot_id || "",
-        paymentMethod: initialOrder.payment_method || "",
+        paymentMethod: resolveAvailablePaymentMethodName(
+          initialOrder.payment_method,
+          paymentMethodNames,
+        ),
         note: initialOrder.comment || initialOrder.note || "",
       });
     }
-  }, [initialOrder, clients, products, tomorrowKey]);
+  }, [initialOrder, clients, products, tomorrowKey, paymentMethodNames]);
 
-  const handleClientSelect = useCallback((client: Client) => {
-    const address = client.addresses?.[0] || null;
-    setFormData((prev) => ({
-      ...prev,
-      client,
-      deliveryPhone: client.phones?.[0] || null,
-      deliveryAddress: address,
-      timeSlotId: initialOrder ? prev.timeSlotId : getAddressPreferredTimeSlot(address),
-    }));
-  }, [initialOrder]);
+  useEffect(() => {
+    const paymentMethod = resolveAvailablePaymentMethodName(
+      formData.paymentMethod,
+      paymentMethodNames,
+    );
+    if (paymentMethod && paymentMethod !== formData.paymentMethod) {
+      setFormData((prev) => ({ ...prev, paymentMethod }));
+    }
+  }, [formData.paymentMethod, paymentMethodNames]);
+
+  const handleClientSelect = useCallback(
+    (client: Client) => {
+      const address = client.addresses?.[0] || null;
+      setFormData((prev) => ({
+        ...prev,
+        client,
+        deliveryPhone: client.phones?.[0] || null,
+        deliveryAddress: address,
+        timeSlotId: initialOrder ? prev.timeSlotId : getAddressPreferredTimeSlot(address),
+      }));
+    },
+    [initialOrder],
+  );
 
   const handleProductToggle = (product: Product) => {
     const exists = formData.products.find((p) => p.product.product_id === product.product_id);
@@ -307,9 +326,7 @@ export const useOrderForm = (options: UseOrderFormOptions = {}) => {
       setFormData({
         ...formData,
         deliveryAddress: address,
-        timeSlotId: initialOrder
-          ? formData.timeSlotId
-          : getAddressPreferredTimeSlot(address),
+        timeSlotId: initialOrder ? formData.timeSlotId : getAddressPreferredTimeSlot(address),
       });
     }
   };
@@ -350,7 +367,8 @@ export const useOrderForm = (options: UseOrderFormOptions = {}) => {
         return (
           formData.deliveryDate !== "" &&
           formData.timeSlotId !== "" &&
-          formData.paymentMethod !== ""
+          formData.paymentMethod !== "" &&
+          paymentMethodNames.includes(formData.paymentMethod)
         );
       default:
         return false;

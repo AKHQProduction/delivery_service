@@ -17,6 +17,14 @@ export const startRunDialog = (order: RecurringOrder): RunDialogState =>
     ? { step: "activate", order }
     : { step: "today", order, activate: false };
 
+export const startRunDialogAfterActivationRequest = (
+  order: RecurringOrder,
+): RunDialogState => ({
+  step: "today",
+  order,
+  activate: true,
+});
+
 export const continueRunDialogAfterActivation = (
   state: RunDialogState,
 ): RunDialogState =>

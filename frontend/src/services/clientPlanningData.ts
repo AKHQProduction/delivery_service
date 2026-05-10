@@ -1,4 +1,4 @@
-import { listRecurringOrders } from "./api/recurringOrderApi";
+import { listRecurringOrders, type RecurringOrderFilters } from "./api/recurringOrderApi";
 import { getRecentOrdersByClient } from "./api/ordersApi";
 import { type Client } from "../types/entities/Client";
 import { type Order } from "../types/entities/Order";
@@ -6,11 +6,12 @@ import { type RecurringOrder } from "../types/entities/RecurringOrder";
 
 export const fetchRecurringOrdersForClient = async (
   client: Client,
+  filters: Omit<RecurringOrderFilters, "client_id" | "client_name"> = {},
 ): Promise<RecurringOrder[]> => {
-  const data = await listRecurringOrders({
-    client_name: client.full_name || "",
+  return await listRecurringOrders({
+    client_id: client.client_id,
+    ...filters,
   });
-  return data.filter((order) => order.client_id === client.client_id);
 };
 
 export const fetchRecentOrdersForClient = async (

@@ -1,13 +1,14 @@
 from dataclasses import dataclass
 from datetime import date
 
-from backend.application.policies.access import ensure_can_manage
 from backend.application.services.recurring_order_execution import (
     RecurringOrderExecution,
     RecurringOrderExecutionRequest,
 )
+from backend.application.services.recurring_order_management_context import (
+    RecurringOrderManagementContext,
+)
 from backend.application.vars import RecurringOrderId
-from backend.infrastructure.idp import IdentityProvider
 from backend.infrastructure.transaction_manager import TransactionManager
 
 
@@ -29,19 +30,18 @@ class RunRecurringOrderResult:
 class RunRecurringOrderCommandHandler:
     def __init__(
         self,
-        idp: IdentityProvider,
+        management_context: RecurringOrderManagementContext,
         recurring_order_execution: RecurringOrderExecution,
         tr_manager: TransactionManager,
     ) -> None:
-        self._idp = idp
+        self._management_context = management_context
         self._recurring_order_execution = recurring_order_execution
         self._tr_manager = tr_manager
 
     async def handle(
         self, command: RunRecurringOrderCommand
     ) -> RunRecurringOrderResult:
-        current_user = await self._idp.current_user()
-        ensure_can_manage(current_user)
+        current_user = await self._management_context.current_manager()
 
         result = await self._recurring_order_execution.run(
             RecurringOrderExecutionRequest(

@@ -3,11 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { fetchRecurringOrdersForClient } from "../../services/clientPlanningData";
 import { type Client } from "../../types/entities/Client";
 import { type RecurringOrder } from "../../types/entities/RecurringOrder";
-import {
-  formatRecurringOrderItemsCount,
-  formatRecurringOrderTimeSlotLabel,
-  formatScheduleSummaryLabel,
-} from "../../utils/recurringOrderPresentation";
+import { RecurringOrderListItem } from "./RecurringOrderListItem";
 
 interface ClientPlanningSummarySectionProps {
   client: Client;
@@ -62,14 +58,8 @@ export const ClientPlanningSummarySection = ({
         </button>
       </div>
       {orders[0] && (
-        <div className="border-t border-slate-200 px-4 py-3">
-          <p className="text-sm font-medium text-slate-950">
-            {formatScheduleSummaryLabel(orders[0])}
-          </p>
-          <p className="mt-1 text-sm text-slate-500">
-            {formatRecurringOrderTimeSlotLabel(orders[0])} ·{" "}
-            {formatRecurringOrderItemsCount(orders[0].items_count)}
-          </p>
+        <div className="border-t border-slate-200">
+          <RecurringOrderListItem order={orders[0]} summaryLabel />
         </div>
       )}
     </section>

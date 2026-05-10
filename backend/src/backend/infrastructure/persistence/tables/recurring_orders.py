@@ -50,9 +50,9 @@ class RecurringOrder(Base, CreatedAt, UpdatedAt):
         sa.ForeignKey("client_phones.id", ondelete="SET NULL"),
         nullable=True,
     )
-    time_slot_id: Mapped[TimeSlotId] = mapped_column(
-        sa.ForeignKey("shop_delivery_time_slots.id", ondelete="CASCADE"),
-        nullable=False,
+    time_slot_id: Mapped[TimeSlotId | None] = mapped_column(
+        sa.ForeignKey("shop_delivery_time_slots.id", ondelete="SET NULL"),
+        nullable=True,
     )
     payment_method: Mapped[str] = mapped_column(sa.String, nullable=False)
     comment: Mapped[str | None] = mapped_column(sa.String, nullable=True)

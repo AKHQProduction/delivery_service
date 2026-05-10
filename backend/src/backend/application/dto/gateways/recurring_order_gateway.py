@@ -14,6 +14,7 @@ from backend.application.vars import (
 
 @dataclass(frozen=True)
 class RecurringOrderFilters:
+    client_id: ClientId | None = None
     client_name: str | None = None
     status: RecurringOrderStatus | None = None
     schedule_type: ScheduleType | None = None
@@ -30,10 +31,10 @@ class RecurringOrderReadModel:
     phone_number: str | None
     address_id: AddressId | None
     address_summary: str | None
-    time_slot_id: TimeSlotId
+    time_slot_id: TimeSlotId | None
     time_slot_label: str | None
-    delivery_start_time: str
-    delivery_end_time: str
+    delivery_start_time: str | None
+    delivery_end_time: str | None
     schedule_type: ScheduleType
     weekdays: list[int] | None
     month_days: list[int] | None

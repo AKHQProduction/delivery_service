@@ -16,10 +16,10 @@ export interface RecurringOrder {
   phone_number: string | null;
   address_id: number | null;
   address_summary: string | null;
-  time_slot_id: string;
+  time_slot_id: string | null;
   time_slot_label?: string | null;
-  delivery_start_time: string;
-  delivery_end_time: string;
+  delivery_start_time: string | null;
+  delivery_end_time: string | null;
   schedule_type: ScheduleType;
   weekdays: number[] | null;
   month_days: number[] | null;
@@ -45,6 +45,8 @@ export interface CreateRecurringOrderPayload {
   weekdays?: number[] | null;
   month_days?: number[] | null;
 }
+
+export type UpdateRecurringOrderPayload = Omit<CreateRecurringOrderPayload, "client_id">;
 
 export interface RunRecurringOrderPayload {
   include_today?: boolean;

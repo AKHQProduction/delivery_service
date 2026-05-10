@@ -47,7 +47,7 @@ def upgrade() -> None:
         sa.Column("client_id", sa.UUID(), nullable=False),
         sa.Column("address_id", sa.Integer(), nullable=True),
         sa.Column("phone_id", sa.Integer(), nullable=True),
-        sa.Column("time_slot_id", sa.UUID(), nullable=False),
+        sa.Column("time_slot_id", sa.UUID(), nullable=True),
         sa.Column("payment_method", sa.String(), nullable=False),
         sa.Column("comment", sa.String(), nullable=True),
         sa.Column("schedule_type", schedule_type, nullable=False),
@@ -108,7 +108,7 @@ def upgrade() -> None:
         sa.ForeignKeyConstraint(
             ["time_slot_id"],
             ["shop_delivery_time_slots.id"],
-            ondelete="CASCADE",
+            ondelete="SET NULL",
         ),
         sa.PrimaryKeyConstraint("id"),
     )

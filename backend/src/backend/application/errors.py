@@ -201,3 +201,9 @@ class RecurringOrderPausedError(ValidationError):
     @property
     def message(self) -> str:
         return "Recurring order is paused"
+
+
+class RecurringOrderTemplateInvalidError(ValidationError):
+    @property
+    def message(self) -> str:
+        return "Recurring order template is invalid"

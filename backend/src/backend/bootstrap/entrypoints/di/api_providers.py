@@ -110,6 +110,9 @@ from backend.application.commands.set_client_balance import (
 from backend.application.commands.update_order_coordinates import (
     UpdateOrderCoordinatesCommandHandler,
 )
+from backend.application.commands.update_recurring_order import (
+    UpdateRecurringOrderCommandHandler,
+)
 from backend.application.queries.get_categories import (
     GetCategoriesQueryHandler,
 )
@@ -146,13 +149,32 @@ from backend.application.queries.get_time_slots import GetTimeSlotsQueryHandler
 from backend.application.queries.preview_import_xlsx import (
     PreviewImportXlsxQueryHandler,
 )
+from backend.application.services.generated_order_lifecycle import (
+    GeneratedOrderLifecycle,
+)
 from backend.application.services.geocoder import Geocoder
+from backend.application.services.order_deletion import OrderDeletion
 from backend.application.services.order_intake import OrderIntake
 from backend.application.services.recurring_order_execution import (
     RecurringOrderExecution,
 )
+from backend.application.services.recurring_order_management_context import (
+    RecurringOrderManagementContext,
+)
 from backend.application.services.recurring_order_occurrence_ledger import (
     RecurringOrderOccurrenceLedger,
+)
+from backend.application.services.recurring_order_planning_read import (
+    RecurringOrderPlanningRead,
+)
+from backend.application.services.recurring_order_resource_impact import (
+    RecurringOrderResourceImpact,
+)
+from backend.application.services.recurring_order_scheduling_clock import (
+    RecurringOrderSchedulingClock,
+)
+from backend.application.services.recurring_order_template_integrity import (
+    RecurringOrderTemplateIntegrity,
 )
 from backend.application.services.tsp_solvers import RouteOptimizer
 from backend.application.usecases.invite_employee.generate_invite_link import (
@@ -267,6 +289,7 @@ class APIInteractorsProvider(Provider):
         PauseRecurringOrderCommandHandler,
         ResumeRecurringOrderCommandHandler,
         RunRecurringOrderCommandHandler,
+        UpdateRecurringOrderCommandHandler,
         GetRecurringOrderQueryHandler,
         GetRecurringOrdersQueryHandler,
         CreateCategoryCommandHandler,
@@ -320,8 +343,15 @@ class APIInteractorsProvider(Provider):
 
     services = provide_all(
         OrderIntake,
+        OrderDeletion,
+        GeneratedOrderLifecycle,
         RecurringOrderExecution,
+        RecurringOrderManagementContext,
         RecurringOrderOccurrenceLedger,
+        RecurringOrderPlanningRead,
+        RecurringOrderResourceImpact,
+        RecurringOrderSchedulingClock,
+        RecurringOrderTemplateIntegrity,
     )
 
     add_employee = provide_all(GenerateInviteLinkCommandHandler)

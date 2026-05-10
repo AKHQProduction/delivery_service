@@ -7,6 +7,7 @@ from backend.application.vars import (
     OrderId,
     OrderItemId,
     ProductId,
+    RecurringOrderId,
     ShopId,
 )
 from backend.infrastructure.persistence.tables.base import DeliveryAddressDTO
@@ -49,6 +50,7 @@ class OrderReadModel:
     items: list[OrderItemReadModel]
     payment_method: str
     is_paid: bool
+    recurring_order_id: RecurringOrderId | None
 
 
 @dataclass(frozen=True)

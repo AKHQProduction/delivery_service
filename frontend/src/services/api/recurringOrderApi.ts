@@ -7,9 +7,11 @@ import {
   type RunRecurringOrderPayload,
   type RunRecurringOrderResult,
   type ScheduleType,
+  type UpdateRecurringOrderPayload,
 } from "../../types/entities/RecurringOrder";
 
-interface RecurringOrderFilters {
+export interface RecurringOrderFilters {
+  client_id?: string;
   client_name?: string;
   status?: RecurringOrderStatus;
   schedule_type?: ScheduleType;
@@ -38,17 +40,26 @@ export const createRecurringOrderTemplate = async (
   return response.data;
 };
 
-export const pauseRecurringOrder = async (recurringOrderId: string) => {
-  const response = await api.post(
-    `v1/recurring-orders/${recurringOrderId}/pause`,
-  );
+export const updateRecurringOrderTemplate = async (
+  recurringOrderId: string,
+  payload: UpdateRecurringOrderPayload,
+) => {
+  const response = await api.patch(`v1/recurring-orders/${recurringOrderId}`, payload);
+  return response.data;
+};
+
+export const pauseRecurringOrder = async (
+  recurringOrderId: string,
+  options: { cancel_future_orders?: boolean } = {},
+) => {
+  const response = await api.post(`v1/recurring-orders/${recurringOrderId}/pause`, null, {
+    params: options,
+  });
   return response.data;
 };
 
 export const resumeRecurringOrder = async (recurringOrderId: string) => {
-  const response = await api.post(
-    `v1/recurring-orders/${recurringOrderId}/resume`,
-  );
+  const response = await api.post(`v1/recurring-orders/${recurringOrderId}/resume`);
   return response.data;
 };
 
@@ -56,14 +67,16 @@ export const runRecurringOrderWithPolicy = async (
   recurringOrderId: string,
   payload: RunRecurringOrderPayload,
 ): Promise<RunRecurringOrderResult> => {
-  const response = await api.post(
-    `v1/recurring-orders/${recurringOrderId}/run`,
-    payload,
-  );
+  const response = await api.post(`v1/recurring-orders/${recurringOrderId}/run`, payload);
   return response.data;
 };
 
-export const deleteRecurringOrder = async (recurringOrderId: string) => {
-  const response = await api.delete(`v1/recurring-orders/${recurringOrderId}`);
+export const deleteRecurringOrder = async (
+  recurringOrderId: string,
+  options: { delete_future_orders?: boolean } = {},
+) => {
+  const response = await api.delete(`v1/recurring-orders/${recurringOrderId}`, {
+    params: options,
+  });
   return response.data;
 };
