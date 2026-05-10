@@ -4,7 +4,7 @@ from backend.application.dto.gateways.recurring_order_gateway import (
     RecurringOrderFilters,
     RecurringOrderReadModel,
 )
-from backend.application.services.recurring_order_planning_read import (
+from backend.application.services.recurring.planning_read import (
     RecurringOrderPlanningRead,
 )
 from backend.application.vars import (

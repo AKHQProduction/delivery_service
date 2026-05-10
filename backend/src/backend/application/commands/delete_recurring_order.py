@@ -3,10 +3,10 @@ from dataclasses import dataclass
 from backend.application.services.generated_order_lifecycle import (
     GeneratedOrderLifecycle,
 )
-from backend.application.services.recurring_order_management_context import (
+from backend.application.services.recurring.management_context import (
     RecurringOrderManagementContext,
 )
-from backend.application.services.recurring_order_scheduling_clock import (
+from backend.application.services.recurring.scheduling_clock import (
     RecurringOrderSchedulingClock,
 )
 from backend.application.vars import RecurringOrderId

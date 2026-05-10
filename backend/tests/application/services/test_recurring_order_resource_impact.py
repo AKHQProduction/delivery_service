@@ -4,7 +4,7 @@ from uuid import UUID
 import pytest
 
 from backend.application.dto.idp import CurrentUserDTO
-from backend.application.services.recurring_order_resource_impact import (
+from backend.application.services.recurring.resource_impact import (
     RecurringOrderResourceImpact,
 )
 from backend.application.vars import (

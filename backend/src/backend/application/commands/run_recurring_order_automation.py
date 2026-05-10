@@ -1,6 +1,6 @@
 from dataclasses import dataclass
 
-from backend.application.services.recurring_order_execution import (
+from backend.application.services.recurring.execution import (
     RecurringOrderExecution,
     RecurringOrderExecutionRequest,
 )

@@ -28,6 +28,17 @@ at least one item, existing resources, and same-shop ownership for the client,
 delivery slot, and products. It is read-only: callers decide whether a failed
 check becomes a business error, a pause, or a UI warning.
 
+## Regular Order template write policy
+
+Regular Order template write policy is the backend path that turns manager
+input for a regular order template into validated template state.
+
+It owns current write-time policies: schedule normalization, item quantity
+validation, client address and phone ownership, delivery slot ownership,
+payment method availability, product ownership, and applying the resulting
+state to a template. It does not commit transactions and does not decide whether
+future generated orders should be rebuilt.
+
 ## Regular Order management context
 
 Regular Order management context is the backend access path for commands that

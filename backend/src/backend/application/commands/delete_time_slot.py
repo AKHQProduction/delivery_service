@@ -7,7 +7,7 @@ from backend.application.policies.access import (
     ensure_is_owner,
     ensure_related_to_shop,
 )
-from backend.application.services.recurring_order_resource_impact import (
+from backend.application.services.recurring.resource_impact import (
     RecurringOrderResourceImpact,
 )
 from backend.application.vars import TimeSlotId

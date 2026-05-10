@@ -5,7 +5,7 @@ from uuid import UUID
 
 import pytest
 
-from backend.application.services.recurring_order_template_integrity import (
+from backend.application.services.recurring.template_integrity import (
     RecurringOrderTemplateIntegrity,
 )
 from backend.application.vars import (

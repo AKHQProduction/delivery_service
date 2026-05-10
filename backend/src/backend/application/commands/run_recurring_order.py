@@ -1,11 +1,11 @@
 from dataclasses import dataclass
 from datetime import date
 
-from backend.application.services.recurring_order_execution import (
+from backend.application.services.recurring.execution import (
     RecurringOrderExecution,
     RecurringOrderExecutionRequest,
 )
-from backend.application.services.recurring_order_management_context import (
+from backend.application.services.recurring.management_context import (
     RecurringOrderManagementContext,
 )
 from backend.application.vars import RecurringOrderId

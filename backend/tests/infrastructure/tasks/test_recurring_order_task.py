@@ -122,7 +122,7 @@ async def test_recurring_order_task_executes_with_real_database(
     monkeypatch,
 ) -> None:
     monkeypatch.setattr(
-        "backend.application.services.recurring_order_scheduling_clock.today",
+        "backend.application.services.recurring.scheduling_clock.today",
         lambda: date(2026, 5, 10),
     )
     _, shop_id = await setup_full_test_user_with_shop(telegram_id=9203)

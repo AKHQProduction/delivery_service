@@ -5,7 +5,7 @@ import pytest
 
 from backend.application.dto.idp import CurrentUserDTO
 from backend.application.errors import AccessDeniedError, EntityNotFoundError
-from backend.application.services.recurring_order_management_context import (
+from backend.application.services.recurring.management_context import (
     RecurringOrderManagementContext,
 )
 from backend.application.vars import (

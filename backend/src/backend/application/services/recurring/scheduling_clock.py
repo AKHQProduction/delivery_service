@@ -1,6 +1,6 @@
 from datetime import date, timedelta
 
-from backend.application.services.recurring_order_schedule import (
+from backend.application.services.recurring.schedule import (
     iter_recurring_order_dates,
 )
 from backend.application.vars import ScheduleType, today

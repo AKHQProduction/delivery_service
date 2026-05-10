@@ -4,7 +4,7 @@ from uuid import UUID
 
 import pytest
 
-from backend.application.services.recurring_order_occurrence_ledger import (
+from backend.application.services.recurring.occurrence_ledger import (
     RecurringOrderOccurrenceLedger,
 )
 from backend.application.vars import (

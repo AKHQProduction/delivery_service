@@ -158,26 +158,29 @@ from backend.application.services.generated_order_lifecycle import (
 from backend.application.services.geocoder import Geocoder
 from backend.application.services.order_deletion import OrderDeletion
 from backend.application.services.order_intake import OrderIntake
-from backend.application.services.recurring_order_execution import (
+from backend.application.services.recurring.execution import (
     RecurringOrderExecution,
 )
-from backend.application.services.recurring_order_management_context import (
+from backend.application.services.recurring.management_context import (
     RecurringOrderManagementContext,
 )
-from backend.application.services.recurring_order_occurrence_ledger import (
+from backend.application.services.recurring.occurrence_ledger import (
     RecurringOrderOccurrenceLedger,
 )
-from backend.application.services.recurring_order_planning_read import (
+from backend.application.services.recurring.planning_read import (
     RecurringOrderPlanningRead,
 )
-from backend.application.services.recurring_order_resource_impact import (
+from backend.application.services.recurring.resource_impact import (
     RecurringOrderResourceImpact,
 )
-from backend.application.services.recurring_order_scheduling_clock import (
+from backend.application.services.recurring.scheduling_clock import (
     RecurringOrderSchedulingClock,
 )
-from backend.application.services.recurring_order_template_integrity import (
+from backend.application.services.recurring.template_integrity import (
     RecurringOrderTemplateIntegrity,
+)
+from backend.application.services.recurring.template_write import (
+    RecurringOrderTemplateWritePolicy,
 )
 from backend.application.services.tsp_solvers import RouteOptimizer
 from backend.application.usecases.invite_employee.generate_invite_link import (
@@ -356,6 +359,7 @@ class APIInteractorsProvider(Provider):
         RecurringOrderResourceImpact,
         RecurringOrderSchedulingClock,
         RecurringOrderTemplateIntegrity,
+        RecurringOrderTemplateWritePolicy,
     )
 
     add_employee = provide_all(GenerateInviteLinkCommandHandler)

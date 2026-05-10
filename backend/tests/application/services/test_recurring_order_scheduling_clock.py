@@ -1,6 +1,6 @@
 from datetime import date
 
-from backend.application.services.recurring_order_scheduling_clock import (
+from backend.application.services.recurring.scheduling_clock import (
     RecurringOrderSchedulingClock,
 )
 from backend.application.vars import ScheduleType
@@ -10,7 +10,7 @@ def test_scheduling_clock_uses_kyiv_today_for_run_window(
     monkeypatch,
 ) -> None:
     monkeypatch.setattr(
-        "backend.application.services.recurring_order_scheduling_clock.today",
+        "backend.application.services.recurring.scheduling_clock.today",
         lambda: date(2026, 5, 8),
     )
 
@@ -35,7 +35,7 @@ def test_scheduling_clock_future_order_cutoff_starts_tomorrow(
     monkeypatch,
 ) -> None:
     monkeypatch.setattr(
-        "backend.application.services.recurring_order_scheduling_clock.today",
+        "backend.application.services.recurring.scheduling_clock.today",
         lambda: date(2026, 5, 8),
     )
 

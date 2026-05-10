@@ -1,10 +1,10 @@
 from dataclasses import dataclass
 
 from backend.application.errors import RecurringOrderTemplateInvalidError
-from backend.application.services.recurring_order_management_context import (
+from backend.application.services.recurring.management_context import (
     RecurringOrderManagementContext,
 )
-from backend.application.services.recurring_order_template_integrity import (
+from backend.application.services.recurring.template_integrity import (
     RecurringOrderTemplateIntegrity,
 )
 from backend.application.vars import RecurringOrderId, RecurringOrderStatus

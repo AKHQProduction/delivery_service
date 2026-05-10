@@ -11,16 +11,16 @@ from backend.application.commands.run_recurring_order_automation import (
     RunRecurringOrderAutomationCommandHandler,
 )
 from backend.application.services.order_intake import OrderIntake
-from backend.application.services.recurring_order_execution import (
+from backend.application.services.recurring.execution import (
     RecurringOrderExecution,
 )
-from backend.application.services.recurring_order_occurrence_ledger import (
+from backend.application.services.recurring.occurrence_ledger import (
     RecurringOrderOccurrenceLedger,
 )
-from backend.application.services.recurring_order_scheduling_clock import (
+from backend.application.services.recurring.scheduling_clock import (
     RecurringOrderSchedulingClock,
 )
-from backend.application.services.recurring_order_template_integrity import (
+from backend.application.services.recurring.template_integrity import (
     RecurringOrderTemplateIntegrity,
 )
 from backend.application.vars import (
@@ -165,7 +165,7 @@ async def test_daily_automation_processes_active_templates_from_tomorrow(
     monkeypatch,
 ) -> None:
     monkeypatch.setattr(
-        "backend.application.services.recurring_order_scheduling_clock.today",
+        "backend.application.services.recurring.scheduling_clock.today",
         lambda: date(2026, 5, 10),
     )
     _, shop_id = await setup_full_test_user_with_shop(telegram_id=9200)
@@ -222,7 +222,7 @@ async def test_daily_automation_pauses_invalid_template_and_continues(
     monkeypatch,
 ) -> None:
     monkeypatch.setattr(
-        "backend.application.services.recurring_order_scheduling_clock.today",
+        "backend.application.services.recurring.scheduling_clock.today",
         lambda: date(2026, 5, 10),
     )
     _, shop_id = await setup_full_test_user_with_shop(telegram_id=9201)
@@ -277,7 +277,7 @@ async def test_daily_automation_is_idempotent_for_retry(
     monkeypatch,
 ) -> None:
     monkeypatch.setattr(
-        "backend.application.services.recurring_order_scheduling_clock.today",
+        "backend.application.services.recurring.scheduling_clock.today",
         lambda: date(2026, 5, 10),
     )
     _, shop_id = await setup_full_test_user_with_shop(telegram_id=9202)

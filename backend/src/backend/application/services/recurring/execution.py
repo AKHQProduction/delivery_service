@@ -11,13 +11,13 @@ from backend.application.services.order_intake import (
     OrderIntakeItem,
     OrderIntakeRequest,
 )
-from backend.application.services.recurring_order_occurrence_ledger import (
+from backend.application.services.recurring.occurrence_ledger import (
     RecurringOrderOccurrenceLedger,
 )
-from backend.application.services.recurring_order_scheduling_clock import (
+from backend.application.services.recurring.scheduling_clock import (
     RecurringOrderSchedulingClock,
 )
-from backend.application.services.recurring_order_template_integrity import (
+from backend.application.services.recurring.template_integrity import (
     RecurringOrderTemplateIntegrity,
 )
 from backend.application.vars import (

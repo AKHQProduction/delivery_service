@@ -9,7 +9,6 @@ from fastapi.security import HTTPBearer
 from backend.application.commands.create_recurring_order import (
     CreateRecurringOrderCommand,
     CreateRecurringOrderCommandHandler,
-    RecurringOrderProductInput,
 )
 from backend.application.commands.delete_recurring_order import (
     DeleteRecurringOrderCommand,
@@ -43,6 +42,9 @@ from backend.application.queries.get_recurring_order import (
 from backend.application.queries.get_recurring_orders import (
     GetRecurringOrdersQuery,
     GetRecurringOrdersQueryHandler,
+)
+from backend.application.services.recurring.template_write import (
+    RecurringOrderProductInput,
 )
 from backend.application.vars import (
     AddressId,

@@ -10,7 +10,7 @@ from backend.application.dto.gateways.recurring_order_gateway import (
     RecurringOrderFilters,
 )
 from backend.application.dto.idp import CurrentUserDTO
-from backend.application.services.recurring_order_planning_read import (
+from backend.application.services.recurring.planning_read import (
     RecurringOrderPlanningRead,
 )
 from backend.application.vars import (

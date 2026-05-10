@@ -392,7 +392,7 @@ async def test_update_active_without_flags_keeps_existing_orders(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     monkeypatch.setattr(
-        "backend.application.services.recurring_order_scheduling_clock.today",
+        "backend.application.services.recurring.scheduling_clock.today",
         lambda: date(2026, 5, 8),
     )
     telegram_id = 9117
@@ -482,7 +482,7 @@ async def test_update_active_rebuilds_future_orders_and_balance(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     monkeypatch.setattr(
-        "backend.application.services.recurring_order_scheduling_clock.today",
+        "backend.application.services.recurring.scheduling_clock.today",
         lambda: date(2026, 5, 8),
     )
     telegram_id = 9118
@@ -601,7 +601,7 @@ async def test_update_active_rebuild_keeps_today_and_removes_old_future_dates(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     monkeypatch.setattr(
-        "backend.application.services.recurring_order_scheduling_clock.today",
+        "backend.application.services.recurring.scheduling_clock.today",
         lambda: date(2026, 5, 8),
     )
     telegram_id = 9119
@@ -701,7 +701,7 @@ async def test_update_active_rebuild_recreates_previously_cancelled_dates(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     monkeypatch.setattr(
-        "backend.application.services.recurring_order_scheduling_clock.today",
+        "backend.application.services.recurring.scheduling_clock.today",
         lambda: date(2026, 5, 8),
     )
     telegram_id = 9121
@@ -1119,7 +1119,7 @@ async def test_run_recurring_order_creates_scheduled_orders_for_default_window(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     monkeypatch.setattr(
-        "backend.application.services.recurring_order_scheduling_clock.today",
+        "backend.application.services.recurring.scheduling_clock.today",
         lambda: date(2026, 5, 8),
     )
     telegram_id = 9106
@@ -1280,7 +1280,7 @@ async def test_run_paused_recurring_order_requires_activation(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     monkeypatch.setattr(
-        "backend.application.services.recurring_order_scheduling_clock.today",
+        "backend.application.services.recurring.scheduling_clock.today",
         lambda: date(2026, 5, 8),
     )
     telegram_id = 9107
@@ -1355,7 +1355,7 @@ async def test_run_recurring_order_skips_cancelled_occurrences(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     monkeypatch.setattr(
-        "backend.application.services.recurring_order_scheduling_clock.today",
+        "backend.application.services.recurring.scheduling_clock.today",
         lambda: date(2026, 5, 8),
     )
     telegram_id = 9108
@@ -1433,7 +1433,7 @@ async def test_run_recurring_order_pauses_when_business_link_is_missing(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     monkeypatch.setattr(
-        "backend.application.services.recurring_order_scheduling_clock.today",
+        "backend.application.services.recurring.scheduling_clock.today",
         lambda: date(2026, 5, 8),
     )
     telegram_id = 9109
@@ -1496,7 +1496,7 @@ async def test_run_recurring_order_charges_balance_payments(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     monkeypatch.setattr(
-        "backend.application.services.recurring_order_scheduling_clock.today",
+        "backend.application.services.recurring.scheduling_clock.today",
         lambda: date(2026, 5, 8),
     )
     telegram_id = 9110
@@ -1566,7 +1566,7 @@ async def test_delete_generated_order_cancels_recurring_occurrence(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     monkeypatch.setattr(
-        "backend.application.services.recurring_order_scheduling_clock.today",
+        "backend.application.services.recurring.scheduling_clock.today",
         lambda: date(2026, 5, 8),
     )
     telegram_id = 9111
@@ -1661,7 +1661,7 @@ async def test_delete_generated_order_can_pause_recurring_order_atomically(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     monkeypatch.setattr(
-        "backend.application.services.recurring_order_scheduling_clock.today",
+        "backend.application.services.recurring.scheduling_clock.today",
         lambda: date(2026, 5, 8),
     )
     telegram_id = 9117
@@ -1737,7 +1737,7 @@ async def test_pause_recurring_order_can_cancel_future_generated_orders(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     monkeypatch.setattr(
-        "backend.application.services.recurring_order_scheduling_clock.today",
+        "backend.application.services.recurring.scheduling_clock.today",
         lambda: date(2026, 5, 8),
     )
     telegram_id = 9112
@@ -1838,7 +1838,7 @@ async def test_delete_recurring_order_only_keeps_generated_orders_normal(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     monkeypatch.setattr(
-        "backend.application.services.recurring_order_scheduling_clock.today",
+        "backend.application.services.recurring.scheduling_clock.today",
         lambda: date(2026, 5, 8),
     )
     telegram_id = 9113
@@ -1915,7 +1915,7 @@ async def test_delete_recurring_order_with_future_orders_keeps_today_only(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     monkeypatch.setattr(
-        "backend.application.services.recurring_order_scheduling_clock.today",
+        "backend.application.services.recurring.scheduling_clock.today",
         lambda: date(2026, 5, 8),
     )
     telegram_id = 9114

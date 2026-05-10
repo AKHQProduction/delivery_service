@@ -5,7 +5,7 @@ from backend.application.policies.access import (
     ensure_can_manage,
     ensure_related_to_shop,
 )
-from backend.application.services.recurring_order_resource_impact import (
+from backend.application.services.recurring.resource_impact import (
     RecurringOrderResourceImpact,
 )
 from backend.application.vars import ProductId
