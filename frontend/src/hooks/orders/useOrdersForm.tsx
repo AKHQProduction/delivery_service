@@ -7,6 +7,7 @@ import { type Client } from "../../types/entities/Client";
 import { type Product } from "../../types/entities/Product";
 import { formatLocalDateKey } from "../../utils/dateUtils";
 import { useUserShopStore } from "../../context/useUserShopStore";
+import { type RepeatOrderDraft } from "../../utils/orderRepeatSuggestion";
 
 interface OrderFormProduct {
   product: Product;
@@ -60,9 +61,8 @@ interface UseOrderFormOptions {
   };
 }
 
-const getAddressPreferredTimeSlot = (
-  address: OrderFormData["deliveryAddress"],
-) => address?.preferred_time_slot_id || "";
+const getAddressPreferredTimeSlot = (address: OrderFormData["deliveryAddress"]) =>
+  address?.preferred_time_slot_id || "";
 
 export const useOrderForm = (options: UseOrderFormOptions = {}) => {
   const { initialOrder } = options;
@@ -73,6 +73,7 @@ export const useOrderForm = (options: UseOrderFormOptions = {}) => {
   const [searchProduct, setSearchProduct] = useState("");
   const [newlyCreatedClients, setNewlyCreatedClients] = useState<Client[]>([]);
   const [initialListsLoaded, setInitialListsLoaded] = useState(false);
+  const [hasManualOrderInput, setHasManualOrderInput] = useState(false);
 
   const {
     clients: fetchedClients,
@@ -238,18 +239,22 @@ export const useOrderForm = (options: UseOrderFormOptions = {}) => {
     }
   }, [initialOrder, clients, products]);
 
-  const handleClientSelect = useCallback((client: Client) => {
-    const address = client.addresses?.[0] || null;
-    setFormData((prev) => ({
-      ...prev,
-      client,
-      deliveryPhone: client.phones?.[0] || null,
-      deliveryAddress: address,
-      timeSlotId: initialOrder ? prev.timeSlotId : getAddressPreferredTimeSlot(address),
-    }));
-  }, [initialOrder]);
+  const handleClientSelect = useCallback(
+    (client: Client) => {
+      const address = client.addresses?.[0] || null;
+      setFormData((prev) => ({
+        ...prev,
+        client,
+        deliveryPhone: client.phones?.[0] || null,
+        deliveryAddress: address,
+        timeSlotId: initialOrder ? prev.timeSlotId : getAddressPreferredTimeSlot(address),
+      }));
+    },
+    [initialOrder],
+  );
 
   const handleProductToggle = (product: Product) => {
+    setHasManualOrderInput(true);
     const exists = formData.products.find((p) => p.product.product_id === product.product_id);
     if (exists) {
       setFormData({
@@ -265,6 +270,7 @@ export const useOrderForm = (options: UseOrderFormOptions = {}) => {
   };
 
   const handleQuantityChange = (productId: string, quantity: number) => {
+    setHasManualOrderInput(true);
     setFormData({
       ...formData,
       products: formData.products.map((p) =>
@@ -276,6 +282,7 @@ export const useOrderForm = (options: UseOrderFormOptions = {}) => {
   const handlePhoneChange = (
     phone: string | { id?: number; number: string; is_primary: boolean },
   ) => {
+    setHasManualOrderInput(true);
     if (typeof phone === "string") {
       const phoneObj = formData.client?.phones?.find((p) => p.number === phone);
       setFormData({ ...formData, deliveryPhone: phoneObj || null });
@@ -303,6 +310,7 @@ export const useOrderForm = (options: UseOrderFormOptions = {}) => {
           preferred_time_slot_id?: string | null;
         },
   ) => {
+    setHasManualOrderInput(true);
     if (typeof address === "string" || typeof address === "number") {
       const addressId = typeof address === "string" ? parseInt(address, 10) : address;
       const addressObj = formData.client?.addresses?.find((a) => a.id === addressId);
@@ -317,27 +325,43 @@ export const useOrderForm = (options: UseOrderFormOptions = {}) => {
       setFormData({
         ...formData,
         deliveryAddress: address,
-        timeSlotId: initialOrder
-          ? formData.timeSlotId
-          : getAddressPreferredTimeSlot(address),
+        timeSlotId: initialOrder ? formData.timeSlotId : getAddressPreferredTimeSlot(address),
       });
     }
   };
 
   const handleDateChange = (date: string) => {
+    setHasManualOrderInput(true);
     setFormData({ ...formData, deliveryDate: date });
   };
 
   const handlePaymentMethodChange = (paymentMethod: string) => {
+    setHasManualOrderInput(true);
     setFormData({ ...formData, paymentMethod });
   };
 
   const handleTimeSlotChange = (timeSlotId: string) => {
+    setHasManualOrderInput(true);
     setFormData({ ...formData, timeSlotId });
   };
 
   const handleNoteChange = (note: string) => {
+    setHasManualOrderInput(true);
     setFormData({ ...formData, note });
+  };
+
+  const applyRepeatOrderDraft = (draft: RepeatOrderDraft) => {
+    setFormData({
+      client: draft.client,
+      products: draft.products,
+      deliveryPhone: draft.deliveryPhone,
+      deliveryAddress: draft.deliveryAddress,
+      deliveryDate: draft.deliveryDate,
+      timeSlotId: draft.timeSlotId,
+      paymentMethod: draft.paymentMethod,
+      note: draft.note,
+    });
+    setHasManualOrderInput(true);
   };
 
   const handleNext = () => {
@@ -445,6 +469,7 @@ export const useOrderForm = (options: UseOrderFormOptions = {}) => {
     timeSlotsLoading,
     paymentMethodsLoading,
     referencesReady: initialListsLoaded && timeSlotsLoaded && paymentMethodsLoaded,
+    canSuggestRepeatOrder: !initialOrder && !hasManualOrderInput,
 
     // Infinite scroll for clients
     loadMoreClients,
@@ -468,6 +493,7 @@ export const useOrderForm = (options: UseOrderFormOptions = {}) => {
     handleTimeSlotChange,
     handleNoteChange,
     handlePaymentMethodChange,
+    applyRepeatOrderDraft,
 
     handleNext,
     handleBack,
