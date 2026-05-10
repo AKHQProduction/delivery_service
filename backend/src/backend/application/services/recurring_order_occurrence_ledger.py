@@ -7,6 +7,7 @@ from backend.application.vars import (
     RecurringOrderOccurrenceStatus,
 )
 from backend.infrastructure.persistence.gateways import (
+    RecurringOrderOccurrenceFilters,
     SQLAlchemyRecurringOrderGateway,
 )
 from backend.infrastructure.persistence.tables.recurring_orders import (
@@ -33,13 +34,17 @@ class RecurringOrderOccurrenceLedger:
         recurring_order_id: RecurringOrderId,
         scheduled_dates: list[date],
     ) -> RecurringOrderOccurrencePlan:
-        existing_occurrences = {
-            occurrence.scheduled_for: occurrence
-            for occurrence in (
-                await self._recurring_order_gateway.load_occurrences_for_dates(
-                    recurring_order_id, scheduled_dates
-                )
+        occurrence_filters = RecurringOrderOccurrenceFilters(
+            recurring_order_id=recurring_order_id,
+            scheduled_dates=scheduled_dates,
+        )
+        occurrences = (
+            await self._recurring_order_gateway.load_occurrences_by_filters(
+                occurrence_filters
             )
+        )
+        existing_occurrences = {
+            occurrence.scheduled_for: occurrence for occurrence in occurrences
         }
 
         dates_to_create: list[date] = []

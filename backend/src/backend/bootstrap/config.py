@@ -44,6 +44,10 @@ class RedisConfig(BaseModel):
     def persistence_uri(self) -> str:
         return self.default_uri + "1"
 
+    @property
+    def task_uri(self) -> str:
+        return self.default_uri + "2"
+
 
 class PostgresConfig(BaseModel):
     host: str = Field(alias="DB_HOST")

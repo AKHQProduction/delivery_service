@@ -19,6 +19,7 @@ from backend.application.vars import (
     UserId,
 )
 from backend.infrastructure.persistence.gateways import (
+    RecurringOrderFilters,
     SQLAlchemyRecurringOrderGateway,
 )
 from backend.infrastructure.persistence.tables.recurring_orders import (
@@ -38,25 +39,25 @@ class FakeRecurringOrderGateway:
     def __init__(self, recurring_orders: list[RecurringOrder]) -> None:
         self.recurring_orders = recurring_orders
 
-    async def load_by_product(
-        self, product_id: ProductId
+    async def load_by_filters(
+        self, filters: RecurringOrderFilters
     ) -> list[RecurringOrder]:
-        return [
-            recurring_order
-            for recurring_order in self.recurring_orders
-            if any(
-                item.product_id == product_id for item in recurring_order.items
-            )
-        ]
-
-    async def load_by_time_slot(
-        self, time_slot_id: TimeSlotId
-    ) -> list[RecurringOrder]:
-        return [
-            recurring_order
-            for recurring_order in self.recurring_orders
-            if recurring_order.time_slot_id == time_slot_id
-        ]
+        if filters.product_id is not None:
+            return [
+                recurring_order
+                for recurring_order in self.recurring_orders
+                if any(
+                    item.product_id == filters.product_id
+                    for item in recurring_order.items
+                )
+            ]
+        if filters.time_slot_id is not None:
+            return [
+                recurring_order
+                for recurring_order in self.recurring_orders
+                if recurring_order.time_slot_id == filters.time_slot_id
+            ]
+        return self.recurring_orders
 
 
 def _current_user() -> CurrentUserDTO:

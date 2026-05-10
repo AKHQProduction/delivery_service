@@ -10,6 +10,7 @@ from backend.application.vars import (
     RecurringOrderStatus,
 )
 from backend.infrastructure.persistence.gateways import (
+    RecurringOrderOccurrenceFilters,
     SQLAlchemyRecurringOrderGateway,
 )
 
@@ -31,8 +32,8 @@ class GeneratedOrderLifecycle:
         pause_recurring_order: bool = False,
     ) -> None:
         occurrence = (
-            await self._recurring_order_gateway.load_occurrence_by_order(
-                order_id
+            await self._recurring_order_gateway.load_occurrence_by_filters(
+                RecurringOrderOccurrenceFilters(order_id=order_id)
             )
         )
         if occurrence:
@@ -57,9 +58,11 @@ class GeneratedOrderLifecycle:
         current_user: CurrentUserDTO,
     ) -> None:
         gateway = self._recurring_order_gateway
-        occurrences = await gateway.load_occurrences_from(
-            recurring_order_id,
-            from_date,
+        occurrences = await gateway.load_occurrences_by_filters(
+            RecurringOrderOccurrenceFilters(
+                recurring_order_id=recurring_order_id,
+                from_date=from_date,
+            )
         )
         for occurrence in occurrences:
             if occurrence.order_id is not None:
@@ -72,9 +75,12 @@ class GeneratedOrderLifecycle:
         current_user: CurrentUserDTO,
     ) -> None:
         gateway = self._recurring_order_gateway
-        occurrences = await gateway.load_scheduled_occurrences_from(
-            recurring_order_id,
-            from_date,
+        occurrences = await gateway.load_occurrences_by_filters(
+            RecurringOrderOccurrenceFilters(
+                recurring_order_id=recurring_order_id,
+                from_date=from_date,
+                with_order=True,
+            )
         )
         for occurrence in occurrences:
             if occurrence.order_id is not None:

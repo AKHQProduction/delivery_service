@@ -52,6 +52,56 @@ services:
         reservations:
           memory: 256M
 
+  taskiq_worker:
+    container_name: "water_delivery-taskiq_worker"
+    build:
+      context: ./backend
+      dockerfile: Dockerfile.prod
+    env_file:
+      - .env
+    restart: on-failure
+    command: >
+      taskiq worker --ack-type when_saved
+      backend.bootstrap.entrypoints.taskiq:setup_taskiq_broker
+      backend.infrastructure.tasks
+    depends_on:
+      redis:
+        condition: service_healthy
+      postgres:
+        condition: service_healthy
+    deploy:
+      resources:
+        limits:
+          cpus: '0.5'
+          memory: 512M
+        reservations:
+          memory: 128M
+
+  taskiq_scheduler:
+    container_name: "water_delivery-taskiq_scheduler"
+    build:
+      context: ./backend
+      dockerfile: Dockerfile.prod
+    env_file:
+      - .env
+    restart: on-failure
+    command: >
+      taskiq scheduler --skip-first-run --update-interval 300
+      backend.bootstrap.entrypoints.taskiq:setup_taskiq_scheduler
+      backend.infrastructure.tasks
+    depends_on:
+      redis:
+        condition: service_healthy
+      taskiq_worker:
+        condition: service_started
+    deploy:
+      resources:
+        limits:
+          cpus: '0.25'
+          memory: 256M
+        reservations:
+          memory: 64M
+
   redis:
     container_name: "water_delivery-redis"
     image: redis:8-alpine

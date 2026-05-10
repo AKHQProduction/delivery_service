@@ -32,6 +32,7 @@ from backend.application.vars import (
 )
 from backend.infrastructure.idp import IdentityProvider
 from backend.infrastructure.persistence.gateways import (
+    RecurringOrderFilters,
     SQLAlchemyClientGateway,
     SQLAlchemyRecurringOrderGateway,
     SQLAlchemyShopGateway,
@@ -146,14 +147,16 @@ class EditClientCommandHandler:
             for address in client.addresses
         }
         recurring_orders_to_repoint = (
-            await self._recurring_order_gateway.load_by_client_refs(
-                client.id,
-                phone_ids=set(old_phone_numbers)
-                if command.phones is not None
-                else set(),
-                address_ids=set(old_address_keys)
-                if command.addresses is not None
-                else set(),
+            await self._recurring_order_gateway.load_by_filters(
+                RecurringOrderFilters(
+                    client_id=client.id,
+                    phone_ids=set(old_phone_numbers)
+                    if command.phones is not None
+                    else set(),
+                    address_ids=set(old_address_keys)
+                    if command.addresses is not None
+                    else set(),
+                )
             )
         )
 

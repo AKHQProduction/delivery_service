@@ -6,6 +6,7 @@ from backend.application.vars import (
     TimeSlotId,
 )
 from backend.infrastructure.persistence.gateways import (
+    RecurringOrderFilters,
     SQLAlchemyRecurringOrderGateway,
 )
 
@@ -22,8 +23,8 @@ class RecurringOrderResourceImpact:
         product_id: ProductId,
         current_user: CurrentUserDTO,
     ) -> None:
-        recurring_orders = await self._recurring_order_gateway.load_by_product(
-            product_id
+        recurring_orders = await self._recurring_order_gateway.load_by_filters(
+            RecurringOrderFilters(product_id=product_id)
         )
         for recurring_order in recurring_orders:
             ensure_related_to_shop(current_user, recurring_order.shop_id)
@@ -34,8 +35,8 @@ class RecurringOrderResourceImpact:
         time_slot_id: TimeSlotId,
         current_user: CurrentUserDTO,
     ) -> None:
-        recurring_orders = (
-            await self._recurring_order_gateway.load_by_time_slot(time_slot_id)
+        recurring_orders = await self._recurring_order_gateway.load_by_filters(
+            RecurringOrderFilters(time_slot_id=time_slot_id)
         )
         for recurring_order in recurring_orders:
             ensure_related_to_shop(current_user, recurring_order.shop_id)

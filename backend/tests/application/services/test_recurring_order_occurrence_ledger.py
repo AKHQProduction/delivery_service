@@ -13,6 +13,7 @@ from backend.application.vars import (
     RecurringOrderOccurrenceStatus,
 )
 from backend.infrastructure.persistence.gateways import (
+    RecurringOrderOccurrenceFilters,
     SQLAlchemyRecurringOrderGateway,
 )
 from backend.infrastructure.persistence.tables.recurring_orders import (
@@ -28,16 +29,14 @@ class FakeRecurringOrderGateway:
         self.occurrences = occurrences or []
         self.saved_occurrences: list[RecurringOrderOccurrence] = []
 
-    async def load_occurrences_for_dates(
-        self,
-        recurring_order_id: RecurringOrderId,
-        dates: list[date],
+    async def load_occurrences_by_filters(
+        self, filters: RecurringOrderOccurrenceFilters
     ) -> list[RecurringOrderOccurrence]:
         return [
             occurrence
             for occurrence in self.occurrences
-            if occurrence.recurring_order_id == recurring_order_id
-            and occurrence.scheduled_for in dates
+            if occurrence.recurring_order_id == filters.recurring_order_id
+            and occurrence.scheduled_for in (filters.scheduled_dates or [])
         ]
 
     def save_occurrence(self, occurrence: RecurringOrderOccurrence) -> None:

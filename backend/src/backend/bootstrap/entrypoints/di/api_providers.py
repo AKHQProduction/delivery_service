@@ -104,6 +104,9 @@ from backend.application.commands.reverse_route import (
 from backend.application.commands.run_recurring_order import (
     RunRecurringOrderCommandHandler,
 )
+from backend.application.commands.run_recurring_order_automation import (
+    RunRecurringOrderAutomationCommandHandler,
+)
 from backend.application.commands.set_client_balance import (
     SetClientBalanceCommandHandler,
 )
@@ -289,6 +292,7 @@ class APIInteractorsProvider(Provider):
         PauseRecurringOrderCommandHandler,
         ResumeRecurringOrderCommandHandler,
         RunRecurringOrderCommandHandler,
+        RunRecurringOrderAutomationCommandHandler,
         UpdateRecurringOrderCommandHandler,
         GetRecurringOrderQueryHandler,
         GetRecurringOrdersQueryHandler,

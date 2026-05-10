@@ -7,7 +7,11 @@ from .link_gateway import RedisLinkGateway
 from .order_gateway import SQLAlchemyOrderGateway
 from .payment_method_gateway import SQLAlchemyPaymentMethodGateway
 from .product_gateway import SQLAlchemyProductGateway
-from .recurring_order_gateway import SQLAlchemyRecurringOrderGateway
+from .recurring_order_gateway import (
+    RecurringOrderFilters,
+    RecurringOrderOccurrenceFilters,
+    SQLAlchemyRecurringOrderGateway,
+)
 from .recurring_order_read_gateway import SQLAlchemyRecurringOrderReadGateway
 from .route_edge_history_gateway import SQLAlchemyRouteEdgeHistoryGateway
 from .route_plan_gateway import SQLAlchemyRoutePlanGateway
@@ -17,6 +21,8 @@ from .time_slot_gateway import SQLAlchemyTimeSlotGateway
 from .user_gateway import SQLAlchemyUserGateway
 
 __all__ = [
+    "RecurringOrderFilters",
+    "RecurringOrderOccurrenceFilters",
     "RedisFileStorage",
     "RedisGeocodeCache",
     "RedisLinkGateway",

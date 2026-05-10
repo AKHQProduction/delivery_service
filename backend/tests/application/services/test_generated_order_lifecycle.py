@@ -22,6 +22,7 @@ from backend.application.vars import (
     UserId,
 )
 from backend.infrastructure.persistence.gateways import (
+    RecurringOrderOccurrenceFilters,
     SQLAlchemyRecurringOrderGateway,
 )
 from backend.infrastructure.persistence.tables.recurring_orders import (
@@ -47,26 +48,37 @@ class FakeRecurringOrderGateway:
         self.recurring_order = recurring_order
         self.occurrences = occurrences
 
-    async def load_occurrence_by_order(
-        self, order_id: OrderId
+    async def load_occurrence_by_filters(
+        self, filters: RecurringOrderOccurrenceFilters
     ) -> RecurringOrderOccurrence | None:
         for occurrence in self.occurrences:
-            if occurrence.order_id == order_id:
+            if occurrence.order_id == filters.order_id:
                 return occurrence
         return None
 
-    async def load_scheduled_occurrences_from(
-        self,
-        recurring_order_id: RecurringOrderId,
-        from_date: date,
+    async def load_occurrences_by_filters(
+        self, filters: RecurringOrderOccurrenceFilters
     ) -> list[RecurringOrderOccurrence]:
-        return [
-            occurrence
-            for occurrence in self.occurrences
-            if occurrence.recurring_order_id == recurring_order_id
-            and occurrence.scheduled_for >= from_date
-            and occurrence.order_id is not None
-        ]
+        occurrences = self.occurrences
+        if filters.recurring_order_id is not None:
+            occurrences = [
+                occurrence
+                for occurrence in occurrences
+                if occurrence.recurring_order_id == filters.recurring_order_id
+            ]
+        if filters.from_date is not None:
+            occurrences = [
+                occurrence
+                for occurrence in occurrences
+                if occurrence.scheduled_for >= filters.from_date
+            ]
+        if filters.with_order is True:
+            occurrences = [
+                occurrence
+                for occurrence in occurrences
+                if occurrence.order_id is not None
+            ]
+        return occurrences
 
     async def load(
         self, recurring_order_id: RecurringOrderId
