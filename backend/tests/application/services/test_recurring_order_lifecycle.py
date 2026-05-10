@@ -15,6 +15,7 @@ from backend.application.services.generated_order_lifecycle import (
 from backend.application.services.recurring.execution import (
     RecurringOrderExecution,
     RecurringOrderExecutionRequest,
+    RecurringOrderExecutionResult,
 )
 from backend.application.services.recurring.lifecycle import (
     RecurringOrderLifecycle,
@@ -87,9 +88,16 @@ class FakeRecurringOrderExecution:
     def __init__(self) -> None:
         self.requests: list[RecurringOrderExecutionRequest] = []
 
-    async def run(self, request: RecurringOrderExecutionRequest) -> object:
+    async def run(
+        self, request: RecurringOrderExecutionRequest
+    ) -> RecurringOrderExecutionResult:
         self.requests.append(request)
-        return object()
+        return RecurringOrderExecutionResult(
+            created_dates=[],
+            already_scheduled_dates=[],
+            cancelled_dates=[],
+            paused=False,
+        )
 
 
 class FakeSchedulingClock:

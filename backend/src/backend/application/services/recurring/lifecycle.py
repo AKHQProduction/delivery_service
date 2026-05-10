@@ -1,3 +1,5 @@
+import logging
+
 from backend.application.dto.idp import CurrentUserDTO
 from backend.application.errors import (
     RecurringOrderPausedError,
@@ -25,6 +27,8 @@ from backend.infrastructure.persistence.tables.recurring_orders import (
 )
 from backend.infrastructure.transaction_manager import TransactionManager
 
+logger = logging.getLogger(__name__)
+
 
 class RecurringOrderLifecycle:
     def __init__(
@@ -50,18 +54,48 @@ class RecurringOrderLifecycle:
         *,
         cancel_future_orders: bool,
     ) -> None:
+        logger.info(
+            "Pausing recurring order: "
+            "recurring_order_id=%s cancel_future_orders=%s",
+            recurring_order.id,
+            cancel_future_orders,
+        )
         recurring_order.status = RecurringOrderStatus.PAUSED
         if cancel_future_orders:
+            cutoff = self._scheduling_clock.future_order_cutoff()
+            logger.info(
+                "Deleting future generated orders while pausing recurring "
+                "order: recurring_order_id=%s from_date=%s",
+                recurring_order.id,
+                cutoff,
+            )
             await self._generated_order_lifecycle.delete_future_orders(
                 recurring_order.id,
-                self._scheduling_clock.future_order_cutoff(),
+                cutoff,
                 current_user,
             )
+        logger.info(
+            "Recurring order paused: recurring_order_id=%s",
+            recurring_order.id,
+        )
 
     async def resume(self, recurring_order: RecurringOrder) -> None:
+        logger.info(
+            "Resuming recurring order: recurring_order_id=%s",
+            recurring_order.id,
+        )
         if not await self._template_integrity.is_runnable(recurring_order):
+            logger.warning(
+                "Recurring order cannot be resumed because template is "
+                "invalid: recurring_order_id=%s",
+                recurring_order.id,
+            )
             raise RecurringOrderTemplateInvalidError
         recurring_order.status = RecurringOrderStatus.ACTIVE
+        logger.info(
+            "Recurring order resumed: recurring_order_id=%s",
+            recurring_order.id,
+        )
 
     async def delete(
         self,
@@ -70,18 +104,40 @@ class RecurringOrderLifecycle:
         *,
         delete_future_orders: bool,
     ) -> None:
+        logger.info(
+            "Deleting recurring order template: "
+            "recurring_order_id=%s delete_future_orders=%s",
+            recurring_order.id,
+            delete_future_orders,
+        )
         if delete_future_orders:
+            cutoff = self._scheduling_clock.future_order_cutoff()
+            logger.info(
+                "Deleting future generated orders before deleting recurring "
+                "order: recurring_order_id=%s from_date=%s",
+                recurring_order.id,
+                cutoff,
+            )
             await self._generated_order_lifecycle.delete_future_orders(
                 recurring_order.id,
-                self._scheduling_clock.future_order_cutoff(),
+                cutoff,
                 current_user,
             )
         await self._recurring_order_gateway.delete(recurring_order)
+        logger.info(
+            "Recurring order template deleted: recurring_order_id=%s",
+            recurring_order.id,
+        )
 
     def ensure_can_rebuild_future_orders(
         self, recurring_order: RecurringOrder
     ) -> None:
         if recurring_order.status == RecurringOrderStatus.PAUSED:
+            logger.warning(
+                "Cannot rebuild future orders for paused recurring order: "
+                "recurring_order_id=%s",
+                recurring_order.id,
+            )
             raise RecurringOrderPausedError
 
     async def rebuild_future_orders(
@@ -91,16 +147,33 @@ class RecurringOrderLifecycle:
     ) -> None:
         self.ensure_can_rebuild_future_orders(recurring_order)
 
+        cutoff = self._scheduling_clock.future_order_cutoff()
+        logger.info(
+            "Rebuilding future generated orders: "
+            "recurring_order_id=%s from_date=%s",
+            recurring_order.id,
+            cutoff,
+        )
         await self._generated_order_lifecycle.delete_future_orders_for_rebuild(
             recurring_order.id,
-            self._scheduling_clock.future_order_cutoff(),
+            cutoff,
             current_user,
         )
         await self._tr_manager.flush()
-        await self._recurring_order_execution.run(
+        result = await self._recurring_order_execution.run(
             RecurringOrderExecutionRequest(
                 recurring_order_id=recurring_order.id,
                 shop_id=current_user.shop_id,
                 include_today=False,
             )
+        )
+        logger.info(
+            "Future generated orders rebuilt: "
+            "recurring_order_id=%s created=%d already_scheduled=%d "
+            "cancelled=%d paused=%s",
+            recurring_order.id,
+            len(result.created_dates),
+            len(result.already_scheduled_dates),
+            len(result.cancelled_dates),
+            result.paused,
         )

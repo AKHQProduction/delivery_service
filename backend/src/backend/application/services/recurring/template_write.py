@@ -1,3 +1,4 @@
+import logging
 from dataclasses import dataclass
 
 from backend.application.common import ensure_exists
@@ -27,6 +28,8 @@ from backend.infrastructure.persistence.tables.recurring_orders import (
     RecurringOrder,
     RecurringOrderItem,
 )
+
+logger = logging.getLogger(__name__)
 
 
 @dataclass(frozen=True)
@@ -69,6 +72,16 @@ class RecurringOrderTemplateWritePolicy:
         shop_id: ShopId,
         draft: RecurringOrderTemplateDraft,
     ) -> RecurringOrder:
+        logger.info(
+            "Creating recurring order template: "
+            "recurring_order_id=%s shop_id=%s client_id=%s "
+            "schedule_type=%s items_count=%d",
+            recurring_order_id,
+            shop_id,
+            draft.client_id,
+            draft.schedule_type,
+            len(draft.items),
+        )
         recurring_order = RecurringOrder(
             id=recurring_order_id,
             shop_id=shop_id,
@@ -84,6 +97,11 @@ class RecurringOrderTemplateWritePolicy:
             status=RecurringOrderStatus.ACTIVE,
         )
         await self.apply(recurring_order, shop_id=shop_id, draft=draft)
+        logger.info(
+            "Recurring order template created in memory: "
+            "recurring_order_id=%s",
+            recurring_order_id,
+        )
         return recurring_order
 
     async def apply(
@@ -93,6 +111,16 @@ class RecurringOrderTemplateWritePolicy:
         shop_id: ShopId,
         draft: RecurringOrderTemplateDraft,
     ) -> None:
+        logger.info(
+            "Applying recurring order template draft: "
+            "recurring_order_id=%s shop_id=%s client_id=%s "
+            "schedule_type=%s items_count=%d",
+            recurring_order.id,
+            shop_id,
+            draft.client_id,
+            draft.schedule_type,
+            len(draft.items),
+        )
         weekdays, month_days = await self._validate(shop_id, draft)
 
         recurring_order.client_id = draft.client_id
@@ -111,12 +139,30 @@ class RecurringOrderTemplateWritePolicy:
             )
             for item in draft.items
         ]
+        logger.info(
+            "Recurring order template draft applied: "
+            "recurring_order_id=%s weekdays=%s month_days=%s",
+            recurring_order.id,
+            weekdays,
+            month_days,
+        )
 
     async def _validate(
         self,
         shop_id: ShopId,
         draft: RecurringOrderTemplateDraft,
     ) -> tuple[list[int] | None, list[int] | None]:
+        logger.debug(
+            "Validating recurring order template draft: "
+            "shop_id=%s client_id=%s address_id=%s phone_id=%s "
+            "time_slot_id=%s payment_method=%s",
+            shop_id,
+            draft.client_id,
+            draft.address_id,
+            draft.phone_id,
+            draft.time_slot_id,
+            draft.payment_method,
+        )
         weekdays, month_days = normalize_schedule(
             schedule_type=draft.schedule_type,
             weekdays=draft.weekdays,
@@ -130,14 +176,33 @@ class RecurringOrderTemplateWritePolicy:
             await self._client_gateway.load(draft.client_id), "Client"
         )
         if client.shop_id != shop_id:
+            logger.warning(
+                "Recurring order template client belongs to another shop: "
+                "client_id=%s client_shop_id=%s shop_id=%s",
+                draft.client_id,
+                client.shop_id,
+                shop_id,
+            )
             raise AccessDeniedError
         has_address = any(
             address.id == draft.address_id for address in client.addresses
         )
         if not has_address:
+            logger.warning(
+                "Recurring order template address not found on client: "
+                "client_id=%s address_id=%s",
+                draft.client_id,
+                draft.address_id,
+            )
             entity = "Address"
             raise EntityNotFoundError(entity, draft.address_id)
         if not any(phone.id == draft.phone_id for phone in client.phones):
+            logger.warning(
+                "Recurring order template phone not found on client: "
+                "client_id=%s phone_id=%s",
+                draft.client_id,
+                draft.phone_id,
+            )
             entity = "Phone"
             raise EntityNotFoundError(entity, draft.phone_id)
 
@@ -146,11 +211,24 @@ class RecurringOrderTemplateWritePolicy:
             "TimeSlot",
         )
         if time_slot.shop_id != shop_id:
+            logger.warning(
+                "Recurring order template time slot belongs to another shop: "
+                "time_slot_id=%s time_slot_shop_id=%s shop_id=%s",
+                draft.time_slot_id,
+                time_slot.shop_id,
+                shop_id,
+            )
             raise AccessDeniedError
 
         if not await self._payment_method_gateway.exists_by_name_in_shop(
             shop_id, draft.payment_method
         ):
+            logger.warning(
+                "Recurring order template payment method not found: "
+                "shop_id=%s payment_method=%s",
+                shop_id,
+                draft.payment_method,
+            )
             entity = "PaymentMethod"
             raise EntityNotFoundError(entity)
 
@@ -163,6 +241,21 @@ class RecurringOrderTemplateWritePolicy:
                 products_by_id.get(item.product_id), "Product"
             )
             if product.shop_id != shop_id:
+                logger.warning(
+                    "Recurring order template product belongs to another "
+                    "shop: product_id=%s product_shop_id=%s shop_id=%s",
+                    item.product_id,
+                    product.shop_id,
+                    shop_id,
+                )
                 raise AccessDeniedError
 
+        logger.debug(
+            "Recurring order template draft validated: "
+            "shop_id=%s client_id=%s weekdays=%s month_days=%s",
+            shop_id,
+            draft.client_id,
+            weekdays,
+            month_days,
+        )
         return weekdays, month_days

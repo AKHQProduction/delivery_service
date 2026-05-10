@@ -1,3 +1,4 @@
+import logging
 from dataclasses import dataclass
 from datetime import date
 
@@ -13,6 +14,8 @@ from backend.infrastructure.persistence.gateways import (
 from backend.infrastructure.persistence.tables.recurring_orders import (
     RecurringOrderOccurrence,
 )
+
+logger = logging.getLogger(__name__)
 
 
 @dataclass(frozen=True)
@@ -34,6 +37,12 @@ class RecurringOrderOccurrenceLedger:
         recurring_order_id: RecurringOrderId,
         scheduled_dates: list[date],
     ) -> RecurringOrderOccurrencePlan:
+        logger.debug(
+            "Planning recurring order occurrences: "
+            "recurring_order_id=%s dates_count=%d",
+            recurring_order_id,
+            len(scheduled_dates),
+        )
         occurrence_filters = RecurringOrderOccurrenceFilters(
             recurring_order_id=recurring_order_id,
             scheduled_dates=scheduled_dates,
@@ -60,11 +69,21 @@ class RecurringOrderOccurrenceLedger:
                 continue
             already_scheduled_dates.append(scheduled_for)
 
-        return RecurringOrderOccurrencePlan(
+        plan = RecurringOrderOccurrencePlan(
             dates_to_create=dates_to_create,
             already_scheduled_dates=already_scheduled_dates,
             cancelled_dates=cancelled_dates,
         )
+        logger.info(
+            "Recurring order occurrence plan built: "
+            "recurring_order_id=%s to_create=%d already_scheduled=%d "
+            "cancelled=%d",
+            recurring_order_id,
+            len(plan.dates_to_create),
+            len(plan.already_scheduled_dates),
+            len(plan.cancelled_dates),
+        )
+        return plan
 
     def mark_scheduled(
         self,
@@ -73,6 +92,13 @@ class RecurringOrderOccurrenceLedger:
         scheduled_for: date,
         order_id: OrderId,
     ) -> None:
+        logger.debug(
+            "Marking recurring order occurrence scheduled: "
+            "recurring_order_id=%s scheduled_for=%s order_id=%s",
+            recurring_order_id,
+            scheduled_for,
+            order_id,
+        )
         self._recurring_order_gateway.save_occurrence(
             RecurringOrderOccurrence(
                 recurring_order_id=recurring_order_id,
