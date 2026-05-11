@@ -1,7 +1,6 @@
 import { type Client } from "../types/entities/Client";
 import { type Order, type OrderItem } from "../types/entities/Order";
 import { type Product } from "../types/entities/Product";
-import { addDaysToDateKey } from "./dateUtils";
 
 export interface RepeatOrderFormProduct {
   product: Product;
@@ -112,7 +111,7 @@ export const buildOrderRepeatSuggestion = ({
   const paymentMethod = paymentMethodNames.includes(previousPaymentMethod)
     ? previousPaymentMethod
     : "";
-  const deliveryDate = addDaysToDateKey(todayKey, 1);
+  const deliveryDate = todayKey;
   const timeSlotId = deliveryAddress?.preferred_time_slot_id || "";
   const missingRequiredFields: MissingRepeatOrderField[] = [];
 
