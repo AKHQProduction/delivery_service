@@ -1,9 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import { useNavigate } from "react-router-dom";
 import { AddClientForm } from "../components/forms/client/AddClientForm";
 import { ImportClientsModal } from "../components/features/ImportClientsModal";
-import { ClientRecentOrdersSection } from "../components/features/ClientRecentOrdersSection";
-import { ClientPlanningSummarySection } from "../components/features/ClientPlanningSummarySection";
 import { Modal } from "../components/modals/Modal";
 import { DetailModal } from "../components/modals/DetailModal";
 import { ClientDetailModal } from "../components/modals/detailsModals/ClientDetailModal";
@@ -504,8 +501,6 @@ const ClientSidePanel = ({
   onEdit: () => void;
   onDelete: () => void;
 }) => {
-  const navigate = useNavigate();
-
   return (
   <div className="flex h-full flex-col">
     <div className="flex items-start justify-between gap-4">
@@ -550,24 +545,6 @@ const ClientSidePanel = ({
         <dd className="font-medium text-slate-950">{client.addresses?.length ?? 0}</dd>
       </div>
     </dl>
-
-    <div className="mt-5">
-      <ClientRecentOrdersSection
-        client={client}
-        limit={10}
-        onCreateRegular={(recurringSeed) =>
-          navigate(`/planning?client_id=${client.client_id}`, {
-            state: { recurringSeed },
-          })
-        }
-      />
-    </div>
-
-    <div className="mt-5">
-      <ClientPlanningSummarySection
-        client={client}
-      />
-    </div>
 
     <div className="mt-7 space-y-3">
       <button
