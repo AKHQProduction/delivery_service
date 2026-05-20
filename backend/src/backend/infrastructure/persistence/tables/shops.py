@@ -8,6 +8,7 @@ from sqlalchemy.orm import Mapped, mapped_column, relationship
 from backend.application.vars import (
     PaymentMethodId,
     ShopId,
+    ShopRepeatOrderMode,
     TimeSlotId,
     UserId,
 )
@@ -37,6 +38,12 @@ class Shop(Base, CreatedAt, UpdatedAt):
     house: Mapped[str | None] = mapped_column(sa.String, nullable=True)
     latitude: Mapped[float | None] = mapped_column(sa.Double, nullable=True)
     longitude: Mapped[float | None] = mapped_column(sa.Double, nullable=True)
+    repeat_order_mode: Mapped[ShopRepeatOrderMode] = mapped_column(
+        sa.String(32),
+        nullable=False,
+        default=ShopRepeatOrderMode.CONFIRMATION_REQUIRED,
+        server_default=ShopRepeatOrderMode.CONFIRMATION_REQUIRED,
+    )
 
     memberships: Mapped[list["ShopMembership"]] = relationship(
         back_populates="shop", lazy="raise"

@@ -4,6 +4,7 @@ from dataclasses import dataclass
 from backend.application.common import ensure_exists
 from backend.application.policies.access import ensure_is_owner
 from backend.application.services.shop import NewShopAddressDTO, update_shop
+from backend.application.vars import ShopRepeatOrderMode
 from backend.infrastructure.idp import IdentityProvider
 from backend.infrastructure.persistence.gateways import SQLAlchemyShopGateway
 from backend.infrastructure.transaction_manager import TransactionManager
@@ -14,6 +15,7 @@ logger = logging.getLogger(__name__)
 @dataclass(frozen=True)
 class EditShopCommand:
     address: NewShopAddressDTO | None = None
+    repeat_order_mode: ShopRepeatOrderMode | None = None
 
 
 class EditShopCommandHandler:
@@ -28,7 +30,11 @@ class EditShopCommandHandler:
         self._tr_manager = tr_manager
 
     async def handle(self, command: EditShopCommand) -> None:
-        logger.info("Editing shop: address=%s", command.address)
+        logger.info(
+            "Editing shop: address=%s repeat_order_mode=%s",
+            command.address,
+            command.repeat_order_mode,
+        )
 
         current_user = await self._idp.current_user()
         ensure_is_owner(current_user)
@@ -38,7 +44,11 @@ class EditShopCommandHandler:
             "Shop",
         )
 
-        update_shop(shop, address=command.address)
+        update_shop(
+            shop,
+            address=command.address,
+            repeat_order_mode=command.repeat_order_mode,
+        )
 
         await self._tr_manager.commit()
 

@@ -4,6 +4,7 @@ import { ShopAddressForm } from "../components/settings/ShopAddressForm";
 import { DistrictsComponent } from "../components/settings/DistrictsComponent";
 import { TimeSlotsComponent } from "../components/settings/TimeSlotsComponent";
 import { PaymentMethodsComponent } from "../components/settings/PaymentMethodsComponent";
+import { OrderSettingsComponent } from "../components/settings/OrderSettingsComponent";
 import { useToast } from "../hooks/useToast";
 
 export const ShopSettingsPage: React.FC = () => {
@@ -25,7 +26,7 @@ export const ShopSettingsPage: React.FC = () => {
       <div>
         <h1 className="text-2xl font-semibold leading-8 text-slate-950">Налаштування магазину</h1>
         <p className="mt-1 text-sm text-slate-500">
-          Адреса, райони, часові проміжки та способи оплати
+          Адреса, райони, часові проміжки, замовлення та способи оплати
         </p>
       </div>
 
@@ -75,6 +76,7 @@ export const ShopSettingsPage: React.FC = () => {
           )}
           {activeSettingsSection.key === "districts" && <DistrictsComponent />}
           {activeSettingsSection.key === "timeSlots" && <TimeSlotsComponent />}
+          {activeSettingsSection.key === "orders" && <OrderSettingsComponent />}
           {activeSettingsSection.key === "paymentMethods" && <PaymentMethodsComponent />}
         </section>
       </div>
@@ -84,7 +86,7 @@ export const ShopSettingsPage: React.FC = () => {
   );
 };
 
-type SettingsSectionKey = "address" | "districts" | "timeSlots" | "paymentMethods";
+type SettingsSectionKey = "address" | "districts" | "timeSlots" | "orders" | "paymentMethods";
 
 const SETTINGS_SECTIONS: Array<{
   key: SettingsSectionKey;
@@ -94,5 +96,6 @@ const SETTINGS_SECTIONS: Array<{
   { key: "address", label: "Адреса", description: "Адреса магазину і координати" },
   { key: "districts", label: "Райони", description: "Зони доставки" },
   { key: "timeSlots", label: "Часові проміжки", description: "Вікна доставки" },
+  { key: "orders", label: "Замовлення", description: "Повторення та one-click режим" },
   { key: "paymentMethods", label: "Оплата", description: "Способи оплати" },
 ];

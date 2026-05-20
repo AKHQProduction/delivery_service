@@ -6,7 +6,8 @@ from fastapi import status
 from httpx import AsyncClient
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from backend.application.vars import ShopRole, today
+from backend.application.vars import ShopRepeatOrderMode, ShopRole, today
+from backend.infrastructure.persistence.tables.shops import Shop
 
 BASE_URL = "/api/v1/auth"
 
@@ -51,6 +52,7 @@ async def test_me_return_correct_id_and_role(
             "city": None,
             "street": None,
             "house": None,
+            "repeat_order_mode": "CONFIRMATION_REQUIRED",
         },
         "current_date": today().isoformat(),
     }
@@ -85,7 +87,35 @@ async def test_me_returns_shop_address(
         "city": "Київ",
         "street": "Хрещатик",
         "house": "1",
+        "repeat_order_mode": "CONFIRMATION_REQUIRED",
     }
+
+
+@pytest.mark.asyncio()
+async def test_me_returns_shop_repeat_order_mode(
+    http_client: AsyncClient,
+    session: AsyncSession,
+    customer_headers: Callable[[int], dict[str, Any]],
+    setup_full_test_user_with_shop,
+) -> None:
+    telegram_id = 4001
+    _, shop_id = await setup_full_test_user_with_shop(
+        telegram_id=telegram_id,
+        role=ShopRole.OWNER,
+    )
+    shop = await session.get(Shop, shop_id)
+    assert shop is not None
+    shop.repeat_order_mode = ShopRepeatOrderMode.CREATE_REGULAR_ORDER
+    await session.commit()
+
+    headers = customer_headers(telegram_id)
+
+    response = await http_client.get(url=BASE_URL + "/me", headers=headers)
+
+    assert response.status_code == status.HTTP_200_OK
+    assert (
+        response.json()["shop"]["repeat_order_mode"] == "CREATE_REGULAR_ORDER"
+    )
 
 
 @pytest.mark.asyncio()

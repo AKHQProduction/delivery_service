@@ -1,6 +1,11 @@
 import { useState, useCallback } from "react";
-import { updateShopAddress, type ShopAddressPayload } from "../../services/api/settingsApi";
+import {
+  updateShopAddress,
+  updateShopRepeatOrderMode,
+  type ShopAddressPayload,
+} from "../../services/api/settingsApi";
 import { useUserShopStore } from "../../context/useUserShopStore";
+import type { RepeatOrderMode, Shop } from "../../types/entities/user";
 
 export interface ShopAddress {
   city: string;
@@ -15,6 +20,18 @@ export interface ShopAddress {
 export const useShopSettings = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  const patchShopInStore = useCallback((patch: Partial<Shop>) => {
+    const currentShop = useUserShopStore.getState().shop;
+    useUserShopStore.getState().setShop({
+      shop_id: currentShop?.shop_id ?? "",
+      city: currentShop?.city ?? null,
+      street: currentShop?.street ?? null,
+      house: currentShop?.house ?? null,
+      ...(currentShop ?? {}),
+      ...patch,
+    });
+  }, []);
 
   const saveShopAddress = useCallback(async (address: ShopAddress): Promise<boolean> => {
     setLoading(true);
@@ -37,10 +54,7 @@ export const useShopSettings = () => {
 
       await updateShopAddress(payload);
 
-      // Update shop city in the store
-      const currentShop = useUserShopStore.getState().shop;
-      useUserShopStore.getState().setShop({
-        shop_id: currentShop?.shop_id ?? "",
+      patchShopInStore({
         city: address.city,
         street: address.street,
         house: address.house,
@@ -55,11 +69,35 @@ export const useShopSettings = () => {
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [patchShopInStore]);
+
+  const saveRepeatOrderMode = useCallback(
+    async (repeatOrderMode: RepeatOrderMode): Promise<boolean> => {
+      setLoading(true);
+      setError(null);
+
+      try {
+        await updateShopRepeatOrderMode({ repeat_order_mode: repeatOrderMode });
+        patchShopInStore({ repeat_order_mode: repeatOrderMode });
+
+        return true;
+      } catch (err: unknown) {
+        const errorMessage =
+          err instanceof Error ? err.message : "Failed to save repeat order mode";
+        setError(errorMessage);
+        console.error("Error saving repeat order mode:", err);
+        return false;
+      } finally {
+        setLoading(false);
+      }
+    },
+    [patchShopInStore],
+  );
 
   return {
     loading,
     error,
     saveShopAddress,
+    saveRepeatOrderMode,
   };
 };

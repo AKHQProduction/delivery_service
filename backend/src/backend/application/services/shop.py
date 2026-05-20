@@ -1,7 +1,7 @@
 from dataclasses import dataclass
 
 from backend.application.dto.coordinates import CoordinatesDTO
-from backend.application.vars import ShopId, UserId
+from backend.application.vars import ShopId, ShopRepeatOrderMode, UserId
 from backend.infrastructure.persistence.tables import Shop, ShopMembership
 
 
@@ -53,12 +53,15 @@ def update_shop(
     shop: Shop,
     *,
     address: NewShopAddressDTO | None = None,
+    repeat_order_mode: ShopRepeatOrderMode | None = None,
 ) -> None:
     if address is not None:
         shop.city = address.city
         shop.street = address.street
         shop.house = address.house
         address.coordinates.apply_to(shop)
+    if repeat_order_mode is not None:
+        shop.repeat_order_mode = repeat_order_mode
 
 
 def update_membership(

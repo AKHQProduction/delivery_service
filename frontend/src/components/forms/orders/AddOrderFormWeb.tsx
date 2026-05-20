@@ -32,6 +32,8 @@ export const AddOrderFormWeb: React.FC<AddOrderFormWebProps> = ({
 }) => {
   const { createNewOrder } = useOrders();
   const currentDate = useUserShopStore((s) => s.currentDate);
+  const repeatOrderMode =
+    useUserShopStore((s) => s.shop?.repeat_order_mode) ?? "CONFIRMATION_REQUIRED";
   const { showSuccess, showWarning } = useError();
   const [showAddClient, setShowAddClient] = useState(false);
   const [isChangingClient, setIsChangingClient] = useState(false);
@@ -98,12 +100,16 @@ export const AddOrderFormWeb: React.FC<AddOrderFormWebProps> = ({
 
   useEffect(() => {
     const client = formData.client;
+    const canLoadRepeatSuggestion = repeatOrderMode === "CONFIRMATION_REQUIRED";
+
     if (
       !client ||
       !referencesReady ||
+      !canLoadRepeatSuggestion ||
       !canSuggestRepeatOrder ||
       rejectedRepeatClientIds.has(client.client_id)
     ) {
+      setRepeatSuggestion(null);
       return;
     }
 
@@ -145,6 +151,7 @@ export const AddOrderFormWeb: React.FC<AddOrderFormWebProps> = ({
     products,
     referencesReady,
     rejectedRepeatClientIds,
+    repeatOrderMode,
   ]);
 
   const handleRejectRepeatSuggestion = () => {

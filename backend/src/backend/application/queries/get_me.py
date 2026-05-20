@@ -2,7 +2,13 @@ import logging
 from dataclasses import dataclass
 
 from backend.application.errors import AuthorizationError
-from backend.application.vars import ShopId, ShopRole, UserId, today
+from backend.application.vars import (
+    ShopId,
+    ShopRepeatOrderMode,
+    ShopRole,
+    UserId,
+    today,
+)
 from backend.infrastructure.idp import IdentityProvider
 from backend.infrastructure.persistence.gateways import SQLAlchemyShopGateway
 
@@ -23,6 +29,7 @@ class MeShop:
     city: str | None
     street: str | None
     house: str | None
+    repeat_order_mode: ShopRepeatOrderMode | None
 
 
 @dataclass(frozen=True)
@@ -75,6 +82,11 @@ class GetMeQueryHandler:
                 city=shop.city if shop else None,
                 street=shop.street if shop else None,
                 house=shop.house if shop else None,
+                repeat_order_mode=(
+                    ShopRepeatOrderMode(shop.repeat_order_mode)
+                    if shop and shop.repeat_order_mode
+                    else None
+                ),
             ),
             current_date=today().isoformat(),
         )

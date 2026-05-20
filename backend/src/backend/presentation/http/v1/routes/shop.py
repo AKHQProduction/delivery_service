@@ -59,6 +59,10 @@ _EDIT_SHOP_EXAMPLES: dict[str, Example] = {
             }
         },
     ),
+    "update_repeat_order_mode": Example(
+        summary="Update repeat order mode",
+        value={"repeat_order_mode": "CREATE_REGULAR_ORDER"},
+    ),
 }
 
 

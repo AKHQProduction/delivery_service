@@ -36,6 +36,11 @@ class ShopRole(StrEnum):
     COURIER = "COURIER"
 
 
+class ShopRepeatOrderMode(StrEnum):
+    CONFIRMATION_REQUIRED = "CONFIRMATION_REQUIRED"
+    CREATE_REGULAR_ORDER = "CREATE_REGULAR_ORDER"
+
+
 class ExportDocType(StrEnum):
     ORDER_LIST = "ORDER_LIST"
     STATISTICS = "STATISTICS"

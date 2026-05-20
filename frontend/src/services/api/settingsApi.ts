@@ -1,4 +1,5 @@
 import api from "../../config/api.config";
+import type { RepeatOrderMode } from "../../types/entities/user";
 
 //Time slots settings API calls
 const dateToTimeString = (date: Date): string => {
@@ -54,7 +55,16 @@ export interface ShopAddressPayload {
   };
 }
 
+export interface ShopRepeatOrderModePayload {
+  repeat_order_mode: RepeatOrderMode;
+}
+
 export const updateShopAddress = async (payload: ShopAddressPayload) => {
+  const response = await api.patch(`v1/shop`, payload);
+  return response.data;
+};
+
+export const updateShopRepeatOrderMode = async (payload: ShopRepeatOrderModePayload) => {
   const response = await api.patch(`v1/shop`, payload);
   return response.data;
 };

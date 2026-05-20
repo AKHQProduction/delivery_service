@@ -7,7 +7,7 @@ from httpx import AsyncClient
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from backend.application.vars import ShopRole
+from backend.application.vars import ShopRepeatOrderMode, ShopRole
 from backend.infrastructure.persistence.tables.shops import (
     Shop,
     ShopDeliveryTimeSlot,
@@ -49,6 +49,7 @@ async def test_create_shop(
     result = await session.execute(select(Shop))
     shop = result.scalar_one()
     assert shop.name == "Моя крамниця"
+    assert shop.repeat_order_mode == ShopRepeatOrderMode.CONFIRMATION_REQUIRED
 
     memberships = await session.execute(
         select(ShopMembership).where(ShopMembership.user_id == user_id)
@@ -146,6 +147,37 @@ async def test_update_shop_address(
     assert shop.house == "1"
     assert shop.latitude == pytest.approx(50.4501)
     assert shop.longitude == pytest.approx(30.5234)
+
+
+@pytest.mark.asyncio()
+async def test_update_shop_repeat_order_mode(
+    http_client: AsyncClient,
+    session: AsyncSession,
+    customer_headers: Callable[[int], dict[str, Any]],
+    setup_full_test_user_with_shop,
+) -> None:
+    telegram_id = 9004
+    _, shop_id = await setup_full_test_user_with_shop(telegram_id=telegram_id)
+    await session.commit()
+
+    headers = customer_headers(telegram_id)
+
+    response = await http_client.patch(
+        url=BASE_URL,
+        headers=headers,
+        json={"repeat_order_mode": "CREATE_REGULAR_ORDER"},
+    )
+
+    assert response.status_code == status.HTTP_200_OK
+
+    await session.flush()
+
+    result = await session.execute(select(Shop).where(Shop.id == shop_id))
+    shop = result.scalar_one()
+    assert shop.repeat_order_mode == ShopRepeatOrderMode.CREATE_REGULAR_ORDER
+    assert shop.city is None
+    assert shop.street is None
+    assert shop.house is None
 
 
 @pytest.mark.asyncio()
