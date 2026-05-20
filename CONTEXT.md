@@ -9,6 +9,164 @@ It owns current Order creation policies: address and phone snapshots, product
 name and price snapshots, optional recurring order link, balance payment,
 missing-coordinate geocoding, and route insertion.
 
+## Order Discount
+
+An Order Discount is a client-specific reduction applied once to the whole
+Order total.
+
+A client can have at most one active personal Discount Rule.
+
+A client personal Discount Rule is always available for that client's Orders
+until the rule is changed or removed.
+
+Client personal Discount Rules are managed from the client context.
+Client lists and client detail views show compact personal discount indicators.
+
+A fixed amount client Discount Rule reduces the Order total once, while a
+percent client Discount Rule is calculated against the Order total after Order
+Item Discounts.
+
+## Order Item Discount
+
+An Order Item Discount is a product-specific reduction applied to one Order
+Item before the Order total is calculated.
+
+Product-specific discounts become available after the Order Item quantity
+reaches the configured minimum quantity.
+
+When an Order Item reaches the minimum quantity, a fixed amount discount
+reduces that Order Item subtotal once, while a percent discount is calculated
+against that Order Item subtotal.
+
+An Order Item Discount cannot reduce its Order Item total below zero.
+
+A product cannot have two active Discount Rules with the same minimum quantity.
+
+When several product Discount Rules are available for one Order Item, the
+applied rule is the rule with the highest minimum quantity that the Order Item
+reaches.
+
+Product Discount Rules are managed from the product context.
+Product lists show a compact discount indicator, while product detail and edit
+flows show the discount quantity thresholds.
+
+Managers who can manage clients, products, or orders can manage the related
+Discount Rules and disable Applied Discounts on those Orders.
+
+## Discount stacking
+
+Discount stacking is the rule that Order Item Discounts are applied before the
+Order Discount, and the final Order total cannot be less than zero.
+
+An Order with a final total of zero is valid.
+
+## Order total breakdown
+
+An Order total breakdown is the split between the pre-discount item subtotal,
+Order Item Discount total, Order Discount total, and final Order total.
+
+Payments use the final Order total after Applied Discounts.
+
+Revenue reporting uses the final Order total after Applied Discounts, while
+product revenue reflects product-specific discounts and does not distribute
+Order Discounts across Order Items.
+
+Discount monetary amounts and Order totals are expressed in whole hryvnias.
+
+Percent discounts are calculated against the relevant line or order amount and
+rounded to the nearest whole hryvnia with half values rounded up.
+
+Delivery route views expose only the final Order total, not the discount
+breakdown.
+
+Order exports use final Order totals after Applied Discounts; detailed order
+exports include the discount breakdown, while route-style exports may show only
+the final total.
+
+Managers see the discount breakdown while creating, editing, or viewing an
+Order, while dense Order lists show only the final Order total.
+Order intake modals show the discount breakdown next to the Order total as the
+manager changes the client, items, or quantities.
+Order intake modals do not show product Discount Rules whose minimum quantity
+has not been reached.
+Applied Order Item Discounts appear compactly on their Order Item rows and as
+an aggregate in the Order total breakdown.
+Order Item rows keep the original price visible and show discount amount and
+discounted line total separately.
+Historical Order views present Applied Discounts as Order facts without warning
+that the source Discount Rule later changed or was deactivated.
+
+Order statistics include total discount amount as a separate metric.
+
+Manager-facing Order breakdowns show manager-disabled Applied Discounts as
+disabled lines instead of hiding them.
+
+Regular Order templates do not store Applied Discounts; generated Orders
+snapshot the Discount Rules available when each generated Order is created.
+
+When a Discount Rule changes, future Orders keep their existing Applied
+Discounts unless a manager explicitly recalculates them from today or tomorrow.
+The default future Order policy for Discount Rule changes is to keep existing
+future Order snapshots.
+Managers can preview affected future Order counts before choosing a future
+Order recalculation policy for a Discount Rule change.
+
+Deleting a Discount Rule follows the same future Order recalculation policy as
+changing a Discount Rule.
+
+Future Order recalculation preserves manager-disabled Applied Discounts instead
+of re-enabling them automatically.
+
+## Discount Rule
+
+A Discount Rule is a shop-managed condition that makes a discount available for
+future Orders or Order Items.
+
+Discount Rules support two value units: percent of the relevant price and fixed
+amount in hryvnias.
+
+Discount Rules cover both client-specific and product-specific discounts.
+Category-level discounts are outside the initial discount management scope.
+Shop-wide discounts are outside the initial discount management scope.
+
+Discount Rule values use whole numbers: percent values are between 1 and 100,
+fixed amounts are positive whole hryvnias, and product minimum quantities are
+positive whole units.
+
+Removing a Discount Rule deactivates it instead of deleting its history.
+Inactive Discount Rules do not prevent creating a new active Discount Rule for
+the same client or product quantity threshold.
+Bulk import and export of Discount Rules is outside the initial discount
+management scope.
+Discount Rules do not have validity date ranges in the initial scope; active
+rules stay available until deactivated.
+
+## Applied Discount
+
+An Applied Discount is the snapshot of a Discount Rule that was actually used
+or explicitly disabled on a specific Order.
+
+Manager-disabled Applied Discounts are saved with zero applied amount and keep
+the source rule details that were available at the time.
+
+Manager-disabled Applied Discounts are removed from an Order when their source
+rule no longer applies to the current client, items, or quantities.
+
+An available Discount Rule is not saved as an Applied Discount when its
+discount base is already zero.
+
+Available Discount Rules are applied automatically during Order intake, while a
+manager may disable an Applied Discount for that specific Order.
+Managers can only enable or disable available Applied Discounts on an Order;
+they do not edit discount values inside the Order.
+
+Applied Discounts remain stable when Discount Rules change, but relevant
+Applied Discounts are recalculated when a manager changes the Order client,
+items, or quantities.
+
+Repeat-order flows copy the previous Order's client, items, and quantities, but
+Applied Discounts are recalculated from the currently available Discount Rules.
+
 ## Regular Order resource impact
 
 Regular Order resource impact is the domain path that reacts when a resource
